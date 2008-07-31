@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -84,6 +85,11 @@ public class PluginManager {
       ClassloaderUtil.clearJarURLCache();
     }
     return ourPlugins;
+  }
+
+  public static void invalidatePlugins() {
+    ourPlugins = null;
+    ourDisabledPlugins = null;
   }
 
   /**
@@ -383,7 +389,7 @@ public class PluginManager {
   }
 
   private static ClassLoader[] getParentLoaders(Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap, PluginId[] pluginIds) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return new ClassLoader[0];
+    if (isUnitTestMode()) return new ClassLoader[0];
     final List<ClassLoader> classLoaders = new ArrayList<ClassLoader>();
     for (final PluginId id : pluginIds) {
       IdeaPluginDescriptor pluginDescriptor = idToDescriptorMap.get(id);
@@ -400,7 +406,7 @@ public class PluginManager {
     return classLoaders.toArray(new ClassLoader[classLoaders.size()]);
   }
 
-  private static IdeaPluginDescriptorImpl[] loadDescriptors() {
+  public static IdeaPluginDescriptorImpl[] loadDescriptors() {
     if (ClassloaderUtil.isLoadingOfExternalPluginsDisabled()) {
       return IdeaPluginDescriptorImpl.EMPTY_ARRAY;
     }
@@ -780,7 +786,7 @@ public class PluginManager {
     PluginId pluginId = pluginDescriptor.getPluginId();
     File pluginRoot = pluginDescriptor.getPath();
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
+    if (isUnitTestMode()) return null;
     try {
       final List<URL> urls = new ArrayList<URL>(classPath.length);
       for (File aClassPath : classPath) {
@@ -845,7 +851,7 @@ public class PluginManager {
     }
   }
 
-  public static void saveDisabledPlugins(List<String> ids, boolean append) throws IOException {
+  public static void saveDisabledPlugins(Collection<String> ids, boolean append) throws IOException {
     File plugins = new File(PathManager.getConfigPath(), PluginManager.DISABLED_PLUGINS_FILENAME);
     if (!plugins.isFile()) {
       plugins.createNewFile();
@@ -868,34 +874,43 @@ public class PluginManager {
   public static List<String> getDisabledPlugins() {
     if (ourDisabledPlugins == null) {
       ourDisabledPlugins = new ArrayList<String>();
-      if (System.getProperty("idea.ignore.disabled.plugins") == null && !ApplicationManager.getApplication().isUnitTestMode()) {
-        final File file = new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
-        if (file.isFile()) {
-          BufferedReader reader = null;
-          try {
-            reader = new BufferedReader(new FileReader(file));
-            String id;
-            while ((id = reader.readLine()) != null) {
-              ourDisabledPlugins.add(id.trim());
-            }
-          }
-          catch (IOException e) {
-            //do nothing
-          }
-          finally {
-            try {
-              if (reader != null) {
-                reader.close();
-              }
-            }
-            catch (IOException e) {
-              //do nothing
-            }
-          }
-        }
+      if (System.getProperty("idea.ignore.disabled.plugins") == null && !isUnitTestMode()) {
+        loadDisabledPlugins(PathManager.getConfigPath(), ourDisabledPlugins);
       }
     }
     return ourDisabledPlugins;
+  }
+
+  public static void loadDisabledPlugins(final String configPath, final Collection<String> disabledPlugins) {
+    final File file = new File(configPath, DISABLED_PLUGINS_FILENAME);
+    if (file.isFile()) {
+      BufferedReader reader = null;
+      try {
+        reader = new BufferedReader(new FileReader(file));
+        String id;
+        while ((id = reader.readLine()) != null) {
+          disabledPlugins.add(id.trim());
+        }
+      }
+      catch (IOException e) {
+        //do nothing
+      }
+      finally {
+        try {
+          if (reader != null) {
+            reader.close();
+          }
+        }
+        catch (IOException e) {
+          //do nothing
+        }
+      }
+    }
+  }
+
+  private static boolean isUnitTestMode() {
+    final Application app = ApplicationManager.getApplication();
+    return app != null && app.isUnitTestMode();
   }
 
   private static class IdeaLogProvider implements LogProvider {

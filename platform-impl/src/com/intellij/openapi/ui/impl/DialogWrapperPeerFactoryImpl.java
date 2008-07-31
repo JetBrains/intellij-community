@@ -16,6 +16,10 @@ public class DialogWrapperPeerFactoryImpl extends DialogWrapperPeerFactory {
     return new DialogWrapperPeerImpl(wrapper, canBeParent);
   }
 
+  public DialogWrapperPeer createPeer(final DialogWrapper wrapper, final boolean canBeParent, final boolean tryToolkitModal) {
+    return new DialogWrapperPeerImpl(wrapper, canBeParent, tryToolkitModal);
+  }
+
   public DialogWrapperPeer createPeer(DialogWrapper wrapper, Component parent, boolean canBeParent) {
     return new DialogWrapperPeerImpl(wrapper, parent, canBeParent);
   }

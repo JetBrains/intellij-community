@@ -18,8 +18,9 @@ package com.intellij.openapi.ui;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -125,6 +126,13 @@ public abstract class DialogWrapper {
   protected DialogWrapper(boolean canBeParent) {
     synchronized (ourLock) {
       myPeer = DialogWrapperPeerFactory.getInstance().createPeer(this, canBeParent);
+      createDefaultActions();
+    }
+  }
+
+  protected DialogWrapper(boolean canBeParent, boolean toolkitModalIfPossible) {
+    synchronized (ourLock) {
+      myPeer = DialogWrapperPeerFactory.getInstance().createPeer(this, canBeParent, toolkitModalIfPossible);
       createDefaultActions();
     }
   }
@@ -830,7 +838,7 @@ public abstract class DialogWrapper {
         if (selectedPath.length > 0) { // hide popup menu if any
           menuSelectionManager.clearSelectedPath();
         }
-        else if (!StackingPopupDispatcher.getInstance().isPopupFocused()) {
+        else if (ApplicationManager.getApplication() == null || !StackingPopupDispatcher.getInstance().isPopupFocused()) {
           doCancelAction();
         }
       }

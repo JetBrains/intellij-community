@@ -124,6 +124,19 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     createDialog(owner, canBeParent);
   }
 
+  public DialogWrapperPeerImpl(final DialogWrapper wrapper, final boolean canBeParent, final boolean tryToolkitModal) {
+    myWrapper = wrapper;
+    myWindowManager = null;
+    Application application = ApplicationManager.getApplication();
+    if (application != null && application.hasComponent(WindowManager.class)) {
+      myWindowManager = (WindowManagerEx)WindowManager.getInstance();
+    }
+    createDialog(null, canBeParent);
+    if (tryToolkitModal) {
+      setToolkitModal();
+    }
+  }
+
   public void setUndecorated(boolean undecorated) {
     myDialog.setUndecorated(undecorated);
   }
@@ -238,6 +251,24 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
    */
   public void pack() {
     myDialog.pack();
+  }
+
+  public void setIconImage(final Image image) {
+    myDialog.setIconImage(image);
+  }
+
+  private void setToolkitModal() {
+    try {
+      final Class<?> modalityType = myDialog.getClass().getClassLoader().loadClass("java.awt.Dialog$ModalityType");
+      final Field field = modalityType.getField("TOOLKIT_MODAL");
+      final Object value = field.get(null);
+
+      final Method method = myDialog.getClass().getMethod("setModalityType", modalityType);
+      method.invoke(myDialog, value);
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   public Dimension getPreferredSize() {

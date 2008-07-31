@@ -37,39 +37,48 @@ public class ConfigImportHelper {
 
   public static void importConfigsTo(String newConfigPath) {
     do {
-      ImportOldConfigsPanel dlg = new ImportOldConfigsPanel();
+      ImportOldConfigsDialog dlg = new ImportOldConfigsDialog();
       dlg.setVisible(true);
       if (dlg.isImportEnabled()) {
         File instHome = dlg.getSelectedFile();
         File oldConfigDir = getOldConfigDir(instHome);
-        if (oldConfigDir == null) {
-          JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                        ApplicationBundle.message("error.invalid.installation.home", instHome.getAbsolutePath(),
-                                                                  ApplicationNamesInfo.getInstance().getFullProductName()));
-          continue;
-        }
+        if (!validateOldConfigDir(instHome, oldConfigDir)) continue;
 
-        if (!oldConfigDir.exists()) {
-          JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                        ApplicationBundle.message("error.no.settings.path",
-                                                                  oldConfigDir.getAbsolutePath()),
-                                        ApplicationBundle.message("title.settings.import.failed"), JOptionPane.WARNING_MESSAGE);
-          continue;
-        }
-
-        try {
-          xcopy(oldConfigDir, new File(newConfigPath));
-        }
-        catch (IOException e) {
-          JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                        ApplicationBundle.message("error.unable.to.import.settings", e.getMessage()),
-                                        ApplicationBundle.message("title.settings.import.failed"), JOptionPane.WARNING_MESSAGE);
-        }
+        doImport(newConfigPath, oldConfigDir);
       }
 
       break;
     }
     while (true);
+  }
+
+  public static void doImport(final String newConfigPath, final File oldConfigDir) {
+    try {
+      xcopy(oldConfigDir, new File(newConfigPath));
+    }
+    catch (IOException e) {
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                    ApplicationBundle.message("error.unable.to.import.settings", e.getMessage()),
+                                    ApplicationBundle.message("title.settings.import.failed"), JOptionPane.WARNING_MESSAGE);
+    }
+  }
+
+  public static boolean validateOldConfigDir(final File instHome, final File oldConfigDir) {
+    if (oldConfigDir == null) {
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                    ApplicationBundle.message("error.invalid.installation.home", instHome.getAbsolutePath(),
+                                                              ApplicationNamesInfo.getInstance().getFullProductName()));
+      return false;
+    }
+
+    if (!oldConfigDir.exists()) {
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                    ApplicationBundle.message("error.no.settings.path",
+                                                              oldConfigDir.getAbsolutePath()),
+                                    ApplicationBundle.message("title.settings.import.failed"), JOptionPane.WARNING_MESSAGE);
+      return false;
+    }
+    return true;
   }
 
   public static void xcopy(File src, File dest) throws IOException{

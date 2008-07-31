@@ -8,7 +8,7 @@ import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
-public abstract class WizardStep {
+public abstract class WizardStep<T extends WizardModel> {
 
   public static final WizardStep FORCED_GOAL_DROPPED = new Empty();
   public static final WizardStep FORCED_GOAL_ACHIEVED = new Empty();
@@ -54,11 +54,11 @@ public abstract class WizardStep {
 
   public abstract JComponent prepare(WizardNavigationState state);
 
-  public WizardStep onNext(WizardModel model) {
+  public WizardStep onNext(T model) {
     return model.getNextFor(this);
   }
 
-  public WizardStep onPrevious(WizardModel model) {
+  public WizardStep onPrevious(T model) {
     return model.getPreviousFor(this);
   }
 

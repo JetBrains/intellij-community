@@ -141,4 +141,6 @@ public abstract class DialogWrapperPeer {
   public abstract void validate();
   public abstract void repaint();
   public abstract void pack();
+
+  public abstract void setIconImage(Image image);
 }

@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.Properties;
@@ -147,27 +146,19 @@ public class PathManager {
     return ourSystemPath;
   }
 
-  public static void ensureConfigFolderExists(boolean userInteractionAllowed, final boolean createIfNotExists) {
+  public static boolean ensureConfigFolderExists(final boolean createIfNotExists) {
     getConfigPathWithoutDialog();
 
     File file = new File(ourConfigPath);
     if (createIfNotExists && !file.exists()) {
       file.mkdirs();
-      if (userInteractionAllowed) {
-        try {
-          @NonNls final Class<?> helper = Class.forName("com.intellij.openapi.application.ConfigImportHelper");
-          final Method helperMethod = helper.getMethod("importConfigsTo", String.class);
-          helperMethod.invoke(null, ourConfigPath);
-        }
-        catch (Exception e) {
-          // Ignore exceptions. No config helping stuff is present.
-        }
-      }
+      return true;
     }
+    return false;
   }
 
   public static String getConfigPath(boolean createIfNotExists) {
-    ensureConfigFolderExists(false, createIfNotExists);
+    ensureConfigFolderExists(createIfNotExists);
     return ourConfigPath;
   }
 

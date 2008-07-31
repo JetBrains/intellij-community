@@ -37,5 +37,6 @@ public abstract class DialogWrapperPeerFactory {
 
   public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, Project project, boolean canBeParent);
   public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, boolean canBeParent);
+  public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, boolean canBeParent, boolean tryToolkitModal);
   public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, Component parent, boolean canBeParent);
 }

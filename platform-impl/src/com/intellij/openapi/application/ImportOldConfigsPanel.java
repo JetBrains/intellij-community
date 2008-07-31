@@ -15,14 +15,12 @@
  */
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -30,19 +28,14 @@ import java.io.File;
 /**
  * @author max
  */
-public class ImportOldConfigsPanel extends JDialog {
+public class ImportOldConfigsPanel {
   private TextFieldWithBrowseButton myPrevInstallation;
   private JRadioButton myRbDoNotImport;
   private JRadioButton myRbImport;
   private JPanel myRootPanel;
   private File myLastSelection = null;
-  private JButton myOkButton;
 
   public ImportOldConfigsPanel() {
-    super(JOptionPane.getRootFrame(), true);
-
-    new MnemonicHelper().register(getContentPane());
-
     ButtonGroup group = new ButtonGroup();
     group.add(myRbDoNotImport);
     group.add(myRbImport);
@@ -77,7 +70,7 @@ public class ImportOldConfigsPanel extends JDialog {
           fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         }
 
-        int returnVal = fc.showOpenDialog(ImportOldConfigsPanel.this);
+        int returnVal = fc.showOpenDialog(myRootPanel);
         if (returnVal == JFileChooser.APPROVE_OPTION){
           File file = fc.getSelectedFile();
           if (file != null){
@@ -87,28 +80,9 @@ public class ImportOldConfigsPanel extends JDialog {
         }
       }
     });
-
-    myOkButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        close();
-      }
-    });
-
-    getContentPane().setLayout(new BorderLayout());
-    getContentPane().add(myRootPanel);
-
-    setTitle(ApplicationBundle.message("title.complete.installation"));
-
-    update();
-    pack();
-
-    Dimension parentSize = Toolkit.getDefaultToolkit().getScreenSize();
-    Dimension ownSize = getPreferredSize();
-
-    setLocation((parentSize.width - ownSize.width) / 2, (parentSize.height - ownSize.height) / 2);
   }
 
-  private void close() {
+  public boolean checkImportSettings() {
     if (isImportEnabled()) {
       final String productWithVendor = ApplicationNamesInfo.getInstance().getFullProductName();
       String instHome = myPrevInstallation.getText();
@@ -116,7 +90,7 @@ public class ImportOldConfigsPanel extends JDialog {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
                                       ApplicationBundle.message("error.please.select.previous.installation.home", productWithVendor),
                                       ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
-        return;
+        return false;
       }
 
       if (PathManager.getHomePath().equals(instHome)) {
@@ -124,7 +98,7 @@ public class ImportOldConfigsPanel extends JDialog {
                                       ApplicationBundle.message("error.selected.current.installation.home",
                                                                 productWithVendor, productWithVendor),
                                       ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
-        return;
+        return false;
       }
 
       if (!ConfigImportHelper.isInstallationHome(instHome)) {
@@ -132,18 +106,17 @@ public class ImportOldConfigsPanel extends JDialog {
                                       ApplicationBundle.message("error.does.not.appear.to.be.installation.home", instHome,
                                                                 productWithVendor),
                                       ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
-        return;
+        return false;
       }
 
       if (!new File(instHome).canRead()) {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
                                       ApplicationBundle.message("error.no.read.permissions", instHome),
                                       ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
-        return;
+        return false;
       }
     }
-
-    dispose();
+    return true;
   }
 
   public boolean isImportEnabled() {
@@ -154,12 +127,11 @@ public class ImportOldConfigsPanel extends JDialog {
     return new File(myPrevInstallation.getText());
   }
 
-  private void update() {
+  void update() {
     myPrevInstallation.setEnabled(myRbImport.isSelected());
   }
 
-  public static void main(String[] args) {
-    ImportOldConfigsPanel dlg = new ImportOldConfigsPanel();
-    dlg.setVisible(true);
+  public JComponent getRootPanel() {
+    return myRootPanel;
   }
 }

@@ -10,7 +10,7 @@ import java.util.List;
 
 public class WizardModel {
 
-  private List mySteps = new ArrayList();
+  private List<WizardStep> mySteps = new ArrayList<WizardStep>();
 
   private WizardStep myCurrentStep;
   private WizardNavigationState myCurrentState;
@@ -105,7 +105,7 @@ public class WizardModel {
     checkModel();
 
     if (myCurrentStep == null) {
-      prepareCurrentStep((WizardStep) mySteps.get(0));
+      prepareCurrentStep(mySteps.get(0));
     }
 
     return myCurrentStep;
@@ -131,12 +131,12 @@ public class WizardModel {
     return mySteps.indexOf(step) == mySteps.size() - 1;
   }
 
-  final WizardStep getNextFor(WizardStep wizardStep) {
-    return (WizardStep) mySteps.get(mySteps.indexOf(wizardStep) + 1);
+  public final WizardStep getNextFor(WizardStep wizardStep) {
+    return mySteps.get(mySteps.indexOf(wizardStep) + 1);
   }
 
   final WizardStep getPreviousFor(WizardStep wizardStep) {
-    return (WizardStep) mySteps.get(mySteps.indexOf(wizardStep) - 1);
+    return mySteps.get(mySteps.indexOf(wizardStep) - 1);
   }
 
   private void checkModel() {
