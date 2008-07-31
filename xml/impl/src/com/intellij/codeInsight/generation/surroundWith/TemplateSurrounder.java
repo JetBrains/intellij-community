@@ -41,7 +41,7 @@ public class TemplateSurrounder implements Surrounder {
   public boolean isApplicableForFileType(FileType fileType) {
     final TemplateContext templateContext = myTemplate.getTemplateContext();
 
-    if (fileType == StdFileTypes.XHTML || fileType == StdFileTypes.HTML || templateContext.XML.getValue()) {
+    if (fileType == StdFileTypes.XHTML || fileType == StdFileTypes.HTML || fileType == StdFileTypes.XML || fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX) {
       for(TemplateContextType contextType: Extensions.getExtensions(TemplateContextType.EP_NAME)) {
         if (contextType.isInContext(fileType)) {
           if (contextType.isEnabled(templateContext)) return true;
