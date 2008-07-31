@@ -18,14 +18,13 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDebuggerRunnerSettings> {
-
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return executorId.equals(DefaultDebugExecutor.EXECUTOR_ID) && profile instanceof ModuleRunProfile;
   }
 
   @NotNull
   public String getRunnerId() {
-    return "Debug";
+    return DebuggingRunnerData.DEBUGGER_RUNNER_ID;
   }
 
   protected RunContentDescriptor doExecute(final Project project, final Executor executor, final RunProfileState state, final RunContentDescriptor contentToReuse,
