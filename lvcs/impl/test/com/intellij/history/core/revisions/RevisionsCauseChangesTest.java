@@ -10,7 +10,7 @@ public class RevisionsCauseChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testCurrentRevisionIsBefore() {
-    Revision r = new CurrentRevision(null, -1);
+    Revision r = new CurrentRevision(null);
     assertNull(r.getCauseChangeName());
     assertNull(r.getCauseChange());
   }

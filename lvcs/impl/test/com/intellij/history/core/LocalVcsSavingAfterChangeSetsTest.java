@@ -14,9 +14,9 @@ public class LocalVcsSavingAfterChangeSetsTest extends TempDirTestCase {
   public void initVcs() {
     s = new Storage(tempDir) {
       @Override
-      public void save() {
+      public void saveContents() {
         called = true;
-        super.save();
+        super.saveContents();
       }
     };
     vcs = new LocalVcs(s);

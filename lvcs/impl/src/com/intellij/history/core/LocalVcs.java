@@ -44,13 +44,15 @@ public class LocalVcs implements ILocalVcs {
   public void save() {
     if (!wasModifiedAfterLastSave) return;
 
+    // saving contents first is necessary to prevent 'storage corrupted' messages
+    // if state was saved but contents
+    myStorage.saveContents();
+
     Memento m = new Memento();
     m.myRoot = myRoot;
     m.myEntryCounter = myEntryCounter;
     m.myChangeList = myChangeList;
-
-    myStorage.store(m);
-    myStorage.save();
+    myStorage.saveState(m);
 
     wasModifiedAfterLastSave = false;
   }
@@ -94,7 +96,7 @@ public class LocalVcs implements ILocalVcs {
     // otherwise the ContentStorage may become corrupted if IDEA is shutdown forcefully.
     myChangeSetDepth--;
     if (myChangeSetDepth == 0) {
-      myStorage.save();
+      myStorage.saveContents();
     }
   }
 
@@ -238,7 +240,7 @@ public class LocalVcs implements ILocalVcs {
     myChangeList.accept(myRoot, v);
   }
 
-  protected long getCurrentTimestamp() {
+  private long getCurrentTimestamp() {
     return Clock.getCurrentTimestamp();
   }
 

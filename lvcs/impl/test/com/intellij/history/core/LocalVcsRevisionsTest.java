@@ -12,8 +12,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testRevisions() {
-    long timestamp = -1;
-    vcs.createFile("file", cf("old"), timestamp, false);
+    vcs.createFile("file", cf("old"), -1, false);
     vcs.changeFileContent("file", cf("new"), -1);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
@@ -25,8 +24,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testNamedAndUnnamedCauseActions() {
     vcs.beginChangeSet();
-    long timestamp = -1;
-    vcs.createFile("file", null, timestamp, false);
+    vcs.createFile("file", null, -1, false);
     vcs.endChangeSet("name");
 
     vcs.changeFileContent("file", null, -1);
@@ -41,11 +39,8 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testIncludingCurrentVersionIntoRevisionsAfterPurge() {
     setCurrentTimestamp(10);
-    long timestamp = -1;
-    vcs.createFile("file", cf("content"), timestamp, false);
+    vcs.createFile("file", cf("content"), 10, false);
     vcs.purgeObsoleteAndSave(0);
-
-    setCurrentTimestamp(30);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
     assertEquals(1, rr.size());
@@ -53,7 +48,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
     Revision r = rr.get(0);
     assertNull(r.getName());
     assertNull(r.getCauseChangeName());
-    assertEquals(30, r.getTimestamp());
+    assertEquals(10, r.getTimestamp());
 
     Entry e = r.getEntry();
     assertEquals("file", e.getName());
@@ -63,8 +58,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testIncludingVersionBeforeFirstChangeAfterPurge() {
     setCurrentTimestamp(10);
-    long timestamp = -1;
-    vcs.createFile("file", cf("one"), timestamp, false);
+    vcs.createFile("file", cf("one"), -1, false);
     setCurrentTimestamp(20);
     vcs.changeFileContent("file", cf("two"), -1);
 
@@ -80,13 +74,11 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotIncludeRevisionsForAnotherEntries() {
     vcs.beginChangeSet();
-    long timestamp1 = -1;
-    vcs.createFile("file1", null, timestamp1, false);
+    vcs.createFile("file1", null, -1, false);
     vcs.endChangeSet("1");
 
     vcs.beginChangeSet();
-    long timestamp = -1;
-    vcs.createFile("file2", null, timestamp, false);
+    vcs.createFile("file2", null, -1, false);
     vcs.endChangeSet("2");
 
     List<Revision> rr = vcs.getRevisionsFor("file2");
@@ -97,8 +89,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testRevisionsTimestamp() {
     setCurrentTimestamp(10);
-    long timestamp = -1;
-    vcs.createFile("file", null, timestamp, false);
+    vcs.createFile("file", null, -1, false);
 
     setCurrentTimestamp(20);
     vcs.changeFileContent("file", null, -1);
@@ -114,20 +105,16 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testTimestampForCurrentRevisionAfterPurgeFromCurrentTimestamp() {
-    setCurrentTimestamp(10);
-    long timestamp = -1;
-    vcs.createFile("file", null, timestamp, false);
+    vcs.createFile("file", null, 10, false);
     vcs.purgeObsoleteAndSave(0);
 
-    setCurrentTimestamp(20);
-    assertEquals(20L, vcs.getRevisionsFor("file").get(0).getTimestamp());
+    assertEquals(10L, vcs.getRevisionsFor("file").get(0).getTimestamp());
   }
 
   @Test
   public void testTimestampForLastRevisionAfterPurge() {
     setCurrentTimestamp(10);
-    long timestamp = -1;
-    vcs.createFile("file", null, timestamp, false);
+    vcs.createFile("file", null, -1, false);
 
     setCurrentTimestamp(20);
     vcs.changeFileContent("file", null, -1);
@@ -145,11 +132,9 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testRevisionsForFileCreatedWithSameNameAsDeletedOne() {
-    long timestamp = -1;
-    vcs.createFile("file", cf("old"), timestamp, false);
+    vcs.createFile("file", cf("old"), -1, false);
     vcs.delete("file");
-    long timestamp1 = -1;
-    vcs.createFile("file", cf("new"), timestamp1, false);
+    vcs.createFile("file", cf("new"), -1, false);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
     assertEquals(1, rr.size());
@@ -161,13 +146,11 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testRevisionsForRestoredFile() {
-    long timestamp = -1;
-    vcs.createFile("f", cf("one"), timestamp, false);
+    vcs.createFile("f", cf("one"), -1, false);
     vcs.changeFileContent("f", cf("two"), -1);
     int id = vcs.getEntry("f").getId();
     vcs.delete("f");
-    long timestamp1 = -1;
-    vcs.restoreFile(id, "f", cf("two_restored"), timestamp1, false);
+    vcs.restoreFile(id, "f", cf("two_restored"), -1, false);
     vcs.changeFileContent("f", cf("three"), -1);
 
     List<Revision> rr = vcs.getRevisionsFor("f");
@@ -192,15 +175,13 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testRevisionForRestoredDirectoryWithRestoreChildren() {
     vcs.createDirectory("dir");
-    long timestamp = -1;
-    vcs.createFile("dir/f", cf("one"), timestamp, false);
+    vcs.createFile("dir/f", cf("one"), -1, false);
     int dirId = vcs.getEntry("dir").getId();
     int fileId = vcs.getEntry("dir/f").getId();
     vcs.delete("dir");
     vcs.beginChangeSet();
     vcs.restoreDirectory(dirId, "dir");
-    long timestamp1 = -1;
-    vcs.restoreFile(fileId, "dir/f", cf("one"), timestamp1, false);
+    vcs.restoreFile(fileId, "dir/f", cf("one"), -1, false);
     vcs.endChangeSet(null);
 
     List<Revision> rr = vcs.getRevisionsFor("dir");
@@ -215,27 +196,23 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testRevisionsForFileThatWasCreatedAndDeletedInOneChangeSet() {
     vcs.beginChangeSet();
-    long timestamp = -1;
-    vcs.createFile("f", null, timestamp, false);
+    vcs.createFile("f", null, -1, false);
     vcs.endChangeSet("1");
     int id = vcs.getEntry("f").getId();
     vcs.delete("f");
 
     vcs.beginChangeSet();
-    long timestamp1 = -1;
-    vcs.restoreFile(id, "f", null, timestamp1, false);
+    vcs.restoreFile(id, "f", null, -1, false);
     vcs.delete("f");
     vcs.endChangeSet("2");
 
     vcs.beginChangeSet();
-    long timestamp3 = -1;
-    vcs.restoreFile(id, "f", null, timestamp3, false);
+    vcs.restoreFile(id, "f", null, -1, false);
     vcs.endChangeSet("3");
 
     vcs.beginChangeSet();
     vcs.delete("f");
-    long timestamp2 = -1;
-    vcs.restoreFile(id, "f", null, timestamp2, false);
+    vcs.restoreFile(id, "f", null, -1, false);
     vcs.endChangeSet("4");
 
     List<Revision> rr = vcs.getRevisionsFor("f");
@@ -247,11 +224,9 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testRevisionsForFileCreatenInPlaceOfRenamedOne() {
-    long timestamp1 = -1;
-    vcs.createFile("file1", cf("content1"), timestamp1, false);
+    vcs.createFile("file1", cf("content1"), -1, false);
     vcs.rename("file1", "file2");
-    long timestamp = -1;
-    vcs.createFile("file1", cf("content2"), timestamp, false);
+    vcs.createFile("file1", cf("content2"), -1, false);
 
     List<Revision> rr = vcs.getRevisionsFor("file1");
     assertEquals(1, rr.size());
@@ -275,8 +250,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testRevisionsIfSomeFilesWereDeletedDuringChangeSet() {
     vcs.createDirectory("dir");
-    long timestamp = -1;
-    vcs.createFile("dir/f", null, timestamp, false);
+    vcs.createFile("dir/f", null, -1, false);
     vcs.beginChangeSet();
     vcs.delete("dir/f");
 
@@ -305,8 +279,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testGettingEntryFromRevisionInRenamedDir() {
     vcs.createDirectory("dir");
-    long timestamp = -1;
-    vcs.createFile("dir/file", null, timestamp, false);
+    vcs.createFile("dir/file", null, -1, false);
     vcs.rename("dir", "newDir");
     vcs.changeFileContent("newDir/file", null, -1);
 
@@ -320,8 +293,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testGettingEntryFromRevisionDoesNotChangeRootEntry() {
-    long timestamp = -1;
-    vcs.createFile("file", cf("content"), timestamp, false);
+    vcs.createFile("file", cf("content"), -1, false);
     vcs.changeFileContent("file", cf("new content"), -1);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
@@ -332,8 +304,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testGettingDifferenceBetweenRevisionls() {
-    long timestamp = -1;
-    vcs.createFile("file", cf("content"), timestamp, false);
+    vcs.createFile("file", cf("content"), -1, false);
     vcs.changeFileContent("file", cf("new content"), -1);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
@@ -351,8 +322,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
 
   @Test
   public void testNoDifferenceBetweenRevisions() {
-    long timestamp = -1;
-    vcs.createFile("file", cf("content"), timestamp, false);
+    vcs.createFile("file", cf("content"), -1, false);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
 
@@ -365,8 +335,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testDifferenceForDirectory() {
     vcs.createDirectory("dir");
-    long timestamp = -1;
-    vcs.createFile("dir/file", null, timestamp, false);
+    vcs.createFile("dir/file", null, -1, false);
 
     List<Revision> rr = vcs.getRevisionsFor("dir");
     assertEquals(2, rr.size());
@@ -385,8 +354,7 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
   @Test
   public void testNoDifferenceForDirectoryWithEqualContents() {
     vcs.createDirectory("dir");
-    long timestamp = -1;
-    vcs.createFile("dir/file", null, timestamp, false);
+    vcs.createFile("dir/file", null, -1, false);
     vcs.delete("dir/file");
 
     List<Revision> rr = vcs.getRevisionsFor("dir");
@@ -400,12 +368,10 @@ public class LocalVcsRevisionsTest extends LocalVcsTestCase {
     vcs.createDirectory("dir1");
     vcs.createDirectory("dir1/dir2");
     vcs.createDirectory("dir1/dir3");
-    long timestamp1 = -1;
-    vcs.createFile("dir1/dir2/file", cf(""), timestamp1, false);
+    vcs.createFile("dir1/dir2/file", cf(""), -1, false);
     vcs.endChangeSet(null);
 
-    long timestamp = -1;
-    vcs.createFile("dir1/dir3/file", null, timestamp, false);
+    vcs.createFile("dir1/dir3/file", null, -1, false);
 
     List<Revision> rr = vcs.getRevisionsFor("dir1");
     Revision recent = rr.get(0);

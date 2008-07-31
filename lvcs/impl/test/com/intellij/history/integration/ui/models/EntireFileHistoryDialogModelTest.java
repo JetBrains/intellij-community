@@ -15,24 +15,20 @@ public class EntireFileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testRevisionsAfterPurgeContainsCurrentVersion() {
-    setCurrentTimestamp(10);
-    long timestamp = -1;
-    vcs.createFile("f", cf(""), timestamp, false);
+    vcs.createFile("f", cf(""), 10, false);
     vcs.purgeObsoleteAndSave(0);
 
     initModelFor("f");
 
-    setCurrentTimestamp(20);
     List<Revision> rr = m.getRevisions();
-    setCurrentTimestamp(30);
 
     assertEquals(1, rr.size());
-    assertEquals(20L, rr.get(0).getTimestamp());
+    assertEquals(10L, rr.get(0).getTimestamp());
   }
 
   @Test
   public void testDifferenceModelTitles() {
-    vcs.createFile("old", cf(""), (long)123, false);
+    vcs.createFile("old", cf(""), 123, false);
     vcs.rename("old", "new");
     vcs.rename("new", "current");
 
@@ -46,7 +42,7 @@ public class EntireFileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testTitleForCurrentRevision() {
-    vcs.createFile("f", cf("content"), (long)123, false);
+    vcs.createFile("f", cf("content"), 123, false);
     initModelFor("f");
 
     FileDifferenceModel dm = m.getDifferenceModel();

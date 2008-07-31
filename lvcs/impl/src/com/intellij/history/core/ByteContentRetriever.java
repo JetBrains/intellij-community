@@ -60,28 +60,28 @@ public class ByteContentRetriever extends ChangeSetsProcessor {
   }
 
   @Override
-  protected void notingToVisit(long timestamp) {
-    doVisit(timestamp);
+  protected void nothingToVisit(long timestamp) {
+    // visit current version
+    doVisit();
   }
 
   @Override
   protected void visitLabel(Change c) {
-    doVisit(c.getTimestamp());
   }
 
   @Override
   public void visitRegular(Change c) {
-    doVisit(c.getTimestamp());
+    doVisit();
     recordContentAndTimestamp(c);
   }
 
   @Override
   protected void visitFirstAvailableNonCreational(Change c) {
-    doVisit(c.getTimestamp());
+    doVisit();
   }
 
-  void doVisit(long revisionTimestamp) {
-    if (myComparator.isSuitable(myCurrentFileTimestamp, revisionTimestamp)) {
+  void doVisit() {
+    if (myComparator.isSuitable(myCurrentFileTimestamp)) {
       throw new ContentFoundException();
     }
   }

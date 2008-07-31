@@ -9,7 +9,7 @@ import org.junit.Test;
 public class RevisionsIsImportantTest extends LocalVcsTestCase {
   @Test
   public void testCurrentRevision() {
-    Revision r = new CurrentRevision(null, -1);
+    Revision r = new CurrentRevision(null);
     assertTrue(r.isImportant());
   }
 

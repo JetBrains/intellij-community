@@ -43,7 +43,7 @@ public class StorageTest extends TempDirTestCase {
     m.myChangeList.addChange(cs);
     m.myEntryCounter = 11;
 
-    s.store(m);
+    s.saveState(m);
 
     initStorage();
     m = s.load();
@@ -61,7 +61,7 @@ public class StorageTest extends TempDirTestCase {
     m.myEntryCounter = 111;
 
     initStorage(dir);
-    s.store(m);
+    s.saveState(m);
 
     assertTrue(dir.exists());
   }
@@ -71,7 +71,7 @@ public class StorageTest extends TempDirTestCase {
     initStorage(123);
 
     m.myEntryCounter = 111;
-    s.store(m);
+    s.saveState(m);
 
     initStorage(666);
 
@@ -84,7 +84,7 @@ public class StorageTest extends TempDirTestCase {
     initStorage(123);
 
     m.myEntryCounter = 111;
-    s.store(m);
+    s.saveState(m);
 
     initStorage(123);
 
@@ -121,7 +121,7 @@ public class StorageTest extends TempDirTestCase {
   public void testRecreationOfStorageOnLoadingError() {
     StoredContent oldContent = (StoredContent)s.storeContent(b("abc"));
     m.myEntryCounter = 10;
-    s.store(m);
+    s.saveState(m);
     s.close();
 
     corruptFile("storage");
@@ -152,7 +152,7 @@ public class StorageTest extends TempDirTestCase {
   public void testRecreationOfStorageOnContentLoadingError() {
     StoredContent c = (StoredContent)s.storeContent(b("abc"));
     m.myEntryCounter = 10;
-    s.store(m);
+    s.saveState(m);
     s.purgeContent(c);
 
     s.close();

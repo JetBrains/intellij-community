@@ -105,7 +105,7 @@ public class Storage {
     });
   }
 
-  public void store(final LocalVcs.Memento m) {
+  public void saveState(final LocalVcs.Memento m) {
     store(STORAGE_FILE, new Storer() {
       public void store(Stream s) throws IOException {
         s.writeEntry(m.myRoot);
@@ -119,7 +119,7 @@ public class Storage {
     return VERSION;
   }
 
-  public void save() {
+  public void saveContents() {
     myContentStorage.save();
   }
 

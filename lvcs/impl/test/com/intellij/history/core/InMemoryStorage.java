@@ -20,7 +20,7 @@ public class InMemoryStorage extends Storage {
   }
 
   @Override
-  public void save() {
+  public void saveContents() {
   }
 
   @Override
@@ -29,7 +29,7 @@ public class InMemoryStorage extends Storage {
   }
 
   @Override
-  public void store(LocalVcs.Memento m) {
+  public void saveState(LocalVcs.Memento m) {
   }
 
   @Override

@@ -4,16 +4,14 @@ import com.intellij.history.core.tree.Entry;
 
 public class CurrentRevision extends Revision {
   private Entry myEntry;
-  private long myTimestamp;
 
-  public CurrentRevision(Entry e, long timestamp) {
+  public CurrentRevision(Entry e) {
     myEntry = e;
-    myTimestamp = timestamp;
   }
 
   @Override
   public long getTimestamp() {
-    return myTimestamp;
+    return myEntry.getTimestamp();
   }
 
   @Override

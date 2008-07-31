@@ -8,17 +8,15 @@ public class LocalVcsDatedContentTest extends LocalVcsTestCase {
 
   @Test
   public void testGettingContentByRevisionTimestamp() {
-    setCurrentTimestamp(10);
-    vcs.createFile("f", cf("one"), -1, false);
-    setCurrentTimestamp(20);
-    vcs.changeFileContent("f", cf("two"), -1);
+    vcs.createFile("f", cf("one"), 10, false);
+    vcs.changeFileContent("f", cf("two"), 20);
 
-    assertNull(vcs.getByteContent("f", revisionComparator(5)));
-    assertEquals("one", new String(vcs.getByteContent("f", revisionComparator(10))));
-    assertNull(vcs.getByteContent("f", revisionComparator(15)));
+    assertNull(vcs.getByteContent("f", comparator(5)));
+    assertEquals("one", new String(vcs.getByteContent("f", comparator(10))));
+    assertNull(vcs.getByteContent("f", comparator(15)));
 
-    assertEquals("two", new String(vcs.getByteContent("f", revisionComparator(20))));
-    assertNull(vcs.getByteContent("f", revisionComparator(100)));
+    assertEquals("two", new String(vcs.getByteContent("f", comparator(20))));
+    assertNull(vcs.getByteContent("f", comparator(100)));
   }
 
   @Test
@@ -27,29 +25,27 @@ public class LocalVcsDatedContentTest extends LocalVcsTestCase {
     vcs.changeFileContent("f", cf("two"), 20);
     vcs.changeFileContent("f", cf("three"), 30);
 
-    assertNull(vcs.getByteContent("f", fileComparator(40)));
-    assertEquals("three", new String(vcs.getByteContent("f", fileComparator(30))));
-    assertEquals("two", new String(vcs.getByteContent("f", fileComparator(20))));
-    assertEquals("one", new String(vcs.getByteContent("f", fileComparator(10))));
-    assertNull(vcs.getByteContent("f", fileComparator(5)));
+    assertNull(vcs.getByteContent("f", comparator((long)40)));
+    assertEquals("three", new String(vcs.getByteContent("f", comparator((long)30))));
+    assertEquals("two", new String(vcs.getByteContent("f", comparator((long)20))));
+    assertEquals("one", new String(vcs.getByteContent("f", comparator((long)10))));
+    assertNull(vcs.getByteContent("f", comparator((long)5)));
   }
 
   @Test
-  public void testGettingFirstAvailableContentByFileTimestampAfterPurge() {
+  public void testGettingFirstAvailableContentAfterPurge() {
     setCurrentTimestamp(10);
     vcs.createFile("f", cf("one"), 10, false);
-
     setCurrentTimestamp(20);
     vcs.changeFileContent("f", cf("two"), 20);
-
     setCurrentTimestamp(30);
     vcs.changeFileContent("f", cf("three"), 30);
 
     vcs.purgeObsoleteAndSave(5);
 
-    assertNull(vcs.getByteContent("f", fileComparator(10)));
-    assertEquals("two", new String(vcs.getByteContent("f", fileComparator(20))));
-    assertEquals("three", new String(vcs.getByteContent("f", fileComparator(30))));
+    assertNull(vcs.getByteContent("f", comparator(10)));
+    assertEquals("two", new String(vcs.getByteContent("f", comparator(20))));
+    assertEquals("three", new String(vcs.getByteContent("f", comparator(30))));
   }
 
   @Test
@@ -67,19 +63,17 @@ public class LocalVcsDatedContentTest extends LocalVcsTestCase {
     vcs.changeFileContent("f2", cf("five"), 30);
     vcs.endChangeSet(null);
 
-    assertEquals("two", new String(vcs.getByteContent("f1", fileComparator(20))));
-    assertEquals("three", new String(vcs.getByteContent("f2", fileComparator(20))));
+    assertEquals("two", new String(vcs.getByteContent("f1", comparator((long)20))));
+    assertEquals("three", new String(vcs.getByteContent("f2", comparator((long)20))));
   }
 
   @Test
   public void testGettingMostRecentRevisionContent() {
-    setCurrentTimestamp(10);
-    vcs.createFile("f", cf("one"), -1, false);
-    setCurrentTimestamp(20);
-    vcs.changeFileContent("f", cf("two"), -1);
+    vcs.createFile("f", cf("one"), 10, false);
+    vcs.changeFileContent("f", cf("two"), 20);
 
     FileRevisionTimestampComparator c = new FileRevisionTimestampComparator() {
-      public boolean isSuitable(long fileTimestamp, long revisionTimestamp) {
+      public boolean isSuitable(long revisionTimestamp) {
         return revisionTimestamp < 100;
       }
     };
@@ -89,29 +83,29 @@ public class LocalVcsDatedContentTest extends LocalVcsTestCase {
   @Test
   public void testGettingContentForUnavailableContentIsNull() {
     setCurrentTimestamp(10);
-    vcs.createFile("f", bigContentFactory(), -1, false);
+    vcs.createFile("f", bigContentFactory(), 10, false);
 
-    assertNull(vcs.getByteContent("f", revisionComparator(10)));
+    assertNull(vcs.getByteContent("f", comparator(10)));
   }
 
   @Test
-  public void testGettingContentByRevisionTimestampIfPurgedIsNull() {
+  public void testGettingContentByRevisionTimestampIfPurged() {
     setCurrentTimestamp(10);
-    vcs.createFile("f", cf("one"), -1, false);
+    vcs.createFile("f", cf("one"), 10, false);
     setCurrentTimestamp(20);
-    vcs.changeFileContent("f", cf("two"), -1);
+    vcs.changeFileContent("f", cf("two"), 20);
 
-    vcs.purgeObsoleteAndSave(5);
+    vcs.purgeObsoleteAndSave(0);
 
-    assertNull(vcs.getByteContent("f", revisionComparator(10)));
-    assertEquals("two", new String(vcs.getByteContent("f", revisionComparator(20))));
+    assertNull(vcs.getByteContent("f", comparator(10)));
+    assertEquals("two", new String(vcs.getByteContent("f", comparator(20))));
   }
 
-  private FileRevisionTimestampComparator revisionComparator(long revisionTimestamp) {
-    return new TestTimestampComparator(-1, revisionTimestamp);
-  }
-
-  private FileRevisionTimestampComparator fileComparator(long fileTimestamp) {
-    return new TestTimestampComparator(fileTimestamp, -1);
+  private FileRevisionTimestampComparator comparator(final long timestamp) {
+    return new FileRevisionTimestampComparator() {
+      public boolean isSuitable(long revisionTimestamp) {
+        return revisionTimestamp == timestamp;
+      }
+    };
   }
 }

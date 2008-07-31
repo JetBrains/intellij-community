@@ -1,18 +1,16 @@
 package com.intellij.historyIntegrTests;
 
 
-import com.intellij.history.Clock;
-import com.intellij.history.LocalHistory;
 import com.intellij.history.FileRevisionTimestampComparator;
+import com.intellij.history.LocalHistory;
 import com.intellij.history.core.LocalVcs;
-import com.intellij.history.core.TestTimestampComparator;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.storage.Storage;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
@@ -156,23 +154,20 @@ public class BasicsTest extends IntegrationTestCase {
 
   public void testContentAtDate() throws Exception {
     VirtualFile f = root.createChildData(null, "f.java");
-    Clock.setCurrentTimestamp(10);
-    f.setBinaryContent(new byte[]{1});
-    Clock.setCurrentTimestamp(20);
-    f.setBinaryContent(new byte[]{2});
+    f.setBinaryContent(new byte[]{1}, -1, 10);
+    f.setBinaryContent(new byte[]{2}, -1, 20);
 
-    assertEquals(1, LocalHistory.getByteContent(myProject, f, revisionComparator(10))[0]);
-    assertNull(LocalHistory.getByteContent(myProject, f, revisionComparator(15)));
-    assertEquals(2, LocalHistory.getByteContent(myProject, f, revisionComparator(20))[0]);
-    assertNull(LocalHistory.getByteContent(myProject, f, revisionComparator(30)));
+    assertEquals(1, LocalHistory.getByteContent(myProject, f, comparator(10))[0]);
+    assertNull(LocalHistory.getByteContent(myProject, f, comparator(15)));
+    assertEquals(2, LocalHistory.getByteContent(myProject, f, comparator(20))[0]);
+    assertNull(LocalHistory.getByteContent(myProject, f, comparator(30)));
   }
 
   public void testContentAtDateForFilteredFilesIsNull() throws Exception {
     VirtualFile f = root.createChildData(null, "f.xxx");
-    Clock.setCurrentTimestamp(10);
-    f.setBinaryContent(new byte[]{1});
+    f.setBinaryContent(new byte[]{1}, -1, 10);
 
-    assertNull(LocalHistory.getByteContent(myProject, f, revisionComparator(10)));
+    assertNull(LocalHistory.getByteContent(myProject, f, comparator(10)));
   }
 
   public void testRevisionsIfThereWasFileThatBecameUnversioned() throws IOException {
@@ -189,7 +184,11 @@ public class BasicsTest extends IntegrationTestCase {
   }
 
 
-  private FileRevisionTimestampComparator revisionComparator(long timestamp) {
-    return new TestTimestampComparator(-1, timestamp);
+  private FileRevisionTimestampComparator comparator(final long timestamp) {
+    return new FileRevisionTimestampComparator() {
+      public boolean isSuitable(long revisionTimestamp) {
+        return revisionTimestamp == timestamp;
+      }
+    };
   }
 }

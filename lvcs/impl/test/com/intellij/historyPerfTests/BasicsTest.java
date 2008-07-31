@@ -164,7 +164,7 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
     assertExecutionTime(250, new RunnableAdapter() {
       public void doRun() throws Exception {
         vcs.getByteContent(createRandomPath(), new FileRevisionTimestampComparator() {
-          public boolean isSuitable(long fileTimestamp, long revisionTimestamp) {
+          public boolean isSuitable(long revisionTimestamp) {
             return false;
           }
         });

@@ -304,8 +304,8 @@ public class CvsChangeProvider implements ChangeProvider {
   public byte[] getLastUpToDateContentFor(@NotNull final VirtualFile f) {
     final long upToDateTimestamp = getUpToDateTimeForFile(f);
     FileRevisionTimestampComparator c = new FileRevisionTimestampComparator() {
-      public boolean isSuitable(long fileTimestamp, long revisionTimestamp) {
-        return CvsStatusProvider.timeStampsAreEqual(upToDateTimestamp, fileTimestamp);
+      public boolean isSuitable(long revisionTimestamp) {
+        return CvsStatusProvider.timeStampsAreEqual(upToDateTimestamp, revisionTimestamp);
       }
     };
     return LocalHistory.getByteContent(myVcs.getProject(), f, c);

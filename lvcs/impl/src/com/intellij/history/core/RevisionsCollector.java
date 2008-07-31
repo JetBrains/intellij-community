@@ -32,8 +32,8 @@ public class RevisionsCollector extends ChangeSetsProcessor {
   }
 
   @Override
-  protected void notingToVisit(long timestamp) {
-    myResult.add(new CurrentRevision(myEntry, timestamp));
+  protected void nothingToVisit(long timestamp) {
+    myResult.add(new CurrentRevision(myEntry));
   }
 
   @Override
