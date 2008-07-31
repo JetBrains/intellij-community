@@ -225,7 +225,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
   private Object[] processPackage(final PsiPackage aPackage) {
     final ArrayList<Object> list = new ArrayList<Object>();
-    final int startOffset = StringUtil.isEmpty(aPackage.getName()) ? 0 : aPackage.getName().length() + 1;
+    final int startOffset = StringUtil.isEmpty(aPackage.getName()) ? 0 : aPackage.getQualifiedName().length() + 1;
     for (final PsiPackage subPackage : aPackage.getSubPackages()) {
       final String shortName = subPackage.getQualifiedName().substring(startOffset);
       if (JavaPsiFacade.getInstance(subPackage.getProject()).getNameHelper().isIdentifier(shortName)) {

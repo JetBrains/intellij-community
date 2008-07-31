@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiPackageImpl;
@@ -312,7 +313,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
         }
       }
       for (final String prefix : myPackagePrefixIndex.getAllPackagePrefixes(scope)) {
-        if (prefix.startsWith(qualifiedName + '.')) {
+        if (prefix.startsWith(qualifiedName + '.') || StringUtil.isEmpty(qualifiedName)) {
           final int i = prefix.indexOf('.', qualifiedName.length() + 1);
           String childName = i >= 0 ? prefix.substring(0, i) : prefix;
           if (!packagesMap.containsKey(childName)) {
