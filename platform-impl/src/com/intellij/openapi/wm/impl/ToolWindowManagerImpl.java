@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.ex.*;
 import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -76,6 +78,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private final Alarm myForcedFocusRequestsAlarm;
 
+  private final Alarm myIdleAlarm;
+  private final Set<Runnable> myIdleRequests = new HashSet<Runnable>();
+  private final Runnable myFlushRunnable = new Runnable() {
+    public void run() {
+      flushIdleRequests();
+    }
+  };
+
   private ActionCallback.Runnable myRequestFocusCmd;
   private WeakReference<ActionCallback.Runnable> myLastForcedRequest = new WeakReference<ActionCallback.Runnable>(null);
 
@@ -106,6 +116,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     myFocusedComponentAlaram = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);  
     myForcedFocusRequestsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
+    myIdleAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
   }
 
   public Project getProject() {
@@ -1110,6 +1121,26 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   }
 
+  public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
+    myIdleRequests.add(runnable);
+    if (myIdleAlarm.getActiveRequestCount() == 0) {
+      restartIdleAlarm();
+    }
+  }
+
+  private void restartIdleAlarm() {
+    myIdleAlarm.cancelAllRequests();
+    myIdleAlarm.addRequest(myFlushRunnable, 250);
+  }
+
+  private void flushIdleRequests() {
+    final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
+    myIdleRequests.clear();
+    for (Runnable each : all) {
+      each.run();
+    }
+  }
+
 
   /**
    * This command creates and shows <code>FloatingDecorator</code>.
@@ -1380,6 +1411,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void _requestFocus(final ActionCallback.Runnable command, final boolean forced, final ActionCallback result) {
     if (checkForRejectOrByPass(command, forced, result)) return;
 
+    restartIdleAlarm();
+
     myRequestFocusCmd = command;
     if (forced) {
       myForcedFocusRequestsAlarm.cancelAllRequests();
@@ -1394,6 +1427,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
           myRequestFocusCmd = null;
 
           command.run().notifyWhenDone(result);
+
+          restartIdleAlarm();
 
           if (forced) {
             myForcedFocusRequestsAlarm.addRequest(new Runnable() {
@@ -1433,7 +1468,4 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return myLastForcedRequest == null || myLastForcedRequest.get() == null;
   }
 
-  public JComponent getFocusTargetFor(final JComponent comp) {
-    return IdeFocusTraversalPolicy.getPreferredFocusedComponent(comp);
-  }
 }

@@ -16,7 +16,9 @@ import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -26,6 +28,7 @@ import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.popup.StackingPopupDispatcherImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,6 +50,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
    */
   private WindowManagerEx myWindowManager;
   private java.util.List<Runnable> myDisposeActions = new ArrayList<Runnable>();
+  private Project myProject;
 
   /**
    * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
@@ -71,6 +75,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       if (project == null) {
         project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
       }
+
+      myProject = project;
 
       window = myWindowManager.suggestParentWindow(project);
       if (window == null) {
@@ -136,10 +142,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   private void createDialog(Window owner, boolean canBeParent) {
     if (owner instanceof Frame) {
-      myDialog = new MyDialog((Frame)owner, myWrapper);
+      myDialog = new MyDialog((Frame)owner, myWrapper, myProject);
     }
     else {
-      myDialog = new MyDialog((Dialog)owner, myWrapper);
+      myDialog = new MyDialog((Dialog)owner, myWrapper, myProject);
     }
     myDialog.setModal(true);
     myCanBeParent = canBeParent;
@@ -390,15 +396,19 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     private MyDialog.MyWindowListener myWindowListener;
     private MyDialog.MyComponentListener myComponentListener;
 
-    public MyDialog(Dialog owner, DialogWrapper dialogWrapper) {
+    private WeakReference<Project> myProject;
+
+    public MyDialog(Dialog owner, DialogWrapper dialogWrapper, Project project) {
       super(owner);
       myDialogWrapper = new WeakReference<DialogWrapper>(dialogWrapper);
+      myProject = project != null ? new WeakReference<Project>(project) : null;
       initDialog();
     }
 
-    public MyDialog(Frame owner, DialogWrapper dialogWrapper) {
+    public MyDialog(Frame owner, DialogWrapper dialogWrapper, Project project) {
       super(owner);
       myDialogWrapper = new WeakReference<DialogWrapper>(dialogWrapper);
+      myProject = project != null ? new WeakReference<Project>(project) : null;
       initDialog();
     }
 
@@ -516,12 +526,42 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
         public void windowDeactivated(final WindowEvent e) {
           if (!isModal()) {
-            myFocusTrackback.consume();
+            final Ref<IdeFocusManager> focusManager = new Ref<IdeFocusManager>(null);
+            if (myProject != null && myProject.get() != null) {
+              focusManager.set(IdeFocusManager.getInstance(myProject.get()));
+              focusManager.get().doWhenFocusSettlesDown(new Runnable() {
+                public void run() {
+                  disposeFocusTrackbackIfNoChildWindowFocused(focusManager.get());
+                }
+              });
+            } else {
+              disposeFocusTrackbackIfNoChildWindowFocused(focusManager.get());
+            }
           }
         }
       });
 
       super.show();
+    }
+
+    private void disposeFocusTrackbackIfNoChildWindowFocused(@Nullable IdeFocusManager focusManager) {
+      final DialogWrapper wrapper = myDialogWrapper.get();
+      if (wrapper == null) {
+        myFocusTrackback.dispose();
+        return;
+      }
+
+      if (focusManager != null) {
+        final Component c = focusManager.getFocusedDescendantFor(wrapper.getContentPane());
+        if (c == null) {
+          myFocusTrackback.dispose();
+        }
+      } else {
+        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (owner == null || !SwingUtilities.isDescendingFrom(owner, wrapper.getContentPane())) {
+          myFocusTrackback.dispose();
+        }
+      }
     }
 
     @Deprecated

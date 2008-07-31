@@ -493,10 +493,6 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
     handleSelect(false);
   }
 
-  protected void requestFocus() {
-    myWizardTree.requestFocus();
-  }
-
   protected JComponent getPreferredFocusableComponent() {
     return myWizardTree;
   }

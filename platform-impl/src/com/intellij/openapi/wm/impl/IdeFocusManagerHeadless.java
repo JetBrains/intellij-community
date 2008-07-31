@@ -24,4 +24,12 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   public JComponent getFocusTargetFor(@NotNull final JComponent comp) {
     return null;
   }
+
+  public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
+    runnable.run();
+  }
+
+  public Component getFocusedDescendantFor(final Component c) {
+    return null;
+  }
 }

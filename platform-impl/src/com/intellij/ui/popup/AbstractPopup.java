@@ -741,7 +741,7 @@ public class AbstractPopup implements JBPopup, Disposable {
   protected void afterShow() {
   }
 
-  protected void requestFocus() {
+  protected final void requestFocus() {
     if (!myFocusable) return;
 
     if (myPreferredFocusedComponent != null) {

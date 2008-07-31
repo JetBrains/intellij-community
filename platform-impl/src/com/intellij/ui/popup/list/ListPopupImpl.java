@@ -398,10 +398,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     });
   }
 
-  public void requestFocus() {
-    myList.requestFocus();
-  }
-
   protected JComponent getPreferredFocusableComponent() {
     return myList;
   }

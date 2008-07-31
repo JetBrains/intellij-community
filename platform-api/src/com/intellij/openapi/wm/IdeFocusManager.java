@@ -56,4 +56,8 @@ public abstract class IdeFocusManager {
     return project.getComponent(IdeFocusManager.class);
   }
 
+  public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable);
+
+  @Nullable
+  public abstract Component getFocusedDescendantFor(final Component comp);
 }
