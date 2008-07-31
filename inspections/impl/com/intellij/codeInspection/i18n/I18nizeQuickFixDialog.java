@@ -72,7 +72,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   private final String myDefaultPropertyValue;
   private final boolean myShowJavaCodeInfo;
   private final boolean myShowPreview;
-  protected ResourceBundleManager myResourceBundleManager;
+  protected final ResourceBundleManager myResourceBundleManager;
 
   @NonNls private static final String PROPERTY_KEY_OPTION_KEY = "PROPERTY_KEY";
   @NonNls private static final String RESOURCE_BUNDLE_OPTION_KEY = "RESOURCE_BUNDLE";
@@ -99,14 +99,16 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     PsiManager psiManager = PsiManager.getInstance(myProject);
     PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
     PsiClass resourceBundle = null;
+    ResourceBundleManager resourceBundleManager = null;
     try {
-      myResourceBundleManager = ResourceBundleManager.getManager(context);
-      LOG.assertTrue(myResourceBundleManager != null);
-      resourceBundle = myResourceBundleManager.getResourceBundle();
+      resourceBundleManager = ResourceBundleManager.getManager(context);
+      LOG.assertTrue(resourceBundleManager != null);
+      resourceBundle = resourceBundleManager.getResourceBundle();
     }
     catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
       LOG.error(e);
     }
+    myResourceBundleManager = resourceBundleManager;
     myShowJavaCodeInfo = showJavaCodeInfo && myResourceBundleManager.canShowJavaCodeInfo();
     if (myShowJavaCodeInfo) {
       LOG.assertTrue(resourceBundle != null);
@@ -216,7 +218,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
       final IntentionAction fix = e.getFix();
       if (fix != null) {
-        if (Messages.showOkCancelDialog(project, e.getMessage(), title, Messages.getErrorIcon()) == DialogWrapper.OK_EXIT_CODE) {
+        if (Messages.showOkCancelDialog(project, e.getMessage(), title, Messages.getErrorIcon()) == OK_EXIT_CODE) {
           try {
             fix.invoke(project, null, file);
             return false;
