@@ -2,7 +2,6 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.Patches;
 import com.intellij.ide.util.JavaUtil;
-import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -34,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -328,8 +328,11 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     final HashMap<ContentEntry, List<Pair<File, String>>> entryToRootMap = new HashMap<ContentEntry, List<Pair<File, String>>>();
     final Map<File, ContentEntry> fileToEntryMap = new HashMap<File, ContentEntry>();
     for (final ContentEntry contentEntry : contentEntries) {
-      entryToRootMap.put(contentEntry, null);
-      fileToEntryMap.put(VfsUtil.virtualToIoFile(contentEntry.getFile()), contentEntry);
+      final VirtualFile file = contentEntry.getFile();
+      if (file != null) {
+        entryToRootMap.put(contentEntry, null);
+        fileToEntryMap.put(VfsUtil.virtualToIoFile(file), contentEntry);
+      }
     }
 
     final ProgressWindow progressWindow = new ProgressWindow(true, project);

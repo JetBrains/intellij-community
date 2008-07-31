@@ -461,7 +461,7 @@ public class VfsUtil {
     return VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, path);
   }
 
-  public static File virtualToIoFile(VirtualFile file) {
+  public static File virtualToIoFile(@NotNull VirtualFile file) {
     return new File(PathUtil.toPresentableUrl(file.getUrl()));
   }
 
