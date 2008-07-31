@@ -697,11 +697,15 @@ public class CompileDriver {
 
       if (snapshot == null || ModuleCompilerUtil.intersects(generatedTypes, compilerManager.getRegisteredInputTypes(translator))) {
         // rescan snapshot if previously generated files can influence the input of this compiler
+        final boolean shouldForceRecompilation = snapshot == null && isRebuild && myShouldClearOutputDirectory;
         snapshot = ApplicationManager.getApplication().runReadAction(new Computable<VfsSnapshot>() {
           public VfsSnapshot compute() {
             return new VfsSnapshot(context.getCompileScope().getFiles(null, true));
           }
         });
+        if (shouldForceRecompilation) {
+          TranslatingCompilerFilesMonitor.getInstance().forceRecompilation(myProject, Arrays.asList(snapshot.getFiles()).iterator());
+        }
       }
 
       final CompileContextEx _context;

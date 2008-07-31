@@ -123,6 +123,18 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return null;
   }
 
+  public void forceRecompilation(Project project, Iterator<VirtualFile> srcIterator) {
+    final int projectId = getProjectId(project);
+    while (srcIterator.hasNext()) {
+      final VirtualFile file = srcIterator.next();
+      final SourceFileInfo srcInfo = loadSourceInfo(file);
+      if (srcInfo != null) {
+        // mark for recompilation only those files that were previously compiled 
+        addSourceForRecompilation(projectId, file, srcInfo);
+      }
+    }
+  }
+  
   public void collectFiles(CompileContext context, final TranslatingCompiler compiler, Iterator<VirtualFile> scopeSrcIterator, boolean forceCompile,
                            final boolean isRebuild,
                            Collection<VirtualFile> toCompile,
