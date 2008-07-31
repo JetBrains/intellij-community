@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
 
@@ -52,7 +53,19 @@ public class QuickfixUtil {
   }
 
   public static boolean isStaticCall(GrReferenceExpression refExpr){
-      return refExpr.getQualifierExpression() instanceof GrReferenceExpression;
+
+      //todo: look more carefully
+      GrExpression qualifierExpression = refExpr.getQualifierExpression();
+
+      if (!(qualifierExpression instanceof GrReferenceExpression)) return false;
+
+      GrReferenceExpression referenceExpression = (GrReferenceExpression) qualifierExpression;
+      GroovyPsiElement resolvedElement = ResolveUtil.resolveProperty(referenceExpression, referenceExpression.getName());
+
+      if (resolvedElement == null) return false;
+      if (resolvedElement instanceof PsiClass) return true;
+
+      return false;
   }
 
 

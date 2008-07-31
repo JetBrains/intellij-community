@@ -50,6 +50,7 @@
     <lang.braceMatcher language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher"/>
     <lang.importOptimizer language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer"/>
     <lang.documentationProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider"/>
+    <lang.smartEnterProcessor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor"/>
     <codeInsight.overrideMethod language="Groovy" implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideMethodsHandler"/>
     <codeInsight.implementMethod language="Groovy" implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyImplementMethodsHandler"/>
     <codeInsight.parameterInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
