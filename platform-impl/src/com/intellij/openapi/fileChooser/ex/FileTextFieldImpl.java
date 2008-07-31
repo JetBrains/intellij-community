@@ -59,7 +59,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   private String myFileSpitRegExp;
   public static final String KEY = "fileTextField";
 
-  private boolean myAutopopup = true;
+  private boolean myAutopopup = false;
   private FileTextFieldImpl.CancelAction myCancelAction;
   private Set<Action> myDisabledTextActions;
   private Map<String, String> myMacroMap;

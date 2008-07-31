@@ -1,12 +1,15 @@
 package com.intellij.openapi.fileChooser.ex;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileChooser.*;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
+import com.intellij.openapi.fileChooser.FileElement;
+import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -377,21 +380,17 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private void updateTextFieldShowing() {
     myTextFieldAction.update();
     myNorthPanel.remove(myPathTextFieldWrapper);
-    if (!myChooserDescriptor.isChooseMultiple()) {
-      if (ourToShowTextField) {
-        if (myFileSystemTree.getSelectedFile() != null) {
-          final ArrayList<VirtualFile> selection = new ArrayList<VirtualFile>();
-          selection.add(myFileSystemTree.getSelectedFile());
-          updatePathFromTree(selection, true);
-        }
-        myNorthPanel.add(myPathTextFieldWrapper, BorderLayout.CENTER);
-      } else {
-        setErrorText(null);
+    if (ourToShowTextField) {
+      if (myFileSystemTree.getSelectedFile() != null) {
+        final ArrayList<VirtualFile> selection = new ArrayList<VirtualFile>();
+        selection.add(myFileSystemTree.getSelectedFile());
+        updatePathFromTree(selection, true);
       }
-      myPathTextField.getField().requestFocus();
+      myNorthPanel.add(myPathTextFieldWrapper, BorderLayout.CENTER);
     } else {
-      myFileSystemTree.getTree().requestFocus();
+      setErrorText(null);
     }
+    myPathTextField.getField().requestFocus();
 
     myNorthPanel.revalidate();
     myNorthPanel.repaint();
@@ -416,12 +415,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
 
     public void update() {
-      if (myChooserDescriptor.isChooseMultiple()) {
-        setVisible(false);
-      } else {
-        setVisible(true);
-        setText(ourToShowTextField ? IdeBundle.message("file.chooser.hide.path") : IdeBundle.message("file.chooser.show.path"));
-      }
+      setVisible(true);
+      setText(ourToShowTextField ? IdeBundle.message("file.chooser.hide.path") : IdeBundle.message("file.chooser.show.path"));
     }
 
     public void linkSelected(final LinkLabel aSource, final Object aLinkData) {
