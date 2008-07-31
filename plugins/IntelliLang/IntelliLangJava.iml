@@ -10,7 +10,6 @@
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="jsp-spi" />
-    <orderEntry type="module" module-name="ui-impl" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="codeInsight-impl" />
