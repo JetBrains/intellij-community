@@ -5,7 +5,6 @@
  */
 package com.intellij.internal.psiView;
 
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -17,6 +16,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -34,8 +34,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -153,14 +151,14 @@ public class PsiViewerDialog extends DialogWrapper {
       myFileTypeButtons[i] = button;
     }
 
-    final ChangeListener listener = new ChangeListener() {
-      public void stateChanged(final ChangeEvent e) {
+    final ActionListener updateDialectsListener = new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
         updateDialectsCombo();
       }
     };
     final Enumeration<AbstractButton> buttonEnum = bg.getElements();
     while (buttonEnum.hasMoreElements()) {
-      buttonEnum.nextElement().addChangeListener(listener);
+      buttonEnum.nextElement().addActionListener(updateDialectsListener);
     }
     updateDialectsCombo();
     myDialectsComboBox.setRenderer(new DefaultListCellRenderer() {
