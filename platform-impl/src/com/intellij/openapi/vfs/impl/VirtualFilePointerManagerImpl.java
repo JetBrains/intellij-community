@@ -106,7 +106,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @TestOnly
-  public void cleanupForNextTest() {
+  public synchronized void cleanupForNextTest() {
     myUrlToPointerMaps.clear();
     myContainers.clear();
   }
@@ -242,12 +242,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @Deprecated
-  public VirtualFilePointerContainer createContainer() {
+  public synchronized VirtualFilePointerContainer createContainer() {
     return createContainer(this);
   }
 
   @Deprecated // see createContainer(VirtualFilePointerFactory factory, Disposable parent)
-  public VirtualFilePointerContainer createContainer(final VirtualFilePointerFactory factory) {
+  public synchronized VirtualFilePointerContainer createContainer(final VirtualFilePointerFactory factory) {
     final VirtualFilePointerContainerImpl virtualFilePointerContainer = new VirtualFilePointerContainerImpl(this, this){
       @Override
       protected VirtualFilePointer create(VirtualFile file) {
@@ -268,11 +268,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @NotNull
-  public VirtualFilePointerContainer createContainer(@NotNull Disposable parent) {
+  public synchronized VirtualFilePointerContainer createContainer(@NotNull Disposable parent) {
     return registerContainer(parent, new VirtualFilePointerContainerImpl(this, parent));
   }
 
-  private VirtualFilePointerContainer registerContainer(Disposable parent, final VirtualFilePointerContainerImpl virtualFilePointerContainer) {
+  private VirtualFilePointerContainer registerContainer(Disposable parent, @NotNull final VirtualFilePointerContainerImpl virtualFilePointerContainer) {
     myContainers.add(virtualFilePointerContainer);
     Disposer.register(parent, new Disposable() {
       public void dispose() {
