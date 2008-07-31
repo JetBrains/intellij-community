@@ -33,12 +33,14 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiField field = getField();
+    PsiClass containingClass = field == null ? null : field.getContainingClass();
     return
            field != null
            && field.getManager().isInProject(field)
-           && field.getContainingClass() != null
-           && !(field.getContainingClass() instanceof JspClass)
            && !field.hasModifierProperty(PsiModifier.STATIC)
+           && containingClass != null
+           && !(containingClass instanceof JspClass)
+           && containingClass.getName() != null
       ;
   }
 
