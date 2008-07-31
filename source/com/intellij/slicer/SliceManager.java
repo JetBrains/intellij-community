@@ -17,6 +17,7 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.usageView.UsageInfo;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
 
@@ -25,6 +26,7 @@ public class SliceManager implements ProjectComponent {
   private ContentManager myContentManager;
   private final ToolWindowManager myToolWindowManager;
   private final Map<Content, SlicePanel> myContents = new THashMap<Content, SlicePanel>();
+  @NonNls private static final String TOOL_WINDOW_ID = "Slice";
 
   public static SliceManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, SliceManager.class);
@@ -36,13 +38,13 @@ public class SliceManager implements ProjectComponent {
   }
 
   public void projectOpened() {
-    final ToolWindow toolWindow= myToolWindowManager.registerToolWindow("Slice", true, ToolWindowAnchor.BOTTOM );
+    final ToolWindow toolWindow= myToolWindowManager.registerToolWindow(TOOL_WINDOW_ID, true, ToolWindowAnchor.BOTTOM );
     myContentManager = toolWindow.getContentManager();
     new ContentManagerWatcher(toolWindow, myContentManager);
   }
 
   public void projectClosed() {
-    myToolWindowManager.unregisterToolWindow("Slice");
+    myToolWindowManager.unregisterToolWindow(TOOL_WINDOW_ID);
     for (Content content : myContents.keySet()) {
       SlicePanel slicePanel = myContents.get(content);
       slicePanel.dispose();
@@ -96,11 +98,11 @@ public class SliceManager implements ProjectComponent {
         sliceToolwindowSettings.setPreview(preview);
       }
     };
-    myContent[0] = myContentManager.getFactory().createContent(slicePanel, "slices", true);
+    myContent[0] = myContentManager.getFactory().createContent(slicePanel, "Dataflow", true);
     myContentManager.addContent(myContent[0]);
     myContentManager.setSelectedContent(myContent[0]);
 
-    ToolWindowManager.getInstance(myProject).getToolWindow("Slice").activate(new Runnable(){
+    ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID).activate(new Runnable(){
       public void run() {
         //mySlicePanel.sliceFinished();
       }
