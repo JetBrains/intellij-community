@@ -1,4 +1,3 @@
-
 package com.intellij.ide.actions;
 
 import com.intellij.ide.impl.NewProjectUtil;

@@ -84,4 +84,20 @@ public class DirectoryUtil {
     return directory;
   }
 
+  public static PsiDirectory createSubdirectories(final String subDirName, PsiDirectory baseDirectory) throws IncorrectOperationException {
+    StringTokenizer tokenizer = new StringTokenizer(subDirName, ".");
+    PsiDirectory dir = baseDirectory;
+    while (tokenizer.hasMoreTokens()) {
+      String packName = tokenizer.nextToken();
+      if (tokenizer.hasMoreTokens()) {
+        PsiDirectory existingDir = dir.findSubdirectory(packName);
+        if (existingDir != null) {
+          dir = existingDir;
+          continue;
+        }
+      }
+      dir = dir.createSubdirectory(packName);
+    }
+    return dir;
+  }
 }

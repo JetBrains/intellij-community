@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -135,7 +134,8 @@ public class CreateHtmlAction extends CreateElementActionBase {
           boolean inSourceRoot = false;
           for (PsiDirectory dir : dirs) {
             //todo[nik] check dir is under web facet?
-            if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && JavaDirectoryService.getInstance().getPackage(dir) != null) {
+            String packageName = projectFileIndex.getPackageNameByDirectory(dir.getVirtualFile());
+            if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && packageName != null) {
               inSourceRoot = true;
               break;
             }

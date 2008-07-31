@@ -6,14 +6,15 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.DirectoryChooserUtil;
-import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
@@ -35,7 +36,8 @@ public class CreateDirectoryOrPackageAction extends AnAction {
     PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
 
     if (directory == null) return;
-    boolean isDirectory = JavaDirectoryService.getInstance().getPackage(directory) == null;
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    boolean isDirectory = fileIndex.getPackageNameByDirectory(directory.getVirtualFile()) == null;
 
     MyInputValidator validator = new MyInputValidator(project, directory, isDirectory);
     Messages.showInputDialog(project, isDirectory
@@ -78,8 +80,9 @@ public class CreateDirectoryOrPackageAction extends AnAction {
     presentation.setEnabled(true);
 
     boolean isPackage = false;
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (PsiDirectory directory : directories) {
-      if (JavaDirectoryService.getInstance().getPackage(directory) != null) {
+      if (fileIndex.getPackageNameByDirectory(directory.getVirtualFile()) != null) {
         isPackage = true;
         break;
       }
@@ -148,14 +151,8 @@ public class CreateDirectoryOrPackageAction extends AnAction {
               LocalHistoryAction action = LocalHistoryAction.NULL;
               try {
                 String actionName;
-                if (myIsDirectory) {
-                  String dirPath = myDirectory.getVirtualFile().getPresentableUrl();
-                  actionName = IdeBundle.message("progress.creating.directory", dirPath, File.separator, subDirName);
-                }
-                else {
-                  String packagePath = JavaDirectoryService.getInstance().getPackage(myDirectory).getQualifiedName();
-                  actionName = IdeBundle.message("progress.creating.package", packagePath, subDirName);
-                }
+                String dirPath = myDirectory.getVirtualFile().getPresentableUrl();
+                actionName = IdeBundle.message("progress.creating.directory", dirPath, File.separator, subDirName);
                 action = LocalHistory.startAction(myProject, actionName);
 
                 final PsiDirectory createdDir;
@@ -163,7 +160,7 @@ public class CreateDirectoryOrPackageAction extends AnAction {
                   createdDir = myDirectory.createSubdirectory(subDirName);
                 }
                 else {
-                  createdDir = PackageUtil.createSubdirectories(subDirName, MyInputValidator.this.myDirectory);
+                  createdDir = DirectoryUtil.createSubdirectories(subDirName, MyInputValidator.this.myDirectory);
                 }
 
 
