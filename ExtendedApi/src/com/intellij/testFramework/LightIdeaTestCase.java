@@ -60,7 +60,6 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexableFileSet;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -555,9 +554,13 @@ import java.util.Map;
 
   private static synchronized void closeAndDeleteProject() {
     if (ourProject != null) {
-      final File projectFile = VfsUtil.virtualToIoFile(((ProjectEx)ourProject).getStateStore().getProjectFile());
+      final VirtualFile projFile = ((ProjectEx)ourProject).getStateStore().getProjectFile();
+      final File projectFile = projFile == null ? null : VfsUtil.virtualToIoFile(projFile);
       if (!ourProject.isDisposed()) Disposer.dispose(ourProject);
-      FileUtil.delete(projectFile);
+      
+      if (projectFile != null) {
+        FileUtil.delete(projectFile);
+      }
     }
   }
 }
