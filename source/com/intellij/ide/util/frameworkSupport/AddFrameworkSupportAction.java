@@ -1,9 +1,6 @@
-/*
- * Copyright (c) 2007, Your Corporation. All Rights Reserved.
- */
-
 package com.intellij.ide.util.frameworkSupport;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -26,6 +23,11 @@ public class AddFrameworkSupportAction extends AnAction {
   public void update(final AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
     boolean enable = module != null && AddFrameworkSupportDialog.isAvailable(module);
-    e.getPresentation().setEnabled(enable);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setVisible(enable);
+    }
+    else {
+      e.getPresentation().setEnabled(enable);
+    }
   }
 }

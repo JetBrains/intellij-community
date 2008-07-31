@@ -31,7 +31,7 @@ public class MultiplePasteAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    Component focusedComponent = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
+    Component focusedComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
 
     if (!(focusedComponent instanceof JComponent)) return;
@@ -95,13 +95,19 @@ public class MultiplePasteAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(isEnabled(e.getDataContext()));
+    final boolean enabled = isEnabled(e);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setVisible(enabled);
+    }
+    else {
+      e.getPresentation().setEnabled(enabled);
+    }
   }
 
-  private boolean isEnabled(DataContext dataContext) {
-    Object component = dataContext.getData(DataConstants.CONTEXT_COMPONENT);
+  private static boolean isEnabled(AnActionEvent e) {
+    Object component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     if (!(component instanceof JComponent)) return false;
-    if (dataContext.getData(DataConstants.EDITOR) != null) return true;
+    if (e.getData(PlatformDataKeys.EDITOR) != null) return true;
     Action pasteAction = ((JComponent)component).getActionMap().get(DefaultEditorKit.pasteAction);
     return pasteAction != null;
   }
