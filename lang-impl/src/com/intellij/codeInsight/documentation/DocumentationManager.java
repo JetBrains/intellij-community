@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
@@ -536,6 +537,8 @@ public class DocumentationManager implements ProjectComponent {
                 }
                 documentationProvider.openExternalDocumentation(psiElement, getOriginalElement(psiElement));
               }
+            } else {
+              BrowserUtil.launchBrowser(docUrl);
             }
             return "";
           }

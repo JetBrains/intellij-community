@@ -7,6 +7,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -70,14 +71,7 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
   }
 
   public void update() {
-    if (!myInitialized) {
-      initialize();
-    }
-
-    if (myFile == null || !myFile.isValid()) {
-      myFile = VirtualFileManager.getInstance().findFileByUrl(myUrl);
-      if (myFile != null && !myFile.isDirectory()) myFile = null;
-    }
+    initialize();
   }
 
   private void initialize() {
@@ -85,10 +79,15 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
 
     if (myFile == null || !myFile.isValid()) {
       myFile = VirtualFileManager.getInstance().findFileByUrl(myUrl);
-      if (myFile != null && !myFile.isDirectory()) {
+      if (myFile != null && cantHaveChildren()) {
         myFile = null;
       }
     }
+  }
+
+  private boolean cantHaveChildren() {
+    if (myFile.getFileSystem() instanceof HttpFileSystem) return false;
+    return !myFile.isDirectory();
   }
 
   public String getUrl() {

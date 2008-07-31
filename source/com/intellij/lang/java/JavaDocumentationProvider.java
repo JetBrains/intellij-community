@@ -12,6 +12,7 @@ import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.DataManager;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageCommenters;
@@ -30,11 +31,12 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
+import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -45,9 +47,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -525,6 +525,7 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
     return generateExternalJavadoc(element);
   }
 
+  @Nullable
   public static String generateExternalJavadoc(final PsiElement element) {
     final JavaDocInfoGenerator javaDocInfoGenerator = new JavaDocInfoGenerator(element.getProject(), element);
     JavaDocExternalFilter docFilter = new JavaDocExternalFilter(element.getProject());
@@ -532,21 +533,29 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
 
     if (docURLs != null) {
       for (String docURL : docURLs) {
-        if (element instanceof PsiCompiledElement) {
-          try {
-            String externalDoc = docFilter.getExternalDocInfoForElement(docURL, element);
-            if (externalDoc != null) {
-              return externalDoc;
-            }
-          }
-          catch (Exception e) {
-            //try to generate some javadoc
-          }
-        }
+        final String javadoc = generateExternalJavadoc(element, docURL, true, docFilter);
+        if (javadoc != null) return javadoc;
       }
     }
 
     return JavaDocExternalFilter.filterInternalDocInfo(javaDocInfoGenerator.generateDocInfo());
+  }
+
+
+  @Nullable
+  private static String generateExternalJavadoc(final PsiElement element, String fromUrl, boolean checkCompiled, JavaDocExternalFilter filter) {
+    if (!checkCompiled || element instanceof PsiCompiledElement) {
+      try {
+        String externalDoc = filter.getExternalDocInfoForElement(fromUrl, element);
+        if (externalDoc != null && externalDoc.length() > 0) {
+          return externalDoc;
+        }
+      }
+      catch (Exception e) {
+        //try to generate some javadoc
+      }
+    }
+    return null;
   }
 
   private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
@@ -609,13 +618,20 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.javadoc.external");
     List<String> urls = getExternalJavaDocUrl(element);
     if (urls != null && !urls.isEmpty()) {
-      if (urls.size() > 1) {
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("", urls) {
+      final JavaDocExternalFilter filter = new JavaDocExternalFilter(element.getProject());
+      for (Iterator<String> it = urls.iterator(); it.hasNext();) {
+        String url = it.next();
+        if (generateExternalJavadoc(element, url, false, filter) == null) it.remove();
+      }
+      final HashSet<String> set = new HashSet<String>(urls);
+      if (set.size() > 1) {
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Choose javadoc root",
+                                                                                   set.toArray(new String[set.size()])) {
           public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
             BrowserUtil.launchBrowser(selectedValue);
             return PopupStep.FINAL_CHOICE;
           }
-        });
+        }).showInBestPositionFor(DataManager.getInstance().getDataContext());
       }
       else {
         BrowserUtil.launchBrowser(urls.get(0));
@@ -654,13 +670,21 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
       PsiMethod method = (PsiMethod)element;
       PsiClass aClass = method.getContainingClass();
       if (aClass != null) {
-        urls = findUrlForClass(aClass);
-        if (urls != null) {
+        final List<String> classUrls = findUrlForClass(aClass);
+
+        if (classUrls != null) {
+          urls = new ArrayList<String>();
           String signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
+                                                        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_RAW_TYPE,
+                                                        PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES | PsiFormatUtil.SHOW_RAW_TYPE, 999);
+          for (String classUrl : classUrls) {
+            urls.add(classUrl + "#" + signature);
+          }
+          signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
                                                         PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
                                                         PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES, 999);
-          for (int i = 0; i < urls.size(); i++) {
-            urls.set(i, urls.get(i) + "#" + signature);
+          for (String classUrl : classUrls) {
+            urls.add(classUrl + "#" + signature);
           }
         }
       }
@@ -691,7 +715,7 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
     }
     else {
       for (int i = 0; i < urls.size(); i++) {
-        urls.set(i, FileUtil.toSystemIndependentName(urls.get(i)).replaceAll("[\\<\\>\\?]", ""));
+        urls.set(i, FileUtil.toSystemIndependentName(urls.get(i)));
       }
       return urls;
     }
@@ -735,14 +759,14 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
       }
     }
     if (module != null) {
-      VirtualFile[] javadocPaths = ModuleRootManager.getInstance(module).getRootPaths(JavadocOrderRootType.getInstance());
+      String[] javadocPaths = ModuleRootManager.getInstance(module).getRootUrls(JavadocOrderRootType.getInstance());
       List<String> httpRoot = getHttpRoots(javadocPaths, relPath);
       if (httpRoot != null) return httpRoot;
     }
 
     final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(virtualFile);
     for (OrderEntry orderEntry : orderEntries) {
-      final VirtualFile[] files = orderEntry.getFiles(JavadocOrderRootType.getInstance());
+      final String[] files = orderEntry.getUrls(JavadocOrderRootType.getInstance());
       final List<String> httpRoot = getHttpRoots(files, relPath);
       if (httpRoot != null) return httpRoot;
     }
@@ -750,15 +774,18 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
   }
 
   @Nullable
-  public static List<String> getHttpRoots(final VirtualFile[] roots, String relPath) {
+  public static List<String> getHttpRoots(final String[] roots, String relPath) {
     final ArrayList<String> result = new ArrayList<String>();
-    for (VirtualFile root : roots) {
-      if (root.getFileSystem() instanceof HttpFileSystem) {
-        result.add(root.getUrl() + relPath);
-      }
-      else {
-        VirtualFile file = root.findFileByRelativePath(relPath);
-        if (file != null) result.add(file.getUrl());
+    for (String root : roots) {
+      final VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(root);
+      if (virtualFile != null) {
+        if (virtualFile.getFileSystem() instanceof HttpFileSystem) {
+          result.add(virtualFile.getUrl() + relPath);
+        }
+        else {
+          VirtualFile file = virtualFile.findFileByRelativePath(relPath);
+          if (file != null) result.add(file.getUrl());
+        }
       }
     }
 
