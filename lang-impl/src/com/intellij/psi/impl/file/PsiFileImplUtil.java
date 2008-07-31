@@ -2,6 +2,7 @@ package com.intellij.psi.impl.file;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -24,7 +25,16 @@ public class PsiFileImplUtil {
       final FileDocumentManager fdm = FileDocumentManager.getInstance();
       final Document doc = fdm.getCachedDocument(vFile);
       if (doc != null) {
-        fdm.saveDocument(doc);
+        EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+        
+        String trailer = editorSettings.getStripTrailingSpaces();
+        editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+        try {
+          fdm.saveDocument(doc);
+        }
+        finally {
+          editorSettings.setStripTrailingSpaces(trailer);
+        }
       }
       
       vFile.rename(manager, newName);
