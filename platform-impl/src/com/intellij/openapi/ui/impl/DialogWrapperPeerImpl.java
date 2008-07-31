@@ -254,7 +254,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   public void setIconImage(final Image image) {
-    myDialog.setIconImage(image);
+    // TODO: fix usage of JDK 1.6 api
+    //myDialog.setIconImage(image);
   }
 
   private void setToolkitModal() {
