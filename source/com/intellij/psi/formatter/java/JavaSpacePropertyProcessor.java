@@ -199,7 +199,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private boolean isTheOnlyClassMember(final ASTNode node) {
     ASTNode next = node.getTreeNext();
-    if (next == null || !(next.getElementType() == JavaTokenType.LBRACE)) return false;
+    if (next == null || !(next.getElementType() == JavaTokenType.RBRACE)) return false;
 
     ASTNode prev = node.getTreePrev();
     if (prev == null || !(prev.getElementType() == JavaTokenType.LBRACE)) return false;
