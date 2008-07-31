@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Properties;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,17 +42,23 @@ public class PropertyResolver {
         dynamicProperties.setProperty(each.getName(), each.getValue().getText());
       }
     }
-    return resolve(text, mavenProject, dynamicProperties);
+    return doResolve(text, mavenProject, dynamicProperties, new Stack<String>());
   }
 
-  private static String resolve(String text, MavenProjectModel n, Properties additionalProperties) {
+  private static String doResolve(String text, MavenProjectModel n, Properties additionalProperties, Stack<String> resolutionStack) {
     Matcher matcher = PATTERN.matcher(text);
 
     StringBuffer buff = new StringBuffer();
     while (matcher.find()) {
+      String propText = matcher.group();
       String propName = matcher.group(1);
-      String resolved = resolveProperty(propName, n, additionalProperties);
-      if (resolved == null) resolved = matcher.group();
+      String resolved = doResolveProperty(propName, n, additionalProperties);
+      if (resolved == null) resolved = propText;
+      if (!resolved.equals(propText) && !resolutionStack.contains(propName)) {
+        resolutionStack.push(propName);
+        resolved = doResolve(resolved, n, additionalProperties, resolutionStack);
+        resolutionStack.pop();
+      }
       matcher.appendReplacement(buff, Matcher.quoteReplacement(resolved));
     }
     matcher.appendTail(buff);
@@ -59,7 +66,7 @@ public class PropertyResolver {
     return buff.toString();
   }
 
-  private static String resolveProperty(String propName, MavenProjectModel n, Properties additionalProperties) {
+  private static String doResolveProperty(String propName, MavenProjectModel n, Properties additionalProperties) {
     String result;
 
     result = MavenEmbedderFactory.collectSystemProperties().getProperty(propName);

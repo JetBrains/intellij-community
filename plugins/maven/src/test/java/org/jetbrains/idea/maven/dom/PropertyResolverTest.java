@@ -96,6 +96,47 @@ public class PropertyResolverTest extends MavenImportingTestCase {
     assertEquals("module.value", resolve("${pom.moduleProp}", f));
   }
 
+  public void testProjectPropertiesRecursively() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     " <prop1>value</prop1>" +
+                     " <prop2>${prop1}-2</prop2>" +
+                     " <prop3>${prop2}-3</prop3>" +
+                     "</properties>");
+
+    importProject();
+
+    assertEquals("value", resolve("${prop1}", myProjectPom));
+    assertEquals("value-2", resolve("${prop2}", myProjectPom));
+    assertEquals("value-2-3", resolve("${prop3}", myProjectPom));
+  }
+
+  public void testDoNotGoIndoInfiniteRecursion() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     " <prop1>${prop1}</prop1>" +
+
+                     " <prop2>${prop3}</prop2>" +
+                     " <prop3>${prop2}</prop3>" +
+
+                     " <prop4>${prop5}</prop4>" +
+                     " <prop5>${prop6}</prop5>" +
+                     " <prop6>${prop4}</prop6>" +
+
+                     "</properties>");
+
+    importProject();
+    assertEquals("${prop1}", resolve("${prop1}", myProjectPom));
+    assertEquals("${prop3}", resolve("${prop2}", myProjectPom));
+    assertEquals("${prop5}", resolve("${prop4}", myProjectPom));
+  }
+
   public void testResolvingBasedirProperties() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -149,7 +190,7 @@ public class PropertyResolverTest extends MavenImportingTestCase {
 
                          "<properties>" +
                          " <uncomitted>value</uncomitted>" +
-                         "</properties>") );
+                         "</properties>"));
 
     assertEquals("value", resolve("${uncomitted}", myProjectPom));
   }
