@@ -27,7 +27,7 @@ import java.util.Set;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ComponentTreeBuilder extends AbstractTreeBuilder{
+public final class ComponentTreeBuilder extends AbstractTreeBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.componentTree.ComponentTreeBuilder");
 
   private final GuiEditor myEditor;
@@ -37,15 +37,14 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
    * react on our own events.
    */
   private int myInsideChange;
-  private ComponentTreeBuilder.MyHierarchyChangeListener myHierarchyChangeListener;
-  private ComponentTreeBuilder.MyTreeSelectionListener myTreeSelectionListener;
+  private MyHierarchyChangeListener myHierarchyChangeListener;
+  private MyTreeSelectionListener myTreeSelectionListener;
 
-  public ComponentTreeBuilder(final ComponentTree tree, @NotNull final GuiEditor editor){
-    super(tree,(DefaultTreeModel)tree.getModel(),null,MyComparator.ourComparator);
+  public ComponentTreeBuilder(final ComponentTree tree, @NotNull final GuiEditor editor) {
+    super(tree,(DefaultTreeModel)tree.getModel(), new ComponentTreeStructure(editor), MyComparator.ourComparator);
 
     myEditor = editor;
     mySelectionWatcher = new MySelectionWatcher(editor);
-    setTreeStructure(new ComponentTreeStructure(editor));
 
     initRootNode();
     syncSelection();
