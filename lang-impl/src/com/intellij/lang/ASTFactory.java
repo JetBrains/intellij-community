@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ASTFactory {
-  public static final DefaultFactory DEFAULT = new DefaultFactory();
+  public static final ASTFactory DEFAULT = new DefaultFactory();
 
   @Nullable
   public abstract CompositeElement createComposite(IElementType type);

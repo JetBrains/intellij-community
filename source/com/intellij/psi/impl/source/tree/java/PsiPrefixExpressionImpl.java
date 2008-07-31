@@ -3,18 +3,19 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements PsiPrefixExpression, Constants {
+public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements PsiPrefixExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiPrefixExpressionImpl");
 
   public PsiPrefixExpressionImpl() {
-    super(PREFIX_EXPRESSION);
+    super(JavaElementType.PREFIX_EXPRESSION);
   }
 
   public PsiExpression getOperand() {
@@ -36,7 +37,7 @@ public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements Psi
     if (operand == null) return null;
     PsiType type = operand.getType();
     IElementType opCode = SourceTreeToPsiMap.psiElementToTree(getOperationSign()).getElementType();
-    if (opCode == PLUS || opCode == MINUS || opCode == TILDE) {
+    if (opCode == JavaTokenType.PLUS || opCode == JavaTokenType.MINUS || opCode == JavaTokenType.TILDE) {
       if (type == null) return null;
       if (type == PsiType.BYTE || type == PsiType.CHAR || type == PsiType.SHORT) {
         return PsiType.INT;
@@ -45,10 +46,10 @@ public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements Psi
         return type;
       }
     }
-    else if (opCode == PLUSPLUS || opCode == MINUSMINUS) {
+    else if (opCode == JavaTokenType.PLUSPLUS || opCode == JavaTokenType.MINUSMINUS) {
       return type;
     }
-    else if (opCode == EXCL) {
+    else if (opCode == JavaTokenType.EXCL) {
       return PsiType.BOOLEAN;
     }
     else {
@@ -67,14 +68,14 @@ public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements Psi
         return getFirstChildNode();
 
       case ChildRole.OPERAND:
-        return EXPRESSION_BIT_SET.contains(getLastChildNode().getElementType()) ? getLastChildNode() : null;
+        return ElementType.EXPRESSION_BIT_SET.contains(getLastChildNode().getElementType()) ? getLastChildNode() : null;
     }
   }
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child == getFirstChildNode()) return ChildRole.OPERATION_SIGN;
-    if (child == getLastChildNode() && EXPRESSION_BIT_SET.contains(child.getElementType())) return ChildRole.OPERAND;
+    if (child == getLastChildNode() && ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) return ChildRole.OPERAND;
     return ChildRoleBase.NONE;
   }
 
