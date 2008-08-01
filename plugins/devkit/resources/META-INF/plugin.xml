@@ -34,7 +34,7 @@
     </component>    
   </module-components>
   <actions>
-    <group>
+    <group id="PluginDeployActions">
       <action class="org.jetbrains.idea.devkit.build.PrepareToDeployAction" id="MakeJarAction" />
       <action class="org.jetbrains.idea.devkit.build.PrepareAllToDeployAction" id="MakeAllJarsAction" />
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="Compile"/>
