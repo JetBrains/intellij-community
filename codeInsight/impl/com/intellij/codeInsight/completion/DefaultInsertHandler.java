@@ -58,6 +58,10 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
   public void handleInsert(final InsertionContext context, LookupElement item) {
     super.handleInsert(context, item);
 
+    if (item instanceof LookupItem && ((LookupItem)item).getAttribute(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE) != null) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_CHAIN);
+    }
+
     if (!(item instanceof SimpleLookupItem) && item instanceof LookupItem) {
       if (((LookupItem)item).getObject() instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)((LookupItem)item).getObject();

@@ -136,6 +136,43 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
       }
     }
+
+    if (parameters.getCompletionType() == CompletionType.SMART && parameters.getInvocationCount() == 1) {
+      final PsiType[] psiTypes = ExpectedTypesGetter.getExpectedTypes(parameters.getPosition(), true);
+      if (psiTypes.length > 0) {
+        if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.SECOND_SMART_COMPLETION_TOAR)) {
+          final String shortcut = getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);
+          if (shortcut != null) {
+            for (final PsiType psiType : psiTypes) {
+              final PsiType type = PsiUtil.extractIterableTypeParameter(psiType, false);
+              if (type != null) {
+                return CompletionBundle.message("completion.smart.aslist.hint", shortcut, type.getPresentableText());
+              }
+            }
+          }
+        }
+        if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.SECOND_SMART_COMPLETION_ASLIST)) {
+          final String shortcut = getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);
+          if (shortcut != null) {
+            for (final PsiType psiType : psiTypes) {
+              if (psiType instanceof PsiArrayType) {
+                final PsiType componentType = ((PsiArrayType)psiType).getComponentType();
+                if (!(componentType instanceof PsiPrimitiveType)) {
+                  return CompletionBundle.message("completion.smart.toar.hint", shortcut, componentType.getPresentableText());
+                }
+              }
+            }
+          }
+        }
+
+        if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.SECOND_SMART_COMPLETION_CHAIN)) {
+          final String shortcut = getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);
+          if (shortcut != null) {
+            return CompletionBundle.message("completion.smart.chain.hint", shortcut);
+          }
+        }
+      }
+    }
     return null;
   }
 

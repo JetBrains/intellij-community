@@ -33,6 +33,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -175,6 +176,8 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
                               final LookupElement[] allItems,
                               final TailType tailType,
                               final char completionChar) throws IncorrectOperationException {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_ASLIST);
+
         final Document document = editor.getDocument();
         final int tailOffset = startOffset + item.getLookupString().length();
         RangeMarker tail = document.createRangeMarker(tailOffset, tailOffset);
@@ -322,6 +325,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
       public int handleInsert(final Editor editor, final int startOffset, final LookupElement item, final LookupElement[] allItems,
                               final TailType tailType,
                               final char completionChar) throws IncorrectOperationException {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_TOAR);
         final Document document = editor.getDocument();
         final int tailOffset = startOffset + item.getLookupString().length();
         RangeMarker tail = document.createRangeMarker(tailOffset, tailOffset);
