@@ -50,13 +50,11 @@ import org.jetbrains.plugins.groovy.caches.project.GroovyCachesManager;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class GroovyPositionManager implements PositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.PositionManagerImpl");
@@ -189,6 +187,7 @@ public class GroovyPositionManager implements PositionManager {
     final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
 
     PsiClass clazz = GroovyCachesManager.getInstance(project).getClassByName(qName, searchScope);
+    Collection<PsiClass> classes = GrFullClassNameIndex.getInstance().get(qName.hashCode(), project, searchScope);
     if (clazz != null) return clazz.getContainingFile();
 
     DirectoryIndex directoryIndex = DirectoryIndex.getInstance(project);

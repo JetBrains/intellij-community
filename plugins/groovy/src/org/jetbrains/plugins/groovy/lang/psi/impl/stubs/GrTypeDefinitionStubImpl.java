@@ -5,18 +5,27 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.util.io.StringRef;
+import com.intellij.pom.java.LanguageLevel;
 
 /**
  * @author ilyas
  */
 public class GrTypeDefinitionStubImpl extends StubBase<GrTypeDefinition> implements GrTypeDefinitionStub {
-  private final String myName;
+  private final StringRef myName;
   private final String[] mySuperClasses;
+  private final StringRef myQualifiedName;
+  private StringRef mySourceFileName;
 
-  public GrTypeDefinitionStubImpl(final  String name, StubElement parent, final String[] supers, final IStubElementType elementType) {
+  public GrTypeDefinitionStubImpl(final String name,
+                                  StubElement parent,
+                                  final String[] supers,
+                                  final IStubElementType elementType,
+                                  final String qualifiedName) {
     super(parent, elementType);
-    myName = name;
+    myName = StringRef.fromString(name);
     mySuperClasses = supers;
+    myQualifiedName = StringRef.fromString(qualifiedName);
   }
 
   public String[] getSuperClassNames() {
@@ -24,6 +33,23 @@ public class GrTypeDefinitionStubImpl extends StubBase<GrTypeDefinition> impleme
   }
 
   public String getName() {
-    return myName;
+    return StringRef.toString(myName);
   }
+
+  public String getQualifiedName() {
+    return StringRef.toString(myQualifiedName);
+  }
+
+  public String getSourceFileName() {
+    return StringRef.toString(mySourceFileName);
+  }
+
+  public void setSourceFileName(final StringRef sourceFileName) {
+    mySourceFileName = sourceFileName;
+  }
+
+  public void setSourceFileName(final String sourceFileName) {
+    mySourceFileName = StringRef.fromString(sourceFileName);
+  }
+
 }

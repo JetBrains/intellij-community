@@ -82,7 +82,8 @@
     <usageGroupingRuleProvider implementation="org.jetbrains.plugins.groovy.findUsages.GroovyUsageViewGroupingRuleProvider"/>
 
     <!--Stubs index-->
-    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.GrClassNameIndex"/>
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrShortClassNameIndex"/>
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex"/>
 
 
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.ConstructorReferencesSearcher"/>-->
