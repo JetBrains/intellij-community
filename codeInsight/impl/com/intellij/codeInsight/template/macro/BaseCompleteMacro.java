@@ -63,6 +63,7 @@ public abstract class BaseCompleteMacro implements Macro {
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       getCompletionHandler().invoke(project, editor, psiFile);
+      return;
     }
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
