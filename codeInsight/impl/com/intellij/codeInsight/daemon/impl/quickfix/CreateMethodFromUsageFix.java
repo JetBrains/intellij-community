@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.util.FieldConflictsResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,6 +110,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     final PsiFile targetFile = targetClass.getContainingFile();
 
     String methodName = ref.getReferenceName();
+    LOG.assertTrue(methodName != null);
 
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
@@ -130,6 +132,11 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
         else {
           method = (PsiMethod)targetClass.add(method);
         }
+      }
+
+      if (enclosingContext instanceof PsiMethod && methodName.equals(enclosingContext.getName()) &&
+          !targetClass.equals(parentClass)) {
+        FieldConflictsResolver.qualifyReference(ref, method, null);
       }
 
       PsiCodeBlock body = method.getBody();

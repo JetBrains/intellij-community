@@ -8,6 +8,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,7 +86,8 @@ public class FieldConflictsResolver {
   }
 
 
-  public static PsiReferenceExpression qualifyReference(PsiReferenceExpression referenceExpression, final PsiMember member, final PsiClass qualifyingClass) throws IncorrectOperationException {
+  public static PsiReferenceExpression qualifyReference(PsiReferenceExpression referenceExpression, final PsiMember member,
+                                                        @Nullable final PsiClass qualifyingClass) throws IncorrectOperationException {
     PsiManager manager = referenceExpression.getManager();
     PsiReferenceExpression expressionFromText;
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
