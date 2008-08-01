@@ -9,30 +9,13 @@
       <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
     </group>
 
-    <group id="EditorValidatePopupMenu">
-      <reference ref="ValidateXml"/>
+    <reference ref="ValidateXml">
       <add-to-group group-id="EditorPopupMenu.Run" anchor="last"/>
-    </group>
-
-    <group id="ProjectViewValidateGroup">
-      <reference ref="ValidateXml"/>
       <add-to-group group-id="ProjectViewPopupMenuRefactoringGroup" anchor="last"/>
-    </group>
-
-    <group id="ValidateXmlGroup">
-      <reference ref="ValidateXml"/>
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>
-    </group>
-
-    <group id="ValidateXmlGroupForCommander">
-      <reference ref="ValidateXml"/>
       <add-to-group group-id="CommanderPopupMenu" anchor="last"/>
-    </group>
-
-    <group id="ValidateXmlGroupForVcs">
-      <reference ref="ValidateXml"/>
       <add-to-group group-id="Vcs.FileViewPopup" anchor="last"/>
-    </group>
+    </reference>
 
     <action id="DomElementsTreeView.GotoDomElementDeclarationAction"
             class="com.intellij.util.xml.tree.actions.GotoDomElementDeclarationAction"

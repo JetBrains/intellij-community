@@ -85,10 +85,13 @@ public class DefaultActionGroup extends ActionGroup {
     add(action, constraint, ActionManager.getInstance());
   }
 
-  public final void add(@NotNull AnAction action, @NotNull Constraints constraint, @NotNull ActionManager actionManager){
+  public final void add(@NotNull AnAction action, @NotNull Constraints constraint, @NotNull ActionManager actionManager) {
+    if (action == this) {
+      throw new IllegalArgumentException("Cannot add a group to itself");
+    }
     // Check that action isn't already registered
     if (!(action instanceof Separator)) {
-      if (mySortedChildren.contains(action)){
+      if (mySortedChildren.contains(action)) {
         throw new IllegalArgumentException("cannot add an action twice");
       }
       for (Pair<AnAction, Constraints> pair : myPairs) {

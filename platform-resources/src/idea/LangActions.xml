@@ -85,6 +85,8 @@
       <separator/>
       <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction"/>
       <action id="ReplaceInPath" class="com.intellij.find.actions.ReplaceInPathAction"/>
+      <separator/>
+      <action id="GotoAction" class="com.intellij.ide.actions.GotoActionAction"/>
 
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="EditMenu"/>
     </group>
@@ -145,7 +147,6 @@
       <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction"/>
       <action id="GotoFile" class="com.intellij.ide.actions.GotoFileAction"/>
       <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction"/>
-      <action id="GotoAction" class="com.intellij.ide.actions.GotoActionAction"/>
 
       <add-to-group group-id="GoToMenu" anchor="first"/>
     </group>

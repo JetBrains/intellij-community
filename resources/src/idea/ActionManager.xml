@@ -133,6 +133,8 @@
       <add-to-group group-id="CodeMenu" anchor="last"/>
     </group>
 
+    <!-- Analyze -->
+
     <group id="CoverageMenu">
       <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction"/>
       <action id="GenerateCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction"/>
@@ -347,11 +349,9 @@
       <add-to-group group-id="EditorLangPopupMenu" relative-to-action="EditorPopupMenu.Run" anchor="before"/>
     </group>
 
-    <group id="EditorCompilePopupMenu">
-      <reference ref="Compile"/>
-
+    <reference ref="Compile">
       <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
-    </group>
+    </reference>
 
     <action id="ShowAppliedStylesAction" class="com.intellij.psi.css.actions.ShowAppliedStylesAction">
       <add-to-group group-id="EditorLangPopupMenu" anchor="last"/>
@@ -393,11 +393,9 @@
       <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </group>
 
-    <group id="ProjectViewModuleSettingsGroup">
-      <reference ref="ModuleSettings"/>
-
+    <reference ref="ModuleSettings">
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="first"/>
-    </group>
+    </reference>
 
     <group id="StructureViewCompileGroup">
       <separator/>
@@ -674,11 +672,11 @@
 
     <group id="StructuralSearchActions">
       <action id="StructuralSearchPlugin.StructuralSearchAction" class="com.intellij.structuralsearch.plugin.StructuralSearchAction">
-        <add-to-group group-id="SearchMenu" anchor="last"/>
+        <add-to-group group-id="SearchMenu" anchor="after" relative-to-action="ReplaceInPath"/>
       </action>
 
       <action id="StructuralSearchPlugin.StructuralReplaceAction" class="com.intellij.structuralsearch.plugin.StructuralReplaceAction">
-        <add-to-group group-id="SearchMenu" anchor="last"/>
+        <add-to-group group-id="SearchMenu" anchor="after" relative-to-action="StructuralSearchPlugin.StructuralSearchAction"/>
       </action>
     </group>
 
