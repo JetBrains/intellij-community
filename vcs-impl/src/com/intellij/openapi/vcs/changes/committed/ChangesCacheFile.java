@@ -784,6 +784,13 @@ public class ChangesCacheFile {
           return true;
         }
         else {
+          final VirtualFile file = beforeRevision.getFile().getVirtualFile();
+          final VcsRevisionNumber currentRevision = myCurrentRevisions.get(file);
+          if ((currentRevision != null) && (currentRevision.compareTo(beforeRevision.getRevisionNumber()) > 0)) {
+            // revived in newer revision - possibly was added file with same name
+            LOG.info("File with same name was added after file deletion");
+            return true;
+          }
           LOG.info("File exists locally and no 'create' change found for it");
         }
       }
