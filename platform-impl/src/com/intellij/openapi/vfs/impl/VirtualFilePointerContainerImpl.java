@@ -6,6 +6,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -26,13 +27,15 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   private final List<VirtualFilePointer> myReadOnlyList = Collections.unmodifiableList(myList);
   private final VirtualFilePointerManagerImpl myVirtualFilePointerManager;
   private final Disposable myParent;
+  private VirtualFilePointerListener myListener;
   private VirtualFile[] myCachedDirectories;
   @NonNls private static final String URL_ATTR = "url";
   private boolean myDisposed;
 
-  public VirtualFilePointerContainerImpl(VirtualFilePointerManagerImpl manager, Disposable parent) {
+  public VirtualFilePointerContainerImpl(VirtualFilePointerManagerImpl manager, Disposable parent, VirtualFilePointerListener listener) {
     myVirtualFilePointerManager = manager;
     myParent = parent;
+    myListener = listener;
   }
 
   public void readExternal(final Element rootChild, final String childElements) throws InvalidDataException {
@@ -221,15 +224,15 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   }
 
   protected VirtualFilePointer create(VirtualFile file) {
-    return myVirtualFilePointerManager.create(file, myParent, null);
+    return myVirtualFilePointerManager.create(file, myParent, myListener);
   }
 
   protected VirtualFilePointer create(String url) {
-    return myVirtualFilePointerManager.create(url, myParent, null);
+    return myVirtualFilePointerManager.create(url, myParent, myListener);
   }
 
   protected VirtualFilePointer duplicate(VirtualFilePointer virtualFilePointer) {
-    return myVirtualFilePointerManager.duplicate(virtualFilePointer, myParent, null);
+    return myVirtualFilePointerManager.duplicate(virtualFilePointer, myParent, myListener);
   }
 
   @Override
@@ -238,8 +241,12 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   }
 
   public VirtualFilePointerContainer clone(@NotNull Disposable parent) {
+    return clone(parent, null);
+  }
+
+  public VirtualFilePointerContainer clone(@NotNull Disposable parent, VirtualFilePointerListener listener) {
     assert !myDisposed;
-    VirtualFilePointerContainer clone = myVirtualFilePointerManager.createContainer(parent);
+    VirtualFilePointerContainer clone = myVirtualFilePointerManager.createContainer(parent, listener);
     for (VirtualFilePointer pointer : myList) {
       clone.add(pointer.getUrl());
     }

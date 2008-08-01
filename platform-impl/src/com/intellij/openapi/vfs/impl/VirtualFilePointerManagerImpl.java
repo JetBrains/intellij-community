@@ -248,7 +248,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   @Deprecated // see createContainer(VirtualFilePointerFactory factory, Disposable parent)
   public synchronized VirtualFilePointerContainer createContainer(final VirtualFilePointerFactory factory) {
-    final VirtualFilePointerContainerImpl virtualFilePointerContainer = new VirtualFilePointerContainerImpl(this, this){
+    final VirtualFilePointerContainerImpl virtualFilePointerContainer = new VirtualFilePointerContainerImpl(this, this, null){
       @Override
       protected VirtualFilePointer create(VirtualFile file) {
         return factory.create(file);
@@ -268,8 +268,13 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @NotNull
-  public synchronized VirtualFilePointerContainer createContainer(@NotNull Disposable parent) {
-    return registerContainer(parent, new VirtualFilePointerContainerImpl(this, parent));
+  public VirtualFilePointerContainer createContainer(@NotNull Disposable parent) {
+    return createContainer(parent, null);
+  }
+
+  @NotNull
+  public synchronized VirtualFilePointerContainer createContainer(@NotNull Disposable parent, VirtualFilePointerListener listener) {
+    return registerContainer(parent, new VirtualFilePointerContainerImpl(this, parent, listener));
   }
 
   private VirtualFilePointerContainer registerContainer(Disposable parent, @NotNull final VirtualFilePointerContainerImpl virtualFilePointerContainer) {

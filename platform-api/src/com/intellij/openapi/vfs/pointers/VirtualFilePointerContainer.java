@@ -64,4 +64,6 @@ public interface VirtualFilePointerContainer {
   void moveDown(String url);
 
   VirtualFilePointerContainer clone(@NotNull Disposable parent);
+
+  VirtualFilePointerContainer clone(@NotNull Disposable parent, VirtualFilePointerListener listener);
 }
