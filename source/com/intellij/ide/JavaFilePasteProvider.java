@@ -34,9 +34,9 @@ public class JavaFilePasteProvider implements PasteProvider {
     if (targetDir == null) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        PsiJavaFile file;
+        PsiFile file;
         try {
-          file = (PsiJavaFile)targetDir.createFile(classes[0].getName() + ".java");
+          file = targetDir.createFile(classes[0].getName() + ".java");
         }
         catch (IncorrectOperationException e) {
           return;
@@ -44,7 +44,9 @@ public class JavaFilePasteProvider implements PasteProvider {
         final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         document.setText(javaFile.getText());
         PsiDocumentManager.getInstance(project).commitDocument(document);
-        updatePackageStatement(file, targetDir);
+        if (file instanceof PsiJavaFile) {
+          updatePackageStatement((PsiJavaFile) file, targetDir);
+        }
         new OpenFileDescriptor(project, file.getVirtualFile()).navigate(true);
       }
     });
