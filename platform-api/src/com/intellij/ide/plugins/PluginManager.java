@@ -149,10 +149,7 @@ public class PluginManager {
         result.add(descriptor);
       } else {
         descriptor.setEnabled(false);
-        final List<File> classPath = descriptor.getClassPath();
-        final ClassLoader loader =
-            createPluginClassLoader(classPath.toArray(new File[classPath.size()]), new ClassLoader[]{parentLoader}, descriptor);
-        descriptor.setLoader(loader, false);
+        initClassLoader(parentLoader, descriptor);
       }
     }
 
@@ -199,6 +196,13 @@ public class PluginManager {
     }
 
     ourPlugins = pluginDescriptors;
+  }
+
+  public static void initClassLoader(final ClassLoader parentLoader, final IdeaPluginDescriptorImpl descriptor) {
+    final List<File> classPath = descriptor.getClassPath();
+    final ClassLoader loader =
+        createPluginClassLoader(classPath.toArray(new File[classPath.size()]), new ClassLoader[]{parentLoader}, descriptor);
+    descriptor.setLoader(loader, false);
   }
 
   public static int getPluginLoadingOrder(PluginId id) {

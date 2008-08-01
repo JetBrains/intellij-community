@@ -133,7 +133,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
     createDialog(null, canBeParent);
     if (tryToolkitModal) {
-      setToolkitModal();
+      UIUtil.setToolkitModal(myDialog);
     }
   }
 
@@ -254,27 +254,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   public void setIconImage(final Image image) {
-    try {
-      final Method method = myDialog.getClass().getMethod("setIconImage", Image.class);
-      method.invoke(myDialog, image);
-    }
-    catch (Exception e) {
-      // ignore - no JDK 6
-    }
-  }
-
-  private void setToolkitModal() {
-    try {
-      final Class<?> modalityType = myDialog.getClass().getClassLoader().loadClass("java.awt.Dialog$ModalityType");
-      final Field field = modalityType.getField("TOOLKIT_MODAL");
-      final Object value = field.get(null);
-
-      final Method method = myDialog.getClass().getMethod("setModalityType", modalityType);
-      method.invoke(myDialog, value);
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
+    UIUtil.updateDialogIcon(myDialog, image);
   }
 
   public Dimension getPreferredSize() {

@@ -38,6 +38,7 @@ import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
  * @author max
@@ -791,5 +792,32 @@ public class UIUtil {
     }
   }
 
+  public static void setToolkitModal(final JDialog dialog) {
+    try {
+      final Class<?> modalityType = dialog.getClass().getClassLoader().loadClass("java.awt.Dialog$ModalityType");
+      final Field field = modalityType.getField("TOOLKIT_MODAL");
+      final Object value = field.get(null);
+
+      final Method method = dialog.getClass().getMethod("setModalityType", modalityType);
+      method.invoke(dialog, value);
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  public static void updateDialogIcon(final JDialog dialog) {
+    updateDialogIcon(dialog, ImageLoader.loadFromResource("/icon.png"));
+  }
+
+  public static void updateDialogIcon(final JDialog dialog, final Image image) {
+    try {
+      final Method method = dialog.getClass().getMethod("setIconImage", Image.class);
+      method.invoke(dialog, image);
+    }
+    catch (Exception e) {
+      // ignore - no JDK 6
+    }
+  }
 }
 

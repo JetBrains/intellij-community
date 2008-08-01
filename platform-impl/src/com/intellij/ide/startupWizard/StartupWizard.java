@@ -1,15 +1,11 @@
 package com.intellij.ide.startupWizard;
 
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.application.ConfigImportHelper;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.wizard.WizardDialog;
 import com.intellij.util.ImageLoader;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 
 /**
@@ -24,11 +20,7 @@ public class StartupWizard extends WizardDialog<StartupWizardModel> {
   @Override
   public void onWizardGoalAchieved() {
     super.onWizardGoalAchieved();
-    final File path = myModel.getOldConfigPath();
-    if (path != null) {
-      ConfigImportHelper.doImport(PathManager.getConfigPath(), path);
-    }
-    
+
     try {
       PluginManager.saveDisabledPlugins(myModel.getDisabledPluginIds(), false);
     }
@@ -39,15 +31,7 @@ public class StartupWizard extends WizardDialog<StartupWizardModel> {
   }
 
   public static void run() {
-    try {
-      if (SystemInfo.isWindowsVista || SystemInfo.isMac) {
-        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-      }
-    }
-    catch (Exception e) {
-      // ignore
-    }
-    new StartupWizard().show();    
+    new StartupWizard().show();
   }
 
   public static void main(String[] args) {

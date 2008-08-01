@@ -4,17 +4,22 @@
  */
 package com.intellij.ui.wizard;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.ui.CommandButtonGroup;
 import com.intellij.ui.SeparatorComponent;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 public class WizardDialog<T extends WizardModel> extends DialogWrapper implements WizardCallback {
 
@@ -28,9 +33,11 @@ public class WizardDialog<T extends WizardModel> extends DialogWrapper implement
 
   private JLabel myIcon = new JLabel();
   private JLabel myHeader = new JLabel();
-  private JLabel myExplanation = new JLabel();
+  private JLabel myExplanation = new MultiLineLabel();
 
   private JPanel myStepContent;
+  private CardLayout myCardLayout;
+  private Map<WizardStep, String> myStepCardNames = new HashMap<WizardStep, String>();
 
   public WizardDialog(Project project, boolean canBeParent, T model) {
     super(project, canBeParent);
@@ -44,8 +51,8 @@ public class WizardDialog<T extends WizardModel> extends DialogWrapper implement
     init();
   }
 
-  public WizardDialog(boolean canBeParent, boolean unknown, T model) {
-    super(canBeParent);
+  public WizardDialog(boolean canBeParent, boolean tryToolkitModal, T model) {
+    super(canBeParent, tryToolkitModal);
     myModel = model;
     init();
   }
@@ -76,7 +83,8 @@ public class WizardDialog<T extends WizardModel> extends DialogWrapper implement
     JPanel content = new JPanel(new BorderLayout(12, 12));
     content.add(header, BorderLayout.NORTH);
 
-    myStepContent = new JPanel(new BorderLayout()) {
+    myCardLayout = new CardLayout();
+    myStepContent = new JPanel(myCardLayout) {
       public Dimension getPreferredSize() {
         Dimension custom = getWindowPreferredSize();
         Dimension superSize = super.getPreferredSize();
@@ -95,8 +103,8 @@ public class WizardDialog<T extends WizardModel> extends DialogWrapper implement
 
     result.add(content, BorderLayout.CENTER);
 
-    myHeader.setFont(myHeader.getFont().deriveFont(Font.BOLD, 16));
-    myHeader.setFont(myHeader.getFont().deriveFont(Font.PLAIN, 14));
+    //myHeader.setFont(myHeader.getFont().deriveFont(Font.BOLD, 14));
+    //myHeader.setFont(myHeader.getFont().deriveFont(Font.PLAIN, 12));
 
     return result;
   }
@@ -150,12 +158,17 @@ public class WizardDialog<T extends WizardModel> extends DialogWrapper implement
     WizardStep current = myModel.getCurrentStep();
 
     myIcon.setIcon(current.getIcon());
-    myHeader.setFont(myHeader.getFont().deriveFont(Font.BOLD, 16));
+    myHeader.setFont(myHeader.getFont().deriveFont(Font.BOLD, 14));
     myHeader.setText(current.getTitle());
     myExplanation.setText(current.getExplanation());
 
-    myStepContent.removeAll();
-    myStepContent.add(myModel.getCurrentComponent());
+    @NonNls String stepName = myStepCardNames.get(current);
+    if (stepName == null) {
+      stepName = "Step" + myStepCardNames.size();
+      myStepContent.add(myModel.getCurrentComponent(), stepName);
+      myStepCardNames.put(current, stepName);
+    }
+    myCardLayout.show(myStepContent, stepName);
 
     WizardNavigationState state = myModel.getCurrentNavigationState();
     myPrevious.setAction(state.PREVIOUS);
@@ -181,7 +194,10 @@ public class WizardDialog<T extends WizardModel> extends DialogWrapper implement
     panel.add(myNext);
     panel.add(myFinish);
     panel.add(myCancel);
-    panel.add(myHelp);
+    if (ApplicationManager.getApplication() != null) {
+      // we won't be able to show help if there's no HelpManager
+      panel.add(myHelp);
+    }
     panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
     return panel;
   }
@@ -205,5 +221,4 @@ public class WizardDialog<T extends WizardModel> extends DialogWrapper implement
   protected Dimension getWindowPreferredSize() {
     return null;
   }
-
 }

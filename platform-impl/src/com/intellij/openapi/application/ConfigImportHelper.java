@@ -18,6 +18,7 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,9 @@ public class ConfigImportHelper {
 
   public static void importConfigsTo(String newConfigPath) {
     do {
-      ImportOldConfigsDialog dlg = new ImportOldConfigsDialog();
+      ImportOldConfigsPanel dlg = new ImportOldConfigsPanel();
+      UIUtil.setToolkitModal(dlg);
+      UIUtil.updateDialogIcon(dlg);
       dlg.setVisible(true);
       if (dlg.isImportEnabled()) {
         File instHome = dlg.getSelectedFile();

@@ -227,7 +227,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public String getDescription() {
-    return myDescription;
+    return myDescription == null ? myDescriptionChildText : myDescription;
   }
 
   public String getChangeNotes() {

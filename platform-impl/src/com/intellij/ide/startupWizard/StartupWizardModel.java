@@ -2,7 +2,9 @@ package com.intellij.ide.startupWizard;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.ui.wizard.WizardModel;
 import com.intellij.util.containers.HashSet;
 
@@ -19,13 +21,11 @@ public class StartupWizardModel extends WizardModel {
   private Set<String> myDisabledPluginIds = new HashSet<String>();
   private Map<String, SelectPluginsStep> myStepMap = new HashMap<String, SelectPluginsStep>();
   private SelectPluginsStep myOtherStep = new SelectPluginsStep("Select other plugins", myDisabledPluginIds, null);
-  private File myOldConfigPath;
-  private SelectPluginsStep myHtmlStep;
 
   public StartupWizardModel() {
-    super(ApplicationNamesInfo.getInstance().getFullProductName() + " Startup Wizard");
+    super(ApplicationNamesInfo.getInstance().getFullProductName() + " Initial Configuration Wizard");
+    loadDisabledPlugins(new File(PathManager.getConfigPath()));
 
-    add(new ImportOldConfigsStep());
     addSelectPluginsStep("VCS Integration", "Select VCS Integration Plugins", null);
     addSelectPluginsStep("Web/JavaEE Technologies", "Select Web/JavaEE Technology Plugins", null);
     addSelectPluginsStep("Application Servers", "Select Application Server Plugins", "com.intellij.javaee");
@@ -38,6 +38,7 @@ public class StartupWizardModel extends WizardModel {
         // skip 'IDEA CORE' plugin
         continue;
       }
+      PluginManager.initClassLoader(getClass().getClassLoader(), (IdeaPluginDescriptorImpl) pluginDescriptor);
       SelectPluginsStep step = myStepMap.get(pluginDescriptor.getCategory());
       if (step != null) {
         step.addPlugin(pluginDescriptor);
@@ -65,13 +66,5 @@ public class StartupWizardModel extends WizardModel {
 
   public Collection<String> getDisabledPluginIds() {
     return myDisabledPluginIds;
-  }
-
-  public File getOldConfigPath() {
-    return myOldConfigPath;
-  }
-
-  public void setOldConfigPath(final File oldConfigPath) {
-    myOldConfigPath = oldConfigPath;
   }
 }
