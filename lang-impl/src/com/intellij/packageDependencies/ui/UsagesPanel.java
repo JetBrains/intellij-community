@@ -48,6 +48,9 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
   }
 
   protected void showUsages(final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor, final UsageInfo[] usageInfos) {
+    if (myCurrentUsageView != null) {
+      Disposer.dispose(myCurrentUsageView);
+    }
     try {
       Usage[] usages = UsageInfoToUsageConverter.convert(descriptor, usageInfos);
       UsageViewPresentation presentation = new UsageViewPresentation();
