@@ -7,8 +7,6 @@ import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,15 +27,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     super(rootModel);
     myRootContainers = new HashMap<OrderRootType, VirtualFilePointerContainer>();
     for (OrderRootType type : OrderRootType.getAllTypes()) {
-      myRootContainers.put(type, filePointerManager.createContainer(this, new VirtualFilePointerListener() {
-        public void beforeValidityChanged(VirtualFilePointer[] pointers) {
-           getRootModel().fireBeforeExternalChange();
-        }
-
-        public void validityChanged(VirtualFilePointer[] pointers) {
-          getRootModel().fireAfterExternalChange();
-        }
-      }));
+      myRootContainers.put(type, filePointerManager.createContainer(this));
     }
     myProjectRootManagerImpl = instanceImpl;
   }
