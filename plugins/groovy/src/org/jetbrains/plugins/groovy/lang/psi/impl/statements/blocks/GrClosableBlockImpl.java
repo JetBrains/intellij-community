@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticPara
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 
 /**
  * @author ilyas
@@ -155,7 +156,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
         type = GrClosureType.create((GrClosableBlock) context);
       } else if (context instanceof GroovyFile) {
         final PsiClass scriptClass = ((GroovyFile) context).getScriptClass();
-        if (scriptClass != null) type = factory.createType(scriptClass);
+        if (scriptClass != null && GroovyNamesUtil.isIdentifier(scriptClass.getName())) type = factory.createType(scriptClass);
       }
       if (type == null) {
         type = TypesUtil.getJavaLangObject(this);
