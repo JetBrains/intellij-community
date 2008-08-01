@@ -412,18 +412,17 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   private AntElement[] fixUndefinedElements(final AntElement[] elements) {
-    for (int i = 0; i < elements.length; i++) {
-      final AntElement element = elements[i];
-      if (element instanceof AntStructuredElement) {
-        AntStructuredElement se = (AntStructuredElement)element;
-        if (se.getTypeDefinition() == null) {
-          final XmlTag sourceElement = se.getSourceElement();
-          
-          assert sourceElement.isValid();
-          
-          se = (AntStructuredElement)AntElementFactory.createAntElement(this, sourceElement);
-          if (se != null && se.getTypeDefinition() != null) {
-            elements[i] = se;
+    if (isValid()) {
+      for (int i = 0; i < elements.length; i++) {
+        final AntElement element = elements[i];
+        if (element instanceof AntStructuredElement && element.isValid()) {
+          AntStructuredElement se = (AntStructuredElement)element;
+          if (se.getTypeDefinition() == null) {
+            final XmlTag sourceElement = se.getSourceElement();
+            se = (AntStructuredElement)AntElementFactory.createAntElement(this, sourceElement);
+            if (se != null && se.getTypeDefinition() != null) {
+              elements[i] = se;
+            }
           }
         }
       }
