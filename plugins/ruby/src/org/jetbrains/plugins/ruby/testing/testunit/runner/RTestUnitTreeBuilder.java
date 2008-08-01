@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner;
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +30,9 @@ public class RTestUnitTreeBuilder extends AbstractTestTreeBuilder {
   }
 
   public void updateTestsSubtree(final RTestUnitTestProxy parentTestProxy) {
-    final DefaultMutableTreeNode parentNode = getNodeForElement(parentTestProxy);
-    if (parentNode != null) {
-      updateSubtree(parentNode);
+    final AbstractTreeUpdater updater = getUpdater();
+    if (updater != null) {
+      updater.addSubtreeToUpdateByElement(parentTestProxy);
     }
   }
 
