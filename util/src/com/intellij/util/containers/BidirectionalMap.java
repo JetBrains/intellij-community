@@ -80,6 +80,15 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
     return myKeyToValueMap.get(key);
   }
 
+  public void removeValue(V v) {
+    List<K> ks = myValueToKeysMap.remove(v);
+    if (ks != null) {
+      for (K k : ks) {
+        myKeyToValueMap.remove(k);
+      }
+    }
+  }
+
   @SuppressWarnings({"SuspiciousMethodCalls"})
   public V remove(Object key){
     final V value = myKeyToValueMap.remove(key);

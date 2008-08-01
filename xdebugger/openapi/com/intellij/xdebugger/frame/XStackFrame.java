@@ -18,9 +18,10 @@ package com.intellij.xdebugger.frame;
 
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -65,7 +66,7 @@ public abstract class XStackFrame extends XValueContainer {
       component.setIcon(DebuggerIcons.STACK_FRAME_ICON);
     }
     else {
-      //todo[nik]
+      component.append(XDebuggerBundle.message("invalid.frame"), SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
   }
 }
