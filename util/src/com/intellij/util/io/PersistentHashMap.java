@@ -373,7 +373,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   private DataOutputStream keyStream() throws FileNotFoundException {
     if (myKeysOutStream == null) {
-      myKeysOutStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(keystreamFile())));
+      myKeysOutStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(keystreamFile(), true)));
     }
     return myKeysOutStream;
   }
