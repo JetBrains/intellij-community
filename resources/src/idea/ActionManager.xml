@@ -111,12 +111,12 @@
       <add-to-group group-id="ViewMenu" anchor="last"/>
     </group>
 
-    <group id="JavadocFoldingGroup">
-      <action id="ExpandJavadocs" class="com.intellij.codeInsight.folding.impl.actions.ExpandJavadocsAction"/>
-      <action id="CollapseJavadocs" class="com.intellij.codeInsight.folding.impl.actions.CollapseJavadocsAction"/>
-
+    <action id="ExpandJavadocs" class="com.intellij.codeInsight.folding.impl.actions.ExpandJavadocsAction">
       <add-to-group group-id="LanguageSpecificFoldingGroup" anchor="last"/>
-    </group>
+    </action>
+    <action id="CollapseJavadocs" class="com.intellij.codeInsight.folding.impl.actions.CollapseJavadocsAction">
+      <add-to-group group-id="LanguageSpecificFoldingGroup" anchor="last"/>
+    </action>
 
     <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction">
       <add-to-group group-id="FoldingGroup" anchor="after" relative-to-action="CollapseSelection"/>
@@ -217,12 +217,9 @@
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
     </group>
 
-
-    <group id="HotswapGroup">
-      <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction"/>
-      <separator/>
+    <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction">
       <add-to-group group-id="DebugMainMenu" anchor="before" relative-to-action="StepOver"/>
-    </group>
+    </action>
 
     <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="/actions/popFrame.png">
       <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ForceRunToCursor"/>
@@ -235,12 +232,9 @@
       <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ToggleLineBreakpoint"/>
     </group>
 
-    <group id="ExportThreadsGroup">
-      <separator/>
-      <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="/actions/export.png"/>
-
-      <add-to-group group-id="DebugMainMenu" anchor="last"/>
-    </group>
+    <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="/actions/export.png">
+      <add-to-group group-id="RunMenu" anchor="last"/>
+    </action>
 
     <!-- Tools -->
     <action id="GenerateJavadoc" class="com.intellij.javadoc.actions.GenerateJavadocAction">

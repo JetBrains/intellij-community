@@ -147,7 +147,7 @@
       <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction"/>
       <action id="GotoAction" class="com.intellij.ide.actions.GotoActionAction"/>
 
-      <add-to-group group-id="GoToTarget" anchor="first"/>
+      <add-to-group group-id="GoToMenu" anchor="first"/>
     </group>
 
     <group id="GoToErrorGroup">
@@ -516,6 +516,7 @@
     </action>
 
     <group id="DebugMainMenu">
+      <separator/>
       <action id="StepOver" class="com.intellij.xdebugger.impl.actions.StepOverAction" icon="/actions/traceOver.png"/>
       <action id="StepInto" class="com.intellij.xdebugger.impl.actions.StepIntoAction" icon="/actions/traceInto.png"/>
       <action id="SmartStepInto" class="com.intellij.xdebugger.impl.actions.SmartStepIntoAction" icon="/actions/traceInto.png"/>
@@ -534,6 +535,7 @@
       <separator/>
       <action id="ToggleLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction"/>
       <action id="ViewBreakpoints" class="com.intellij.xdebugger.impl.actions.ViewBreakpointsAction" icon="/debugger/viewBreakpoints.png"/>
+      <separator/>
 
       <add-to-group group-id="RunMenu" anchor="last"/>
     </group>

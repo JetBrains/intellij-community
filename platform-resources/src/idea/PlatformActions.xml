@@ -174,9 +174,7 @@
 
       <!-- Go to -->
       <group id="GoToMenu" popup="true">
-        <group id="GoToTarget">
-          <action id="GotoLine" class="com.intellij.ide.actions.GotoLineAction"/>
-        </group>
+        <action id="GotoLine" class="com.intellij.ide.actions.GotoLineAction"/>
         <separator/>
         <action id="Back" class="com.intellij.ide.actions.BackAction" icon="/actions/back.png"/>
         <action id="Forward" class="com.intellij.ide.actions.ForwardAction" icon="/actions/forward.png"/>
