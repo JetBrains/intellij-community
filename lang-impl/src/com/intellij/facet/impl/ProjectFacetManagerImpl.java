@@ -42,6 +42,7 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pr
   private ProjectFacetManagerState myState = new ProjectFacetManagerState();
   private final List<FacetLoadingErrorDescription> myFacetLoadingErrors = new ArrayList<FacetLoadingErrorDescription>();
   private final Project myProject;
+  private final List<Runnable> myRunnablesToRunOnProjectSettingsClosed = new ArrayList<Runnable>();
 
   public ProjectFacetManagerImpl(Project project) {
     myProject = project;
@@ -136,6 +137,17 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pr
 
   public void registerFacetLoadingError(@NotNull final FacetLoadingErrorDescription errorDescription) {
     myFacetLoadingErrors.add(errorDescription);
+  }
+
+  //todo[nik] remove
+  public void registerRunnableToRunOnProjectSettingsClosed(@NotNull Runnable runnable) {
+    myRunnablesToRunOnProjectSettingsClosed.add(runnable);
+  }
+
+  public void fireRunnableOnProjectSettingsClosed() {
+    for (Runnable runnable : myRunnablesToRunOnProjectSettingsClosed) {
+      runnable.run();
+    }
   }
 
   @Tag("default-facet-configuration")

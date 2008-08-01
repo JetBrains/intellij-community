@@ -5,14 +5,15 @@
 package com.intellij.facet.impl;
 
 import com.intellij.facet.*;
-import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.facet.impl.ui.FacetEditorContextBase;
+import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.facet.impl.ui.FacetTreeModel;
 import com.intellij.facet.impl.ui.ProjectConfigurableContext;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
@@ -44,11 +45,13 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   private Set<Facet> myChangedFacets = new HashSet<Facet>();
   private Set<Facet> myCreatedFacets = new HashSet<Facet>();
   private final StructureConfigurableContext myContext;
+  private final Project myProject;
   private final NotNullFunction<Module, ModuleConfigurationState> myModuleStateProvider;
   private UserDataHolderBase myProjectData = new UserDataHolderBase();
 
-  public ProjectFacetsConfigurator(final StructureConfigurableContext context, NotNullFunction<Module, ModuleConfigurationState> moduleStateProvider) {
+  public ProjectFacetsConfigurator(final StructureConfigurableContext context, Project project, NotNullFunction<Module, ModuleConfigurationState> moduleStateProvider) {
     myContext = context;
+    myProject = project;
     myModuleStateProvider = moduleStateProvider;
   }
 
@@ -253,6 +256,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
       editor.disposeUIResources();
     }
     myProjectData = null;
+    ((ProjectFacetManagerImpl)ProjectFacetManagerImpl.getInstance(myProject)).fireRunnableOnProjectSettingsClosed();
   }
 
   @NotNull

@@ -248,7 +248,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private ProjectFacetsConfigurator createFacetsConfigurator() {
-    return new ProjectFacetsConfigurator(myContext, new NotNullFunction<Module, ModuleConfigurationState>() {
+    return new ProjectFacetsConfigurator(myContext, myProject, new NotNullFunction<Module, ModuleConfigurationState>() {
       @NotNull
       public ModuleConfigurationState fun(final Module module) {
         return getModuleEditor(module).createModuleConfigurationState();
