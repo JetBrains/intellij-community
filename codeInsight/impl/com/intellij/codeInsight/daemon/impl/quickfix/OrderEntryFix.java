@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
@@ -112,6 +111,10 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     }
 
     if (isAnnotation(psiElement) && AnnotationUtil.isJetbrainsAnnotation(referenceName)) {
+      @NonNls final String className = "org.jetbrains.annotations." + referenceName;
+      PsiClass found =
+        JavaPsiFacade.getInstance(project).findClass(className, currentModule.getModuleWithDependenciesAndLibrariesScope(true));
+      if (found != null) return null; //no need to add junit to classpath
       final OrderEntryFix fix = new OrderEntryFix() {
         @NotNull
         public String getText() {
