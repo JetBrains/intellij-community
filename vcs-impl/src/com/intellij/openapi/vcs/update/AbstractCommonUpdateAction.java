@@ -445,6 +445,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
               }
             }
 
+            final boolean noMerged = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty();
             if (myUpdatedFiles.isEmpty() && myVcsExceptions.isEmpty()) {
               Messages.showMessageDialog(getAllFilesAreUpToDateMessage(myRoots),
                                          getTemplatePresentation().getText(),
@@ -452,7 +453,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
             }
             else if (! myUpdatedFiles.isEmpty()) {
-              showUpdateTree();
+              showUpdateTree(continueChainFinal && updateSuccess && noMerged);
 
               final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
               cache.processUpdatedFiles(myUpdatedFiles);
@@ -461,7 +462,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
             ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
 
             if (continueChainFinal && updateSuccess) {
-              if (! myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty()) {
+              if (!noMerged) {
                 showContextInterruptedError();
               } else {
                 // trigger next update; for CVS when updating from several branvhes simultaneously
@@ -498,11 +499,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       return vcsException;
     }
 
-    private void showUpdateTree() {
+    private void showUpdateTree(final boolean willBeContinued) {
       RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(myProject);
       restoreUpdateTree.registerUpdateInformation(myUpdatedFiles, myActionInfo);
-      final UpdateInfoTree updateInfoTree = myProjectLevelVcsManager.showUpdateProjectInfo(myUpdatedFiles,
-          getTemplatePresentation().getText() + '#' + myUpdateNumber, myActionInfo);
+      final String text = getTemplatePresentation().getText() + ((willBeContinued || (myUpdateNumber > 1)) ? ("#" + myUpdateNumber) : "");
+      final UpdateInfoTree updateInfoTree = myProjectLevelVcsManager.showUpdateProjectInfo(myUpdatedFiles, text, myActionInfo);
       if (updateInfoTree != null) {
         updateInfoTree.setCanGroupByChangeList(canGroupByChangelist(myVcsToVirtualFiles.keySet()));
         final MessageBusConnection messageBusConnection = myProject.getMessageBus().connect();
