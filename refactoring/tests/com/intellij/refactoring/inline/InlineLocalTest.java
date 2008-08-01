@@ -79,6 +79,22 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     assertEquals(error, exception);
   }
 
+  public void testUsedInInnerClass() throws Exception {       // IDEADEV-28786
+    doTest(true);
+  }
+
+  public void testUsedInInnerClass2() throws Exception {       // IDEADEV-28786
+    doTest(true);
+  }
+
+  public void testUsedInInnerClass3() throws Exception {       // IDEADEV-28786
+    doTest(true);
+  }
+
+  public void testUsedInInnerClass4() throws Exception {       // IDEADEV-28786
+    doTest(true);
+  }
+
   private void doTest(final boolean inlineDef) throws Exception {
     String name = getTestName(false);
     String fileName = "/refactoring/inlineLocal/" + name + ".java";
