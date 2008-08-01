@@ -180,7 +180,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
     }
 
     if (newChildIndex == getSubBlocks().size()) {
-      return new ChildAttributes(getCodeBlockChildExternalIndent(), null);
+      return new ChildAttributes(getCodeBlockChildExternalIndent(newChildIndex), null);
     }
 
     return new ChildAttributes(myIndentsBefore.get(newChildIndex), null);
