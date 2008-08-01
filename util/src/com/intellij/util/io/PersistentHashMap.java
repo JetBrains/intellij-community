@@ -30,6 +30,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   public static final String DATA_FILE_EXTENSION = ".values";
   private File myFile;
   private int myGarbageSize;
+  private DataDescriptor<Key> myKeyDescriptor;
+  private DataOutputStream myKeysOutStream;
 
   private static class AppendStream extends DataOutputStream {
     private AppendStream() {
@@ -91,6 +93,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   
   public PersistentHashMap(final File file, PersistentEnumerator.DataDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
     super(checkDataFile(file), new DescriptorWrapper<Key>(keyDescriptor), initialSize);
+    myKeyDescriptor = keyDescriptor;
     myFile = file;
     myValueExternalizer = valueExternalizer;
     myValueStorage = PersistentHashMapValueStorage.create(getDataFile(myFile).getPath());
@@ -160,17 +163,43 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   public synchronized boolean processKeys(Processor<Key> processor) throws IOException {
     myAppendCache.clear();
+    flushKeysStream();
 
-    return processAllDataObject(processor, new DataFilter() {
-      public boolean accept(final int id) {
-        try {
-          return readValueId(id).address != NULL_ADDR;
+    final File file = keystreamFile();
+    if (!file.exists()) {
+      buildKeystream();
+    }
+
+    DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+    try {
+      try {
+        while (true) {
+          Key key = myKeyDescriptor.read(keysStream);
+          if (!processor.process(key)) return false;
         }
-        catch (IOException ignored) {
-        }
+      }
+      catch (EOFException e) {
+        // Done
+      }
+      return true;
+    }
+    finally {
+      keysStream.close();
+    }
+
+  }
+
+  private void buildKeystream() throws IOException {
+    keyStream();
+    
+    processAllDataObject(new Processor<Key>() {
+      public boolean process(final Key key) {
+        onNewValueAdded(key);
         return true;
       }
-    });
+    }, null);
+
+    flushKeysStream();
   }
 
   public synchronized Collection<Key> allKeys() throws IOException {
@@ -230,8 +259,21 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   public synchronized void force() {
     myAppendCache.clear();
     myValueStorage.force();
+    flushKeysStream();
 
     super.force();
+  }
+
+  private void flushKeysStream() {
+    if (myKeysOutStream != null) {
+      try {
+        myKeysOutStream.close();
+        myKeysOutStream = null;
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   public synchronized void close() throws IOException {
@@ -317,5 +359,26 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   private static class HeaderRecord {
     long address;
     int size;
+  }
+
+  @Override
+  protected void onNewValueAdded(final Key key) {
+    try {
+      myKeyDescriptor.save(keyStream(), key);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+  }
+
+  private DataOutputStream keyStream() throws FileNotFoundException {
+    if (myKeysOutStream == null) {
+      myKeysOutStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(keystreamFile())));
+    }
+    return myKeysOutStream;
+  }
+
+  private File keystreamFile() {
+    return new File(myFile.getPath() + ".keystream");
   }
 }

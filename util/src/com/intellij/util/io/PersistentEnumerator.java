@@ -347,12 +347,16 @@ public class PersistentEnumerator<Data> implements Forceable {
       myStorage.put(buf, 0, buf.length);
 
       myDataDescriptor.save(myOut, value);
+      onNewValueAdded(value);
 
       return pos;
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected void onNewValueAdded(final Data data) {
   }
 
   private int hashCodeOf(int idx) throws IOException {
