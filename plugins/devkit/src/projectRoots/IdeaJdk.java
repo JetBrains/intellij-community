@@ -63,6 +63,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
   @NonNls private static final String PLUGINS_DIR = "plugins";
   @NonNls private static final String JAVAEE_DIR = "JavaEE";
   @NonNls private static final String JSF_DIR = "JSF";
+  @NonNls private static final String PERSISTENCE_SUPPORT = "PersistenceSupport";
 
   public IdeaJdk() {
     super("IDEA JDK");
@@ -149,6 +150,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + JAVAEE_DIR + File.separator + LIB_DIR_NAME, "javaee-impl.jar",
                       result);
     appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + JSF_DIR + File.separator + LIB_DIR_NAME, "jsf-impl.jar", result);
+    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + PERSISTENCE_SUPPORT + File.separator + LIB_DIR_NAME, "persistence-impl.jar", result);
     return result.toArray(new VirtualFile[result.size()]);
   }
 
