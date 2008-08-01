@@ -5,20 +5,19 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.MethodCellRenderer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -109,9 +108,9 @@ public class StaticImportMethodFix implements IntentionAction {
   }
 
   private void doImport(final PsiMethod toImport) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    CommandProcessor.getInstance().executeCommand(toImport.getProject(), new Runnable(){
       public void run() {
-        CommandProcessor.getInstance().executeCommand(toImport.getProject(), new Runnable(){
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             try {
               myMethodCall.getMethodExpression().bindToElementViaStaticImport(toImport.getContainingClass());
@@ -119,10 +118,13 @@ public class StaticImportMethodFix implements IntentionAction {
             catch (IncorrectOperationException e) {
               LOG.error(e);
             }
+            
           }
-        }, getText(), this);
+        });
+
       }
-    });
+    }, getText(), this);
+
   }
 
   private void chooseAndImport(Editor editor) {
