@@ -47,13 +47,13 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
       child = child.getTreeNext();
     }
 
-    Alignment childAlignment = createChildAlignment();
-    Alignment childAlignment2 = createChildAlignment2(childAlignment);
+    myReservedAlignment = createChildAlignment();
+    myReservedAlignment2 = createChildAlignment2(myReservedAlignment);
     Wrap childWrap = createChildWrap();
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         final ASTNode astNode = child;
-        child = processChild(result, astNode, chooseAlignment(childAlignment, childAlignment2, child) , childWrap, indent, offset);
+        child = processChild(result, astNode, chooseAlignment(myReservedAlignment, myReservedAlignment2, child) , childWrap, indent, offset);
         if (astNode != child && child != null) {
           offset = child.getTextRange().getStartOffset();
         }

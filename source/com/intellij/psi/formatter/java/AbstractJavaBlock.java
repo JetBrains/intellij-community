@@ -33,6 +33,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   protected boolean myUseChildAttributes = false;
   private boolean myIsAfterClassKeyword = false;
   private Wrap myAnnotationWrap = null;
+
+  protected Alignment myReservedAlignment;
+  protected Alignment myReservedAlignment2;
+
   
 
   protected AbstractJavaBlock(final ASTNode node,
@@ -361,6 +365,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return false;
   }
 
+  @Nullable
   protected ASTNode processChild(final ArrayList<Block> result,
                                  ASTNode child,
                                  Alignment defaultAlignment,
@@ -369,6 +374,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return processChild(result, child, defaultAlignment, defaultWrap, childIndent, -1);
   }
 
+  @Nullable
   protected ASTNode processChild(final ArrayList<Block> result,
                                  ASTNode child,
                                  Alignment defaultAlignment,
@@ -435,7 +441,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         child = processEnumBlock(result, child, ((ClassElement)myNode).findEnumConstantListDelimiterPlace());
       }
       else if (mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE && isTernaryOperationSign(child)) {
-        child = processTernaryOperationRange(result, child, defaultAlignment, defaultWrap, childIndent);
+        child = processTernaryOperationRange(result, child, defaultWrap, childIndent);
       }
       else if (childType == JavaElementType.FIELD) {
         child = processField(result, child, defaultAlignment, defaultWrap, childIndent);
@@ -540,27 +546,27 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return currentResult;
   }
 
+  @Nullable
   private ASTNode processTernaryOperationRange(final ArrayList<Block> result,
-                                               final ASTNode child,
-                                               final Alignment defaultAlignment,
-                                               final Wrap defaultWrap, final Indent childIndent) {
+                                               final ASTNode child, final Wrap defaultWrap, final Indent childIndent) {
     final ArrayList<Block> localResult = new ArrayList<Block>();
     final Wrap wrap = arrangeChildWrap(child, defaultWrap);
-    final Alignment alignment = arrangeChildAlignment(child, defaultAlignment);
-    localResult.add(new LeafBlock(child, wrap, alignment, childIndent));
+    final Alignment alignment = myReservedAlignment;
+    final Alignment alignment2 = myReservedAlignment2;
+    localResult.add(new LeafBlock(child, wrap, chooseAlignment(alignment,  alignment2, child), childIndent));
 
     ASTNode current = child.getTreeNext();
     while (current != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(current) && current.getTextLength() > 0) {
         if (isTernaryOperationSign(current)) break;
-        current = processChild(localResult, current, defaultAlignment, defaultWrap, childIndent);
+        current = processChild(localResult, current, chooseAlignment(alignment,  alignment2, current), defaultWrap, childIndent);
       }
       if (current != null) {
         current = current.getTreeNext();
       }
     }
 
-    result.add(new SyntheticCodeBlock(localResult, alignment, getSettings(), null, wrap));
+    result.add(new SyntheticCodeBlock(localResult,  chooseAlignment(alignment,  alignment2, child), getSettings(), null, wrap));
 
     if (current == null) {
       return null;
@@ -927,6 +933,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return defaultWrap;
   }
 
+  @Nullable
   private static ASTNode getPrevElement(final ASTNode child) {
     ASTNode result = child.getTreePrev();
     while (result != null && result.getElementType() == TokenType.WHITE_SPACE) {
@@ -1182,6 +1189,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return false;
   }
 
+  @Nullable
   protected Alignment getUsedAlignment(final int newChildIndex) {
     final List<Block> subBlocks = getSubBlocks();
     for (int i = 0; i < newChildIndex; i++) {
