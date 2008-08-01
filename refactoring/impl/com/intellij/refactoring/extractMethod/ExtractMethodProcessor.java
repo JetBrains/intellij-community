@@ -676,6 +676,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         ifStatement = (PsiIfStatement)addToMethodCallLocation(ifStatement);
         methodCall = (PsiMethodCallExpression)ifStatement.getCondition().replace(methodCall);
         ifStatement.getThenBranch().replace(myFirstExitStatementCopy);
+        CodeStyleManager.getInstance(myProject).reformat(ifStatement);
       }
       else if (myOutputVariable != null) {
         String name = myOutputVariable.getName();

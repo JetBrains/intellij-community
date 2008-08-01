@@ -289,6 +289,18 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doChainedConstructorTest(true);
   }
 
+  public void testForceBraces() throws Exception {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    int old = settings.IF_BRACE_FORCE;
+    settings.IF_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_ALWAYS;
+    try {
+      doTest();
+    }
+    finally {
+      settings.IF_BRACE_FORCE = old;
+    }
+  }
+
   private void doChainedConstructorTest(final boolean replaceAllDuplicates) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     boolean success = performExtractMethod(true, replaceAllDuplicates, getEditor(), getFile(), getProject(), true);
