@@ -126,10 +126,6 @@
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>
     </reference>
 
-    <action id="Unwrap" class="com.intellij.codeInsight.unwrap.UnwrapAction">
-      <add-to-group group-id="CodeSurroundGroup" anchor="last"/>
-    </action>
-
     <group id="CodeMenu2">
       <separator/>
       <action id="MoveStatementDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementDownAction"/>
