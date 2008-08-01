@@ -22,12 +22,12 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     if (extension == null) extension = StdFileTypes.JAVA.getDefaultExtension();
     final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("myclass" + "." + extension, content);
     if (!(psiFile instanceof PsiJavaFile)){
-      throw new IncorrectOperationException("This template did not produce Java class nor interface!\n"+psiFile.getText());
+      throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
     }
     PsiJavaFile psiJavaFile = (PsiJavaFile)psiFile;
     final PsiClass[] classes = psiJavaFile.getClasses();
     if (classes.length == 0) {
-      throw new IncorrectOperationException("This template did not produce Java class nor interface!\n"+psiFile.getText());
+      throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
     }
     PsiClass createdClass = classes[0];
     if(reformat){
