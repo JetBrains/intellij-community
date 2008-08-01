@@ -72,7 +72,18 @@ public class Merger {
                                                      myLatestProcessed.getNumber()));
     }
     doMerge();
-    myCommitMessage.append(myLatestProcessed.getComment()).append('\n');
+
+    appendComment();
+  }
+
+  private void appendComment() {
+    final String nextComment = myLatestProcessed.getComment();
+    if (nextComment.trim().length() > 0) {
+      if (myCommitMessage.length() != 0) {
+        myCommitMessage.append('\n');
+      }
+      myCommitMessage.append(nextComment);
+    }
   }
 
   protected void doMerge() throws SVNException {
