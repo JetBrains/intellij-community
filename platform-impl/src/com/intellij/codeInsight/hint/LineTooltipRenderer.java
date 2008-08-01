@@ -163,6 +163,10 @@ public class LineTooltipRenderer implements TooltipRenderer {
               BrowserUtil.launchBrowser(e.getURL().toString());
             }
           } else { //less -> more
+            if (e.getURL() != null) {
+              BrowserUtil.launchBrowser(e.getURL().toString());
+              return;
+            }
             stripDescription();
             hint.hide();
             createRenderer(myText, 0).show(editor, new Point(p.x - 3, p.y - 3), false, group);
