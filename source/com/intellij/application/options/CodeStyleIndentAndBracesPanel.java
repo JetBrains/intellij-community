@@ -307,8 +307,7 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
       "          int someVariable = a ? \n" +
       "             x : \n" +
       "             y;\n" +
-      "          int anotherVariable = a\n" +
-      "             ? x\n" +
+      "          int anotherVariable = a ? x\n" +
       "             : y;\n" +      
       "        } else if (x < 0) {\n" +
       "          int someVariable = (y +\n" +
