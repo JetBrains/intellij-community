@@ -10,21 +10,12 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../lib/junit.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="idea_rt" />
-    <orderEntry type="module" module-name="ui-impl" />
     <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="module" module-name="xdebugger-openapi" />
     <orderEntry type="module" module-name="testRunner" />
+    <orderEntry type="library" name="JUnit3" level="project" />
   </component>
   <component name="copyright">
     <Base>
