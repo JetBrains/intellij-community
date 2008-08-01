@@ -58,6 +58,10 @@ public class SmartEnterAction extends EditorAction {
       }
 
       PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
+      if (psiFile == null) {
+        plainEnter(editor, dataContext);
+        return;
+      }
 
       if (EnterAfterUnmatchedBraceHandler.isAfterUnmatchedLBrace(editor, caretOffset, psiFile.getFileType())) {
         EditorActionHandler enterHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
