@@ -28,8 +28,10 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,9 +81,21 @@ public class JUnitConfigurationType implements LocatableConfigurationType {
 
   public boolean isConfigurationByLocation(final RunConfiguration configuration, final Location location) {
     final JUnitConfiguration unitConfiguration = (JUnitConfiguration)configuration;
-    final TestObject testObject = unitConfiguration.getTestObject();
-    return testObject != null && testObject.isConfiguredByElement(unitConfiguration, location.getPsiElement()) &&
-           Comparing.equal(ModuleUtil.findModuleForPsiElement(location.getPsiElement()), ((JUnitConfiguration)configuration).getConfigurationModule().getModule());
+    final TestObject testobject = unitConfiguration.getTestObject();
+    if (testobject == null) {
+      return false;
+    }
+    else {
+      final PsiElement element = location.getPsiElement();
+      if (testobject.isConfiguredByElement(unitConfiguration, element)) {
+        return element instanceof PsiPackage ||
+               Comparing.equal(ModuleUtil.findModuleForPsiElement(element), unitConfiguration.getConfigurationModule().getModule());
+
+      }
+      else {
+        return false;
+      }
+    }
   }
 
   @NotNull

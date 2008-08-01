@@ -18,6 +18,8 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.ui.LayeredIcon;
 import com.theoryinpractice.testng.model.TestData;
 import org.jetbrains.annotations.NotNull;
@@ -65,9 +67,18 @@ public class TestNGConfigurationType implements LocatableConfigurationType
         TestData testobject = config.getPersistantData();
         if (testobject == null)
             return false;
-        else
-            return testobject.isConfiguredByElement(location.getPsiElement()) &&
-           Comparing.equal(ModuleUtil.findModuleForPsiElement(location.getPsiElement()), ((TestNGConfiguration)runConfiguration).getConfigurationModule().getModule());
+        else {
+          final PsiElement element = location.getPsiElement();
+          if (testobject.isConfiguredByElement(element)) {
+            return element instanceof PsiPackage ||
+                   Comparing.equal(ModuleUtil.findModuleForPsiElement(element),
+                                   ((TestNGConfiguration)runConfiguration).getConfigurationModule().getModule());
+
+          }
+          else {
+            return false;
+          }
+        }
     }
 
     public String getDisplayName() {
