@@ -1,7 +1,6 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -53,24 +52,28 @@ public class MavenIndex {
 
   private final String myRepositoryPathOrUrl;
   private final Kind myKind;
-  private Long myUpdateTimestamp;
+  private volatile Long myUpdateTimestamp;
 
-  private String myDataDirName;
-  private IndexData myData;
+  private volatile String myDataDirName;
+  private volatile IndexData myData;
 
-  private String myFailureMessage;
+  private volatile String myFailureMessage;
 
-  public MavenIndex(File dir, String repositoryPathOrUrl, Kind kind) throws MavenIndexException {
+  private volatile boolean isBroken;
+  private final IndexListener myListener;
+
+  public MavenIndex(File dir, String repositoryPathOrUrl, Kind kind, IndexListener listener) throws MavenIndexException {
     myDir = dir;
     myRepositoryPathOrUrl = normalizePathOrUrl(repositoryPathOrUrl);
     myKind = kind;
+    myListener = listener;
 
     open();
-    save();
   }
 
-  public MavenIndex(File dir) throws MavenIndexException {
+  public MavenIndex(File dir, IndexListener listener) throws MavenIndexException {
     myDir = dir;
+    myListener = listener;
 
     Properties props = new Properties();
     try {
@@ -113,16 +116,22 @@ public class MavenIndex {
 
   private void open() throws MavenIndexException {
     try {
-      doOpen();
-    }
-    catch (Exception e1) {
-      MavenLog.info(e1);
       try {
         doOpen();
       }
-      catch (Exception e2) {
-        throw new MavenIndexException("Cannot open index " + myDir.getPath(), e2);
+      catch (Exception e1) {
+        MavenLog.info(e1);
+        try {
+          doOpen();
+        }
+        catch (Exception e2) {
+          throw new MavenIndexException("Cannot open index " + myDir.getPath(), e2);
+        }
+        isBroken = true;
       }
+    }
+    finally {
+      save();
     }
   }
 
@@ -134,27 +143,25 @@ public class MavenIndex {
       myData = openData(myDataDirName);
     }
     catch (Exception e) {
-      try {
-        close();
-      }
-      catch (Exception ignore) {
-        MavenLog.warn(e);
-      }
-      FileUtil.delete(getCurrentDataDir());
-      // just in case we couldn't correctly close or delete the current data.
-      myDataDirName = null;
-      myUpdateTimestamp = null;
+      cleanupBrokenData();
       throw e;
     }
   }
 
-  public synchronized void close() throws MavenIndexException {
+  private void cleanupBrokenData() {
+    close();
+    FileUtil.delete(getCurrentDataDir());
+    myDataDirName = null;
+  }
+
+  public synchronized void close() {
     try {
       if (myData != null) myData.close();
     }
     catch (IOException e) {
-      throw new MavenIndexException(e);
+      MavenLog.warn(e);
     }
+    myData = null;
   }
 
   private synchronized void save() {
@@ -165,7 +172,7 @@ public class MavenIndex {
     props.setProperty(KIND_KEY, myKind.toString());
     props.setProperty(PATH_OR_URL_KEY, myRepositoryPathOrUrl);
     if (myUpdateTimestamp != null) props.setProperty(TIMESTAMP_KEY, String.valueOf(myUpdateTimestamp));
-    props.setProperty(DATA_DIR_NAME_KEY, myDataDirName);
+    if (myDataDirName != null) props.setProperty(DATA_DIR_NAME_KEY, myDataDirName);
     if (myFailureMessage != null) props.setProperty(FAILURE_MESSAGE_KEY, myFailureMessage);
 
     try {
@@ -210,26 +217,30 @@ public class MavenIndex {
     return myUpdateTimestamp == null ? -1 : myUpdateTimestamp;
   }
 
-  public String getFailureMessage() {
+  public synchronized String getFailureMessage() {
     return myFailureMessage;
   }
 
-  public void update(NexusIndexer indexer,
-                     IndexUpdater updater,
-                     ProxyInfo proxyInfo,
-                     ProgressIndicator progress) throws ProcessCanceledException {
+  public void updateOrRepair(NexusIndexer indexer,
+                             IndexUpdater updater,
+                             ProxyInfo proxyInfo,
+                             boolean fullUpdate,
+                             ProgressIndicator progress) {
     try {
-      if (myKind == Kind.LOCAL) {
-        FileUtil.delete(getContextDir());
+      if (fullUpdate) {
+        if (myKind == Kind.LOCAL) {
+          FileUtil.delete(getContextDir());
+        }
       }
       IndexingContext context = createContext(indexer);
       try {
-        updateContext(context, indexer, updater, proxyInfo, progress);
+        if (fullUpdate) updateContext(context, indexer, updater, proxyInfo, progress);
         updateData(context, progress);
       }
       finally {
         indexer.removeIndexingContext(context, false);
       }
+      isBroken = false;
       myFailureMessage = null;
     }
     catch (IOException e) {
@@ -415,33 +426,34 @@ public class MavenIndex {
     return MavenIndices.findAvailableDir(myDir, DATA_DIR_PREFIX, 100).getName();
   }
 
-  public synchronized void addArtifact(MavenId id) throws MavenIndexException {
-    if (id.groupId == null) return;
+  public synchronized void addArtifact(final MavenId id) {
+    doIndexTask(new IndexTask<Object>() {
+      public Object doTask() throws Exception {
+        if (id.groupId == null) return null;
 
-    try {
-      myData.groups.enumerate(id.groupId);
-      myData.hasGroupCache.put(id.groupId, true);
+        myData.groups.enumerate(id.groupId);
+        myData.hasGroupCache.put(id.groupId, true);
 
-      if (id.artifactId != null) {
-        String groupWithArtifact = id.groupId + ":" + id.artifactId;
+        if (id.artifactId != null) {
+          String groupWithArtifact = id.groupId + ":" + id.artifactId;
 
-        myData.groupsWithArtifacts.enumerate(groupWithArtifact);
-        myData.hasArtifactCache.put(groupWithArtifact, true);
-        addToCache(myData.groupToArtifactMap, id.groupId, id.artifactId);
+          myData.groupsWithArtifacts.enumerate(groupWithArtifact);
+          myData.hasArtifactCache.put(groupWithArtifact, true);
+          addToCache(myData.groupToArtifactMap, id.groupId, id.artifactId);
 
-        if (id.version != null) {
-          String groupWithArtifactWithVersion = groupWithArtifact + ":" + id.version;
+          if (id.version != null) {
+            String groupWithArtifactWithVersion = groupWithArtifact + ":" + id.version;
 
-          myData.groupsWithArtifactsWithVersions.enumerate(groupWithArtifactWithVersion);
-          myData.hasVersionCache.put(groupWithArtifactWithVersion, true);
-          addToCache(myData.groupWithArtifactToVersionMap, groupWithArtifact, id.version);
+            myData.groupsWithArtifactsWithVersions.enumerate(groupWithArtifactWithVersion);
+            myData.hasVersionCache.put(groupWithArtifactWithVersion, true);
+            addToCache(myData.groupWithArtifactToVersionMap, groupWithArtifact, id.version);
+          }
         }
+        myData.flush();
+
+        return null;
       }
-      myData.flush();
-    }
-    catch (IOException e) {
-      throw new MavenIndexException(e);
-    }
+    }, null);
   }
 
   private void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
@@ -451,85 +463,110 @@ public class MavenIndex {
     cache.put(key, values);
   }
 
-  public synchronized Set<String> getGroupIds() throws MavenIndexException {
-    try {
-      final Set<String> result = new HashSet<String>();
-      myData.groups.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
-        public void process(int record) throws IOException {
-          result.add(myData.groups.valueOf(record));
-        }
-      });
-      return result;
-    }
-    catch (IOException e) {
-      throw new MavenIndexException(e);
-    }
+  public synchronized Set<String> getGroupIds() {
+    return doIndexTask(new IndexTask<Set<String>>() {
+      public Set<String> doTask() throws Exception {
+        final Set<String> result = new HashSet<String>();
+        myData.groups.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
+          public void process(int record) throws IOException {
+            result.add(myData.groups.valueOf(record));
+          }
+        });
+        return result;
+      }
+    }, Collections.<String>emptySet());
   }
 
-  public synchronized Set<String> getArtifactIds(String groupId) throws MavenIndexException {
-    try {
-      Set<String> result = myData.groupToArtifactMap.get(groupId);
-      return result == null ? Collections.<String>emptySet() : result;
-    }
-    catch (IOException e) {
-      throw new MavenIndexException(e);
-    }
+  public synchronized Set<String> getArtifactIds(final String groupId) {
+    return doIndexTask(new IndexTask<Set<String>>() {
+      public Set<String> doTask() throws Exception {
+        Set<String> result = myData.groupToArtifactMap.get(groupId);
+        return result == null ? Collections.<String>emptySet() : result;
+      }
+    }, Collections.<String>emptySet());
   }
 
-  public synchronized Set<String> getVersions(String groupId, String artifactId) throws MavenIndexException {
-    try {
-      Set<String> result = myData.groupWithArtifactToVersionMap.get(groupId + ":" + artifactId);
-      return result == null ? Collections.<String>emptySet() : result;
-    }
-    catch (IOException e) {
-      throw new MavenIndexException(e);
-    }
+  public synchronized Set<String> getVersions(final String groupId, final String artifactId) {
+    return doIndexTask(new IndexTask<Set<String>>() {
+      public Set<String> doTask() throws Exception {
+        Set<String> result = myData.groupWithArtifactToVersionMap.get(groupId + ":" + artifactId);
+        return result == null ? Collections.<String>emptySet() : result;
+      }
+    }, Collections.<String>emptySet());
   }
 
-  public synchronized boolean hasGroupId(String groupId) throws MavenIndexException {
+  public synchronized boolean hasGroupId(String groupId) {
     return hasValue(myData.groups, myData.hasGroupCache, groupId);
   }
 
-  public synchronized boolean hasArtifactId(String groupId, String artifactId) throws MavenIndexException {
+  public synchronized boolean hasArtifactId(String groupId, String artifactId) {
     return hasValue(myData.groupsWithArtifacts,
                     myData.hasArtifactCache,
                     groupId + ":" + artifactId);
   }
 
-  public synchronized boolean hasVersion(String groupId, String artifactId, String version) throws MavenIndexException {
+  public synchronized boolean hasVersion(String groupId, String artifactId, String version) {
     return hasValue(myData.groupsWithArtifactsWithVersions,
                     myData.hasVersionCache,
                     groupId + ":" + artifactId + ":" + version);
   }
 
-  private boolean hasValue(final PersistentStringEnumerator set, Map<String, Boolean> cache, final String value)
-      throws MavenIndexException {
+  private boolean hasValue(final PersistentStringEnumerator set, Map<String, Boolean> cache, final String value) {
     Boolean cached = cache.get(value);
     if (cached != null) return cached;
 
     class FoundException extends RuntimeException {
     }
 
-    boolean result = false;
-
-    try {
-      set.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
-        public void process(int record) throws IOException {
-          if (value.equals(set.valueOf(record))) {
-            throw new FoundException();
-          }
+    boolean result = doIndexTask(new IndexTask<Boolean>() {
+      public Boolean doTask() throws Exception {
+        try {
+          set.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
+            public void process(int record) throws IOException {
+              if (value.equals(set.valueOf(record))) {
+                throw new FoundException();
+              }
+            }
+          });
         }
-      });
-    }
-    catch (IOException e) {
-      throw new MavenIndexException(e);
-    }
-    catch (FoundException ignore) {
-      result = true;
-    }
+        catch (FoundException ignore) {
+          return true;
+        }
+        return false;
+      }
+    }, false).booleanValue();
 
     cache.put(value, result);
     return result;
+  }
+
+  private <T> T doIndexTask(IndexTask<T> task, T defaultValue) {
+    assert Thread.holdsLock(this);
+
+    if (!isBroken) {
+      try {
+        return task.doTask();
+      }
+      catch (Exception e1) {
+        MavenLog.warn(e1);
+
+        cleanupBrokenData();
+        try {
+          open();
+        }
+        catch (MavenIndexException e2) {
+          MavenLog.warn(e2);
+        }
+      }
+    }
+
+    isBroken = true;
+    myListener.indexIsBroken(this);
+    return defaultValue;
+  }
+
+  private static interface IndexTask<T> {
+    T doTask() throws Exception;
   }
 
   private static class IndexData {
@@ -564,16 +601,25 @@ public class MavenIndex {
     }
 
     public void close() throws IOException {
-      safeClose(groups);
-      safeClose(groupsWithArtifacts);
-      safeClose(groupsWithArtifactsWithVersions);
+      IOException[] exceptions = new IOException[1];
 
-      safeClose(groupToArtifactMap);
-      safeClose(groupWithArtifactToVersionMap);
+      safeClose(groups, exceptions);
+      safeClose(groupsWithArtifacts, exceptions);
+      safeClose(groupsWithArtifactsWithVersions, exceptions);
+
+      safeClose(groupToArtifactMap, exceptions);
+      safeClose(groupWithArtifactToVersionMap, exceptions);
+
+      if (exceptions[0] != null) throw exceptions[0];
     }
 
-    private void safeClose(PersistentEnumerator enumerator) throws IOException {
-      if (enumerator != null) enumerator.close();
+    private void safeClose(PersistentEnumerator enumerator, IOException[] exceptions) throws IOException {
+      try {
+        if (enumerator != null) enumerator.close();
+      }
+      catch (IOException e) {
+        if (exceptions[0] == null) exceptions[0] = e;
+      }
     }
 
     public void flush() throws IOException {
@@ -627,5 +673,9 @@ public class MavenIndex {
       p.checkCanceled();
       p.setText2(IndicesBundle.message("maven.indices.updating.indexing", ac.getArtifact()));
     }
+  }
+
+  public static interface IndexListener {
+    void indexIsBroken(MavenIndex index);
   }
 }

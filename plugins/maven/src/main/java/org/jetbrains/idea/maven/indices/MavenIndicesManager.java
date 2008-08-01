@@ -66,7 +66,11 @@ public class MavenIndicesManager implements ApplicationComponent {
     File dir = myTestIndicesDir == null
                ? new File(PathManager.getSystemPath(), "Maven/Indices")
                : myTestIndicesDir;
-    myIndices = new MavenIndices(myEmbedder, dir);
+    myIndices = new MavenIndices(myEmbedder, dir, new MavenIndex.IndexListener() {
+      public void indexIsBroken(MavenIndex index) {
+        scheduleUpdate(Collections.singletonList(index), false);
+      }
+    });
 
     return myIndices;
   }
@@ -102,22 +106,31 @@ public class MavenIndicesManager implements ApplicationComponent {
     return getIndicesObject().getIndices();
   }
 
-  public synchronized List<MavenIndex> ensureIndicesExist(Project project,
-                                                          File localRepository,
-                                                          Collection<String> remoteRepositories) throws MavenIndexException {
+  public synchronized List<MavenIndex> ensureIndicesExist(File localRepository,
+                                                          Collection<String> remoteRepositories) {
     // MavenIndices.add method returns an existing index if it has already been added, thus we have to use set here.
     LinkedHashSet<MavenIndex> result = new LinkedHashSet<MavenIndex>();
 
     MavenIndices indicesObjectCache = getIndicesObject();
 
-    MavenIndex localIndex = indicesObjectCache.add(localRepository.getPath(), MavenIndex.Kind.LOCAL);
-    result.add(localIndex);
-    if (localIndex.getUpdateTimestamp() == -1) {
-      scheduleUpdate(project, Collections.singletonList(localIndex));
+    try {
+      MavenIndex localIndex = indicesObjectCache.add(localRepository.getPath(), MavenIndex.Kind.LOCAL);
+      result.add(localIndex);
+      if (localIndex.getUpdateTimestamp() == -1) {
+        scheduleUpdate(Collections.singletonList(localIndex));
+      }
+    }
+    catch (MavenIndexException e) {
+      MavenLog.warn(e);
     }
 
     for (String eachRepo : remoteRepositories) {
-      result.add(indicesObjectCache.add(eachRepo, MavenIndex.Kind.REMOTE));
+      try {
+        result.add(indicesObjectCache.add(eachRepo, MavenIndex.Kind.REMOTE));
+      }
+      catch (MavenIndexException e) {
+        MavenLog.warn(e);
+      }
     }
 
     return new ArrayList<MavenIndex>(result);
@@ -126,31 +139,17 @@ public class MavenIndicesManager implements ApplicationComponent {
   public void addArtifact(File repository, MavenId artifact) {
     for (MavenIndex each : getIndices()) {
       if (repository.equals(each.getRepositoryFile())) {
-        try {
-          each.addArtifact(artifact);
-        }
-        catch (MavenIndexException e) {
-          MavenLog.error(logIndexError(each), e);
-        }
+        each.addArtifact(artifact);
         return;
       }
     }
   }
 
-  private String logIndexError(MavenIndex each) {
-    String message = "Failed with fix #1 for index " + each.getDir();
-    String separator = "\n-------------------------------------------------";
-    for (MavenIndex eachExistingIndex : getIndices()) {
-      message += separator +
-                 "\ndir: " + eachExistingIndex.getDir() +
-                 "\ndataDir: " + eachExistingIndex.getCurrentDataDir() +
-                 "\nrepository: " + eachExistingIndex.getRepositoryPathOrUrl();
-    }
-    message += separator;
-    return message;
+  public void scheduleUpdate(List<MavenIndex> indices) {
+    scheduleUpdate(indices, true);
   }
 
-  public void scheduleUpdate(final Project p, List<MavenIndex> indices) {
+  private void scheduleUpdate(List<MavenIndex> indices, final boolean fullUpdate) {
     final List<MavenIndex> toSchedule = new ArrayList<MavenIndex>();
 
     synchronized (myUpdatingIndicesLock) {
@@ -164,12 +163,12 @@ public class MavenIndicesManager implements ApplicationComponent {
 
     myUpdatingQueue.run(new Task.Backgroundable(null, IndicesBundle.message("maven.indices.updating"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
-        doUpdateIndices(toSchedule, p, indicator);
+        doUpdateIndices(toSchedule, fullUpdate, indicator);
       }
     });
   }
 
-  private void doUpdateIndices(List<MavenIndex> indices, final Project p, ProgressIndicator indicator) {
+  private void doUpdateIndices(List<MavenIndex> indices, boolean fullUpdate, ProgressIndicator indicator) {
     List<MavenIndex> remainingWaiting = new ArrayList<MavenIndex>(indices);
 
     try {
@@ -185,11 +184,11 @@ public class MavenIndicesManager implements ApplicationComponent {
         }
 
         try {
-          getIndicesObject().update(each, indicator);
+          getIndicesObject().updateOrRepair(each, fullUpdate, indicator);
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              rehighlightAllPoms(p);
+              rehighlightAllPoms();
             }
           });
         }
@@ -217,11 +216,13 @@ public class MavenIndicesManager implements ApplicationComponent {
     }
   }
 
-  private void rehighlightAllPoms(final Project p) {
+  private void rehighlightAllPoms() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        ((PsiModificationTrackerImpl)PsiManager.getInstance(p).getModificationTracker()).incCounter();
-        DaemonCodeAnalyzer.getInstance(p).restart();
+        for (Project each : ProjectManager.getInstance().getOpenProjects()) {
+          ((PsiModificationTrackerImpl)PsiManager.getInstance(each).getModificationTracker()).incCounter();
+          DaemonCodeAnalyzer.getInstance(each).restart();
+        }
       }
     });
   }

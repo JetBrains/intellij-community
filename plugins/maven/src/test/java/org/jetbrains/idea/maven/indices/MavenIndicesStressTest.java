@@ -8,10 +8,11 @@ import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 
 import java.io.File;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class MavenIndicesStressTest extends MavenTestCase {
+public abstract class MavenIndicesStressTest extends MavenTestCase implements MavenIndex.IndexListener {
   public void test1() throws Exception {
     MavenCustomRepositoryTestFixture fixture;
 
@@ -24,7 +25,7 @@ public abstract class MavenIndicesStressTest extends MavenTestCase {
     MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings()).getEmbedder();
     File indicesDir = new File(myDir, "indices");
 
-    final MavenIndices indices = new MavenIndices(embedder, indicesDir);
+    final MavenIndices indices = new MavenIndices(embedder, indicesDir, this);
     final MavenIndex index = indices.add(getRepositoryPath(), MavenIndex.Kind.LOCAL);
 
     final AtomicBoolean isFinished = new AtomicBoolean(false);
@@ -34,7 +35,7 @@ public abstract class MavenIndicesStressTest extends MavenTestCase {
         try {
           for (int i = 0; i < 3; i++) {
             System.out.println("INDEXING #" + i);
-            indices.update(index, new EmptyProgressIndicator());
+            indices.updateOrRepair(index, true, new EmptyProgressIndicator());
           }
         }
         catch (ProcessCanceledException e) {
@@ -48,16 +49,11 @@ public abstract class MavenIndicesStressTest extends MavenTestCase {
 
     Thread t2 = new Thread(new Runnable() {
       public void run() {
-        try {
-          int i = 0;
-          while (!isFinished.get()) {
-            System.out.println("Adding artifact #" + i);
-            index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
-            i++;
-          }
-        }
-        catch (MavenIndexException e) {
-          throw new RuntimeException(e);
+        Random random = new Random();
+        while (!isFinished.get()) {
+          int i = random.nextInt(100);
+          System.out.println("Adding artifact #" + i);
+          index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
         }
       }
     });
@@ -89,14 +85,14 @@ public abstract class MavenIndicesStressTest extends MavenTestCase {
     MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings()).getEmbedder();
     File indicesDir = new File(myDir, "indices");
 
-    MavenIndices indices = new MavenIndices(embedder, indicesDir);
+    MavenIndices indices = new MavenIndices(embedder, indicesDir, this);
     MavenIndex index = indices.add(getRepositoryPath(), MavenIndex.Kind.LOCAL);
 
     index.addArtifact(new MavenId("group1", "artifact1", "1"));
     indices.close();
 
-    MavenIndices indices1 = new MavenIndices(embedder, indicesDir);
-    MavenIndices indices2 = new MavenIndices(embedder, indicesDir);
+    MavenIndices indices1 = new MavenIndices(embedder, indicesDir, this);
+    MavenIndices indices2 = new MavenIndices(embedder, indicesDir, this);
 
     AtomicInteger finishedCount = new AtomicInteger(0);
 
@@ -130,14 +126,14 @@ public abstract class MavenIndicesStressTest extends MavenTestCase {
             index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
           }
         }
-        catch (MavenIndexException e) {
-          throw new RuntimeException(e);
-        }
         finally {
           finishedCount.incrementAndGet();
         }
       }
     });
     return t2;
+  }
+
+  public void indexIsBroken(MavenIndex index) {
   }
 }

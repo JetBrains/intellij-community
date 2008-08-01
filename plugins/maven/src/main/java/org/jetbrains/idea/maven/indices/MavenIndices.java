@@ -22,14 +22,15 @@ public class MavenIndices {
   private final IndexUpdater myUpdater;
 
   private final File myIndicesDir;
-
+  private final MavenIndex.IndexListener myListener;
   private final List<MavenIndex> myIndices = new ArrayList<MavenIndex>();
 
   private static final Object ourDirectoryLock = new Object();
 
-  public MavenIndices(MavenEmbedder e, File indicesDir) {
+  public MavenIndices(MavenEmbedder e, File indicesDir, MavenIndex.IndexListener listener) {
     myEmbedder = e;
     myIndicesDir = indicesDir;
+    myListener = listener;
 
     PlexusContainer p = myEmbedder.getPlexusContainer();
     try {
@@ -50,7 +51,7 @@ public class MavenIndices {
     if (indices == null) return;
     for (File each : indices) {
       try {
-        MavenIndex index = new MavenIndex(each);
+        MavenIndex index = new MavenIndex(each, myListener);
         if (findExisting(index.getRepositoryPathOrUrl(), index.getKind()) != null) {
           index.close();
           FileUtil.delete(each);
@@ -66,19 +67,10 @@ public class MavenIndices {
   }
 
   public synchronized void close() {
-    try {
-      for (MavenIndex data : myIndices) {
-        try {
-          data.close();
-        }
-        catch (MavenIndexException e) {
-          MavenLog.warn(e);
-        }
-      }
+    for (MavenIndex each : myIndices) {
+      each.close();
     }
-    finally {
-      myIndices.clear();
-    }
+    myIndices.clear();
   }
 
   public synchronized List<MavenIndex> getIndices() {
@@ -90,7 +82,7 @@ public class MavenIndices {
     if (index != null) return index;
 
     File dir = getAvailableIndexDir();
-    index = new MavenIndex(dir, repositoryPathOrUrl, kind);
+    index = new MavenIndex(dir, repositoryPathOrUrl, kind, myListener);
     myIndices.add(index);
     return index;
   }
@@ -129,8 +121,8 @@ public class MavenIndices {
     }
   }
 
-  public void update(MavenIndex i, ProgressIndicator progress) throws ProcessCanceledException {
-    i.update(myIndexer, myUpdater, getProxyInfo(), progress);
+  public void updateOrRepair(MavenIndex i, boolean fullUpdate, ProgressIndicator progress) throws ProcessCanceledException {
+    i.updateOrRepair(myIndexer, myUpdater, getProxyInfo(), fullUpdate, progress);
   }
 
   private ProxyInfo getProxyInfo() {

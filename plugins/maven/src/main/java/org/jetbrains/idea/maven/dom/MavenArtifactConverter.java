@@ -15,20 +15,17 @@ import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.MavenLog;
+import org.jetbrains.idea.maven.core.util.MavenArtifactUtil;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.dom.model.Dependency;
 import org.jetbrains.idea.maven.dom.model.MavenParent;
 import org.jetbrains.idea.maven.dom.model.Plugin;
-import org.jetbrains.idea.maven.indices.MavenIndexException;
-import org.jetbrains.idea.maven.core.util.MavenArtifactUtil;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -43,31 +40,24 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
       }
     }
 
-    try {
-      Project p = getProject(context);
-      MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(p);
-      MavenId id = MavenArtifactConverterHelper.getId(context);
+    Project p = getProject(context);
+    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(p);
+    MavenId id = MavenArtifactConverterHelper.getId(context);
 
-      Plugin plugin = MavenArtifactConverterHelper.getMavenPlugin(context);
-      if (StringUtil.isEmpty(id.groupId) && plugin != null) {
-        for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
-          id.groupId = each;
-          if (isValid(p, manager, id, context)) return s;
-        }
-        return null;
+    Plugin plugin = MavenArtifactConverterHelper.getMavenPlugin(context);
+    if (StringUtil.isEmpty(id.groupId) && plugin != null) {
+      for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
+        id.groupId = each;
+        if (isValid(p, manager, id, context)) return s;
       }
-      else {
-        return isValid(p, manager, id, context) ? s : null;
-      }
+      return null;
     }
-    catch (MavenIndexException e) {
-      MavenLog.info(e);
-      return s;
+    else {
+      return isValid(p, manager, id, context) ? s : null;
     }
   }
 
-  protected abstract boolean isValid(Project project, MavenProjectIndicesManager manager, MavenId id, ConvertContext context)
-      throws MavenIndexException;
+  protected abstract boolean isValid(Project project, MavenProjectIndicesManager manager, MavenId id, ConvertContext context);
 
   public String toString(@Nullable String s, ConvertContext context) {
     return s;
@@ -75,31 +65,24 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
 
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
-    try {
-      Project p = getProject(context);
-      MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(p);
-      MavenId id = MavenArtifactConverterHelper.getId(context);
+    Project p = getProject(context);
+    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(p);
+    MavenId id = MavenArtifactConverterHelper.getId(context);
 
-      Plugin plugin = MavenArtifactConverterHelper.getMavenPlugin(context);
-      if (StringUtil.isEmpty(id.groupId) && plugin != null) {
-        Set<String> result = new HashSet<String>();
-        for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
-          id.groupId = each;
-          result.addAll(getVariants(p, manager, id, context));
-        }
-        return result;
+    Plugin plugin = MavenArtifactConverterHelper.getMavenPlugin(context);
+    if (StringUtil.isEmpty(id.groupId) && plugin != null) {
+      Set<String> result = new HashSet<String>();
+      for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
+        id.groupId = each;
+        result.addAll(getVariants(p, manager, id, context));
       }
+      return result;
+    }
 
-      return getVariants(p, manager, id, context);
-    }
-    catch (MavenIndexException e) {
-      MavenLog.info(e);
-      return Collections.emptyList();
-    }
+    return getVariants(p, manager, id, context);
   }
 
-  protected abstract Set<String> getVariants(Project project, MavenProjectIndicesManager manager, MavenId id, ConvertContext context)
-      throws MavenIndexException;
+  protected abstract Set<String> getVariants(Project project, MavenProjectIndicesManager manager, MavenId id, ConvertContext context);
 
   @Override
   public PsiElement resolve(String o, ConvertContext context) {

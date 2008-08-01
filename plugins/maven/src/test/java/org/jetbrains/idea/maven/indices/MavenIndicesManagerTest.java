@@ -29,14 +29,14 @@ public class MavenIndicesManagerTest extends MavenImportingTestCase {
     File dir3 = myIndicesFixture.getRepositoryFixture().getTestData("dir\\foo\\");
     File dir4 = myIndicesFixture.getRepositoryFixture().getTestData("dir/bar");
 
-    List<MavenIndex> indices1 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir1, Collections.<String>emptySet());
+    List<MavenIndex> indices1 = myIndicesFixture.getIndicesManager().ensureIndicesExist(dir1, Collections.<String>emptySet());
     assertEquals(1, indices1.size());
     assertTrue(myIndicesFixture.getIndicesManager().getIndices().contains(indices1.get(0)));
 
-    assertEquals(indices1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir2, Collections.<String>emptySet()));
-    assertEquals(indices1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir3, Collections.<String>emptySet()));
+    assertEquals(indices1, myIndicesFixture.getIndicesManager().ensureIndicesExist(dir2, Collections.<String>emptySet()));
+    assertEquals(indices1, myIndicesFixture.getIndicesManager().ensureIndicesExist(dir3, Collections.<String>emptySet()));
 
-    List<MavenIndex> indices2 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir4, Collections.<String>emptySet());
+    List<MavenIndex> indices2 = myIndicesFixture.getIndicesManager().ensureIndicesExist(dir4, Collections.<String>emptySet());
     assertFalse(indices1.get(0).equals(indices2.get(0)));
   }
 
@@ -46,13 +46,13 @@ public class MavenIndicesManagerTest extends MavenImportingTestCase {
     String remote2 = "  http://foo\\bar\\\\  ";
     String remote3 = "http://foo\\bar\\baz";
 
-    List<MavenIndex> indices1 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, Collections.singleton(remote1));
+    List<MavenIndex> indices1 = myIndicesFixture.getIndicesManager().ensureIndicesExist(local, Collections.singleton(remote1));
     assertEquals(2, indices1.size());
 
-    List<MavenIndex> indices2 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, asList(remote1, remote2));
+    List<MavenIndex> indices2 = myIndicesFixture.getIndicesManager().ensureIndicesExist(local, asList(remote1, remote2));
     assertEquals(2, indices2.size());
 
-    List<MavenIndex> indices3 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, asList(remote1, remote2, remote3));
+    List<MavenIndex> indices3 = myIndicesFixture.getIndicesManager().ensureIndicesExist(local, asList(remote1, remote2, remote3));
     assertEquals(3, indices3.size());
   }
 }

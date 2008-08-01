@@ -5,7 +5,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
@@ -74,15 +73,9 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
   }
 
   private void updateIndicesList() {
-    try {
-      MavenIndicesManager m = MavenIndicesManager.getInstance();
-      myProjectIndices.set(m.ensureIndicesExist(myProject,
-                                                MavenProjectsManager.getInstance(myProject).getLocalRepository(),
-                                                collectRemoteRepositories()));
-    }
-    catch (MavenIndexException e) {
-      MavenLog.info(e);
-    }
+    MavenIndicesManager m = MavenIndicesManager.getInstance();
+    myProjectIndices.set(m.ensureIndicesExist(MavenProjectsManager.getInstance(myProject).getLocalRepository(),
+                                              collectRemoteRepositories()));
   }
 
   private Set<String> collectRemoteRepositories() {
@@ -104,11 +97,11 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
   }
 
   public void scheduleUpdateAll() {
-    MavenIndicesManager.getInstance().scheduleUpdate(myProject, myProjectIndices.get());
+    MavenIndicesManager.getInstance().scheduleUpdate(myProjectIndices.get());
   }
 
   public void scheduleUpdate(List<MavenIndex> indices) {
-    MavenIndicesManager.getInstance().scheduleUpdate(myProject, indices);
+    MavenIndicesManager.getInstance().scheduleUpdate(indices);
   }
 
   public MavenIndicesManager.IndexUpdatingState getUpdatingState(MavenIndex index) {
@@ -119,7 +112,7 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
     return MavenProjectsManager.getInstance(myProject);
   }
 
-  public Set<String> getGroupIds() throws MavenIndexException {
+  public Set<String> getGroupIds() {
     Set<String> result = getProjectGroupIds();
     for (MavenIndex each : myProjectIndices.get()) {
       result.addAll(each.getGroupIds());
@@ -127,7 +120,7 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
     return result;
   }
 
-  public Set<String> getArtifactIds(String groupId) throws MavenIndexException {
+  public Set<String> getArtifactIds(String groupId) {
     Set<String> result = getProjectArtifactIds(groupId);
     for (MavenIndex each : myProjectIndices.get()) {
       result.addAll(each.getArtifactIds(groupId));
@@ -135,7 +128,7 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
     return result;
   }
 
-  public Set<String> getVersions(String groupId, String artifactId) throws MavenIndexException {
+  public Set<String> getVersions(String groupId, String artifactId) {
     Set<String> result = getProjectVersions(groupId, artifactId);
     for (MavenIndex each : myProjectIndices.get()) {
       result.addAll(each.getVersions(groupId, artifactId));
@@ -143,7 +136,7 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
     return result;
   }
 
-  public boolean hasGroupId(String groupId) throws MavenIndexException {
+  public boolean hasGroupId(String groupId) {
     if (hasProjectGroupId(groupId)) return true;
     for (MavenIndex each : myProjectIndices.get()) {
       if (each.hasGroupId(groupId)) return true;
@@ -151,7 +144,7 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
     return false;
   }
 
-  public boolean hasArtifactId(String groupId, String artifactId) throws MavenIndexException {
+  public boolean hasArtifactId(String groupId, String artifactId) {
     if (hasProjectArtifactId(groupId, artifactId)) return true;
     for (MavenIndex each : myProjectIndices.get()) {
       if (each.hasArtifactId(groupId, artifactId)) return true;
@@ -159,7 +152,7 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
     return false;
   }
 
-  public boolean hasVersion(String groupId, String artifactId, String version) throws MavenIndexException {
+  public boolean hasVersion(String groupId, String artifactId, String version) {
     if (hasProjectVersion(groupId, artifactId, version)) return true;
     for (MavenIndex each : myProjectIndices.get()) {
       if (each.hasVersion(groupId, artifactId, version)) return true;
