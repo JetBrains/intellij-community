@@ -74,7 +74,10 @@ public class PluginDownloader {
       //store old plugins file
       ideaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(myPluginId));
       LOG.assertTrue(ideaPluginDescriptor != null);
-      if (myPluginVersion != null && IdeaPluginDescriptorImpl.compareVersion(ideaPluginDescriptor.getVersion(), myPluginVersion) >= 0) return false;
+      if (myPluginVersion != null && IdeaPluginDescriptorImpl.compareVersion(ideaPluginDescriptor.getVersion(), myPluginVersion) >= 0) {
+        LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
+        return false;
+      }
       myOldFile = ideaPluginDescriptor.getPath();
     }
     // download plugin
@@ -116,7 +119,10 @@ public class PluginDownloader {
     }
     if (descriptor != null) {
       myPluginVersion = descriptor.getVersion();
-      if (ideaPluginDescriptor != null && IdeaPluginDescriptorImpl.compareVersion(ideaPluginDescriptor.getVersion(), descriptor.getVersion()) >= 0) return false; //was not updated
+      if (ideaPluginDescriptor != null && IdeaPluginDescriptorImpl.compareVersion(ideaPluginDescriptor.getVersion(), descriptor.getVersion()) >= 0) {
+        LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
+        return false; //was not updated
+      }
     }
     return true;
   }
