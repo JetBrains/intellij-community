@@ -57,4 +57,11 @@ public class RTestUnitTreeBuilder extends AbstractTestTreeBuilder {
     //TODO[romeo] move to base class
     return false;
   }
+
+  /**
+   * for java unit tests
+   */
+  public void performUpdate() {
+    getUpdater().performUpdate();
+  }
 }

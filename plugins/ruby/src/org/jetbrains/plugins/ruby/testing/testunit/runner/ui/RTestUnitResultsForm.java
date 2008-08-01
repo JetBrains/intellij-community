@@ -373,14 +373,12 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     final RTestUnitTestProxy parentSuite = newTestOrSuite.getParent();
     assert parentSuite != null;
 
-
-
-    // Tree
-    myTreeBuilder.updateTestsSubtree(parentSuite);
-    myTreeBuilder.repaintWithParents(newTestOrSuite);
-
     IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
       public void run() {
+        // Tree
+        myTreeBuilder.updateTestsSubtree(parentSuite);
+        myTreeBuilder.repaintWithParents(newTestOrSuite);
+
         myAnimator.setCurrentTestCase(newTestOrSuite);
       }
     }, ModalityState.NON_MODAL);
@@ -432,6 +430,13 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     myStatusLabel.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
                                                                        myTestsTotal, myTestsCurrentCount,
                                                                        myTestsFailuresCount));
+  }
+
+  /**
+   * for java unit tests
+   */
+  public void performUpdate() {
+    myTreeBuilder.performUpdate();
   }
 
 

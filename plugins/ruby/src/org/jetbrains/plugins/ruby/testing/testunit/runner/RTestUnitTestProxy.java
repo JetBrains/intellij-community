@@ -230,6 +230,14 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
     });
   }
 
+  public void addStdSys(final String output) {
+    addLast(new Printable() {
+      public void printOn(final Printer printer) {
+        printer.print(output, ConsoleViewContentType.SYSTEM_OUTPUT);
+      }
+    });
+  }
+
   private void fireOnNewPrintable(final Printable printable) {
     myPrinter.onNewAvaliable(printable);
   }

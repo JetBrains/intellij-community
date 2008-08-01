@@ -16,18 +16,19 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
   private RTestUnitConsoleView myConsole;
   private GeneralToRTestUnitEventsConvertor myEventsProcessor;
   private TreeModel myTreeModel;
+  private RTestUnitResultsForm myResultsViewer;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     final RTestUnitConsoleProperties consoleProperties = createConsoleProperties();
-    final RTestUnitResultsForm resultsViewer = (RTestUnitResultsForm)createResultsViewer(consoleProperties);
+    myResultsViewer = (RTestUnitResultsForm)createResultsViewer(consoleProperties);
 
-    myConsole = new RTestUnitConsoleView(consoleProperties, resultsViewer);
-    myEventsProcessor = new GeneralToRTestUnitEventsConvertor(resultsViewer.getTestsRootNode());
-    myEventsProcessor.addEventsListener(resultsViewer);
-    myTreeModel = resultsViewer.getTreeView().getModel();
+    myConsole = new RTestUnitConsoleView(consoleProperties, myResultsViewer);
+    myEventsProcessor = new GeneralToRTestUnitEventsConvertor(myResultsViewer.getTestsRootNode());
+    myEventsProcessor.addEventsListener(myResultsViewer);
+    myTreeModel = myResultsViewer.getTreeView().getModel();
 
     myEventsProcessor.onStartTesting();
   }
@@ -58,36 +59,36 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
     assertEquals("[root]", rootTreeNode.toString());
   }
 
-  public void testOnTestStart() {
-    myEventsProcessor.onTestStart("some_test");
+  public void testOnTestStart() throws InterruptedException {
+    onTestStart("some_test");
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final RTestUnitTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
 
     assertNotNull(proxy);
     assertTrue(proxy.isInProgress());
 
-    final Object rootTreeNode = myTreeModel.getRoot();
+    final Object rootTreeNode = (myTreeModel.getRoot());
     assertEquals(1, myTreeModel.getChildCount(rootTreeNode));
     final RTestUnitTestProxy rootProxy = RTestUnitTestTreeView.getTestProxyFor(rootTreeNode);
     assertNotNull(rootProxy);
     assertSameElements(rootProxy.getChildren(), proxy);
 
 
-    myEventsProcessor.onTestStart("some_test2");
+    onTestStart("some_test2");
     final String fullName2 = myEventsProcessor.getFullTestName("some_test2");
     final RTestUnitTestProxy proxy2 = myEventsProcessor.getProxyByFullTestName(fullName2);
     assertSameElements(rootProxy.getChildren(), proxy, proxy2);
   }
 
   public void testOnTestStart_Twice() {
-    myEventsProcessor.onTestStart("some_test");
-    myEventsProcessor.onTestStart("some_test");
+    onTestStart("some_test");
+    onTestStart("some_test");
 
     assertEquals(1, myEventsProcessor.getRunningTestsQuantity());
   }
 
   public void testOnTestFailure() {
-    myEventsProcessor.onTestStart("some_test");
+    onTestStart("some_test");
     myEventsProcessor.onTestFailure("some_test", "", "");
 
     final String fullName = myEventsProcessor.getFullTestName("some_test");
@@ -98,7 +99,7 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
   }
 
   public void testOnTestFailure_Twice() {
-    myEventsProcessor.onTestStart("some_test");
+    onTestStart("some_test");
     myEventsProcessor.onTestFailure("some_test", "", "");
     myEventsProcessor.onTestFailure("some_test", "", "");
 
@@ -108,7 +109,7 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
   }
 
   public void testOnTestFinish() {
-    myEventsProcessor.onTestStart("some_test");
+    onTestStart("some_test");
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final RTestUnitTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
     myEventsProcessor.onTestFinish("some_test");
@@ -154,7 +155,7 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
   }
 
   public void testOnFinishTesting_WithDefect() {
-    myEventsProcessor.onTestStart("test");
+    onTestStart("test");
     myEventsProcessor.onTestFailure("test", "", "");
     myEventsProcessor.onTestFinish("test");
     myEventsProcessor.onFinishTesting();
@@ -184,18 +185,18 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
   }
 
   public void testOnSuiteStart() {
-    myEventsProcessor.onTestSuiteStart("suite1");
+    onTestSuiteStart("suite1");
 
     //lets check that new tests have right parent
-    myEventsProcessor.onTestStart("test1");
+    onTestStart("test1");
     final RTestUnitTestProxy test1 =
         myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName("test1"));
     assertEquals("suite1", test1.getParent().getName());
 
     //lets check that new suits have righ parent
-    myEventsProcessor.onTestSuiteStart("suite2");
-    myEventsProcessor.onTestSuiteStart("suite3");
-    myEventsProcessor.onTestStart("test2");
+    onTestSuiteStart("suite2");
+    onTestSuiteStart("suite3");
+    onTestStart("test2");
     final RTestUnitTestProxy test2 =
         myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName("test2"));
     assertEquals("suite3", test2.getParent().getName());
@@ -205,7 +206,7 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
 
     //check that after finishing suite (suite3), current will be parent of finished suite (i.e. suite2)
     myEventsProcessor.onTestSuiteFinish("suite3");
-    myEventsProcessor.onTestStart("test3");
+    onTestStart("test3");
     final RTestUnitTestProxy test3 =
         myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName("test3"));
     assertEquals("suite2", test3.getParent().getName());
@@ -213,5 +214,15 @@ public class RTestUnitEventsProcessorTest extends BaseRUnitTestsTestCase {
     //clean up
     myEventsProcessor.onTestSuiteFinish("suite2");
     myEventsProcessor.onTestSuiteFinish("suite1");
+  }
+
+  private void onTestStart(final String testName) {
+    myEventsProcessor.onTestStart(testName);
+    myResultsViewer.performUpdate();
+  }
+
+  private void onTestSuiteStart(final String suiteName) {
+    myEventsProcessor.onTestSuiteStart(suiteName);
+    myResultsViewer.performUpdate();
   }
 }

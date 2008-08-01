@@ -66,6 +66,13 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
     assertAllOutputs(myMockResetablePrinter, "oneone", "twotwo", "");
   }
 
+  public void testAddStdSys() {
+    mySimpleTest.setPrintLinstener(myMockResetablePrinter);
+
+    mySimpleTest.addStdSys("sys");
+    assertAllOutputs(myMockResetablePrinter, "", "", "sys");
+  }
+
   public void testPrintTestProxy_Order() {
     mySimpleTest.setPrintLinstener(myMockResetablePrinter);
 
@@ -152,11 +159,11 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
     myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
     myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
 
-    assertAllOutputs(myMockResetablePrinter, "stdout1 ", "error msg\nmethod1:1\nmethod2:2\nstderr1 ", "");
+    assertAllOutputs(myMockResetablePrinter, "stdout1 ", "\nerror msg\nmethod1:1\nmethod2:2\nstderr1 ", "");
 
     final MockPrinter mockPrinter1 = new MockPrinter(true);
     mockPrinter1.onNewAvaliable(myTest1);
-    assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 error msg\nmethod1:1\nmethod2:2\n", "");
+    assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
 
     //other output order
     final RTestUnitTestProxy myTest2 = startTestWithPrinter("my_test2");
@@ -164,10 +171,10 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
     myEventsProcessor.onTestOutput("my_test2", "stderr1 ", false);
     myEventsProcessor.onTestFailure("my_test2", "error msg", "method1:1\nmethod2:2");
 
-    assertAllOutputs(myMockResetablePrinter, "stdout1 ", "stderr1 error msg\nmethod1:1\nmethod2:2\n", "");
+    assertAllOutputs(myMockResetablePrinter, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
     final MockPrinter mockPrinter2 = new MockPrinter(true);
     mockPrinter2.onNewAvaliable(myTest2);
-    assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 error msg\nmethod1:1\nmethod2:2\n", "");
+    assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
   }
 
   private RTestUnitTestProxy startTestWithPrinter(final String testName) {

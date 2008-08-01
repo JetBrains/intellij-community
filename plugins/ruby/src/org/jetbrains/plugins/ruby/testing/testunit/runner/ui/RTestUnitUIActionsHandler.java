@@ -13,7 +13,6 @@ import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 public class RTestUnitUIActionsHandler extends RTestUnitEventsAdapter {
   private TestResultsViewer myResultsViewer;
   private TestConsoleProperties myConsoleProperties;
-  private boolean firstWasFound;
 
   public RTestUnitUIActionsHandler(final TestResultsViewer resultsViewer,
                                    final TestConsoleProperties consoleProperties) {
@@ -44,18 +43,18 @@ public class RTestUnitUIActionsHandler extends RTestUnitEventsAdapter {
     }
   }
 
-  @Override
-  public void onTestFinished(@NotNull final RTestUnitTestProxy test) {
-    if (!firstWasFound) {
-      // select first defect on the fly
-      if (test.isDefect()
-          && TestConsoleProperties.SELECT_FIRST_DEFECT.value(myConsoleProperties)) {
-
-        myResultsViewer.selectAndNotify(test);
-      }
-      firstWasFound = true;
-    }
-  }
+  //@Override
+  //public void onTestFinished(@NotNull final RTestUnitTestProxy test) {
+  //  if (!firstWasFound) {
+  //    // select first defect on the fly
+  //    if (test.isDefect()
+  //        && TestConsoleProperties.SELECT_FIRST_DEFECT.value(myConsoleProperties)) {
+  //
+  //      myResultsViewer.selectAndNotify(test);
+  //    }
+  //    firstWasFound = true;
+  //  }
+  //}
 
   //TODO: SCROLL_TO_SOURCE
 }
