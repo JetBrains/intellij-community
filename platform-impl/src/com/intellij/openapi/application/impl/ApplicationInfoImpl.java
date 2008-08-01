@@ -17,6 +17,8 @@ import org.jetbrains.annotations.NonNls;
 import java.io.File;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.ArrayList;
 
 public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExternalizable, ApplicationComponent {
 
@@ -39,6 +41,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private boolean myEAP;
   @NonNls private String myHelpFileName = "ideahelp.jar";
   @NonNls private String myHelpRootName = "idea";
+  private List<PluginChooserPage> myPluginChooserPages = new ArrayList<PluginChooserPage>();
 
   @NonNls private static final String IDEA_PATH = "/idea/";
   @NonNls private static final String ELEMENT_VERSION = "version";
@@ -65,6 +68,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String HELP_ELEMENT_NAME = "help";
   @NonNls private static final String ATTRIBUTE_HELP_FILE = "file";
   @NonNls private static final String ATTRIBUTE_HELP_ROOT = "root";
+  @NonNls private static final String PLUGINS_PAGE_ELEMENT_NAME = "plugins-page";
 
   public void initComponent() { }
 
@@ -254,6 +258,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
     Element eapUpdateUrls = parentNode.getChild(EAP_UPDATE_URLS_ELEMENT_NAME);
     myEapUpdateUrls = new UpdateUrlsImpl(eapUpdateUrls);
+
+    myPluginChooserPages = new ArrayList<PluginChooserPage>();
+    final List children = parentNode.getChildren(PLUGINS_PAGE_ELEMENT_NAME);
+    for(Object child: children) {
+      myPluginChooserPages.add(new PluginChooserPageImpl((Element) child));
+    }
+  }
+
+  public List<PluginChooserPage> getPluginChooserPages() {
+    return myPluginChooserPages;
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -284,6 +298,30 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
     public String getDownloadUrl() {
       return myDownloadUrl;
+    }
+  }
+
+  private static class PluginChooserPageImpl implements PluginChooserPage {
+    private String myTitle;
+    private String myCategory;
+    private String myDependentPlugin;
+
+    private PluginChooserPageImpl(Element e) {
+      myTitle = e.getAttributeValue("title");
+      myCategory = e.getAttributeValue("category");
+      myDependentPlugin = e.getAttributeValue("depends");
+    }
+
+    public String getTitle() {
+      return myTitle;
+    }
+
+    public String getCategory() {
+      return myCategory;
+    }
+
+    public String getDependentPlugin() {
+      return myDependentPlugin;
     }
   }
 }

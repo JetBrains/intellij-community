@@ -3,17 +3,20 @@ package com.intellij.ide.startupWizard;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ui.wizard.WizardDialog;
 import com.intellij.util.ImageLoader;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class StartupWizard extends WizardDialog<StartupWizardModel> {
-  public StartupWizard() {
-    super(true, true, new StartupWizardModel());
+  public StartupWizard(final List<ApplicationInfoEx.PluginChooserPage> pluginChooserPages) {
+    super(true, true, new StartupWizardModel(pluginChooserPages));
     getPeer().setIconImage(ImageLoader.loadFromResource("/icon.png"));
   }
 
@@ -31,7 +34,7 @@ public class StartupWizard extends WizardDialog<StartupWizardModel> {
   }
 
   public static void run() {
-    new StartupWizard().show();
+    new StartupWizard(ApplicationInfoImpl.getShadowInstance().getPluginChooserPages()).show();
   }
 
   public static void main(String[] args) {

@@ -10,6 +10,8 @@ package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
 
+import java.util.List;
+
 public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public static ApplicationInfoEx getInstanceEx() {
@@ -45,4 +47,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
     String getDownloadUrl();
   }
 
+  public static interface PluginChooserPage {
+    String getTitle();
+    String getCategory();
+    String getDependentPlugin();
+  }
+
+  public abstract List<PluginChooserPage> getPluginChooserPages();
 }

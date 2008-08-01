@@ -1,18 +1,16 @@
 package com.intellij.ide.startupWizard;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.ui.wizard.WizardModel;
 import com.intellij.util.containers.HashSet;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
@@ -20,17 +18,23 @@ import java.util.Set;
 public class StartupWizardModel extends WizardModel {
   private Set<String> myDisabledPluginIds = new HashSet<String>();
   private Map<String, SelectPluginsStep> myStepMap = new HashMap<String, SelectPluginsStep>();
-  private SelectPluginsStep myOtherStep = new SelectPluginsStep("Select other plugins", myDisabledPluginIds, null);
+  private SelectPluginsStep myOtherStep;
 
-  public StartupWizardModel() {
+  public StartupWizardModel(final List<ApplicationInfoEx.PluginChooserPage> pluginChooserPages) {
     super(ApplicationNamesInfo.getInstance().getFullProductName() + " Initial Configuration Wizard");
     loadDisabledPlugins(new File(PathManager.getConfigPath()));
 
-    addSelectPluginsStep("VCS Integration", "Select VCS Integration Plugins", null);
-    addSelectPluginsStep("Web/JavaEE Technologies", "Select Web/JavaEE Technology Plugins", null);
-    addSelectPluginsStep("Application Servers", "Select Application Server Plugins", "com.intellij.javaee");
-    addSelectPluginsStep("HTML/JavaScript Development", "Select HTML/JavaScript Development Plugins", null);
-    add(myOtherStep);
+    for (ApplicationInfoEx.PluginChooserPage page : pluginChooserPages) {
+      if (page.getCategory() == null) {
+        myOtherStep = new SelectPluginsStep(page.getTitle(), myDisabledPluginIds, null);
+      }
+      else {
+        addSelectPluginsStep(page.getCategory(), page.getTitle(), page.getDependentPlugin());
+      }
+    }
+    if (myOtherStep != null) {
+      add(myOtherStep);
+    }
 
     final IdeaPluginDescriptor[] pluginDescriptors = PluginManager.loadDescriptors();
     for (IdeaPluginDescriptor pluginDescriptor : pluginDescriptors) {
@@ -43,7 +47,7 @@ public class StartupWizardModel extends WizardModel {
       if (step != null) {
         step.addPlugin(pluginDescriptor);
       }
-      else {
+      else if (myOtherStep != null) {
         myOtherStep.addPlugin(pluginDescriptor);
       }
     }
