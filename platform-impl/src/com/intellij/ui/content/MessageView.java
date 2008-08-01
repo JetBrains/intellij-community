@@ -4,4 +4,5 @@ public interface MessageView  {
 
   ContentManager getContentManager();
 
+  void runWhenInitialized(final Runnable runnable);
 }

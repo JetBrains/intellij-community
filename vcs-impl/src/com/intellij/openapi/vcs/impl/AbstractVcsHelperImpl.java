@@ -76,12 +76,16 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     commandProcessor.executeCommand(myProject, new Runnable() {
       public void run() {
         final MessageView messageView = myProject.getComponent(MessageView.class);
-        final Content content =
-          ContentFactory.SERVICE.getInstance().createContent(errorTreeView, tabDisplayName, true);
-        messageView.getContentManager().addContent(content);
-        Disposer.register(content, errorTreeView);
-        messageView.getContentManager().setSelectedContent(content);
-        removeContents(content, tabDisplayName);
+        messageView.runWhenInitialized(new Runnable() {
+          public void run() {
+            final Content content =
+              ContentFactory.SERVICE.getInstance().createContent(errorTreeView, tabDisplayName, true);
+            messageView.getContentManager().addContent(content);
+            Disposer.register(content, errorTreeView);
+            messageView.getContentManager().setSelectedContent(content);
+            removeContents(content, tabDisplayName);
+          }
+        });
       }
     }, VcsBundle.message("command.name.open.error.message.view"), null);
   }
