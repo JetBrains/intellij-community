@@ -43,7 +43,7 @@ public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void _testMethodParams() throws Exception {
+  public void testMethodParams() throws Exception {
     doTest();
   }
 
