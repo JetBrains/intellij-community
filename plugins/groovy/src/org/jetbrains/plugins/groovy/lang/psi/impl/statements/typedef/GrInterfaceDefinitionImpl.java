@@ -17,14 +17,22 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.stubs.IStubElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 16.03.2007
+ * @author Dmitry.Krasilschikov
+ * @date 16.03.2007
  */
 public class GrInterfaceDefinitionImpl extends GrTypeDefinitionImpl implements GrInterfaceDefinition {
+
+  public GrInterfaceDefinitionImpl(GrTypeDefinitionStub stub) {
+    super(stub, GroovyElementTypes.INTERFACE_DEFINITION);
+  }
+
   public GrInterfaceDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }

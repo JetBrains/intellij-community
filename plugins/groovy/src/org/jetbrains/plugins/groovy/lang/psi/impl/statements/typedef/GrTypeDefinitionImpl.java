@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.InheritanceImplUtil;
@@ -71,13 +72,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodDefinitionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -88,13 +89,17 @@ import java.util.*;
 /**
  * @author ilyas
  */
-public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implements GrTypeDefinition {
+public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeDefinitionStub> implements GrTypeDefinition {
   private PsiMethod[] myMethods;
   private GrMethod[] myGroovyMethods;
   private GrMethod[] myConstructors;
 
   public GrTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  protected GrTypeDefinitionImpl(GrTypeDefinitionStub stub, IStubElementType nodeType) {
+    super(stub, nodeType);
   }
 
   public void accept(GroovyElementVisitor visitor) {
@@ -876,7 +881,9 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       return element;
     }
 
-    body.getNode().addChild(element.getNode(), nextChild.getNode());
+    ASTNode node = element.getNode();
+    assert node != null;
+    body.getNode().addChild(node, nextChild.getNode());
     return element;
   }
 
@@ -889,14 +896,16 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     final GrTypeDefinitionBody body = getBody();
     assert anchor.getParent() == body;
 
-    body.getNode().addChild(element.getNode(), anchor.getNode());
+    ASTNode node = element.getNode();
+    assert node != null;
+    body.getNode().addChild(node, anchor.getNode());
     return element;
   }
 
   public PsiElement add(@NotNull PsiElement psiElement) throws IncorrectOperationException {
     final GrTypeDefinitionBody body = getBody();
 
-    if (body == null) throw new IncorrectOperationException("Class must have body");;
+    if (body == null) throw new IncorrectOperationException("Class must have body");
 
     final PsiElement lBrace = body.getLBrace();
     final PsiElement rBrace = body.getRBrace();

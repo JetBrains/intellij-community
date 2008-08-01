@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.*;
+import com.jetbrains.python.psi.stubs.PyClassStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -27,12 +28,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiClass, GrTopLevelDefintion, GrMemberOwner {
+public interface GrTypeDefinition extends GrTopStatement, NavigatablePsiElement, PsiClass, GrTopLevelDefintion, GrMemberOwner, StubBasedPsiElement<GrTypeDefinitionStub> {
   String DEFAULT_BASE_CLASS_NAME = "groovy.lang.GroovyObjectSupport";
 
   public GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];

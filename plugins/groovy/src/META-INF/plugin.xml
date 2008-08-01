@@ -21,7 +21,7 @@
   <version>VERSION</version>
   <vendor logo="/org/jetbrains/plugins/groovy/images/groovy_16x16.png" url="http://www.jetbrains.com">JetBrains Inc.
   </vendor>
-  <idea-version since-build="8632" until-build="8637"/>
+  <idea-version since-build="8632" until-build="8999"/>
   <depends optional="true" config-file="groovy-js-integration.xml">JavaScript</depends>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -43,7 +43,7 @@
     <lang.commenter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyCommenter"/>
     <lang.foldingBuilder language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder"/>
     <lang.formatter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
-    <lang.gotoClassContributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.gotoclass.GroovyChooseByNameContributor"/>
+    <gotoClassContributor implementation="org.jetbrains.plugins.groovy.gotoclass.GroovyGoToClassContributor"/>
     <lang.refactoringSupport language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider"/>
     <lang.surroundDescriptor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor"/>
     <lang.findUsagesProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesProvider"/>
@@ -80,6 +80,10 @@
     <fileTemplateGroup implementation="org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory"/>
 
     <usageGroupingRuleProvider implementation="org.jetbrains.plugins.groovy.findUsages.GroovyUsageViewGroupingRuleProvider"/>
+
+    <!--Stubs index-->
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.GrClassNameIndex"/>
+
 
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.ConstructorReferencesSearcher"/>-->
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.PropertyReferencesSearcher"/>-->

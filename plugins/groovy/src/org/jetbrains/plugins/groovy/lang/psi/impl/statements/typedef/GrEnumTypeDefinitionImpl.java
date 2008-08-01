@@ -21,15 +21,17 @@ import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
+ * @author Dmitry.Krasilschikov
+ * @date 18.03.2007
  */
 public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements GrEnumTypeDefinition {
   @NonNls
@@ -38,6 +40,10 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
 
   public GrEnumTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public GrEnumTypeDefinitionImpl(GrTypeDefinitionStub stub) {
+    super(stub, GroovyElementTypes.ENUM_DEFINITION);
   }
 
   public String toString() {

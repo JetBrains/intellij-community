@@ -19,16 +19,23 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.stubs.IStubElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnnotationTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
+ * @author Dmitry.Krasilschikov
+ * @date 18.03.2007
  */
 public class GrAnnotationTypeDefinitionImpl extends GrTypeDefinitionImpl implements GrAnnotationTypeDefinition {
   public GrAnnotationTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public GrAnnotationTypeDefinitionImpl(GrTypeDefinitionStub stub) {
+    super(stub, GroovyElementTypes.ANNOTATION_DEFINITION);
   }
 
   public String toString() {

@@ -17,6 +17,8 @@ package org.jetbrains.plugins.groovy;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.impl.source.codeStyle.ReferenceAdjuster;
+import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.IStubFileElementType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyReferenceAdjuster;
 
@@ -30,10 +32,5 @@ public class GroovyLanguage extends Language {
   public GroovyLanguage() {
     super("Groovy");
   }
-
-  //todo[DIANA] provide language extension
-  @Nullable
-  public ReferenceAdjuster getReferenceAdjuster() {
-    return GroovyReferenceAdjuster.INSTANCE;
-  }
+  
 }
