@@ -60,7 +60,7 @@ public class XmlCompletionContributor extends CompletionContributor {
           }
         } else {
 
-          result.setPrefixMatcher(pos >= 0 ? prefix.substring(pos + 1) : prefix);
+          final CompletionResultSet newResult = result.withPrefixMatcher(pos >= 0 ? prefix.substring(pos + 1) : prefix);
 
           final XmlFile file = (XmlFile)parameters.getOriginalFile();
           final List<Pair<String,String>> names =
@@ -84,7 +84,7 @@ public class XmlCompletionContributor extends CompletionContributor {
               item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " (" + ns + ")");
               item.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
             }
-            result.addElement(item);
+            newResult.addElement(item);
           }
         }
         return false;

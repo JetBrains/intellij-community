@@ -20,16 +20,27 @@ public class CompletionServiceImpl extends CompletionService{
 
     final String textBeforePosition = parameters.getOriginalFile().getText().substring(0, parameters.getOffset());
 
-    return new CompletionResultSet(new CamelHumpMatcher(prefix), consumer) {
+    return new CompletionResultSetImpl(consumer, textBeforePosition, new CamelHumpMatcher(prefix));
+  }
 
-      public void setPrefixMatcher(@NotNull final PrefixMatcher matcher) {
-        assert textBeforePosition.endsWith(matcher.getPrefix()) : "prefix should be some actual file string just before caret: " + matcher.getPrefix();
-        super.setPrefixMatcher(matcher);
-      }
+  private static class CompletionResultSetImpl extends CompletionResultSet {
+    private final String myTextBeforePosition;
 
-      public void setPrefixMatcher(@NotNull final String prefix) {
-        setPrefixMatcher(new CamelHumpMatcher(prefix));
-      }
-    };
+    public CompletionResultSetImpl(final Consumer<LookupElement> consumer, final String textBeforePosition,
+                                   final PrefixMatcher prefixMatcher) {
+      super(prefixMatcher, consumer);
+      myTextBeforePosition = textBeforePosition;
+    }
+
+    @NotNull
+    public CompletionResultSet withPrefixMatcher(@NotNull final PrefixMatcher matcher) {
+      assert myTextBeforePosition.endsWith(matcher.getPrefix()) : "prefix should be some actual file string just before caret: " + matcher.getPrefix();
+      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, matcher);
+    }
+
+    @NotNull
+    public CompletionResultSet withPrefixMatcher(@NotNull final String prefix) {
+      return withPrefixMatcher(new CamelHumpMatcher(prefix));
+    }
   }
 }

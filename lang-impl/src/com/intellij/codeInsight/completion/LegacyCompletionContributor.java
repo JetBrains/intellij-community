@@ -29,7 +29,7 @@ public class LegacyCompletionContributor extends CompletionContributor {
   public LegacyCompletionContributor() {
     final PsiElementPattern.Capture<PsiElement> everywhere = PlatformPatterns.psiElement();
     extend(CompletionType.BASIC, everywhere, new CompletionProvider<CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
+      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet _result) {
         final PsiFile file = parameters.getOriginalFile();
         final int offsetInFile = parameters.getOffset();
         final int startOffset = offsetInFile;
@@ -40,7 +40,9 @@ public class LegacyCompletionContributor extends CompletionContributor {
             return CompletionUtil.getCompletionDataByElement(lastElement, file, startOffset);
           }
         });
-        result.setPrefixMatcher(completionData == null ? CompletionData.findPrefixStatic(insertedElement, startOffset) : completionData.findPrefix(insertedElement, startOffset));
+        final CompletionResultSet result = _result.withPrefixMatcher(completionData == null
+                                                                     ? CompletionData.findPrefixStatic(insertedElement, startOffset)
+                                                                     : completionData.findPrefix(insertedElement, startOffset));
         if (completionData == null) {
           // some completion data may depend on prefix
           completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
@@ -61,10 +63,11 @@ public class LegacyCompletionContributor extends CompletionContributor {
         if (ref instanceof PsiMultiReference) {
           for (final PsiReference reference : completionData.getReferences((PsiMultiReference)ref)) {
             int offsetInElement = offsetInFile - reference.getElement().getTextRange().getStartOffset();
-            result.setPrefixMatcher(reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement));
+            final CompletionResultSet resultSet = result.withPrefixMatcher(
+                reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement));
             completionData.completeReference(reference, lookupSet, insertedElement, parameters.getOriginalFile(), offsetInFile);
             for (final LookupItem item : lookupSet) {
-              result.addElement(item);
+              resultSet.addElement(item);
             }
             lookupSet.clear();
           }

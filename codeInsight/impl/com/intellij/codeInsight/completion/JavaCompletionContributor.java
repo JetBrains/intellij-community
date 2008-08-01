@@ -44,7 +44,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       psiElement(TokenType.WHITE_SPACE).afterLeaf(INSIDE_METHOD_TYPE_ELEMENT),
       INSIDE_METHOD_TYPE_ELEMENT);
 
-  public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+  public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet _result) {
     if (parameters.getCompletionType() != CompletionType.BASIC) return true;
 
     if (parameters.getPosition().getContainingFile().getLanguage() == StdLanguages.JAVA) {
@@ -57,7 +57,7 @@ public class JavaCompletionContributor extends CompletionContributor {
           return CompletionUtil.getCompletionData(lastElement, file, startOffset, getCompletionDataByElementInner(lastElement));
         }
       });
-      result.setPrefixMatcher(completionData.findPrefix(insertedElement, startOffset));
+      final CompletionResultSet result = _result.withPrefixMatcher(completionData.findPrefix(insertedElement, startOffset));
 
       final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
       final PsiReference ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
