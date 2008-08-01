@@ -13,9 +13,6 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateEditingAdapter;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,7 +27,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -47,10 +43,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class DefaultInsertHandler implements InsertHandler,Cloneable {
+public class DefaultInsertHandler extends TemplateInsertHandler implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.DefaultInsertHandler");
-
-  protected static final Object EXPANDED_TEMPLATE_ATTR = Key.create("EXPANDED_TEMPLATE_ATTR");
 
   protected InsertionContext myContext;
   private LookupItem myLookupItem;
@@ -62,6 +56,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   private InsertHandlerState myState;
 
   public void handleInsert(final InsertionContext context, LookupElement item) {
+    super.handleInsert(context, item);
+
     if (!(item instanceof SimpleLookupItem) && item instanceof LookupItem) {
       if (((LookupItem)item).getObject() instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)((LookupItem)item).getObject();
@@ -91,27 +87,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       }
     }
 
-    DefaultInsertHandler delegate = this;
-
-    if (isTemplateToBeCompleted((LookupItem)item)) {
-      try {
-        delegate = (DefaultInsertHandler)clone();
-        delegate.clear();
-      }
-      catch (CloneNotSupportedException e) {
-        e.printStackTrace();
-      }
-    }
-
-    boolean toClear = true;
-    try{
-      toClear = delegate.handleInsertInner(context, context.getStartOffset(), (LookupItem)item, context.isSignatureSelected(), context.getCompletionChar());
-    }
-    finally{
-      if (toClear) {
-        delegate.clear();
-      }
-    }
+    handleInsertInner(context, (LookupItem)item, context.getCompletionChar());
   }
 
   private void clear() {
@@ -125,8 +101,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   }
 
   private boolean handleInsertInner(InsertionContext context,
-                                    int startOffset, LookupItem item,
-                                    final boolean signatureSelected, final char completionChar) {
+                                    LookupItem item,
+                                    final char completionChar) {
 
     LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getEditor().getDocument());
@@ -137,13 +113,6 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     myFile = myContext.getFile();
     myEditor = myContext.getEditor();
     myDocument = myEditor.getDocument();
-
-    if (isTemplateToBeCompleted(myLookupItem)){
-      handleTemplate(startOffset, signatureSelected, completionChar);
-      // we could not clear in this case since handleTemplate has templateFinished lisntener that works
-      // with e.g. myLookupItem
-      return false;
-    }
 
     TailType tailType = getTailType(completionChar);
 
@@ -269,11 +238,6 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     iterator.retreat();
     if (iterator.getTokenType() == TokenType.WHITE_SPACE) iterator.retreat();
     return iterator.getTokenType() != JavaTokenType.AT && iterator.getTokenType() != JavaTokenType.DOT;
-  }
-
-  private static boolean isTemplateToBeCompleted(final LookupItem lookupItem) {
-    return lookupItem.getObject() instanceof Template
-           && lookupItem.getAttribute(EXPANDED_TEMPLATE_ATTR) == null;
   }
 
   private void handleBrackets(){
@@ -483,39 +447,6 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     return attr != TailType.UNKNOWN ? attr : TailType.NONE;
   }
 
-  private void handleTemplate(final int templateStartOffset, final boolean signatureSelected, final char completionChar){
-    Template template = (Template)myLookupItem.getObject();
-
-    myDocument.replaceString(templateStartOffset, templateStartOffset + myLookupItem.getLookupString().length(), "");
-
-    final RangeMarker offsetRangeMarker = myContext.getEditor().getDocument().createRangeMarker(templateStartOffset, templateStartOffset);
-
-    TemplateManager.getInstance(myProject).startTemplate(
-      myContext.getEditor(),
-      template,
-      new TemplateEditingAdapter() {
-        public void templateFinished(Template template) {
-          myLookupItem.setAttribute(EXPANDED_TEMPLATE_ATTR, Boolean.TRUE);
-
-          if (!offsetRangeMarker.isValid()) return;
-
-          final Editor editor = myContext.getEditor();
-          final int startOffset = offsetRangeMarker.getStartOffset();
-          final int endOffset = editor.getCaretModel().getOffset();
-          String lookupString = editor.getDocument().getCharsSequence().subSequence(startOffset, endOffset).toString();
-          myLookupItem.setLookupString(lookupString);
-
-          final OffsetMap offsetMap = myContext.getOffsetMap();
-          offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, endOffset);
-          offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, endOffset);
-          InsertionContext newContext = new InsertionContext(offsetMap, completionChar, signatureSelected, LookupElement.EMPTY_ARRAY, myFile, editor);
-          JavaCompletionUtil.initOffsets(myFile, myProject, offsetMap);
-          handleInsert(newContext, myLookupItem);
-        }
-      }
-    );
-  }
-
   private int processTail(TailType tailType, int caretOffset, int tailOffset) {
     myEditor.getCaretModel().moveToOffset(caretOffset);
     tailType.processTail(myEditor, tailOffset);
@@ -636,6 +567,11 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     catch(IncorrectOperationException ioe){
       LOG.error(ioe);
     }
+  }
+
+  @Override
+  protected void populateInsertMap(@NotNull final PsiFile file, @NotNull final OffsetMap offsetMap) {
+    JavaCompletionUtil.initOffsets(file, file.getProject(), offsetMap);
   }
 
   private static void addImportForItem(PsiFile file, int startOffset, LookupItem item) throws IncorrectOperationException {
