@@ -49,11 +49,11 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
       checkContext();
     }
     private void checkContext() {
-      if(getContext() != null) {
-        if(!getContext().isValid()) {
-          final DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myProject).getContextManager().getContext();
-          setContext(PositionUtil.getContextElement(context));
-        }
+      final PsiElement contextElement = getContext();
+      if(contextElement == null || !contextElement.isValid()) {
+        final DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myProject).getContextManager().getContext();
+        final PsiElement newContextElement = PositionUtil.getContextElement(context);
+        setContext(newContextElement != null && newContextElement.isValid()? newContextElement : null);
       }
     }
   };
