@@ -120,7 +120,6 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
 
       // html
       HtmlExtraClosingTagInspection.class,
-      XmlWrongClosingTagNameInspection.class,
       XmlWrongRootElementInspection.class,
       HtmlUnknownTagInspection.class,
       HtmlUnknownAttributeInspection.class

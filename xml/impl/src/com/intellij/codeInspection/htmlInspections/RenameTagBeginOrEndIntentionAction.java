@@ -6,12 +6,13 @@ package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author spleaner
  */
-public class RenameTagBeginOrEndIntentionAction implements LocalQuickFix {
+public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.RenameTagBeginOrEndIntentionAction");
 
   private boolean myStart;
@@ -42,15 +43,19 @@ public class RenameTagBeginOrEndIntentionAction implements LocalQuickFix {
   }
 
   @NotNull
-  public String getName() {
-    return myStart
-           ? XmlErrorMessages.message("rename.start.tag.name.intention", mySourceName, myTargetName)
-           : XmlErrorMessages.message("rename.end.tag.name.intention", mySourceName, myTargetName);
+  public String getText() {
+    return getName();
   }
 
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PsiElement psiElement = descriptor.getPsiElement();
-    if (!psiElement.isValid()) return;
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+    return true;
+  }
+
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    final int offset = editor.getCaretModel().getOffset();
+    final PsiElement psiElement = file.findElementAt(offset);
+
+    if (psiElement == null || !psiElement.isValid()) return;
     if (!CodeInsightUtilBase.prepareFileForWrite(psiElement.getContainingFile())) return;
 
     if (psiElement instanceof XmlToken) {
@@ -91,5 +96,16 @@ public class RenameTagBeginOrEndIntentionAction implements LocalQuickFix {
       }
 
     }
+  }
+
+  public boolean startInWriteAction() {
+    return true;
+  }
+
+  @NotNull
+  public String getName() {
+    return myStart
+           ? XmlErrorMessages.message("rename.start.tag.name.intention", mySourceName, myTargetName)
+           : XmlErrorMessages.message("rename.end.tag.name.intention", mySourceName, myTargetName);
   }
 }

@@ -225,6 +225,7 @@
 
     <methodNavigationOffsetProvider implementation="com.intellij.codeInsight.navigation.XmlMethodNavigationOffsetProvider"/>
     
+    <annotator language="XML" implementationClass="com.intellij.codeInspection.htmlInspections.XmlWrongClosingTagNameInspection"/>
 
   </extensions>
   

@@ -4,12 +4,12 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.XmlInspectionGroupNames;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.tree.IElementType;
@@ -17,58 +17,41 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author spleaner
  */
-public class XmlWrongClosingTagNameInspection extends HtmlLocalInspectionTool {
+public class XmlWrongClosingTagNameInspection implements Annotator {
 
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("xml.inspection.wrong.closing.tag");
-  }
-
-  @NonNls
-  @NotNull
-  public String getShortName() {
-    return "XmlWrongClosingTagName";
-  }
-
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return XmlInspectionGroupNames.XML_INSPECTIONS;
-  }
-
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.ERROR;
-  }
-
-  @Override
-  protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    final XmlToken start = XmlTagUtil.getStartTagNameElement(tag);
-    XmlToken endTagName = XmlTagUtil.getEndTagNameElement(tag);
-    if (endTagName != null && !(tag instanceof HtmlTag) && !tag.getName().equals(endTagName.getText())) {
-      registerProblem(holder, tag, start, endTagName);
-    } else if (endTagName == null && !(tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(tag.getName()))) {
-      final PsiErrorElement errorElement = PsiTreeUtil.getChildOfType(tag, PsiErrorElement.class);
-      endTagName = findEndTagName(errorElement);
-      if (endTagName != null) {
-        registerProblem(holder, tag, start, endTagName);
+  public void annotate(final PsiElement psiElement, final AnnotationHolder holder) {
+    if (psiElement instanceof XmlToken) {
+      final PsiElement parent = psiElement.getParent();
+      if (parent instanceof XmlTag) {
+        final XmlTag tag = (XmlTag)parent;
+        final XmlToken start = XmlTagUtil.getStartTagNameElement(tag);
+        XmlToken endTagName = XmlTagUtil.getEndTagNameElement(tag);
+        if (endTagName != null && !(tag instanceof HtmlTag) && !tag.getName().equals(endTagName.getText())) {
+          registerProblem(holder, tag, start, endTagName);
+        }
+        else if (endTagName == null && !(tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(tag.getName()))) {
+          final PsiErrorElement errorElement = PsiTreeUtil.getChildOfType(tag, PsiErrorElement.class);
+          endTagName = findEndTagName(errorElement);
+          if (endTagName != null) {
+            registerProblem(holder, tag, start, endTagName);
+          }
+        }
       }
     }
   }
 
-  private static void registerProblem(@NotNull final ProblemsHolder holder, @NotNull final XmlTag tag, @Nullable final XmlToken start, @NotNull final XmlToken end) {
+  private static void registerProblem(@NotNull final AnnotationHolder holder,
+                                      @NotNull final XmlTag tag,
+                                      @Nullable final XmlToken start,
+                                      @NotNull final XmlToken end) {
     final String tagName = (tag instanceof HtmlTag) ? tag.getName().toLowerCase() : tag.getName();
     final String endTokenText = (tag instanceof HtmlTag) ? end.getText().toLowerCase() : end.getText();
 
@@ -76,12 +59,15 @@ public class XmlWrongClosingTagNameInspection extends HtmlLocalInspectionTool {
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
 
     if (start != null) {
-      holder.registerProblem(start, XmlErrorMessages.message("tag.has.wrong.closing.tag.name"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                             renameEndAction, renameStartAction);
+      final Annotation annotation = holder.createErrorAnnotation(start, XmlErrorMessages.message("tag.has.wrong.closing.tag.name"));
+      annotation.registerFix(renameEndAction);
+      annotation.registerFix(renameStartAction);
     }
-    
-    holder.registerProblem(end, XmlErrorMessages.message("wrong.closing.tag.name"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                           new RemoveExtraClosingTagIntentionAction(), renameEndAction, renameStartAction);
+
+    final Annotation annotation = holder.createErrorAnnotation(end, XmlErrorMessages.message("wrong.closing.tag.name"));
+    annotation.registerFix(new RemoveExtraClosingTagIntentionAction());
+    annotation.registerFix(renameEndAction);
+    annotation.registerFix(renameStartAction);
   }
 
   @Nullable
