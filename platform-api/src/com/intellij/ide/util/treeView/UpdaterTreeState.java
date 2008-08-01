@@ -145,7 +145,7 @@ public class UpdaterTreeState {
       }
     };
     if (toSelect.length > 0) {
-      myUi._select(toSelect, expandRunnable, false, false);
+      myUi._select(toSelect, expandRunnable, false, true);
     } else {
       expandRunnable.run();
     }
