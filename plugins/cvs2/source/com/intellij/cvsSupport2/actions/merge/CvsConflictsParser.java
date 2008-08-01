@@ -1,5 +1,7 @@
 package com.intellij.cvsSupport2.actions.merge;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,6 +18,10 @@ import java.util.Stack;
 
 
 public class CvsConflictsParser {
+  private static final String RIGHT = "<<<<<<<";
+  private static final String LEFT = "=======";
+  private static final String END = ">>>>>>>";
+
   enum State {
     RIGHT, LEFT
   }
@@ -51,24 +57,54 @@ public class CvsConflictsParser {
   private void parseFile(final InputStream merged) throws IOException {
     final InputStreamReader isr = new InputStreamReader(merged);
     final BufferedReader br = new BufferedReader(isr);
-    String line;
-    while ((line = br.readLine()) != null) {
-      if (line.startsWith("<<<<<<<")) {
-        processRightMarker(line);
-      }
-      else if (line.startsWith("=======")) {
-        processLeftMarker(line);
-      }
-      else if (line.startsWith(">>>>>>>")) {
-        processEndMarker(line);
-      }
-      else if (myStateStack.isEmpty()) {
-        appendLine(line);
-      } else {
-        appendToCurrentBuffer(line);
+    try {
+      String line;
+      while ((line = br.readLine()) != null) {
+        String cutLine = findMarkerAndWriteTail(line, RIGHT);
+        if (cutLine != null) {
+          processRightMarker(cutLine);
+          continue;
+        }
+
+        cutLine = findMarkerAndWriteTail(line, LEFT);
+        if (cutLine != null) {
+          processLeftMarker(cutLine);
+          continue;
+        }
+
+        cutLine = findMarkerAndWriteTail(line, END);
+        if (cutLine != null) {
+          processEndMarker(cutLine);
+          continue;
+        }
+
+        appendToMainOrCurrent(line);
       }
     }
+    finally {
+      br.close();
+    }
+  }
 
+  private void appendToMainOrCurrent(final String line) {
+    if (myStateStack.isEmpty()) {
+      appendLine(line);
+    } else {
+      appendToCurrentBuffer(line);
+    }
+  }
+
+  @Nullable
+  private String findMarkerAndWriteTail(final String s, final String marker) {
+    final int idx = s.indexOf(marker);
+    if (idx == -1) {
+      return null;
+    }
+    final String startFragment = s.substring(0, idx);
+    if (startFragment.length() > 0) {
+      appendToMainOrCurrent(startFragment);
+    }
+    return s.substring(idx);
   }
 
   private void processEndMarker(final String line) {
