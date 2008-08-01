@@ -2,10 +2,10 @@ package com.intellij.openapi.components.impl.stores;
 
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -189,13 +190,42 @@ public class FileBasedStorage extends XmlElementStorage {
         return JDOMUtil.loadDocument(myFile);
       }
     }
-    catch (JDOMException e) {
+    catch (final JDOMException e) {
+      SwingUtilities.invokeLater(new Runnable(){
+        public void run() {
+          JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                        "Cannot load settings from file '" + myFile.getPath() + "': " + e.getLocalizedMessage() + "\n" +
+                                        "File content will be recreated",
+                                        "Load Settings",
+                                        JOptionPane.ERROR_MESSAGE);
+        }
+      });
+
+      /*
       throw new StateStorage.StateStorageException(
         "Error while parsing " + myFile.getAbsolutePath() + ".\nFile is probably corrupted:\n" + e.getMessage(), e);
+        */
+      return createEmptyElement();
     }
-    catch (IOException e) {
-      throw new StateStorage.StateStorageException("Error while loading " + myFile.getAbsolutePath() + ": " + e.getMessage(), e);
+    catch (final IOException e) {
+      SwingUtilities.invokeLater(new Runnable(){
+        public void run() {
+          JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                        "Cannot load settings from file '" + myFile.getPath() + "': " + e.getLocalizedMessage() + "\n" +
+                                        "File content will be recreated",
+                                        "Load Settings",
+                                        JOptionPane.ERROR_MESSAGE);
+        }
+      });
+
+      return createEmptyElement();
+
+      //throw new StateStorage.StateStorageException("Error while loading " + myFile.getAbsolutePath() + ": " + e.getMessage(), e);
     }
+  }
+
+  private Document createEmptyElement() {
+    return new Document(new Element(myRootElementName));
   }
 
   public String getFileName() {
