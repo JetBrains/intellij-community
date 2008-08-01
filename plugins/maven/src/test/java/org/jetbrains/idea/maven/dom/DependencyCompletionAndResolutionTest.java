@@ -433,7 +433,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "    <groupId>xxx</groupId>" +
                      "    <artifactId>xxx</artifactId>" +
                      "    <version>xxx</version>" +
-                     "    <scope>system</system>" +
+                     "    <scope>system</scope>" +
                      "  </dependency>" +
                      "</dependencies>");
 
@@ -452,7 +452,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "    <groupId>xxx</groupId>" +
                      "    <artifactId>xxx</artifactId>" +
                      "    <version><caret>xxx</version>" +
-                     "    <scope>system</system>" +
+                     "    <scope>system</scope>" +
                      "    <systemPath>" + libPath + "</systemPath>" +
                      "  </dependency>" +
                      "</dependencies>");
@@ -480,7 +480,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "    <groupId>xxx</groupId>" +
                      "    <artifactId>xxx</artifactId>" +
                      "    <version><caret>xxx</version>" +
-                     "    <scope>system</system>" +
+                     "    <scope>system</scope>" +
                      "    <systemPath>${depPath}</systemPath>" +
                      "  </dependency>" +
                      "</dependencies>");
@@ -504,7 +504,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "    <groupId>xxx</groupId>" +
                      "    <artifactId>xxx</artifactId>" +
                      "    <version>xxx</version>" +
-                     "    <scope>system</system>" +
+                     "    <scope>system</scope>" +
                      "    <systemPath><caret>" + libPath + "</systemPath>" +
                      "  </dependency>" +
                      "</dependencies>");

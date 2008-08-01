@@ -389,7 +389,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "      <artifactId>maven-compiler-plugin</artifactId>" +
                      "      <executions>" +
                      "        <execution>" +
-                     "          <phase><caret></phases>" +
+                     "          <phase><caret></phase>" +
                      "        </execution>" +
                      "      </executions>" +
                      "    </plugin>" +
@@ -408,7 +408,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "      <artifactId>maven-compiler-plugin</artifactId>" +
                      "      <executions>" +
                      "        <execution>" +
-                     "          <phase><error>xxx</error></phases>" +
+                     "          <phase><error>xxx</error></phase>" +
                      "        </execution>" +
                      "      </executions>" +
                      "    </plugin>" +
