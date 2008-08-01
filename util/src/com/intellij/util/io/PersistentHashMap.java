@@ -2,13 +2,17 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -154,9 +158,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     appender.append(myAppendCache.get(key));
   }
 
-  public synchronized Collection<Key> allKeys() throws IOException {
+  public synchronized boolean processKeys(Processor<Key> processor) throws IOException {
     myAppendCache.clear();
-    return getAllDataObjects(new DataFilter() {
+
+    return processAllDataObject(processor, new DataFilter() {
       public boolean accept(final int id) {
         try {
           return readValueId(id).address != NULL_ADDR;
@@ -166,6 +171,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
         return true;
       }
     });
+  }
+
+  public synchronized Collection<Key> allKeys() throws IOException {
+    List<Key> keys = new ArrayList<Key>();
+    processKeys(new CommonProcessors.CollectProcessor<Key>(keys));
+    return keys;
   }
 
   public synchronized Value get(Key key) throws IOException {
@@ -241,7 +252,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     myValueStorage.switchToCompactionMode();
     
     traverseAllRecords(new RecordsProcessor() {
-      public void process(final int keyId) throws IOException {
+      public boolean process(final int keyId) throws IOException {
         final HeaderRecord record = readValueId(keyId);
         if (record.address != NULL_ADDR) {
           byte[] bytes = new byte[record.size];
@@ -249,6 +260,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
           record.address = newStorage.appendBytes(bytes, 0);
           updateValueId(keyId, record);
         }
+        return true;
       }
     });
 

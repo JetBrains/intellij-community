@@ -1,5 +1,6 @@
 package com.intellij.util.indexing;
 
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Flushable;
@@ -21,6 +22,8 @@ public interface IndexStorage<Key, Value> extends Flushable{
   
   @NotNull
   ValueContainer<Value> read(Key key) throws StorageException;
+
+  boolean processKeys(Processor<Key> processor) throws StorageException;
 
   Collection<Key> getKeys() throws StorageException;
   

@@ -3,6 +3,8 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -11,8 +13,10 @@ import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -158,10 +162,10 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
-  public Collection<Key> getKeys() throws StorageException {
+  public boolean processKeys(final Processor<Key> processor) throws StorageException {
     try {
       myCache.clear(); // this will ensure that all new keys are made into the map
-      return myMap.allKeys();
+      return myMap.processKeys(processor);
     }
     catch (IOException e) {
       throw new StorageException(e);
@@ -176,6 +180,12 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
       }
       throw e;
     }
+  }
+
+  public Collection<Key> getKeys() throws StorageException {
+    List<Key> keys = new ArrayList<Key>();
+    processKeys(new CommonProcessors.CollectProcessor<Key>(keys));
+    return keys;
   }
 
   @NotNull

@@ -16,6 +16,8 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.containers.ShareableKey;
 import org.jetbrains.annotations.Nullable;
@@ -176,38 +178,45 @@ public class PersistentEnumerator<Data> implements Forceable {
     return myStorage.getInt(META_DATA_OFFSET);
   }
 
-  public Collection<Data> getAllDataObjects(@Nullable final DataFilter filter) throws IOException {
-    final List<Data> values = new ArrayList<Data>();
-    traverseAllRecords(new RecordsProcessor() {
-      public void process(final int record) throws IOException {
+  public boolean processAllDataObject(final Processor<Data> processor, @Nullable final DataFilter filter) throws IOException {
+    return traverseAllRecords(new RecordsProcessor() {
+      public boolean process(final int record) throws IOException {
         if (filter == null || filter.accept(record)) {
-          values.add(valueOf(record));
+          return processor.process(valueOf(record));
         }
+        return true;
       }
     });
+
+  }
+
+  public Collection<Data> getAllDataObjects(@Nullable final DataFilter filter) throws IOException {
+    final List<Data> values = new ArrayList<Data>();
+    processAllDataObject(new CommonProcessors.CollectProcessor<Data>(values), filter);
     return values;
   }
 
   public interface RecordsProcessor {
-    void process(int record) throws IOException;
+    boolean process(int record) throws IOException;
   }
 
-  public synchronized void traverseAllRecords(RecordsProcessor p) throws IOException {
-    traverseRecords(FIRST_VECTOR_OFFSET, SLOTS_PER_FIRST_VECTOR, p);
+  public synchronized boolean traverseAllRecords(RecordsProcessor p) throws IOException {
+    return traverseRecords(FIRST_VECTOR_OFFSET, SLOTS_PER_FIRST_VECTOR, p);
   }
 
-  private void traverseRecords(int vectorStart, int slotsCount, RecordsProcessor p) throws IOException {
+  private boolean traverseRecords(int vectorStart, int slotsCount, RecordsProcessor p) throws IOException {
     for (int slotIdx = 0; slotIdx < slotsCount; slotIdx++) {
       final int vector = myStorage.getInt(vectorStart + slotIdx * 4);
       if (vector < 0) {
         for (int record = -vector; record != 0; record = nextCanditate(record)) {
-          p.process(record);
+          if (!p.process(record)) return false;
         }
       }
       else if (vector > 0) {
-        traverseRecords(vector, SLOTS_PER_VECTOR, p);
+        if (!traverseRecords(vector, SLOTS_PER_VECTOR, p)) return false;
       }
     }
+    return true;
   }
 
   private int enumerateImpl(final Data value, final boolean saveNewValue) throws IOException {

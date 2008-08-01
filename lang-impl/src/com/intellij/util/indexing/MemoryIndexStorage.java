@@ -1,6 +1,8 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -62,18 +64,34 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
 
   public Collection<Key> getKeys() throws StorageException {
-    final Set<Key> keys = new HashSet<Key>(myBackendStorage.getKeys());
-    if (myBufferingEnabled.get()) {
-      for (Key key : myMap.keySet()) {
-        if (myMap.get(key).size() == 0) {
-          keys.remove(key);
-        }
-        else {
-          keys.add(key);
-        }
-      }
-    }
+    final Set<Key> keys = new HashSet<Key>();
+    processKeys(new CommonProcessors.CollectProcessor<Key>(keys));
     return keys;
+  }
+
+  public boolean processKeys(final Processor<Key> processor) throws StorageException {
+    if (myBufferingEnabled.get()) {
+      final Set<Key> stopList = new HashSet<Key>();
+
+      Processor<Key> decoratingProcessor = new Processor<Key>() {
+        public boolean process(final Key key) {
+          if (stopList.contains(key)) return true;
+
+          final UpdatableValueContainer<Value> container = myMap.get(key);
+          if (container != null && container.size() == 0) return true;
+          return processor.process(key);
+        }
+      };
+
+      for (Key key : myMap.keySet()) {
+        if (!decoratingProcessor.process(key)) return false;
+        stopList.add(key);
+      }
+      return myBackendStorage.processKeys(decoratingProcessor);
+    }
+    else {
+      return myBackendStorage.processKeys(processor);
+    }
   }
 
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {

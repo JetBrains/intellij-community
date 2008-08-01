@@ -2,6 +2,8 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Alarm;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,10 +86,16 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   public Collection<Key> getAllKeys() throws StorageException {
+    Set<Key> allKeys = new HashSet<Key>();
+    processAllKeys(new CommonProcessors.CollectProcessor<Key>(allKeys));
+    return allKeys;
+  }
+
+  public boolean processAllKeys(Processor<Key> processor) throws StorageException {
     final Lock lock = getReadLock();
     try {
       lock.lock();
-      return myStorage.getKeys();
+      return myStorage.processKeys(processor);
     }
     finally {
       lock.unlock();

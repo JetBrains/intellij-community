@@ -33,6 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
@@ -265,10 +266,17 @@ public class FileBasedIndex implements ApplicationComponent {
 
   @NotNull
   public <K> Collection<K> getAllKeys(final ID<K, ?> indexId) {
+    Set<K> allKeys = new HashSet<K>();
+    processAllKeys(indexId, new CommonProcessors.CollectProcessor<K>(allKeys));
+    return allKeys;
+  }
+
+  public <K> boolean processAllKeys(final ID<K, ?> indexId, Processor<K> processor) {
     try {
       ensureUpToDate(indexId);
       final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
-      return index != null? index.getAllKeys() : Collections.<K>emptyList();
+      if (index == null) return true;
+      return index.processAllKeys(processor);
     }
     catch (StorageException e) {
       scheduleRebuild(indexId, e);
@@ -282,7 +290,8 @@ public class FileBasedIndex implements ApplicationComponent {
         throw e;
       }
     }
-    return Collections.emptyList();
+
+    return false;
   }
 
   private ThreadLocal<Integer> myUpToDateCheckState = new ThreadLocal<Integer>();
