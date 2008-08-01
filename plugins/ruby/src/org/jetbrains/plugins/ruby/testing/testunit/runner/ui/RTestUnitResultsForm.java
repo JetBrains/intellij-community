@@ -137,8 +137,11 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   public void addTestsProxySelectionListener(final TestProxyTreeSelectionListener listener) {
      addTestsTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(final TreeSelectionEvent e) {
-        final PrintableTestProxy selectedProxy =(PrintableTestProxy)getTreeView().getSelectedTest();
-        listener.onSelected(selectedProxy);
+        //TODO
+        //if (tree.isFocusOwner()) {
+          final PrintableTestProxy selectedProxy = (PrintableTestProxy)getTreeView().getSelectedTest();
+          listener.onSelected(selectedProxy);
+        //}
       }
     });
   }
@@ -227,15 +230,6 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
 
 
     myAnimator.stopMovie();
-
-
-    //TODO implement
-    //if (RTestUnitConsoleProperties.SELECT_FIRST_DEFECT.value(consoleProperties)) {
-    //    selectTest(myTestsRootNode.getFirstDefect());
-    //} else {
-        selectWithoutNotify(myTestsRootNode);
-        //tree.getSelectionModel().setSelectionPath(new TreePath(myTreeBuilder.getNodeForElement(myTestsRootNode)));
-    //}
     tree.repaint();
 
     LvcsHelper.addLabel(this);
@@ -266,8 +260,6 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
 
 
     updateStatusLabel();
-    //TODO if Console.properites.TRACK_RUNNING_TEST.consoleProperties
-    // select(test)
   }
 
   public void onTestFailed(@NotNull final RTestUnitTestProxy test) {
@@ -332,7 +324,9 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
 
   public void selectAndNotify(@Nullable final AbstractTestProxy testProxy) {
     //is used by Test Runner actions - go to next failed, passed, first failed, etc
-
+    //if (testProxy != getTestsRootNode()) {
+    //  //notify
+    //}
     selectWithoutNotify(testProxy);
   }
 

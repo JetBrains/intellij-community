@@ -16,6 +16,8 @@ public class TestFailedState extends AbstractState {
 
   @Override
   public void printOn(final Printer printer) {
+    printer.print(PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+    printer.mark();
     printer.print(myPresentationText, ConsoleViewContentType.ERROR_OUTPUT);
   }
 

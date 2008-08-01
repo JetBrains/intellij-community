@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner.ui;
 
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.Disposable;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,4 +47,10 @@ public interface TestResultsViewer extends Disposable {
    * @return root
    */
   RTestUnitTestProxy getTestsRootNode();
+
+  /**
+   * Selects test or suite in Tests tree and notify about selection changed
+   * @param proxy
+   */
+  void selectAndNotify(@Nullable final AbstractTestProxy proxy);
 }

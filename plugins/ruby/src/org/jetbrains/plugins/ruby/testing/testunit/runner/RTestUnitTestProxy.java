@@ -79,11 +79,16 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
 
   @Nullable
   public Location getLocation(final Project project) {
+    //TODO
+    //determines location of test proxy
     return null;
   }
 
   @Nullable
   public Navigatable getDescriptor(final Location location) {
+    //TODO
+    // by location gets navigatable element.
+    // It can be file or place in file (e.g. when OPEN_FAILURE_LINE is enabled)
     return null;
   }
 
