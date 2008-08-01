@@ -468,8 +468,9 @@ public class MavenIndex {
       public Set<String> doTask() throws Exception {
         final Set<String> result = new HashSet<String>();
         myData.groups.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
-          public void process(int record) throws IOException {
+          public boolean process(int record) throws IOException {
             result.add(myData.groups.valueOf(record));
+            return true;
           }
         });
         return result;
@@ -522,10 +523,11 @@ public class MavenIndex {
       public Boolean doTask() throws Exception {
         try {
           set.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
-            public void process(int record) throws IOException {
+            public boolean process(int record) throws IOException {
               if (value.equals(set.valueOf(record))) {
                 throw new FoundException();
               }
+              return true;
             }
           });
         }
