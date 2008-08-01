@@ -17,8 +17,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class CopyClassesHandler implements CopyHandlerDelegate {
   public boolean canCopy(PsiElement[] elements) {
@@ -147,7 +147,8 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
       public void visitReferenceElement(final PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
         final PsiElement target = reference.resolve();
-        if (target == oldClass) {
+        if (target == null) return;
+        if (target == oldClass || target.getNavigationElement() == oldClass) {
           selfReferences.add(reference);
         }
       }
