@@ -8,11 +8,9 @@ import com.intellij.facet.*;
 import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.impl.autodetecting.facetsTree.DetectedFacetsDialog;
 import com.intellij.facet.impl.autodetecting.model.DetectedFacetInfo;
-import com.intellij.facet.impl.autodetecting.model.ProjectFacetInfoSet;
 import com.intellij.facet.impl.autodetecting.model.FacetInfo2;
+import com.intellij.facet.impl.autodetecting.model.ProjectFacetInfoSet;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
@@ -22,7 +20,10 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SimpleColoredComponent;
@@ -79,6 +80,7 @@ public class DetectedFacetManager implements Disposable {
         onDetectedFacetChanged(Collections.<DetectedFacetInfo<Module>>emptyList(), Collections.singletonList(info));
       }
     });
+    Disposer.register(myProject, this);
   }
 
   public <F extends Facet<C>, C extends FacetConfiguration> void registerListeners(final FacetType<F, C> type) {

@@ -22,7 +22,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -112,8 +111,8 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     myFileIndex = new FacetDetectionIndex(myProject, this, myDetectors.keySet());
     myFileIndex.initialize();
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
-    myPsiManager.addPsiTreeChangeListener(myPsiTreeChangeListener);
-    myMergingUpdateQueue = new MergingUpdateQueue("FacetAutodetectionQueue", 500, true, null);
+    myPsiManager.addPsiTreeChangeListener(myPsiTreeChangeListener, myProject);
+    myMergingUpdateQueue = new MergingUpdateQueue("FacetAutodetectionQueue", 500, true, null, myProject);
   }
 
   private <F extends Facet<C>, C extends FacetConfiguration> void registerDetectors(final FacetType<F, C> type) {
@@ -209,10 +208,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   }
 
   public void dispose() {
-    if (myDetectedFacetManager != null) {
-      Disposer.dispose(myDetectedFacetManager);
-      myMergingUpdateQueue.dispose();
-      myPsiManager.removePsiTreeChangeListener(myPsiTreeChangeListener);
+    if (myFileIndex != null) {
       myDetectedFacetSet.saveDetectedFacets(FacetDetectionIndex.getDetectedFacetsFile(myProject));
       myFileIndex.dispose();
     }
