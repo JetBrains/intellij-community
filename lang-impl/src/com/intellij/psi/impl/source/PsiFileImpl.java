@@ -804,7 +804,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public StubTree calcStubTree() {
     synchronized (myStubLock) {
-      final FileElement fileElement = getTreeElement();
+      final FileElement fileElement = (FileElement)calcTreeElement();
       StubTree tree = fileElement.getUserData(STUB_TREE_IN_PARSED_TREE);
       if (tree == null) {
         final StubElement currentStubTree = ((IStubFileElementType)getContentElementType()).getBuilder().buildStubTree(this);
