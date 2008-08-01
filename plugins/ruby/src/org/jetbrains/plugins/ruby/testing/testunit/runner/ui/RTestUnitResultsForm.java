@@ -345,7 +345,11 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
       return;
     }
 
-    myTreeBuilder.select(testProxy, null);
+    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+      public void run() {
+        myTreeBuilder.select(testProxy, null);
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   protected int getTestsCurrentCount() {
