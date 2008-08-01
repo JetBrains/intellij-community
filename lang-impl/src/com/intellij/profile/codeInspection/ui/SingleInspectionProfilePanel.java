@@ -33,8 +33,8 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.profile.ProfileManager;
-import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -873,6 +873,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     myBrowser = new JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML);
     myBrowser.setEditable(false);
+    myBrowser.addHyperlinkListener(new BrowserHyperlinkListener());
 
     initDescriptors();
     fillTreeData(myProfileFilter != null ? myProfileFilter.getFilter() : null, true);
