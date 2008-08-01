@@ -49,7 +49,21 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null) return false;
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    if (psiClass == null || psiClass.isAnnotationType() || psiClass.isEnum() || psiClass instanceof PsiAnonymousClass) return false;
+    if (psiClass == null || psiClass.isAnnotationType() || psiClass.isEnum() || psiClass instanceof PsiAnonymousClass ||
+        psiClass.hasModifierProperty(PsiModifier.FINAL)) {
+      return false;
+    }
+    final PsiMethod[] constructors = psiClass.getConstructors();
+    if (constructors.length > 0) {
+      boolean hasNonPrivateConstructor = false;
+      for (PsiMethod constructor : constructors) {
+        if (!constructor.hasModifierProperty(PsiModifier.PRIVATE)) {
+          hasNonPrivateConstructor = true;
+          break;
+        }
+      }
+      if (!hasNonPrivateConstructor) return false;
+    }
     PsiJavaToken lBrace = psiClass.getLBrace();
     if (lBrace == null) return false;
     if (element.getTextOffset() >= lBrace.getTextOffset()) return false;
@@ -98,8 +112,8 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                       public void run() {
                         Messages.showErrorDialog(project,
-                                                 CodeInsightBundle.message( "intention.implement.abstract.class.error.cannot.create.class.message", dialog.getClassName()),
-                                                 CodeInsightBundle.message("intention.implement.abstract.class.error.cannot.create.class.title"));
+                                                 CodeInsightBundle.message( "intention.error.cannot.create.class.message", dialog.getClassName()),
+                                                 CodeInsightBundle.message("intention.error.cannot.create.class.title"));
                       }
                     });
               return null;
