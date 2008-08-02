@@ -117,7 +117,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     if (!editor.getSelectionModel().hasSelection()) return;
 
     final String text = editor.getSelectionModel().getSelectedText();
-    if (text == null || text.indexOf('\n') >= 0) return;
+    if (text == null) return;
 
     if (editor instanceof EditorWindow) {
       // highlight selection in the whole editor, not injected fragment only  

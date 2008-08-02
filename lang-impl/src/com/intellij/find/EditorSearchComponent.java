@@ -64,6 +64,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private boolean myHasMatches = false;
   private final JCheckBox myCbRegexp;
   private JCheckBox myCbWholeWords;
+  private boolean myInitialTextOverridden = false;
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -232,8 +233,14 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        final String text = initialText != null && initialText.indexOf('\n') < 0 ? initialText : "";
-        mySearchField.setText(text);
+        final String text = initialText != null ? initialText : "";
+        if (text.indexOf("\n") >= 0) {
+          setRegexp(true);
+          mySearchField.setText(StringUtil.escapeToRegexp(text));
+        }
+        else {
+          mySearchField.setText(text);
+        }
         mySearchField.selectAll();
       }
     });

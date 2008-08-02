@@ -1128,11 +1128,14 @@ public class StringUtil {
   }
 
   public static String escapeToRegexp(String text) {
-    StringBuilder result = new StringBuilder();
+    @NonNls StringBuilder result = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       final char c = text.charAt(i);
       if (c == ' ' || Character.isLetter(c) || Character.isDigit(c)) {
         result.append(c);
+      }
+      else if (c == '\n') {
+        result.append("\\n");
       }
       else {
         result.append('\\').append(c);
