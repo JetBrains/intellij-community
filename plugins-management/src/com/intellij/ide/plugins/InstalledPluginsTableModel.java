@@ -35,7 +35,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   public InstalledPluginsTableModel(SortableProvider sortableProvider) {
     super.sortableProvider = sortableProvider;
-    super.columns = new ColumnInfo[]{new EnabledPluginInfo(), new NameColumnInfo()};
+    super.columns = new ColumnInfo[]{
+        new EnabledPluginInfo(),
+        new NameColumnInfo()
+    };
     view = new ArrayList<IdeaPluginDescriptor>(Arrays.asList(PluginManager.getPlugins()));
 
     myEnabled.clear();
@@ -172,13 +175,13 @@ public class InstalledPluginsTableModel extends PluginTableModel {
             }
           });
         if (!deps.isEmpty()) {
-          if (Messages.showOkCancelDialog("<html>Plugin has disabled dependant plugins:<br>" + StringUtil.join(deps, new Function<PluginId, String>() {
+          if (Messages.showOkCancelDialog("<html>The following plugins on which this plugin depends are disabled:<br>" + StringUtil.join(deps, new Function<PluginId, String>() {
             public String fun(final PluginId pluginId) {
               final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
               assert pluginDescriptor != null;
               return pluginDescriptor.getName();
             }
-          }, "<br>") + "</html>", "Enable dependant plugins?", Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
+          }, "<br>") + "<br>Would you like to enable them?</html>", "Enable Dependant Plugins", Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
             for (PluginId pluginId : deps) {
               myEnabled.put(pluginId, Boolean.TRUE);
             }
