@@ -42,7 +42,7 @@ public class MoveInnerTest extends MultiFileTestCase {
     doTest(createAction("p.A.B", "B", true, "outer", false, false, null));
   }
 
-  public void _testConstructorVisibility() throws Exception {  // IDEADEV-19561
+  public void testConstructorVisibility() throws Exception {  // IDEADEV-19561
     doTest(createAction("p.A.B", "B", false, null, false, false, null));
   }
 

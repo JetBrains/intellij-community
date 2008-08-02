@@ -168,8 +168,19 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         newClass.getModifierList().setModifierProperty(PsiModifier.STATIC, false);
         newClass.getModifierList().setModifierProperty(PsiModifier.PRIVATE, false);
         newClass.getModifierList().setModifierProperty(PsiModifier.PROTECTED, false);
-        if (needPublicAccess()) {
+        final boolean makePublic = needPublicAccess();
+        if (makePublic) {
           newClass.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
+        }
+
+        final PsiMethod[] constructors = newClass.getConstructors();
+        for (PsiMethod constructor : constructors) {
+          final PsiModifierList modifierList = constructor.getModifierList();
+          modifierList.setModifierProperty(PsiModifier.PRIVATE, false);
+          modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
+          if (makePublic) {
+            modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
+          }
         }
 
       }
