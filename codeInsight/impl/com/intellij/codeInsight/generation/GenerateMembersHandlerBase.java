@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.actions.EnterAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -74,6 +75,16 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
     int col = editor.getCaretModel().getLogicalPosition().column;
     int line = editor.getCaretModel().getLogicalPosition().line;
+    int lineStartOffset = editor.getDocument().getLineStartOffset(line);
+    String textBeforeCaret = editor.getDocument().getCharsSequence().subSequence(lineStartOffset, offset).toString().trim();
+    if (textBeforeCaret.length() > 0) {
+      EnterAction.insertNewLineAtCaret(editor);
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      offset = editor.getCaretModel().getOffset();
+      col = editor.getCaretModel().getLogicalPosition().column;
+      line = editor.getCaretModel().getLogicalPosition().line;
+    }
+
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 0));
 
     List<? extends GenerationInfo> newMembers;

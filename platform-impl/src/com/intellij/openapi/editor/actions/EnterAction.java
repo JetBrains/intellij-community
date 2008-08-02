@@ -31,7 +31,7 @@ public class EnterAction extends EditorAction {
     }
   }
 
-  private static void insertNewLineAtCaret(Editor editor) {
+  public static void insertNewLineAtCaret(Editor editor) {
     if(!editor.isInsertMode()) {
       if(editor.getCaretModel().getLogicalPosition().line < editor.getDocument().getLineCount()-1) {
         LogicalPosition pos = new LogicalPosition(editor.getCaretModel().getLogicalPosition().line+1, 0);
