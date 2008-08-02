@@ -227,6 +227,7 @@
     
     <annotator language="XML" implementationClass="com.intellij.codeInspection.htmlInspections.XmlWrongClosingTagNameInspection"/>
 
+    <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.XmlMover" id="xml" order="before line"/>
   </extensions>
   
 </idea-plugin>

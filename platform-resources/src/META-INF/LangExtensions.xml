@@ -268,4 +268,6 @@
   <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectViewOpener"/>
 
   <iconProvider implementation="com.intellij.psi.impl.file.DirectoryIconProvider" id="directory" order="last"/>
+
+  <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.LineMover" id="line" order="last"/>
 </extensions>
