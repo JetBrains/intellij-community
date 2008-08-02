@@ -187,7 +187,7 @@ public class GroovyPositionManager implements PositionManager {
     final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
 
     PsiClass clazz = GroovyCachesManager.getInstance(project).getClassByName(qName, searchScope);
-    Collection<PsiClass> classes = GrFullClassNameIndex.getInstance().get(qName.hashCode(), project, searchScope);
+//    Collection<PsiClass> classes = GrFullClassNameIndex.getInstance().get(qName.hashCode(), project, searchScope);
     if (clazz != null) return clazz.getContainingFile();
 
     DirectoryIndex directoryIndex = DirectoryIndex.getInstance(project);
