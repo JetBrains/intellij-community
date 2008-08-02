@@ -4,6 +4,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.KeyedLazyInstance;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -16,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class KeyedExtensionCollector<T, KeyT> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.KeyedExtensionCollector");
+
   private final Map<String, List<T>> myExplicitExtensions = new THashMap<String, List<T>>();
   private final Map<String, List<T>> myCache = new HashMap<String, List<T>>();
   private final Object lock = new Object();
@@ -87,7 +90,15 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
       final KeyedLazyInstance<T>[] beans = point.getExtensions();
       for (KeyedLazyInstance<T> bean : beans) {
         if (stringKey.equals(bean.getKey())) {
-          result.add(bean.getInstance());
+          final T instance;
+          try {
+            instance = bean.getInstance();
+          }
+          catch (Exception e) {
+            LOG.error(e);
+            continue;
+          }
+          result.add(instance);
         }
       }
     }
