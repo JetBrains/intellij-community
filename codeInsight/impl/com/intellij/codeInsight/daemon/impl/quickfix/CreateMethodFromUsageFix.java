@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -18,8 +18,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.refactoring.util.FieldConflictsResolver;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,7 +135,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
       }
 
       if (enclosingContext instanceof PsiMethod && methodName.equals(enclosingContext.getName()) &&
-          !targetClass.equals(parentClass)) {
+          PsiTreeUtil.isAncestor(targetClass, parentClass, true)) {
         FieldConflictsResolver.qualifyReference(ref, method, null);
       }
 
