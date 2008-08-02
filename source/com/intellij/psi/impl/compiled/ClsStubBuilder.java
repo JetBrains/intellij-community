@@ -545,7 +545,7 @@ public class ClsStubBuilder {
     if (value == null) return null;
 
     if (value instanceof String) return "\"" + StringUtil.escapeStringCharacters((String)value) + "\"";
-    if (value instanceof Integer) return value.toString();
+    if (value instanceof Integer || value instanceof Boolean) return value.toString();
     if (value instanceof Long) return value.toString() + "L";
 
     if (value instanceof Double) {
