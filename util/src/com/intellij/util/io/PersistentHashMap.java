@@ -277,6 +277,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
 
   public synchronized void close() throws IOException {
+    flushKeysStream();
     myAppendCache.clear();
     try {
       super.close();
