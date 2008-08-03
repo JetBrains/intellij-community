@@ -61,7 +61,12 @@ public class FocusTrackback {
     register(parent);
 
     final List<FocusTrackback> stack = getStackForRoot(myRoot);
-    if (stack.indexOf(this) == 0) {
+    final int index = stack.indexOf(this);
+
+    //todo [kirillk] diagnostics for IDEADEV-28766
+    assert index >= 0 : myRequestorName;
+
+    if (index == 0) {
       final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       setFocusOwner(manager.getPermanentFocusOwner());
       if (getFocusOwner() == null) {
@@ -81,7 +86,7 @@ public class FocusTrackback {
     if (stack.size() == 1 && getFocusOwner() == null) {
       setFocusOwner(getFocusFor(myRoot));
     }
-    else if (stack.indexOf(this) == 0 && getFocusOwner() != null) {
+    else if (index == 0 && getFocusOwner() != null) {
       setFocusFor(myRoot, getFocusOwner());
     }
   }
