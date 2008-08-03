@@ -257,7 +257,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   }
 
   public void addNotify() {
-    LOG.assertTrue(myEditor == null);
+    releaseEditor();
 
     boolean isFocused = isFocusOwner();
 
@@ -278,6 +278,10 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
 
   public void removeNotify() {
     super.removeNotify();
+    releaseEditor();
+  }
+
+  private void releaseEditor() {
     if (myEditor != null) {
       // Theoretically this condition is always true but under some Linux VMs it seems removeNotify is called twice
       // or called for components addNotify haven't been called for.
