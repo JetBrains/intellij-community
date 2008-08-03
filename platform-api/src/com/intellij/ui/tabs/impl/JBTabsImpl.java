@@ -110,6 +110,7 @@ public class JBTabsImpl extends JComponent
   boolean myAddNavigationGroup = true;
 
   boolean myGhostsAlwaysVisible = false;
+  private boolean myDisposed;
 
 
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
@@ -186,6 +187,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public void dispose() {
+    myDisposed = true;
     mySelectedInfo = null;
     myAllTabs = null;
     myAttractions.clear();
@@ -506,7 +508,11 @@ public class JBTabsImpl extends JComponent
         final ActionCallback result = new ActionCallback();
         requestFocus(toFocus).doWhenProcessed(new Runnable() {
           public void run() {
-            removeDeferred(deferredRemove).notifyWhenDone(result);
+            if (myDisposed) {
+              result.setRejected();
+            } else {
+              removeDeferred(deferredRemove).notifyWhenDone(result);
+            }
           }
         });
         return result;
