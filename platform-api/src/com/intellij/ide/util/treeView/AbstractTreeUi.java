@@ -14,6 +14,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.ui.LoadingNode;
 import com.intellij.util.Alarm;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.Time;
 import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakList;
@@ -78,6 +79,7 @@ class AbstractTreeUi {
   private AbstractTreeBuilder myBuilder;
 
   private Set<DefaultMutableTreeNode> myUpdatingChildren = new HashSet<DefaultMutableTreeNode>();
+  private long myJanitorPollPeriod = Time.SECOND * 10;
 
   protected final void init(AbstractTreeBuilder builder,
                             JTree tree,
@@ -116,13 +118,15 @@ class AbstractTreeUi {
 
     final UiNotifyConnector uiNotify = new UiNotifyConnector(tree, new Activatable() {
       public void showNotify() {
-        if (isDisposed()) return;
-        getBuilder().processShowNotify();
+        if (!isDisposed()) {
+          AbstractTreeUi.this.showNotify();
+        }
       }
 
       public void hideNotify() {
-        if (isDisposed()) return;
-        getBuilder().processHideNotify();
+        if (!isDisposed()) {
+          AbstractTreeUi.this.hideNotify();
+        }
       }
     });
     Disposer.register(getBuilder(), uiNotify);
@@ -150,7 +154,7 @@ class AbstractTreeUi {
       public void run() {
         cleanUpAll();
       }
-    }, getBuilder().getJanitorPollPeriod(), getBuilder().getJanitorPollPeriod(), TimeUnit.MILLISECONDS);
+    }, myJanitorPollPeriod, myJanitorPollPeriod, TimeUnit.MILLISECONDS);
   }
 
   private void cleanUpAll() {
@@ -190,7 +194,7 @@ class AbstractTreeUi {
     }
   }
 
-  protected void showNotify() {
+  void showNotify() {
     ourUi2Countdown.remove(this);
 
     if (!myWasEverShown || myUpdateFromRootRequested) {
@@ -1517,6 +1521,10 @@ class AbstractTreeUi {
   public AbstractTreeUi setClearOnHideDelay(final long clearOnHideDelay) {
     myClearOnHideDelay = clearOnHideDelay;
     return this;
+  }
+
+  public void setJantorPollPeriod(final long time) {
+    myJanitorPollPeriod = time;
   }
 
   private class MySelectionListener implements TreeSelectionListener {

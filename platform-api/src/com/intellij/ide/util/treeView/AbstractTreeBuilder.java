@@ -19,7 +19,6 @@ package com.intellij.ide.util.treeView;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.util.Time;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,14 +55,18 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
   protected void init(final JTree tree, final DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure, final Comparator<NodeDescriptor> comparator) {
 
-    myUi = new AbstractTreeUi();
+    myUi = createUi();
     getUi().init(this, tree, treeModel, treeStructure, comparator);
   }
   protected void init(final JTree tree, final DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure, final Comparator<NodeDescriptor> comparator,
                       final boolean updateIfInactive) {
 
-    myUi = new AbstractTreeUi();
+    myUi = createUi();
     getUi().init(this, tree, treeModel, treeStructure, comparator, updateIfInactive);
+  }
+
+  AbstractTreeUi createUi() {
+    return new AbstractTreeUi();
   }
 
   public final void select(final Object element, @Nullable final Runnable onDone) {
@@ -101,6 +104,10 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
   protected final AbstractTreeUpdater getUpdater() {
     return getUi().getUpdater();
+  }
+
+  public final boolean addSubtreeToUpdateByElement(Object element) {
+    return getUpdater().addSubtreeToUpdateByElement(element);
   }
 
   public final void addSubtreeToUpdate(DefaultMutableTreeNode node) {
@@ -158,14 +165,6 @@ public abstract class AbstractTreeBuilder implements Disposable {
     getUi().doUpdateFromRoot();
   }
 
-  public void processHideNotify() {
-    getUi().hideNotify();
-  }
-
-  public void processShowNotify() {
-    getUi().showNotify();
-  }
-
   public void initRootNode() {
     getUi().initRootNode();
   }
@@ -192,10 +191,6 @@ public abstract class AbstractTreeBuilder implements Disposable {
     getUi().doCleanUp();
   }
 
-  protected long getJanitorPollPeriod() {
-    return Time.SECOND * 10;
-  }
-
   @Nullable
   protected ProgressIndicator createProgressIndicator() {
     return null;
@@ -215,7 +210,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     return true;
   }
 
-  public boolean isDisposed() {
+  public final boolean isDisposed() {
     return getUi() == null || getUi().isDisposed();
   }
 
@@ -223,15 +218,15 @@ public abstract class AbstractTreeBuilder implements Disposable {
    * @deprecated
    * @param node
    */
-  public void updateSubtree(final DefaultMutableTreeNode node) {
+  public final void updateSubtree(final DefaultMutableTreeNode node) {
     getUi().updateSubtree(node);
   }
 
-  public boolean wasRootNodeInitialized() {
+  public final boolean wasRootNodeInitialized() {
     return getUi().wasRootNodeInitialized();
   }
 
-  public boolean isNodeBeingBuilt(final TreePath path) {
+  public final boolean isNodeBeingBuilt(final TreePath path) {
     return getUi().isNodeBeingBuilt(path);
   }
 
@@ -239,14 +234,14 @@ public abstract class AbstractTreeBuilder implements Disposable {
    * @deprecated
    * @param path
    */
-  public void buildNodeForPath(final Object[] path) {
+  public final void buildNodeForPath(final Object[] path) {
     getUi().buildNodeForPath(path);
   }
 
   /**
    * @deprecated
    */
-  public DefaultMutableTreeNode getNodeForPath(final Object[] path) {
+  public final DefaultMutableTreeNode getNodeForPath(final Object[] path) {
     return getUi().getNodeForPath(path);
   }
 
