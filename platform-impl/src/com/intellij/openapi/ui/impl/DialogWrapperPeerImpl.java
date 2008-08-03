@@ -562,6 +562,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     private void disposeFocusTrackbackIfNoChildWindowFocused(@Nullable IdeFocusManager focusManager) {
+      if (myFocusTrackback == null) return;
+
       final DialogWrapper wrapper = myDialogWrapper.get();
       if (wrapper == null || !wrapper.isShowing()) {
         myFocusTrackback.dispose();
