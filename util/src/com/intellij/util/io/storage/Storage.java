@@ -56,10 +56,12 @@ public class Storage implements Disposable, Forceable {
 
   public static void convertFromOldExtensions(String storageFilePath) {
     try {
-      FileUtil.rename(new File(storageFilePath + ".rindex"), new File(storageFilePath + INDEX_EXTENSION));
-      FileUtil.rename(new File(storageFilePath + ".data"), new File(storageFilePath + DATA_EXTENSION));
-      
-      LOG.info("Succesfully converted storage files to new extensions for path: " + storageFilePath);
+      final File oldFile = new File(storageFilePath + ".rindex");
+      if (oldFile.exists()) {
+        FileUtil.rename(oldFile, new File(storageFilePath + INDEX_EXTENSION));
+        FileUtil.rename(new File(storageFilePath + ".data"), new File(storageFilePath + DATA_EXTENSION));
+        LOG.info("Succesfully converted storage files to new extensions for path: " + storageFilePath);
+      }
     }
     catch (IOException e) {
       // Ignore. May well be we don't have old files at all.
