@@ -1102,10 +1102,10 @@ class AbstractTreeUi {
   }
 
   public void select(final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection) {
-    _select(elements, onDone, addToSelection, true);
+    _select(elements, onDone, addToSelection, true, false);
   }
 
-  void _select(final Object[] elements, final Runnable onDone, final boolean addToSelection, boolean checkCurrentSelection) {
+  void _select(final Object[] elements, final Runnable onDone, final boolean addToSelection, boolean checkCurrentSelection, boolean checkIfInStructure) {
     final Set<Object> currentElements = getSelectedElements();
 
     if (checkCurrentSelection && currentElements.size() > 0 && elements.length == currentElements.size()) {
@@ -1130,6 +1130,16 @@ class AbstractTreeUi {
     toSelect.addAll(Arrays.asList(elements));
     if (addToSelection) {
       toSelect.addAll(currentElements);
+    }
+
+    if (checkIfInStructure) {
+      final Iterator<Object> allToSelect = toSelect.iterator();
+      while (allToSelect.hasNext()) {
+        Object each = allToSelect.next();
+        if (!isInStructure(each)) {
+          allToSelect.remove();
+        }
+      }
     }
 
     final Object[] elementsToSelect = toSelect.toArray(new Object[toSelect.size()]);
@@ -1212,17 +1222,27 @@ class AbstractTreeUi {
         }
       }
     };
-    _expand(element, _onDone, true);
+    _expand(element, _onDone, true, false);
   }
 
   public void expand(final Object element, @Nullable final Runnable onDone) {
+    expand(element, onDone, false);
+  }
+
+
+  void expand(final Object element, @Nullable final Runnable onDone, boolean checkIfInStructure) {
     if (myUpdaterState != null) {
       myUpdaterState.clearExpansion();
     }
-    _expand(element, onDone == null ? new EmptyRunnable() : onDone, false);
+    _expand(element, onDone == null ? new EmptyRunnable() : onDone, false, checkIfInStructure);
   }
 
-  private void _expand(final Object element, @NotNull final Runnable onDone, final boolean parentsOnly) {
+  private void _expand(final Object element, @NotNull final Runnable onDone, final boolean parentsOnly, boolean checkIfInStructure) {
+    if (checkIfInStructure && !isInStructure(element)) {
+      onDone.run();
+      return;
+    }
+
     if (wasRootNodeInitialized()) {
       List<Object> kidsToExpand = new ArrayList<Object>();
       Object eachElement = element;
@@ -1259,7 +1279,7 @@ class AbstractTreeUi {
     else {
       myDeferredExpansions.add(new Runnable() {
         public void run() {
-          _expand(element, onDone, parentsOnly);
+          _expand(element, onDone, parentsOnly, false);
         }
       });
     }
@@ -1594,6 +1614,15 @@ class AbstractTreeUi {
     }
   }
 
+  public boolean isInStructure(@NotNull Object element) {
+    Object eachParent = element;
+    while(eachParent != null) {
+      if (getTreeStructure().getRootElement().equals(eachParent)) return true;
+      eachParent = getTreeStructure().getParentElement(eachParent);
+    }
+
+    return false;
+  }
 
   interface NodeAction {
     void onReady(DefaultMutableTreeNode node);

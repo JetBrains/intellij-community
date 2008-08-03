@@ -90,32 +90,6 @@ public class UpdaterTreeState {
     return isEmpty();
   }
 
-  public boolean process(final DefaultMutableTreeNode node, final JTree tree) {
-    return process(new Runnable() {
-      public void run() {
-        final Object object = node.getUserObject();
-        if (object == null) return;
-
-        final boolean toExpand = myToExpand.containsKey(object);
-        final boolean toSelect = myToSelect.containsKey(object);
-
-        if (!toExpand && !toSelect) return;
-
-
-        TreePath path = new TreePath(node.getPath());
-        if (toExpand) {
-          myToExpand.remove(object);
-          tree.expandPath(path);
-        }
-
-        if (toSelect) {
-          myToSelect.remove(object);
-          tree.addSelectionPath(path);
-        }
-      }
-    });
-  }
-
   public boolean isEmpty() {
     return myToExpand.isEmpty() && myToSelect.isEmpty();
   }
@@ -140,12 +114,12 @@ public class UpdaterTreeState {
     final Runnable expandRunnable = new Runnable() {
       public void run() {
         for (Object each : toExpand) {
-          myUi.getBuilder().expand(each, null);
+          myUi.expand(each, null, true);
         }
       }
     };
     if (toSelect.length > 0) {
-      myUi._select(toSelect, expandRunnable, false, true);
+      myUi._select(toSelect, expandRunnable, false, true, true);
     } else {
       expandRunnable.run();
     }
