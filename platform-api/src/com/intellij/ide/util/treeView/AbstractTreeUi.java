@@ -470,7 +470,7 @@ class AbstractTreeUi {
     boolean changes = getBuilder().updateNodeDescriptor(descriptor);
     if (descriptor.getElement() == null) {
       LOG.assertTrue(false, "element == null, updateSubtree should be invoked for parent! builder=" +
-                            this +
+                            getBuilder() +
                             ", prevElement = " +
                             prevElement +
                             ", node = " +
