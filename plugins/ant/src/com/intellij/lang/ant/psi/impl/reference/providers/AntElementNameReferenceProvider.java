@@ -34,7 +34,7 @@ public class AntElementNameReferenceProvider extends PsiReferenceProvider {
       result.add(new AntElementNameReference(se));
       if (element instanceof AntTask) {
         final AntTask task = (AntTask)element;
-        if (task.isMacroDefined()) {
+        if (task.isMacroDefined() || task.isScriptDefined()) {
           final XmlAttribute[] attrs = task.getSourceElement().getAttributes();
           if (attrs.length != 0) {
             for (XmlAttribute attr : attrs) {

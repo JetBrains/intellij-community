@@ -55,4 +55,9 @@ public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
     final AntTypeDefinition def = getTypeDefinition();
     return def != null && def.getClassName().startsWith(AntMacroDefImpl.ANT_MACRODEF_NAME);
   }
+
+  public boolean isScriptDefined() {
+    final AntTypeDefinition def = getTypeDefinition();
+    return def != null && def.getClassName().startsWith(AntScriptDefImpl.ANT_SCRIPTDEF_NAME);
+  }
 }

@@ -37,15 +37,14 @@ public class AntElementNameReference extends AntGenericReference {
 
     if (!(element instanceof AntTask)) {
       final AntStructuredElement defElement = (AntStructuredElement)typeDef.getDefiningElement();
-      if (defElement != null && (defElement instanceof AntPresetDef || (defElement.getParent() instanceof AntMacroDef &&
-                                                                        "element".equals(defElement.getSourceElement().getName())))) {
-        // renaming macrodef's nested element
+      if (defElement != null && (defElement instanceof AntPresetDef || ((defElement.getParent() instanceof AntMacroDef || defElement.getParent() instanceof AntScriptDef) && "element".equals(defElement.getSourceElement().getName())))) {
+        // renaming macrodef's or scriptdef's nested element
         element.getSourceElement().setName(newElementName);
       }
     }
     else {
       AntTask task = (AntTask)element;
-      if (task.isMacroDefined() || task.isPresetDefined() || task.isTypeDefined()) {
+      if (task.isMacroDefined() || task.isScriptDefined() || task.isPresetDefined() || task.isTypeDefined()) {
         final XmlAttribute attr = getAttribute();
         if (attr == null) {
           // renaming macrodef, presetdef or typedef/taskdef itself
@@ -80,7 +79,7 @@ public class AntElementNameReference extends AntGenericReference {
         return (definingElement == null) ? findClass(elementDef, element) : definingElement;
       }
       AntTask task = (AntTask)element;
-      if (task.isMacroDefined()) {
+      if (task.isMacroDefined() || task.isScriptDefined()) {
         final XmlAttribute attr = getAttribute();
         if (definingElement != null && attr != null) {
           for (PsiElement child : definingElement.getChildren()) {

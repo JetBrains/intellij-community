@@ -53,6 +53,10 @@ public class AntElementVisitor {
     visitAntElement(antMacroDef);
   }
 
+  public void visitAntScriptDef(final AntScriptDef antScriptDef) {
+    visitAntElement(antScriptDef);
+  }
+
   public void visitAntPresetDef(final AntPresetDef presetDef) {
     visitAntElement(presetDef);
   }

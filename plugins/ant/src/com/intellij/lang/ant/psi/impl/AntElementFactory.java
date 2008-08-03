@@ -16,6 +16,7 @@ import org.apache.tools.ant.Target;
 import org.apache.tools.ant.taskdefs.*;
 import org.apache.tools.ant.taskdefs.optional.extension.JarLibResolveTask;
 import org.apache.tools.ant.taskdefs.optional.perforce.P4Counter;
+import org.apache.tools.ant.taskdefs.optional.script.ScriptDef;
 import org.apache.tools.ant.types.DirSet;
 import org.apache.tools.ant.types.FileList;
 import org.apache.tools.ant.types.FileSet;
@@ -249,6 +250,12 @@ public class AntElementFactory {
           public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
             return new AntPresetDefImpl((AntStructuredElement)parent, tag,
                                         parent.getAntFile().getBaseTypeDefinition(PreSetDef.class.getName()));
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(ScriptDef.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntScriptDefImpl((AntStructuredElement)parent, tag,
+                                        parent.getAntFile().getBaseTypeDefinition(ScriptDef.class.getName()));
           }
         });
         ourAntTypeToKnownAntElementCreatorMap.put(ImportTask.class.getName(), new AntElementCreator() {

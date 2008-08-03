@@ -79,8 +79,10 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     if (element instanceof AntTypeDef) {
       ((AntTypeDef)element).clearClassesCache();
     }
-    if (element instanceof AntMacroDef || element instanceof AntPresetDef) {
-      element.clearCaches();
+    if (element != null && element.isValid()) {
+      if (element instanceof AntMacroDef || element instanceof AntPresetDef || element instanceof AntScriptDef) {
+        element.clearCaches();
+      }
     }
     if (element != null) {
       do{
@@ -97,15 +99,19 @@ public class AntChangeVisitor implements XmlChangeVisitor {
       if (shouldInvalidateProperties) {
         file.invalidateProperties();
       }
-      final AntMacroDef macrodef = PsiTreeUtil.getParentOfType(element, AntMacroDef.class, true, true);
+      final AntMacroDef macrodef = PsiTreeUtil.getParentOfType(element, AntMacroDef.class, false, true);
       if (macrodef != null) {
         macrodef.clearCaches();
       }
-      final AntPresetDef presetdef = PsiTreeUtil.getParentOfType(element, AntPresetDef.class, true, true);
+      final AntPresetDef presetdef = PsiTreeUtil.getParentOfType(element, AntPresetDef.class, false, true);
       if (presetdef != null) {
         presetdef.clearCaches();
       }
-      final AntTypeDef typeDef = PsiTreeUtil.getParentOfType(element, AntTypeDef.class, true, true);
+      final AntScriptDef scriptdef = PsiTreeUtil.getParentOfType(element, AntScriptDef.class, false, true);
+      if (scriptdef != null) {
+        scriptdef.clearCaches();
+      }
+      final AntTypeDef typeDef = PsiTreeUtil.getParentOfType(element, AntTypeDef.class, false, true);
       if (typeDef != null) {
         typeDef.clearCaches();
       }

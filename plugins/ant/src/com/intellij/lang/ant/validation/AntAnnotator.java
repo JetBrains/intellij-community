@@ -35,7 +35,7 @@ public class AntAnnotator implements Annotator {
         if (!isSuccessorOfUndefinedElement(se.getAntParent())) {
           boolean macroDefined = false;
           while (parent != null) {
-            if (parent instanceof AntTask && ((AntTask)parent).isMacroDefined()) {
+            if (parent instanceof AntTask && (((AntTask)parent).isMacroDefined() || ((AntTask)parent).isScriptDefined())) {
               macroDefined = true;
               break;
             }

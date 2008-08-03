@@ -4,4 +4,5 @@ public interface AntTask extends AntStructuredElement {
 
   boolean isMacroDefined();
 
+  boolean isScriptDefined();
 }

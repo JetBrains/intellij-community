@@ -30,6 +30,7 @@ public enum AntElementRole {
   USER_TASK_ROLE(AntBundle.message("ant.element.role.user.task"), Icons.TASK_ICON),
   PROJECT_ROLE(AntBundle.message("ant.element.role.ant.project.name"), Icons.PROPERTY_ICON),
   MACRODEF_ROLE(AntBundle.message("ant.element.role.macrodef.element"), Icons.TASK_ICON),
+  SCRIPTDEF_ROLE(AntBundle.message("ant.element.role.scriptdef.element"), Icons.TASK_ICON),
   @NonNls NULL_ROLE("Ant element", null);
 
   AntElementRole(String name, Icon icon) {

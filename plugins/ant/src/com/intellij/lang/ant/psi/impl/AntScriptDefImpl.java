@@ -17,29 +17,25 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
+public class AntScriptDefImpl extends AntTaskImpl implements AntScriptDef {
 
-  @NonNls public static final String ANT_MACRODEF_NAME = "AntMacroDef";
+  @NonNls public static final String ANT_SCRIPTDEF_NAME = "AntScriptDef";
 
-  private AntTypeDefinitionImpl myMacroDefinition;
+  private AntTypeDefinitionImpl myScriptDefinition;
 
-  public AntMacroDefImpl(final AntStructuredElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
+  public AntScriptDefImpl(final AntStructuredElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
-    invalidateMacroDefinition();
-  }
-
-  public void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor) {
-    visitor.visitAntMacroDef(this);
+    invalidateScriptDefinition();
   }
 
   public String toString() {
-    return createMacroClassName(getName());
+    return createScriptClassName(getName());
   }
 
-  public static String createMacroClassName(final String macroName) {
+  public static String createScriptClassName(final String macroName) {
     @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      builder.append(ANT_MACRODEF_NAME);
+      builder.append(ANT_SCRIPTDEF_NAME);
       builder.append("[");
       builder.append(macroName);
       builder.append("]");
@@ -51,63 +47,68 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
   }
 
   public AntElementRole getRole() {
-    return AntElementRole.MACRODEF_ROLE;
+    return AntElementRole.SCRIPTDEF_ROLE;
   }
 
+  public void acceptAntElementVisitor(@NotNull final AntElementVisitor visitor) {
+    visitor.visitAntScriptDef(this);
+  }
 
-  public AntTypeDefinition getMacroDefinition() {
-    return myMacroDefinition;
+  public AntTypeDefinition getScriptDefinition() {
+    return myScriptDefinition;
   }
 
   public void clearCaches() {
     synchronized (PsiLock.LOCK) {
       super.clearCaches();
       final AntFile file = getAntFile();
-      if (myMacroDefinition != null) {
-        for (AntTypeId id : myMacroDefinition.getNestedElements()) {
-          final AntTypeDefinition nestedDef = file.getBaseTypeDefinition(myMacroDefinition.getNestedClassName(id));
+      if (myScriptDefinition != null) {
+        for (AntTypeId id : myScriptDefinition.getNestedElements()) {
+          final AntTypeDefinition nestedDef = file.getBaseTypeDefinition(myScriptDefinition.getNestedClassName(id));
           if (nestedDef != null) {
             file.unregisterCustomType(nestedDef);
           }
         }
         final AntStructuredElement parent = getAntProject();
         if (parent != null) {
-          parent.unregisterCustomType(myMacroDefinition);
+          parent.unregisterCustomType(myScriptDefinition);
         }
-        myMacroDefinition = null;
+        myScriptDefinition = null;
       }
       file.clearCaches();
     }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private void invalidateMacroDefinition() {
+  private void invalidateScriptDefinition() {
     if (!hasNameElement()) {
-      myMacroDefinition = null;
+      myScriptDefinition = null;
       return;
     }
 
     final AntFile file = getAntFile();
     if (file == null) return;
 
-    final String thisClassName = createMacroClassName(getName());
-    myMacroDefinition = (AntTypeDefinitionImpl)file.getBaseTypeDefinition(thisClassName);
+    final String thisClassName = createScriptClassName(getName());
+    myScriptDefinition = (AntTypeDefinitionImpl)file.getBaseTypeDefinition(thisClassName);
     final Map<String, AntAttributeType> attributes =
-      (myMacroDefinition == null) ? new HashMap<String, AntAttributeType>() : myMacroDefinition.getAttributesMap();
+      (myScriptDefinition == null) ? new HashMap<String, AntAttributeType>() : myScriptDefinition.getAttributesMap();
     attributes.clear();
     final Map<AntTypeId, String> nestedElements =
-      (myMacroDefinition == null) ? new HashMap<AntTypeId, String>() : myMacroDefinition.getNestedElementsMap();
+      (myScriptDefinition == null) ? new HashMap<AntTypeId, String>() : myScriptDefinition.getNestedElementsMap();
     for (AntElement child : getChildren()) {
       if (child instanceof AntStructuredElement) {
         final AntStructuredElement se = (AntStructuredElement)child;
         final String name = se.getName();
         if (name != null) {
-          final String tagName = se.getSourceElement().getName();
+          final XmlTag sourceElement = se.getSourceElement();
+          final String tagName = sourceElement.getName();
           if (tagName.equals("attribute")) {
             attributes.put(name.toLowerCase(Locale.US), AntAttributeType.STRING);
           }
           else if (tagName.equals("element")) {
-            final String elementClassName = thisClassName + '$' + name;
+            final String classNameAttrib = sourceElement.getAttributeValue("classname");
+            final String elementClassName = classNameAttrib != null? classNameAttrib : thisClassName + '$' + name;
             AntTypeDefinitionImpl nestedDef = (AntTypeDefinitionImpl)file.getBaseTypeDefinition(elementClassName);
             if (nestedDef == null) {
               final AntTypeDefinitionImpl targetDef = (AntTypeDefinitionImpl)file.getTargetDefinition();
@@ -116,10 +117,12 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
               }
             }
             if (nestedDef != null) {
-              final AntTypeId typeId = new AntTypeId(name);
+              final String typeAttrib = sourceElement.getAttributeValue("type");
+              final String typeName = typeAttrib != null? typeAttrib : name;
+              final AntTypeId typeId = new AntTypeId(typeName);
               nestedDef.setTypeId(typeId);
               nestedDef.setClassName(elementClassName);
-              nestedDef.setIsTask(false);
+              //nestedDef.setIsTask(false);
               nestedDef.setDefiningElement(child);
               file.registerCustomType(nestedDef);
               nestedElements.put(typeId, nestedDef.getClassName());
@@ -129,25 +132,25 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
       }
     }
     final AntTypeId definedTypeId = new AntTypeId(getName());
-    if (myMacroDefinition == null) {
-      myMacroDefinition = new AntTypeDefinitionImpl(definedTypeId, thisClassName, true, false, attributes, nestedElements, this);
+    if (myScriptDefinition == null) {
+      myScriptDefinition = new AntTypeDefinitionImpl(definedTypeId, thisClassName, true, false, attributes, nestedElements, this);
     }
     else {
-      myMacroDefinition.setTypeId(definedTypeId);
-      myMacroDefinition.setClassName(thisClassName);
-      myMacroDefinition.setIsTask(true);
-      myMacroDefinition.setDefiningElement(this);
+      myScriptDefinition.setTypeId(definedTypeId);
+      myScriptDefinition.setClassName(thisClassName);
+      myScriptDefinition.setIsTask(true);
+      myScriptDefinition.setDefiningElement(this);
     }
     final AntStructuredElement parent = getAntProject();
     if (parent != null) {
-      parent.registerCustomType(myMacroDefinition);
+      parent.registerCustomType(myScriptDefinition);
     }
     // define itself as nested task for sequential
     final AntAllTasksContainerImpl sequential = PsiTreeUtil.getChildOfType(this, AntAllTasksContainerImpl.class);
     if (sequential != null) {
-      sequential.registerCustomType(myMacroDefinition);
-      for (final AntTypeId id : myMacroDefinition.getNestedElements()) {
-        sequential.registerCustomType(file.getBaseTypeDefinition(myMacroDefinition.getNestedClassName(id)));
+      sequential.registerCustomType(myScriptDefinition);
+      for (final AntTypeId id : myScriptDefinition.getNestedElements()) {
+        sequential.registerCustomType(file.getBaseTypeDefinition(myScriptDefinition.getNestedClassName(id)));
       }
     }
   }
