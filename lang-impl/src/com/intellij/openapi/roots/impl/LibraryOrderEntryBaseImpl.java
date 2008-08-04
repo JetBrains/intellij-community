@@ -27,7 +27,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     super(rootModel);
     myRootContainers = new HashMap<OrderRootType, VirtualFilePointerContainer>();
     for (OrderRootType type : OrderRootType.getAllTypes()) {
-      myRootContainers.put(type, filePointerManager.createContainer(this));
+      myRootContainers.put(type, filePointerManager.createContainer(this, rootModel.myVirtualFilePointerListener));
     }
     myProjectRootManagerImpl = instanceImpl;
   }

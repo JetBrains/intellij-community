@@ -145,7 +145,7 @@ public class RootModelImpl implements ModifiableRootModel {
       if (paths != null) {
         final Element pathsElement = element.getChild(paths);
         if (pathsElement != null) {
-          VirtualFilePointerContainer container = myFilePointerManager.createContainer(myDisposable);
+          VirtualFilePointerContainer container = myFilePointerManager.createContainer(myDisposable, myVirtualFilePointerListener);
           myOrderRootPointerContainers.put(orderRootType, container);
           container.readExternal(pathsElement, ROOT_ELEMENT);
         }
@@ -222,7 +222,7 @@ public class RootModelImpl implements ModifiableRootModel {
     for(OrderRootType orderRootType: OrderRootType.getAllTypes()) {
       final VirtualFilePointerContainer otherContainer = rootModel.getOrderRootContainer(orderRootType);
       if (otherContainer != null) {
-        myOrderRootPointerContainers.put(orderRootType, otherContainer.clone(getModule()));
+        myOrderRootPointerContainers.put(orderRootType, otherContainer.clone(getModule(), myVirtualFilePointerListener));
       }
     }
   }
@@ -992,7 +992,7 @@ public class RootModelImpl implements ModifiableRootModel {
     assertWritable();
     VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
     if (container == null) {
-      container = myFilePointerManager.createContainer(myDisposable);
+      container = myFilePointerManager.createContainer(myDisposable, myVirtualFilePointerListener);
       myOrderRootPointerContainers.put(orderRootType, container);
     }
     container.clear();
