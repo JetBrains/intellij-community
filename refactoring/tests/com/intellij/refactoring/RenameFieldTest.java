@@ -61,6 +61,10 @@ public class RenameFieldTest extends CodeInsightTestCase {
     doTest("newName", "java");
   }
 
+  public void testEnumConstantWithInitializer() throws Exception {  // IDEADEV-28840
+    doTest("AAA", "java");
+  }
+
   protected void perform(String newName) {
     PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase
       .ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
