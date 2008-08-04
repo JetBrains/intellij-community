@@ -46,6 +46,9 @@
     <include name="icons.jar"/>
     <include name="forms_rt.jar"/>
     <include name="oromatcher.jar"/>
+    <include name="cglib-nodep-2.1_3.jar"/>
+    <include name="velocity.jar"/>
+    <include name="xmlrpc-2.0.jar"/>
   </fileset>
 
   <path id="classpath.lib">
