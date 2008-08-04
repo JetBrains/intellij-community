@@ -15,8 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -34,6 +33,8 @@ public class PerformanceWatcher implements ApplicationComponent {
   private DateFormat myPrintDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
   private File myLogDir;
   private int myUnresponsiveDuration = 0;
+  private File myCurHangLogDir;
+  private List<StackTraceElement> myStacktraceCommonPart;
 
   @NotNull
   public String getComponentName() {
@@ -47,6 +48,7 @@ public class PerformanceWatcher implements ApplicationComponent {
 
     myLogDir = new File(PathManager.getSystemPath() + "/log/threadDumps-" + myDateFormat.format(new Date()));
     myLogDir.mkdirs();
+    myCurHangLogDir = myLogDir;
     myThreadMXBean = ManagementFactory.getThreadMXBean();
     // this method was added in JDK 1.6 so we have to all it through reflection
     try {
@@ -111,21 +113,37 @@ public class PerformanceWatcher implements ApplicationComponent {
       if (mySwingThreadCounter != myLoopCounter) {
         if (myUnresponsiveDuration == 0) {
           System.out.println("EDT is not responding at " + myPrintDateFormat.format(new Date()));
+          myCurHangLogDir = new File(myLogDir, myDateFormat.format(new Date()));
+          myCurHangLogDir.mkdirs();
         }
         myUnresponsiveDuration++;
         dumpThreads();
       }
       else if (myUnresponsiveDuration > 0) {
         System.out.println("EDT was unresponsive for " + myUnresponsiveDuration + " seconds");
+        myCurHangLogDir.renameTo(new File(myLogDir, getLogDirForHang()));
         myUnresponsiveDuration = 0;
+        myCurHangLogDir = myLogDir;
+
+        myStacktraceCommonPart = null;
       }
       myLoopCounter++;
       SwingUtilities.invokeLater(new SwingThreadRunnable(myLoopCounter));
     }
   }
 
+  private String getLogDirForHang() {
+    StringBuilder name = new StringBuilder(myCurHangLogDir.getName());
+    name.append("-").append(myUnresponsiveDuration);
+    if (myStacktraceCommonPart != null && !myStacktraceCommonPart.isEmpty()) {
+      final StackTraceElement element = myStacktraceCommonPart.get(0);
+      name.append("-").append(element.getClassName()).append(".").append(element.getMethodName());
+    }
+    return name.toString();
+  }
+
   private void dumpThreads() {
-    File f = new File(myLogDir, "threadDump-" + myDateFormat.format(new Date()) + ".txt");
+    File f = new File(myCurHangLogDir, "threadDump-" + myDateFormat.format(new Date()) + ".txt");
     FileOutputStream fos;
     try {
       fos = new FileOutputStream(f);
@@ -153,7 +171,17 @@ public class PerformanceWatcher implements ApplicationComponent {
         try {
           ThreadInfo[] threads = (ThreadInfo[])myDumpAllThreadsMethod.invoke(myThreadMXBean, false, false);
           for(ThreadInfo info: threads) {
-            dumpCallStack(info, f);
+            StackTraceElement[] stackTraceElements = info.getStackTrace();
+            dumpCallStack(info, f, stackTraceElements);
+            if (info.getThreadName().equals("AWT-EventQueue-1")) {
+              if (myStacktraceCommonPart == null) {
+                myStacktraceCommonPart = new ArrayList<StackTraceElement>();
+                Collections.addAll(myStacktraceCommonPart, stackTraceElements);
+              }
+              else {
+                updateStacktraceCommonPart(stackTraceElements);
+              }
+            }
           }
           dumpSuccessful = true;
         }
@@ -169,9 +197,20 @@ public class PerformanceWatcher implements ApplicationComponent {
     }
   }
 
-  private static void dumpCallStack(final ThreadInfo info, final OutputStreamWriter f) throws IOException {
+  private void updateStacktraceCommonPart(final StackTraceElement[] stackTraceElements) {
+    for(int i=0; i < myStacktraceCommonPart.size() && i < stackTraceElements.length; i++) {
+      StackTraceElement el1 = myStacktraceCommonPart.get(myStacktraceCommonPart.size()-i-1);
+      StackTraceElement el2 = stackTraceElements [stackTraceElements.length-i-1];
+      if (!el1.equals(el2)) {
+        myStacktraceCommonPart = myStacktraceCommonPart.subList(myStacktraceCommonPart.size() - i, myStacktraceCommonPart.size());
+        break;
+      }
+    }
+  }
+
+  private static void dumpCallStack(final ThreadInfo info, final OutputStreamWriter f,
+                                    final StackTraceElement[] stackTraceElements) throws IOException {
     f.write("\"" + info.getThreadName() + "\"\n");
-    StackTraceElement[] stackTraceElements = info.getStackTrace();
     for(StackTraceElement element: stackTraceElements) {
       f.write("\tat " + element.toString() + "\n");
     }
