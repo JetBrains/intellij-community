@@ -1085,6 +1085,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         PsiElement catchBlock = unhandledExceptionCatchBlocks.get(i);
 
         final ReturnInstruction returnInstruction = new ReturnInstruction(0, myStack, callInstruction);
+        returnInstruction.setRethrowFromFinally();
         myCurrentFlow.addInstruction(returnInstruction);
         if (catchBlock == null) {
           // dispatch to rethrowing exception code

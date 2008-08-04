@@ -9,6 +9,7 @@ public class ReturnInstruction extends GoToInstruction {
 
   private final ControlFlowStack myStack;
   private CallInstruction myCallInstruction;
+  private boolean myRethrowFromFinally = false;
 
   public ReturnInstruction(int offset, @NotNull ControlFlowStack stack, CallInstruction callInstruction) {
     super(offset, ControlFlow.JUMP_ROLE_GOTO_END, false);
@@ -87,5 +88,13 @@ public class ReturnInstruction extends GoToInstruction {
 
   public ControlFlowStack getStack() {
     return myStack;
+  }
+
+  public void setRethrowFromFinally() {
+    myRethrowFromFinally = true;
+  }
+
+  public boolean isRethrowFromFinally() {
+    return myRethrowFromFinally;
   }
 }

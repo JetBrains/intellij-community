@@ -595,7 +595,8 @@ public class ControlFlowUtil {
       @Override public void visitGoToInstruction(GoToInstruction instruction, int offset, int nextOffset) {
         if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
         if (offset > endOffset) return;
-        boolean isNormal = !instruction.isReturn && isNormalCompletion[nextOffset];
+        boolean isRethrowFromFinally = instruction instanceof ReturnInstruction && ((ReturnInstruction) instruction).isRethrowFromFinally();
+        boolean isNormal = !instruction.isReturn && isNormalCompletion[nextOffset] && !isRethrowFromFinally;
         isNormalCompletion[offset] |= isNormal;
       }
 

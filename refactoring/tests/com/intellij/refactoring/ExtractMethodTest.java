@@ -289,6 +289,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doChainedConstructorTest(true);
   }
 
+  public void testReturnFromTry() throws Exception {
+    doTest();
+  }
+
   public void testForceBraces() throws Exception {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     int old = settings.IF_BRACE_FORCE;
