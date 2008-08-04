@@ -46,7 +46,8 @@ public class DirectoryAsPackageRenameHandler implements RenameHandler {
     PsiDirectory psiDirectory = (PsiDirectory)element;
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
     final String qualifiedName = aPackage != null ? aPackage.getQualifiedName() : "";
-    if (aPackage == null || qualifiedName.length() == 0/*default package*/) {
+    if (aPackage == null || qualifiedName.length() == 0/*default package*/ ||
+        !JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(psiDirectory.getName())) {
       PsiElementRenameHandler.rename(element, project, nameSuggestionContext, editor);
     }
     else {
