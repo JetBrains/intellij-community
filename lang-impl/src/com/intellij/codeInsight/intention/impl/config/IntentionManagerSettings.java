@@ -122,15 +122,41 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     return new ArrayList<IntentionActionMetaData>(myMetaData.values());
   }
 
-  public synchronized boolean isEnabled(String family) {
-    return !myIgnoredActions.contains(family);
+  public synchronized boolean isEnabled(IntentionActionMetaData metaData) {
+    return !myIgnoredActions.contains(getFamilyName(metaData));
   }
-  public synchronized void setEnabled(String family, boolean enabled) {
-    if (enabled) {
-      myIgnoredActions.remove(family);
+
+  private String getFamilyName(final IntentionActionMetaData metaData) {
+    return StringUtil.join(metaData.myCategory, "/") + "/" + metaData.myFamily;
+  }
+
+  private String getFamilyName(final IntentionAction action) {
+    if (action instanceof IntentionActionWrapper) {
+      return ((IntentionActionWrapper)action).getFullFamilyName();
     }
     else {
-      myIgnoredActions.add(family);
+      return action.getFamilyName();
+    }
+  }
+
+  public synchronized void setEnabled(IntentionActionMetaData metaData, boolean enabled) {
+    if (enabled) {
+      myIgnoredActions.remove(getFamilyName(metaData));
+    }
+    else {
+      myIgnoredActions.add(getFamilyName(metaData));
+    }
+  }
+
+  public synchronized boolean isEnabled(IntentionAction action) {
+    return !myIgnoredActions.contains(getFamilyName(action));
+  }
+  public synchronized void setEnabled(IntentionAction action, boolean enabled) {
+    if (enabled) {
+      myIgnoredActions.remove(getFamilyName(action));
+    }
+    else {
+      myIgnoredActions.add(getFamilyName(action));
     }
   }
 

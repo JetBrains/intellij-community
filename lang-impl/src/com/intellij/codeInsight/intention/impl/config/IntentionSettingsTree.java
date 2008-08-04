@@ -189,7 +189,7 @@ public abstract class IntentionSettingsTree {
     Object userObject = root.getUserObject();
     if (userObject instanceof IntentionActionMetaData) {
       IntentionActionMetaData metaData = (IntentionActionMetaData)userObject;
-      boolean enabled = IntentionManagerSettings.getInstance().isEnabled(metaData.myFamily);
+      boolean enabled = IntentionManagerSettings.getInstance().isEnabled(metaData);
       root.setChecked(enabled);
       return enabled;
     }
@@ -255,7 +255,7 @@ public abstract class IntentionSettingsTree {
     Object userObject = root.getUserObject();
     if (userObject instanceof IntentionActionMetaData) {
       IntentionActionMetaData actionMetaData = (IntentionActionMetaData)userObject;
-      IntentionManagerSettings.getInstance().setEnabled(actionMetaData.myFamily, root.isChecked());
+      IntentionManagerSettings.getInstance().setEnabled(actionMetaData, root.isChecked());
     }
     else {
       visitChildren(root, new CheckedNodeVisitor() {
@@ -274,7 +274,7 @@ public abstract class IntentionSettingsTree {
     Object userObject = root.getUserObject();
     if (userObject instanceof IntentionActionMetaData) {
       IntentionActionMetaData actionMetaData = (IntentionActionMetaData)userObject;
-      boolean enabled = IntentionManagerSettings.getInstance().isEnabled(actionMetaData.myFamily);
+      boolean enabled = IntentionManagerSettings.getInstance().isEnabled(actionMetaData);
       return enabled != root.isChecked();
     }
     else {

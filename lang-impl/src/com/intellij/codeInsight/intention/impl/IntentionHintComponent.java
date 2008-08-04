@@ -661,9 +661,11 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   public static class EnableDisableIntentionAction implements IntentionAction{
     private final String myActionFamilyName;
     private final IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
+    private final IntentionAction myAction;
 
     public EnableDisableIntentionAction(IntentionAction action) {
       myActionFamilyName = action.getFamilyName();
+      myAction = action;
       // needed for checking errors in user written actions
       //noinspection ConstantConditions
       LOG.assertTrue(myActionFamilyName != null, "action "+action.getClass()+" family returned null");
@@ -671,7 +673,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
     @NotNull
     public String getText() {
-      return mySettings.isEnabled(myActionFamilyName) ?
+      return mySettings.isEnabled(myAction) ?
              CodeInsightBundle.message("disable.intention.action", myActionFamilyName) :
              CodeInsightBundle.message("enable.intention.action", myActionFamilyName);
     }
@@ -686,7 +688,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     }
 
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      mySettings.setEnabled(myActionFamilyName, !mySettings.isEnabled(myActionFamilyName));
+      mySettings.setEnabled(myAction, !mySettings.isEnabled(myAction));
     }
 
     public boolean startInWriteAction() {
