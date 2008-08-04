@@ -133,6 +133,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void _testExtractFromTryFinally2() throws Exception {  // IDEADEV-11844
+    doTest();
+  }
+
   public void testLesyaBug() throws Exception {
     myCatchOnNewLine = false;
     doTest();
