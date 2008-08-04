@@ -42,7 +42,7 @@ class InlineMethodHandler {
     PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset()) : null;
     boolean allowInlineThisOnly = false;
     if (InlineMethodProcessor.checkBadReturns(method) && !allUsagesAreTailCalls(method)) {
-      if (reference != null && isTailCall(reference)) {
+      if (reference != null && getTailCallType(reference) != TailCallType.None) {
         allowInlineThisOnly = true;
       }
       else {
@@ -91,14 +91,14 @@ class InlineMethodHandler {
     dialog.show();
   }
 
-  private static boolean allUsagesAreTailCalls(final PsiMethod method) {
+  public static boolean allUsagesAreTailCalls(final PsiMethod method) {
     final List<PsiReference> nonTailCallUsages = new ArrayList<PsiReference>();
     boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {
           public boolean process(final PsiReference psiReference) {
             ProgressManager.getInstance().checkCanceled();
-            if (!isTailCall(psiReference)) {
+            if (getTailCallType(psiReference) == TailCallType.None) {
               nonTailCallUsages.add(psiReference);
               return false;
             }
@@ -110,20 +110,24 @@ class InlineMethodHandler {
     return result && nonTailCallUsages.isEmpty();
   }
 
-  private static boolean isTailCall(final PsiReference psiReference) {
+  public enum TailCallType {
+    None, Simple, Return
+  }
+
+  public static TailCallType getTailCallType(final PsiReference psiReference) {
     PsiElement element = psiReference.getElement();
     PsiExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
-    if (methodCall == null) return false;
-    if (methodCall.getParent() instanceof PsiReturnStatement) return true;
+    if (methodCall == null) return TailCallType.None;
+    if (methodCall.getParent() instanceof PsiReturnStatement) return TailCallType.Return;
     if (methodCall.getParent() instanceof PsiExpressionStatement) {
       PsiStatement callStatement = (PsiStatement) methodCall.getParent();
       PsiMethod callerMethod = PsiTreeUtil.getParentOfType(callStatement, PsiMethod.class);
       if (callerMethod != null) {
         final PsiStatement[] psiStatements = callerMethod.getBody().getStatements();
-        return psiStatements.length > 0 && callStatement == psiStatements [psiStatements.length-1];
+        return psiStatements.length > 0 && callStatement == psiStatements [psiStatements.length-1] ? TailCallType.Simple : TailCallType.None;
       }
     }
-    return false;
+    return TailCallType.None;
   }
 
   public static boolean isChainingConstructor(PsiMethod constructor) {

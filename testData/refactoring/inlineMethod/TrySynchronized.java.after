@@ -9,7 +9,8 @@ public class Try {
                 throw ex;
             }
         }
-        return result;
+        int i = result;
+        return i;
     }
 
 }

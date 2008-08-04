@@ -124,6 +124,14 @@ public class InlineMethodTest extends CodeInsightTestCase {
     doTest();
   }
 
+  public void testTailCallReturn() throws Exception {  // IDEADEV-27983
+    doTest();
+  }
+
+  public void testTailCallSimple() throws Exception {  // IDEADEV-27983
+    doTest();
+  }
+
   private void doTest() throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineMethod/" + name + ".java";
@@ -138,9 +146,9 @@ public class InlineMethodTest extends CodeInsightTestCase {
     final PsiReference ref = myFile.findReferenceAt(myEditor.getCaretModel().getOffset());
     PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
     assertTrue(element instanceof PsiMethod);
-    final boolean condition = InlineMethodProcessor.checkBadReturns((PsiMethod) element);
-    assertFalse("Bad returns found", condition);
     PsiMethod method = (PsiMethod)element;
+    final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineMethodHandler.allUsagesAreTailCalls(method);
+    assertFalse("Bad returns found", condition);
     InlineOptions options = new MockInlineMethodOptions();
     final InlineMethodProcessor processor = new InlineMethodProcessor(myProject, method, refExpr, myEditor, options.isInlineThisOnly());
     processor.run();

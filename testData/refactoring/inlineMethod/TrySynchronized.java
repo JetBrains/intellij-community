@@ -1,6 +1,7 @@
 public class Try {
     public int test() {
-        return another();
+        int i = another();
+        return i;
     }
  
     public synchronized int another<caret>() {
