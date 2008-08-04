@@ -65,7 +65,6 @@ public class LibrariesContainerFactory {
   public static Library createLibraryInTable(final @NonNls String name, final VirtualFile[] roots, final VirtualFile[] sources, final LibraryTable table) {
     LibraryTable.ModifiableModel modifiableModel = table.getModifiableModel();
     Library library = modifiableModel.createLibrary(getUniqueLibraryName(name, modifiableModel));
-    modifiableModel.commit();
     final Library.ModifiableModel model = library.getModifiableModel();
     for (VirtualFile root : roots) {
       model.addRoot(root, OrderRootType.CLASSES);
@@ -74,6 +73,7 @@ public class LibrariesContainerFactory {
       model.addRoot(root, OrderRootType.SOURCES);
     }
     model.commit();
+    modifiableModel.commit();
     return library;
   }
 

@@ -42,6 +42,7 @@ class LibraryInfoBasedOnLibrary implements LibraryInfo {
     return table == null ? LibraryLink.MODULE_LEVEL : table.getTableLevel();
   }
 
+  @NotNull
   public Library getLibrary() {
     return myLibrary;
   }

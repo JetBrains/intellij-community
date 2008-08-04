@@ -49,9 +49,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
-import gnu.trove.Equality;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -129,6 +127,7 @@ public class LibraryLinkImpl extends LibraryLink {
 
   @Nullable
   public Library getLibrary(@Nullable ModulesProvider provider) {
+    fixLibraryInfo();
     final LibraryInfo libraryInfo = myLibraryInfo;
     if (libraryInfo instanceof LibraryInfoBasedOnLibrary) {
       return ((LibraryInfoBasedOnLibrary)libraryInfo).getLibrary();
@@ -183,6 +182,7 @@ public class LibraryLinkImpl extends LibraryLink {
   }
 
   public List<String> getUrls() {
+    fixLibraryInfo();
     return myLibraryInfo.getUrls();
   }
 
@@ -297,24 +297,16 @@ public class LibraryLinkImpl extends LibraryLink {
     return libraryLink;
   }
 
-  public void adjustLibrary() {
+  public void fixLibraryInfo() {
     if (myLibraryInfo instanceof LibraryInfoBasedOnLibrary) {
       LibraryInfoBasedOnLibrary libraryInfo = (LibraryInfoBasedOnLibrary)myLibraryInfo;
       Library library = libraryInfo.getLibrary();
-      LibraryTable table = library.getTable();
-      if (table != null && !isInTable(library, table) || ((LibraryEx)library).isDisposed()) {
-        fixLibraryInfo(libraryInfo);
+      if (((LibraryEx)library).isDisposed()) {
+        LibraryInfoImpl info = libraryInfo.getInfoToRestore();
+        Library newLibrary = info.findLibrary(myProject, getParentModule(), null);
+        myLibraryInfo = newLibrary != null ? new LibraryInfoBasedOnLibrary(newLibrary) : info;
       }
     }
   }
 
-  private void fixLibraryInfo(final LibraryInfoBasedOnLibrary libraryInfo) {
-    LibraryInfoImpl info = libraryInfo.getInfoToRestore();
-    Library newLibrary = info.findLibrary(myProject, getParentModule(), null);
-    myLibraryInfo = newLibrary != null ? new LibraryInfoBasedOnLibrary(newLibrary) : info;
-  }
-
-  private static boolean isInTable(final Library library, final LibraryTable table) {
-    return ArrayUtil.indexOf(table.getLibraries(), library, Equality.IDENTITY) != -1;
-  }
 }
