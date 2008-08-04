@@ -28,7 +28,7 @@
   <property name="idea.plugins" location="${idea.dir}/plugins"/>
   <property name="groovy.lib" value="${project.dir}/GDK"/>
   <property name="test.dir" value="${project.dir}/test"/>
-  <property name="test.dest" value="${project.dir}/classes/test/svnPlugins/groovy/"/>
+  <property name="test.dest" value="${project .dir}/classes/test/groovy"/>
   <property name="tools.jar.dir" value="${env.JAVA_HOME}/lib"/>
   <property name="resources.file" value="resources_en.jar"/>
 
@@ -232,7 +232,7 @@
   <target name="build tests" depends="make.project">
 
     <mkdir dir="${test.dest}"/>
-    <mkdir dir="${test.dest}/Groovy"/>
+    <mkdir dir="${test.dest}/groovy"/>
 
     <javac srcdir="${project.dir}/test"
             destdir="${test.dest}"
@@ -274,7 +274,7 @@
     </groovyc>
 
 
-    <copy toDir="${test.dest}/testdata">
+    <copy toDir="${idea.dir}/svnPlugins/groovy/testdata">
       <fileset dir="${project.dir}/testdata"/>
     </copy>
 
