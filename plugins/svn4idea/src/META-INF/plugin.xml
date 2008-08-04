@@ -42,11 +42,11 @@
       <add-to-group group-id="CommittedChangesToolbar" anchor="last"/>
     </action> -->
 
-    <action id="IntegrateChangeSetAction" class="org.jetbrains.idea.svn.actions.IntegrateChangeSetAction" popup="true">
+    <action id="IntegrateChangeSetAction" class="org.jetbrains.idea.svn.actions.IntegrateChangeSetAction" popup="true" icon="/icons/IntegrateToBranch.png">
       <add-to-group group-id="RepositoryChangesBrowserToolbar" anchor="last"/>
     </action>
 
-    <action id="PropertiesDiff" class="org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction" popup="true">
+    <action id="PropertiesDiff" class="org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction" popup="true" icon="/icons/PropertiesDiff.png">
       <add-to-group group-id="RepositoryChangesBrowserToolbar" anchor="last"/>
     </action>
 
@@ -61,7 +61,7 @@
       <separator/>
       <action id="Subversion.ShowProperties" class="org.jetbrains.idea.svn.actions.ShowPropertiesAction"/>
       <action id="Subversion.SetProperty" class="org.jetbrains.idea.svn.actions.SetPropertyAction"/>
-      <action id="ShowPropertiesDiffVsLocal" class="org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction">
+      <action id="ShowPropertiesDiffVsLocal" class="org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction" icon="/icons/PropertiesDiffWithLocal.png">
       </action>
       <reference id="ChangesView.Rollback"/>
       <action id="Subversion.Resolve" class="org.jetbrains.idea.svn.actions.ResolveAction"/>
@@ -83,7 +83,7 @@
       <separator/>
       <reference id="ChangesView.Browse"/>
       <separator/>
-      <action id="Subversion.Map" class="org.jetbrains.idea.svn.actions.ShowSvnMapAction"/>
+      <action id="Subversion.Map" class="org.jetbrains.idea.svn.actions.ShowSvnMapAction" icon="/icons/ShowWorkingCopies.png"/>
       <separator/> 
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
     </group>

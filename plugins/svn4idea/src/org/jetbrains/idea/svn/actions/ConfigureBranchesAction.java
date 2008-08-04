@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -26,6 +27,7 @@ public class ConfigureBranchesAction extends AnAction {
 
     presentation.setText(SvnBundle.message("configure.branches.item"));
     presentation.setDescription(SvnBundle.message("configure.branches.item"));
+    presentation.setIcon(IconLoader.getIcon("/icons/ConfigureBranches.png"));
 
     presentation.setVisible(true);
     
