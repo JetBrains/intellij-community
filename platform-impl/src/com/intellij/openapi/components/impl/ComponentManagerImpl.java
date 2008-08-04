@@ -53,7 +53,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private final ComponentManager myParentComponentManager;
   private IComponentStore myComponentStore;
   private Boolean myHeadless;
-  private final ComponentsRegistry myComponentsRegistry = new ComponentsRegistry();
+  private ComponentsRegistry myComponentsRegistry = new ComponentsRegistry();
 
   protected ComponentManagerImpl(ComponentManager parentComponentManager) {
     myParentComponentManager = parentComponentManager;
@@ -320,6 +320,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     myInitializedComponents = null;
+    myComponentsRegistry = null;
     myPicoContainer = null;
   }
 
