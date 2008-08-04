@@ -12,7 +12,7 @@ import com.intellij.openapi.wm.ToolWindowType;
 public class TogglePinnedModeAction extends ToggleAction {
   public boolean isSelected(AnActionEvent event){
     Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
-    if (project == null) {
+    if (project == null || project.isDisposed()) {
       return false;
     }
     ToolWindowManager mgr=ToolWindowManager.getInstance(project);
