@@ -277,6 +277,9 @@
     <copy toDir="${idea.dir}/svnPlugins/groovy/testdata">
       <fileset dir="${project.dir}/testdata"/>
     </copy>
+    <copy toDir="${idea.dir}/svnPlugins/groovy/test">
+      <fileset dir="${project.dir}/test"/>
+    </copy>
 
   </target>
 
