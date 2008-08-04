@@ -71,7 +71,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   }
 
   public void reloadProjectOnLanguageLevelChange(final LanguageLevel languageLevel, final boolean forceReload) {
-    if (myProject.isOpen()) {
+    if (myProject.isOpen() && !ApplicationManager.getApplication().isUnitTestMode()) {
       myReloadProjectRequest = new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
