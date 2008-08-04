@@ -177,6 +177,11 @@ public class StringUtil {
     return Character.toLowerCase(a);
   }
 
+  @Nullable
+  public static String toLowerCase(@Nullable final String str) {
+    return str == null? null : str.toLowerCase();
+  }
+
   @NotNull public static String getShortName(@NotNull String fqName, char separator) {
     int lastPointIdx = fqName.lastIndexOf(separator);
     if (lastPointIdx >= 0) {
