@@ -193,6 +193,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
 
   private void buildKeystream() throws IOException {
+    keyStream();
+    
     processAllDataObject(new Processor<Key>() {
       public boolean process(final Key key) {
         onNewValueAdded(key);
