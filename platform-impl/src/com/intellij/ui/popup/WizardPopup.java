@@ -154,8 +154,6 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public void show(final Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
-    //myScrollPane.getViewport().setPreferredSize(getContent().getPreferredSize());
-    //
     Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), getContent().getPreferredSize());
     ScreenUtil.moveRectangleToFitTheScreen(targetBounds);
 

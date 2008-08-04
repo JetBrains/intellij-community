@@ -128,7 +128,7 @@ public class ShowUsagesAction extends AnAction {
       else {
         navigateAndHint(usage, FindBundle.message("all.usages.are.in.this.line", filteredUsages.size(), searchScopePresentableName(element, handler)));
       }
-      usageView.dispose();
+      Disposer.dispose(usageView);
       return null;
     }
 

@@ -123,7 +123,7 @@ public class AbstractPopup implements JBPopup, Disposable {
   AbstractPopup() {
   }
 
-  AbstractPopup init(final Project project, @NotNull final JComponent content, @Nullable final JComponent preferredFocusedComponent, final boolean requestFocus,
+  AbstractPopup init(final Project project, @NotNull final JComponent component, @Nullable final JComponent preferredFocusedComponent, final boolean requestFocus,
                       final boolean focusable,
                       final boolean forceHeavyweight,
                       final String dimensionServiceKey,
@@ -154,11 +154,11 @@ public class AbstractPopup implements JBPopup, Disposable {
     }
 
     myProject = project;
-    myComponent = content;
+    myComponent = component;
     myPopupBorder = PopupBorder.Factory.create(true);
     myContent = createContentPanel(resizable, myPopupBorder, isToDrawMacCorner());
 
-    myContent.add(content, BorderLayout.CENTER);
+    myContent.add(component, BorderLayout.CENTER);
     if (adText != null) {
       myContent.add(HintUtil.createAdComponent(adText), BorderLayout.SOUTH);
     }
@@ -217,75 +217,6 @@ public class AbstractPopup implements JBPopup, Disposable {
     myUseDimServiceForXYLocation = useDimServiceForXYLocation;
     myCancelOnWindow = cancelOnWindow;
     myMinSize = minSize;
-
-    final MouseAdapter mouseAdapter = new MouseAdapter() {
-      public void mousePressed(MouseEvent e) {
-        Point point = (Point)e.getPoint().clone();
-        SwingUtilities.convertPointToScreen(point, e.getComponent());
-
-        final Dimension dimension = content.getSize();
-        dimension.height += myResizable && isToDrawMacCorner() ? ourMacCorner.getHeight(myContent) : 4;
-        dimension.width += 4;
-        Point locationOnScreen = content.getLocationOnScreen();
-        final Rectangle bounds = new Rectangle(new Point(locationOnScreen.x - 2, locationOnScreen.y - 2), dimension);
-        if (!bounds.contains(point)) {
-          cancel();
-        }
-      }
-    };
-    myContent.addMouseListener(mouseAdapter);
-    final MyContentPanel savedContent = myContent;
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        savedContent.removeMouseListener(mouseAdapter);
-      }
-    });
-    myContent.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (myCancelKeyEnabled) {
-          cancel();
-        }
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-
-    myContent.addKeyListener(new KeyListener() {
-      public void keyTyped(final KeyEvent e) {
-        mySpeedSearch.process(e);
-      }
-
-      public void keyPressed(final KeyEvent e) {
-        mySpeedSearch.process(e);
-      }
-
-      public void keyReleased(final KeyEvent e) {
-        mySpeedSearch.process(e);
-      }
-    });
-    
-    if (myCancelOnMouseOutCallback != null || myCancelOnWindow) {
-      myMouseOutCanceller = new Canceller();
-      Toolkit.getDefaultToolkit().addAWTEventListener(myMouseOutCanceller, AWTEvent.MOUSE_EVENT_MASK | WindowEvent.WINDOW_ACTIVATED |
-                                                                           AWTEvent.MOUSE_MOTION_EVENT_MASK);
-    }
-
-
-    myFocusWatcher = new ChildFocusWatcher(myContent) {
-      protected void onFocusGained(final FocusEvent event) {
-        setWindowActive(true);
-      }
-
-      protected void onFocusLost(final FocusEvent event) {
-        setWindowActive(false);
-      }
-
-    };
-
-    mySpeedSearchPatternField = new JTextField();
-    if (SystemInfo.isMac) {
-      Font f = mySpeedSearchPatternField.getFont();
-      mySpeedSearchPatternField.setFont(f.deriveFont(f.getStyle(), f.getSize() - 2));
-    }
 
     return this;
   }
@@ -547,17 +478,18 @@ public class AbstractPopup implements JBPopup, Disposable {
 
     assert ApplicationManager.getApplication().isDispatchThread();
 
+
     final boolean shouldShow = beforeShow();
     if (!shouldShow) {
       return;
     }
 
+    prepareToShow();
+
     if (myInStack) {
       myFocusTrackback = new FocusTrackback(this, owner, true);
       myFocusTrackback.setMustBeShown(true);
     }
-
-
 
 
     Dimension sizeToSet = null;
@@ -700,6 +632,77 @@ public class AbstractPopup implements JBPopup, Disposable {
         afterShow();
       }
     });
+  }
+
+  private void prepareToShow() {
+    final MouseAdapter mouseAdapter = new MouseAdapter() {
+      public void mousePressed(MouseEvent e) {
+        Point point = (Point)e.getPoint().clone();
+        SwingUtilities.convertPointToScreen(point, e.getComponent());
+
+        final Dimension dimension = myComponent.getSize();
+        dimension.height += myResizable && isToDrawMacCorner() ? ourMacCorner.getHeight(myContent) : 4;
+        dimension.width += 4;
+        Point locationOnScreen = myComponent.getLocationOnScreen();
+        final Rectangle bounds = new Rectangle(new Point(locationOnScreen.x - 2, locationOnScreen.y - 2), dimension);
+        if (!bounds.contains(point)) {
+          cancel();
+        }
+      }
+    };
+    myContent.addMouseListener(mouseAdapter);
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        myContent.removeMouseListener(mouseAdapter);
+      }
+    });
+
+    myContent.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        if (myCancelKeyEnabled) {
+          cancel();
+        }
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+
+    myContent.addKeyListener(new KeyListener() {
+      public void keyTyped(final KeyEvent e) {
+        mySpeedSearch.process(e);
+      }
+
+      public void keyPressed(final KeyEvent e) {
+        mySpeedSearch.process(e);
+      }
+
+      public void keyReleased(final KeyEvent e) {
+        mySpeedSearch.process(e);
+      }
+    });
+
+    if (myCancelOnMouseOutCallback != null || myCancelOnWindow) {
+      myMouseOutCanceller = new Canceller();
+      Toolkit.getDefaultToolkit().addAWTEventListener(myMouseOutCanceller, AWTEvent.MOUSE_EVENT_MASK | WindowEvent.WINDOW_ACTIVATED |
+                                                                           AWTEvent.MOUSE_MOTION_EVENT_MASK);
+    }
+
+
+    myFocusWatcher = new ChildFocusWatcher(myContent) {
+      protected void onFocusGained(final FocusEvent event) {
+        setWindowActive(true);
+      }
+
+      protected void onFocusLost(final FocusEvent event) {
+        setWindowActive(false);
+      }
+
+    };
+
+    mySpeedSearchPatternField = new JTextField();
+    if (SystemInfo.isMac) {
+      Font f = mySpeedSearchPatternField.getFont();
+      mySpeedSearchPatternField.setFont(f.deriveFont(f.getStyle(), f.getSize() - 2));
+    }
   }
 
   private Window updateMaskAndAlpha(Window window) {
