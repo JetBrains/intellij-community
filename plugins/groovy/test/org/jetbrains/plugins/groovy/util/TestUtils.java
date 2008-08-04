@@ -93,6 +93,7 @@ public abstract class TestUtils {
   public static String getTestDataPath() {
     if (TEST_DATA_PATH == null) {
       TEST_DATA_PATH = FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/svnPlugins/groovy/testdata";
+      System.out.println(TEST_DATA_PATH);
       /*
       ClassLoader loader = TestUtils.class.getClassLoader();
       URL resource = loader.getResource("testdata");

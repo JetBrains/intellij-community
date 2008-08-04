@@ -15,8 +15,14 @@ Groovy script
       PsiErrorElement:Expression expected
         <empty list>
       PsiElement(,)(',')
+      PsiErrorElement:Expression expected
+        <empty list>
       PsiElement(,)(',')
+      PsiErrorElement:Expression expected
+        <empty list>
       PsiElement(,)(',')
+      PsiErrorElement:Expression expected
+        <empty list>
       PsiElement(,)(',')
       Literal
         PsiElement(Integer)('5')

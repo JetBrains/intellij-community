@@ -19,6 +19,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -40,7 +46,7 @@ import java.io.IOException;
 public class ExtractMethodTest extends ActionTestCase {
 
   @NonNls
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/extractMethod/data/";
+  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/extractMethod/data";
 
   protected Editor myEditor;
   protected FileEditorManager fileEditorManager;

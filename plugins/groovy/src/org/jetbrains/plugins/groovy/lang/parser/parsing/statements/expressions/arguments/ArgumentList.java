@@ -30,7 +30,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class ArgumentList implements GroovyElementTypes {
 
   public static void parse(PsiBuilder builder, IElementType closingBrace) {
-    if (!argumentParse(builder, closingBrace)) {
+    boolean hasntFirstArg = false;
+    if (hasntFirstArg = !argumentParse(builder, closingBrace)) {
       if (!closingBrace.equals(builder.getTokenType())) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
@@ -42,7 +43,11 @@ public class ArgumentList implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
     while (!builder.eof() && !closingBrace.equals(builder.getTokenType())) {
-      ParserUtils.getToken(builder, mCOMMA, GroovyBundle.message("comma.expected"));
+      if (hasntFirstArg) {
+        ParserUtils.getToken(builder, mCOMMA);
+      } else {
+        ParserUtils.getToken(builder, mCOMMA, GroovyBundle.message("comma.expected"));
+      }
       ParserUtils.getToken(builder, mNLS);
       if (!argumentParse(builder, closingBrace)) {
         if (!closingBrace.equals(builder.getTokenType())) {

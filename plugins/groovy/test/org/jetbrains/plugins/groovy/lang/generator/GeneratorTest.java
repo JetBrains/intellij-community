@@ -138,7 +138,7 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
     }
 
     protected Module getModuleByFile(CompileContext context, VirtualFile file) {
-      return module;
+      return myModule;
     }
 
     protected ProgressIndicator getProcessIndicator() {

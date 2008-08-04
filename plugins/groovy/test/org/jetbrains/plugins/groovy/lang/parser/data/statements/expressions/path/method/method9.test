@@ -12,7 +12,11 @@ Groovy script
       PsiErrorElement:Expression expected
         <empty list>
       PsiElement(wrong token)('#')
+      PsiErrorElement:Expression expected
+        <empty list>
       PsiElement(wrong token)('#')
+      PsiErrorElement:Expression expected
+        <empty list>
       PsiElement(wrong token)('#')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
@@ -27,6 +31,8 @@ Groovy script
         <empty list>
       PsiWhiteSpace(' ')
       PsiElement(wrong token)('#')
+      PsiErrorElement:Expression expected
+        <empty list>
       PsiElement(wrong token)('#')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')

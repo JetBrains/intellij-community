@@ -28,7 +28,7 @@
   <property name="idea.plugins" location="${idea.dir}/plugins"/>
   <property name="groovy.lib" value="${project.dir}/GDK"/>
   <property name="test.dir" value="${project.dir}/test"/>
-  <property name="test.dest" value="${project.dir}/classes/test/Groovy"/>
+  <property name="test.dest" value="${project.dir}/classes/test/svnPlugins/groovy/"/>
   <property name="tools.jar.dir" value="${env.JAVA_HOME}/lib"/>
   <property name="resources.file" value="resources_en.jar"/>
 
