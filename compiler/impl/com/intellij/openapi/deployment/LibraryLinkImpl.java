@@ -110,6 +110,10 @@ public class LibraryLinkImpl extends LibraryLink {
     if (library == null) {
       return urls;
     }
+    return getLibraryClassRoots(library);
+  }
+
+  public static List<String> getLibraryClassRoots(final Library library) {
     VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
     ArrayList<String> classRoots = new ArrayList<String>(files.length);
     for (VirtualFile file : files) {
@@ -258,9 +262,9 @@ public class LibraryLinkImpl extends LibraryLink {
 
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    List<String> urls = getUrls();
     String name = getName();
     if (name == null) {
+      List<String> urls = getUrls();
       for (final String url : urls) {
         final Element urlElement = new Element(URL_ELEMENT_NAME);
         urlElement.setText(url);
@@ -299,11 +303,15 @@ public class LibraryLinkImpl extends LibraryLink {
       Library library = libraryInfo.getLibrary();
       LibraryTable table = library.getTable();
       if (table != null && !isInTable(library, table) || ((LibraryEx)library).isDisposed()) {
-        LibraryInfoImpl info = libraryInfo.getInfoToRestore();
-        Library newLibrary = info.findLibrary(myProject, getParentModule(), null);
-        myLibraryInfo = newLibrary != null ? new LibraryInfoBasedOnLibrary(newLibrary) : info;
+        fixLibraryInfo(libraryInfo);
       }
     }
+  }
+
+  private void fixLibraryInfo(final LibraryInfoBasedOnLibrary libraryInfo) {
+    LibraryInfoImpl info = libraryInfo.getInfoToRestore();
+    Library newLibrary = info.findLibrary(myProject, getParentModule(), null);
+    myLibraryInfo = newLibrary != null ? new LibraryInfoBasedOnLibrary(newLibrary) : info;
   }
 
   private static boolean isInTable(final Library library, final LibraryTable table) {

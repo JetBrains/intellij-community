@@ -203,6 +203,21 @@ public abstract class PackagingEditorPolicy {
     return element.getPresentableName();
   }
 
+  public void processNewLibraries(final PackagingEditor editor, final List<Library> libraries) {
+    List<Library> toAdd = new ArrayList<Library>();
+    Set<Library> suitable = new HashSet<Library>(getLibrariesToAdd(editor));
+    for (Library library : libraries) {
+      if (suitable.contains(library) && shouldAddSilently(library)) {
+        toAdd.add(library);
+      }
+    }
+    editor.addLibraries(toAdd);
+  }
+
+  protected boolean shouldAddSilently(final Library library) {
+    return false;
+  }
+
   protected static abstract class AdditionalPropertiesConfigurable {
 
     public abstract JComponent getLabelsComponent();

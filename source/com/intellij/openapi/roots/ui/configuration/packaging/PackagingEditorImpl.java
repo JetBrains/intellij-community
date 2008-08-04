@@ -14,6 +14,8 @@ import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -195,11 +197,16 @@ public class PackagingEditorImpl implements PackagingEditor {
 
     saveData();
     modules.removeAll(Arrays.asList(myModifiedConfiguration.getContainingIdeaModules()));
+    ContainerElement last = null;
     for (Module module : modules) {
       ModuleLink element = DeploymentUtil.getInstance().createModuleLink(module, myPolicy.getModule());
       addElement(element);
+      last = element;
     }
     rebuildTree();
+    if (last != null) {
+      selectElement(last);
+    }
   }
 
 
@@ -233,6 +240,16 @@ public class PackagingEditorImpl implements PackagingEditor {
     }
   }
 
+  public void processNewOrderEntries(final Set<OrderEntry> newEntries) {
+    List<Library> libraries = new ArrayList<Library>();
+    for (OrderEntry entry : newEntries) {
+      if (entry instanceof LibraryOrderEntry) {
+        libraries.add(((LibraryOrderEntry)entry).getLibrary());
+      }
+    }
+    myPolicy.processNewLibraries(this, libraries);
+  }
+
   @Nullable
   private PackagingTreeNode findNodeByElement(final ContainerElement toSelect) {
     final Ref<PackagingTreeNode> ref = Ref.create(null);
@@ -261,11 +278,16 @@ public class PackagingEditorImpl implements PackagingEditor {
 
     saveData();
     libraries.removeAll(Arrays.asList(myModifiedConfiguration.getContainingLibraries()));
+    ContainerElement last = null;
     for (Library library : libraries) {
       LibraryLink libraryLink = DeploymentUtil.getInstance().createLibraryLink(library, myPolicy.getModule());
       addElement(libraryLink);
+      last = libraryLink;
     }
     rebuildTree();
+    if (last != null) {
+      selectElement(last);
+    }
   }
 
   private BaseListPopupStep<AddPackagingElementAction> createAddActionsPopup() {

@@ -4,10 +4,12 @@ import com.intellij.openapi.deployment.ContainerElement;
 import com.intellij.openapi.deployment.PackagingConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.OrderEntry;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -39,4 +41,6 @@ public interface PackagingEditor {
   void addElement(ContainerElement element);
 
   void selectElement(@NotNull ContainerElement toSelect);
+
+  void processNewOrderEntries(final Set<OrderEntry> newEntries);
 }
