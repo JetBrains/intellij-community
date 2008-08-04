@@ -409,28 +409,31 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         description = element.getAttributeValue(DESCRIPTION);
       }
       String shortcut = element.getAttributeValue(SHORTCUT);
-      if (isDefault && (myDeletedTemplates.contains(name) || myTemplates.containsKey(name))) continue;
       TemplateImpl template = addTemplate(name, value, groupName, description, shortcut, isDefault, id);
-      template.setToReformat(Boolean.parseBoolean(element.getAttributeValue(TO_REFORMAT)));
-      template.setToShortenLongNames(Boolean.parseBoolean(element.getAttributeValue(TO_SHORTEN_FQ_NAMES)));
-      template.setDeactivated(Boolean.parseBoolean(element.getAttributeValue(DEACTIVATED)));
+      boolean doNotRegister = isDefault && (myDeletedTemplates.contains(name) || myTemplates.containsKey(name));
+
+      if(!doNotRegister) {
+        template.setToReformat(Boolean.parseBoolean(element.getAttributeValue(TO_REFORMAT)));
+        template.setToShortenLongNames(Boolean.parseBoolean(element.getAttributeValue(TO_SHORTEN_FQ_NAMES)));
+        template.setDeactivated(Boolean.parseBoolean(element.getAttributeValue(DEACTIVATED)));
 
 
-      for (final Object o : element.getChildren(VARIABLE)) {
-        Element e = (Element)o;
-        String variableName = e.getAttributeValue(NAME);
-        String expression = e.getAttributeValue(EXPRESSION);
-        String defaultValue = e.getAttributeValue(DEFAULT_VALUE);
-        boolean isAlwaysStopAt = Boolean.parseBoolean(e.getAttributeValue(ALWAYS_STOP_AT));
-        template.addVariable(variableName, expression, defaultValue, isAlwaysStopAt);
+        for (final Object o : element.getChildren(VARIABLE)) {
+          Element e = (Element)o;
+          String variableName = e.getAttributeValue(NAME);
+          String expression = e.getAttributeValue(EXPRESSION);
+          String defaultValue = e.getAttributeValue(DEFAULT_VALUE);
+          boolean isAlwaysStopAt = Boolean.parseBoolean(e.getAttributeValue(ALWAYS_STOP_AT));
+          template.addVariable(variableName, expression, defaultValue, isAlwaysStopAt);
+        }
+
+        Element context = element.getChild(CONTEXT);
+        if (context != null) {
+          template.getTemplateContext().readExternal(context);
+        }
+
+        created.put(template.getKey(), template);
       }
-
-      Element context = element.getChild(CONTEXT);
-      if (context != null) {
-        template.getTemplateContext().readExternal(context);
-      }
-
-      created.put(template.getKey(), template);
 
 
 
