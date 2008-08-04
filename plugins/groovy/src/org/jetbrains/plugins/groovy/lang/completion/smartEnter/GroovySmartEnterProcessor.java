@@ -31,13 +31,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrIfConditionFixer;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GroovyMissingIfStatement;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GroovyFixer;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrLiteralFixer;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -54,7 +57,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     final List<GroovyFixer> fixers = new ArrayList<GroovyFixer>();
     fixers.add(new GroovyMissingIfStatement());
     fixers.add(new GrIfConditionFixer());
-//    fixers.add(new LiteralFixer());
+    fixers.add(new GrLiteralFixer());
 //    fixers.add(new MethodCallFixer());
 //    fixers.add(new IfConditionFixer());
 //    fixers.add(new WhileConditionFixer());
@@ -211,6 +214,10 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     if (doNotStepInto(atCaret)) {
       if (!recurse) return;
       recurse = false;
+    }
+
+    if (atCaret instanceof GrClosableBlock &&  atCaret.getParent() instanceof GrString){
+      res.add(atCaret.getParent());
     }
 
     final PsiElement[] children = getChildren(atCaret);
