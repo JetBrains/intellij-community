@@ -189,7 +189,6 @@ public class CompilerTask extends Task.Backgroundable {
 
   public void addMessage(final CompileContext compileContext, final CompilerMessage message) {
     prepareMessageView();
-    openMessageView();
 
     final CompilerMessageCategory messageCategory = message.getCategory();
     if (CompilerMessageCategory.WARNING.equals(messageCategory)) {
@@ -201,6 +200,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
+      openMessageView();
       doAddMessage(message);
     }
     else {
@@ -208,7 +208,10 @@ public class CompilerTask extends Task.Backgroundable {
       final ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          doAddMessage(message);
+          if (!myProject.isDisposed()) {
+            openMessageView();
+            doAddMessage(message);
+          }
         }
       }, modalityState);
     }
@@ -343,8 +346,8 @@ public class CompilerTask extends Task.Backgroundable {
     });
   }
 
-  // error tree view handling:
 
+  // error tree view initialization must be invoked from event dispatch thread
   private void openMessageView() {
     if (isHeadlessMode()) {
       return;
@@ -352,6 +355,8 @@ public class CompilerTask extends Task.Backgroundable {
     if (myIndicator.isCanceled()) {
       return;
     }
+    
+    final JComponent component;
     synchronized (myMessageViewLock) {
       if (myErrorTreeView != null) {
         return;
@@ -370,30 +375,17 @@ public class CompilerTask extends Task.Backgroundable {
           return !myIndicator.isRunning();
         }
       });
+      component = myErrorTreeView.getComponent();
     }
     
-    final Window window = getWindow();
-    final ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
-    // the work with ToolWindowManager should be done in the Swing thread
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myProject.isDisposed()) {
-          return;
-        }
-        final MessageView messageView = myProject.getComponent(MessageView.class);
-        final JComponent component;
-        synchronized (myMessageViewLock) {
-          component = myErrorTreeView.getComponent();
-        }
-        final Content content = PeerFactory.getInstance().getContentFactory().createContent(component, myContentName, true);
-        content.putUserData(CONTENT_ID_KEY, myContentId);
-        messageView.getContentManager().addContent(content);
-        new CloseListener(content, messageView.getContentManager());
-        removeAllContents(myProject, content);
-        messageView.getContentManager().setSelectedContent(content);
-        updateProgressText();
-      }
-    }, modalityState);
+    final MessageView messageView = myProject.getComponent(MessageView.class);
+    final Content content = PeerFactory.getInstance().getContentFactory().createContent(component, myContentName, true);
+    content.putUserData(CONTENT_ID_KEY, myContentId);
+    messageView.getContentManager().addContent(content);
+    new CloseListener(content, messageView.getContentManager());
+    removeAllContents(myProject, content);
+    messageView.getContentManager().setSelectedContent(content);
+    updateProgressText();
   }
 
   public void showCompilerContent() {
