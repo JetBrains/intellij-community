@@ -102,6 +102,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     if (makesSenceToCompact()) {
       compact();
     }
+
+    ensureKeystreamExists();
   }
   
   private boolean makesSenceToCompact() {
@@ -165,12 +167,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     myAppendCache.clear();
     flushKeysStream();
 
-    final File file = keystreamFile();
-    if (!file.exists()) {
-      buildKeystream();
-    }
-
-    DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+    DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new FileInputStream(keystreamFile())));
     try {
       try {
         while (true) {
@@ -189,9 +186,13 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   }
 
+  private void ensureKeystreamExists() throws IOException {
+    if (!keystreamFile().exists()) {
+      buildKeystream();
+    }
+  }
+
   private void buildKeystream() throws IOException {
-    keyStream();
-    
     processAllDataObject(new Processor<Key>() {
       public boolean process(final Key key) {
         onNewValueAdded(key);
