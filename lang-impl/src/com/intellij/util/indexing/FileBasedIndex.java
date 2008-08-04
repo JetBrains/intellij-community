@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.util.ArrayUtil;
@@ -569,7 +570,12 @@ public class FileBasedIndex implements ApplicationComponent {
       }
       finally {
         myUnsavedDataIndexingSemaphore.up();
-        myUnsavedDataIndexingSemaphore.waitFor(); // may need to wait until another thread is done with indexing 
+        
+        while (!myUnsavedDataIndexingSemaphore.waitFor(500)) { // may need to wait until another thread is done with indexing
+          if (Thread.holdsLock(PsiLock.LOCK)) {
+            break; // hack. Most probably that other indexing threas is waiting for PsiLock, which we're are holding.
+          }
+        }
       }
     }
   }
