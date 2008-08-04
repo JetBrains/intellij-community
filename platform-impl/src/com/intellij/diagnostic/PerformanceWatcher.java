@@ -3,6 +3,7 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -14,6 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +42,9 @@ public class PerformanceWatcher implements ApplicationComponent {
 
   public void initComponent() {
     if (shallNotWatch()) return;
+
+    deleteOldThreadDumps();
+
     myLogDir = new File(PathManager.getSystemPath() + "/log/threadDumps-" + myDateFormat.format(new Date()));
     myLogDir.mkdirs();
     myThreadMXBean = ManagementFactory.getThreadMXBean();
@@ -63,6 +68,19 @@ public class PerformanceWatcher implements ApplicationComponent {
       }
     }, "Performance watcher");
     myThread.start();
+  }
+
+  private static void deleteOldThreadDumps() {
+    File allLogsDir = new File(PathManager.getSystemPath(), "log");
+    final String[] dirs = allLogsDir.list(new FilenameFilter() {
+      public boolean accept(final File dir, final String name) {
+        return name.startsWith("threadDumps-");
+      }
+    });
+    Arrays.sort(dirs);
+    for (int i = 0; i < dirs.length - 10; i++) {
+      FileUtil.delete(new File(allLogsDir, dirs [i]));
+    }
   }
 
   public void disposeComponent() {
