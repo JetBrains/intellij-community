@@ -9,6 +9,8 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -219,6 +221,14 @@ public class CtrlMouseHandler implements ProjectComponent {
         return virtualFile.getPresentableUrl();
       }
     }
+
+    if (element instanceof NavigationItem) {
+      final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
+      if (presentation != null) {
+        return presentation.getPresentableText();
+      }
+    }
+    
     return null;
   }
 
