@@ -1,15 +1,17 @@
 package com.intellij.refactoring.rename.inplace;
 
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
@@ -23,8 +25,10 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
     if (editor == null || file == null) return false;
     final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
-    return element instanceof PsiVariable && VariableInplaceRenamer.mayRenameInplace((PsiVariable)element, editor,
-                                                                                            nameSuggestionContext);
+
+    final RefactoringSupportProvider supportProvider = element != null ? LanguageRefactoringSupport.INSTANCE.forLanguage(element.getLanguage()):null;
+    if (supportProvider == null) return false;
+    return editor.getSettings().isVariableInplaceRenameEnabled() && supportProvider.doInplaceRenameFor(element, nameSuggestionContext);
   }
 
   public boolean isRenaming(final DataContext dataContext) {
@@ -46,6 +50,6 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   }
 
   private static void doRename(final PsiElement elementToRename, final Editor editor) {
-    new VariableInplaceRenamer((PsiVariable)elementToRename, editor).performInplaceRename();
+    new VariableInplaceRenamer((PsiNameIdentifierOwner)elementToRename, editor).performInplaceRename();
   }
 }

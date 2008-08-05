@@ -48,7 +48,7 @@ import java.util.Map;
  */
 public class VariableInplaceRenamer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
-  private final PsiVariable myElementToRename;
+  private final PsiNameIdentifierOwner myElementToRename;
   @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
   private ArrayList<RangeHighlighter> myHighlighters;
@@ -57,7 +57,7 @@ public class VariableInplaceRenamer {
 
   private final static Stack<VariableInplaceRenamer> ourRenamersStack = new Stack<VariableInplaceRenamer>();
 
-  public VariableInplaceRenamer(PsiVariable elementToRename, Editor editor) {
+  public VariableInplaceRenamer(PsiNameIdentifierOwner elementToRename, Editor editor) {
     myElementToRename = elementToRename;
     myEditor = editor;
     myProject = myElementToRename.getProject();
@@ -76,13 +76,28 @@ public class VariableInplaceRenamer {
 
     final HighlightManager highlightManager = HighlightManager.getInstance(myProject);
 
-    final PsiElement scope = myElementToRename instanceof PsiParameter
+    PsiElement scope = myElementToRename instanceof PsiParameter
                              ? ((PsiParameter)myElementToRename).getDeclarationScope()
                              : PsiTreeUtil.getParentOfType(myElementToRename, PsiCodeBlock.class);
+    if (scope == null) {
+      final SearchScope searchScope = myElementToRename.getUseScope();
+      if (searchScope instanceof LocalSearchScope) {
+        final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
+        scope = elements[0];
+
+        if (elements.length > 1) {
+          assert scope.getParent() == elements[1].getParent():"Cannot devise common scope out of use scope";
+          scope = scope.getParent();
+        }
+      }
+
+      assert scope != null:"Should have local search scope for inplace rename";
+    }
+
     final ResolveSnapshot snapshot = scope == null ? null : ResolveSnapshot.createSnapshot(scope);
     final TemplateBuilder builder = new TemplateBuilder(scope);
 
-    final PsiIdentifier nameIdentifier = myElementToRename.getNameIdentifier();
+    final PsiElement nameIdentifier = myElementToRename.getNameIdentifier();
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, myEditor.getCaretModel().getOffset());
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return;
 
@@ -90,6 +105,8 @@ public class VariableInplaceRenamer {
     for (PsiReference ref : refs) {
       addVariable(ref.getElement(), selectedElement, builder);
     }
+    
+    final PsiElement scope1 = scope;
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -97,8 +114,8 @@ public class VariableInplaceRenamer {
             int offset = myEditor.getCaretModel().getOffset();
             Template template = builder.buildInlineTemplate();
             template.setToShortenLongNames(false);
-            assert scope != null;
-            TextRange range = scope.getTextRange();
+            assert scope1 != null;
+            TextRange range = scope1.getTextRange();
             assert range != null;
             myEditor.getCaretModel().moveToOffset(range.getStartOffset());
             myHighlighters = new ArrayList<RangeHighlighter>();
@@ -157,7 +174,7 @@ public class VariableInplaceRenamer {
 
   private void collectRangesToHighlight(Map<TextRange,TextAttributes> rangesToHighlight, Collection<PsiReference> refs) {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    PsiIdentifier nameId = myElementToRename.getNameIdentifier();
+    PsiElement nameId = myElementToRename.getNameIdentifier();
     LOG.assertTrue(nameId != null);
     rangesToHighlight.put(nameId.getTextRange(), colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES));
     for (PsiReference ref : refs) {
@@ -185,7 +202,7 @@ public class VariableInplaceRenamer {
     }
   }
 
-  private static PsiElement getSelectedInEditorElement(final PsiIdentifier nameIdentifier, final Collection<PsiReference> refs, final int offset) {
+  private static PsiElement getSelectedInEditorElement(final PsiElement nameIdentifier, final Collection<PsiReference> refs, final int offset) {
     if (nameIdentifier != null) {
       final TextRange range = nameIdentifier.getTextRange();
       if (contains(range, offset)) return nameIdentifier;
@@ -215,8 +232,8 @@ public class VariableInplaceRenamer {
     }
   }
 
-  public static boolean mayRenameInplace(PsiVariable elementToRename, final Editor editor, final PsiElement nameSuggestionContext) {
-    if (!editor.getSettings().isVariableInplaceRenameEnabled()) return false;
+  public static boolean mayRenameInplace(PsiElement elementToRename, final PsiElement nameSuggestionContext) {
+    if (!(elementToRename instanceof PsiVariable)) return false;
     if (nameSuggestionContext != null && nameSuggestionContext.getContainingFile() != elementToRename.getContainingFile()) return false;
     if (!(elementToRename instanceof PsiLocalVariable) && !(elementToRename instanceof PsiParameter)) return false;
     SearchScope useScope = elementToRename.getUseScope();

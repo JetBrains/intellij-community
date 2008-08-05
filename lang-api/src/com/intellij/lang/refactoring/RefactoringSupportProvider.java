@@ -60,4 +60,6 @@ public interface RefactoringSupportProvider {
    * @see com.intellij.refactoring.RefactoringActionHandler;
    */
   @Nullable RefactoringActionHandler getIntroduceFieldHandler();
+
+  boolean doInplaceRenameFor(PsiElement element, PsiElement context);
 }

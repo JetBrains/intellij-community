@@ -45,4 +45,8 @@ public class DefaultRefactoringSupportProvider implements RefactoringSupportProv
   public RefactoringActionHandler getIntroduceFieldHandler() {
     return null;
   }
+
+  public boolean doInplaceRenameFor(final PsiElement element, final PsiElement context) {
+    return false;
+  }
 }
