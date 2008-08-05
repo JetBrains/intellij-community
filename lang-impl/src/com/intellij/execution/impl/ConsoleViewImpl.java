@@ -839,7 +839,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
 
     public HyperlinkInfo getHyperlinkAt(final int offset) {
       for (final RangeHighlighter highlighter : myHighlighterToMessageInfoMap.keySet()) {
-        if (containsOffset(offset, highlighter)) {
+        if (highlighter.isValid() && containsOffset(offset, highlighter)) {
           return myHighlighterToMessageInfoMap.get(highlighter);
         }
       }
