@@ -7,23 +7,7 @@ import org.jdom.Element;
 
 import javax.swing.*;
 
-public class TabImpl implements Tab {
-
-  private int myIndex;
-  private String myDisplayName;
-  private Icon myIcon;
-
-  float myLeftProportion = .2f;
-  float myRightProportion = .2f;
-  float myBottomProportion = .5f;
-
-  boolean myLeftDetached = false;
-
-  boolean myCenterDetached = false;
-
-  boolean myRightDetached = false;
-
-  boolean myBottomDetached = false;
+public class TabImpl extends AbstractTab implements Tab {
 
   public TabImpl(Element element) {
     read(element);
@@ -33,10 +17,7 @@ public class TabImpl implements Tab {
     XmlSerializer.deserializeInto(this, element);
   }
 
-  public TabImpl(final int index, final String displayName, final Icon icon) {
-    myIndex = index;
-    myDisplayName = displayName;
-    myIcon = icon;
+  TabImpl() {
   }
 
   public int getIndex() {
@@ -160,10 +141,7 @@ public class TabImpl implements Tab {
     }
   }
 
-  public static class Default {
-    private int myIndex;
-    private String myDisplayName;
-    private Icon myIcon;
+  public static class Default extends AbstractTab {
 
     public Default(final int index, final String displayName, final Icon icon) {
       myIndex = index;
@@ -172,7 +150,9 @@ public class TabImpl implements Tab {
     }
 
     public TabImpl createTab() {
-      return new TabImpl(myIndex, myDisplayName, myIcon);
+      final TabImpl tab = new TabImpl();
+      tab.copyFrom(this);
+      return tab;
     }
   }
 
