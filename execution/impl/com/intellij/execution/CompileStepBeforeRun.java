@@ -10,6 +10,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
@@ -71,7 +72,12 @@ public class CompileStepBeforeRun implements StepsBeforeRunProvider {
             scope = compilerManager.createProjectCompileScope(myProject);
           }
           else {
-            scope = compilerManager.createModulesCompileScope(runConfiguration.getModules(), true);
+            final Module[] modules = runConfiguration.getModules();
+            if (modules.length > 0) {
+              scope = compilerManager.createModulesCompileScope(modules, true);
+            } else {
+              scope = compilerManager.createProjectCompileScope(myProject);
+            }
           }
 
           done.down();
