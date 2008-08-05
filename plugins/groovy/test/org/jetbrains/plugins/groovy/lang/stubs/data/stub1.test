@@ -2,3 +2,6 @@ class A {}
 
 interface I {}
 -----
+[Groovy script]
+  [Class definition : A]
+  [Interface definition : I]
