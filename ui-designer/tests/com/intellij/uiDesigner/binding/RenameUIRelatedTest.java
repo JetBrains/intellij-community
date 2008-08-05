@@ -47,6 +47,28 @@ public class RenameUIRelatedTest extends MultiFileTestCase {
     });
   }
 
+  public void testRenamePackageNested() throws Exception {                     // IDEADEV-28864
+    doTest(new PerformAction() {
+      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
+        PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("org.withoutForms");
+        Assert.assertNotNull(aPackage);
+
+        new RenameProcessor(myProject, aPackage, "withForms", true, true).run();
+      }
+    });
+  }
+
+  public void testRenamePackageWithComponentClass() throws Exception {         // IDEADEV-5615
+    doTest(new PerformAction() {
+      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
+        PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("org.withoutForms");
+        Assert.assertNotNull(aPackage);
+
+        new RenameProcessor(myProject, aPackage, "withForms", true, true).run();
+      }
+    });
+  }
+
   public void testRenameEnumConstant() throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {

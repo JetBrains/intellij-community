@@ -166,14 +166,14 @@ public class FormReferenceProvider extends PsiReferenceProvider implements Proje
       final XmlAttribute titleBundleAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE_RESOURCE_BUNDLE, Utils.FORM_NAMESPACE);
       final XmlAttribute titleKeyAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE_KEY, Utils.FORM_NAMESPACE);
       if (titleBundleAttribute != null && titleKeyAttribute != null) {
-        processor.execute(new ResourceBundleFileReference(file, getValueRange(titleBundleAttribute)));
+        processResourceBundleFileReferences(file, processor, titleBundleAttribute);
         processor.execute(new ResourceBundleKeyReference(file, titleBundleAttribute.getValue(), getValueRange(titleKeyAttribute)));
       }
 
       final XmlAttribute bundleAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_RESOURCE_BUNDLE, Utils.FORM_NAMESPACE);
       final XmlAttribute keyAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_KEY, Utils.FORM_NAMESPACE);
       if (bundleAttribute != null && keyAttribute != null) {
-        processor.execute(new ResourceBundleFileReference(file, getValueRange(bundleAttribute)));
+        processResourceBundleFileReferences(file, processor, bundleAttribute);
         processor.execute(new ResourceBundleKeyReference(file, bundleAttribute.getValue(), getValueRange(keyAttribute)));
       }
 
@@ -212,6 +212,23 @@ public class FormReferenceProvider extends PsiReferenceProvider implements Proje
     for (XmlTag subtag : subtags) {
       processReferences(subtag, classReference, file, processor);
     }
+  }
+
+  private static void processResourceBundleFileReferences(final PsiPlainTextFile file,
+                                                          final PsiReferenceProcessor processor,
+                                                          final XmlAttribute titleBundleAttribute) {
+    final TextRange valueRange = getValueRange(titleBundleAttribute);
+    final String value = titleBundleAttribute.getValue();
+    int pos=-1;
+    while(true) {
+      pos = value.indexOf('/', pos+1);
+      if (pos < 0) {
+        break;
+      }
+      processor.execute(new FormPackageReference(file, new TextRange(valueRange.getStartOffset(), valueRange.getStartOffset() + pos)));
+    }
+
+    processor.execute(new ResourceBundleFileReference(file, valueRange));
   }
 
   private static void processNestedFormReference(final XmlTag tag, final PsiReferenceProcessor processor, final PsiPlainTextFile file) {
