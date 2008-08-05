@@ -50,8 +50,15 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
   private BooleanEditor myEditor = new BooleanEditor() {
     @Override
     public JComponent getComponent(final RadComponent component, final Boolean value, final InplaceContext inplaceContext) {
-      JComponent result = super.getComponent(component, value, inplaceContext);
-      result.setEnabled(!component.isCustomCreateRequired());
+      JCheckBox result = (JCheckBox) super.getComponent(component, value, inplaceContext);
+      final boolean customCreateRequired = component.isCustomCreateRequired();
+      if (customCreateRequired) {
+        result.setEnabled(false);
+        result.setSelected(true);
+      }
+      else {
+        result.setEnabled(true);
+      }
       return result;
     }
   };
