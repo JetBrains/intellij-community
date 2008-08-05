@@ -91,6 +91,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         myDialog.updateLegend();
       }
     }
+
+    public void restart(final CommitChangeListDialog dialog) {
+      myDialog = dialog;
+      run();
+    }
   }
 
   private MyUpdateButtonsRunnable myUpdateButtonsRunnable = new MyUpdateButtonsRunnable(this);
@@ -460,6 +465,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Override
   public void dispose() {
+    myDisposed = true;
     myBrowser.dispose();
     Disposer.dispose(myCommitMessageArea);
     Disposer.dispose(myOKButtonUpdateAlarm);
@@ -494,6 +500,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
+  private void stopUpdate() {
+    myDisposed = true;
+    myUpdateButtonsRunnable.cancel();
+  }
+
+  private void restartUpdate() {
+    myDisposed = false;
+    myUpdateButtonsRunnable.restart(this);
+  }
+  
   private void runBeforeCommitHandlers(final Runnable okAction, final CommitExecutor executor) {
     Runnable proceedRunnable = new Runnable() {
       public void run() {
@@ -502,7 +518,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         for (CheckinHandler handler : myHandlers) {
           final CheckinHandler.ReturnResult result = handler.beforeCheckin(executor);
           if (result == CheckinHandler.ReturnResult.COMMIT) continue;
-          if (result == CheckinHandler.ReturnResult.CANCEL) return;
+          if (result == CheckinHandler.ReturnResult.CANCEL) {
+            restartUpdate();
+            return;
+          }
 
           if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
             final ChangeList changeList = myBrowser.getSelectedChangeList();
@@ -520,6 +539,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     };
 
+    stopUpdate();
     for(CheckinHandler handler: myHandlers) {
       if (handler instanceof CheckinMetaHandler) {
         ((CheckinMetaHandler) handler).runCheckinHandlers(proceedRunnable);
@@ -747,6 +767,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void updateLegend() {
+    if (myDisposed) return;
     myLegend.update(myBrowser.getCurrentDisplayedChanges(), myBrowserExtender.getCurrentIncludedChanges());
   }
 
