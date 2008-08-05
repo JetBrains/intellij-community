@@ -1,66 +1,84 @@
 package com.intellij.lang.ant.config.impl;
 
+import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
-import com.intellij.lang.ant.psi.AntProject;
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.Nullable;
 
 public class AntBuildTargetImpl implements AntBuildTargetBase {
 
-  private final AntTarget myTarget;
   private final AntBuildModelBase myModel;
+  private final VirtualFile myFile;
+  private final boolean myIsDefault;
+  private final int myHashCode;
+  private final String myName;
+  private final String myDisplayName;
+  private final String myDescription;
+  private final Project myProject;
+  private final int myTextOffset;
 
-  public AntBuildTargetImpl(final AntTarget target, final AntBuildModelBase buildModel) {
-    myTarget = target;
+  public AntBuildTargetImpl(final AntTarget target, final AntBuildModelBase buildModel, final VirtualFile sourceFile, final boolean isImported, final boolean isDefault) {
     myModel = buildModel;
+    myFile = sourceFile;
+    myIsDefault = isDefault;
+    myHashCode = target.hashCode();
+    myName = target.getName();
+    myDisplayName = isImported ? target.getQualifiedName() : target.getName();
+    myProject = target.getProject();
+    myTextOffset = target.getTextOffset();
+    
+    final String desc = target.getDescription();
+    myDescription = (desc != null && desc.trim().length() > 0) ? desc : null;
   }
 
   public int hashCode() {
-    return myTarget.hashCode();
+    return myHashCode;
   }
 
   public boolean equals(Object obj) {
-    return obj instanceof AntBuildTargetImpl && myTarget == ((AntBuildTargetImpl)obj).myTarget;
+    if (!(obj instanceof AntBuildTargetImpl)) {
+      return false;
+    }
+    final AntBuildTargetImpl that = (AntBuildTargetImpl)obj;
+    return Comparing.equal(myName, that.myName) && myFile.equals(that.myFile);
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   @Nullable
   public String getName() {
-    return myTarget.getName();
+    return myName;
   }
 
   @Nullable
   public String getDisplayName() {
-    final AntProject project = myModel.getAntProject();
-    return (project == myTarget.getAntProject()) ? myTarget.getName() : myTarget.getQualifiedName();
+    return myDisplayName;
   }
 
   @Nullable
   public String getNotEmptyDescription() {
-    final String desc = myTarget.getDescription();
-    return (desc != null && desc.trim().length() > 0) ? desc : null;
+    return myDescription;
   }
 
   public boolean isDefault() {
-    final AntProject project = myModel.getAntProject();
-    return project != null && myTarget == project.getDefaultTarget();
+    return myIsDefault;
   }
 
-  @Nullable
-  public AntTarget getAntTarget() {
-    return myTarget;
-  }
-
-  public PsiFile getAntFile() {
-    return myModel.getBuildFile().getAntFile();
+  public VirtualFile getContainingFile() {
+    return myFile;
   }
 
   public AntBuildModelBase getModel() {
@@ -89,11 +107,17 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
 
   @Nullable
   public BuildTask findTask(final String taskName) {
-    for (final PsiElement element : myTarget.getChildren()) {
-      if (element instanceof AntTask) {
-        final AntTask task = (AntTask)element;
-        if (taskName.equals(task.getSourceElement().getName())) {
-          return new BuildTask(this, task);
+    final AntFile antFile = AntSupport.toAntFile(myFile, myProject);
+    if (antFile != null) {
+      final AntTarget target = antFile.getAntProject().getTarget(myName);
+      if (target != null) {
+        for (final PsiElement element : target.getChildren()) {
+          if (element instanceof AntTask) {
+            final AntTask task = (AntTask)element;
+            if (taskName.equals(task.getSourceElement().getName())) {
+              return new BuildTask(this, task);
+            }
+          }
         }
       }
     }
@@ -101,9 +125,7 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
   }
 
   public OpenFileDescriptor getOpenFileDescriptor() {
-    final PsiFile psiFile = myTarget.getContainingFile();
-    final VirtualFile vFile = (psiFile.isPhysical()) ? psiFile.getVirtualFile() : null;
-    return (vFile == null) ? null : new OpenFileDescriptor(psiFile.getProject(), vFile, myTarget.getTextOffset());
+    return (myFile == null) ? null : new OpenFileDescriptor(myProject, myFile, myTextOffset);
   }
 
   public void run(DataContext dataContext, AntBuildListener buildListener) {

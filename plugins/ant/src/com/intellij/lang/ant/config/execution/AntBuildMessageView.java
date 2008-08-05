@@ -3,7 +3,10 @@ package com.intellij.lang.ant.config.execution;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.actions.*;
+import com.intellij.ide.actions.CloseTabToolbarAction;
+import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.actions.NextOccurenceToolbarAction;
+import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
@@ -30,12 +33,11 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.peer.PeerFactory;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiFile;
 import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.ui.content.*;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -205,7 +207,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
    */
   @Nullable
   public static AntBuildMessageView openBuildMessageView(Project project, AntBuildFileBase buildFile, String[] targets) {
-    final PsiFile antFile = buildFile.getAntFile();
+    final VirtualFile antFile = buildFile.getVirtualFile();
     if (!LOG.assertTrue(antFile != null)) {
       return null;
     }
@@ -223,7 +225,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
         continue;
       }
 
-      if (!antFile.equals(buildMessageView.getBuildFile().getAntFile())) {
+      if (!antFile.equals(buildMessageView.getBuildFile().getVirtualFile())) {
         continue;
       }
 

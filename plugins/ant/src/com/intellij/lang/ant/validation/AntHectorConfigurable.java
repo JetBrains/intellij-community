@@ -15,12 +15,9 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -79,7 +76,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
     final FileBasedIndex fbi = FileBasedIndex.getInstance();
     final Collection<VirtualFile> antFiles = fbi.getContainingFiles(AntImportsIndex.INDEX_NAME, AntImportsIndex.ANT_FILES_WITH_IMPORTS_KEY, myFileFilter);
     for (VirtualFile file : antFiles) {
-      final AntFile antFile = toAntFile(file);
+      final AntFile antFile = AntSupport.toAntFile(file, myFile.getProject());
       if (antFile != null) {
         final String path = PathUtil.getLocalPath(file);
         final AntFile previous = myPathToFileMap.put(path, antFile);
@@ -149,14 +146,5 @@ public class AntHectorConfigurable extends HectorComponentPanel {
 
   public void disposeUIResources() {
     myPathToFileMap.clear();
-  }
-
-  @Nullable
-  private AntFile toAntFile(VirtualFile vFile) {
-    if (vFile == null) {
-      return null;
-    }
-    final PsiFile psiFile = PsiManager.getInstance(myFile.getProject()).findFile(vFile);
-    return psiFile != null? AntSupport.getAntFile(psiFile) : null;
   }
 }

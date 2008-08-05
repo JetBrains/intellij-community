@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.Tree;
@@ -378,7 +377,7 @@ public class AntExplorer extends JPanel implements DataProvider {
       if (buildFile == null) {
         return null;
       }
-      final PsiFile file = buildFile.getAntFile();
+      final VirtualFile file = buildFile.getVirtualFile();
       if (file == null) {
         return null;
       }
@@ -396,16 +395,13 @@ public class AntExplorer extends JPanel implements DataProvider {
         final OpenFileDescriptor descriptor = buildTarget.getOpenFileDescriptor();
         if (descriptor != null) {
           final VirtualFile descriptorFile = descriptor.getFile();
-          if (descriptorFile != null && descriptorFile.isValid()) {
+          if (descriptorFile.isValid()) {
             return descriptor;
           }
         }
       }
       if (file.isValid()) {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile != null && virtualFile.isValid()) {
-          return new OpenFileDescriptor(myProject, virtualFile);
-        }
+        return new OpenFileDescriptor(myProject, file);
       }
     }
     else if (DataConstants.HELP_ID.equals(dataId)) {
@@ -575,7 +571,7 @@ public class AntExplorer extends JPanel implements DataProvider {
 
     public void setSelected(AnActionEvent event, boolean state) {
       final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(myProject);
-      if (state) {
+      if (state) {                                                                                                       
         final AntBuildFileBase buildFile =
           (AntBuildFileBase)((myTarget instanceof MetaTarget) ? ((MetaTarget)myTarget).getBuildFile() : myTarget.getModel().getBuildFile());
         antConfiguration.setTargetForEvent(buildFile, myTarget.getName(), myExecutionEvent);

@@ -7,6 +7,8 @@ import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -105,8 +107,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   private static AntBuildTargetBase findTargetImpl(final String name, final AntBuildModelImpl model) {
     final List<AntBuildTargetBase> buildTargetBases = getTargetListImpl(model);
     for (AntBuildTargetBase targetBase : buildTargetBases) {
-      final AntTarget antTarget = targetBase.getAntTarget();
-      if (antTarget != null && Comparing.strEqual(antTarget.getName(), name)) {
+      if (Comparing.strEqual(targetBase.getName(), name)) {
         return targetBase;
       }
     }
@@ -117,12 +118,23 @@ public class AntBuildModelImpl implements AntBuildModelBase {
     final AntProject project = model.getAntProject();
     final AntTarget[] targets = (project == null) ? AntTarget.EMPTY_ARRAY : project.getTargets();
     final List<AntBuildTargetBase> list = new ArrayList<AntBuildTargetBase>(targets.length);
+    final VirtualFile sourceFile = model.getBuildFile().getVirtualFile();
+    final AntTarget defaultTarget = project.getDefaultTarget();
     for (final AntTarget target : targets) {
-      list.add(new AntBuildTargetImpl(target, model));
+      list.add(new AntBuildTargetImpl(target, model, sourceFile, false, target.equals(defaultTarget)));
     }
     if (project != null) {
       for (final AntTarget target : project.getImportedTargets()) {
-        list.add(new AntBuildTargetImpl(target, model));
+        final PsiFile containingFile = target.getContainingFile();
+        final AntTarget fileDefaultTarget;
+        if (containingFile instanceof AntFile) {
+          final AntProject antProject = ((AntFile)containingFile).getAntProject();
+          fileDefaultTarget =  antProject != null? antProject.getDefaultTarget() : null;
+        }
+        else {
+          fileDefaultTarget = null;
+        }
+        list.add(new AntBuildTargetImpl(target, model, containingFile != null? containingFile.getVirtualFile() : null, true, target.equals(fileDefaultTarget)));
       }
     }
     return list;

@@ -3,10 +3,10 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
-import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +23,10 @@ public class MetaTarget implements AntBuildTargetBase {
     myTargets = targets;
     myName = displayName;
     myDescription = AntBundle.message("meta.target.build.sequence.name.display.name", displayName);
+  }
+
+  public Project getProject() {
+    return myBuildFile.getProject();
   }
 
   public AntBuildFile getBuildFile() {
@@ -88,12 +92,8 @@ public class MetaTarget implements AntBuildTargetBase {
   }
 
   @Nullable
-  public AntTarget getAntTarget() {
-    return null;
-  }
-
-  public PsiFile getAntFile() {
-    return myBuildFile.getAntFile();
+  public VirtualFile getContainingFile() {
+    return myBuildFile.getVirtualFile();
   }
 
   public boolean equals(Object o) {

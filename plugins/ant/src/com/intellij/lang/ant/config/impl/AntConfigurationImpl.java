@@ -143,7 +143,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
       public void beforeFileDeletion(final VirtualFileEvent event) {
         final VirtualFile vFile = event.getFile();
-        final AntFile antFile = toAntFile(vFile);
+        final AntFile antFile = AntSupport.toAntFile(vFile, AntConfigurationImpl.this.getProject());
         if (antFile != null) {
           // cleanup
           for (AntBuildFile file : getBuildFiles()) {
@@ -786,7 +786,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   public AntFile getContextFile(@Nullable final AntFile file) {
-    return file != null? toAntFile(myAntFileToContextFileMap.get(file.getVirtualFile())) : null;
+    return file != null? AntSupport.toAntFile(myAntFileToContextFileMap.get(file.getVirtualFile()), getProject()) : null;
   }
 
   @Nullable
@@ -796,7 +796,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       AntFile findContext(final AntFile file, Set<PsiElement> processed) {
         if (file != null) {
           processed.add(file);
-          final AntFile contextFile = toAntFile(myAntFileToContextFileMap.get(file.getVirtualFile()));
+          final AntFile contextFile = AntSupport.toAntFile(myAntFileToContextFileMap.get(file.getVirtualFile()), getProject());
           return (contextFile == null || processed.contains(contextFile))? file : findContext(contextFile, processed);
         }
         return null;
@@ -804,15 +804,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     }.findContext(file, new HashSet<PsiElement>());
   }
 
-  @Nullable
-  private AntFile toAntFile(VirtualFile vFile) {
-    if (vFile == null) {
-      return null;
-    }
-    final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
-    return psiFile != null? AntSupport.getAntFile(psiFile) : null;
-  }
-  
   @Nullable
   ExecuteBeforeRunEvent findExecuteBeforeRunEvent(RunConfiguration configuration) {
     final ConfigurationType type = configuration.getType();

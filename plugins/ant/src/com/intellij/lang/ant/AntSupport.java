@@ -12,11 +12,14 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -117,5 +120,14 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
     else {
       return (AntFile)psiFile.getViewProvider().getPsi(getLanguage());
     }
+  }
+
+  @Nullable
+  public static AntFile toAntFile(VirtualFile vFile, final Project project) {
+    if (vFile == null) {
+      return null;
+    }
+    final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
+    return psiFile != null? getAntFile(psiFile) : null;
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
+import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.NewInstanceFactory;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -125,15 +127,9 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     }
   };
 
-  public static List<File> getUserHomeLibraries() {
-    ArrayList<File> classpath = new ArrayList<File>();
-    final String homeDir = System.getProperty(USER_HOME);
-    new AllJarsUnderDirEntry(new File(homeDir, ANT_LIB)).addFilesTo(classpath);
-    return classpath;
-  }
-  
-  
-  private final AntFile myFile;
+  //private final AntFile myFile;
+  private final VirtualFile myVFile;
+  private final Project myProject;
   private final AntConfigurationBase myAntConfiguration;
   private final ExternalizablePropertyContainer myWorkspaceOptions;
   private final ExternalizablePropertyContainer myProjectOptions;
@@ -142,7 +138,8 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   private boolean myExpandFirstTime = true;
 
   public AntBuildFileImpl(final AntFile antFile, final AntConfigurationBase configuration) {
-    myFile = antFile;
+    myVFile = antFile.getVirtualFile();
+    myProject = antFile.getProject();
     myAntConfiguration = configuration;
     myWorkspaceOptions = new ExternalizablePropertyContainer();
     myWorkspaceOptions.registerProperty(RUN_IN_BACKGROUND);
@@ -168,19 +165,27 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     myClassloaderHolder = new AntBuildFileClassLoaderHolder(myAllOptions);
   }
 
+  public static List<File> getUserHomeLibraries() {
+    ArrayList<File> classpath = new ArrayList<File>();
+    final String homeDir = System.getProperty(USER_HOME);
+    new AllJarsUnderDirEntry(new File(homeDir, ANT_LIB)).addFilesTo(classpath);
+    return classpath;
+  }
+
   @Nullable
   public String getPresentableName() {
     AntBuildModel model = myAntConfiguration.getModelIfRegistered(this);
     String name = model != null ? model.getName() : null;
     if (name == null || name.trim().length() == 0) {
-      name = myFile.getName();
+      name = myVFile.getName();
     }
     return name;
   }
 
   @Nullable
   public String getName() {
-    return getAntFile().getName();
+    final VirtualFile vFile = getVirtualFile();
+    return vFile != null? vFile.getName() : null;
   }
 
 
@@ -197,17 +202,18 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     return RUN_IN_BACKGROUND.value(myAllOptions);
   }
 
-  public PsiFile getAntFile() {
-    return myFile;
+  public AntFile getAntFile() {
+    final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(myVFile);
+    return psiFile != null? AntSupport.getAntFile(psiFile) : null;
   }
 
   public Project getProject() {
-    return myFile.getProject();
+    return myProject;
   }
 
   @Nullable
   public VirtualFile getVirtualFile() {
-    return myFile.getVirtualFile();
+    return myVFile;
   }
 
   public AbstractProperty.AbstractPropertyContainer getAllOptions() {
@@ -235,11 +241,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public boolean exists() {
-    final PsiFile psiFile = getAntFile();
-    if (psiFile == null) {
-      return false;
-    }
-    final VirtualFile file = psiFile.getVirtualFile();
+    final VirtualFile file = getVirtualFile();
     if (file == null || !(new File(file.getPath()).exists())) {
       return false;
     }
@@ -325,24 +327,25 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   private void basicUpdateConfig() {
-    registerPropertiesInPsi();
+    final AntFile antFile = getAntFile();
+    registerPropertiesInPsi(antFile);
     bindAnt();
     myClassloaderHolder.updateClasspath();
-    myFile.clearCachesWithTypeDefinitions();
+    antFile.clearCachesWithTypeDefinitions();
   }
 
-  private void registerPropertiesInPsi() {
+  private void registerPropertiesInPsi(final AntFile antFile) {
     final DataContext context = MapDataContext.singleData(DataConstants.PROJECT, getProject());
     final MacroManager macroManager = MacroManager.getInstance();
     Iterator<BuildFileProperty> properties = ANT_PROPERTIES.getIterator(myAllOptions);
-    myFile.clearExternalProperties();
+    antFile.clearExternalProperties();
     while (properties.hasNext()) {
       BuildFileProperty property = properties.next();
       try {
         String value = property.getPropertyValue();
         value = macroManager.expandSilentMarcos(value, true, context);
         value = macroManager.expandSilentMarcos(value, false, context);
-        myFile.setExternalProperty(property.getPropertyName(), value);
+        antFile.setExternalProperty(property.getPropertyName(), value);
       }
       catch (Macro.ExecutionCancelledException e) {
         LOG.debug(e);

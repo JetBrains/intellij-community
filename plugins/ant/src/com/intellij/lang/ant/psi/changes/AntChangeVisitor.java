@@ -7,7 +7,9 @@ import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.lang.ant.psi.impl.AntOuterProjectElement;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.*;
 import com.intellij.psi.PsiLock;
@@ -132,8 +134,9 @@ public class AntChangeVisitor implements XmlChangeVisitor {
       if (project.isDisposed()) {
         return;
       }
+      final VirtualFile vFile = file.getVirtualFile();
       for (final AntBuildFile buildFile : AntConfiguration.getInstance(project).getBuildFiles()) {
-        if (file.equals(buildFile.getAntFile())) {
+        if (Comparing.equal(vFile, buildFile.getVirtualFile())) {
           synchronized (myDirtyFiles) {
             myDirtyFiles.add(buildFile);
           }
