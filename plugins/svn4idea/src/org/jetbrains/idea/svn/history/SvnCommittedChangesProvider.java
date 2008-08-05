@@ -81,6 +81,9 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       public void execute(final Project project, final VirtualFile vcsRoot, final List<CommittedChangeList> cachedList) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (project.isDisposed()) {
+              return;
+            }
             for (CommittedChangeList committedChangeList : cachedList) {
               if ((committedChangeList instanceof SvnChangeList) &&
                   ((vcsRoot == null) || (vcsRoot.equals(((SvnChangeList)committedChangeList).getVcsRoot())))) {
@@ -122,6 +125,9 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   public List<SvnChangeList> getCommittedChanges(ChangeBrowserSettings settings, final RepositoryLocation location, final int maxCount) throws VcsException {
     final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
     final ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
+    if (myProject.isDisposed()) {
+      return result;
+    }
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) {
       progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
