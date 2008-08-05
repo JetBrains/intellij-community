@@ -263,10 +263,13 @@ public class AntExplorer extends JPanel implements DataProvider {
       if (userObject instanceof AntTargetNodeDescriptor) {
         buildFileNodeDescriptor = (AntBuildFileNodeDescriptor)((DefaultMutableTreeNode)node.getParent()).getUserObject();
       }
-      else {
+      else if (userObject instanceof AntBuildFileNodeDescriptor){
         buildFileNodeDescriptor = (AntBuildFileNodeDescriptor)userObject;
       }
-      if (buildFileNodeDescriptor.getBuildFile() != buildFile) {
+      else {
+        buildFileNodeDescriptor = null;
+      }
+      if (buildFileNodeDescriptor == null || buildFileNodeDescriptor.getBuildFile() != buildFile) {
         return false;
       }
     }
