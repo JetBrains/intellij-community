@@ -14,14 +14,15 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.ui.HintListener;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.HintListener;
 
 import java.awt.*;
 import java.util.EventObject;
@@ -30,7 +31,9 @@ import java.util.EventObject;
  * @author peter
  */
 public class CompletionProgressIndicator extends ProgressIndicatorBase {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionProgressIndicator");
   private static CompletionProgressIndicator ourCurrentCompletion = null;
+  private static Throwable ourTrace = null;
 
   private final Editor myEditor;
   private final CodeCompletionHandlerBase myHandler;
@@ -87,8 +90,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
   }
 
   private void registerItself() {
-    assert ourCurrentCompletion == null;
+    if (ourCurrentCompletion != null) {
+      throw new RuntimeException("SHe's not dead yet!", ourTrace);
+    }
     ourCurrentCompletion = this;
+    ourTrace = new Throwable();
   }
 
   public void liveAfterDeath(LightweightHint hint) {
