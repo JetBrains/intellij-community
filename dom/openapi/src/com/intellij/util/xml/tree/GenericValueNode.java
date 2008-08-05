@@ -67,6 +67,6 @@ public class GenericValueNode extends AbstractDomElementNode {
   }
 
   public Object[] getEqualityObjects() {
-    return NONE;
+    return new Object[]{myModelElement};
   }
 }
