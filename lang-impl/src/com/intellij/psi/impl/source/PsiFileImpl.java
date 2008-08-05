@@ -308,6 +308,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public void subtreeChanged() {
+    doClearCaches();
+    getViewProvider().rootChanged(this);
+  }
+
+  private void doClearCaches() {
     final FileElement tree = getTreeElement();
     if (tree != null) {
       myTreeElementPointer = tree;
@@ -320,7 +325,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
 
     clearCaches();
-    getViewProvider().rootChanged(this);
   }
 
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException", "CloneDoesntCallSuperClone"})
@@ -354,7 +358,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
-    subtreeChanged();
+    doClearCaches();
     return PsiFileImplUtil.setName(this, name);
   }
 

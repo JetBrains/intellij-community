@@ -57,11 +57,6 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     myGuessCache = myManager.getResolveCache().getOrCreateWeakMap(CACHED_CLASSES_MAP_KEY, false);
   }
 
-  public void subtreeChanged() {
-    super.subtreeChanged();
-    clearCaches();
-  }
-
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected PsiJavaFileBaseImpl clone() {
     PsiJavaFileBaseImpl clone = (PsiJavaFileBaseImpl)super.clone();

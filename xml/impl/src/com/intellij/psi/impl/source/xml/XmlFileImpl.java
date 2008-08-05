@@ -73,8 +73,9 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile, XmlElementType 
     return myType;
   }
 
-  public void subtreeChanged() {
-    super.subtreeChanged();
+  @Override
+  public void clearCaches() {
+    super.clearCaches();
 
     if (isWebFileType()) {
       ScriptSupportUtil.clearCaches(this);

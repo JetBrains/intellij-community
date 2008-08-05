@@ -173,8 +173,10 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return result;
   }
 
-  public void subtreeChanged() {
-    super.subtreeChanged();
+  @Override
+  public void clearCaches() {
+    super.clearCaches();
+
     synchronized (PsiLock.LOCK) {
       myPropertiesMap = null;
       myProperties = null;
