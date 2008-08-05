@@ -796,8 +796,8 @@ class RunConfigurable extends BaseConfigurable {
         }
       }
 
+      mySelectedConfigurable = null;
       if (myRoot.getChildCount() == 0) {
-        mySelectedConfigurable = null;
         drawPressAddButtonMessage(null);
       }
       else {
