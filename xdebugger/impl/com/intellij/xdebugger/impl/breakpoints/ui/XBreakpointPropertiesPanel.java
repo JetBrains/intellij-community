@@ -67,7 +67,7 @@ public class XBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
     @NonNls String card = type.isSuspendThreadSupported() ? "radioButtons" : "checkbox";
     ((CardLayout)mySuspendPolicyPanel.getLayout()).show(mySuspendPolicyPanel, card);
 
-    myMasterBreakpointComboBox = new ComboBox();
+    myMasterBreakpointComboBox = new ComboBox(300);
     myMasterBreakpointComboBoxPanel.add(myMasterBreakpointComboBox, BorderLayout.CENTER);
     myMasterBreakpointComboBox.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
