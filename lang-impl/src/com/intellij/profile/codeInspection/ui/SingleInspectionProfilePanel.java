@@ -436,8 +436,11 @@ public class SingleInspectionProfilePanel extends JPanel {
 
         if (!myIsInRestore) {
           InspectionProfileImpl selected = (InspectionProfileImpl)mySelectedProfile;
-          ((InspectionProfileImpl)selected.getParentProfile()).getExpandedNodes().setSelectionPaths(myTree.getSelectionPaths());
-          selected.getExpandedNodes().setSelectionPaths(myTree.getSelectionPaths());
+          if (selected != null) {
+            InspectionProfileImpl baseProfile = (InspectionProfileImpl)selected.getParentProfile();
+            baseProfile.getExpandedNodes().setSelectionPaths(myTree.getSelectionPaths());
+            selected.getExpandedNodes().setSelectionPaths(myTree.getSelectionPaths());
+          }
         }
 
       }
