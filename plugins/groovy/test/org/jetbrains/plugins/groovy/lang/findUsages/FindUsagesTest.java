@@ -101,12 +101,7 @@ public class FindUsagesTest extends UsefulTestCase {
 
   //todo [ilyas]
   public void _testProperty2() throws Throwable {
-    myFixture.configureByFile("A.groovy");
-    int offset = myFixture.getEditor().getCaretModel().getOffset();
-    final PsiElement elementAt = myFixture.getFile().findElementAt(offset);
-    final GrField field = PsiTreeUtil.getParentOfType(elementAt, GrField.class);
-    assertNotNull(field);
-    doFind(1, field);
+    doTestImpl("A.groovy", 1);
   }
 
   public void testEscapedReference() throws Throwable {

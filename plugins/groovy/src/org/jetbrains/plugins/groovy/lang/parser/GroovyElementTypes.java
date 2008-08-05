@@ -52,7 +52,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType LITERAL = new GroovyElementType("Literal");
 
   // Top-level elements
-  IFileElementType FILE = new IStubFileElementType(GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
+  IFileElementType GROOVY_FILE = new IStubFileElementType(GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
 
   //Packaging
   GroovyElementType PACKAGE_DEFINITION = new GroovyElementType("Package definition");
