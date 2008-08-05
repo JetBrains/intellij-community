@@ -64,7 +64,7 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
     // Is used by some of Tests Filters
 
     //WARN: It is Hack, see PoolOfTestStates, API is necessary
-    //TODO ignored, error, termnated tests
+    //TODO ignored, error
     final AbstractState state = myState;
 
     if (!state.isFinal()) {
@@ -72,6 +72,10 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
         return NOT_RUN_INDEX;
       }
       return RUNNING_INDEX;
+
+    } if (state.wasTerminated()) {
+      return TERMINATED_INDEX;
+
     } else if (state.isDefect()) {
       return FAILED_INDEX;
     }
@@ -145,13 +149,14 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
   }
 
   public void setFinished() {
+    if (myState.isFinal()) {
+      // we shouldn't fire new printable because final state
+      // has been already fired
+      return;
+    }
+
     if (!isSuite()) {
       // if isn't in other finished state (ignored, failed or passed)
-      if (myState.isFinal()) {
-        // we shouldn't fire new printable because final state
-        // has been already fired
-        return;
-      }
       myState = TestPassedState.INSTACE;
     } else {
       //Test Suite
@@ -272,5 +277,24 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
   @Override
   public String toString() {
     return getPresentableName();
+  }
+
+  /**
+   * Process was terminated
+   */
+  public void setTerminated() {
+    if (myState.isFinal()) {
+      return;
+    }
+    myState = TerminatedState.INSTANCE;
+    final List<? extends RTestUnitTestProxy> children = getChildren();
+    for (RTestUnitTestProxy child : children) {
+      child.setTerminated();
+    }
+    fireOnNewPrintable(myState);
+  }
+
+  public boolean wasTerminated() {
+    return myState.wasTerminated();
   }
 }

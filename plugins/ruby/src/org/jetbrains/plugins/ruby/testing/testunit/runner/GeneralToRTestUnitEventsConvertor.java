@@ -2,15 +2,14 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.utils.IdeaInternalUtil;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -38,7 +37,7 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onStartTesting() {
-    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         mySuitesStack.pushSuite(myTestsRootNode);
         myTestsRootNode.setStarted();
@@ -46,11 +45,11 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
         //fire
         fireOnTestingStarted();
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   public void onFinishTesting() {
-    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         if (myIsTestingFinished) {
           // has been already invoked!
@@ -58,18 +57,26 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
         }
         myIsTestingFinished = true;
 
+        // We don't know whether process was destroyed by user
+        // or it finished after all tests have been run
+        // Lets assume, if at finish all suites except root suite are passed
+        // then all is ok otherwise process was terminated by user
+        if (!myTestsRootNode.equals(mySuitesStack.getCurrentSuite())) {
+          myTestsRootNode.setTerminated();
+          myRunningTestsFullNameToProxy.clear();
+        }
+        mySuitesStack.clear();
         myTestsRootNode.setFinished();
-        mySuitesStack.popSuite(myTestsRootNode.getName());
-        LOG.assertTrue(mySuitesStack.isEmpty());
+
 
         //fire events
         fireOnTestingFinished();
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   public void onTestStarted(final String testName) {
-    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         final String fullName = getFullTestName(testName);
 
@@ -93,11 +100,11 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
         //fire events
         fireOnTestStarted(testProxy);
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   public void onSuiteStarted(final String suiteName) {
-    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         final RTestUnitTestProxy parentSuite = getCurrentSuite();
         //new suite
@@ -112,11 +119,11 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
         //fire event
         fireOnSuiteStarted(newSuite);
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   public void onTestFinished(final String testName) {
-    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         final String fullTestName = getFullTestName(testName);
         final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
@@ -131,11 +138,11 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
         //fire events
         fireOnTestFinished(testProxy);
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   public void onSuiteFinished(final String suiteName) {
-    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         final RTestUnitTestProxy mySuite = mySuitesStack.popSuite(suiteName);
         mySuite.setFinished();
@@ -143,11 +150,11 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
         //fire events
         fireOnSuiteFinished(mySuite);
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   public void onUncapturedOutput(final String text, final Key outputType) {
-    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         //if we can locate test - we will send outout to it, otherwise to current test suite
         final RTestUnitTestProxy currentProxy;
@@ -169,12 +176,12 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
           currentProxy.addSystemOutput(text);
         }
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   public void onTestFailure(final String testName,
                             final String localizedMessage, final String stackTrace) {
-    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         final String fullTestName = getFullTestName(testName);
         final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
@@ -197,12 +204,12 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
         // fire event
         fireOnTestFailed(testProxy);
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   public void onTestOutput(final String testName,
                            final String text, final boolean stdOut) {
-    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         final String fullTestName = getFullTestName(testName);
         final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
@@ -217,23 +224,23 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
           testProxy.addStdErr(text);
         }
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   public void onTestsCount(final int count) {
-    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         fireOnTestsCount(count);
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
   @NotNull
   protected final RTestUnitTestProxy getCurrentSuite() {
-    final RTestUnitTestProxy parentSuite = mySuitesStack.getCurrentSuite();
-    assert parentSuite != null;
+    final RTestUnitTestProxy currentSuite = mySuitesStack.getCurrentSuite();
+    assert currentSuite != null;
 
-    return parentSuite;
+    return currentSuite;
   }
  
   protected String getFullTestName(final String testName) {
@@ -322,7 +329,7 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
    * Remove listeners,  etc
    */
   public void dispose() {
-    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         myEventsListeners.clear();
 
@@ -335,7 +342,15 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
         myRunningTestsFullNameToProxy.clear();
         mySuitesStack.clear();
       }
-    }, ModalityState.NON_MODAL);
+    });
   }
 
+  private static void addToInvokeLater(final Runnable runnable) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isHeadlessEnvironment() || application.isUnitTestMode()) {
+      runnable.run();
+    } else {
+      SwingUtilities.invokeLater(runnable);
+    }
+  }
 }

@@ -30,4 +30,9 @@ public interface TestStateInfo {
    * @return True if is final
    */
   boolean isFinal();
+
+  /**
+   * @return Was terminated by user
+   */
+  boolean wasTerminated();
 }

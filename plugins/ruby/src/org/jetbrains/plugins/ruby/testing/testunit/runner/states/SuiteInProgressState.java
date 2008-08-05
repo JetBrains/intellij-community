@@ -39,6 +39,10 @@ public class SuiteInProgressState extends TestInProgressState {
     return false;
   }
 
+  public boolean wasTerminated() {
+    return false;
+  }
+
   @Override
   public String toString() {
     //noinspection HardCodedStringLiteral

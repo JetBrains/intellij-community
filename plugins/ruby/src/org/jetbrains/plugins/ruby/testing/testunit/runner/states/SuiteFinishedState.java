@@ -64,6 +64,10 @@ public class SuiteFinishedState extends AbstractState {
     return true;
   }
 
+  public boolean wasTerminated() {
+    return false;
+  }
+
   @Override
   public String toString() {
     //noinspection HardCodedStringLiteral

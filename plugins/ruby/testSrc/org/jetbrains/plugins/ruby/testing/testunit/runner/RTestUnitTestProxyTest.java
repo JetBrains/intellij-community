@@ -106,6 +106,7 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
 
     assertFalse(mySimpleTest.isInProgress());
     assertFalse(mySimpleTest.isDefect());
+    assertFalse(mySuite.wasTerminated());
   }
 
   public void testTestFinished_InSuite() {
@@ -153,6 +154,7 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     assertTrue(mySimpleTest.wasLaunched());
     assertFalse(mySimpleTest.isInProgress());
     assertTrue(mySimpleTest.isDefect());
+    assertFalse(mySuite.wasTerminated());
   }
 
   public void testTestFailed_InSuite() {
@@ -176,6 +178,82 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
 
     assertFalse(mySuite.isInProgress());
     assertTrue(mySuite.isDefect());
+  }
+
+  public void testSuiteTerminated() {
+    mySuite.setStarted();
+    mySuite.setTerminated();
+
+    assertFalse(mySuite.isInProgress());
+    
+    assertTrue(mySuite.wasLaunched());
+    assertTrue(mySuite.isDefect());
+    assertTrue(mySuite.wasTerminated());
+
+    mySuite.setFinished();
+    assertTrue(mySuite.wasTerminated());    
+  }
+
+  public void testSuiteTerminated_WithNotRunChild() {
+    mySuite.setStarted();
+    mySuite.addChild(mySimpleTest);
+
+    mySuite.setTerminated();
+
+    assertTrue(mySuite.wasTerminated());
+    assertTrue(mySimpleTest.wasTerminated());
+  }
+
+  public void testSuiteTerminated_WithChildInProgrss() {
+    mySuite.setStarted();
+    mySuite.addChild(mySimpleTest);
+    mySimpleTest.setStarted();
+
+    mySuite.setTerminated();
+
+    assertTrue(mySuite.wasTerminated());
+    assertTrue(mySimpleTest.wasTerminated());
+  }
+
+  public void testSuiteTerminated_WithChildInFinalState() {
+    final RTestUnitTestProxy testPassed = createTestProxy("passed");
+    final RTestUnitTestProxy testFailed = createTestProxy("failed");
+    final RTestUnitTestProxy testInProgress = createTestProxy("inProgress");
+
+    mySuite.setStarted();
+
+    mySuite.addChild(testPassed);
+    testPassed.setStarted();
+    testPassed.setFinished();
+
+    mySuite.addChild(testFailed);
+    testFailed.setStarted();
+    testFailed.setTestFailed("", "");
+    testFailed.setFinished();
+
+    mySuite.addChild(testInProgress);
+    testInProgress.setStarted();
+
+    // Suite terminated
+    mySuite.setTerminated();
+
+    assertTrue(mySuite.wasTerminated());
+    assertFalse(testPassed.wasTerminated());
+    assertFalse(testFailed.wasTerminated());
+    assertTrue(testInProgress.wasTerminated());
+  }
+
+  public void testTestTerminated() {
+    mySimpleTest.setTerminated();
+
+    assertTrue(mySimpleTest.isDefect());
+    assertTrue(mySimpleTest.wasTerminated());
+    assertTrue(mySimpleTest.wasLaunched());
+
+    assertFalse(mySimpleTest.isInProgress());
+
+    mySimpleTest.setFinished();
+    assertTrue(mySimpleTest.wasTerminated());
   }
 
   public void testMagnitude() {
@@ -219,12 +297,31 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     assertEquals(RTestUnitTestProxy.FAILED_INDEX, mySuite.getMagnitude());
     assertEquals(RTestUnitTestProxy.PASSED_INDEX, passedTest.getMagnitude());
     assertEquals(RTestUnitTestProxy.FAILED_INDEX, failedTest.getMagnitude());
+  }
 
+  public void testMagnitude_Terminated() {
+    assertEquals(RTestUnitTestProxy.NOT_RUN_INDEX, mySuite.getMagnitude());
+
+    final RTestUnitTestProxy testProxy = createTestProxy("failed");
+    mySuite.addChild(testProxy);
+
+    assertEquals(RTestUnitTestProxy.NOT_RUN_INDEX, mySuite.getMagnitude());
+    assertEquals(RTestUnitTestProxy.NOT_RUN_INDEX, testProxy.getMagnitude());
+
+    mySuite.setStarted();
+    mySuite.setTerminated();
+    assertEquals(RTestUnitTestProxy.TERMINATED_INDEX, mySuite.getMagnitude());
+    assertEquals(RTestUnitTestProxy.TERMINATED_INDEX, testProxy.getMagnitude());
+  }
+
+  public void testMagnitude_suiteWithoutTests() {
     final RTestUnitTestProxy noTests = createSuiteProxy("failedSuite");
     noTests.setStarted();
     noTests.setFinished();
     assertEquals(RTestUnitTestProxy.FAILED_INDEX, noTests.getMagnitude());
+  }
 
+  public void testMagnitude_PassedSuite() {
     final RTestUnitTestProxy passedSuite = createSuiteProxy("passedSuite");
     final RTestUnitTestProxy passedSuiteTest = createTestProxy("test");
     passedSuite.setStarted();

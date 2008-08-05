@@ -55,10 +55,16 @@ public class TestsPresentationUtil {
   public static void formatRootNodeWithChildren(final RTestUnitTestProxy testProxy,
                                           final RTestUnitTestTreeRenderer renderer) {
     renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
-    renderer.append(testProxy.isInProgress()
-                      ? RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.running.tests")
-                      : RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.test.results"),
-                    SimpleTextAttributes.REGULAR_ATTRIBUTES);
+
+    final String text;
+    if (testProxy.isInProgress()) {
+      text = RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.running.tests");
+    } else if (testProxy.wasTerminated()) {
+      text = RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.was.terminated");
+    } else {
+      text = RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.test.results");
+    }
+    renderer.append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
   public static void formatRootNodeWithoutChildren(final RTestUnitTestProxy testProxy,
@@ -71,6 +77,10 @@ public class TestsPresentationUtil {
       renderer.setIcon(PoolOfTestIcons.NOT_RAN);
       renderer.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.not.test.results"),
                       SimpleTextAttributes.ERROR_ATTRIBUTES);
+    } else if (testProxy.wasTerminated()) {
+      renderer.setIcon(PoolOfTestIcons.TERMINATED_ICON);
+      renderer.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.was.terminated"),
+                      SimpleTextAttributes.REGULAR_ATTRIBUTES);
     } else {
       renderer.setIcon(PoolOfTestIcons.NOT_RAN);
       renderer.append(RBundle.message(
@@ -114,6 +124,10 @@ public class TestsPresentationUtil {
 
     if (!testProxy.wasLaunched()) {
       return PoolOfTestIcons.NOT_RAN;
+    }
+
+    if (testProxy.wasTerminated()) {
+      return PoolOfTestIcons.TERMINATED_ICON;
     }
 
     if (testProxy.isDefect()) {

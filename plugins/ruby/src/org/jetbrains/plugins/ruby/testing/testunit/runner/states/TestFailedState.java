@@ -37,6 +37,10 @@ public class TestFailedState extends AbstractState {
     return false;
   }
 
+  public boolean wasTerminated() {
+    return false;
+  }
+
   @Override
   public String toString() {
     //noinspection HardCodedStringLiteral

@@ -111,6 +111,21 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     assertEquals(PoolOfTestIcons.FAILED_ICON, myRenderer.getIcon());
   }
 
+  public void testFormatTestProxyTest_Terminated() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTerminated();
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
+
+    assertEquals(PoolOfTestIcons.TERMINATED_ICON, myRenderer.getIcon());
+    assertOneElement(myRenderer.getFragments());
+    assertEquals(FAKE_TEST_NAME, myRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+
+    mySimpleTest.setFinished();
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
+    assertEquals(PoolOfTestIcons.TERMINATED_ICON, myRenderer.getIcon());
+  }
+
   public void testFormatRootNodeWithChildren_Started() {
     mySimpleTest.setStarted();
 
@@ -136,7 +151,7 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
 
     assertEquals(PoolOfTestIcons.FAILED_ICON, renderer1.getIcon());
     assertOneElement(renderer1.getFragments());
-    assertEquals("Test Results", renderer1.getFragmentAt(0));
+    assertEquals("Test Results.", renderer1.getFragmentAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getAttribsAt(0));
 
     final MyRenderer renderer2 = new MyRenderer(false);
@@ -144,7 +159,7 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     mySuite.setFinished();
     assertEquals(PoolOfTestIcons.FAILED_ICON, renderer1.getIcon());
     assertOneElement(renderer1.getFragments());
-    assertEquals("Test Results", renderer1.getFragmentAt(0));
+    assertEquals("Test Results.", renderer1.getFragmentAt(0));
   }
 
   public void testFormatRootNodeWithChildren_Passed() {
@@ -158,7 +173,39 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
 
     assertEquals(PoolOfTestIcons.PASSED_ICON, myRenderer.getIcon());
     assertOneElement(myRenderer.getFragments());
-    assertEquals("Test Results", myRenderer.getFragmentAt(0));
+    assertEquals("Test Results.", myRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+  }
+
+  public void testFormatRootNodeWithChildren_Terminated() {
+    mySuite.addChild(mySimpleTest);
+    mySuite.setStarted();
+    mySimpleTest.setStarted();
+    mySimpleTest.setFinished();
+    mySuite.setTerminated();
+    // terminated
+    TestsPresentationUtil.formatRootNodeWithChildren(mySuite, myRenderer);
+
+    assertEquals(PoolOfTestIcons.TERMINATED_ICON, myRenderer.getIcon());
+    assertOneElement(myRenderer.getFragments());
+    assertEquals("Terminated.", myRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+  }
+
+  public void testFormatRootNodeWithChildren_TerminatedAndFinished() {
+    mySuite.addChild(mySimpleTest);
+    mySuite.setStarted();
+    mySimpleTest.setStarted();
+    mySimpleTest.setFinished();
+    mySuite.setTerminated();
+    mySuite.setFinished();
+
+    // terminated and finished
+    TestsPresentationUtil.formatRootNodeWithChildren(mySuite, myRenderer);
+    mySuite.setFinished();
+    assertEquals(PoolOfTestIcons.TERMINATED_ICON, myRenderer.getIcon());
+    assertOneElement(myRenderer.getFragments());
+    assertEquals("Terminated.", myRenderer.getFragmentAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
   }
 
@@ -192,6 +239,18 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     assertOneElement(myRenderer.getFragments());
     assertEquals("No tests were found.", myRenderer.getFragmentAt(0));
     assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+
+  }
+
+  public void testFormatRootNodeWithoutChildren_Terminated() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTerminated();
+    TestsPresentationUtil.formatRootNodeWithoutChildren(mySimpleTest, myRenderer);
+
+    assertEquals(PoolOfTestIcons.TERMINATED_ICON, myRenderer.getIcon());
+    assertOneElement(myRenderer.getFragments());
+    assertEquals("Terminated.", myRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
 
   }
 
