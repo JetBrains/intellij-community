@@ -168,7 +168,12 @@ public class CompletionData {
     final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(offsetInFile);
     if(ref != null) {
       final PsiElement element = ref.getElement();
-      return element.getText().substring(ref.getRangeInElement().getStartOffset(), offsetInFile - element.getTextRange().getStartOffset());
+      final int endIndex = offsetInFile - element.getTextRange().getStartOffset();
+      final int beginIndex = ref.getRangeInElement().getStartOffset();
+      if (beginIndex > endIndex) {
+        LOG.error("Inconsistent reference (found at offset not included in its range): ref=" + ref + " element=" + element);
+      }
+      return element.getText().substring(beginIndex, endIndex);
     }
     return null;
   }
