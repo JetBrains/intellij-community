@@ -214,6 +214,9 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
     }
 
     public void visitOpenBlock(GrOpenBlock block) {
+      if (myChild1.getElementType() == mLCURLY && myChild2.getElementType() == mRCURLY && block.getParent() instanceof GrBlockStatement) {
+        myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      } else 
       if (myChild1.getElementType() == mLCURLY && !GroovyEditorActionUtil.isMultilineStringElement(myChild2) ||
               myChild2.getElementType() == mRCURLY && !GroovyEditorActionUtil.isMultilineStringElement(myChild1)) {
         myResult = Spacing.createDependentLFSpacing(0, 1, block.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
