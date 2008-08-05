@@ -18,7 +18,17 @@ import java.util.List;
 /**
  * @author: Roman Chernyatchik
  */
-public class RTestUnitTestProxy extends CompositePrintable implements PrintableTestProxy { 
+public class RTestUnitTestProxy extends CompositePrintable implements PrintableTestProxy {
+  public static final int SKIPPED_INDEX = 0;
+  public static final int COMPLETE_INDEX = 1;
+  public static final int NOT_RUN_INDEX = 2;
+  public static final int RUNNING_INDEX = 3;
+  public static final int TERMINATED_INDEX = 4;
+  public static final int IGNORED_INDEX = 5;
+  public static final int FAILED_INDEX = 6;
+  public static final int ERROR_INDEX = 8;
+  public static final int PASSED_INDEX = COMPLETE_INDEX;
+
   private List<RTestUnitTestProxy> myChildren;
   private RTestUnitTestProxy myParent;
 
@@ -51,8 +61,21 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
 
   @Deprecated
   public int getMagnitude() {
-    //TODO[romeo] what it is?
-    return 0;
+    // Is used by some of Tests Filters
+
+    //WARN: It is Hack, see PoolOfTestStates, API is necessary
+    //TODO ignored, error, termnated tests
+    final AbstractState state = myState;
+
+    if (!state.isFinal()) {
+      if (!state.wasLaunched()) {
+        return NOT_RUN_INDEX;
+      }
+      return RUNNING_INDEX;
+    } else if (state.isDefect()) {
+      return FAILED_INDEX;
+    }
+    return PASSED_INDEX;
   }
 
   public boolean isLeaf() {
@@ -230,7 +253,7 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
     });
   }
 
-  public void addStdSys(final String output) {
+  public void addSystemOutput(final String output) {
     addLast(new Printable() {
       public void printOn(final Printer printer) {
         printer.print(output, ConsoleViewContentType.SYSTEM_OUTPUT);

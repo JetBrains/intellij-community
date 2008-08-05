@@ -1,0 +1,249 @@
+package org.jetbrains.plugins.ruby.testing.testunit.runner.server;
+
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
+import jetbrains.buildServer.messages.serviceMessages.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.GeneralTestEventsProcessor;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitConsoleView;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author Roman Chernyatchik
+ *
+ * This implementation also supports messages splitted in parts by early flush.
+ * Implementation assumes that buffer is being flushed on line end or by timer,
+ * i.e. incomming text contains no more than one line's end marker ('\r', '\n', or "\r\n")
+ * (e.g. process was run with IDEA program's runner)
+ */
+public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer {
+  private static final Logger LOG = Logger.getInstance(OutputToGeneralTestEventsConverter.class.getName());
+  
+  private List<GeneralTestEventsProcessor> myProcessors = new ArrayList<GeneralTestEventsProcessor>();
+  private MyServiceMessageVisitor myServiceMessageVisitor;
+  private RTestUnitConsoleView myTestUnitConsole;
+
+  private final StringBuilder myStdoutBuffer;
+
+  public OutputToGeneralTestEventsConverter(final RTestUnitConsoleView testUnitConsole) {
+    myServiceMessageVisitor = new MyServiceMessageVisitor();
+    //TODO remove console
+    myTestUnitConsole = testUnitConsole;
+    myStdoutBuffer = new StringBuilder();
+  }
+
+  public void addProcessor(final GeneralTestEventsProcessor processor) {
+    myProcessors.add(processor);
+  }
+
+  //TODO on process terminated - flush buffer
+  public void process(final String text, final Key outputType) {
+    if (ProcessOutputTypes.STDOUT.equals(outputType)) {
+      // we check for consistensy only std output
+      // because all events must be send to stdout
+      processStdOutConsistently(text);
+    } else {
+      processConsistentText(text, outputType);
+    }
+  }
+
+  public void flushBufferBeforeTerminating() {
+    flushStdOutputBuffer();
+  }
+
+  public void dispose() {
+    myProcessors.clear();
+  }
+
+  private void flushStdOutputBuffer() {
+    processConsistentText(myStdoutBuffer.toString(), ProcessOutputTypes.STDOUT);
+    myStdoutBuffer.setLength(0);
+  }
+
+  private void processStdOutConsistently(final String text) {
+    final int textLength = text.length();
+    if (textLength == 0) {
+      return;
+    }
+
+    myStdoutBuffer.append(text);
+
+    final char lastChar = text.charAt(textLength - 1);
+    if (lastChar == '\n' || lastChar == '\r') {
+      // buffer contains consistent string
+      flushStdOutputBuffer();
+    } //TODO remove
+    //else {
+    //  LOG.warn(text);
+    //}
+  }
+
+  private void processConsistentText(final String text, final Key outputType) {
+    try {
+      final ServiceMessage serviceMessage = ServiceMessage.parse(text);
+      if (serviceMessage != null) {
+        //TODO remove, it is for debug
+        //myTestUnitConsole.print('[' + text + "]: " + serviceMessage.getClass().getName() + '\n', ConsoleViewContentType.SYSTEM_OUTPUT);
+        serviceMessage.visit(myServiceMessageVisitor);
+      } else {
+        //TODO remove, it is for debug
+        //myTestUnitConsole.print('[' + text + "]: unparsed\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+        // Filters \n
+        if (text.equals("\n")) {
+          // ServiceMessages protocol requires that every message
+          // should start with new line, so such behaviour may led to generating
+          // some number of useless \n.
+          //
+          // This will not affect tests output because all
+          // output will be in TestOutput message
+          return;
+        }
+        //fire current output
+        fireOnUncapturedOutput(text, outputType);
+      }
+    }
+    catch (ParseException e) {
+      LOG.error(e);
+    }
+  }
+
+  private void fireOnTestStarted(final String testName) {
+    for (GeneralTestEventsProcessor processor : myProcessors) {
+      processor.onTestStarted(testName);
+    }
+  }
+
+  private void fireOnTestFailure(final String testName, final String localizedMessage,
+                                final String stackTrace) {
+
+    for (GeneralTestEventsProcessor processor : myProcessors) {
+      processor.onTestFailure(testName, localizedMessage, stackTrace);
+    }
+  }
+
+  private void fireOnTestOutput(final String testName, final String text, final boolean stdOut) {
+    for (GeneralTestEventsProcessor processor : myProcessors) {
+      processor.onTestOutput(testName, text, stdOut);
+    }
+  }
+
+  private void fireOnUncapturedOutput(final String text, final Key outputType) {
+    for (GeneralTestEventsProcessor processor : myProcessors) {
+      processor.onUncapturedOutput(text, outputType);
+    }
+  }
+
+  private void fireOnTestsCount(final int count) {
+    for (GeneralTestEventsProcessor processor : myProcessors) {
+      processor.onTestsCount(count);
+    }
+  }
+
+  private void fireOnTestFinished(final String testName) {
+    for (GeneralTestEventsProcessor processor : myProcessors) {
+      processor.onTestFinished(testName);
+    }
+  }
+
+  private void fireOnSuiteStarted(final String suiteName) {
+    for (GeneralTestEventsProcessor processor : myProcessors) {
+      processor.onSuiteStarted(suiteName);
+    }
+  }
+
+  private void fireOnSuiteFinished(final String suiteName) {
+    for (GeneralTestEventsProcessor processor : myProcessors) {
+      processor.onSuiteFinished(suiteName);
+    }
+  }
+
+  private class MyServiceMessageVisitor extends DefaultServiceMessageVisitor {
+    @NonNls public static final String KEY_TESTS_COUNT = "testCount";
+
+    public void visitTestSuiteStarted(@NotNull final TestSuiteStarted suiteStarted) {
+      fireOnSuiteStarted(suiteStarted.getSuiteName());
+    }
+
+    public void visitTestSuiteFinished(@NotNull final TestSuiteFinished suiteFinished) {
+      fireOnSuiteFinished(suiteFinished.getSuiteName());
+    }
+
+    public void visitTestStarted(@NotNull final TestStarted testStarted) {
+      fireOnTestStarted(testStarted.getTestName());
+    }
+
+    public void visitTestFinished(@NotNull final TestFinished testFinished) {
+      fireOnTestFinished(testFinished.getTestName());
+    }
+
+    public void visitTestIgnored(@NotNull final TestIgnored testIgnored) {
+      //TODO
+    }
+
+    public void visitTestStdOut(@NotNull final TestStdOut testStdOut) {
+      fireOnTestOutput(testStdOut.getTestName(),testStdOut.getStdOut(), true);
+    }
+
+    public void visitTestStdErr(@NotNull final TestStdErr testStdErr) {
+      fireOnTestOutput(testStdErr.getTestName(),testStdErr.getStdErr(), false);
+    }
+
+    public void visitTestFailed(@NotNull final TestFailed testFailed) {
+      fireOnTestFailure(testFailed.getTestName(), testFailed.getFailureMessage(), testFailed.getStacktrace());
+    }
+
+    public void visitPublishArtifacts(@NotNull final PublishArtifacts publishArtifacts) {
+      //Do nothing
+    }
+
+    public void visitProgressMessage(@NotNull final ProgressMessage progressMessage) {
+      //Do nothing
+    }
+
+    public void visitProgressStart(@NotNull final ProgressStart progressStart) {
+      //Do nothing
+    }
+
+    public void visitProgressFinish(@NotNull final ProgressFinish progressFinish) {
+      //Do nothing
+    }
+
+    public void visitBuildStatus(@NotNull final BuildStatus buildStatus) {
+      //Do nothing
+    }
+
+    public void visitBuildNumber(@NotNull final BuildNumber buildNumber) {
+      //Do nothing
+    }
+
+    public void visitBuildStatisticValue(@NotNull final BuildStatisticValue buildStatsValue) {
+      //Do nothing
+    }
+
+    public void visitServiceMessage(@NotNull final ServiceMessage msg) {
+      final String name = msg.getMessageName();
+
+      if (KEY_TESTS_COUNT.equals(name)) {
+        processTestCount(msg);
+      } else {
+        //Do nothing
+      }
+    }
+
+    private void processTestCount(final ServiceMessage msg) {
+      final String countStr = msg.getArgument();
+      int count = 0;
+      try {
+        count = Integer.parseInt(countStr);
+      } catch (NumberFormatException ex) {
+        LOG.error(ex);
+      }
+      fireOnTestsCount(count);
+    }
+  }
+}

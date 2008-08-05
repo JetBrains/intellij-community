@@ -41,6 +41,8 @@ public class MockTestResultsViewer implements TestResultsViewer {
 
   public void selectAndNotify(@Nullable final AbstractTestProxy proxy) {}
 
+  public void addEventsListener(final EventsListener listener) {}
+
   public void dispose() {
     myProperties.dispose();
   }

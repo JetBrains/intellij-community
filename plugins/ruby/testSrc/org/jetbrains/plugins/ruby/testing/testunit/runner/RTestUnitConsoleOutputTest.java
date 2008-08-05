@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.MockPrinter;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitConsoleView;
@@ -15,6 +16,7 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
   private RTestUnitConsoleView myConsole;
   private GeneralToRTestUnitEventsConvertor myEventsProcessor;
   private MockPrinter myMockResetablePrinter;
+  private RTestUnitTestProxy myRootSuite;
 
   @Override
   protected void setUp() throws Exception {
@@ -23,6 +25,7 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
     final RTestUnitConsoleProperties consoleProperties = createConsoleProperties();
     final TestResultsViewer resultsViewer = createResultsViewer(consoleProperties);
 
+    myRootSuite = resultsViewer.getTestsRootNode();
     myConsole = new RTestUnitConsoleView(consoleProperties, resultsViewer);
     myEventsProcessor = new GeneralToRTestUnitEventsConvertor(resultsViewer.getTestsRootNode());
 
@@ -32,7 +35,7 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myEventsProcessor.onFinishTesting();
+    Disposer.dispose(myEventsProcessor);
     Disposer.dispose(myConsole);
 
     super.tearDown();
@@ -69,7 +72,7 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
   public void testAddStdSys() {
     mySimpleTest.setPrintLinstener(myMockResetablePrinter);
 
-    mySimpleTest.addStdSys("sys");
+    mySimpleTest.addSystemOutput("sys");
     assertAllOutputs(myMockResetablePrinter, "", "", "sys");
   }
 
@@ -177,20 +180,46 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
     assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
   }
 
-  private RTestUnitTestProxy startTestWithPrinter(final String testName) {
-    myEventsProcessor.onTestStart(testName);
-    final RTestUnitTestProxy proxy =
-        myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName(testName));
-    proxy.setPrintLinstener(myMockResetablePrinter);
-    return proxy;
+  public void testOnUncapturedOutput_BeforeProcessStarted() {
+    myRootSuite.setPrintLinstener(myMockResetablePrinter);
+
+    assertOnUncapturedOutput();
   }
 
-  private void sendToTestProxyStdOut(final RTestUnitTestProxy proxy, final String text) {
-    proxy.addLast(new Printable() {
-      public void printOn(final Printer printer) {
-        printer.print(text, ConsoleViewContentType.NORMAL_OUTPUT);
-      }
-    });
+  public void testOnUncapturedOutput_BeforeFirstSuiteStarted() {
+    myRootSuite.setPrintLinstener(myMockResetablePrinter);
+
+    myEventsProcessor.onStartTesting();
+    assertOnUncapturedOutput();
+  }
+
+  public void testOnUncapturedOutput_SomeSuite() {
+    myEventsProcessor.onStartTesting();
+
+    myEventsProcessor.onSuiteStarted("my suite");
+    final RTestUnitTestProxy mySuite = myEventsProcessor.getCurrentSuite();
+    assertTrue(mySuite != myRootSuite);
+    mySuite.setPrintLinstener(myMockResetablePrinter);
+
+    assertOnUncapturedOutput();
+  }
+
+  public void testOnUncapturedOutput_SomeTest() {
+    myEventsProcessor.onStartTesting();
+
+    myEventsProcessor.onSuiteStarted("my suite");
+    startTestWithPrinter("my test");
+
+    assertOnUncapturedOutput();
+  }
+
+
+  public void assertOnUncapturedOutput() {
+    myEventsProcessor.onUncapturedOutput("stdout", ProcessOutputTypes.STDOUT);
+    myEventsProcessor.onUncapturedOutput("stderr", ProcessOutputTypes.STDERR);
+    myEventsProcessor.onUncapturedOutput("system", ProcessOutputTypes.SYSTEM);
+
+    assertAllOutputs(myMockResetablePrinter, "stdout", "stderr", "system");
   }
 
   public void assertStdOutput(final MockPrinter printer, final String out) {
@@ -209,5 +238,21 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
     assertEquals(sys, printer.getStdSys());
 
     printer.resetIfNecessary();
+  }
+
+  private RTestUnitTestProxy startTestWithPrinter(final String testName) {
+    myEventsProcessor.onTestStarted(testName);
+    final RTestUnitTestProxy proxy =
+        myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName(testName));
+    proxy.setPrintLinstener(myMockResetablePrinter);
+    return proxy;
+  }
+
+  private void sendToTestProxyStdOut(final RTestUnitTestProxy proxy, final String text) {
+    proxy.addLast(new Printable() {
+      public void printOn(final Printer printer) {
+        printer.print(text, ConsoleViewContentType.NORMAL_OUTPUT);
+      }
+    });
   }
 }

@@ -53,4 +53,11 @@ public interface TestResultsViewer extends Disposable {
    * @param proxy
    */
   void selectAndNotify(@Nullable final AbstractTestProxy proxy);
+
+  void addEventsListener(final EventsListener listener);
+
+  interface EventsListener {
+    void onTestNodeAdded(final TestResultsViewer sender, final RTestUnitTestProxy test);
+    void onTestingFinished(final TestResultsViewer sender);
+  }
 }

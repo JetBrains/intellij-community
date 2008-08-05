@@ -42,13 +42,17 @@ public class TestSuiteStack {
     final RTestUnitTestProxy currentSuite = myStack.pop();
 
     if (!suiteName.equals(currentSuite.getName())) {
-      LOG.assertTrue(false, "Pop error: Unexpected top element [" + suiteName + "] for stack: " + getSuitePathPresentation());
+      LOG.assertTrue(false, "Pop error: Unexpected top element. Expected [" + suiteName + "] but [" + currentSuite.getName() + "] was found. Rest of stack: " + getSuitePathPresentation());
       assert false;
     }
 
     return currentSuite;
   }
 
+  public final boolean isEmpty() {
+    return getStackSize() == 0;
+  }
+  
   protected int getStackSize() {
     return myStack.size();
   }

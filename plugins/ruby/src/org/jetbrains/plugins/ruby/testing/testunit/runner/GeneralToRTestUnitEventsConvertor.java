@@ -1,13 +1,22 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.utils.IdeaInternalUtil;
 
 import java.util.*;
 
 /**
  * @author: Roman Chernyatchik
+ *
+ * This class fires events to RTestUnitEventsListener in EventDispatch thread
  */
 public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProcessor {
   private static final Logger LOG = Logger.getInstance(GeneralToRTestUnitEventsConvertor.class.getName());
@@ -29,135 +38,206 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onStartTesting() {
-    mySuitesStack.pushSuite(myTestsRootNode);
-    myTestsRootNode.setStarted();
+    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+      public void run() {
+        mySuitesStack.pushSuite(myTestsRootNode);
+        myTestsRootNode.setStarted();
 
-    //fire
-    fireOnTestingStarted();
+        //fire
+        fireOnTestingStarted();
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   public void onFinishTesting() {
-    if (myIsTestingFinished) {
-      // has been already invoked!
-      return;
-    }
-    myIsTestingFinished = true;
+    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+      public void run() {
+        if (myIsTestingFinished) {
+          // has been already invoked!
+          return;
+        }
+        myIsTestingFinished = true;
 
-    myTestsRootNode.setFinished();
-    mySuitesStack.popSuite(myTestsRootNode.getName());
-    LOG.assertTrue(mySuitesStack.getStackSize() == 0);
+        myTestsRootNode.setFinished();
+        mySuitesStack.popSuite(myTestsRootNode.getName());
+        LOG.assertTrue(mySuitesStack.isEmpty());
 
-    //fire events
-    fireOnTestingFinished();
+        //fire events
+        fireOnTestingFinished();
+      }
+    }, ModalityState.NON_MODAL);
   }
 
-  public void onTestStart(final String testName) {
+  public void onTestStarted(final String testName) {
+    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+      public void run() {
+        final String fullName = getFullTestName(testName);
 
-    final String fullName = getFullTestName(testName);
+        if (myRunningTestsFullNameToProxy.containsKey(fullName)) {
+          //Dublicated event
+          LOG.warn("Test [" + fullName + "] has been already started");
+          return;
+        }
 
-    if (myRunningTestsFullNameToProxy.containsKey(fullName)) {
-      //Dublicated event
-      LOG.warn("Test [" + fullName + "] has been already started");
-      return;
-    }
+        final RTestUnitTestProxy parentSuite = getCurrentSuite();
 
-    final RTestUnitTestProxy parentSuite = getCurrentTestSuite();
+        // creates test
+        final RTestUnitTestProxy testProxy = new RTestUnitTestProxy(testName, false);
+        parentSuite.addChild(testProxy);
+        // adds to running tests map
+        myRunningTestsFullNameToProxy.put(fullName, testProxy);
 
-    // creates test
-    final RTestUnitTestProxy testProxy = new RTestUnitTestProxy(testName, false);
-    parentSuite.addChild(testProxy);
-    // adds to running tests map
-    myRunningTestsFullNameToProxy.put(fullName, testProxy);
+        //Progress started
+        testProxy.setStarted();
 
-    //Progress started
-    testProxy.setStarted();
+        //fire events
+        fireOnTestStarted(testProxy);
+      }
+    }, ModalityState.NON_MODAL);
+  }
 
-    //fire events
-    fireOnTestStarted(testProxy);
+  public void onSuiteStarted(final String suiteName) {
+    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+      public void run() {
+        final RTestUnitTestProxy parentSuite = getCurrentSuite();
+        //new suite
+        final RTestUnitTestProxy newSuite = new RTestUnitTestProxy(suiteName, true);
+        parentSuite.addChild(newSuite);
+
+        mySuitesStack.pushSuite(newSuite);
+
+        //Progress started
+        newSuite.setStarted();
+
+        //fire event
+        fireOnSuiteStarted(newSuite);
+      }
+    }, ModalityState.NON_MODAL);
+  }
+
+  public void onTestFinished(final String testName) {
+    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+      public void run() {
+        final String fullTestName = getFullTestName(testName);
+        final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
+        if (testProxy == null) {
+          LOG.error("Test wasn't started! TestFinished event: name = {" + testName + "}");
+          return;
+        }
+
+        testProxy.setFinished();
+        myRunningTestsFullNameToProxy.remove(fullTestName);
+
+        //fire events
+        fireOnTestFinished(testProxy);
+      }
+    }, ModalityState.NON_MODAL);
+  }
+
+  public void onSuiteFinished(final String suiteName) {
+    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+      public void run() {
+        final RTestUnitTestProxy mySuite = mySuitesStack.popSuite(suiteName);
+        mySuite.setFinished();
+
+        //fire events
+        fireOnSuiteFinished(mySuite);
+      }
+    }, ModalityState.NON_MODAL);
+  }
+
+  public void onUncapturedOutput(final String text, final Key outputType) {
+    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+      public void run() {
+        //if we can locate test - we will send outout to it, otherwise to current test suite
+        final RTestUnitTestProxy currentProxy;
+        if (myRunningTestsFullNameToProxy.size() == 1) {
+          //current test
+          currentProxy = myRunningTestsFullNameToProxy.values().iterator().next();
+        } else {
+          //current suite
+          //
+          // ProcessHandler can fire output available event before processStarted event
+          currentProxy = mySuitesStack.isEmpty() ? myTestsRootNode : getCurrentSuite();
+        }
+
+        if (ProcessOutputTypes.STDOUT.equals(outputType)) {
+          currentProxy.addStdOutput(text);
+        } else if (ProcessOutputTypes.STDERR.equals(outputType)) {
+          currentProxy.addStdErr(text);
+        } else if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
+          currentProxy.addSystemOutput(text);
+        }
+      }
+    }, ModalityState.NON_MODAL);
+  }
+
+  public void onTestFailure(final String testName,
+                            final String localizedMessage, final String stackTrace) {
+    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+      public void run() {
+        final String fullTestName = getFullTestName(testName);
+        final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
+        if (testProxy == null) {
+          LOG.error("Test wasn't started! TestFailure event: name = {" + testName + "}, message = {" + localizedMessage + "}, stackTrace = {" + stackTrace + "}");
+          return;
+        }
+        // if wasn't processed
+        if (myFailedTestsSet.contains(testProxy)) {
+          // dublicate message
+          LOG.warn("Dublicate failure for test [" + fullTestName  + "]: msg = " + localizedMessage + ", stacktrace = " + stackTrace);
+          return;
+        }
+
+        testProxy.setTestFailed(localizedMessage, stackTrace);
+
+
+        myFailedTestsSet.add(testProxy);
+
+        // fire event
+        fireOnTestFailed(testProxy);
+      }
+    }, ModalityState.NON_MODAL);
+  }
+
+  public void onTestOutput(final String testName,
+                           final String text, final boolean stdOut) {
+    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+      public void run() {
+        final String fullTestName = getFullTestName(testName);
+        final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
+        if (testProxy == null) {
+          LOG.error("Test wasn't started! TestOutput event: name = {" + testName + "}, isStdOut = " + stdOut + ", text = {" + text + "}");
+          return;
+        }
+
+        if (stdOut) {
+          testProxy.addStdOutput(text);
+        } else {
+          testProxy.addStdErr(text);
+        }
+      }
+    }, ModalityState.NON_MODAL);
+  }
+
+  public void onTestsCount(final int count) {
+    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+      public void run() {
+        fireOnTestsCount(count);
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   @NotNull
-  private RTestUnitTestProxy getCurrentTestSuite() {
+  protected final RTestUnitTestProxy getCurrentSuite() {
     final RTestUnitTestProxy parentSuite = mySuitesStack.getCurrentSuite();
     assert parentSuite != null;
 
     return parentSuite;
   }
-
-  public void onTestSuiteStart(final String suiteName) {
-    final RTestUnitTestProxy parentSuite = getCurrentTestSuite();
-    //new suite
-    final RTestUnitTestProxy newSuite = new RTestUnitTestProxy(suiteName, true);
-    parentSuite.addChild(newSuite);
-
-    mySuitesStack.pushSuite(newSuite);
-
-    //Progress started
-    newSuite.setStarted();
-
-    //fire event
-    fireOnSuiteStarted(newSuite);
-  }
-
-  public void onTestFinish(final String testName) {
-    final String fullTestName = getFullTestName(testName);
-    final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
-
-    testProxy.setFinished();
-    myRunningTestsFullNameToProxy.remove(fullTestName);
-
-    //fire events
-    fireOnTestFinished(testProxy);
-  }
-
-  public void onTestSuiteFinish(final String suiteName) {
-    final RTestUnitTestProxy mySuite = mySuitesStack.popSuite(suiteName);
-    mySuite.setFinished();
-
-    //fire events
-    fireOnSuiteFinished(mySuite);
-  }
-
-  public void onTestFailure(final String testName,
-                            final String localizedMessage, final String stackTrace) {
-
-    final String fullTestName = getFullTestName(testName);
-    final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
-
-    // if wasn't processed
-    if (myFailedTestsSet.contains(testProxy)) {
-      // dublicate message
-      LOG.warn("Dublicate failure for test [" + fullTestName  + "]: msg = " + localizedMessage + ", stacktrace = " + stackTrace);
-      return;
-    }
-
-    testProxy.setTestFailed(localizedMessage, stackTrace);
-
-
-    myFailedTestsSet.add(testProxy);
-
-    // fire event
-    fireOnTestFailed(testProxy);
-  }
-
-  public void onTestOutput(final String testName,
-                           final String text, final boolean stdOut) {
-    final String fullTestName = getFullTestName(testName);
-    final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
-
-    if (stdOut) {
-      testProxy.addStdOutput(text);
-    } else {
-      testProxy.addStdErr(text);
-    }
-  }
-
-  public void onTestsCount(final int count) {
-    fireOnTestsCount(count);
-  }
-
+ 
   protected String getFullTestName(final String testName) {
-    return getCurrentTestSuite().getName() + testName;
+    return getCurrentSuite().getName() + testName;
   }
 
   protected int getRunningTestsQuantity() {
@@ -168,10 +248,25 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
     return Collections.unmodifiableSet(myFailedTestsSet);
   }
 
+  @Nullable
   protected RTestUnitTestProxy getProxyByFullTestName(final String fullTestName) {
     final RTestUnitTestProxy testProxy = myRunningTestsFullNameToProxy.get(fullTestName);
-    LOG.assertTrue(testProxy != null);
+    if (testProxy == null) {
+      LOG.error("Cant find running test for ["
+                + fullTestName
+                + "]. Current running tests: {"
+                + dumpRunningTestsNames() + "}");
+    }
     return testProxy;
+  }
+
+  private StringBuilder dumpRunningTestsNames() {
+    final Set<String> names = myRunningTestsFullNameToProxy.keySet();
+    final StringBuilder namesDump = new StringBuilder();
+    for (String name : names) {
+      namesDump.append('[').append(name).append(']').append(',');
+    }
+    return namesDump;
   }
 
   private void fireOnTestingStarted() {
@@ -226,10 +321,21 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
   /*
    * Remove listeners,  etc
    */
-  public void cleanupOnProcessTerminated() {
-    myEventsListeners.clear();
-    myRunningTestsFullNameToProxy.clear();
-    mySuitesStack.clear();        
+  public void dispose() {
+    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+      public void run() {
+        myEventsListeners.clear();
+
+        if (!myRunningTestsFullNameToProxy.isEmpty()) {
+          final Application application = ApplicationManager.getApplication();
+          if (!application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
+            LOG.error("Not all events were processed! " + dumpRunningTestsNames());
+          }
+        }
+        myRunningTestsFullNameToProxy.clear();
+        mySuitesStack.clear();
+      }
+    }, ModalityState.NON_MODAL);
   }
 
 }

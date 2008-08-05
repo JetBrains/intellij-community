@@ -30,7 +30,7 @@ public class RTestUnitUIActionsHandlerTest extends BaseRUnitTestsTestCase {
       }
     };
 
-    myUIActionsHandler = new RTestUnitUIActionsHandler(myResultsViewer, myProperties);
+    myUIActionsHandler = new RTestUnitUIActionsHandler(myProperties);
 
     TestConsoleProperties.HIDE_PASSED_TESTS.set(myProperties, false);
     TestConsoleProperties.OPEN_FAILURE_LINE.set(myProperties, false);
@@ -56,43 +56,43 @@ public class RTestUnitUIActionsHandlerTest extends BaseRUnitTestsTestCase {
     // passed test
     final RTestUnitTestProxy testPassed1 = createTestProxy("testPassed1", testsSuite);
     testPassed1.setStarted();
-    myUIActionsHandler.onTestStarted(testPassed1);
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testPassed1);
     assertNull(mySelectedTestProxy);
 
     testPassed1.setFinished();
-    myUIActionsHandler.onTestFinished(testPassed1);
+    //myUIActionsHandler.onTestFinished(testPassed1);
     assertNull(mySelectedTestProxy);
 
     //failed test
     final RTestUnitTestProxy testFailed1 = createTestProxy("testFailed1", testsSuite);
     testFailed1.setStarted();
-    myUIActionsHandler.onTestStarted(testFailed1);
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testFailed1);
     assertNull(mySelectedTestProxy);
 
     testFailed1.setTestFailed("", "");
-    myUIActionsHandler.onTestFinished(testFailed1);
+    //myUIActionsHandler.onTestFinished(testFailed1);
     assertNull(mySelectedTestProxy);
 
    // passed test numer 2
     mySelectedTestProxy = null;
     final RTestUnitTestProxy testPassed2 = createTestProxy("testPassed2", testsSuite);
     testPassed2.setStarted();
-    myUIActionsHandler.onTestStarted(testPassed2);
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testPassed2);
     assertNull(mySelectedTestProxy);
 
     testPassed2.setFinished();
-    myUIActionsHandler.onTestFinished(testPassed2);
+    //myUIActionsHandler.onTestFinished(testPassed2);
     assertNull(mySelectedTestProxy);
 
 
     //failed test 2
     final RTestUnitTestProxy testFailed2 = createTestProxy("testFailed1", testsSuite);
     testFailed2.setStarted();
-    myUIActionsHandler.onTestStarted(testFailed2);
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testFailed2);
     assertNull(mySelectedTestProxy);
 
     testFailed2.setTestFailed("", "");
-    myUIActionsHandler.onTestFinished(testFailed2);
+    //myUIActionsHandler.onTestFinished(testFailed2);
     assertNull(mySelectedTestProxy);
 
     // finish suite
@@ -103,7 +103,7 @@ public class RTestUnitUIActionsHandlerTest extends BaseRUnitTestsTestCase {
     mySuite.setFinished();
     assertNull(mySelectedTestProxy);
 
-    myUIActionsHandler.onTestingFinished();
+    myUIActionsHandler.onTestingFinished(myResultsViewer);
     assertEquals(testFailed1, mySelectedTestProxy);
   }
 
@@ -118,44 +118,44 @@ public class RTestUnitUIActionsHandlerTest extends BaseRUnitTestsTestCase {
     // passed test
     final RTestUnitTestProxy testPassed1 = createTestProxy("testPassed1", testsSuite);
     testPassed1.setStarted();
-    myUIActionsHandler.onTestStarted(testPassed1);
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testPassed1);
     assertEquals(testPassed1, mySelectedTestProxy);
 
     testPassed1.setFinished();
-    myUIActionsHandler.onTestFinished(testPassed1);
+    //myUIActionsHandler.onTestFinished(testPassed1);
     assertEquals(testPassed1, mySelectedTestProxy);
 
     //failed test
     final RTestUnitTestProxy testFailed1 = createTestProxy("testFailed1", testsSuite);
     testFailed1.setStarted();
-    myUIActionsHandler.onTestStarted(testFailed1);
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testFailed1);
     assertEquals(testFailed1, mySelectedTestProxy);
 
     testFailed1.setTestFailed("", "");
-    myUIActionsHandler.onTestFinished(testFailed1);
+    //myUIActionsHandler.onTestFinished(testFailed1);
     assertEquals(testFailed1, mySelectedTestProxy);
 
    // passed test numer 2
     mySelectedTestProxy = null;
     final RTestUnitTestProxy testPassed2 = createTestProxy("testPassed2", testsSuite);
     testPassed2.setStarted();
-    myUIActionsHandler.onTestStarted(testPassed2);
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testPassed2);
     assertEquals(testPassed2, mySelectedTestProxy);
 
     testPassed2.setFinished();
-    myUIActionsHandler.onTestFinished(testPassed2);
+    //myUIActionsHandler.onTestFinished(testPassed2);
     assertEquals(testPassed2, mySelectedTestProxy);
 
 
     //failed test 2
     final RTestUnitTestProxy testFailed2 = createTestProxy("testFailed1", testsSuite);
     testFailed2.setStarted();
-    myUIActionsHandler.onTestStarted(testFailed2);
+    myUIActionsHandler.onTestNodeAdded(myResultsViewer, testFailed2);
     assertEquals(testFailed2, mySelectedTestProxy);
     final RTestUnitTestProxy lastSelectedTest = testFailed2;
 
     testFailed2.setTestFailed("", "");
-    myUIActionsHandler.onTestFinished(testFailed2);
+    //myUIActionsHandler.onTestFinished(testFailed2);
     assertEquals(lastSelectedTest, mySelectedTestProxy);
 
     // finish suite
@@ -167,7 +167,7 @@ public class RTestUnitUIActionsHandlerTest extends BaseRUnitTestsTestCase {
     assertEquals(lastSelectedTest, mySelectedTestProxy);
 
     //testing finished
-    myUIActionsHandler.onTestingFinished();
+    myUIActionsHandler.onTestingFinished(myResultsViewer);
     assertEquals(myResultsViewer.getTestsRootNode(), mySelectedTestProxy);
   }
 }

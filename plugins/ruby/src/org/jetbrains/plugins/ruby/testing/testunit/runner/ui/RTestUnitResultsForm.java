@@ -25,7 +25,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.RTestsRunConfiguration;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.*;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsListener;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTreeBuilder;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTreeStructure;
 import org.jetbrains.plugins.ruby.utils.IdeaInternalUtil;
 
 import javax.swing.*;
@@ -35,8 +38,10 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author: Roman Chernyatchik
@@ -63,6 +68,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   private final RTestUnitTreeBuilder myTreeBuilder;
   private final TestConsoleProperties myConsoleProperties;
   private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
+  private List<EventsListener> myEventListeners = new ArrayList<EventsListener>();
 
   // Manages console tabs for runConfigurations's log files
   private final LogFilesManager myLogFilesManager;
@@ -233,6 +239,8 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     tree.repaint();
 
     LvcsHelper.addLabel(this);
+
+    fireOnTestingFinished();
   }
 
   public void onTestsCount(final int count) {
@@ -260,6 +268,8 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
 
 
     updateStatusLabel();
+
+    fireOnTestNodeAdded(testProxy);
   }
 
   public void onTestFailed(@NotNull final RTestUnitTestProxy test) {
@@ -330,10 +340,15 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     selectWithoutNotify(testProxy);
   }
 
+  public void addEventsListener(final EventsListener listener) {
+    myEventListeners.add(listener);
+  }
+
   public void dispose() {
     for (ModelListener listener : myListeners) {
       listener.onDispose();
     }
+    myEventListeners.clear();
     myAnimator.dispose();
     myToolbar.dispose();
     Disposer.dispose(myTreeBuilder);
@@ -347,6 +362,9 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
 
     IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
       public void run() {
+        //TODO remove manual update!
+        myTreeBuilder.performUpdate();
+        
         myTreeBuilder.select(testProxy, null);
       }
     }, ModalityState.NON_MODAL);
@@ -373,15 +391,11 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     final RTestUnitTestProxy parentSuite = newTestOrSuite.getParent();
     assert parentSuite != null;
 
-    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
-      public void run() {
-        // Tree
-        myTreeBuilder.updateTestsSubtree(parentSuite);
-        myTreeBuilder.repaintWithParents(newTestOrSuite);
+    // Tree
+    myTreeBuilder.updateTestsSubtree(parentSuite);
+    myTreeBuilder.repaintWithParents(newTestOrSuite);
 
-        myAnimator.setCurrentTestCase(newTestOrSuite);
-      }
-    }, ModalityState.NON_MODAL);
+    myAnimator.setCurrentTestCase(newTestOrSuite);
   }
 
   private RTestUnitToolbarPanel initToolbarPanel(final TestConsoleProperties consoleProperties,
@@ -393,6 +407,18 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     toolbarPanel.add(toolbar);
 
     return toolbar;
+  }
+
+  private void fireOnTestNodeAdded(final RTestUnitTestProxy test) {
+    for (EventsListener eventListener : myEventListeners) {
+      eventListener.onTestNodeAdded(this, test);
+    }
+  }
+
+  private void fireOnTestingFinished() {
+    for (EventsListener eventListener : myEventListeners) {
+      eventListener.onTestingFinished(this);
+    }
   }
 
   private void makeSplitterSettingsExternalizable(final JSplitPane splitPane) {

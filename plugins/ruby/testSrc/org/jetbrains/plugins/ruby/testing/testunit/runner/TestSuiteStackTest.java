@@ -90,4 +90,19 @@ public class TestSuiteStackTest extends BaseRUnitTestsTestCase {
 
     assertEquals(0, myTestSuiteStack.getStackSize());
   }
+
+  public void testIsEmpty() {
+    assertTrue(myTestSuiteStack.isEmpty());
+
+    myTestSuiteStack.pushSuite(createSuiteProxy("1"));
+    assertFalse(myTestSuiteStack.isEmpty());
+
+    myTestSuiteStack.popSuite("1");
+    assertTrue(myTestSuiteStack.isEmpty());
+
+    myTestSuiteStack.pushSuite(createSuiteProxy("1"));
+    myTestSuiteStack.pushSuite(createSuiteProxy("2"));
+    myTestSuiteStack.clear();
+    assertTrue(myTestSuiteStack.isEmpty());    
+  }
 }
