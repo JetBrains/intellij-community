@@ -11,8 +11,8 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ExpectedTypeInfoImpl");
 
-  private PsiType type;
-  private PsiType defaultType;
+  private final PsiType type;
+  private final PsiType defaultType;
   private boolean myInsertExplicitTypeParams;
 
   int getDimCount() {
@@ -62,6 +62,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return t;
   }
 
+  @NotNull
   public PsiType getDefaultType () {
     PsiType t = defaultType;
     int dims = dimCount;

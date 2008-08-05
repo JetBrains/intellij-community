@@ -134,7 +134,7 @@ public class ExpectedTypesProvider {
     return set.toArray(new PsiType[set.size()]);
   }
 
-  private static void processType(PsiType type, PsiTypeVisitor<PsiType> visitor, Set<PsiType> typeSet) {
+  private static void processType(@NotNull PsiType type, PsiTypeVisitor<PsiType> visitor, Set<PsiType> typeSet) {
     PsiType accepted = type.accept(visitor);
     if (accepted != null) typeSet.add(accepted);
   }
