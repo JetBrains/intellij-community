@@ -256,6 +256,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   private boolean _handleSelect(final boolean handleFinalChoices) {
     if (myList.getSelectedIndex() == -1) return false;
 
+    if (getSpeedSearch().isHoldingFilter() && myList.getModel().getSize() == 0) return false;
+
     if (myList.getSelectedIndex() == getIndexForShowingChild()) {
       return false;
     }
