@@ -8,19 +8,20 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="e18d1" class="javax.swing.JCheckBox" binding="UIField">
+      <component id="e18d1" class="javax.swing.JButton" binding="UIField">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="org/withoutForms/child/Messages" key="key"/>
+          <icon value="org/withoutForms/child/abstractClass.png"/>
         </properties>
       </component>
-      <vspacer id="1da48">
+      <nested-form id="c96fb" form-file="org/withoutForms/child/Form1.form">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
-      </vspacer>
+      </nested-form>
     </children>
   </grid>
 </form>

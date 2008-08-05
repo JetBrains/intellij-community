@@ -13,15 +13,9 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/withForms/child/Messages" key="key"/>
-          <icon value="org/withForms/child/abstractClass.png"/>
+          <icon value="org/withoutForms/child/abstractClass.png"/>
         </properties>
       </component>
-      <nested-form id="c96fb" form-file="org/withForms/child/Form1.form">
-        <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </nested-form>
     </children>
   </grid>
 </form>

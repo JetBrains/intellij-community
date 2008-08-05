@@ -2,6 +2,8 @@ package com.intellij.uiDesigner.binding;
 
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
@@ -15,6 +17,11 @@ import junit.framework.Assert;
 public class RenameUIRelatedTest extends MultiFileTestCase {
   protected String getTestRoot() {
     return "/refactoring/renameUIRelated/";
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 
   protected void setupProject(VirtualFile rootDir) {
@@ -102,6 +109,17 @@ public class RenameUIRelatedTest extends MultiFileTestCase {
 
 
         new RenameProcessor(myProject, file, "Form2.form", true, true).run();
+      }
+    });
+  }
+
+  public void testRenameImage() throws Exception {
+    doTest(new PerformAction() {
+      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
+        PsiFile file = myPsiManager.findFile(rootDir.findFileByRelativePath("org/withoutForms/child/abstractClass.png"));
+        Assert.assertNotNull(file);
+
+        new RenameProcessor(myProject, file, "specificClass.png", true, true).run();
       }
     });
   }

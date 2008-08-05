@@ -4,19 +4,21 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
-import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -26,8 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -217,8 +219,15 @@ public class FormReferenceProvider extends PsiReferenceProvider implements Proje
   private static void processResourceBundleFileReferences(final PsiPlainTextFile file,
                                                           final PsiReferenceProcessor processor,
                                                           final XmlAttribute titleBundleAttribute) {
-    final TextRange valueRange = getValueRange(titleBundleAttribute);
-    final String value = titleBundleAttribute.getValue();
+    processPackageReferences(file, processor, titleBundleAttribute);
+    processor.execute(new ResourceBundleFileReference(file, getValueRange(titleBundleAttribute)));
+  }
+
+  private static void processPackageReferences(final PsiPlainTextFile file,
+                                               final PsiReferenceProcessor processor,
+                                               final XmlAttribute attribute) {
+    final TextRange valueRange = getValueRange(attribute);
+    final String value = attribute.getValue();
     int pos=-1;
     while(true) {
       pos = value.indexOf('/', pos+1);
@@ -227,14 +236,13 @@ public class FormReferenceProvider extends PsiReferenceProvider implements Proje
       }
       processor.execute(new FormPackageReference(file, new TextRange(valueRange.getStartOffset(), valueRange.getStartOffset() + pos)));
     }
-
-    processor.execute(new ResourceBundleFileReference(file, valueRange));
   }
 
   private static void processNestedFormReference(final XmlTag tag, final PsiReferenceProcessor processor, final PsiPlainTextFile file) {
     final XmlAttribute formFileAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_FORM_FILE, Utils.FORM_NAMESPACE);
     if (formFileAttribute != null) {
-      processor.execute(new NestedFormFileReference(file, getValueRange(formFileAttribute)));
+      processPackageReferences(file, processor, formFileAttribute);
+      processor.execute(new ResourceFileReference(file, getValueRange(formFileAttribute)));
     }
   }
 
@@ -251,10 +259,14 @@ public class FormReferenceProvider extends PsiReferenceProvider implements Proje
                                                final String className) {
     final XmlAttribute valueAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, Utils.FORM_NAMESPACE);
     if (valueAttribute != null) {
-      FormEnumConstantReference reference = ApplicationManager.getApplication().runReadAction(new Computable<FormEnumConstantReference>() {
+      PsiReference reference = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
         @Nullable
-        public FormEnumConstantReference compute() {
-          PsiClass psiClass = JavaPsiFacade.getInstance(file.getProject()).findClass(className, ProjectScope.getAllScope(file.getProject()));
+        public PsiReference compute() {
+          final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(file.getProject());
+          final Module module = ModuleUtil.findModuleForPsiElement(file);
+          if (module == null) return null;
+          final GlobalSearchScope scope = module.getModuleWithDependenciesAndLibrariesScope(false);
+          PsiClass psiClass = psiFacade.findClass(className, scope);
           if (psiClass != null) {
             PsiMethod getter = PropertyUtil.findPropertyGetter(psiClass, tag.getName(), false, true);
             if (getter != null) {
@@ -262,8 +274,14 @@ public class FormReferenceProvider extends PsiReferenceProvider implements Proje
               if (returnType instanceof PsiClassType) {
                 PsiClassType propClassType = (PsiClassType)returnType;
                 PsiClass propClass = propClassType.resolve();
-                if (propClass != null && propClass.isEnum()) {
-                  return new FormEnumConstantReference(file, getValueRange(valueAttribute), propClassType);
+                if (propClass != null) {
+                  if (propClass.isEnum()) {
+                    return new FormEnumConstantReference(file, getValueRange(valueAttribute), propClassType);
+                  }
+                  PsiClass iconClass = psiFacade.findClass("javax.swing.Icon", scope);
+                  if (iconClass != null && InheritanceUtil.isInheritorOrSelf(propClass, iconClass, true)) {
+                    return new ResourceFileReference(file, getValueRange(valueAttribute));
+                  }
                 }
               }
             }
@@ -271,6 +289,9 @@ public class FormReferenceProvider extends PsiReferenceProvider implements Proje
           return null;
       }});
       if (reference != null) {
+        if (reference instanceof ResourceFileReference) {
+          processPackageReferences(file, processor, valueAttribute);
+        }
         processor.execute(reference);
       }
     }

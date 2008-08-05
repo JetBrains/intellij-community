@@ -22,8 +22,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class NestedFormFileReference extends ReferenceInForm {
-  public NestedFormFileReference(final PsiPlainTextFile file, TextRange range) {
+public class ResourceFileReference extends ReferenceInForm {
+  public ResourceFileReference(final PsiPlainTextFile file, TextRange range) {
     super(file, range);
   }
 
@@ -57,6 +57,6 @@ public class NestedFormFileReference extends ReferenceInForm {
 
   @Override
   public PsiElement handleElementRename(final String newElementName) {
-    return handleFileRename(newElementName, ".form", true);
+    return handleFileRename(newElementName, "", true);
   }
 }
