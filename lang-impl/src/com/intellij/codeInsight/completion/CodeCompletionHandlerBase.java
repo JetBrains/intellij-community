@@ -442,12 +442,18 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     else {
       handler = item.getInsertHandler();
     }
+    final InsertionContext context1 =
+            new InsertionContext(context.getOffsetMap(), completionChar, signatuireSelected, items, context.file, context.editor);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         PsiDocumentManager.getInstance(context.project).commitAllDocuments();
-        handler.handleInsert(new InsertionContext(context.getOffsetMap(), completionChar, signatuireSelected, items, context.file, context.editor), item);
+        handler.handleInsert(context1, item);
       }
     });
+    final Runnable runnable = context1.getLaterRunnable();
+    if (runnable != null) {
+      runnable.run();
+    }
   }
 
   public boolean startInWriteAction() {

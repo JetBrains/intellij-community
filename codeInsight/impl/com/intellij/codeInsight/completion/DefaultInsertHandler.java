@@ -173,9 +173,9 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor, null);
     }
 
-    if (generateAnonymousBody){
-      generateAnonymousBody();
-      if (hasParams){
+    if (generateAnonymousBody) {
+      context.setLaterRunnable(generateAnonymousBody());
+      if (hasParams) {
         int offset = saveMaker.getStartOffset();
         myEditor.getCaretModel().moveToOffset(offset);
         myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -457,12 +457,12 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     return myEditor.getCaretModel().getOffset();
   }
 
-  private void generateAnonymousBody(){
+  private Runnable generateAnonymousBody() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     int offset = myEditor.getCaretModel().getOffset();
     PsiElement element = myFile.findElementAt(offset);
-    if (element == null) return;
+    if (element == null) return null;
     if (element.getParent() instanceof PsiAnonymousClass){
       try{
         CodeStyleManager.getInstance(myProject).reformat(element.getParent());
@@ -476,7 +476,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       myEditor.getSelectionModel().removeSelection();
     }
     final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    return new Runnable() {
       public void run(){
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
           public void run() {
@@ -517,7 +517,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
           }
         }, CompletionBundle.message("completion.smart.type.generate.anonymous.body"), null, UndoConfirmationPolicy.DEFAULT, myDocument);
       }
-    });
+    };
   }
 
   private static void chooseAndOverrideMethodsInAdapter(final Project project, final Editor editor, final PsiAnonymousClass aClass) {
