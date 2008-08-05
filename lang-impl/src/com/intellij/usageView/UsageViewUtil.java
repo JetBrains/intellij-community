@@ -38,6 +38,9 @@ public class UsageViewUtil {
     }
                                          
     if (element != null) {
+      if (element instanceof PsiFile) {
+        return ((PsiFile) element).getName();
+      }
       FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage());
       return provider.getNodeText(element, useFullName);
     }
