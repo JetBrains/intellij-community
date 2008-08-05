@@ -331,7 +331,9 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
     public void setStateInOldStorage(Object component, final String componentName, Object state) throws StateStorage.StateStorageException {
       assert mySession == this;
       StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.WRITE);
-      myCompoundExternalizationSession.getExternalizationSession(stateStorage).setState(component, componentName, state, null);
+      if (stateStorage != null) {
+        myCompoundExternalizationSession.getExternalizationSession(stateStorage).setState(component, componentName, state, null);
+      }
     }
   }
 
