@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.HashMap;
@@ -336,16 +337,40 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
   }
 
+  protected Color getOwnColor(ColorKey key) {
+    return myColorsMap.get(key);
+  }
+
   private void writeColors(Element colorElements) {
     List<ColorKey> list = new ArrayList<ColorKey>(myColorsMap.keySet());
     Collections.sort(list);
 
     for (ColorKey key : list) {
-      Color value = myColorsMap.get(key);
-      Element element = new Element(OPTION_ELEMENT);
-      element.setAttribute(NAME_ATTR, key.getExternalName());
-      element.setAttribute(VALUE_ELEMENT, value != null ? Integer.toString(value.getRGB() & 0xFFFFFF, 16) : "");
-      colorElements.addContent(element);
+      if (haveToWrite(key)) {
+        Color value = myColorsMap.get(key);
+        Element element = new Element(OPTION_ELEMENT);
+        element.setAttribute(NAME_ATTR, key.getExternalName());
+        element.setAttribute(VALUE_ELEMENT, value != null ? Integer.toString(value.getRGB() & 0xFFFFFF, 16) : "");
+        colorElements.addContent(element);
+      }
     }
+  }
+
+  private boolean haveToWrite(final ColorKey key) {
+    Color value = myColorsMap.get(key);
+    if (myParentScheme != null) {
+      if (myParentScheme instanceof AbstractColorsScheme) {
+        if (Comparing.equal(((AbstractColorsScheme)myParentScheme).getOwnColor(key), value)) {
+          return false;
+        }
+      }
+      else {
+        if (Comparing.equal((myParentScheme).getColor(key), value)) {
+          return false;
+        }
+      }
+    }
+    return true;
+
   }
 }

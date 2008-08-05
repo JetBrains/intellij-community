@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -29,7 +30,9 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   }
 
   public void setColor(ColorKey key, Color color) {
-    myColorsMap.put(key, color);
+    if (color != null && !Comparing.equal(color, getColor(key))) {
+      myColorsMap.put(key, color);
+    }
   }
 
   public TextAttributes getAttributes(TextAttributesKey key) {
