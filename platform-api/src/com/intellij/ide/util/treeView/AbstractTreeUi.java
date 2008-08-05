@@ -80,6 +80,7 @@ class AbstractTreeUi {
 
   private Set<DefaultMutableTreeNode> myUpdatingChildren = new HashSet<DefaultMutableTreeNode>();
   private long myJanitorPollPeriod = Time.SECOND * 10;
+  private boolean myCheckStructure = true;
 
   protected final void init(AbstractTreeBuilder builder,
                             JTree tree,
@@ -522,6 +523,14 @@ class AbstractTreeUi {
         }
 
         myUpdatingChildren.remove(node);
+
+        final Object element = getElementFor(node);
+        addNodeAction(element, new NodeAction() {
+          public void onReady(final DefaultMutableTreeNode node) {
+            removeLoadingNode(node);
+          }
+        });
+        
         processNodeActionsIfReady(node);
       }
     });
@@ -564,19 +573,26 @@ class AbstractTreeUi {
 
     Object[] children = getChildrenFor(getBuilder().getTreeStructureElement(descriptor));
     if (children.length == 0) {
-      for (int i = 0; i < node.getChildCount(); i++) {
-        if (isLoadingNode(node.getChildAt(i))) {
-          removeNodeFromParent((MutableTreeNode)node.getChildAt(i));
-          break;
-        }
-      }
-      myUnbuiltNodes.remove(node);
+      removeLoadingNode(node);
     }
   }
 
-  //todo [kirillk] temporary consistency check
+  private void removeLoadingNode(final DefaultMutableTreeNode parent) {
+    for (int i = 0; i < parent.getChildCount(); i++) {
+      if (isLoadingNode(parent.getChildAt(i))) {
+        removeNodeFromParent((MutableTreeNode)parent.getChildAt(i));
+        break;
+      }
+    }
+    myUnbuiltNodes.remove(parent);
+  }
+
+ //todo [kirillk] temporary consistency check
   private Object[] getChildrenFor(final Object element) {
     final Object[] passOne = getTreeStructure().getChildElements(element);
+
+    if (!myCheckStructure) return passOne;
+   
     final Object[] passTwo = getTreeStructure().getChildElements(element);
 
     final HashSet two = new HashSet(Arrays.asList(passTwo));
@@ -872,6 +888,15 @@ class AbstractTreeUi {
         selectedIndex = node.getIndex(childNode);
       }
 
+      if (childNode.getParent() instanceof DefaultMutableTreeNode) {
+        final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)childNode.getParent();
+        if (myTree.isExpanded(new TreePath(parent.getPath()))) {
+          if (parent.getChildCount() == 1 && parent.getChildAt(0) == childNode) {
+            insertLoadingNode(parent, false);
+          }
+        }
+      }
+
       removeNodeFromParent(childNode);
       disposeNode(childNode);
 
@@ -904,7 +929,20 @@ class AbstractTreeUi {
   private void addSelectionPath(final TreePath path) {
     doWithUpdaterState(new Runnable() {
       public void run() {
-        myTree.addSelectionPath(path);
+        TreePath toSelect = null;
+
+        if (isLoadingNode(path.getLastPathComponent())) {
+          final TreePath parentPath = path.getParentPath();
+          if (parentPath != null) {
+            toSelect = parentPath;
+          }
+        } else {
+          toSelect = path;
+        }
+
+        if (toSelect != null) {
+          myTree.addSelectionPath(toSelect);
+        }
       }
     });
   }
@@ -981,8 +1019,14 @@ class AbstractTreeUi {
       }
     }
 
+    insertLoadingNode(node, true);
+  }
+
+  private void insertLoadingNode(final DefaultMutableTreeNode node, boolean addToUnbuilt) {
     myTreeModel.insertNodeInto(new LoadingNode(), node, 0);
-    myUnbuiltNodes.add(node);
+    if (addToUnbuilt) {
+      myUnbuiltNodes.add(node);
+    }
   }
 
   protected void addTaskToWorker(final Runnable runnable, boolean first, final Runnable postRunnable) {
@@ -1365,7 +1409,7 @@ class AbstractTreeUi {
   }
 
   public final boolean isNodeBeingBuilt(Object node) {
-    return isParentLoading(node) || isLoadingChildrenFor(node) || isLoadingParent(node);
+    return isParentLoading(node) || (isLoadingChildrenFor(node) && myUnbuiltNodes.contains(node)) || isLoadingParent(node);
   }
 
   private boolean isLoadingParent(Object node) {
@@ -1546,6 +1590,10 @@ class AbstractTreeUi {
 
   public void setJantorPollPeriod(final long time) {
     myJanitorPollPeriod = time;
+  }
+
+  public void setCheckStructure(final boolean checkStructure) {
+    myCheckStructure = checkStructure;
   }
 
   private class MySelectionListener implements TreeSelectionListener {
