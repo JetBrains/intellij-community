@@ -131,10 +131,25 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     if (application != null && application.hasComponent(WindowManager.class)) {
       myWindowManager = (WindowManagerEx)WindowManager.getInstance();
     }
-    createDialog(null, canBeParent);
-    if (tryToolkitModal) {
-      UIUtil.setToolkitModal(myDialog);
+    if (isJdk6()) {
+      createDialog(null, canBeParent);
+      if (tryToolkitModal) {
+        UIUtil.setToolkitModal(myDialog);
+      }
     }
+    else {
+      createDialog(JOptionPane.getRootFrame(), canBeParent);
+    }
+  }
+
+  private boolean isJdk6() {
+    try {
+      getClass().getClassLoader().loadClass("java.awt.Dialog$ModalityType");
+    }
+    catch (Throwable e) {
+      return false;
+    }
+    return true;
   }
 
   public void setUndecorated(boolean undecorated) {
