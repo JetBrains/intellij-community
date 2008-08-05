@@ -9,7 +9,6 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -35,6 +34,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ReflectionCache;
@@ -897,13 +897,19 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       doSave();
     }
     catch (final Throwable ex) {
-      LOG.info("Saving application settings failed", ex);
-      invokeLater(new Runnable() {
-        public void run() {
-          Messages.showMessageDialog(ApplicationBundle.message("application.save.settings.error", ex.getLocalizedMessage()),
-                                     CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-        }
-      });
+      if (isUnitTestMode()) {
+        System.out.println("Saving application settings failed");
+        ex.printStackTrace();
+      }
+      else {
+        LOG.info("Saving application settings failed", ex);
+        invokeLater(new Runnable() {
+          public void run() {
+            Messages.showMessageDialog(ApplicationBundle.message("application.save.settings.error", ex.getLocalizedMessage()),
+                                       CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+          }
+        });
+      }
     }
   }
 
