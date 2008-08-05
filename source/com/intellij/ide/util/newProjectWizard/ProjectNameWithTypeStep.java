@@ -8,11 +8,14 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -285,6 +288,19 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       if (!ProjectWizardUtil
         .createDirectoryIfNotExists(IdeBundle.message("directory.module.content.root"), myModuleContentRoot.getText(), myContentRootChangedByUser)) {
         return false;
+      }
+    }
+    if (!myWizardContext.isCreatingNewProject()) {
+      final Module module;
+      final ProjectStructureConfigurable fromConfigurable = ProjectStructureConfigurable.getInstance(myWizardContext.getProject());
+      final String moduleName = myModuleName.getText().trim();
+      if (fromConfigurable != null) {
+        module = fromConfigurable.getModulesConfig().getModule(moduleName);
+      } else {
+        module = ModuleManager.getInstance(myWizardContext.getProject()).findModuleByName(moduleName);
+      }
+      if (module != null) {
+        throw new ConfigurationException("Module \'" + moduleName + "\' already exist in project. Please, specify another name.");
       }
     }
     return !myWizardContext.isCreatingNewProject() || super.validate();
