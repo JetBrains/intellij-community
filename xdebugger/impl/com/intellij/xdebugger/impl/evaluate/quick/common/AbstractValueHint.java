@@ -205,7 +205,7 @@ public abstract class AbstractValueHint {
     if (myPopup != null) {
       myPopup.cancel();
     }
-    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, tree)
+    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(component.getMainPanel(), tree)
       .setRequestFocus(true)
       .setTitle(title)
       .setResizable(true)

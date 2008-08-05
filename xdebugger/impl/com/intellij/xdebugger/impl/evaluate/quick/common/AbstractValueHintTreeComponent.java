@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author nik
  */
-public abstract class AbstractValueHintTreeComponent<H> extends JPanel {
+public abstract class AbstractValueHintTreeComponent<H> {
   private static final Icon ICON_FWD = IconLoader.getIcon("/actions/forward.png");
   private static final Icon ICON_BACK = IconLoader.getIcon("/actions/back.png");
   private static final Icon ICON_UNMARK_WEBROOT = IconLoader.getIcon("/modules/unmarkWebroot.png");
@@ -25,14 +25,21 @@ public abstract class AbstractValueHintTreeComponent<H> extends JPanel {
   private int myCurrentIndex = -1;
   private AbstractValueHint myValueHint;
   private Tree myTree;
+  private JPanel myMainPanel;
 
   protected AbstractValueHintTreeComponent(final AbstractValueHint valueHint, final Tree tree, final H initialItem) {
-    super(new BorderLayout());
     myValueHint = valueHint;
     myTree = tree;
     myHistory.add(initialItem);
-    add(ScrollPaneFactory.createScrollPane(tree), BorderLayout.CENTER);
-    add(createToolbar(), BorderLayout.NORTH);
+  }
+
+  public JPanel getMainPanel() {
+    if (myMainPanel == null) {
+      myMainPanel = new JPanel(new BorderLayout());
+      myMainPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+      myMainPanel.add(createToolbar(myMainPanel), BorderLayout.NORTH);
+    }
+    return myMainPanel;
   }
 
   private AnAction createGoForwardAction(){
@@ -85,16 +92,16 @@ public abstract class AbstractValueHintTreeComponent<H> extends JPanel {
     }
   }
 
-  private JComponent createToolbar() {
+  private JComponent createToolbar(final JPanel parent) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(createSetRoot());
 
     AnAction back = createGoBackAction();
-    back.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.ALT_MASK)), this);
+    back.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.ALT_MASK)), parent);
     group.add(back);
 
     AnAction forward = createGoForwardAction();
-    forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.ALT_MASK)), this);
+    forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.ALT_MASK)), parent);
     group.add(forward);
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
