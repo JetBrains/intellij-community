@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
@@ -43,11 +42,11 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class VariableDefinitions implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder, boolean isInClass, boolean hasModifiers) {
+  public static IElementType parse(PsiBuilder builder, boolean isInClass, boolean hasModifiers) {
     return parseDefinitions(builder, isInClass, false, false, false, hasModifiers);
   }
 
-  public static GroovyElementType parseDefinitions(PsiBuilder builder,
+  public static IElementType parseDefinitions(PsiBuilder builder,
                                                    boolean isInClass,
                                                    boolean isEnumConstantMember,
                                                    boolean isAnnotationMember,

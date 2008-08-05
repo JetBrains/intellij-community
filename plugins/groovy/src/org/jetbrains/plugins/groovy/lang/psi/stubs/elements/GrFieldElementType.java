@@ -9,7 +9,6 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrFieldStubImpl;
@@ -35,22 +34,37 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
   }
 
   public GrFieldStub createStub(GrField psi, StubElement parentStub) {
-    return new GrFieldStubImpl(parentStub, psi.getName(), psi instanceof GrEnumConstant);
+    return new GrFieldStubImpl(parentStub, StringRef.fromString(psi.getName()), false);
   }
 
   public void serialize(GrFieldStub stub, StubOutputStream dataStream) throws IOException {
+    serializeFieldStub(stub, dataStream);
+  }
+
+  public GrFieldStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+    return deserializeFieldStub(dataStream, parentStub);
+  }
+
+  public void indexStub(GrFieldStub stub, IndexSink sink) {
+    indexFieldStub(stub, sink);
+  }
+
+  /*
+   * ****************************************************************************************************************
+   */
+
+  static void serializeFieldStub(GrFieldStub stub, StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     dataStream.writeBoolean(stub.isEnumConstant());
   }
 
-  public GrFieldStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  static GrFieldStub deserializeFieldStub(StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef ref = dataStream.readName();
-    String name = ref.getString();
     boolean isEnumConstant = dataStream.readBoolean();
-    return new GrFieldStubImpl(parentStub, name, isEnumConstant);
+    return new GrFieldStubImpl(parentStub, ref, isEnumConstant);
   }
 
-  public void indexStub(GrFieldStub stub, IndexSink sink) {
+  static void indexFieldStub(GrFieldStub stub, IndexSink sink) {
     String name = stub.getName();
     if (name != null) {
       sink.occurrence(GrFieldNameIndex.KEY, name);

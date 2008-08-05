@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrDe
  * User: Dmitry.Krasilschikov
  * Date: 04.06.2007
  */
-public class GrDefaultAnnotationMethodImpl extends GrMethodDefinitionImpl implements GrDefaultAnnotationMethod {
+public class GrDefaultAnnotationMethodImpl extends GrMethodImpl implements GrDefaultAnnotationMethod {
   public GrDefaultAnnotationMethodImpl(@NotNull ASTNode node) {
     super(node);
   }

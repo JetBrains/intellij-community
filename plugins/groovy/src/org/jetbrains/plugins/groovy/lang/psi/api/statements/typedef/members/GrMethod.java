@@ -16,24 +16,27 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
 public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMethod, GrMember,
-    GrParametersOwner, GrTopLevelDefintion, GrTypeParameterListOwner {
+        GrParametersOwner, GrTopLevelDefintion, GrTypeParameterListOwner {
   public static final GrMethod[] EMPTY_ARRAY = new GrMethod[0];
   Key<Boolean> BUILDER_METHOD = Key.create("BUILDER_METHOD");
 

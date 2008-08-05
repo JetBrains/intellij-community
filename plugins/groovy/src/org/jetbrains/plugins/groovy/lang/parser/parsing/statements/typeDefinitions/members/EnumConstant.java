@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 06.04.2007
  */
 public class EnumConstant implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static IElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker ecMarker = builder.mark();
     ParserUtils.getToken(builder, mNLS);
 

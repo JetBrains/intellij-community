@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
@@ -54,7 +54,7 @@ public class Declaration implements GroovyElementTypes {
       } else {
         checkMarker.drop();
       }
-      GroovyElementType decl = VariableDefinitions.parseDefinitions(builder, isInClass, false, false, true, modifiersParsed);
+      IElementType decl = VariableDefinitions.parseDefinitions(builder, isInClass, false, false, true, modifiersParsed);
 
       if (WRONGWAY.equals(decl)) {
         declMarker.error(GroovyBundle.message("method.definitions.expected"));
@@ -74,7 +74,7 @@ public class Declaration implements GroovyElementTypes {
           builder.error(GroovyBundle.message("type.expected"));
         }
 
-        GroovyElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed);
+        IElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed);
 
         if (WRONGWAY.equals(varDecl)) {
           builder.error(GroovyBundle.message("variable.definitions.expected"));
@@ -86,7 +86,7 @@ public class Declaration implements GroovyElementTypes {
         }
 
       } else {  //type was recognized
-        GroovyElementType varDeclarationTop = VariableDefinitions.parse(builder, isInClass, modifiersParsed);
+        IElementType varDeclarationTop = VariableDefinitions.parse(builder, isInClass, modifiersParsed);
 
         if (WRONGWAY.equals(varDeclarationTop)) {
           checkMarker.rollbackTo();
@@ -95,7 +95,7 @@ public class Declaration implements GroovyElementTypes {
             builder.error(GroovyBundle.message("type.expected"));
           }
 
-          GroovyElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed);
+          IElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed);
 
           if (WRONGWAY.equals(varDecl)) {
             builder.error(GroovyBundle.message("variable.definitions.expected"));
@@ -137,7 +137,7 @@ public class Declaration implements GroovyElementTypes {
         }
       }
 
-      GroovyElementType varDef = VariableDefinitions.parse(builder, isInClass, modifiersParsed || typeParsed);
+      IElementType varDef = VariableDefinitions.parse(builder, isInClass, modifiersParsed || typeParsed);
       if (varDef != WRONGWAY) {
         declMarker.done(varDef);
         return true;

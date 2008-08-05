@@ -1,27 +1,15 @@
-/*
- *  Copyright 2000-2007 JetBrains s.r.o.
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- */
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -30,6 +18,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -51,21 +40,26 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @author ilyas
  */
+public abstract class GrMethodBaseImpl<T extends GrMethodStub> extends GroovyBaseElementImpl<T> implements GrMethod {
 
-public class GrMethodDefinitionImpl extends GroovyBaseElementImpl implements GrMethod {
-  public GrMethodDefinitionImpl(@NotNull ASTNode node) {
+  protected GrMethodBaseImpl(final T stub, IStubElementType nodeType) {
+    super(stub, nodeType);
+  }
+
+  public GrMethodBaseImpl(final ASTNode node) {
     super(node);
   }
 
@@ -80,10 +74,6 @@ public class GrMethodDefinitionImpl extends GroovyBaseElementImpl implements GrM
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
     return findChildByType(TokenSets.PROPERTY_NAMES);
-  }
-
-  public String toString() {
-    return "Method";
   }
 
   @Nullable
@@ -166,6 +156,38 @@ public class GrMethodDefinitionImpl extends GroovyBaseElementImpl implements GrM
   @Nullable
   public PsiType getReturnType() {
     return GroovyPsiManager.getInstance(getProject()).getType(this, ourTypesCalculator);
+  }
+
+  @Override
+  public Icon getIcon(int flags) {
+    return GroovyIcons.METHOD;
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return new ItemPresentation() {
+      public String getPresentableText() {
+        return getName();
+      }
+
+      @Nullable
+      public String getLocationString() {
+        PsiClass clazz = getContainingClass();
+        String name = clazz.getQualifiedName();
+        assert name != null;
+        return "(in " + name + ")";
+      }
+
+      @Nullable
+      public Icon getIcon(boolean open) {
+        return GrMethodBaseImpl.this.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
+      }
+
+      @Nullable
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
+    };
   }
 
   @Nullable
@@ -446,4 +468,5 @@ public class GrMethodDefinitionImpl extends GroovyBaseElementImpl implements GrM
   public PsiElement getContext() {
     return getParent();
   }
+
 }

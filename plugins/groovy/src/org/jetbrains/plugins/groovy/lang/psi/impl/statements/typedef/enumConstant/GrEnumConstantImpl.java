@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
@@ -41,6 +42,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProces
 public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   public GrEnumConstantImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public GrEnumConstantImpl(GrFieldStub stub) {
+    super(stub);
   }
 
   public String toString() {

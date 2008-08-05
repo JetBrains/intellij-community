@@ -49,7 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorImpl;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -292,15 +292,15 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createReferenceExpressionFromText("a" + newDot + "b").getDotToken();
   }
 
-  public GrConstructorDefinitionImpl createConstructorFromText(@NotNull String constructorName, String[] paramTypes, String[] paramNames, String body) {
+  public GrConstructorImpl createConstructorFromText(@NotNull String constructorName, String[] paramTypes, String[] paramNames, String body) {
     final GrMethod method = createMethodFromText(null, constructorName, null, paramTypes, paramNames, body);
 
     GroovyFileBase file = createDummyFile("class " + constructorName + "{" + method.getText() + "}");
     GrTopLevelDefintion defintion = file.getTopLevelDefinitions()[0];
     assert defintion != null && defintion instanceof GrClassDefinition;
     final PsiMethod constructor = ((GrClassDefinition) defintion).getMethods()[0];
-    assert constructor instanceof GrConstructorDefinitionImpl;
-    return ((GrConstructorDefinitionImpl) constructor);
+    assert constructor instanceof GrConstructorImpl;
+    return ((GrConstructorImpl) constructor);
   }
 
   public GrMethod createMethodFromText(@NotNull String methodText) {

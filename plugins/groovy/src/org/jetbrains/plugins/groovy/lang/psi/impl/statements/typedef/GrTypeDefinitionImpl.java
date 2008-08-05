@@ -76,7 +76,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodDefinitionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
@@ -921,7 +921,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
           anchor = rBrace.getPrevSibling();
       } else {
            for (GrMembersDeclaration memberDeclaration : memberDeclarations) {
-            if (memberDeclaration instanceof GrMethodDefinitionImpl) {
+            if (memberDeclaration instanceof GrMethodImpl) {
               anchor = memberDeclaration.getPrevSibling();
               break;
 

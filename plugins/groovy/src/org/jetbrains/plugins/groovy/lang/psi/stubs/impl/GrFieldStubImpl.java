@@ -16,10 +16,10 @@ public class GrFieldStubImpl extends StubBase<GrField> implements GrFieldStub {
   private final StringRef myName;
 
   public GrFieldStubImpl(StubElement parent,
-                         String name,
+                         StringRef name,
                          boolean isEnumConstant) {
     super(parent, GroovyElementTypes.FIELD);
-    myName = StringRef.fromString(name);
+    myName = name;
     this.isEnumConstant = isEnumConstant;
 
   }

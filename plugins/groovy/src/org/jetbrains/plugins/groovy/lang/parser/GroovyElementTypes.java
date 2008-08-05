@@ -28,7 +28,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.*;
 
@@ -47,9 +50,13 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GrStubElementType<GrTypeDefinitionStub, GrEnumTypeDefinition> ENUM_DEFINITION = new GrEnumDefinitionElementType();
   GrStubElementType<GrTypeDefinitionStub, GrAnnotationTypeDefinition> ANNOTATION_DEFINITION = new GrAnnotationDefinitionElementType();
 
+  GrStubElementType<GrFieldStub, GrEnumConstant> ENUM_CONSTANT = new GrEnumConstantElementType();
   GrStubElementType<GrFieldStub, GrField> FIELD = new GrFieldElementType();
 
+  GrStubElementType<GrMethodStub, GrMethod> METHOD_DEFINITION = new GrMethodElementType();
+
   GroovyElementType NONE = new GroovyElementType("no token"); //not a node
+
   // Indicates the wrongway of parsing
   GroovyElementType WRONGWAY = new GroovyElementType("Wrong way!");
 
@@ -57,21 +64,19 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType SEP = new GroovyElementType("Statement separator");
 
   GroovyElementType LITERAL = new GroovyElementType("Literal");
-
   // Top-level elements
   IFileElementType GROOVY_FILE = new IStubFileElementType(GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
   //Packaging
   GroovyElementType PACKAGE_DEFINITION = new GroovyElementType("Package definition");
   // Blocks
   GroovyElementType STATEMENT = new GroovyElementType("Any statement");
-  GroovyElementType CLOSABLE_BLOCK = new GroovyElementType("Closable block");
 
+  GroovyElementType CLOSABLE_BLOCK = new GroovyElementType("Closable block");
   GroovyElementType OPEN_BLOCK = new GroovyElementType("Open block");
   GroovyElementType BLOCK_STATEMENT = new GroovyElementType("Block statement");
+
   // Enum
   GroovyElementType ENUM_CONSTANTS = new GroovyElementType("Enumeration constants");
-
-  GroovyElementType ENUM_CONSTANT = new GroovyElementType("Enumeration constant");
 
   GroovyElementType ENUM_CONSTANT_ERROR = new GroovyElementType("Enumeration constant error");
   GroovyElementType IMPORT_STATEMENT = new GroovyElementType("Import statement");
@@ -165,8 +170,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType DEFAULT_ANNOTATION_MEMBER = new GroovyElementType("default annotation member");
 
   GroovyElementType DEFAULT_ANNOTATION_VALUE = new GroovyElementType("default annotation value");
-  //methods
-  GroovyElementType METHOD_DEFINITION = new GroovyElementType("method definition");
 
   GroovyElementType CONSTRUCTOR_DEFINITION = new GroovyElementType("constructor definition");
   //bodies

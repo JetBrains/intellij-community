@@ -88,6 +88,7 @@
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrSuperClassIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex"/>
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex"/>
 
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.ConstructorReferencesSearcher"/>-->
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.PropertyReferencesSearcher"/>-->

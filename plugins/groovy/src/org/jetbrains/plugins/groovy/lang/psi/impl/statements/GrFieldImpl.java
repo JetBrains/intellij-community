@@ -230,7 +230,6 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   public Icon getIcon(int flags) {
     Icon superIcon = GroovyIcons.FIELD;
     if (!isProperty()) return superIcon;
-
     LayeredIcon rowIcon = new LayeredIcon(2);
     rowIcon.setIcon(superIcon, 0);
     rowIcon.setIcon(GroovyIcons.DEF, 1);

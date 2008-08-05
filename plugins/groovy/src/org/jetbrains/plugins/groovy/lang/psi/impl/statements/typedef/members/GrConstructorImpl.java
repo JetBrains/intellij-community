@@ -25,11 +25,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @author Dmitry.Krasilschikov
+ * @date 26.03.2007
  */
-public class GrConstructorDefinitionImpl extends GrMethodDefinitionImpl implements GrConstructor {
-  public GrConstructorDefinitionImpl(@NotNull ASTNode node) {
+public class GrConstructorImpl extends GrMethodBaseImpl implements GrConstructor {
+  public GrConstructorImpl(@NotNull ASTNode node) {
     super(node);
   }
 
