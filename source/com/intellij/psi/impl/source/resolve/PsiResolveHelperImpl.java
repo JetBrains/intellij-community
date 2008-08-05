@@ -68,7 +68,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return processor.getResult();
   }
 
-  public PsiClass resolveReferencedClass(String referenceText, PsiElement context) {
+  public PsiClass resolveReferencedClass(@NotNull String referenceText, PsiElement context) {
     final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
     CompositeElement ref = Parsing.parseJavaCodeReferenceText(myManager, referenceText, holderElement.getCharTable());
     if (ref == null) return null;

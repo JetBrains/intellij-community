@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class Parsing implements Constants{
@@ -26,7 +27,7 @@ public class Parsing implements Constants{
   }
 
   @Nullable
-  public static CompositeElement parseJavaCodeReferenceText(PsiManager manager, CharSequence buffer, CharTable table) {
+  public static CompositeElement parseJavaCodeReferenceText(PsiManager manager, @NotNull CharSequence buffer, CharTable table) {
     return (CompositeElement)parseJavaCodeReferenceText(manager, buffer, 0, buffer.length(), table, false);
   }
 
