@@ -259,7 +259,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     if (beforeRev != null) {
       for(Change oldChange: changes) {
         ContentRevision rev = oldChange.getAfterRevision();
-        if (rev != null && rev.getFile().equals(beforeRev.getFile())) {
+        if (rev != null && rev.getFile().getIOFile().getAbsolutePath().equals(beforeRev.getFile().getIOFile().getAbsolutePath())) {
           changes.remove(oldChange);
           if (oldChange.getBeforeRevision() != null || c.getAfterRevision() != null) {
             changes.add(new Change(oldChange.getBeforeRevision(), c.getAfterRevision()));
@@ -267,7 +267,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
           return;
         }
       }
-    }
+    } 
     changes.add(c);
   }
 

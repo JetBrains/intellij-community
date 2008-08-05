@@ -75,19 +75,36 @@ public class ChangesUtil {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(VcsContextFactory.SERVICE.getInstance().createFilePathOn(file));
   }
 
+  private static class Adder {
+    private final Collection<FilePath> myResult = new ArrayList<FilePath>();
+    private final Set<String> myDuplicatesControlSet = new HashSet<String>();
+
+    public void add(final FilePath file) {
+      final String path = file.getIOFile().getAbsolutePath();
+      if (! myDuplicatesControlSet.contains(path)) {
+        myResult.add(file);
+        myDuplicatesControlSet.add(path);
+      }
+    }
+
+    public Collection<FilePath> getResult() {
+      return myResult;
+    }
+  }
+
   public static Collection<FilePath> getPaths(final List<Change> changes) {
-    Set<FilePath> paths = new HashSet<FilePath>();
+    final Adder adder = new Adder();
     for (Change change : changes) {
       ContentRevision beforeRevision = change.getBeforeRevision();
       if (beforeRevision != null) {
-        paths.add(beforeRevision.getFile());
+        adder.add(beforeRevision.getFile());
       }
       ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {
-        paths.add(afterRevision.getFile());
+        adder.add(afterRevision.getFile());
       }
     }
-    return paths;
+    return adder.getResult();
   }
 
   public static VirtualFile[] getFilesFromChanges(final Collection<Change> changes) {

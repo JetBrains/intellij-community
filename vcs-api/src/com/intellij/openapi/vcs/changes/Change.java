@@ -41,7 +41,7 @@ public class Change {
   private final ContentRevision myBeforeRevision;
   private final ContentRevision myAfterRevision;
   private final FileStatus myFileStatus;
-  private String myMoveRelativePath;
+  protected String myMoveRelativePath;
   protected boolean myRenamed;
   protected boolean myMoved;
   protected boolean myRenameOrMoveCached = false;
@@ -146,8 +146,7 @@ public class Change {
   private void cacheRenameOrMove(final Project project) {
     if (!myRenameOrMoveCached) {
       myRenameOrMoveCached = true;
-      if (myBeforeRevision != null && myAfterRevision != null &&
-          !myBeforeRevision.getFile().equals(myAfterRevision.getFile())) {
+      if (myBeforeRevision != null && myAfterRevision != null && (! revisionPathsSame())) {
         if (myBeforeRevision.getFile().getParentPath().equals(myAfterRevision.getFile().getParentPath())) {
           myRenamed = true;
         }
@@ -159,6 +158,12 @@ public class Change {
     if (myMoved && myMoveRelativePath == null && project != null) {
       myMoveRelativePath = VcsPathPresenter.getInstance(project).getPresentableRelativePath(myBeforeRevision, myAfterRevision);
     }
+  }
+
+  private boolean revisionPathsSame() {
+    final String path1 = myBeforeRevision.getFile().getIOFile().getAbsolutePath();
+    final String path2 = myAfterRevision.getFile().getIOFile().getAbsolutePath();
+    return path1.equals(path2);
   }
 
   @NonNls

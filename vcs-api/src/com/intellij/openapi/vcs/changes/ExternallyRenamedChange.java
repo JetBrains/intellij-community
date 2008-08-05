@@ -25,7 +25,7 @@ public class ExternallyRenamedChange extends Change {
       return;
     }
     final FilePath localPath = ChangesUtil.getFilePath(this);
-    if (localPath.equals(target)) {
+    if (localPath.getIOFile().getAbsolutePath().equals(target.getIOFile().getAbsolutePath())) {
       // not rename or move
       return;
     }

@@ -259,6 +259,15 @@ public class FileUtil {
     return file;
   }
 
+  public static File createTempFile(@NonNls final File dir, @NonNls String prefix, @NonNls String suffix, final boolean create) throws IOException{
+    File file = doCreateTempFile(prefix, suffix, dir);
+    file.delete();
+    if (create) {
+      file.createNewFile();
+    }
+    return file;
+  }
+
   public static File createTempFile(@NonNls String prefix, @NonNls String suffix) throws IOException{
     File file = doCreateTempFile(prefix, suffix);
     file.delete();
@@ -267,6 +276,10 @@ public class FileUtil {
   }
 
   private static File doCreateTempFile(String prefix, String suffix) throws IOException {
+    return doCreateTempFile(prefix, suffix, null);
+  }
+
+  private static File doCreateTempFile(String prefix, String suffix, final File dir) throws IOException {
     if (prefix.length() < 3) {
       prefix = (prefix + "___").substring(0, 3);
     }
@@ -274,7 +287,7 @@ public class FileUtil {
     int exceptionsCount = 0;
     while(true){
       try{
-        return File.createTempFile(prefix, suffix).getCanonicalFile();
+        return File.createTempFile(prefix, suffix, dir).getCanonicalFile();
       }
       catch(IOException e){ // Win32 createFileExclusively access denied
         if (++exceptionsCount >= 100) {
