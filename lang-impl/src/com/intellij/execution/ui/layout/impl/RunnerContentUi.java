@@ -346,8 +346,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   @Nullable
   public GridCell findCellFor(final Content content) {
     GridImpl cell = getGridFor(content, false);
-    assert cell != null;
-    return cell.getCellFor(content);
+    return cell != null ? cell.getCellFor(content) : null;
   }
 
   private boolean rebuildToolbar() {

@@ -46,13 +46,12 @@ public abstract class BaseViewAction extends AnAction {
 
   protected static boolean isDetached(ViewContext context, Content content) {
     final GridCell cell = context.findCellFor(content);
-    return cell != null ? cell.isDetached() : false;
+    return cell != null && cell.isDetached();
   }
 
   protected static Tab getTabFor(final ViewContext context, final Content[] content) {
     Grid grid = context.findGridFor(content[0]);
-    Tab tab = context.getTabFor(grid);
-    return tab;
+    return context.getTabFor(grid);
   }
 
   protected final void setEnabled(AnActionEvent e, boolean enabled) {
