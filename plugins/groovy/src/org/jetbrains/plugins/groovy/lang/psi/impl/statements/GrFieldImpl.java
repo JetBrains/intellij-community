@@ -15,6 +15,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
@@ -23,6 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -31,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
@@ -39,7 +44,7 @@ import javax.swing.*;
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
-public class GrFieldImpl extends GrVariableImpl implements GrField {
+public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrField {
   private GrAccessorMethod mySetter;
   private GrAccessorMethod[] myGetters;
 
@@ -48,6 +53,10 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
 
   public GrFieldImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public GrFieldImpl(GrFieldStub stub) {
+    super(stub, GroovyElementTypes.FIELD);
   }
 
   public void accept(GroovyElementVisitor visitor) {
@@ -178,6 +187,33 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
     return com.intellij.psi.impl.PsiImplUtil.getMemberUseScope(this);
   }
 
+  @Override
+  public ItemPresentation getPresentation() {
+    return new ItemPresentation() {
+      public String getPresentableText() {
+        return getName();
+      }
+
+      @Nullable
+      public String getLocationString() {
+        PsiClass clazz = getContainingClass();
+        String name = clazz.getQualifiedName();
+        assert name != null;
+        return "(in " + name + ")";
+      }
+
+      @Nullable
+      public Icon getIcon(boolean open) {
+        return GrFieldImpl.this.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
+      }
+
+      @Nullable
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
+    };
+  }
+
   public PsiElement getOriginalElement() {
     final PsiClass containingClass = getContainingClass();
     if (containingClass == null) return this;
@@ -192,7 +228,7 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
 
   @Nullable
   public Icon getIcon(int flags) {
-    Icon superIcon = super.getIcon(flags);
+    Icon superIcon = GroovyIcons.FIELD;
     if (!isProperty()) return superIcon;
 
     LayeredIcon rowIcon = new LayeredIcon(2);

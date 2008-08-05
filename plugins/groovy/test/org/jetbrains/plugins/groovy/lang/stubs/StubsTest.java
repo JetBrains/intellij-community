@@ -1,18 +1,18 @@
 package org.jetbrains.plugins.groovy.lang.stubs;
 
-import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
-import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.NamedStub;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.lang.ASTNode;
-import junit.framework.Test;
 import junit.framework.Assert;
+import junit.framework.Test;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
@@ -59,10 +59,10 @@ public class StubsTest extends SimpleGroovyFileSetTestCase {
   private static void getStubsTreeImpl(StubElement element, StringBuffer buffer, String offset) {
     PsiElement psi = element.getPsi();
     buffer.append(offset).append("[").append(psi.toString()).
-            append(element instanceof NamedStub ? " : "+((NamedStub) element).getName() : "").
+            append(element instanceof NamedStub ? " : " + ((NamedStub) element).getName() : "").
             append("]\n");
     for (StubElement stubElement : ((List<StubElement>) element.getChildrenStubs())) {
-      getStubsTreeImpl(stubElement, buffer, "  ");
+      getStubsTreeImpl(stubElement, buffer, offset + "  ");
     }
   }
 

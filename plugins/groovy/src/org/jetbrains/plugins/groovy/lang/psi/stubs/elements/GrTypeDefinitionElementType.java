@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang.psi.stubs;
+package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
@@ -7,11 +7,12 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrTypeDefinitionStubImpl;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrShortClassNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrSuperClassIndex;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.stubs.GrTypeDefinitionStubImpl;
 
 import java.io.IOException;
 
@@ -26,7 +27,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
 
   public GrTypeDefinitionStub createStub(TypeDef psi, StubElement parentStub) {
     String[] superClassNames = psi.getSuperClassNames();
-    return new GrTypeDefinitionStubImpl(psi.getName(), parentStub, superClassNames, this, psi.getQualifiedName());
+    return new GrTypeDefinitionStubImpl(parentStub, psi.getName(), superClassNames, this, psi.getQualifiedName());
   }
 
   public void serialize(GrTypeDefinitionStub stub, StubOutputStream dataStream) throws IOException {
@@ -47,7 +48,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
     for (int i = 0; i < supersNumber; i++) {
       superClasses[i] = StringRef.toString(dataStream.readName());
     }
-    return new GrTypeDefinitionStubImpl(name, parentStub, superClasses, this, qname);
+    return new GrTypeDefinitionStubImpl(parentStub, name, superClasses, this, qname);
   }
 
   public void indexStub(GrTypeDefinitionStub stub, IndexSink sink) {

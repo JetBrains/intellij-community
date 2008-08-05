@@ -16,16 +16,21 @@
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnnotationTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.*;
 
 /**
  * Utility interface that contains all Groovy non-token element types
@@ -42,10 +47,12 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GrStubElementType<GrTypeDefinitionStub, GrEnumTypeDefinition> ENUM_DEFINITION = new GrEnumDefinitionElementType();
   GrStubElementType<GrTypeDefinitionStub, GrAnnotationTypeDefinition> ANNOTATION_DEFINITION = new GrAnnotationDefinitionElementType();
 
-  GroovyElementType NONE = new GroovyElementType("no token"); //not a node
+  GrStubElementType<GrFieldStub, GrField> FIELD = new GrFieldElementType();
 
+  GroovyElementType NONE = new GroovyElementType("no token"); //not a node
   // Indicates the wrongway of parsing
   GroovyElementType WRONGWAY = new GroovyElementType("Wrong way!");
+
   // Auxiliary elements
   GroovyElementType SEP = new GroovyElementType("Statement separator");
 
@@ -53,28 +60,27 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   // Top-level elements
   IFileElementType GROOVY_FILE = new IStubFileElementType(GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
-
   //Packaging
   GroovyElementType PACKAGE_DEFINITION = new GroovyElementType("Package definition");
   // Blocks
   GroovyElementType STATEMENT = new GroovyElementType("Any statement");
   GroovyElementType CLOSABLE_BLOCK = new GroovyElementType("Closable block");
-  GroovyElementType OPEN_BLOCK = new GroovyElementType("Open block");
 
+  GroovyElementType OPEN_BLOCK = new GroovyElementType("Open block");
   GroovyElementType BLOCK_STATEMENT = new GroovyElementType("Block statement");
   // Enum
   GroovyElementType ENUM_CONSTANTS = new GroovyElementType("Enumeration constants");
+
   GroovyElementType ENUM_CONSTANT = new GroovyElementType("Enumeration constant");
 
   GroovyElementType ENUM_CONSTANT_ERROR = new GroovyElementType("Enumeration constant error");
-
   GroovyElementType IMPORT_STATEMENT = new GroovyElementType("Import statement");
   //Branch statements
   GroovyElementType BREAK_STATEMENT = new GroovyElementType("Break statement");
   GroovyElementType CONTINUE_STATEMENT = new GroovyElementType("Continue statement");
   GroovyElementType RETURN_STATEMENT = new GroovyElementType("Return statement");
-  GroovyElementType ASSERT_STATEMENT = new GroovyElementType("Assert statement");
 
+  GroovyElementType ASSERT_STATEMENT = new GroovyElementType("Assert statement");
   GroovyElementType THROW_STATEMENT = new GroovyElementType("Throw statement");
   // Expression statements
   GroovyElementType LABELED_STATEMENT = new GroovyElementType("Labeled statement");
@@ -108,16 +114,16 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType PATH_EXPRESSION = new GroovyElementType("Path expression");
   GroovyElementType PATH_PROPERTY_REFERENCE = new GroovyElementType("Property reference");
   GroovyElementType PATH_METHOD_CALL = new GroovyElementType("Method call");
+
   GroovyElementType PATH_INDEX_PROPERTY = new GroovyElementType("Index property");
 
   GroovyElementType PARENTHESIZED_EXPRESSION = new GroovyElementType("Parenthesized expression");
-
   // Plain label
   GroovyElementType LABEL = new GroovyElementType("Label");
   // Arguments
   GroovyElementType ARGUMENTS = new GroovyElementType("Arguments");
-  GroovyElementType ARGUMENT = new GroovyElementType("Compound argument");
 
+  GroovyElementType ARGUMENT = new GroovyElementType("Compound argument");
   GroovyElementType ARGUMENT_LABEL = new GroovyElementType("Argument label");
   // Simple expression
   GroovyElementType PATH_PROPERTY = new GroovyElementType("Path name selector");
@@ -125,94 +131,93 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType THIS_REFERENCE_EXPRESSION = new GroovyElementType("This reference expressions");
   GroovyElementType SUPER_REFERENCE_EXPRESSION = new GroovyElementType("Super reference expressions");
   GroovyElementType NEW_EXPRESSION = new GroovyElementType("New expressions");
+
   GroovyElementType PRIMARY_EXPRESSION = new GroovyElementType("Primary expressions");
 
   GroovyElementType BUILT_IN_TYPE_EXPRESSION = new GroovyElementType("Built in type expression");
-
   // Lists & maps
   GroovyElementType LIST_OR_MAP = new GroovyElementType("Generalized list");
+
   // Type Elements
   GroovyElementType ARRAY_TYPE = new GroovyElementType("Array type");
-
   GroovyElementType BUILT_IN_TYPE = new GroovyElementType("Built in type");
+
   // GStrings
   GroovyElementType GSTRING = new GroovyElementType("GString");
 
   GroovyElementType REGEX = new GroovyElementType("Regular expression");
 
   GroovyElementType DECLARATION = new GroovyElementType("declaration");
-
   //types
   GroovyElementType REFERENCE_ELEMENT = new GroovyElementType("reference element");
   GroovyElementType ARRAY_DECLARATOR = new GroovyElementType("array declarator");
   GroovyElementType IMPLEMENTS_CLAUSE = new GroovyElementType("implements clause");
+
   GroovyElementType EXTENDS_CLAUSE = new GroovyElementType("super class clause");
-
   GroovyElementType TYPE_ARGUMENTS = new GroovyElementType("type arguments");
-  GroovyElementType TYPE_ARGUMENT = new GroovyElementType("type argument");
 
+  GroovyElementType TYPE_ARGUMENT = new GroovyElementType("type argument");
   GroovyElementType TYPE_PARAMETER_LIST = new GroovyElementType("type parameter list");
   GroovyElementType TYPE_PARAMETER = new GroovyElementType("type parameter");
-  GroovyElementType TYPE_PARAMETER_EXTENDS_BOUND_LIST = new GroovyElementType("type extends list");
 
+  GroovyElementType TYPE_PARAMETER_EXTENDS_BOUND_LIST = new GroovyElementType("type extends list");
   //fields
   GroovyElementType DEFAULT_ANNOTATION_MEMBER = new GroovyElementType("default annotation member");
-  GroovyElementType DEFAULT_ANNOTATION_VALUE = new GroovyElementType("default annotation value");
 
+  GroovyElementType DEFAULT_ANNOTATION_VALUE = new GroovyElementType("default annotation value");
   //methods
   GroovyElementType METHOD_DEFINITION = new GroovyElementType("method definition");
-  GroovyElementType CONSTRUCTOR_DEFINITION = new GroovyElementType("constructor definition");
 
+  GroovyElementType CONSTRUCTOR_DEFINITION = new GroovyElementType("constructor definition");
   //bodies
   //  GroovyElementType METHOD_BODY = new GroovyElementType("method body");
   GroovyElementType CONSTRUCTOR_BODY_ERROR = new GroovyElementType("constructor body with error");
+
   //  GroovyElementType CONSTRUCTOR_BODY = new GroovyElementType("constructor body");
   GroovyElementType EXPLICIT_CONSTRUCTOR = new GroovyElementType("explicit constructor invokation");
 
   //throws
   GroovyElementType THROW_CLAUSE = new GroovyElementType("throw clause");
-
   //annotation
   GroovyElementType ANNOTATION_ARRAY_INITIALIZER = new GroovyElementType("annotation array initializer");
   GroovyElementType ANNOTATION_ARGUMENTS = new GroovyElementType("annotation arguments");
   GroovyElementType ANNOTATION_MEMBER_VALUE_PAIR = new GroovyElementType("annotation member value pair");
   GroovyElementType ANNOTATION_MEMBER_VALUE_PAIRS = new GroovyElementType("annotation member value pairs");
-  GroovyElementType ANNOTATION = new GroovyElementType("annotation");
 
+  GroovyElementType ANNOTATION = new GroovyElementType("annotation");
   //parameters
   GroovyElementType PARAMETERS_LIST = new GroovyElementType("parameters list");
+
   GroovyElementType PARAMETER = new GroovyElementType("parameter");
-
   GroovyElementType CLASS_BODY = new GroovyElementType("class block");
-  GroovyElementType ENUM_BODY = new GroovyElementType("enum block");
 
+  GroovyElementType ENUM_BODY = new GroovyElementType("enum block");
   //statements
   GroovyElementType IF_STATEMENT = new GroovyElementType("if statement");
   GroovyElementType FOR_STATEMENT = new GroovyElementType("for statement");
-  GroovyElementType WHILE_STATEMENT = new GroovyElementType("while statement");
 
+  GroovyElementType WHILE_STATEMENT = new GroovyElementType("while statement");
   // switch dtatement
   GroovyElementType SWITCH_STATEMENT = new GroovyElementType("switch statement");
   GroovyElementType CASE_BLOCK = new GroovyElementType("case block");
   GroovyElementType CASE_SECTION = new GroovyElementType("case block");
-  GroovyElementType CASE_LABEL = new GroovyElementType("case label");
 
+  GroovyElementType CASE_LABEL = new GroovyElementType("case label");
   //for clauses
   GroovyElementType FOR_IN_CLAUSE = new GroovyElementType("IN clause");
-  GroovyElementType FOR_TRADITIONAL_CLAUSE = new GroovyElementType("Traditional clause");
 
+  GroovyElementType FOR_TRADITIONAL_CLAUSE = new GroovyElementType("Traditional clause");
   GroovyElementType TRY_BLOCK_STATEMENT = new GroovyElementType("try block statement");
   GroovyElementType CATCH_CLAUSE = new GroovyElementType("catch clause");
   GroovyElementType FINALLY_CLAUSE = new GroovyElementType("finally clause");
   GroovyElementType SYNCHRONIZED_STATEMENT = new GroovyElementType("synchronized block statement");
   GroovyElementType CLASS_INITIALIZER = new GroovyElementType("static compound statement");
-  GroovyElementType COMPOUND_STATEMENT = new GroovyElementType("compound statement");
 
+  GroovyElementType COMPOUND_STATEMENT = new GroovyElementType("compound statement");
   GroovyElementType VARIABLE_DEFINITION_ERROR = new GroovyElementType("variable definitions with errors");
   GroovyElementType VARIABLE_DEFINITION = new GroovyElementType("variable definitions");
-  GroovyElementType VARIABLE = new GroovyElementType("assigned variable");
 
-  GroovyElementType FIELD = new GroovyElementType("field");
+  GroovyElementType VARIABLE = new GroovyElementType("assigned variable");
 
   //modifiers
   //  GroovyElementType MODIFIER = new GroovyElementType("modifier"); //node
@@ -231,8 +236,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   TokenSet CLASS_BODY_SET = TokenSet.create(CLASS_BODY, ENUM_BODY);
 
   TokenSet BLOCK_SET = TokenSet.create(CLOSABLE_BLOCK,
-      BLOCK_STATEMENT,
-      OPEN_BLOCK,
-      ENUM_BODY,
-      CLASS_BODY);
+          BLOCK_STATEMENT,
+          OPEN_BLOCK,
+          ENUM_BODY,
+          CLASS_BODY);
 }

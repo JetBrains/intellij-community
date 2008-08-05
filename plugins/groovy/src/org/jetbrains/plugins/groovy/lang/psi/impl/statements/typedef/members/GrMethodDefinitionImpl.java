@@ -45,7 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
@@ -64,7 +64,7 @@ import java.util.Set;
  * @date: 26.03.2007
  */
 
-public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMethod {
+public class GrMethodDefinitionImpl extends GroovyBaseElementImpl implements GrMethod {
   public GrMethodDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }

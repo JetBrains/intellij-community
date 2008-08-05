@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -169,7 +170,7 @@ public class VariableDefinitions implements GroovyElementTypes {
   }
 
   //a, a = b
-  private static GroovyElementType parseVariableDeclarator(PsiBuilder builder, boolean isInClass) {
+  private static IElementType parseVariableDeclarator(PsiBuilder builder, boolean isInClass) {
     PsiBuilder.Marker varAssMarker = builder.mark();
     if (ParserUtils.getToken(builder, mIDENT)) {
       parseAssignment(builder);

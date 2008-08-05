@@ -1,12 +1,11 @@
-package org.jetbrains.plugins.groovy.lang.psi.impl.stubs;
+package org.jetbrains.plugins.groovy.lang.psi.stubs.impl;
 
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.io.StringRef;
-import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 
 /**
  * @author ilyas
@@ -17,8 +16,8 @@ public class GrTypeDefinitionStubImpl extends StubBase<GrTypeDefinition> impleme
   private final StringRef myQualifiedName;
   private StringRef mySourceFileName;
 
-  public GrTypeDefinitionStubImpl(final String name,
-                                  StubElement parent,
+  public GrTypeDefinitionStubImpl(StubElement parent, 
+                                  final String name,
                                   final String[] supers,
                                   final IStubElementType elementType,
                                   final String qualifiedName) {
