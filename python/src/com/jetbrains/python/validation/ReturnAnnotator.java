@@ -53,7 +53,7 @@ public class ReturnAnnotator extends PyAnnotator {
     */
   }
 
-  private class YieldVisitor extends PyElementVisitor {
+  private static class YieldVisitor extends PyElementVisitor {
     private boolean _haveYield = false;
 
     public boolean haveYield() {
@@ -70,6 +70,11 @@ public class ReturnAnnotator extends PyAnnotator {
       if (!_haveYield) {
         node.acceptChildren(this);
       }
+    }
+
+    @Override
+    public void visitPyFunction(final PyFunction node) {
+      // do not go to nested functions
     }
   }
 }

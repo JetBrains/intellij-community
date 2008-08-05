@@ -47,6 +47,9 @@ public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testYieldInNestedFunction() throws Exception {
+    doTest();
+  }
 
   private void doTest() throws Exception {
     doTest(getTestName(true) + ".py", true, true);
