@@ -89,6 +89,7 @@ public class ImplementationViewComponent extends JPanel {
   private JBPopup myHint;
   private static final @NonNls String TEXT_PAGE_KEY = "Text";
   private static final @NonNls String BINARY_PAGE_KEY = "Binary";
+  private ActionToolbar myToolbar;
 
   public void setHint(final JBPopup hint) {
     myHint = hint;
@@ -162,14 +163,14 @@ public class ImplementationViewComponent extends JPanel {
 
     add(myViewingPanel, BorderLayout.CENTER);
 
-    final ActionToolbar toolbar = createToolbar();
+    myToolbar = createToolbar();
     myLocationLabel = new JLabel();
     myCountLabel = new JLabel();
 
     JPanel header = new JPanel(new BorderLayout());
     header.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     JPanel toolbarPanel = new JPanel(new FlowLayout());
-    toolbarPanel.add(toolbar.getComponent());
+    toolbarPanel.add(myToolbar.getComponent());
 
     if (myElements.length > 1) {
       myFileChooser = new JComboBox(files.toArray(new FileDescriptor[files.size()]));
@@ -227,6 +228,7 @@ public class ImplementationViewComponent extends JPanel {
     updateLabels();
     updateCombo();
     updateEditorText();
+    myToolbar.updateActionsImmediately();
   }
 
   private void updateCombo() {
