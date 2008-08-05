@@ -28,7 +28,7 @@ import com.intellij.testFramework.ResolveTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
- * @uthor ven
+ * @author ven
  */
 public abstract class GroovyResolveTestCase extends ResolveTestCase {
 

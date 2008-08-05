@@ -188,6 +188,11 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
       return COMMON_SPACING_WITH_NL;
     }
 
+    if (rightType == mGDOC_INLINE_TAG_END || leftType == mGDOC_INLINE_TAG_START ||
+        rightType == mGDOC_INLINE_TAG_START || leftType == mGDOC_INLINE_TAG_END) {
+      return NO_SPACING;
+    }
+
     return COMMON_SPACING;
   }
 
