@@ -54,7 +54,9 @@ public class SimpleTreeBuilder extends AbstractTreeBuilder {
     } else {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          SimpleTreeBuilder.super.updateFromRoot();
+          if (!isDisposed()) {
+            SimpleTreeBuilder.super.updateFromRoot();
+          }
         }
       });
     }
