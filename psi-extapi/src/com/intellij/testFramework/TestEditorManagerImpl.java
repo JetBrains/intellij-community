@@ -111,7 +111,7 @@ import java.util.Map;
     final EditorFactory editorFactory = EditorFactory.getInstance();
     for (VirtualFile file : myVirtualFile2Editor.keySet()) {
       Editor editor = myVirtualFile2Editor.get(file);
-      if (editor != null){
+      if (editor != null && !editor.isDisposed()){
         editorFactory.releaseEditor(editor);
       }
     }
