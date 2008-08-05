@@ -19,7 +19,6 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -587,41 +586,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         InterfaceType iface = it.next();
         typeNames.add(iface);
         findAllSupertypes(iface, typeNames);
-      }
-    }
-  }
-
-  public static interface ElementVisitor {
-    boolean acceptElement(PsiElement element);
-  }
-
-  public static void iterateLine(Project project, Document document, int line, ElementVisitor visitor) {
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    int lineStart;
-    int lineEnd;
-
-    try {
-      lineStart = document.getLineStartOffset(line);
-      lineEnd = document.getLineEndOffset(line);
-    }
-    catch (IndexOutOfBoundsException e) {
-      return;
-    }
-
-    PsiElement element;
-
-    for (int off = lineStart; off < lineEnd;) {
-      element = file.findElementAt(off);
-      if (element != null) {
-        if (visitor.acceptElement(element)) {
-          return;
-        }
-        else {
-          off = element.getTextRange().getEndOffset();
-        }
-      }
-      else {
-        off++;
       }
     }
   }

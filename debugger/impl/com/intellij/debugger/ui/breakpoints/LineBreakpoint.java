@@ -26,8 +26,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.Processor;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.ui.DebuggerIcons;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
@@ -280,10 +282,10 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     PsiDocumentManager.getInstance(project).commitDocument(document);
 
     final boolean[] canAdd = new boolean[]{false};
-    DebuggerUtilsEx.iterateLine(project, document, lineIndex, new DebuggerUtilsEx.ElementVisitor() {
-      public boolean acceptElement(PsiElement element) {
+    XDebuggerUtil.getInstance().iterateLine(project, document, lineIndex, new Processor<PsiElement>() {
+      public boolean process(PsiElement element) {
         if ((element instanceof PsiWhiteSpace) || (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null)) {
-          return false;
+          return true;
         }
         PsiElement child = element;
         while(element != null) {
@@ -311,7 +313,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
         else {
           canAdd[0] = true;
         }
-        return true;
+        return false;
       }
     });
 

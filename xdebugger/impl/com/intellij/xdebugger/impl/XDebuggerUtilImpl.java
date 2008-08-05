@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.Processor;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -25,6 +26,9 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +58,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   public void toggleLineBreakpoint(@NotNull final Project project, @NotNull final VirtualFile file, final int line) {
     for (XLineBreakpointType<?> type : getLineBreakpointTypes()) {
-      if (type.canPutAt(file, line)) {
+      if (type.canPutAt(file, line, project)) {
         toggleLineBreakpoint(project, type, file, line);
         return;
       }
@@ -173,5 +177,37 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       }
     }
     return null;
+  }
+
+  public void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<PsiElement> processor) {
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    int lineStart;
+    int lineEnd;
+
+    try {
+      lineStart = document.getLineStartOffset(line);
+      lineEnd = document.getLineEndOffset(line);
+    }
+    catch (IndexOutOfBoundsException e) {
+      return;
+    }
+
+    PsiElement element;
+
+    int off = lineStart;
+    while (off < lineEnd) {
+      element = file.findElementAt(off);
+      if (element != null) {
+        if (!processor.process(element)) {
+          return;
+        }
+        else {
+          off = element.getTextRange().getEndOffset();
+        }
+      }
+      else {
+        off++;
+      }
+    }
   }
 }

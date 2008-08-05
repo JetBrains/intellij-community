@@ -21,7 +21,7 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
 
     XLineBreakpointType<?>[] breakpointTypes = XDebuggerUtil.getInstance().getLineBreakpointTypes();
     for (XLineBreakpointType<?> breakpointType : breakpointTypes) {
-      if (breakpointType.canPutAt(position.getFile(), position.getLine())) {
+      if (breakpointType.canPutAt(position.getFile(), position.getLine(), project)) {
         return true;
       }
     }
@@ -35,7 +35,7 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     int line = position.getLine();
     VirtualFile file = position.getFile();
     for (XLineBreakpointType<?> type : XDebuggerUtil.getInstance().getLineBreakpointTypes()) {
-      if (type.canPutAt(file, line)) {
+      if (type.canPutAt(file, line, project)) {
         XDebuggerUtil.getInstance().toggleLineBreakpoint(project, type, file, line);
         return;
       }

@@ -16,9 +16,10 @@
 
 package com.intellij.xdebugger.breakpoints;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,16 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     super(id, title);
   }
 
-  public abstract boolean canPutAt(@NotNull VirtualFile file, int line);
+  /**
+   * @deprecated implement {@link XLineBreakpointType#canPutAt(com.intellij.openapi.vfs.VirtualFile, int, com.intellij.openapi.project.Project)} instead
+   */
+  public boolean canPutAt(@NotNull VirtualFile file, int line) {
+    return false;
+  }
+
+  public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
+    return canPutAt(file, line);
+  }
 
   public abstract P createBreakpointProperties(@NotNull VirtualFile file, int line);
 

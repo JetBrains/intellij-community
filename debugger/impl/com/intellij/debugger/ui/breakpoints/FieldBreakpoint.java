@@ -12,7 +12,6 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +23,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.AccessWatchpointEvent;
 import com.sun.jdi.event.LocatableEvent;
@@ -316,14 +317,14 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     int line = document.getLineNumber(offset);
     if(field == null) {
       final PsiField[] fld = new PsiField[] {null};
-      DebuggerUtilsEx.iterateLine(project, document, line, new DebuggerUtilsEx.ElementVisitor() {
-        public boolean acceptElement(PsiElement element) {
+      XDebuggerUtil.getInstance().iterateLine(project, document, line, new Processor<PsiElement>() {
+        public boolean process(PsiElement element) {
           PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false);
           if(field != null) {
             fld[0] = field;
-            return true;
+            return false;
           }
-          return false;
+          return true;
         }
       });
       field = fld[0];
