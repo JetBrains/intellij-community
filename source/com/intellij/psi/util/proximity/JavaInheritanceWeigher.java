@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
@@ -28,6 +29,11 @@ public class JavaInheritanceWeigher extends ProximityWeigher {
           }
         }
       }
+    }
+
+    if (element instanceof PsiClass) {
+      @NonNls final String qname = ((PsiClass)element).getQualifiedName();
+      if (qname == null || qname.startsWith("java.lang.")) return false;
     }
 
     PsiClass contextClass = PsiTreeUtil.getContextOfType(position, PsiClass.class, false);

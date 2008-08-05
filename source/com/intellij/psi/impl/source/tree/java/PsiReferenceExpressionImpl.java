@@ -26,17 +26,20 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements PsiReferenceExpression, SourceJavaCodeReference, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
@@ -326,7 +329,21 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     filter.addFilter(new AndFilter(new ClassFilter(PsiMethod.class), new NotFilter(new ConstructorFilter())));
     filter.addFilter(new ClassFilter(PsiVariable.class));
 
-    FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor);
+    FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor) {
+      private final Set<String> myVarNames = new THashSet<String>();
+
+      @Override
+      public boolean execute(final PsiElement element, final ResolveState state) {
+        if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+          myVarNames.add(((PsiVariable) element).getName());
+        } else if (element instanceof PsiField && myVarNames.contains(((PsiVariable) element).getName())) {
+          return true;
+        }
+
+        return super.execute(element, state);
+      }
+
+    };
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
   }
 

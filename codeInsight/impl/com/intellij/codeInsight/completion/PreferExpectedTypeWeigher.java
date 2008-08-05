@@ -28,6 +28,8 @@ public class PreferExpectedTypeWeigher extends CompletionWeigher {
     if (!(item instanceof MutableLookupElement)) return MyResult.normal;
 
     final Object object = ((MutableLookupElement)item).getObject();
+    if (object instanceof PsiClass && location.getCompletionType() != CompletionType.SMART) return MyResult.normal;
+
     final ExpectedTypeInfo[] expectedInfos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
     if (expectedInfos == null) return MyResult.normal;
 
