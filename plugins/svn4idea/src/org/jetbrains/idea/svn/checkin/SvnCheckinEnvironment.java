@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -209,20 +210,38 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
+  private static class Adder {
+    private final Collection<File> myResult = new ArrayList<File>();
+    private final Set<String> myDuplicatesControlSet = new HashSet<String>();
+
+    public void add(final File file) {
+      final String path = file.getAbsolutePath();
+      if (! myDuplicatesControlSet.contains(path)) {
+        myResult.add(file);
+        myDuplicatesControlSet.add(path);
+      }
+    }
+
+    public Collection<File> getResult() {
+      return myResult;
+    }
+  }
+
   private Collection<File> getCommitables(List<File> paths) {
-    Collection<File> result = new HashSet<File>();
+    final Adder adder = new Adder();
+
     SVNStatusClient statusClient = mySvnVcs.createStatusClient();
     for (File path : paths) {
       File file = path.getAbsoluteFile();
-      result.add(file);
+      adder.add(file);
       if (file.getParentFile() != null) {
-        addParents(statusClient, file.getParentFile(), result);
+        addParents(statusClient, file.getParentFile(), adder);
       }
     }
-    return result;
+    return adder.getResult();
   }
 
-  private static void addParents(SVNStatusClient statusClient, File file, Collection<File> files) {
+  private static void addParents(SVNStatusClient statusClient, File file, final Adder adder) {
     SVNStatus status;
     try {
       status = statusClient.doStatus(file, false);
@@ -234,20 +253,32 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
         (status.getContentsStatus() == SVNStatusType.STATUS_ADDED ||
          status.getContentsStatus() == SVNStatusType.STATUS_REPLACED)) {
       // file should be added
-      files.add(file);
+      adder.add(file);
       file = file.getParentFile();
       if (file != null) {
-        addParents(statusClient, file, files);
+        addParents(statusClient, file, adder);
       }
     }
   }
 
-  private static List<File> collectPaths(Collection<FilePath> roots) {
+  private static List<File> collectPaths(final List<Change> changes) {
+    // case sensitive..
     ArrayList<File> result = new ArrayList<File>();
-    for (FilePath file : roots) {
-      // if file is scheduled for addition[r] and its parent is also scheduled for additio[r] ->
-      // then add parents till versioned file is met. same for 'copied' files.
-      result.add(file.getIOFile());
+
+    final Set<String> pathesSet = new HashSet<String>();
+    for (Change change : changes) {
+      final ContentRevision beforeRevision = change.getBeforeRevision();
+      final ContentRevision afterRevision = change.getAfterRevision();
+      if (beforeRevision != null) {
+        pathesSet.add(beforeRevision.getFile().getIOFile().getAbsolutePath());
+      }
+      if (afterRevision != null) {
+        pathesSet.add(afterRevision.getFile().getIOFile().getAbsolutePath());
+      }
+    }
+
+    for (String s : pathesSet) {
+      result.add(new File(s));
     }
     return result;
   }
@@ -257,8 +288,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    final Collection<FilePath> paths = ChangesUtil.getPaths(changes);
-    return commitInt(collectPaths(paths), preparedComment, true, false);
+    return commitInt(collectPaths(changes), preparedComment, true, false);
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> filePaths) {

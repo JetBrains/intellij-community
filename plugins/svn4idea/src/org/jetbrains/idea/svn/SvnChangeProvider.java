@@ -103,7 +103,7 @@ public class SvnChangeProvider implements ChangeProvider {
       SvnChangedFile deletedFile = iterator.next();
       final SVNStatus deletedStatus = deletedFile.getStatus();
       if ((deletedStatus != null) && (deletedStatus.getURL() != null) && Comparing.equal(copyFromURL, deletedStatus.getURL().toString())) {
-        builder.processChange(new Change(createBeforeRevision(deletedFile),
+        builder.processChange(new Change(createBeforeRevision(deletedFile, true),
                                          CurrentContentRevision.create(copiedFile.getFilePath())));
         deletedToDelete.add(deletedFile);
         for(Iterator<SvnChangedFile> iterChild = context.getDeletedFiles().iterator(); iterChild.hasNext();) {
@@ -122,7 +122,7 @@ public class SvnChangeProvider implements ChangeProvider {
             File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);
             FilePath newFilePath = myFactory.createFilePathOn(newPath);
             if (! context.isDeleted(newFilePath)) {
-              builder.processChange(new Change(createBeforeRevision(deletedChild),
+              builder.processChange(new Change(createBeforeRevision(deletedChild, true),
                                              CurrentContentRevision.create(newFilePath)));
               deletedToDelete.add(deletedChild);
             }
@@ -163,8 +163,10 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  private SvnContentRevision createBeforeRevision(final SvnChangedFile changedFile) {
-    return SvnContentRevision.create(myVcs, changedFile.getFilePath(), changedFile.getStatus().getRevision());
+  private SvnContentRevision createBeforeRevision(final SvnChangedFile changedFile, final boolean forDeleted) {
+    return SvnContentRevision.create(myVcs,
+        forDeleted ? FilePathImpl.createForDeletedFile(changedFile.getStatus().getFile(), changedFile.getFilePath().isDirectory()) :
+                   changedFile.getFilePath(), changedFile.getStatus().getRevision());
   }
 
   /**

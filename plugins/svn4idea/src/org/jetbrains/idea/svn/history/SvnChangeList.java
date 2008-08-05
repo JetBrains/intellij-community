@@ -154,7 +154,7 @@ public class SvnChangeList implements CommittedChangeList {
       myListsHolder.add(addedChange);
     }
     for(String path: myDeletedPaths) {
-      final ExternallyRenamedChange deletedChange = new ExternallyRenamedChange(myListsHolder.createRevisionLazily(path, true), null);
+      final ExternallyRenamedChange deletedChange = new ExternallyRenamedChange(myListsHolder.createDeletedItemRevision(path, true), null);
       if (copiedAddedChanges.containsKey(path)) {
         final ExternallyRenamedChange addedChange = copiedAddedChanges.get(path);
         //noinspection ConstantConditions
@@ -214,6 +214,23 @@ public class SvnChangeList implements CommittedChangeList {
 
     public void add(final Change change) {
       myList.add(change);
+    }
+
+    private FilePath localDeletedPath(final String fullPath) {
+      final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
+      final String path = urlMapping.getLocalPath(fullPath);
+      if (path != null) {
+        final File file = new File(path);
+        return FilePathImpl.createForDeletedFile(file, file.isDirectory());
+      }
+
+      return null;
+    }
+
+    public SvnRepositoryContentRevision createDeletedItemRevision(final String path, final boolean isBeforeRevision) {
+      final String fullPath = myRepositoryRoot + path;
+      myWithoutDirStatus.add(new Pair<Integer, Boolean>(myList.size(), isBeforeRevision));
+      return SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, localDeletedPath(fullPath), getRevision(isBeforeRevision));
     }
 
     public SvnRepositoryContentRevision createRevisionLazily(final String path, final boolean isBeforeRevision) {
