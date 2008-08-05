@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Set;
 
-public abstract class AbstractTreeBuilder implements Disposable {
+public class AbstractTreeBuilder implements Disposable {
   private AbstractTreeUi myUi;
 
   public AbstractTreeBuilder(JTree tree,
@@ -200,9 +200,13 @@ public abstract class AbstractTreeBuilder implements Disposable {
     getUi().doExpandNodeChildren(node);
   }
 
-  protected abstract boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor);
+  protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
+    return getTreeStructure().getRootElement() == nodeDescriptor.getElement();
+  }
 
-  protected abstract boolean isAlwaysShowPlus(final NodeDescriptor descriptor);
+  protected boolean isAlwaysShowPlus(final NodeDescriptor descriptor) {
+    return false;
+  }
 
 
 

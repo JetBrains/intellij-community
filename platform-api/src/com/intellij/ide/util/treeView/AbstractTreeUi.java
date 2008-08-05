@@ -562,7 +562,7 @@ class AbstractTreeUi {
 
     if (getTreeStructure().isToBuildChildrenInBackground(getBuilder().getTreeStructureElement(descriptor))) return; //?
 
-    Object[] children = getTreeStructure().getChildElements(getBuilder().getTreeStructureElement(descriptor));
+    Object[] children = getChildrenFor(getBuilder().getTreeStructureElement(descriptor));
     if (children.length == 0) {
       for (int i = 0; i < node.getChildCount(); i++) {
         if (isLoadingNode(node.getChildAt(i))) {
@@ -572,6 +572,27 @@ class AbstractTreeUi {
       }
       myUnbuiltNodes.remove(node);
     }
+  }
+
+  //todo [kirillk] temporary consistency check
+  private Object[] getChildrenFor(final Object element) {
+    final Object[] passOne = getTreeStructure().getChildElements(element);
+    final Object[] passTwo = getTreeStructure().getChildElements(element);
+
+    final HashSet two = new HashSet(Arrays.asList(passTwo));
+
+    if (passOne.length != passTwo.length) {
+      LOG.error("AbstractTreeStructure.getChildren() must either provide same objects or new objects but with correct hashCode() and equals() methods. Wrong parent element=" + element);
+    } else {
+      for (Object eachInOne : passOne) {
+        if (!two.contains(eachInOne)) {
+          LOG.error("AbstractTreeStructure.getChildren() must either provide same objects or new objects but with correct hashCode() and equals() methods. Wrong parent element=" + element);
+          break;
+        }
+      }
+    }
+
+    return passOne;
   }
 
   private void updateNodesToInsert(final ArrayList<TreeNode> nodesToInsert) {
@@ -599,7 +620,7 @@ class AbstractTreeUi {
 
   private Map<Object, Integer> collectElementToIndexMap(final NodeDescriptor descriptor) {
     Map<Object, Integer> elementToIndexMap = new LinkedHashMap<Object, Integer>();
-    Object[] children = getTreeStructure().getChildElements(getBuilder().getTreeStructureElement(descriptor));
+    Object[] children = getChildrenFor(getBuilder().getTreeStructureElement(descriptor));
     int index = 0;
     for (Object child : children) {
       if (!getBuilder().validateNode(child)) continue;
@@ -697,7 +718,7 @@ class AbstractTreeUi {
         Object element = descriptor.getElement();
         if (element == null) return;
 
-        getTreeStructure().getChildElements(getBuilder().getTreeStructureElement(descriptor)); // load children
+        getChildrenFor(getBuilder().getTreeStructureElement(descriptor)); // load children
       }
     };
 
@@ -930,7 +951,7 @@ class AbstractTreeUi {
             Object element = getBuilder().getTreeStructureElement(descriptor);
             if (element == null) return;
 
-            Object[] children = getTreeStructure().getChildElements(element);
+            Object[] children = getChildrenFor(element);
             hasNoChildren[0] = children.length == 0;
           }
         };
@@ -955,7 +976,7 @@ class AbstractTreeUi {
         addTaskToWorker(runnable, false, postRunnable);
       }
       else {
-        Object[] children = getTreeStructure().getChildElements(getBuilder().getTreeStructureElement(descriptor));
+        Object[] children = getChildrenFor(getBuilder().getTreeStructureElement(descriptor));
         if (children.length == 0) return;
       }
     }
