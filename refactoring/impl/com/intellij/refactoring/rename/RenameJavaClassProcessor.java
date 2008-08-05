@@ -2,28 +2,26 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -57,8 +55,6 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
 
     // do actual rename
     ChangeContextUtil.encodeContextInfo(aClass, true);
-    PsiFile psiFile = aClass.getContainingFile();
-    Document document = psiFile == null ? null : PsiDocumentManager.getInstance(aClass.getProject()).getDocument(psiFile);
     aClass.setName(newName);
 
     for (UsageInfo usage : usages) {
@@ -81,11 +77,8 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       ClassHidesImportedClassUsageInfo collision = (ClassHidesImportedClassUsageInfo) postponedCollision;
       collision.resolveCollision();
     }
+
     listener.elementRenamed(aClass);
-    if (document != null) {
-      // make highlighting consistent
-      ((DocumentEx)document).setModificationStamp(psiFile.getModificationStamp());
-    }
   }
 
   @Nullable
