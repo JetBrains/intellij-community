@@ -171,17 +171,7 @@ public class PerformanceWatcher implements ApplicationComponent {
         try {
           ThreadInfo[] threads = (ThreadInfo[])myDumpAllThreadsMethod.invoke(myThreadMXBean, false, false);
           for(ThreadInfo info: threads) {
-            StackTraceElement[] stackTraceElements = info.getStackTrace();
-            dumpCallStack(info, f, stackTraceElements);
-            if (info.getThreadName().equals("AWT-EventQueue-1")) {
-              if (myStacktraceCommonPart == null) {
-                myStacktraceCommonPart = new ArrayList<StackTraceElement>();
-                Collections.addAll(myStacktraceCommonPart, stackTraceElements);
-              }
-              else {
-                updateStacktraceCommonPart(stackTraceElements);
-              }
-            }
+            dumpThreadInfo(info, f);
           }
           dumpSuccessful = true;
         }
@@ -194,6 +184,34 @@ public class PerformanceWatcher implements ApplicationComponent {
         catch (IOException e) {
           e.printStackTrace();
         }
+    }
+    if (!dumpSuccessful) {
+      final long[] threadIds = myThreadMXBean.getAllThreadIds();
+      final ThreadInfo[] threadInfo = myThreadMXBean.getThreadInfo(threadIds, Integer.MAX_VALUE);
+      for (ThreadInfo info : threadInfo) {
+        if (info != null) {
+          try {
+            dumpThreadInfo(info, f);
+          }
+          catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
+      }
+    }
+  }
+
+  private void dumpThreadInfo(final ThreadInfo info, final OutputStreamWriter f) throws IOException {
+    StackTraceElement[] stackTraceElements = info.getStackTrace();
+    dumpCallStack(info, f, stackTraceElements);
+    if (info.getThreadName().equals("AWT-EventQueue-1")) {
+      if (myStacktraceCommonPart == null) {
+        myStacktraceCommonPart = new ArrayList<StackTraceElement>();
+        Collections.addAll(myStacktraceCommonPart, stackTraceElements);
+      }
+      else {
+        updateStacktraceCommonPart(stackTraceElements);
+      }
     }
   }
 
