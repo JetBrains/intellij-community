@@ -91,10 +91,6 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
     return true;
   }
 
-  public boolean isBuildExternalDependencies() {
-    return false;
-  }
-
   public void projectOpened() {}
 
   public void projectClosed() {}
