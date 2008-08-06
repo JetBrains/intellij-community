@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -46,7 +47,7 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
     myDirectory = directory;
     myText = text;
     myKey = key;
-    myIsAvailable = true;
+    myIsAvailable = isdirectory || !FileTypeManager.getInstance().getFileTypeByFileName(newFileName).isBinary();
     myIsAvailableTimeStamp = System.currentTimeMillis();
   }
 
