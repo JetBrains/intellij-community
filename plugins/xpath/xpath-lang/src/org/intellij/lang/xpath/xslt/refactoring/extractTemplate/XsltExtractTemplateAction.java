@@ -16,6 +16,15 @@
 
 package org.intellij.lang.xpath.xslt.refactoring.extractTemplate;
 
+import org.intellij.lang.xpath.psi.XPathVariable;
+import org.intellij.lang.xpath.psi.XPathVariableReference;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
+import org.intellij.lang.xpath.xslt.psi.XsltVariable;
+import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
+import org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringActionBase;
+import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -26,32 +35,14 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import org.intellij.lang.xpath.psi.XPathVariable;
-import org.intellij.lang.xpath.psi.XPathVariableReference;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
-import org.intellij.lang.xpath.xslt.psi.XsltVariable;
-import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
-import org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringActionBase;
-import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -138,6 +129,9 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
 
     private boolean extractFrom(final @NotNull PsiElement start, final PsiElement end) {
         final XmlTag outerTemplate = XsltCodeInsightUtil.getTemplateTag(start, false);
+        if (outerTemplate == null) {
+            return false;
+        }
         final XmlTag parentScope = PsiTreeUtil.getParentOfType(start, XmlTag.class, true);
 
         final StringBuilder sb = new StringBuilder("\n");
