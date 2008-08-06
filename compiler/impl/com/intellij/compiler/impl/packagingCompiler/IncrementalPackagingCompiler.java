@@ -327,8 +327,10 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
 
   protected void deleteFiles(final List<String> files) {
     LOG.debug("Deleting outdated files...");
+    List<File> filesToRefresh = new ArrayList<File>();
     for (String path : files) {
       File file = new File(FileUtil.toSystemDependentName(path));
+      filesToRefresh.add(file);
       boolean deleted = FileUtil.delete(file);
       if (LOG.isDebugEnabled() && !deleted) {
         LOG.debug("Cannot delete file " + file);
@@ -338,6 +340,8 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
         getOutputItemsCache().remove(path);
       }
     }
+
+    CompilerUtil.refreshIOFiles(filesToRefresh);
   }
 
   private void processOutputFiles(final Set<String> writtenPaths) {
