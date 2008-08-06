@@ -171,6 +171,26 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     return VERSION;
   }
 
+  public int perFileVersion(final VirtualFile file) {
+    final FileType fileType = file.getFileType();
+    if (fileType instanceof LanguageFileType) {
+      Language l = ((LanguageFileType)fileType).getLanguage();
+      ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
+      if (parserDefinition != null) {
+        final IFileElementType type = parserDefinition.getFileNodeType();
+        if (type instanceof IStubFileElementType) {
+          return ((IStubFileElementType)type).getStubVersion();
+        }
+      }
+    }
+    else if (fileType.isBinary()) {
+      final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
+      if (builder != null ) return builder.getStubVersion();
+    }
+
+    return 0;
+  }
+
   public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(final FileBasedIndex owner, IndexStorage<Integer, SerializedStubTree> storage) {
     if (storage instanceof MemoryIndexStorage) {
       final MemoryIndexStorage<Integer, SerializedStubTree> memStorage = (MemoryIndexStorage<Integer, SerializedStubTree>)storage;

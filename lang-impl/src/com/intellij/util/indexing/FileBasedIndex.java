@@ -83,6 +83,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Map<Document, PsiFile> myTransactionMap = new HashMap<Document, PsiFile>();
 
   private final FileContentStorage myFileContentAttic;
+  private final Map<ID<?, ?>, FileBasedIndexExtension<?, ?>> myExtentions = new HashMap<ID<?,?>, FileBasedIndexExtension<?,?>>();
 
   public static interface InputFilter {
     boolean acceptInput(VirtualFile file);
@@ -171,6 +172,7 @@ public class FileBasedIndex implements ApplicationComponent {
         final IndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
         final UpdatableIndex<K, V, FileContent> index = createIndex(extension, memStorage);
         myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, new IndexableFilesFilter(extension.getInputFilter())));
+        myExtentions.put(name, extension);
         break;
       }
       catch (IOException e) {
@@ -767,7 +769,7 @@ public class FileBasedIndex implements ApplicationComponent {
     index.update(inputId, currentFC, oldFC);
     if (file.isValid()) {
       if (currentFC != null) {
-        IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
+        IndexingStamp.update(file, indexId, perFilePerIndexVersion(indexId, file));
       }
       else {
         // mark the file as unindexed
@@ -1072,7 +1074,18 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private boolean shouldUpdateIndex(final VirtualFile file, final ID<?, ?> indexId) {
-    return getInputFilter(indexId).acceptInput(file) && (isMock(file) || IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
+    return getInputFilter(indexId).acceptInput(file) &&
+           (isMock(file) || IndexingStamp.isFileIndexed(file, indexId, perFilePerIndexVersion(indexId, file)));
+  }
+
+  private long perFilePerIndexVersion(final ID<?, ?> indexId, final VirtualFile file) {
+    final FileBasedIndexExtension<?, ?> extension = myExtentions.get(indexId);
+
+    int perFileVersion = extension instanceof CustomImplementationFileBasedIndexExtension
+                         ? ((CustomImplementationFileBasedIndexExtension)extension).perFileVersion(file)
+                         : 0;
+
+    return IndexInfrastructure.getIndexCreationStamp(indexId) ^ perFileVersion;
   }
 
   private static boolean isMock(final VirtualFile file) {
@@ -1080,7 +1093,8 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private boolean shouldIndexFile(final VirtualFile file, final ID<?, ?> indexId) {
-    return getInputFilter(indexId).acceptInput(file) && (isMock(file) || !IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
+    return getInputFilter(indexId).acceptInput(file) &&
+           (isMock(file) || !IndexingStamp.isFileIndexed(file, indexId, perFilePerIndexVersion(indexId, file)));
   }
 
 

@@ -25,4 +25,8 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
       return null;
     }
   }
+
+  public int getStubVersion() {
+    return 0;
+  }
 }

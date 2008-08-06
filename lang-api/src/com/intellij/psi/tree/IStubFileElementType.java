@@ -6,7 +6,6 @@ package com.intellij.psi.tree;
 import com.intellij.lang.Language;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.stubs.*;
-import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
@@ -18,6 +17,10 @@ public class IStubFileElementType<T extends PsiFileStub> extends IFileElementTyp
 
   public IStubFileElementType(@NonNls final String debugName, final Language language) {
     super(debugName, language);
+  }
+
+  public int getStubVersion() {
+    return 0;
   }
 
   public StubBuilder getBuilder() {

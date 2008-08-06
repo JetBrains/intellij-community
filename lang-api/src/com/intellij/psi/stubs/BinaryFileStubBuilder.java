@@ -11,4 +11,6 @@ public interface BinaryFileStubBuilder {
 
   @Nullable
   StubElement buildStubTree(final VirtualFile file, byte[] content);
+
+  int getStubVersion();
 }
