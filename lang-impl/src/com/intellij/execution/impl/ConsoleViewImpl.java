@@ -47,6 +47,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -348,6 +349,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     final Document document = myEditor.getDocument();
     final int oldLineCount = document.getLineCount();
     final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
+    boolean cycleUsed = USE_CYCLIC_BUFFER && document.getTextLength() + text.length() > CYCLIC_BUFFER_SIZE;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
@@ -360,9 +362,15 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
         }, null, document);
       }
     });
+    myPsiDisposedCheck.performCheck();
     final int newLineCount = document.getLineCount();
-    if (oldLineCount < newLineCount) {
-      myPsiDisposedCheck.performCheck();
+    if (cycleUsed) {
+      final int length = LineTokenizer.tokenize(text, false).length;
+      for (Iterator<RangeHighlighter> it = myHyperlinks.getRanges().keySet().iterator(); it.hasNext();) {
+        if (!it.next().isValid()) it.remove();
+      }
+      highlightHyperlinks(newLineCount >= length + 1 ? newLineCount - length - 1 : 0, newLineCount - 1);
+    } else if (oldLineCount < newLineCount) {
       highlightHyperlinks(oldLineCount - 1, newLineCount - 2);
     }
 
