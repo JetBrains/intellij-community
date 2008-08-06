@@ -1042,7 +1042,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
     public boolean processFile(final VirtualFile file) {
       if (!file.isDirectory()) {
-        if (!SingleRootFileViewProvider.isTooLarge(file)) {
+        if (file instanceof VirtualFileWithId && !SingleRootFileViewProvider.isTooLarge(file)) {
           for (ID<?, ?> indexId : myIndexIds) {
             if (myFileContentAttic.containsContent(file)? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
               myFiles.add(file);
