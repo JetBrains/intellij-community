@@ -62,6 +62,8 @@ public class StubsTest extends SimpleGroovyFileSetTestCase {
             append(element instanceof NamedStub ? " : " + ((NamedStub) element).getName() : "").
             append("]\n");
     for (StubElement stubElement : ((List<StubElement>) element.getChildrenStubs())) {
+      PsiElement child = stubElement.getPsi();
+      Assert.assertTrue(child.getParent() == psi);
       getStubsTreeImpl(stubElement, buffer, offset + "  ");
     }
   }

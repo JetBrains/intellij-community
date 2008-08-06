@@ -44,7 +44,7 @@ public class GroovyBaseElementImpl<T extends StubElement> extends StubBasedPsiEl
 
   public void removeStatement() throws IncorrectOperationException {
     if (getParent() == null ||
-        getParent().getNode() == null) {
+            getParent().getNode() == null) {
       throw new IncorrectOperationException();
     }
     ASTNode parentNode = getParent().getNode();
@@ -53,6 +53,11 @@ public class GroovyBaseElementImpl<T extends StubElement> extends StubBasedPsiEl
     if (prevNode != null && TokenSets.SEPARATORS.contains(prevNode.getElementType())) {
       parentNode.removeChild(prevNode);
     }
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getParentByStub();
   }
 
   public <T extends GrStatement> T replaceWithStatement(@NotNull T newStmt) {
