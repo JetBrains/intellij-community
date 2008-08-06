@@ -52,7 +52,10 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
       for (File file : fileArray) {
         VirtualFile parent = LocalFileSystem.getInstance().findFileByIoFile(file.getParentFile());
         if (parent != null) {
-          result.add(new FilePathImpl(parent, file.getName(), false));
+          final FilePathImpl child = new FilePathImpl(parent, file.getName(), false);
+          if (! result.contains(child)) {
+            result.add(child);
+          }
         }
       }
     }

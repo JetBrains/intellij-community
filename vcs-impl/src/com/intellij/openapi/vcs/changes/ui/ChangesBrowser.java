@@ -4,11 +4,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SeparatorFactory;
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -133,6 +136,8 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     }
     else if (key == PlatformDataKeys.NAVIGATABLE_ARRAY) {
       sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
+    } else if (VcsDataKeys.IO_FILE_ARRAY.equals(key)) {
+      sink.put(VcsDataKeys.IO_FILE_ARRAY, getSelectedIoFiles());
     }
     else if (key == DATA_KEY) {
       sink.put(DATA_KEY, this);
@@ -278,6 +283,20 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
       return new ChangeList[]{mySelectedChangeList};
     }
     return null;
+  }
+
+  private File[] getSelectedIoFiles() {
+    final List<Change> changes = myViewer.getSelectedChanges();
+    final List<File> files = new ArrayList<File>();
+    for (Change change : changes) {
+      final ContentRevision afterRevision = change.getAfterRevision();
+      if (afterRevision != null) {
+        final FilePath file = afterRevision.getFile();
+        final File ioFile = file.getIOFile();
+        files.add(ioFile);
+      }
+    }
+    return files.toArray(new File[files.size()]);
   }
 
   private VirtualFile[] getSelectedFiles() {

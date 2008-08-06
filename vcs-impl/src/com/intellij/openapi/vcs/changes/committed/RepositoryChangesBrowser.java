@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.actions.EditSourceAction;
+import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -81,7 +82,9 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
     else if (VcsDataKeys.SELECTED_CHANGES.getName().equals(dataId)) {
       final List<Change> list = myViewer.getSelectedChanges();
       return list.toArray(new Change [list.size()]);
+    } else {
+      final TypeSafeDataProviderAdapter adapter = new TypeSafeDataProviderAdapter(this);
+      return adapter.getData(dataId);
     }
-    return null;
   }
 }
