@@ -50,8 +50,9 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
             if (aClass == null) return;
 
             final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-            assert classReference != null;
-            classReference.bindToElement(aClass);
+            if (classReference != null) {
+              classReference.bindToElement(aClass);
+            }
             setupInheritance(newExpression, aClass);
             setupGenericParameters(newExpression, aClass);
 
