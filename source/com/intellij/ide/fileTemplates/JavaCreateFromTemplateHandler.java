@@ -42,9 +42,18 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
       JavaDirectoryService.getInstance().checkCreateClass(directory, className);
     }
     psiJavaFile = (PsiJavaFile)psiJavaFile.setName(fileName);
-    psiJavaFile = (PsiJavaFile)directory.add(psiJavaFile);
+    PsiElement addedElement = directory.add(psiJavaFile);
+    if (addedElement instanceof PsiJavaFile) {
+      psiJavaFile = (PsiJavaFile)addedElement;
 
-    return psiJavaFile.getClasses()[0];
+      return psiJavaFile.getClasses()[0];
+    }
+    else {
+      PsiFile containingFile = addedElement.getContainingFile();
+      throw new IncorrectOperationException("Selected class file name '" +
+                                            containingFile.getName() +  "' mapped to not java file type '"+
+                                            containingFile.getFileType().getDescription() + "'");
+    }
   }
 
   static void hackAwayEmptyPackage(PsiJavaFile file, FileTemplate template, Properties props) throws IncorrectOperationException {
