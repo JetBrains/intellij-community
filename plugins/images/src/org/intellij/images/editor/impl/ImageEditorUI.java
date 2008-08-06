@@ -222,6 +222,8 @@ final class ImageEditorUI extends JPanel implements DataProvider {
     }
 
     private class ImageZoomModelImpl implements ImageZoomModel {
+        private boolean myZoomLevelChanged = false;
+
         public double getZoomFactor() {
             Dimension size = imageComponent.getCanvasSize();
             BufferedImage image = imageComponent.getDocument().getValue();
@@ -239,6 +241,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
 
             revalidate();
             repaint();
+            myZoomLevelChanged = false;
         }
 
         private double getMinimumZoomFactor() {
@@ -259,6 +262,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
 
                 setZoomFactor(1.0d - stepSize * (step + 1));
             }
+            myZoomLevelChanged = true;
         }
 
         public void zoomIn() {
@@ -274,6 +278,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
 
                 setZoomFactor(1.0d - stepSize * (step - 1));
             }
+            myZoomLevelChanged = true;
         }
 
         public boolean canZoomOut() {
@@ -288,6 +293,10 @@ final class ImageEditorUI extends JPanel implements DataProvider {
         public boolean canZoomIn() {
             double zoomFactor = getZoomFactor();
             return zoomFactor < MACRO_ZOOM_LIMIT;
+        }
+
+        public boolean isZoomLevelChanged() {
+            return myZoomLevelChanged;
         }
     }
 

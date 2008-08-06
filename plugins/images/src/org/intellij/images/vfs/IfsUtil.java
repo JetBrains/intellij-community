@@ -60,7 +60,7 @@ public final class IfsUtil {
     private static boolean refresh(@NotNull VirtualFile file) throws IOException {
         Long loadedTimeStamp = file.getUserData(TIMESTAMP_KEY);
         SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
-        if (loadedTimeStamp == null || loadedTimeStamp < file.getTimeStamp() || imageRef == null || imageRef.get() == null) {
+        if (loadedTimeStamp == null || loadedTimeStamp.longValue() != file.getTimeStamp() || imageRef == null || imageRef.get() == null) {
             try {
                 final byte[] content = file.contentsToByteArray();
                 InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
@@ -86,7 +86,7 @@ public final class IfsUtil {
                 }
             } finally {
                 // We perform loading no more needed
-                file.putUserData(TIMESTAMP_KEY, System.currentTimeMillis());
+                file.putUserData(TIMESTAMP_KEY, file.getTimeStamp());
             }
         }
         return false;

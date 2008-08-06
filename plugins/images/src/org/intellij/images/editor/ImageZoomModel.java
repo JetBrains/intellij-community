@@ -36,4 +36,6 @@ public interface ImageZoomModel {
     boolean canZoomOut();
 
     boolean canZoomIn();
+
+    boolean isZoomLevelChanged();
 }

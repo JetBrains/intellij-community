@@ -17,10 +17,7 @@ package org.intellij.images.editor.impl;
 
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.vfs.*;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
@@ -57,6 +54,8 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
         editorUI = new ImageEditorUI(this, options.getEditorOptions());
         options.addPropertyChangeListener(optionsChangeListener);
 
+        VirtualFileManager.getInstance().addVirtualFileListener(this);
+
         setValue(file);
     }
 
@@ -67,12 +66,12 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
             BufferedImage image = IfsUtil.getImage(file);
             document.setValue(image);
             document.setFormat(IfsUtil.getFormat(file));
-            if (image != null && previousImage == null) {
+            ImageZoomModel zoomModel = getZoomModel();
+            if (image != null && (previousImage == null || !zoomModel.isZoomLevelChanged())) {
                 // Set smart zooming behaviour on open
                 Options options = OptionsManager.getInstance().getOptions();
                 ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
                 // Open as actual size
-                ImageZoomModel zoomModel = getZoomModel();
                 zoomModel.setZoomFactor(1.0d);
 
                 if (zoomOptions.isSmartZooming()) {
@@ -152,6 +151,7 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
         Options options = OptionsManager.getInstance().getOptions();
         options.removePropertyChangeListener(optionsChangeListener);
         editorUI.dispose();
+        VirtualFileManager.getInstance().removeVirtualFileListener(this);
         disposed = true;
     }
 
