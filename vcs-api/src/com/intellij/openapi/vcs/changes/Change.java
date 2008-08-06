@@ -147,7 +147,7 @@ public class Change {
     if (!myRenameOrMoveCached) {
       myRenameOrMoveCached = true;
       if (myBeforeRevision != null && myAfterRevision != null && (! revisionPathsSame())) {
-        if (myBeforeRevision.getFile().getParentPath().equals(myAfterRevision.getFile().getParentPath())) {
+        if (Comparing.equal(myBeforeRevision.getFile().getParentPath(), myAfterRevision.getFile().getParentPath())) {
           myRenamed = true;
         }
         else {

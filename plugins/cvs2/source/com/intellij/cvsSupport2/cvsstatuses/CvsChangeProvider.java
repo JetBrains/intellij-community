@@ -5,9 +5,14 @@ import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsInfo;
+import com.intellij.cvsSupport2.changeBrowser.CvsBinaryContentRevision;
+import com.intellij.cvsSupport2.changeBrowser.CvsContentRevision;
 import com.intellij.cvsSupport2.checkinProject.DirectoryContent;
 import com.intellij.cvsSupport2.checkinProject.VirtualFileEntry;
+import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
+import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
+import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
@@ -18,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -35,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.Collection;
@@ -276,17 +283,19 @@ public class CvsChangeProvider implements ChangeProvider {
     if (status == FileStatus.NOT_CHANGED) {
       if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
         builder.processChange(
-          new Change(createCvsRevision(filePath, number, isBinary), CurrentContentRevision.create(filePath), FileStatus.MODIFIED));
+          new Change(createRemote((CvsRevisionNumber) number, filePath.getVirtualFile()), CurrentContentRevision.create(filePath), FileStatus.MODIFIED));
       }
       return;
     }
     if (status == FileStatus.MODIFIED || status == FileStatus.MERGE || status == FileStatus.MERGED_WITH_CONFLICTS) {
-      builder.processChange(new Change(createCvsRevision(filePath, number, isBinary), CurrentContentRevision.create(filePath), status));
+      builder.processChange(new Change(createRemote((CvsRevisionNumber) number, filePath.getVirtualFile()),
+          CurrentContentRevision.create(filePath), status));
     }
     else if (status == FileStatus.ADDED) {
       builder.processChange(new Change(null, CurrentContentRevision.create(filePath), status));
     }
     else if (status == FileStatus.DELETED) {
+      // not sure about deleted content
       builder.processChange(new Change(createCvsRevision(filePath, number, isBinary), null, status));
     }
     else if (status == FileStatus.DELETED_FROM_FS) {
@@ -297,6 +306,28 @@ public class CvsChangeProvider implements ChangeProvider {
     }
     else if (status == FileStatus.IGNORED) {
       builder.processIgnoredFile(filePath.getVirtualFile());
+    }
+  }
+
+  private ContentRevision createRemote(final CvsRevisionNumber revisionNumber, final VirtualFile selectedFile) {
+    final CvsConnectionSettings settings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(selectedFile.getParent());
+    final File file = new File(CvsUtil.getModuleName(selectedFile));
+
+    final RevisionOrDate versionInfo;
+    if (revisionNumber.getDateOrRevision() != null) {
+      versionInfo = RevisionOrDateImpl.createOn(revisionNumber.getDateOrRevision());
+    }
+    else {
+      versionInfo = new SimpleRevision(revisionNumber.asString());
+    }
+
+    final Project project = myVcs.getProject();
+    final File ioFile = new File(selectedFile.getPath());
+    if (selectedFile.getFileType().isBinary()) {
+      return new CvsBinaryContentRevision(file, ioFile, versionInfo, settings, project);
+    }
+    else {
+      return new CvsContentRevision(file, ioFile, versionInfo, settings, project);
     }
   }
 
