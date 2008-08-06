@@ -16,7 +16,10 @@ public interface RTestUnitEventsListener {
    * After test framework finish testing
    */
   void onTestingFinished();
-  void onTestsCount(final int count);
+  /*
+   * Tests count in next suite. For several suites this method will be invoked several times
+   */
+  void onTestsCountInSuite(final int count);
 
   void onTestStarted(@NotNull final RTestUnitTestProxy test);
   void onTestFinished(@NotNull final RTestUnitTestProxy test);

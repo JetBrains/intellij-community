@@ -7,7 +7,6 @@ import jetbrains.buildServer.messages.serviceMessages.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.GeneralTestEventsProcessor;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitConsoleView;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -26,14 +25,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   
   private List<GeneralTestEventsProcessor> myProcessors = new ArrayList<GeneralTestEventsProcessor>();
   private MyServiceMessageVisitor myServiceMessageVisitor;
-  private RTestUnitConsoleView myTestUnitConsole;
 
   private final StringBuilder myStdoutBuffer;
 
-  public OutputToGeneralTestEventsConverter(final RTestUnitConsoleView testUnitConsole) {
+  public OutputToGeneralTestEventsConverter() {
     myServiceMessageVisitor = new MyServiceMessageVisitor();
-    //TODO remove console
-    myTestUnitConsole = testUnitConsole;
     myStdoutBuffer = new StringBuilder();
   }
 
@@ -41,7 +37,6 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     myProcessors.add(processor);
   }
 
-  //TODO on process terminated - flush buffer
   public void process(final String text, final Key outputType) {
     if (ProcessOutputTypes.STDOUT.equals(outputType)) {
       // we check for consistensy only std output
@@ -52,6 +47,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
+  /**
+   * Flashes the rest of stdout text buffer after output has been stopped
+   */
   public void flushBufferBeforeTerminating() {
     flushStdOutputBuffer();
   }
@@ -77,22 +75,15 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     if (lastChar == '\n' || lastChar == '\r') {
       // buffer contains consistent string
       flushStdOutputBuffer();
-    } //TODO remove
-    //else {
-    //  LOG.warn(text);
-    //}
+    }
   }
 
   private void processConsistentText(final String text, final Key outputType) {
     try {
       final ServiceMessage serviceMessage = ServiceMessage.parse(text);
       if (serviceMessage != null) {
-        //TODO remove, it is for debug
-        //myTestUnitConsole.print('[' + text + "]: " + serviceMessage.getClass().getName() + '\n', ConsoleViewContentType.SYSTEM_OUTPUT);
         serviceMessage.visit(myServiceMessageVisitor);
       } else {
-        //TODO remove, it is for debug
-        //myTestUnitConsole.print('[' + text + "]: unparsed\n", ConsoleViewContentType.SYSTEM_OUTPUT);
         // Filters \n
         if (text.equals("\n")) {
           // ServiceMessages protocol requires that every message
@@ -138,9 +129,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnTestsCount(final int count) {
+  private void fireOnTestsCountInSuite(final int count) {
     for (GeneralTestEventsProcessor processor : myProcessors) {
-      processor.onTestsCount(count);
+      processor.onTestsCountInSuite(count);
     }
   }
 
@@ -182,7 +173,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     public void visitTestIgnored(@NotNull final TestIgnored testIgnored) {
-      //TODO
+      //TODO[romeo] implement
     }
 
     public void visitTestStdOut(@NotNull final TestStdOut testStdOut) {
@@ -229,13 +220,13 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       final String name = msg.getMessageName();
 
       if (KEY_TESTS_COUNT.equals(name)) {
-        processTestCount(msg);
+        processTestCountInSuite(msg);
       } else {
         //Do nothing
       }
     }
 
-    private void processTestCount(final ServiceMessage msg) {
+    private void processTestCountInSuite(final ServiceMessage msg) {
       final String countStr = msg.getArgument();
       int count = 0;
       try {
@@ -243,7 +234,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       } catch (NumberFormatException ex) {
         LOG.error(ex);
       }
-      fireOnTestsCount(count);
+      fireOnTestsCountInSuite(count);
     }
   }
 }

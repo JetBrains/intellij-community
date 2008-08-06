@@ -9,7 +9,7 @@ import com.intellij.openapi.Disposable;
  * Processes events of test runner in general text-based form
  */
 public interface GeneralTestEventsProcessor extends Disposable {
-  void onTestsCount(final int count);
+  void onTestsCountInSuite(final int count);
 
   void onTestStarted(final String testName);
   void onTestFinished(final String testName);
@@ -20,4 +20,4 @@ public interface GeneralTestEventsProcessor extends Disposable {
   void onSuiteFinished(final String suiteName);
 
   void onUncapturedOutput(final String text, final Key outputType);
- }
+}

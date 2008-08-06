@@ -243,8 +243,10 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     fireOnTestingFinished();
   }
 
-  public void onTestsCount(final int count) {
-    myTestsTotal = count;
+  public void onTestsCountInSuite(final int count) {
+    //This is for beter support groups of TestSuites
+    //Each group notifies about it's size
+    myTestsTotal += count;
   }
 
   /**

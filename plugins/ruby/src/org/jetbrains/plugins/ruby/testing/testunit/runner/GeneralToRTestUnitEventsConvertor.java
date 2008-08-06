@@ -227,10 +227,10 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
     });
   }
 
-  public void onTestsCount(final int count) {
+  public void onTestsCountInSuite(final int count) {
     addToInvokeLater(new Runnable() {
       public void run() {
-        fireOnTestsCount(count);
+        fireOnTestsCountInSuite(count);
       }
     });
   }
@@ -288,9 +288,9 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
     }
   }
 
-  private void fireOnTestsCount(final int count) {
+  private void fireOnTestsCountInSuite(final int count) {
     for (RTestUnitEventsListener listener : myEventsListeners) {
-      listener.onTestsCount(count);
+      listener.onTestsCountInSuite(count);
     }
   }
 

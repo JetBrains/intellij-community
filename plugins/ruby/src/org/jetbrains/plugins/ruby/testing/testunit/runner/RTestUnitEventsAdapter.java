@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 public class RTestUnitEventsAdapter implements RTestUnitEventsListener {
   public void onTestingStarted(){}
   public void onTestingFinished(){}
-  public void onTestsCount(final int count) {}
+  public void onTestsCountInSuite(final int count) {}
 
   public void onTestStarted(@NotNull final RTestUnitTestProxy test) {}
   public void onTestFinished(@NotNull final RTestUnitTestProxy test) {}

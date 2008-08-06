@@ -68,15 +68,18 @@ public class RTestUnitResultsFormTest extends BaseRUnitTestsTestCase {
     assertEquals(1, myResultsViewer.getTestsCurrentCount());
   }
 
-  public void testOnTestsCount() {
-    myResultsViewer.onTestsCount(200);
+  public void testOnTestsCountInSuite() {
+    myResultsViewer.onTestsCountInSuite(200);
 
     assertEquals(0, myResultsViewer.getTestsCurrentCount());
     assertEquals(200, myResultsViewer.getTestsTotal());
+
+    myResultsViewer.onTestsCountInSuite(50);
+    assertEquals(250, myResultsViewer.getTestsTotal());
   }
 
   public void testOnTestStart_ChangeTotal() {
-    myResultsViewer.onTestsCount(2);
+    myResultsViewer.onTestsCountInSuite(2);
 
     myResultsViewer.onTestStarted(createTestProxy("some_test1", myTestsRootNode));
     assertEquals(2, myResultsViewer.getTestsTotal());
@@ -86,6 +89,14 @@ public class RTestUnitResultsFormTest extends BaseRUnitTestsTestCase {
     assertEquals(3, myResultsViewer.getTestsTotal());
     myResultsViewer.onTestStarted(createTestProxy("some_test4", myTestsRootNode));
     assertEquals(4, myResultsViewer.getTestsTotal());
+
+    myResultsViewer.onTestsCountInSuite(2);
+    myResultsViewer.onTestStarted(createTestProxy("another_test1", myTestsRootNode));
+    assertEquals(6, myResultsViewer.getTestsTotal());
+    myResultsViewer.onTestStarted(createTestProxy("another_test2", myTestsRootNode));
+    assertEquals(6, myResultsViewer.getTestsTotal());
+    myResultsViewer.onTestStarted(createTestProxy("another_test3", myTestsRootNode));
+    assertEquals(7, myResultsViewer.getTestsTotal());
   }
 
   public void testOnFinishTesting_EndTime() {
