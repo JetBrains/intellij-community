@@ -1,5 +1,6 @@
 package com.intellij.diagnostic;
 
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -46,7 +47,8 @@ public class PerformanceWatcher implements ApplicationComponent {
 
     deleteOldThreadDumps();
 
-    myLogDir = new File(PathManager.getSystemPath() + "/log/threadDumps-" + myDateFormat.format(new Date()));
+    myLogDir = new File(PathManager.getSystemPath() + "/log/threadDumps-" + myDateFormat.format(new Date())
+                        + "-" + ApplicationInfo.getInstance().getBuildNumber());
     myLogDir.mkdirs();
     myCurHangLogDir = myLogDir;
     myThreadMXBean = ManagementFactory.getThreadMXBean();
