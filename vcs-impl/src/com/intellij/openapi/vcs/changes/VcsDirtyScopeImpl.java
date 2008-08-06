@@ -195,7 +195,6 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
                     if (path.isUnder(filePath, false)) return Boolean.TRUE;
                   }
                 }
-                break;
               }
             }
           }
