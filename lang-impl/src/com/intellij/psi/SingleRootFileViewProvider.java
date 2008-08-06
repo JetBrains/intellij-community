@@ -3,7 +3,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -12,7 +11,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -88,14 +90,8 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     if (fileType instanceof LanguageFileType) {
       return LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), file, project);
     }
-    else if (fileType instanceof AbstractFileType ||
-             fileType == StdFileTypes.GUI_DESIGNER_FORM ||
-             fileType == StdFileTypes.IDEA_MODULE ||
-             fileType == StdFileTypes.IDEA_PROJECT ||
-             fileType == StdFileTypes.IDEA_WORKSPACE) {
-      return PlainTextLanguage.INSTANCE;
-    }
-    return Language.ANY;
+
+    return PlainTextLanguage.INSTANCE;
   }
 
   @NotNull
