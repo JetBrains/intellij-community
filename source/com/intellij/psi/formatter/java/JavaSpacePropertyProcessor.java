@@ -1311,7 +1311,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
 
   @Override public void visitParameter(PsiParameter parameter) {
-    if (myRole1 == ChildRole.TYPE) {
+    if (myRole1 == ChildRole.TYPE || (myRole1 == ChildRole.MODIFIER_LIST)) {
       createSpaceInCode(true);
     }
   }
