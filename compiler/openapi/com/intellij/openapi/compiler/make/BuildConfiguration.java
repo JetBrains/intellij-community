@@ -33,8 +33,6 @@ public abstract class BuildConfiguration {
 
   public abstract boolean isExplodedEnabled();
 
-  public abstract boolean isBuildExternalDependencies();
-
   public boolean willBuildExploded() {
     return isExplodedEnabled() && getExplodedPath() != null;
   }

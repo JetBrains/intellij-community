@@ -256,17 +256,6 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
   }
 
-  public static boolean containsExternalDependencyInstruction(@NotNull PackagingConfiguration packagingConfiguration) {
-    final ContainerElement[] elements = packagingConfiguration.getElements();
-    for (ContainerElement element : elements) {
-      if (element.getPackagingMethod() == PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST
-          || element.getPackagingMethod() == PackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private static String getRelativePathForManifestLinking(String relativePath) {
     if (!StringUtil.startsWithChar(relativePath, '/')) relativePath = '/' + relativePath;
     relativePath = ".." + relativePath;

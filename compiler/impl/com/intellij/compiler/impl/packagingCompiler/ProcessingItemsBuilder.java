@@ -70,7 +70,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
   private void buildItems(final BuildRecipe instructions) {
     instructions.visitInstructions(this, false);
 
-    if (myBuildConfiguration.willBuildExploded() && (myBuildConfiguration.isBuildExternalDependencies() || myOutputPaths.peek().length() > 0)) {
+    if (myBuildConfiguration.willBuildExploded()) {
       List<String> classpath = DeploymentUtilImpl.getExternalDependenciesClasspath(instructions);
       if (!classpath.isEmpty()) {
         String outputRoot = DeploymentUtilImpl.getOrCreateExplodedDir(myBuildParticipant);
@@ -81,8 +81,6 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
   }
 
   public boolean visitFileCopyInstruction(final FileCopyInstruction instruction) throws Exception {
-    if (isSkippedExternalDependency(instruction)) return true;
-
     final String output = myOutputPaths.peek();
     final VirtualFile sourceFile = myLocalFileSystem.findFileByIoFile(instruction.getFile());
     if (sourceFile == null) return true;
@@ -162,13 +160,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
     addItemsToExplodedRecursively(sourceFile, fullOutputPath, outputFile, fileFilter);
   }
 
-  private boolean isSkippedExternalDependency(final BuildInstruction instruction) {
-    return instruction.isExternalDependencyInstruction() && myOutputPaths.peek().length() == 0
-           && !myBuildConfiguration.isBuildExternalDependencies();
-  }
-
   public boolean visitJarAndCopyBuildInstruction(final JarAndCopyBuildInstruction instruction) throws Exception {
-    if (isSkippedExternalDependency(instruction)) return true;
     final VirtualFile sourceFile = myLocalFileSystem.findFileByIoFile(instruction.getFile());
     if (sourceFile == null) return true;
 
