@@ -95,6 +95,10 @@ class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements L
       return name;
     }
     else {
+      if (myLibrary instanceof LibraryEx && ((LibraryEx)myLibrary).isDisposed()) {
+        return "<unknown>";
+      }
+
       final String[] urls = myLibrary.getUrls(OrderRootType.CLASSES);
       if (urls.length > 0) {
         String url = urls[0];
