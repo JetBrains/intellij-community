@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -39,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
+import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,6 +64,7 @@ public class GroovyPsiManager implements ProjectComponent {
 
   private final ConcurrentWeakHashMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
   private boolean myRebuildGdkPending = true;
+  private GroovyShortNamesCache myCache;
 
   public TypeInferenceHelper getTypeInferenceHelper() {
     return myTypeInferenceHelper;
@@ -90,6 +93,14 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   public void initComponent() {
+    myCache = new GroovyShortNamesCache(myProject);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        JavaPsiFacade.getInstance(myProject).registerShortNamesCache(getNamesCache());
+      }
+    });
+
+
     ((PsiManagerEx) PsiManager.getInstance(myProject)).registerRunnableToRunOnAnyChange(new Runnable() {
       public void run() {
         dropTypesCache();
@@ -154,88 +165,88 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   private static final String[] SWING_WIDGETS_METHODS = {
-      "action", "groovy.swing.impl.DefaultAction",
-      "actions", "java.util.List",
-      "map", "java.util.Map",
-      "buttonGroup", "javax.swing.ButtonGroup",
-      "bind", "org.codehaus.groovy.binding.BindingUpdatable",
-      "model", "org.codehaus.groovy.binding.ModelBinding",
-      "widget", "java.awt.Component",
-      "container", "java.awt.Container",
-      "bean", "java.lang.Object",
-      "dialog", "javax.swing.JDialog",
-      "fileChooser", "javax.swing.JFileChooser",
-      "frame", "javax.swing.JFrame",
-      "optionPane", "javax.swing.JOptionPane",
-      "window", "javax.swing.JWindow",
-      "button", "javax.swing.JButton",
-      "checkBox", "javax.swing.JCheckBox",
-      "checkBoxMenuItem", "javax.swing.JCheckBoxMenuItem",
-      "menuItem", "javax.swing.JMenuItem",
-      "radioButton", "javax.swing.JRadioButton",
-      "radioButtonMenuItem", "javax.swing.JRadioButtonMenuItem",
-      "toggleButton", "javax.swing.JToggleButton",
+          "action", "groovy.swing.impl.DefaultAction",
+          "actions", "java.util.List",
+          "map", "java.util.Map",
+          "buttonGroup", "javax.swing.ButtonGroup",
+          "bind", "org.codehaus.groovy.binding.BindingUpdatable",
+          "model", "org.codehaus.groovy.binding.ModelBinding",
+          "widget", "java.awt.Component",
+          "container", "java.awt.Container",
+          "bean", "java.lang.Object",
+          "dialog", "javax.swing.JDialog",
+          "fileChooser", "javax.swing.JFileChooser",
+          "frame", "javax.swing.JFrame",
+          "optionPane", "javax.swing.JOptionPane",
+          "window", "javax.swing.JWindow",
+          "button", "javax.swing.JButton",
+          "checkBox", "javax.swing.JCheckBox",
+          "checkBoxMenuItem", "javax.swing.JCheckBoxMenuItem",
+          "menuItem", "javax.swing.JMenuItem",
+          "radioButton", "javax.swing.JRadioButton",
+          "radioButtonMenuItem", "javax.swing.JRadioButtonMenuItem",
+          "toggleButton", "javax.swing.JToggleButton",
 
-      "editorPane", "javax.swing.JEditorPane",
-      "label", "javax.swing.JLabel",
-      "passwordField", "javax.swing.JPasswordField",
-      "textArea", "javax.swing.JTextArea",
-      "textField", "javax.swing.JTextField",
-      "textPane", "javax.swing.JTextPane",
+          "editorPane", "javax.swing.JEditorPane",
+          "label", "javax.swing.JLabel",
+          "passwordField", "javax.swing.JPasswordField",
+          "textArea", "javax.swing.JTextArea",
+          "textField", "javax.swing.JTextField",
+          "textPane", "javax.swing.JTextPane",
 
-      "colorChooser", "javax.swing.JColorChooser",
-      "comboBox", "javax.swing.JComboBox",
-      "desktopPane", "javax.swing.JDesktopPane",
-      "formattedTextField", "javax.swing.JFormattedTextField",
-      "internalFrame", "javax.swing.JInternalFrame",
-      "layeredPane", "javax.swing.JLayeredPane",
-      "list", "javax.swing.JList",
-      "menu", "javax.swing.JMenu",
-      "menuBar", "javax.swing.JMenuBar",
-      "panel", "javax.swing.JPanel",
-      "popupMenum", "javax.swing.JPopupMenu",
-      "progressBar", "javax.swing.JProgressBar",
-      "scrollBar", "javax.swing.JScrollBar",
-      "scrollPane", "javax.swing.JScrollPane",
-      "separator", "javax.swing.JSeparator",
-      "slider", "javax.swing.JSlider",
-      "spinner", "javax.swing.JSpinner",
-      "splitPane", "javax.swing.JSplitPane",
-      "tabbedPane", "javax.swing.JTabbedPane",
-      "table", "javax.swing.JTable",
-      "tableColumn", "javax.swing.table.TableColumn",
-      "toolbar", "javax.swing.JToolbar",
-      "tree", "javax.swing.JTree",
-      "viewport", "javax.swing.JViewport",
-      "boundedRangeModel", "javax.swing.DefaultBoundedRangeModel",
-      "spinnerDateModel", "javax.swing.SpinnerDateModel",
-      "spinnerListModel", "javax.swing.SpinnerListModel",
-      "spinnerNumberModel", "javax.swing.SpinnerNumberModel",
-      "tableModel", "javax.swing.table.TableModel",
-      "propertyColumn", "javax.swing.table.TableColumn",
-      "closureColumn", "javax.swing.table.TableColumn",
-      "borderLayout", "java.awt.BorderLayout",
-      "cardLayout", "java.awt.CardLayout",
-      "flowLayout", "java.awt.FlowLayout",
-      "gridBagLayout", "java.awt.GridBagLayout",
-      "gridLayout", "java.awt.GridLayout",
-      "overlayLayout", "java.swing.OverlayLayout",
-      "springLayout", "java.swing.SpringLayout",
-      "gridBagConstraints", "java.awt.GridBagConstraints",
-      "gbc", "java.awt.GridBagConstraints",
-      "boxLayout", "javax.swing.BoxLayout",
-      "box", "javax.swing.Box",
-      "hbox", "javax.swing.Box",
-      "hglue", "java.awt.Component",
-      "hstrut", "java.awt.Component",
-      "vbox", "javax.swing.Box",
-      "vglue", "java.awt.Component",
-      "vstrut", "java.awt.Component",
-      "glue", "java.awt.Component",
-      "rigidArea", "java.awt.Component",
-      "tableLayout", "groovy.swing.impl.TableLayoutRow",
-      "tr", "groovy.swing.impl.TableLayoutRow",
-      "td", "groovy.swing.impl.TableLayoutCell",
+          "colorChooser", "javax.swing.JColorChooser",
+          "comboBox", "javax.swing.JComboBox",
+          "desktopPane", "javax.swing.JDesktopPane",
+          "formattedTextField", "javax.swing.JFormattedTextField",
+          "internalFrame", "javax.swing.JInternalFrame",
+          "layeredPane", "javax.swing.JLayeredPane",
+          "list", "javax.swing.JList",
+          "menu", "javax.swing.JMenu",
+          "menuBar", "javax.swing.JMenuBar",
+          "panel", "javax.swing.JPanel",
+          "popupMenum", "javax.swing.JPopupMenu",
+          "progressBar", "javax.swing.JProgressBar",
+          "scrollBar", "javax.swing.JScrollBar",
+          "scrollPane", "javax.swing.JScrollPane",
+          "separator", "javax.swing.JSeparator",
+          "slider", "javax.swing.JSlider",
+          "spinner", "javax.swing.JSpinner",
+          "splitPane", "javax.swing.JSplitPane",
+          "tabbedPane", "javax.swing.JTabbedPane",
+          "table", "javax.swing.JTable",
+          "tableColumn", "javax.swing.table.TableColumn",
+          "toolbar", "javax.swing.JToolbar",
+          "tree", "javax.swing.JTree",
+          "viewport", "javax.swing.JViewport",
+          "boundedRangeModel", "javax.swing.DefaultBoundedRangeModel",
+          "spinnerDateModel", "javax.swing.SpinnerDateModel",
+          "spinnerListModel", "javax.swing.SpinnerListModel",
+          "spinnerNumberModel", "javax.swing.SpinnerNumberModel",
+          "tableModel", "javax.swing.table.TableModel",
+          "propertyColumn", "javax.swing.table.TableColumn",
+          "closureColumn", "javax.swing.table.TableColumn",
+          "borderLayout", "java.awt.BorderLayout",
+          "cardLayout", "java.awt.CardLayout",
+          "flowLayout", "java.awt.FlowLayout",
+          "gridBagLayout", "java.awt.GridBagLayout",
+          "gridLayout", "java.awt.GridLayout",
+          "overlayLayout", "java.swing.OverlayLayout",
+          "springLayout", "java.swing.SpringLayout",
+          "gridBagConstraints", "java.awt.GridBagConstraints",
+          "gbc", "java.awt.GridBagConstraints",
+          "boxLayout", "javax.swing.BoxLayout",
+          "box", "javax.swing.Box",
+          "hbox", "javax.swing.Box",
+          "hglue", "java.awt.Component",
+          "hstrut", "java.awt.Component",
+          "vbox", "javax.swing.Box",
+          "vglue", "java.awt.Component",
+          "vstrut", "java.awt.Component",
+          "glue", "java.awt.Component",
+          "rigidArea", "java.awt.Component",
+          "tableLayout", "groovy.swing.impl.TableLayoutRow",
+          "tr", "groovy.swing.impl.TableLayoutRow",
+          "td", "groovy.swing.impl.TableLayoutCell",
   };
 
   private void addSwingBuilderMethods() {
@@ -340,5 +351,9 @@ public class GroovyPsiManager implements ProjectComponent {
 
   public boolean isTypeBeingInferred(PsiElement element) {
     return myElementsWithTypesBeingInferred.get().contains(element);
+  }
+
+  public GroovyShortNamesCache getNamesCache() {
+    return myCache;
   }
 }

@@ -35,6 +35,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -46,13 +47,12 @@ import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLoader;
-import org.jetbrains.plugins.groovy.caches.project.GroovyCachesManager;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex;
 
 import java.util.*;
 
@@ -104,7 +104,7 @@ public class GroovyPositionManager implements PositionManager {
     String qName = null;
     if (sourceImage instanceof GrTypeDefinition) {
       qName = ((GrTypeDefinition) sourceImage).getQualifiedName();
-    } else if (sourceImage == null){
+    } else if (sourceImage == null) {
       qName = getScriptQualifiedName(position);
     }
 
@@ -185,9 +185,8 @@ public class GroovyPositionManager implements PositionManager {
     int dollar = originalQName.indexOf('$');
     final String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
     final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
-
-    PsiClass clazz = GroovyCachesManager.getInstance(project).getClassByName(qName, searchScope);
-//    Collection<PsiClass> classes = GrFullClassNameIndex.getInstance().get(qName.hashCode(), project, searchScope);
+    Collection<PsiClass> classes = StubIndex.getInstance().get(GrFullClassNameIndex.KEY, qName.hashCode(), project, searchScope);
+    PsiClass clazz = classes.size() == 1 ? classes.iterator().next() : null;
     if (clazz != null) return clazz.getContainingFile();
 
     DirectoryIndex directoryIndex = DirectoryIndex.getInstance(project);
@@ -199,7 +198,6 @@ public class GroovyPositionManager implements PositionManager {
     for (final String extention : GroovyLoader.GROOVY_EXTENSIONS) {
       fileNames.add(fileNameWithoutExtension + "." + extention);
     }
-
     final Ref<PsiFile> result = new Ref<PsiFile>();
     query.forEach(new Processor<VirtualFile>() {
       public boolean process(VirtualFile vDir) {
@@ -236,7 +234,8 @@ public class GroovyPositionManager implements PositionManager {
         } else {
           final GrTypeDefinition typeDefinition = findEnclosingTypeDefinition(position);
           String enclosingName;
-          if (typeDefinition != null) enclosingName = typeDefinition.getQualifiedName(); else enclosingName = scriptName;
+          if (typeDefinition != null) enclosingName = typeDefinition.getQualifiedName();
+          else enclosingName = scriptName;
           if (enclosingName == null) return Collections.emptyList();
 
           final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(enclosingName);

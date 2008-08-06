@@ -57,6 +57,7 @@
     <codeInsight.parameterInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
     <refactoring.inlineHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler"/>
     <lookup.charFilter language="Groovy" implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
+    <completion.contributor implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyCompetionContributor"/>
 
     <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
 

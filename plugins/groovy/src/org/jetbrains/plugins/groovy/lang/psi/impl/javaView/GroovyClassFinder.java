@@ -22,8 +22,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.caches.project.GroovyCachesManager;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,12 +41,12 @@ public class GroovyClassFinder implements ProjectComponent, PsiElementFinder {
 
   @Nullable
   public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    return GroovyCachesManager.getInstance(myProject).getClassByName(qualifiedName, scope);
+    return GroovyPsiManager.getInstance(myProject).getNamesCache().getClassByFQName(qualifiedName, scope);
   }
 
   @NotNull
   public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    return GroovyCachesManager.getInstance(myProject).getClassesByName(qualifiedName, scope);
+    return GroovyPsiManager.getInstance(myProject).getNamesCache().getClassesByFQName(qualifiedName, scope);
   }
 
   @Nullable
