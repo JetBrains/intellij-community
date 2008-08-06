@@ -143,7 +143,6 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
   protected static class MockBuildConfiguration extends BuildConfiguration {
     private boolean myJarEnabled;
     private boolean myExplodedEnabled;
-    private boolean myBuildExternalDependencies;
     private final String myExplodedPath;
     private final String myJarPath;
 
@@ -157,7 +156,6 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
       myJarPath = jarPath;
       myJarEnabled = jarEnabled;
       myExplodedEnabled = explodedEnabled;
-      myBuildExternalDependencies = buildExternalDependencies;
     }
 
     @NonNls
@@ -183,9 +181,6 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
       return myExplodedEnabled;
     }
 
-    public boolean isBuildExternalDependencies() {
-      return myBuildExternalDependencies;
-    }
   }
 
   protected class BuildRecipeInfo {

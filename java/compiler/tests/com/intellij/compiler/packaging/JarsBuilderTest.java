@@ -108,7 +108,7 @@ public class JarsBuilderTest extends IncrementalPackagingTestCase {
       if (mySources.containsKey(fromPath)) {
         fromPath = mySources.get(fromPath);
       }
-      myOutput.add(fromPath + " -> " + toFile.getPath());
+      myOutput.add(FileUtil.toSystemIndependentName(fromPath) + " -> " + FileUtil.toSystemIndependentName(toFile.getPath()));
     }
 
     protected JarOutputStream createJarOutputStream(final File jarFile, final Manifest manifest) throws IOException {
@@ -130,7 +130,8 @@ public class JarsBuilderTest extends IncrementalPackagingTestCase {
 
     protected void addFileToJar(final JarOutputStream jarOutputStream, final File file, final String relativePath,
                                 final THashSet<String> writtenPaths) throws IOException {
-      myOutput.add(file.getPath() + " -> " + relativePath + " in " + myCurrentJar);
+      myOutput.add(FileUtil.toSystemIndependentName(file.getPath()) + " -> " + FileUtil.toSystemIndependentName(relativePath) +
+                   " in " + FileUtil.toSystemIndependentName(myCurrentJar));
     }
 
     private String getOutput() {

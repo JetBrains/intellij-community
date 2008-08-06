@@ -58,17 +58,11 @@ public class ProcessingItemsBuilderTest extends IncrementalPackagingTestCase {
   }
 
   public void testJarFileToParent() throws Exception {
-    doTest(true, true, false, start()
+    doTest(new MockBuildConfiguration(true, true, true, "/out/exploded", "/out2/my.jar"), start()
       .jar("dir", "../a.jar", "a.jsp")
       .copy("b.jsp", "b.jsp"));
   }
 
-  public void testJarFileToParentExternal() throws Exception {
-    doTest(new MockBuildConfiguration(true, true, true, "/out/exploded", "/out2/my.jar"), start()
-      .jar("dir", "../a.jar", "a.jsp"));
-  }
-
-  
   public void testCopyDirToEar() throws Exception {
     doTest(true, true, false, start()
       .copy("a.jsp", "/a.jsp")
