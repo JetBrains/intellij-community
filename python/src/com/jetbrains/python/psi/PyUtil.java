@@ -194,7 +194,9 @@ public class PyUtil {
     return node != null && node.getElementType().equals(TokenType.WHITE_SPACE);
   }
 
-
+  /**
+   * @see com.jetbrains.python.psi.PyUtil#flattenedParens(T[]) 
+   */
   protected static <T extends PyElement> List<T> _unfoldParenExprs(T[] targets, List<T> receiver) {
     // NOTE: this proliferation of instanceofs is not very beautiful. Maybe rewrite using a visitor.
     for (T exp : targets) {
@@ -207,7 +209,13 @@ public class PyUtil {
         }
         else receiver.add(exp);
       }
-      else receiver.add(exp);
+      else if (exp instanceof PyTupleExpression) {
+        final PyTupleExpression tupex = (PyTupleExpression)exp;
+        _unfoldParenExprs((T[])tupex.getElements(), receiver);
+      }
+      else {
+        receiver.add(exp);
+      }
     }
     return receiver;
   }

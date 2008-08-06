@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -22,8 +23,8 @@ import java.util.List;
 public class ResolveImportUtil {
   
   /** Name of the __init__.py special file. */
-  public static final String INIT_PY = "__init__.py"; 
-  public static final String PY_SUFFIX = ".py"; 
+  @NonNls public static final String INIT_PY = "__init__.py";
+  @NonNls public static final String PY_SUFFIX = ".py"; 
   
   private ResolveImportUtil() {
   }

@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -181,6 +182,7 @@ public class PythonSdkType extends SdkType {
   }
 
   
+  @NonNls
   public String getPresentableName() {
     return "Python SDK";
   }
@@ -190,10 +192,10 @@ public class PythonSdkType extends SdkType {
     final SdkModificator sdkModificator = sdk.getSdkModificator();
     String sdk_path = sdk.getHomePath();
     String bin_path = getInterpreterPath(sdk_path);
-    final String stubs_path =
+    @NonNls final String stubs_path =
         PathManager.getSystemPath() + File.separator + "python_stubs" + File.separator + sdk_path.hashCode() + File.separator;
     // we have a number of lib dirs, those listed in python's sys.path
-    String script = // a script printing sys.path
+    @NonNls String script = // a script printing sys.path
       "import sys\n"+
       "for x in sys.path:\n"+
       "  sys.stdout.write(x+chr(10))"
@@ -202,12 +204,19 @@ public class PythonSdkType extends SdkType {
     if ((paths != null) && paths.size() > 0) {
       // add every path as root.
       for (String path: paths) {
-        if (path.indexOf(File.separator) < 0) continue; // TODO: interpret 'special' paths reasonably
+        if (path.indexOf(File.separator) < 0) continue; // TODO: interpret possible 'special' paths reasonably
         VirtualFile child = LocalFileSystem.getInstance().findFileByPath(path);
         if (child != null) {
-          // NOTE: maybe handle .zip / .egg files specially?
-          sdkModificator.addRoot(child, OrderRootType.SOURCES);
-          sdkModificator.addRoot(child, OrderRootType.CLASSES);
+          @NonNls String suffix = child.getExtension();
+          if (suffix != null) suffix = suffix.toLowerCase(); // Why on earth empty suffix is null and not ""?
+          if ((!child.isDirectory()) && ("zip".equals(suffix) || "egg".equals(suffix))) {
+            // a .zip / .egg file must have its root extracted first
+            child = JarFileSystem.getInstance().getJarRootForLocalFile(child);
+          }
+          if (child != null) {
+            sdkModificator.addRoot(child, OrderRootType.SOURCES);
+            sdkModificator.addRoot(child, OrderRootType.CLASSES);
+          }
         }
         else LOG.info("Bogus sys.path entry "+path);
       }

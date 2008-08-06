@@ -135,7 +135,10 @@ public class PyResolveUtil {
       // maybe we're under cap
       while (true) {
         PsiElement local_cap = getConcealingParent(seeker);
-        if ((local_cap != null) && (local_cap != cap)) { // only look at local cap and above
+        if (
+            (local_cap != null) && (local_cap != cap) && // elt and seeker are under different caps and...
+            ((cap == null) || !PsiTreeUtil.isAncestor(local_cap, cap, true)) // elt's cap is not under local cap 
+        ) { // only look at local cap and above
           if (local_cap instanceof NameDefiner) seeker = local_cap;
           else seeker = getPrevNodeOf(local_cap, NameDefiner.class);
         }
