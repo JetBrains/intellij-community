@@ -195,22 +195,26 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
                                                    final GlobalSearchScope globalSearchScope,
                                                    final LocalSearchScope filterScope) {
 
-    GlobalSearchScope scope = GlobalSearchScope.projectScope(property.getProject()).intersectWith(globalSearchScope);
-    PsiManagerImpl manager = (PsiManagerImpl)property.getManager();
+    final GlobalSearchScope scope = GlobalSearchScope.projectScope(property.getProject()).intersectWith(globalSearchScope);
+    final PsiManagerImpl manager = (PsiManagerImpl)property.getManager();
     String name = property.getName();
     if (name == null) return true;
 
     manager.startBatchFilesProcessingMode();
 
     try {
-      List<String> words = StringUtil.getWordsIn(name);
+      final List<String> words = StringUtil.getWordsIn(name);
       if(words.isEmpty()) return true;
 
-      Set<PsiFile> fileSet = new HashSet<PsiFile>();
-      fileSet.addAll(Arrays.asList(manager.getCacheManager().getFilesWithWord(words.get(0), UsageSearchContext.IN_PLAIN_TEXT, scope, true)));
-      for (int i = 1; i < words.size(); i++) {
-        fileSet.retainAll(Arrays.asList(manager.getCacheManager().getFilesWithWord(words.get(i), UsageSearchContext.IN_PLAIN_TEXT, scope, true)));
-      }
+      final Set<PsiFile> fileSet = new HashSet<PsiFile>();
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          fileSet.addAll(Arrays.asList(manager.getCacheManager().getFilesWithWord(words.get(0), UsageSearchContext.IN_PLAIN_TEXT, scope, true)));
+          for (int i = 1; i < words.size(); i++) {
+            fileSet.retainAll(Arrays.asList(manager.getCacheManager().getFilesWithWord(words.get(i), UsageSearchContext.IN_PLAIN_TEXT, scope, true)));
+          }
+        }
+      });
       PsiFile[] files = fileSet.toArray(new PsiFile[fileSet.size()]);
 
       for (PsiFile file : files) {
