@@ -27,9 +27,19 @@ public class FileElement {
   private final String myName;
   private Boolean myIsHidden;
 
+  private FileElement myParent;
+
   public FileElement(VirtualFile file, String name) {
     myFile = file;
     myName = name;
+  }
+
+  public void setParent(final FileElement parent) {
+    myParent = parent;
+  }
+
+  public FileElement getParent() {
+    return myParent;
   }
 
   public int hashCode() {

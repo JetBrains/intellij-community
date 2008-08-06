@@ -99,7 +99,9 @@ public class FileTreeStructure extends AbstractTreeStructure {
     HashSet<FileElement> childrenSet = new HashSet<FileElement>();
     for (VirtualFile child : children) {
       if (myChooserDescriptor.isFileVisible(child, myShownHiddens)) {
-        childrenSet.add(new FileElement(child, child.getName()));
+        final FileElement childElement = new FileElement(child, child.getName());
+        childElement.setParent(element);
+        childrenSet.add(childElement);
       }
     }
     return childrenSet.toArray(new Object[childrenSet.size()]);
@@ -109,7 +111,22 @@ public class FileTreeStructure extends AbstractTreeStructure {
   @Nullable
   public Object getParentElement(Object element) {
     if (element instanceof FileElement) {
-      VirtualFile file = ((FileElement) element).getFile();
+
+      final FileElement fileElement = (FileElement)element;
+
+      final VirtualFile elementFile = getValidFile(fileElement);
+      if (elementFile != null && myRootElement.getFile() != null && myRootElement.getFile().equals(elementFile)) {
+        return null;
+      }
+
+      final VirtualFile parentElementFile = getValidFile(fileElement.getParent());
+
+      if (elementFile != null && parentElementFile != null) {
+        final VirtualFile parentFile = elementFile.getParent();
+        if (parentElementFile.equals(parentFile)) return fileElement.getParent();
+      }
+
+      VirtualFile file = fileElement.getFile();
       if (file == null) return null;
       VirtualFile parent = file.getParent();
       if (parent != null && parent.getFileSystem() instanceof JarFileSystem && parent.getParent() == null) {
@@ -118,12 +135,24 @@ public class FileTreeStructure extends AbstractTreeStructure {
                                                       parent.getPath().length() - JarFileSystem.JAR_SEPARATOR.length());
         parent = LocalFileSystem.getInstance().findFileByPath(localPath);
       }
+
+      if (parent != null && parent.isValid() && parent.equals(myRootElement.getFile())) {
+        return myRootElement;                       
+      }
+
       if (parent == null) {
         return myRootElement;
       }
       return new FileElement(parent, parent.getName());
     }
     return null;
+  }
+
+  @Nullable
+  private VirtualFile getValidFile(FileElement element) {
+    if (element == null) return null;
+    final VirtualFile file = element.getFile();
+    return file != null && file.isValid() ? file : null;
   }
 
   public final void commit() {

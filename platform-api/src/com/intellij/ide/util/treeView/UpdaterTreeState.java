@@ -1,5 +1,9 @@
 package com.intellij.ide.util.treeView;
 
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.Function;
+
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -9,8 +13,12 @@ public class UpdaterTreeState {
 
   private AbstractTreeUi myUi;
   protected WeakHashMap<Object, Object> myToSelect = new WeakHashMap<Object, Object>();
+  protected WeakHashMap<Object, Condition> myAdjustedSelection = new WeakHashMap<Object, Condition>();
+  protected WeakHashMap<Object, Object> myDisposedElements = new WeakHashMap<Object, Object>();
   protected WeakHashMap<Object, Object> myToExpand = new WeakHashMap<Object, Object>();
   private boolean myProcessingNow;
+
+  private boolean myCanRunRestore = true;
 
   public UpdaterTreeState(AbstractTreeUi ui) {
     myUi = ui;
@@ -91,7 +99,7 @@ public class UpdaterTreeState {
   }
 
   public boolean isEmpty() {
-    return myToExpand.isEmpty() && myToSelect.isEmpty();
+    return myToExpand.isEmpty() && myToSelect.isEmpty() && myAdjustedSelection.isEmpty();
   }
 
 
@@ -102,27 +110,107 @@ public class UpdaterTreeState {
   public void addAll(final UpdaterTreeState state) {
     myToExpand.putAll(state.myToExpand);
     myToSelect.putAll(state.myToSelect);
+    myCanRunRestore = state.myCanRunRestore;
   }
 
-  public void restore() {
+  public boolean restore() {
+    if (isProcessingNow() || !myCanRunRestore) return false;
+
+    myProcessingNow = true;
+
     final Object[] toSelect = getToSelect();
     final Object[] toExpand = getToExpand();
 
-    clearExpansion();
-    clearSelection();
 
-    final Runnable expandRunnable = new Runnable() {
+    final Map<Object, Condition> adjusted = new WeakHashMap<Object, Condition>();
+    adjusted.putAll(myAdjustedSelection);
+
+    clearSelection();
+    clearExpansion();
+
+    myUi._select(toSelect, new Runnable() {
       public void run() {
-        for (Object each : toExpand) {
-          myUi.expand(each, null, true);
-        }
+        processUnsuccessfulSelections(toSelect, new Function<Object, Object>() {
+          public Object fun(final Object o) {
+            addSelection(o);
+            return o;
+          }
+        });
+
+        processAjusted(adjusted).doWhenDone(new Runnable() {
+          public void run() {
+            myUi.expand(toExpand, new Runnable() {
+              public void run() {
+                if (!isEmpty()) {
+                  myCanRunRestore = false;
+                  myUi.setUpdaterState(UpdaterTreeState.this);
+                }
+                myProcessingNow = false;
+              }
+            }, true);
+          }
+        });
       }
-    };
-    if (toSelect.length > 0) {
-      myUi._select(toSelect, expandRunnable, false, true, true);
-    } else {
-      expandRunnable.run();
+    }, false, true, true);
+
+    return true;
+  }
+
+  void beforeSubtreeUpdate() {
+    myCanRunRestore = true;
+  }
+
+  private void processUnsuccessfulSelections(final Object[] toSelect, Function<Object, Object> restore) {
+    final Set<Object> selected = myUi.getSelectedElements();
+    for (Object eachToSelect : toSelect) {
+      if (!selected.contains(eachToSelect)) {
+        restore.fun(eachToSelect);
+      }
     }
+  }
+
+  private ActionCallback processAjusted(final Map<Object, Condition> adjusted) {
+    final ActionCallback result = new ActionCallback();
+
+    final Set<Object> allSelected = myUi.getSelectedElements();
+    Set<Object> toSelect = new HashSet<Object>();
+    for (Object each : adjusted.keySet()) {
+      if (adjusted.get(each).value(each)) continue;
+
+      for (final Object eachSelected : allSelected) {
+        if (isParentOrSame(each, eachSelected)) continue;
+        toSelect.add(each);
+      }
+      if (allSelected.size() == 0) {
+        toSelect.add(each);
+      }
+    }
+
+    final Object[] newSelection = toSelect.toArray(new Object[toSelect.size()]);
+
+    myUi._select(newSelection, new Runnable() {
+      public void run() {
+        processUnsuccessfulSelections(newSelection, new Function<Object, Object>() {
+          public Object fun(final Object o) {
+            addAdjustedSelection(o, adjusted.get(o));
+            return null;
+          }
+        });
+        result.setDone();
+      }
+    }, true, true, true);
+
+    return result;
+  }
+
+  private boolean isParentOrSame(Object parent, Object child) {
+    Object eachParent = child;
+    while (eachParent != null) {
+      if (parent.equals(eachParent)) return true;
+      eachParent = myUi.getTreeStructure().getParentElement(eachParent);
+    }
+
+    return false;
   }
 
   public void clearExpansion() {
@@ -131,9 +219,15 @@ public class UpdaterTreeState {
 
   public void clearSelection() {
     myToSelect.clear();
+    myAdjustedSelection = new WeakHashMap<Object, Condition>();
   }
 
   public void addSelection(final Object element) {
     myToSelect.put(element, element);
   }
+
+  public void addAdjustedSelection(final Object element, Condition isExpired) {
+    myAdjustedSelection.put(element, isExpired);
+  }
+
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.ui.LoadingNode;
@@ -452,15 +453,20 @@ class AbstractTreeUi {
 
     if (!(node.getUserObject() instanceof NodeDescriptor)) return;
 
-    if (myUpdaterState == null) {
-      myUpdaterState = new UpdaterTreeState(this);
-    }
-    else {
-      myUpdaterState.addAll(new UpdaterTreeState(this));
-    }
+    setUpdaterState(new UpdaterTreeState(this)).beforeSubtreeUpdate();
 
     getBuilder().updateNode(node);
     updateNodeChildren(node);
+  }
+
+  UpdaterTreeState setUpdaterState(UpdaterTreeState state) {
+    if (myUpdaterState == null) {
+      myUpdaterState = state;
+    } else {
+      myUpdaterState.addAll(state);
+    }
+
+    return myUpdaterState;
   }
 
   protected void doUpdateNode(DefaultMutableTreeNode node) {
@@ -702,8 +708,8 @@ class AbstractTreeUi {
     return nodesToInsert;
   }
 
-  protected DefaultMutableTreeNode createChildNode(final NodeDescriptor childDescr) {
-    return new DefaultMutableTreeNode(childDescr);
+  protected DefaultMutableTreeNode createChildNode(final NodeDescriptor descriptor) {
+    return new DefaultMutableTreeNode(descriptor);
   }
 
   private boolean isUpdatingParent(DefaultMutableTreeNode kid) {
@@ -756,7 +762,7 @@ class AbstractTreeUi {
             TreeNode child = node.getChildAt(i);
             if (isLoadingNode(child)) {
               if (TreeBuilderUtil.isNodeSelected(myTree, node)) {
-                addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)));
+                addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)), true, Condition.FALSE);
               }
               removeNodeFromParent((MutableTreeNode)child);
               i--;
@@ -796,8 +802,9 @@ class AbstractTreeUi {
 
       if (myNodeActions.size() == 0 && myUpdaterState != null && !myUpdaterState.isProcessingNow()) {
         final UpdaterTreeState state = myUpdaterState;
-        clearUpdaterState();
-        state.restore();
+        if (!state.restore()) {
+          setUpdaterState(state);
+        }
       }
     }
   }
@@ -897,6 +904,8 @@ class AbstractTreeUi {
         }
       }
 
+      Object disposedElement = getElementFor(childNode);
+
       removeNodeFromParent(childNode);
       disposeNode(childNode);
 
@@ -904,15 +913,19 @@ class AbstractTreeUi {
         if (node.getChildCount() > 0) {
           if (node.getChildCount() > selectedIndex) {
             TreeNode newChildNode = node.getChildAt(selectedIndex);
-            addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChildNode)));
+            if (isValidForSelectionAdjusting(newChildNode)) {
+              addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChildNode)), true, getExpiredElementCondition(disposedElement));
+            }
           }
           else {
             TreeNode newChild = node.getChildAt(node.getChildCount() - 1);
-            addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChild)));
+            if (isValidForSelectionAdjusting(newChild)) {
+              addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChild)), true, getExpiredElementCondition(disposedElement));
+            }
           }
         }
         else {
-          addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)));
+          addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)), true, getExpiredElementCondition(disposedElement));
         }
       }
     }
@@ -926,7 +939,30 @@ class AbstractTreeUi {
     }
   }
 
-  private void addSelectionPath(final TreePath path) {
+  private boolean isValidForSelectionAdjusting(TreeNode node) {
+    if (isLoadingNode(node)) return true;
+
+    final Object elementInTree = getElementFor(node);
+    if (elementInTree == null) return false;
+
+    final TreeNode parentNode = node.getParent();
+    final Object parentElementInTree = getElementFor(parentNode);
+    if (parentElementInTree == null) return false;
+
+    final Object parentElement = getTreeStructure().getParentElement(elementInTree);
+
+    return parentElementInTree.equals(parentElement);
+  }
+
+  private Condition getExpiredElementCondition(final Object element) {
+    return new Condition() {
+      public boolean value(final Object o) {
+        return isInStructure(element);
+      }
+    };
+  }
+
+  private void addSelectionPath(final TreePath path, final boolean isAdjustedSelection, final Condition isExpiredAdjustement) {
     doWithUpdaterState(new Runnable() {
       public void run() {
         TreePath toSelect = null;
@@ -942,6 +978,11 @@ class AbstractTreeUi {
 
         if (toSelect != null) {
           myTree.addSelectionPath(toSelect);
+
+          if (isAdjustedSelection && myUpdaterState != null) {
+            final Object toSelectElement = getElementFor(toSelect.getLastPathComponent());
+            myUpdaterState.addAdjustedSelection(toSelectElement, isExpiredAdjustement);
+          }
         }
       }
     });
@@ -1175,6 +1216,13 @@ class AbstractTreeUi {
   }
 
   void _select(final Object[] elements, final Runnable onDone, final boolean addToSelection, boolean checkCurrentSelection, boolean checkIfInStructure) {
+    if (elements.length == 0) {
+      if (onDone != null) {
+        onDone.run();
+        return;
+      }
+    }
+
     final Set<Object> currentElements = getSelectedElements();
 
     if (checkCurrentSelection && currentElements.size() > 0 && elements.length == currentElements.size()) {
@@ -1249,6 +1297,7 @@ class AbstractTreeUi {
     return result;
   }
 
+
   private void addNext(final Object[] elements, final int i, @Nullable final Runnable onDone, final int[] originalRows) {
     if (i >= elements.length) {
       if (myTree.isSelectionEmpty()) {
@@ -1279,7 +1328,12 @@ class AbstractTreeUi {
     final Runnable _onDone = new Runnable() {
       public void run() {
         final DefaultMutableTreeNode toSelect = getNodeForElement(element, false);
-        if (toSelect == null) return;
+        if (toSelect == null) {
+          if (onDone != null) {
+            onDone.run();
+          }
+          return;
+        }
         final int row = myTree.getRowForPath(new TreePath(toSelect.getPath()));
 
         if (myUpdaterState != null) {
@@ -1300,11 +1354,40 @@ class AbstractTreeUi {
 
 
   void expand(final Object element, @Nullable final Runnable onDone, boolean checkIfInStructure) {
+    _expand(new Object[] {element}, onDone == null ? new EmptyRunnable() : onDone, false, checkIfInStructure);
+  }
+
+  void expand(final Object[] element, @Nullable final Runnable onDone, boolean checkIfInStructure) {
+    _expand(element, onDone == null ? new EmptyRunnable() : onDone, false, checkIfInStructure);
+  }
+
+  void _expand(final Object[] element, @NotNull final Runnable onDone, final boolean parentsOnly, boolean checkIfInStructure) {
+    if (element.length == 0) {
+        onDone.run();
+        return;
+    }
+
     if (myUpdaterState != null) {
       myUpdaterState.clearExpansion();
     }
-    _expand(element, onDone == null ? new EmptyRunnable() : onDone, false, checkIfInStructure);
+
+
+    final ActionCallback done = new ActionCallback(element.length);
+    done.doWhenDone(new Runnable() {
+      public void run() {
+        onDone.run();
+      }
+    });
+
+    for (Object toExpand : element) {
+      _expand(toExpand, new Runnable() {
+        public void run() {
+          done.setDone();
+        }
+      }, parentsOnly, checkIfInStructure);
+    }
   }
+
 
   private void _expand(final Object element, @NotNull final Runnable onDone, final boolean parentsOnly, boolean checkIfInStructure) {
     if (checkIfInStructure && !isInStructure(element)) {
@@ -1317,8 +1400,9 @@ class AbstractTreeUi {
       Object eachElement = element;
       DefaultMutableTreeNode firstVisible;
       while (true) {
-        firstVisible = getNodeForElement(eachElement, false);
+        firstVisible = getNodeForElement(eachElement, true);
         if (eachElement != element || !parentsOnly) {
+          assert !kidsToExpand.contains(eachElement) : "Not a valid tree structure, walking up the structure gives many entries for element=" + eachElement;
           kidsToExpand.add(eachElement);
         }
         if (firstVisible != null) break;
@@ -1659,7 +1743,7 @@ class AbstractTreeUi {
         removeChildren(node);
         addLoadingNode(node);
         if (node.equals(getRootNode())) {
-          addSelectionPath(new TreePath(getRootNode().getPath()));
+          addSelectionPath(new TreePath(getRootNode().getPath()), true, Condition.FALSE);
         }
         else {
           myTreeModel.reload(node);
@@ -1667,7 +1751,7 @@ class AbstractTreeUi {
       }
 
       if (pathToSelect != null && myTree.isSelectionEmpty()) {
-        addSelectionPath(pathToSelect);
+        addSelectionPath(pathToSelect, true, Condition.FALSE);
       }
     }
 
