@@ -80,7 +80,7 @@ class AbstractTreeUi {
 
   private Set<DefaultMutableTreeNode> myUpdatingChildren = new HashSet<DefaultMutableTreeNode>();
   private long myJanitorPollPeriod = Time.SECOND * 10;
-  private boolean myCheckStructure = true;
+  private boolean myCheckStructure = false;
 
   protected final void init(AbstractTreeBuilder builder,
                             JTree tree,
