@@ -198,7 +198,11 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     synchronized (mySessions) {
       mySessions.put(processHandler, session);
     }
-    if (!(processHandler instanceof RemoteDebugProcessHandler)) {
+    
+    if (ApplicationManager.getApplication().isUnitTestMode() && !(processHandler instanceof RemoteDebugProcessHandler)) {
+      // Not needed for production code anymore because the problem below has been fixed in JDKs
+      // Left for debugger tests only because this listener makes their output deterministic
+      
       // add listener only to non-remote process handler:
       // on Unix systems destroying process does not cause VMDeathEvent to be generated,
       // so we need to call debugProcess.stop() explicitly for graceful termination.
