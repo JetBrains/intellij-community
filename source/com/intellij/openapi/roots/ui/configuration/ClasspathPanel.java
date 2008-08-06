@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -620,6 +621,7 @@ public class ClasspathPanel extends JPanel {
         TableUtil.scrollSelectionToVisible(myEntryTable);
       }
     }
+    IdeFocusManager.getInstance(myProject).requestFocus(myEntryTable, true);
   }
 
   private int moveRow(final int row, final int increment) {

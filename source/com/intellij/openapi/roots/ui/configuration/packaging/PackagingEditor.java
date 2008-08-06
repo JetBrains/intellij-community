@@ -40,7 +40,7 @@ public interface PackagingEditor {
 
   void addElement(ContainerElement element);
 
-  void selectElement(@NotNull ContainerElement toSelect);
+  void selectElement(@NotNull ContainerElement toSelect, final boolean requestFocus);
 
   void processNewOrderEntries(final Set<OrderEntry> newEntries);
 }

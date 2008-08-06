@@ -9,13 +9,13 @@ import com.intellij.openapi.deployment.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.Convertor;
@@ -205,7 +206,7 @@ public class PackagingEditorImpl implements PackagingEditor {
     }
     rebuildTree();
     if (last != null) {
-      selectElement(last);
+      selectElement(last, false);
     }
   }
 
@@ -215,7 +216,7 @@ public class PackagingEditorImpl implements PackagingEditor {
     boolean ok = PackagingElementPropertiesComponent.showDialog(element, myMainPanel, myPolicy);
     if (ok) {
       rebuildTree();
-      selectElement(element);
+      selectElement(element, false);
     }
   }
 
@@ -233,10 +234,13 @@ public class PackagingEditorImpl implements PackagingEditor {
     }
   }
 
-  public void selectElement(@NotNull final ContainerElement toSelect) {
+  public void selectElement(@NotNull final ContainerElement toSelect, final boolean requestFocus) {
     PackagingTreeNode node = findNodeByElement(toSelect);
     if (node != null) {
       TreeUtil.selectNode(myTree, node);
+      if (requestFocus) {
+        IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
+      }
     }
   }
 
@@ -286,7 +290,7 @@ public class PackagingEditorImpl implements PackagingEditor {
     }
     rebuildTree();
     if (last != null) {
-      selectElement(last);
+      selectElement(last, false);
     }
   }
 
@@ -389,6 +393,7 @@ public class PackagingEditorImpl implements PackagingEditor {
   }
 
   public JComponent createMainComponent() {
+    myMainPanel.setMinimumSize(new Dimension(-1, 250));
     myRoot = new RootNode();
     myTreeModel = new DefaultTreeModel(myRoot);
     myTree = new Tree(myTreeModel) {
