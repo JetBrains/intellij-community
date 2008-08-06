@@ -57,18 +57,20 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
       prev = prev.getPrevSibling();
     }
 
-    final XmlFile file = (XmlFile)tag.getContainingFile();
-    final XmlDocument document = file.getDocument();
-    final XmlTag rootTag = document != null ? document.getRootTag() : null;
+    final PsiFile file = tag.getContainingFile();
+    if (file instanceof XmlFile) {
+      final XmlDocument document = ((XmlFile)file).getDocument();
+      final XmlTag rootTag = document != null ? document.getRootTag() : null;
 
-    PsiElement leaf = rootTag != null ? rootTag.getPrevSibling() : file.findElementAt(0);
+      PsiElement leaf = rootTag != null ? rootTag.getPrevSibling() : file.findElementAt(0);
 
-    while (leaf instanceof PsiWhiteSpace) leaf = leaf.getPrevSibling();
+      while (leaf instanceof PsiWhiteSpace) leaf = leaf.getPrevSibling();
 
-    while (leaf instanceof PsiComment || leaf instanceof XmlProlog || leaf instanceof XmlText) {
-      @NonNls String text = leaf.getText();
-      if (isSuppressedFor(text)) return true;
-      leaf = leaf.getPrevSibling();
+      while (leaf instanceof PsiComment || leaf instanceof XmlProlog || leaf instanceof XmlText) {
+        @NonNls String text = leaf.getText();
+        if (isSuppressedFor(text)) return true;
+        leaf = leaf.getPrevSibling();
+      }
     }
 
     return false;
