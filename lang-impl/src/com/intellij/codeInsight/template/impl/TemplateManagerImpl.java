@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -150,7 +151,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   public boolean startTemplate(TemplateManagerImpl templateManager, final Editor editor, char shortcutChar) {
     final Document document = editor.getDocument();
-    PsiFile file = PsiDocumentManager.getInstance(templateManager.myProject).getPsiFile(document);
+    PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
     if (file == null) return false;
 
     TemplateSettings templateSettings = TemplateSettings.getInstance();

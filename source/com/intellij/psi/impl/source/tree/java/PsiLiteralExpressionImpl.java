@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
@@ -240,6 +241,12 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
     }
     else if (i == STRING_LITERAL) {
       if (value == null) {
+        for (final PsiElement element : getChildren()) {
+          if (element instanceof OuterLanguageElement) {
+            return null;
+          }
+        }
+
         if (!StringUtil.startsWithChar(text, '\"')) return null;
         if (StringUtil.endsWithChar(text, '\"')) {
           if (text.length() == 1) return JavaErrorMessages.message("illegal.line.end.in.string.literal");
