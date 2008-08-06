@@ -2,7 +2,6 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
@@ -10,9 +9,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -205,10 +202,17 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     flushKeysStream();
   }
 
-  public synchronized Collection<Key> allKeys() throws IOException {
-    List<Key> keys = new ArrayList<Key>();
-    processKeys(new CommonProcessors.CollectProcessor<Key>(keys));
-    return keys;
+  public synchronized Collection<Key> getAllKeysWithExistingMapping() throws IOException {
+    return getAllDataObjects(new DataFilter() {
+      public boolean accept(final int id) {
+        try {
+          return readValueId(id).address != NULL_ADDR;
+        }
+        catch (IOException ignored) {
+        }
+        return true;
+      }
+    });
   }
 
   public synchronized Value get(Key key) throws IOException {

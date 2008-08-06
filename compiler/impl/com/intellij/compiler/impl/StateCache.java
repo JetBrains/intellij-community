@@ -95,11 +95,11 @@ public abstract class StateCache<T> {
   }
 
   public Collection<String> getUrls() throws IOException {
-    return myMap.allKeys();
+    return myMap.getAllKeysWithExistingMapping();
   }
 
   public Iterator<String> getUrlsIterator() throws IOException {
-    return myMap.allKeys().iterator();
+    return myMap.getAllKeysWithExistingMapping().iterator();
   }
 
 
