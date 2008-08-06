@@ -4,7 +4,7 @@ import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.rubyScript.RubyRunConfigurationFactory;
-import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.RTestsRunConfiguration;
+import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.RTestUnitRunConfiguration;
 import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.TestUnitRunConfigurationType;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestResultsViewer;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
@@ -64,14 +64,14 @@ public abstract class BaseRUnitTestsTestCase extends LightIdeaTestCase {
     return createSuiteProxy("suite", parentSuite);
   }
 
-  protected RTestsRunConfiguration createRTestsRunConfiguration() {
+  protected RTestUnitRunConfiguration createRTestsRunConfiguration() {
     final RubyRunConfigurationFactory factory = new RubyRunConfigurationFactory(
         TestUnitRunConfigurationType.getInstance());
-    return new RTestsRunConfiguration(getProject(), factory, "name");
+    return new RTestUnitRunConfiguration(getProject(), factory, "name");
   }
 
   protected RTestUnitConsoleProperties createConsoleProperties() {
-    final RTestsRunConfiguration runConfiguration = createRTestsRunConfiguration();
+    final RTestUnitRunConfiguration runConfiguration = createRTestsRunConfiguration();
 
     final RTestUnitConsoleProperties consoleProperties = new RTestUnitConsoleProperties(runConfiguration);
     TestConsoleProperties.HIDE_PASSED_TESTS.set(consoleProperties, false);

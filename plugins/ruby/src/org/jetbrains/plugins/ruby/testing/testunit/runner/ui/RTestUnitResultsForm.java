@@ -24,7 +24,7 @@ import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.RTestsRunConfiguration;
+import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.RTestUnitRunConfiguration;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsListener;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTreeBuilder;
@@ -80,7 +80,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   private ProcessHandler myRunProcess;
 
   // Run configuration for Test::Unit
-  private final RTestsRunConfiguration myRunConfiguration;
+  private final RTestUnitRunConfiguration myRunConfiguration;
 
   private int myTestsCurrentCount;
   private int myTestsTotal;
@@ -89,7 +89,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   private long myEndTime;
 
 
-  public RTestUnitResultsForm(final RTestsRunConfiguration runConfiguration,
+  public RTestUnitResultsForm(final RTestUnitRunConfiguration runConfiguration,
                               final TestConsoleProperties consoleProperties,
                               final RunnerSettings runnerSettings,
                               final ConfigurationPerRunnerSettings configurationSettings) {
