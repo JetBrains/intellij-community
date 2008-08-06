@@ -26,7 +26,9 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   // Getters & Setters
   // -------------------------------------------------------------------------
   public void setAttributes(TextAttributesKey key, TextAttributes attributes) {
-    myAttributesMap.put(key, attributes);
+    if (attributes != null && !Comparing.equal(attributes, getAttributes(key))) {
+      myAttributesMap.put(key, attributes);
+    }
   }
 
   public void setColor(ColorKey key, Color color) {

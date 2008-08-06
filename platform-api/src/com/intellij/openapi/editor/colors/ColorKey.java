@@ -16,12 +16,11 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.jetbrains.annotations.NonNls;
 
 public final class ColorKey implements Comparable<ColorKey> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.ColorKey");
@@ -61,10 +60,12 @@ public final class ColorKey implements Comparable<ColorKey> {
   public Color getDefaultColor() {
     if (myDefaultColor == NULL_COLOR) {
       myDefaultColor = null;
+      /*
       EditorColorsManager manager = EditorColorsManager.getInstance();
       if (manager != null) { // Can be null in test mode
         myDefaultColor = manager.getGlobalScheme().getColor(this);
       }
+      */
     }
 
     return myDefaultColor;
