@@ -4,4 +4,5 @@
 while   (true)    {}
 -----
 while (true)
-{}
+{
+}
