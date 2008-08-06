@@ -90,7 +90,24 @@ public class KeymapPanel extends JPanel {
     });
   }
 
-  public void quickListRenamed(){
+  public void quickListRenamed(final QuickList oldQuickList, final QuickList newQuickList){
+
+    for (Keymap keymap : getAllKeymaps()) {
+      KeymapImpl impl = (KeymapImpl)keymap;
+
+      String actionId = oldQuickList.getActionId();
+      String newActionId = newQuickList.getActionId();
+
+      Shortcut[] shortcuts = impl.getShortcuts(actionId);
+
+      if (shortcuts != null) {
+        for (Shortcut shortcut : shortcuts) {
+          impl.removeShortcut(actionId,  shortcut);          
+          impl.addShortcut(newActionId, shortcut);
+        }
+      }
+    }
+
     myQuickListsModified = true;
   }
 

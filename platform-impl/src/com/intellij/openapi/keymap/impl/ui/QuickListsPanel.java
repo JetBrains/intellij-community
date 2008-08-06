@@ -14,10 +14,10 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
+import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.options.SchemesManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ReorderableListController;
@@ -197,7 +197,6 @@ public class QuickListsPanel extends JPanel {
     final DocumentAdapter documentAdapter = new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         updateList(index);
-        myKeymapPanel.quickListRenamed();
       }
     };
     myQuickListPanel.addNameListener(documentAdapter);
@@ -217,6 +216,10 @@ public class QuickListsPanel extends JPanel {
     }
 
     myQuickListsModel.setElementAt(newQuickList, index);
+
+    if (oldQuickList != null && !newQuickList.getName().equals(oldQuickList.getName())) {
+      myKeymapPanel.quickListRenamed(oldQuickList, newQuickList);
+    }
   }
 
   private QuickList createNewQuickListAt() {
