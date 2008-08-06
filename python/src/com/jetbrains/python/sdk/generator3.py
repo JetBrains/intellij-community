@@ -419,6 +419,12 @@ class ModuleRedeclarator(object):
             spec = reqargs + [n + v for (n, v) in zip(optargs, optargvals)]
       else:
         funcdoc = None
+      # here we could have an empty spec because the doc comment states so
+      if p_class and not spec:
+          spec.append("self")
+          if sig_note:
+              sig_note += "; "
+          sig_note += "added 'self'"
       self.out("def " + p_name + "(" + ", ".join(spec) + "): # " + sig_note, indent);
       self.outDocstring(funcdoc, indent+1)
       self.out("pass", indent+1);
