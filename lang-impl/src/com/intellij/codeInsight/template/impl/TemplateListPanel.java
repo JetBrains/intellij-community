@@ -422,7 +422,7 @@ class TemplateListPanel extends JPanel {
 
   private void addRow() {
     TemplateImpl template = new TemplateImpl("", "", TemplateSettings.USER_GROUP_NAME);
-    EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.edit.live.template.title"), template, getTemplateGroups(),
+    EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.add.live.template.title"), template, getTemplateGroups(),
                                                        (String)myExpandByCombo.getSelectedItem());
     dialog.show();
     if (!dialog.isOK()) return;
