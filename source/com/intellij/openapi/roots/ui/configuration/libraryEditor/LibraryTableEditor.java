@@ -928,7 +928,7 @@ public class LibraryTableEditor implements Disposable {
         myRemoveButton.setText(ProjectBundle.message("library.detach.action"));
       }
       else {
-        myRemoveButton.setText(ProjectBundle.message("library.remove.action"));
+        myRemoveButton.setText(ProjectBundle.message("library.detach.action"));
       }
       boolean attachActionsEnabled = selectedElements.length == 1 || getSelectedLibrary() != null;
       myAttachClassesButton.setEnabled(attachActionsEnabled);
