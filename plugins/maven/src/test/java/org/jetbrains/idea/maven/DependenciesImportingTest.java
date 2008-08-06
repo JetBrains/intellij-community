@@ -1,9 +1,11 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.idea.maven.indices.MavenCustomRepositoryTestFixture;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 
 import java.util.List;
+import java.io.File;
 
 public class DependenciesImportingTest extends MavenImportingTestCase {
   public void testLibraryDependency() throws Exception {
@@ -615,7 +617,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                          "</parent>");
 
     importProject();
-    
+
     assertModuleLibDep("project", "group:lib:1");
     assertModuleLibDep("m", "group:lib:2");
   }
@@ -816,5 +818,37 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertOrderedElementsAreEqual(root.getProblems());
     assertOrderedElementsAreEqual(modules.get(0).getProblems(),
                                   "Unresolved dependency: xxx:yyy:pom:1:compile");
+  }
+
+  public void testResolvingFromRepositoriesIfSeveral() throws Exception {
+    MavenCustomRepositoryTestFixture fixture = new MavenCustomRepositoryTestFixture(myDir);
+    setRepositoryPath(fixture.getTestDataPath("local1"));
+    removeFromLocalRepository("junit");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "  <repositories>" +
+                  "    <repository>" +
+                  "      <id>foo</id>" +
+                  "      <url>http://foo.bar</url>" +
+                  "    </repository>" +
+                  "  </repositories>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    File file = fixture.getTestData("local1/junit/junit/4.0/junit-4.0.pom");
+    assertFalse(file.exists());
+
+    resolveProject();
+
+    assertTrue(file.exists());
   }
 }
