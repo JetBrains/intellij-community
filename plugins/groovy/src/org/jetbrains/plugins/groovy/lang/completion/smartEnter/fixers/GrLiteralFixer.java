@@ -19,10 +19,10 @@ public class GrLiteralFixer implements GroovyFixer {
     if (psiElement.getNode().getElementType() == GroovyTokenTypes.mWRONG_STRING_LITERAL &&
             !StringUtil.endsWithChar(psiElement.getText(), '\'')) {
       editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "\'");
-    } else if ( psiElement.getNode().getElementType() == GroovyTokenTypes.mWRONG_GSTRING_LITERAL &&
+    } else if (psiElement.getNode().getElementType() == GroovyTokenTypes.mWRONG_GSTRING_LITERAL &&
             !StringUtil.endsWithChar(psiElement.getText(), '\"')) {
       editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "\"");
-    } else if (psiElement instanceof GrString && !StringUtil.endsWithChar(psiElement.getText(), '\"')){
+    } else if (psiElement instanceof GrString && !StringUtil.endsWithChar(psiElement.getText(), '\"')) {
       editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "\"");
     }
   }

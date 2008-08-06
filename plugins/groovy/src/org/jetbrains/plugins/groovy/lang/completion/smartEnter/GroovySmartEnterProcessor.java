@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.completion.smartEnter;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.EnterProcessor;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.project.Project;
@@ -31,17 +30,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrIfConditionFixer;
-import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GroovyMissingIfStatement;
-import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GroovyFixer;
-import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrLiteralFixer;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.*;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.processors.GroovyPlainEnterProcessor;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -58,10 +56,10 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
 
   static {
     final List<GroovyFixer> fixers = new ArrayList<GroovyFixer>();
-    fixers.add(new GroovyMissingIfStatement());
+    fixers.add(new GrMissingIfStatement());
     fixers.add(new GrIfConditionFixer());
     fixers.add(new GrLiteralFixer());
-//    fixers.add(new MethodCallFixer());
+    fixers.add(new GrMethodCallFixer());
 //    fixers.add(new IfConditionFixer());
 //    fixers.add(new WhileConditionFixer());
 //    fixers.add(new CatchDeclarationFixer());
@@ -193,7 +191,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     atCaret = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) psiFile), rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
 
 //    atCaret = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
-    
+
 
     for (EnterProcessor processor : ourEnterProcessors) {
       if (atCaret == null) {
@@ -222,8 +220,12 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
       recurse = false;
     }
 
-    if (atCaret instanceof GrClosableBlock &&  atCaret.getParent() instanceof GrString){
+    if (atCaret instanceof GrClosableBlock && atCaret.getParent() instanceof GrString) {
       res.add(atCaret.getParent());
+    }
+
+    if (atCaret.getParent() instanceof GrArgumentList) {
+      res.add(atCaret.getParent().getParent());
     }
 
     final PsiElement[] children = getChildren(atCaret);

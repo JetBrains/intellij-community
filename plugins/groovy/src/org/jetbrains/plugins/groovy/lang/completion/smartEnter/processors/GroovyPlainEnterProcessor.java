@@ -22,7 +22,7 @@ public class GroovyPlainEnterProcessor implements EnterProcessor {
       PsiElement firstElement = block.getFirstChild().getNextSibling();
 
       editor.getCaretModel().moveToOffset(firstElement != null ?
-              firstElement.getTextRange().getStartOffset() -1  :
+              firstElement.getTextRange().getStartOffset() - 1 :
               block.getTextRange().getEndOffset());
     }
 

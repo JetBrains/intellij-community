@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.Statement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -35,6 +36,16 @@ public class ArgumentList implements GroovyElementTypes {
       if (!closingBrace.equals(builder.getTokenType())) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
+      if (mRCURLY.equals(builder.getTokenType())) return;
+
+      PsiBuilder.Marker statementMarker = builder.mark();
+      if (Statement.parse(builder, true)) {
+        statementMarker.rollbackTo();
+        return;
+      } else {
+        statementMarker.rollbackTo();
+      }
+
       if (!mCOMMA.equals(builder.getTokenType()) &&
               !closingBrace.equals(builder.getTokenType())) {
         builder.advanceLexer();
@@ -53,6 +64,16 @@ public class ArgumentList implements GroovyElementTypes {
         if (!closingBrace.equals(builder.getTokenType())) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
+        if (mRCURLY.equals(builder.getTokenType())) return;
+
+        PsiBuilder.Marker statementMarker = builder.mark();
+        if (Statement.parse(builder, true)) {
+          statementMarker.rollbackTo();
+          return;
+        } else {
+          statementMarker.rollbackTo();
+        }
+
         if (!mCOMMA.equals(builder.getTokenType()) &&
                 !closingBrace.equals(builder.getTokenType())) {
           builder.advanceLexer();
