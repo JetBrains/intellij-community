@@ -1,0 +1,4 @@
+def s = "asd<caret>
+-----
+def s = "asd"
+<caret>

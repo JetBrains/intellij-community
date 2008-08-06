@@ -36,11 +36,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrIfConditionFixer;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GroovyMissingIfStatement;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GroovyFixer;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrLiteralFixer;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.processors.GroovyPlainEnterProcessor;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -87,7 +90,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
 //    processors.add(new CommentBreakerEnterProcessor());
 //    processors.add(new AfterSemicolonEnterProcessor());
 //    processors.add(new BreakingControlFlowEnterProcessor());
-//    processors.add(new PlainEnterProcessor());
+    processors.add(new GroovyPlainEnterProcessor());
     ourEnterProcessors = processors.toArray(new EnterProcessor[processors.size()]);
   }
 
@@ -187,7 +190,10 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     reformat(atCaret);
     commit(editor);
 
-    atCaret = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
+    atCaret = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) psiFile), rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
+
+//    atCaret = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
+    
 
     for (EnterProcessor processor : ourEnterProcessors) {
       if (atCaret == null) {
