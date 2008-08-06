@@ -35,7 +35,7 @@
 
     <!-- Groovy language -->
     <treeStructureProvider implementation="org.jetbrains.plugins.groovy.projectView.GroovyTreeStructureProvider"/>
-    <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
+    <syntaxHighlighter language="Groovy" key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GroovyAnnotator"/>
     <lang.psiStructureViewFactory language="Groovy" implementationClass="org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory"/>
@@ -97,7 +97,7 @@
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.LateBoundReferencesSearcher"/>-->
       
     <!-- Grails and GSP -->
-    <syntaxHighlighter key="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspSyntaxHiglighter"/>
+    <syntaxHighlighter language="Groovy" key="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspSyntaxHiglighter"/>
     <annotator language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.annotator.GspAnnotator"/>
     <lang.braceMatcher language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspPairedBraceMatcher"/>
     <lang.commenter language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspCommenter"/>

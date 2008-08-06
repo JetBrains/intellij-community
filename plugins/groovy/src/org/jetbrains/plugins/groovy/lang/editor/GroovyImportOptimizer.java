@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.*;
 
 /**
- * @authopr ven
+ * @author ven
  */
 public class GroovyImportOptimizer implements ImportOptimizer {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer");

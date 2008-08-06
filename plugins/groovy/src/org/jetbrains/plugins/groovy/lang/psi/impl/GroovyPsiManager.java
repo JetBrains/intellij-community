@@ -15,7 +15,6 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -94,13 +93,12 @@ public class GroovyPsiManager implements ProjectComponent {
 
   public void initComponent() {
     myCache = new GroovyShortNamesCache(myProject);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        JavaPsiFacade.getInstance(myProject).registerShortNamesCache(getNamesCache());
-      }
-    });
-
-
+    try {
+      JavaPsiFacade.getInstance(myProject).registerShortNamesCache(getNamesCache());
+    } catch (Throwable e) {
+      // Childrem don't do so, it's very bad
+      //todo wait for Diana fix
+    }
     ((PsiManagerEx) PsiManager.getInstance(myProject)).registerRunnableToRunOnAnyChange(new Runnable() {
       public void run() {
         dropTypesCache();

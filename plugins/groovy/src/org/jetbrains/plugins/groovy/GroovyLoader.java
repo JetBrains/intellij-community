@@ -89,9 +89,6 @@ public class GroovyLoader implements ApplicationComponent {
   }
 
   private static void loadGroovy() {
-    //Register factory for special Groovy elements
-//todo[DIANA]
-//    Factory.addElementFactory(new GspElementFactory());
 
     //register editor actions
     GroovyEditorActionsManager.registerGroovyEditorActions();

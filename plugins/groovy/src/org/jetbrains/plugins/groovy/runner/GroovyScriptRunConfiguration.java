@@ -38,11 +38,8 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.jar.JarFile;
 
 class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   private GroovyScriptConfigurationFactory factory;
@@ -53,7 +50,6 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   public String workDir = ".";
   public final String GROOVY_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
   public final String GROOVY_MAIN = "groovy.ui.GroovyMain";
-  public final String JAVA_LANG_STRING = "java/lang/String.class";
 
   public GroovyScriptRunConfiguration(GroovyScriptConfigurationFactory factory, Project project, String name) {
     super(name, new RunConfigurationModule(project), factory);
@@ -137,20 +133,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     params.getProgramParametersList().add("--classpath");
 
     // Clear module libraries from JDK's occurrences
-    List<String> list = params.getClassPath().getPathList();
-    Sdk jdk = params.getJdk();
-    StringBuffer buffer = new StringBuffer();
-    if (jdk != null) {
-      for (String libPath : list) {
-        JarFile jarFile;
-        try {
-          jarFile = new JarFile(libPath);
-        } catch (IOException e) {
-          jarFile = null;
-        }
-        if (jarFile != null && jarFile.getJarEntry(JAVA_LANG_STRING) != null) continue;
-      }
-    }
+    StringBuffer buffer = RunnerUtil.getClearClassPathString(params);
 
     params.getProgramParametersList().add("\"" + workDir + File.pathSeparator + buffer.toString() + "\"");
     if (isDebugEnabled) {
