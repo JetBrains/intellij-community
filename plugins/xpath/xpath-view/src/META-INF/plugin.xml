@@ -193,7 +193,7 @@
     </reference>
 
     <!-- Editor Popup -->
-    <group id="XPathView.EditorPopup">
+    <group id="XPathView.EditorPopup" text="XPath Actions">
       <separator />
       <reference id="XPathView.Actions.Evaluate" />
       <reference id="XPathView.Actions.ShowPath" />
