@@ -80,8 +80,7 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
   }
 
   public ContentFolder cloneFolder(ContentEntry contentEntry) {
-    ContentEntryImpl clone = (ContentEntryImpl)((ClonableContentEntry)contentEntry).cloneEntry(((RootModelComponentBase)contentEntry).getRootModel());
-    return new SourceFolderImpl(this, clone);
+    return new SourceFolderImpl(this, (ContentEntryImpl) contentEntry);
   }
 
   public int compareTo(ContentFolderBaseImpl folder) {
