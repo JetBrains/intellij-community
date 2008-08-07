@@ -119,6 +119,13 @@ public class FacetInfoSet<M> {
     }
   }
 
+  public void removeDetectedFacets(@NotNull M module) {
+    List<FacetTypeId> typeIds = new ArrayList<FacetTypeId>(myInfosByType.keySet());
+    for (FacetTypeId typeId : typeIds) {
+      removeDetectedFacets(typeId, module);
+    }
+  }
+
   private Set<FacetInfo2<M>> collectSubFacets(final FacetInfo2<M> facetInfo) {
     final Set<FacetInfo2<M>> set = new HashSet<FacetInfo2<M>>();
     set.add(facetInfo);

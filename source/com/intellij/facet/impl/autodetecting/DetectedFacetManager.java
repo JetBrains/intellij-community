@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -28,6 +29,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.Alarm;
+import com.intellij.ProjectTopics;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -81,6 +83,12 @@ public class DetectedFacetManager implements Disposable {
       }
     });
     Disposer.register(myProject, this);
+    myProject.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+      @Override
+      public void moduleRemoved(final Project project, final Module module) {
+        myDetectedFacetSet.removeDetectedFacets(module);
+      }
+    });
   }
 
   public <F extends Facet<C>, C extends FacetConfiguration> void registerListeners(final FacetType<F, C> type) {
