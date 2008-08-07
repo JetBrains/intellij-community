@@ -62,7 +62,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
 
   public ProcessHandler[] getRunningProcesses() {
     final List<ProcessHandler> handlers = new ArrayList<ProcessHandler>();
-    RunContentDescriptor[] descriptors = myContentManager.getAllDescriptors();
+    RunContentDescriptor[] descriptors = ((RunContentManagerImpl)getContentManager()).getAllDescriptors();
     for (RunContentDescriptor descriptor : descriptors) {
       if (descriptor != null) {
         final ProcessHandler processHandler = descriptor.getProcessHandler();
