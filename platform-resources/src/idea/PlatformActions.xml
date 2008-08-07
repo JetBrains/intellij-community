@@ -115,7 +115,7 @@
         <separator/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="/actions/sync.png"/>
         
-        <group id="ChangeFileEncodingGroup" popup="true" text="" class="com.intellij.openapi.vfs.encoding.ChangeEncodingUpdateGroup">
+        <group id="ChangeFileEncodingGroup" popup="true" class="com.intellij.openapi.vfs.encoding.ChangeEncodingUpdateGroup">
           <action id="ChangeFileEncodingGroupAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingGroup" text=""/>
         </group>
         <separator/>

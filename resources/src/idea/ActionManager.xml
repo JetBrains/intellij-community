@@ -318,20 +318,6 @@
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
     </group>
 
-    <group id="EditorPopupMenu1">
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="AnalyzeMenu"/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
-      <reference ref="FoldingGroup"/>
-      <separator/>
-
-      <add-to-group group-id="EditorPopupMenu" relative-to-action="MoveToChangeList" anchor="before"/>
-    </group>
-
     <action id="ConfigureFileDefaultEncoding" class="com.intellij.openapi.vfs.encoding.ConfigureFileDefaultEncodingAction">
       <add-to-group group-id="ChangeFileEncodingGroup" anchor="last"/>
     </action>

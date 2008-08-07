@@ -462,6 +462,20 @@
       <reference ref="CompareTwoFiles"/>
     </group>
 
+    <group id="EditorPopupMenu1">
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="AnalyzeMenu"/>
+      <reference ref="RefactoringMenu"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <separator/>
+      <reference ref="FoldingGroup"/>
+      <separator/>
+
+      <add-to-group group-id="EditorPopupMenu" relative-to-action="MoveToChangeList" anchor="before"/>
+    </group>
+
     <group id="EditorLangPopupMenu">
       <separator/>
       <group id="EditorPopupMenu.GoTo" popup="true">
