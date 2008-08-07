@@ -1,17 +1,16 @@
 package com.intellij.openapi.components.impl.stores;
 
 
+import com.intellij.Patches;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
+import com.intellij.util.ArrayUtil;
 import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
@@ -23,8 +22,10 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 import javax.swing.*;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,6 +38,7 @@ public class FileBasedStorage extends XmlElementStorage {
   private final IFile myFile;
   protected final String myRootElementName;
   private long myInitialFileTimestamp;
+  private static final byte[] BUFFER = new byte[10];
 
   public FileBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroManager,
                           StreamProvider streamProvider,
@@ -187,7 +189,7 @@ public class FileBasedStorage extends XmlElementStorage {
         return null;
       }
       else {
-        return JDOMUtil.loadDocument(myFile);
+        return loadDocumentImpl();
       }
     }
     catch (final JDOMException e) {
@@ -222,6 +224,58 @@ public class FileBasedStorage extends XmlElementStorage {
 
       //throw new StateStorage.StateStorageException("Error while loading " + myFile.getAbsolutePath() + ": " + e.getMessage(), e);
     }
+  }
+
+  private Document loadDocumentImpl() throws IOException, JDOMException {
+    int bytesToSkip = skipBom();
+
+    InputStream stream = new BufferedInputStream(myFile.openInputStream());
+    try {
+      if (bytesToSkip > 0) {
+        synchronized (BUFFER) {
+          int read = 0;
+          while (read < bytesToSkip) {
+            int r = stream.read(BUFFER, 0, bytesToSkip - read);
+            if (r < 0) throw new IOException("Can't skip BOM for file: " + myFile.getPath());
+            read += r;
+          }
+        }
+      }
+
+      return JDOMUtil.loadDocument(stream);
+    }
+    finally {
+      stream.close();
+    }
+  }
+
+  private int skipBom() {
+    synchronized (BUFFER) {
+      final int read;
+      try {
+        InputStream input = myFile.openInputStream();
+        try {
+          read = input.read(BUFFER);
+        }
+        finally {
+          input.close();
+        }
+
+        if (Patches.SUN_BUG_ID_4508058) {
+          if (startsWith(BUFFER, read, CharsetToolkit.UTF8_BOM)) {
+            return CharsetToolkit.UTF8_BOM.length;
+          }
+        }
+        return 0;
+      }
+      catch (IOException e) {
+        return 0;
+      }
+    }
+  }
+
+  private static boolean startsWith(final byte[] buffer, final int read, final byte[] bom) {
+    return read >= bom.length && ArrayUtil.startsWith(buffer, bom);
   }
 
   private Document createEmptyElement() {
