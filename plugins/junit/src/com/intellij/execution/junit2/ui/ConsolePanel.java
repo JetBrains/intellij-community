@@ -264,8 +264,10 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
   }
 
   public void removeAdditionalTabComponent(AdditionalTabComponent component) {
-    myTabs.removeTabAt(myAdditionalComponents.get(component).intValue());
-    myAdditionalComponents.remove(component);
+    final Integer tabIdx = myAdditionalComponents.remove(component);
+    if (tabIdx != null) {
+      myTabs.removeTabAt(tabIdx.intValue());
+    }
     component.dispose();
   }
 
