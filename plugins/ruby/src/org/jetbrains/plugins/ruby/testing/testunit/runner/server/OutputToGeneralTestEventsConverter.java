@@ -109,11 +109,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnTestFailure(final String testName, final String localizedMessage,
-                                final String stackTrace) {
+  private void fireOnTestFailure(final String testName, final String localizedMessage, final String stackTrace,
+                                 final boolean isTestError) {
 
     for (GeneralTestEventsProcessor processor : myProcessors) {
-      processor.onTestFailure(testName, localizedMessage, stackTrace);
+      processor.onTestFailure(testName, localizedMessage, stackTrace, isTestError);
     }
   }
 
@@ -155,6 +155,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
   private class MyServiceMessageVisitor extends DefaultServiceMessageVisitor {
     @NonNls public static final String KEY_TESTS_COUNT = "testCount";
+    @NonNls private static final String ATTR_KEY_TEST_ERROR = "error";
 
     public void visitTestSuiteStarted(@NotNull final TestSuiteStarted suiteStarted) {
       fireOnSuiteStarted(suiteStarted.getSuiteName());
@@ -185,7 +186,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     public void visitTestFailed(@NotNull final TestFailed testFailed) {
-      fireOnTestFailure(testFailed.getTestName(), testFailed.getFailureMessage(), testFailed.getStacktrace());
+      final boolean isTestError = testFailed.getAttributes().get(ATTR_KEY_TEST_ERROR) != null;
+
+      fireOnTestFailure(testFailed.getTestName(), testFailed.getFailureMessage(), testFailed.getStacktrace(), isTestError);
     }
 
     public void visitPublishArtifacts(@NotNull final PublishArtifacts publishArtifacts) {

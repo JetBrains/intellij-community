@@ -89,7 +89,7 @@ public class GeneralToRTestUnitEventsConvertorTest extends BaseRUnitTestsTestCas
 
   public void testOnTestFailure() {
     onTestStarted("some_test");
-    myEventsProcessor.onTestFailure("some_test", "", "");
+    myEventsProcessor.onTestFailure("some_test", "", "", false);
 
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final RTestUnitTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
@@ -100,12 +100,22 @@ public class GeneralToRTestUnitEventsConvertorTest extends BaseRUnitTestsTestCas
 
   public void testOnTestFailure_Twice() {
     onTestStarted("some_test");
-    myEventsProcessor.onTestFailure("some_test", "", "");
-    myEventsProcessor.onTestFailure("some_test", "", "");
+    myEventsProcessor.onTestFailure("some_test", "", "", false);
+    myEventsProcessor.onTestFailure("some_test", "", "", false);
 
     assertEquals(1, myEventsProcessor.getRunningTestsQuantity());
     assertEquals(1, myEventsProcessor.getFailedTestsSet().size());
+  }
 
+   public void testOnTestError() {
+    onTestStarted("some_test");
+    myEventsProcessor.onTestFailure("some_test", "", "", true);
+
+    final String fullName = myEventsProcessor.getFullTestName("some_test");
+    final RTestUnitTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
+
+    assertTrue(proxy.isDefect());
+    assertFalse(proxy.isInProgress());
   }
 
   public void testOnTestFinished() {
@@ -154,9 +164,25 @@ public class GeneralToRTestUnitEventsConvertorTest extends BaseRUnitTestsTestCas
     assertTrue(rootProxy.isDefect());
   }
 
-  public void testOnFinishedTesting_WithDefect() {
+  public void testOnFinishedTesting_WithFailure() {
     onTestStarted("test");
-    myEventsProcessor.onTestFailure("test", "", "");
+    myEventsProcessor.onTestFailure("test", "", "", false);
+    myEventsProcessor.onTestFinished("test");
+    myEventsProcessor.onFinishTesting();
+
+    //Tree
+    final Object rootTreeNode = myTreeModel.getRoot();
+    assertEquals(1, myTreeModel.getChildCount(rootTreeNode));
+    final RTestUnitTestProxy rootProxy = RTestUnitTestTreeView.getTestProxyFor(rootTreeNode);
+    assertNotNull(rootProxy);
+
+    assertFalse(rootProxy.isInProgress());
+    assertTrue(rootProxy.isDefect());
+  }
+
+  public void testOnFinishedTesting_WithError() {
+    onTestStarted("test");
+    myEventsProcessor.onTestFailure("test", "", "", true);
     myEventsProcessor.onTestFinished("test");
     myEventsProcessor.onFinishTesting();
 

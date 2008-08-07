@@ -98,7 +98,7 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
 
   public void testFormatTestProxyTest_Failed() {
     mySimpleTest.setStarted();
-    mySimpleTest.setTestFailed("", "");
+    mySimpleTest.setTestFailed("", "", false);
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
     assertEquals(PoolOfTestIcons.FAILED_ICON, myRenderer.getIcon());
@@ -109,6 +109,21 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     mySimpleTest.setFinished();
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
     assertEquals(PoolOfTestIcons.FAILED_ICON, myRenderer.getIcon());
+  }
+
+  public void testFormatTestProxyTest_Error() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", true);
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
+
+    assertEquals(PoolOfTestIcons.ERROR_ICON, myRenderer.getIcon());
+    assertOneElement(myRenderer.getFragments());
+    assertEquals(FAKE_TEST_NAME, myRenderer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+
+    mySimpleTest.setFinished();
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
+    assertEquals(PoolOfTestIcons.ERROR_ICON, myRenderer.getIcon());
   }
 
   public void testFormatTestProxyTest_Terminated() {
@@ -143,9 +158,9 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     mySuite.addChild(mySimpleTest);
     mySuite.setStarted();
     mySimpleTest.setStarted();
-    mySimpleTest.setTestFailed("", "");
+    mySimpleTest.setTestFailed("", "", false);
     mySimpleTest.setFinished();
-    mySuite.setTestFailed("", "");
+    mySuite.setFinished();
 
     TestsPresentationUtil.formatRootNodeWithChildren(mySuite, renderer1);
 
@@ -158,6 +173,31 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatRootNodeWithChildren(mySuite, renderer2);
     mySuite.setFinished();
     assertEquals(PoolOfTestIcons.FAILED_ICON, renderer1.getIcon());
+    assertOneElement(renderer1.getFragments());
+    assertEquals("Test Results.", renderer1.getFragmentAt(0));
+  }
+
+  public void testFormatRootNodeWithChildren_Error() {
+    final MyRenderer renderer1 = new MyRenderer(false);
+
+    mySuite.addChild(mySimpleTest);
+    mySuite.setStarted();
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", true);
+    mySimpleTest.setFinished();
+    mySuite.setFinished();
+
+    TestsPresentationUtil.formatRootNodeWithChildren(mySuite, renderer1);
+
+    assertEquals(PoolOfTestIcons.ERROR_ICON, renderer1.getIcon());
+    assertOneElement(renderer1.getFragments());
+    assertEquals("Test Results.", renderer1.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getAttribsAt(0));
+
+    final MyRenderer renderer2 = new MyRenderer(false);
+    TestsPresentationUtil.formatRootNodeWithChildren(mySuite, renderer2);
+    mySuite.setFinished();
+    assertEquals(PoolOfTestIcons.ERROR_ICON, renderer1.getIcon());
     assertOneElement(renderer1.getFragments());
     assertEquals("Test Results.", renderer1.getFragmentAt(0));
   }

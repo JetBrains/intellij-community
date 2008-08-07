@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
 import com.intellij.execution.testframework.Filter;
+import static org.jetbrains.plugins.ruby.testing.testunit.runner.states.TestStateInfo.Magnitude.*;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.states.TestStateInfo;
 
 /**
  * @author Roman Chernyatchik
@@ -143,18 +145,20 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
 
   public void testTestFailed() {
     mySimpleTest.setStarted();
-    mySimpleTest.setTestFailed("", "");
+    mySimpleTest.setTestFailed("", "", false);
 
-    assertTrue(mySimpleTest.wasLaunched());
     assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySimpleTest.wasLaunched());
     assertTrue(mySimpleTest.isDefect());
+    assertTrue(mySimpleTest.getMagnitudeInfo() == TestStateInfo.Magnitude.FAILED_INDEX);
 
     mySimpleTest.setFinished();
 
-    assertTrue(mySimpleTest.wasLaunched());
     assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySimpleTest.wasLaunched());
     assertTrue(mySimpleTest.isDefect());
-    assertFalse(mySuite.wasTerminated());
+
+    assertTrue(mySimpleTest.getMagnitudeInfo() == TestStateInfo.Magnitude.FAILED_INDEX);
   }
 
   public void testTestFailed_InSuite() {
@@ -162,11 +166,11 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     mySuite.addChild(mySimpleTest);
 
     mySimpleTest.setStarted();
-    mySimpleTest.setTestFailed("", "");
+    mySimpleTest.setTestFailed("", "", false);
 
+    assertFalse(mySimpleTest.isInProgress());
     assertTrue(mySuite.isInProgress());
     assertTrue(mySuite.isDefect());
-    assertFalse(mySimpleTest.isInProgress());
     assertTrue(mySimpleTest.isDefect());
 
     mySimpleTest.setFinished();
@@ -178,6 +182,53 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
 
     assertFalse(mySuite.isInProgress());
     assertTrue(mySuite.isDefect());
+
+    assertTrue(mySimpleTest.getMagnitudeInfo() == TestStateInfo.Magnitude.FAILED_INDEX);
+    assertTrue(mySuite.getMagnitudeInfo() == TestStateInfo.Magnitude.FAILED_INDEX);
+  }
+
+  public void testTestError() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", true);
+
+    assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySimpleTest.wasLaunched());
+    assertTrue(mySimpleTest.isDefect());
+    assertTrue(mySimpleTest.getMagnitudeInfo() == TestStateInfo.Magnitude.ERROR_INDEX);
+
+    mySimpleTest.setFinished();
+
+    assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySimpleTest.wasLaunched());
+    assertTrue(mySimpleTest.isDefect());
+
+    assertTrue(mySimpleTest.getMagnitudeInfo() == TestStateInfo.Magnitude.ERROR_INDEX);
+  }
+
+  public void testTestError_InSuite() {
+    mySuite.setStarted();
+    mySuite.addChild(mySimpleTest);
+
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", true);
+
+    assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySuite.isInProgress());
+    assertTrue(mySuite.isDefect());
+    assertTrue(mySimpleTest.isDefect());
+
+    mySimpleTest.setFinished();
+
+    assertTrue(mySuite.isInProgress());
+    assertTrue(mySuite.isDefect());
+
+    mySuite.setFinished();
+
+    assertFalse(mySuite.isInProgress());
+    assertTrue(mySuite.isDefect());
+
+    assertTrue(mySimpleTest.getMagnitudeInfo() == TestStateInfo.Magnitude.ERROR_INDEX);
+    assertTrue(mySuite.getMagnitudeInfo() == TestStateInfo.Magnitude.ERROR_INDEX);
   }
 
   public void testSuiteTerminated() {
@@ -228,7 +279,7 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
 
     mySuite.addChild(testFailed);
     testFailed.setStarted();
-    testFailed.setTestFailed("", "");
+    testFailed.setTestFailed("", "", false);
     testFailed.setFinished();
 
     mySuite.addChild(testInProgress);
@@ -257,68 +308,94 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
   }
 
   public void testMagnitude() {
-    assertEquals(RTestUnitTestProxy.NOT_RUN_INDEX, mySuite.getMagnitude());
+    assertEquals(NOT_RUN_INDEX.getValue(), mySuite.getMagnitude());
 
     final RTestUnitTestProxy passedTest = createTestProxy("passed");
     final RTestUnitTestProxy failedTest = createTestProxy("failed");
     mySuite.addChild(passedTest);
     mySuite.addChild(failedTest);
 
-    assertEquals(RTestUnitTestProxy.NOT_RUN_INDEX, mySuite.getMagnitude());
-    assertEquals(RTestUnitTestProxy.NOT_RUN_INDEX, passedTest.getMagnitude());
-    assertEquals(RTestUnitTestProxy.NOT_RUN_INDEX, failedTest.getMagnitude());
+    assertEquals(NOT_RUN_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(NOT_RUN_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(NOT_RUN_INDEX.getValue(), failedTest.getMagnitude());
 
     mySuite.setStarted();
-    assertEquals(RTestUnitTestProxy.RUNNING_INDEX, mySuite.getMagnitude());
-    assertEquals(RTestUnitTestProxy.NOT_RUN_INDEX, passedTest.getMagnitude());
-    assertEquals(RTestUnitTestProxy.NOT_RUN_INDEX, failedTest.getMagnitude());
+    assertEquals(RUNNING_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(NOT_RUN_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(NOT_RUN_INDEX.getValue(), failedTest.getMagnitude());
 
     passedTest.setStarted();
-    assertEquals(RTestUnitTestProxy.RUNNING_INDEX, mySuite.getMagnitude());
-    assertEquals(RTestUnitTestProxy.RUNNING_INDEX, passedTest.getMagnitude());
-    assertEquals(RTestUnitTestProxy.NOT_RUN_INDEX, failedTest.getMagnitude());
+    assertEquals(RUNNING_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(RUNNING_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(NOT_RUN_INDEX.getValue(), failedTest.getMagnitude());
 
     passedTest.setFinished();
-    assertEquals(RTestUnitTestProxy.RUNNING_INDEX, mySuite.getMagnitude());
-    assertEquals(RTestUnitTestProxy.PASSED_INDEX, passedTest.getMagnitude());
-    assertEquals(RTestUnitTestProxy.NOT_RUN_INDEX, failedTest.getMagnitude());
+    assertEquals(RUNNING_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(PASSED_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(NOT_RUN_INDEX.getValue(), failedTest.getMagnitude());
 
     failedTest.setStarted();
-    assertEquals(RTestUnitTestProxy.RUNNING_INDEX, mySuite.getMagnitude());
-    assertEquals(RTestUnitTestProxy.PASSED_INDEX, passedTest.getMagnitude());
-    assertEquals(RTestUnitTestProxy.RUNNING_INDEX, failedTest.getMagnitude());
+    assertEquals(RUNNING_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(PASSED_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(RUNNING_INDEX.getValue(), failedTest.getMagnitude());
 
-    failedTest.setTestFailed("", "");
-    assertEquals(RTestUnitTestProxy.RUNNING_INDEX, mySuite.getMagnitude());
-    assertEquals(RTestUnitTestProxy.PASSED_INDEX, passedTest.getMagnitude());
-    assertEquals(RTestUnitTestProxy.FAILED_INDEX, failedTest.getMagnitude());
+    failedTest.setTestFailed("", "", false);
+    assertEquals(RUNNING_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(PASSED_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(FAILED_INDEX.getValue(), failedTest.getMagnitude());
 
     mySuite.setFinished();
-    assertEquals(RTestUnitTestProxy.FAILED_INDEX, mySuite.getMagnitude());
-    assertEquals(RTestUnitTestProxy.PASSED_INDEX, passedTest.getMagnitude());
-    assertEquals(RTestUnitTestProxy.FAILED_INDEX, failedTest.getMagnitude());
+    assertEquals(FAILED_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(PASSED_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(FAILED_INDEX.getValue(), failedTest.getMagnitude());
+  }
+
+  public void testMagnitude_Error() {
+    assertEquals(NOT_RUN_INDEX.getValue(), mySuite.getMagnitude());
+
+    final RTestUnitTestProxy passedTest = createTestProxy("passed");
+    final RTestUnitTestProxy failedTest = createTestProxy("failed");
+    final RTestUnitTestProxy errorTest = createTestProxy("error");
+    mySuite.addChild(passedTest);
+    mySuite.addChild(failedTest);
+    mySuite.addChild(errorTest);
+
+    mySuite.setStarted();
+    passedTest.setStarted();
+    passedTest.setFinished();
+    failedTest.setStarted();
+    failedTest.setTestFailed("", "", false);
+    failedTest.setFinished();
+    errorTest.setStarted();
+    errorTest.setTestFailed("", "", true);
+    errorTest.setFinished();
+
+    assertEquals(RUNNING_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(PASSED_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(FAILED_INDEX.getValue(), failedTest.getMagnitude());
+    assertEquals(ERROR_INDEX.getValue(), errorTest.getMagnitude());
   }
 
   public void testMagnitude_Terminated() {
-    assertEquals(RTestUnitTestProxy.NOT_RUN_INDEX, mySuite.getMagnitude());
+    assertEquals(NOT_RUN_INDEX.getValue(), mySuite.getMagnitude());
 
     final RTestUnitTestProxy testProxy = createTestProxy("failed");
     mySuite.addChild(testProxy);
 
-    assertEquals(RTestUnitTestProxy.NOT_RUN_INDEX, mySuite.getMagnitude());
-    assertEquals(RTestUnitTestProxy.NOT_RUN_INDEX, testProxy.getMagnitude());
+    assertEquals(NOT_RUN_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(NOT_RUN_INDEX.getValue(), testProxy.getMagnitude());
 
     mySuite.setStarted();
     mySuite.setTerminated();
-    assertEquals(RTestUnitTestProxy.TERMINATED_INDEX, mySuite.getMagnitude());
-    assertEquals(RTestUnitTestProxy.TERMINATED_INDEX, testProxy.getMagnitude());
+    assertEquals(TERMINATED_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(TERMINATED_INDEX.getValue(), testProxy.getMagnitude());
   }
 
   public void testMagnitude_suiteWithoutTests() {
     final RTestUnitTestProxy noTests = createSuiteProxy("failedSuite");
     noTests.setStarted();
     noTests.setFinished();
-    assertEquals(RTestUnitTestProxy.FAILED_INDEX, noTests.getMagnitude());
+    assertEquals(ERROR_INDEX.getValue(), noTests.getMagnitude());
   }
 
   public void testMagnitude_PassedSuite() {
@@ -329,7 +406,7 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     passedSuiteTest.setStarted();
     passedSuiteTest.setFinished();
     passedSuite.setFinished();
-    assertEquals(RTestUnitTestProxy.PASSED_INDEX, passedSuite.getMagnitude());
+    assertEquals(PASSED_INDEX.getValue(), passedSuite.getMagnitude());
   }
 
   public void testLocation() {
@@ -380,7 +457,7 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
 
   public void testShouldRun_FailedTest() {
     mySimpleTest.setStarted();
-    mySimpleTest.setTestFailed("", "");
+    mySimpleTest.setTestFailed("", "", false);
     assertTrue(mySimpleTest.shouldRun());
   }
 
@@ -388,7 +465,16 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     mySuite.setStarted();
     mySuite.addChild(mySimpleTest);
     mySimpleTest.setStarted();
-    mySimpleTest.setTestFailed("", "");
+    mySimpleTest.setTestFailed("", "", false);
+
+    assertTrue(mySuite.shouldRun());
+  }
+
+  public void testShouldRun_ErrorSuite() {
+    mySuite.setStarted();
+    mySuite.addChild(mySimpleTest);
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", true);
 
     assertTrue(mySuite.shouldRun());
   }

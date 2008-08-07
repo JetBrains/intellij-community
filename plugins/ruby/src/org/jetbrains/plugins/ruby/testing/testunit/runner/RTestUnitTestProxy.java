@@ -19,16 +19,6 @@ import java.util.List;
  * @author: Roman Chernyatchik
  */
 public class RTestUnitTestProxy extends CompositePrintable implements PrintableTestProxy {
-  public static final int SKIPPED_INDEX = 0;
-  public static final int COMPLETE_INDEX = 1;
-  public static final int NOT_RUN_INDEX = 2;
-  public static final int RUNNING_INDEX = 3;
-  public static final int TERMINATED_INDEX = 4;
-  public static final int IGNORED_INDEX = 5;
-  public static final int FAILED_INDEX = 6;
-  public static final int ERROR_INDEX = 8;
-  public static final int PASSED_INDEX = COMPLETE_INDEX;
-
   private List<RTestUnitTestProxy> myChildren;
   private RTestUnitTestProxy myParent;
 
@@ -59,27 +49,16 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
     return true;
   }
 
-  @Deprecated
   public int getMagnitude() {
     // Is used by some of Tests Filters
 
     //WARN: It is Hack, see PoolOfTestStates, API is necessary
-    //TODO ignored, error
-    final AbstractState state = myState;
+    //TODO ignored
+    return getMagnitudeInfo().getValue();
+  }
 
-    if (!state.isFinal()) {
-      if (!state.wasLaunched()) {
-        return NOT_RUN_INDEX;
-      }
-      return RUNNING_INDEX;
-
-    } if (state.wasTerminated()) {
-      return TERMINATED_INDEX;
-
-    } else if (state.isDefect()) {
-      return FAILED_INDEX;
-    }
-    return PASSED_INDEX;
+  public TestStateInfo.Magnitude getMagnitudeInfo() {
+    return myState.getMagnitude();
   }
 
   public boolean isLeaf() {
@@ -160,17 +139,17 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
       myState = TestPassedState.INSTACE;
     } else {
       //Test Suite
-      myState = isLeaf()
-                ? SuiteFinishedState.EMPTY_SUITE
-                : myState.isDefect() ? SuiteFinishedState.FAILED_SUITE : SuiteFinishedState.PASSED_SUITE;
+      myState = determineSuiteStateOnFinished();
     }
     // prints final state additional info
     fireOnNewPrintable(myState);
   }
 
   public void setTestFailed(@NotNull final String localizedMessage,
-                            @NotNull final String stackTrace) {
-    myState = new TestFailedState(localizedMessage, stackTrace);
+                            @NotNull final String stackTrace, final boolean testError) {
+    myState = testError
+              ? new TestErrorState(localizedMessage, stackTrace)
+              : new TestFailedState(localizedMessage, stackTrace);
     fireOnNewPrintable(myState);
   }
 
@@ -296,5 +275,40 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
 
   public boolean wasTerminated() {
     return myState.wasTerminated();
+  }
+
+  /**
+   * Check if suite contains error tests or suites
+   * @return True if contains
+   */
+  private boolean containsErrorTests() {
+    final List<? extends RTestUnitTestProxy> children = getChildren();
+    for (RTestUnitTestProxy child : children) {
+      if (child.getMagnitudeInfo() == TestStateInfo.Magnitude.ERROR_INDEX) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Determines site state after it has been finished
+   * @return New state
+   */
+  private AbstractState determineSuiteStateOnFinished() {
+    final AbstractState state;
+    if (isLeaf()) {
+      state = SuiteFinishedState.EMPTY_SUITE;
+    } else {
+      if (isDefect()) {
+        // Test suit contains errors if at least one of its tests contains error
+        state = !containsErrorTests()
+                  ?  SuiteFinishedState.FAILED_SUITE
+                  :  SuiteFinishedState.ERROR_SUITE;
+      } else {
+        state = SuiteFinishedState.PASSED_SUITE;
+      }
+    }
+    return state;
   }
 }

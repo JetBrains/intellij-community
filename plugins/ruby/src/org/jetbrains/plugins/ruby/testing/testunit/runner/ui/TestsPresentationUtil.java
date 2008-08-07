@@ -5,8 +5,9 @@ import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.ruby.RBundle;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.states.TestStateInfo;
 
 import javax.swing.*;
 import java.text.NumberFormat;
@@ -56,10 +57,12 @@ public class TestsPresentationUtil {
                                           final RTestUnitTestTreeRenderer renderer) {
     renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
 
+    final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
+
     final String text;
-    if (testProxy.isInProgress()) {
+    if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
       text = RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.running.tests");
-    } else if (testProxy.wasTerminated()) {
+    } else if (magnitude == TestStateInfo.Magnitude.TERMINATED_INDEX) {
       text = RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.was.terminated");
     } else {
       text = RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.test.results");
@@ -69,15 +72,16 @@ public class TestsPresentationUtil {
 
   public static void formatRootNodeWithoutChildren(final RTestUnitTestProxy testProxy,
                                                    final RTestUnitTestTreeRenderer renderer) {
-    if (testProxy.isInProgress()) {
+    final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
+    if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
       renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
       renderer.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.instantiating.tests"),
                       SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    } else if (!testProxy.wasLaunched()) {
+    } else if (magnitude == TestStateInfo.Magnitude.NOT_RUN_INDEX) {
       renderer.setIcon(PoolOfTestIcons.NOT_RAN);
       renderer.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.not.test.results"),
                       SimpleTextAttributes.ERROR_ATTRIBUTES);
-    } else if (testProxy.wasTerminated()) {
+    } else if (magnitude == TestStateInfo.Magnitude.TERMINATED_INDEX) {
       renderer.setIcon(PoolOfTestIcons.TERMINATED_ICON);
       renderer.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.was.terminated"),
                       SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -116,25 +120,28 @@ public class TestsPresentationUtil {
 
   private static Icon getIcon(final RTestUnitTestProxy testProxy,
                               final RTestUnitConsoleProperties consoleProperties) {
-    if (testProxy.isInProgress()) {
-      return !consoleProperties.isPaused()
-             ? TestsProgressAnimator.getCurrentFrame()
-             : TestsProgressAnimator.PAUSED_ICON;
+    final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
+    switch (magnitude) {
+      case ERROR_INDEX:
+        return PoolOfTestIcons.ERROR_ICON;
+      case FAILED_INDEX:
+        return PoolOfTestIcons.FAILED_ICON;
+      case IGNORED_INDEX:
+        return PoolOfTestIcons.IGNORED_ICON;
+      case NOT_RUN_INDEX:
+        return PoolOfTestIcons.NOT_RAN;
+      case COMPLETE_INDEX:
+      case PASSED_INDEX:
+        return PoolOfTestIcons.PASSED_ICON;
+      case RUNNING_INDEX:
+        return !consoleProperties.isPaused()
+               ? TestsProgressAnimator.getCurrentFrame()
+               : TestsProgressAnimator.PAUSED_ICON;
+      case SKIPPED_INDEX:
+        return PoolOfTestIcons.SKIPPED_ICON;
+      case TERMINATED_INDEX:
+        return PoolOfTestIcons.TERMINATED_ICON;
     }
-
-    if (!testProxy.wasLaunched()) {
-      return PoolOfTestIcons.NOT_RAN;
-    }
-
-    if (testProxy.wasTerminated()) {
-      return PoolOfTestIcons.TERMINATED_ICON;
-    }
-
-    if (testProxy.isDefect()) {
-      //TODO[romeo] ignored tests support
-      return PoolOfTestIcons.FAILED_ICON;
-    }
-
-    return PoolOfTestIcons.PASSED_ICON;
+    return null;
   }
 }

@@ -180,7 +180,8 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onTestFailure(final String testName,
-                            final String localizedMessage, final String stackTrace) {
+                            final String localizedMessage, final String stackTrace,
+                            final boolean isTestError) {
     addToInvokeLater(new Runnable() {
       public void run() {
         final String fullTestName = getFullTestName(testName);
@@ -196,7 +197,7 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
           return;
         }
 
-        testProxy.setTestFailed(localizedMessage, stackTrace);
+        testProxy.setTestFailed(localizedMessage, stackTrace, isTestError);
 
 
         myFailedTestsSet.add(testProxy);

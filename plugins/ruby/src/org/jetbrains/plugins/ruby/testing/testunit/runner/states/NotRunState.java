@@ -39,6 +39,10 @@ public class NotRunState extends AbstractState {
     return false;
   }
 
+  public Magnitude getMagnitude() {
+    return Magnitude.NOT_RUN_INDEX;
+  }
+
   @Override
   public String toString() {
     //noinspection HardCodedStringLiteral

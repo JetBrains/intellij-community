@@ -41,6 +41,10 @@ public class TestFailedState extends AbstractState {
     return false;
   }
 
+  public Magnitude getMagnitude() {
+    return Magnitude.FAILED_INDEX;
+  }
+
   @Override
   public String toString() {
     //noinspection HardCodedStringLiteral

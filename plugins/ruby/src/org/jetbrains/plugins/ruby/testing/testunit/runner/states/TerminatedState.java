@@ -29,6 +29,10 @@ public class TerminatedState extends AbstractState {
     return true;
   }
 
+  public Magnitude getMagnitude() {
+    return Magnitude.TERMINATED_INDEX;
+  }
+
   @Override
   public String toString() {
     //noinspection HardCodedStringLiteral

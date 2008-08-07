@@ -8,15 +8,52 @@ import org.jetbrains.plugins.ruby.RBundle;
 /**
  * @author Roman Chernyatchik
  */
-public class SuiteFinishedState extends AbstractState {
+public abstract class SuiteFinishedState extends AbstractState {
   //This states are common for all instances and doesn't contains
   //instance-specific information
 
-  public static SuiteFinishedState PASSED_SUITE = new SuiteFinishedState();
+  public static SuiteFinishedState PASSED_SUITE = new SuiteFinishedState() {
+    public Magnitude getMagnitude() {
+      return Magnitude.PASSED_INDEX;
+    }
+
+    @Override
+    public String toString() {
+      //noinspection HardCodedStringLiteral
+      return "SUITE PASSED";
+    }
+  };
   public static SuiteFinishedState FAILED_SUITE = new SuiteFinishedState() {
     @Override
     public boolean isDefect() {
       return true;
+    }
+
+    public Magnitude getMagnitude() {
+      return Magnitude.FAILED_INDEX;
+    }
+
+    @Override
+    public String toString() {
+      //noinspection HardCodedStringLiteral
+      return "FAILED SUITE";
+    }
+  };
+
+  public static SuiteFinishedState ERROR_SUITE = new SuiteFinishedState() {
+    @Override
+    public boolean isDefect() {
+      return true;
+    }
+
+    public Magnitude getMagnitude() {
+      return Magnitude.ERROR_INDEX;
+    }
+
+    @Override
+    public String toString() {
+      //noinspection HardCodedStringLiteral
+      return "ERROR SUITE";
     }
   };
 
@@ -36,6 +73,11 @@ public class SuiteFinishedState extends AbstractState {
 
       final String msg = RBundle.message("ruby.test.runner.states.suite.error.is.empty") + PrintableTestProxy.NEW_LINE;
       printer.print(msg, ConsoleViewContentType.SYSTEM_OUTPUT);
+    }
+
+
+    public Magnitude getMagnitude() {
+      return Magnitude.ERROR_INDEX;
     }
 
     @Override
@@ -66,11 +108,5 @@ public class SuiteFinishedState extends AbstractState {
 
   public boolean wasTerminated() {
     return false;
-  }
-
-  @Override
-  public String toString() {
-    //noinspection HardCodedStringLiteral
-    return "SUITE FINISHED";
   }
 }

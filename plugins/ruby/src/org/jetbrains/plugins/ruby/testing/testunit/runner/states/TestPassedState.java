@@ -31,6 +31,10 @@ public class TestPassedState extends AbstractState {
     return false;
   }
 
+  public Magnitude getMagnitude() {
+    return Magnitude.PASSED_INDEX;
+  }
+
   @Override
   public String toString() {
     //noinspection HardCodedStringLiteral

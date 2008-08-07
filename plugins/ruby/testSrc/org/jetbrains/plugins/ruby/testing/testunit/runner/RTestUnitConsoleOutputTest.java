@@ -158,7 +158,7 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
   public void testProcessor_OnFailure() {
     final RTestUnitTestProxy myTest1 = startTestWithPrinter("my_test");
 
-    myEventsProcessor.onTestFailure("my_test", "error msg", "method1:1\nmethod2:2");
+    myEventsProcessor.onTestFailure("my_test", "error msg", "method1:1\nmethod2:2", false);
     myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
     myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
 
@@ -172,7 +172,32 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
     final RTestUnitTestProxy myTest2 = startTestWithPrinter("my_test2");
     myEventsProcessor.onTestOutput("my_test2", "stdout1 ", true);
     myEventsProcessor.onTestOutput("my_test2", "stderr1 ", false);
-    myEventsProcessor.onTestFailure("my_test2", "error msg", "method1:1\nmethod2:2");
+    myEventsProcessor.onTestFailure("my_test2", "error msg", "method1:1\nmethod2:2", false);
+
+    assertAllOutputs(myMockResetablePrinter, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
+    final MockPrinter mockPrinter2 = new MockPrinter(true);
+    mockPrinter2.onNewAvaliable(myTest2);
+    assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
+  }
+
+ public void testProcessor_OnError() {
+    final RTestUnitTestProxy myTest1 = startTestWithPrinter("my_test");
+
+    myEventsProcessor.onTestFailure("my_test", "error msg", "method1:1\nmethod2:2", true);
+    myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
+    myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
+
+    assertAllOutputs(myMockResetablePrinter, "stdout1 ", "\nerror msg\nmethod1:1\nmethod2:2\nstderr1 ", "");
+
+    final MockPrinter mockPrinter1 = new MockPrinter(true);
+    mockPrinter1.onNewAvaliable(myTest1);
+    assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
+
+    //other output order
+    final RTestUnitTestProxy myTest2 = startTestWithPrinter("my_test2");
+    myEventsProcessor.onTestOutput("my_test2", "stdout1 ", true);
+    myEventsProcessor.onTestOutput("my_test2", "stderr1 ", false);
+    myEventsProcessor.onTestFailure("my_test2", "error msg", "method1:1\nmethod2:2", true);
 
     assertAllOutputs(myMockResetablePrinter, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
     final MockPrinter mockPrinter2 = new MockPrinter(true);

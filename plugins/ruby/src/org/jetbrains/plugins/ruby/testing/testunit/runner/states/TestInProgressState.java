@@ -33,6 +33,10 @@ public class TestInProgressState extends AbstractState {
     return false;
   }
 
+  public Magnitude getMagnitude() {
+    return Magnitude.RUNNING_INDEX;
+  }
+
   @Override
   public String toString() {
     //noinspection HardCodedStringLiteral
