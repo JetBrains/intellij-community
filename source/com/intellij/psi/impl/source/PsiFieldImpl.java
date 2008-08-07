@@ -164,7 +164,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
       final List siblings = stub.getParentStub().getChildrenStubs();
       final int idx = siblings.indexOf(stub);
       assert idx >= 0;
-      for (int i = idx - 1; i >= 0; i++) {
+      for (int i = idx - 1; i >= 0; i--) {
         if (!(siblings.get(i) instanceof PsiFieldStub)) break;
         PsiFieldStub prevField = (PsiFieldStub)siblings.get(i);
         final PsiFieldImpl prevFieldPsi = (PsiFieldImpl)prevField.getPsi();
