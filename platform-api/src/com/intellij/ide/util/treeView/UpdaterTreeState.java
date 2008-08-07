@@ -109,7 +109,15 @@ public class UpdaterTreeState {
 
   public void addAll(final UpdaterTreeState state) {
     myToExpand.putAll(state.myToExpand);
-    myToSelect.putAll(state.myToSelect);
+
+    final Iterator<Object> toSelect = state.myToSelect.keySet().iterator();
+    while (toSelect.hasNext()) {
+      Object each = toSelect.next();
+      if (!myAdjustedSelection.containsKey(each)) {
+        myToSelect.put(each, each);
+      }
+    }
+
     myCanRunRestore = state.myCanRunRestore;
   }
 

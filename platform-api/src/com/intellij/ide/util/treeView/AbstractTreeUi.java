@@ -266,7 +266,7 @@ class AbstractTreeUi {
         final DefaultMutableTreeNode node = findNode(element, index);
         if (node == null) break;
 
-        if (isValid(element, node)) {
+        if (isNodeValidForElement(element, node)) {
           result = node;
           break;
         }
@@ -286,10 +286,29 @@ class AbstractTreeUi {
     return result;
   }
 
-  private boolean isValid(final Object element, final DefaultMutableTreeNode node) {
-    Object eachParent = element;
-    DefaultMutableTreeNode eachParentNode = node;
+  private boolean isNodeValidForElement(final Object element, final DefaultMutableTreeNode node) {
+    return isSameHierarchy(element, node) || isValidChildOfParent(element, node);
+  }
 
+  private boolean isValidChildOfParent(final Object element, final DefaultMutableTreeNode node) {
+    final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
+    final Object parentElement = getElementFor(parent);
+    if (!isInStructure(parentElement)) return false;
+
+    if (parent instanceof ElementNode) {
+      return ((ElementNode)parent).isValidChild(element);
+    } else {
+      for (int i = 0; i < parent.getChildCount(); i++) {
+        final TreeNode child = parent.getChildAt(i);
+        final Object eachElement = getElementFor(child);
+        if (element.equals(eachElement)) return true;
+      }
+    }
+
+    return false;
+  }
+
+  private boolean isSameHierarchy(Object eachParent, DefaultMutableTreeNode eachParentNode) {
     boolean valid = true;
     while(true) {
       if (eachParent == null) {
@@ -586,7 +605,7 @@ class AbstractTreeUi {
   private void removeLoadingNode(final DefaultMutableTreeNode parent) {
     for (int i = 0; i < parent.getChildCount(); i++) {
       if (isLoadingNode(parent.getChildAt(i))) {
-        removeNodeFromParent((MutableTreeNode)parent.getChildAt(i));
+        removeNodeFromParent((MutableTreeNode)parent.getChildAt(i), false);
         break;
       }
     }
@@ -709,7 +728,39 @@ class AbstractTreeUi {
   }
 
   protected DefaultMutableTreeNode createChildNode(final NodeDescriptor descriptor) {
-    return new DefaultMutableTreeNode(descriptor);
+    return new ElementNode(descriptor);
+  }
+
+  static class ElementNode extends DefaultMutableTreeNode {
+
+    Set<Object> myElements = new HashSet<Object>();
+
+    ElementNode(NodeDescriptor descriptor) {
+      super(descriptor);
+    }
+
+    @Override
+    public void insert(final MutableTreeNode newChild, final int childIndex) {
+      super.insert(newChild, childIndex);
+      final Object element = getElementFor(newChild);
+      if (element != null) {
+        myElements.add(element);
+      }
+    }
+
+    @Override
+    public void remove(final int childIndex) {
+      final TreeNode node = getChildAt(childIndex);
+      super.remove(childIndex);
+      final Object element = getElementFor(node);
+      if (element != null) {
+        myElements.remove(element);
+      }
+    }
+
+    boolean isValidChild(Object childElement) {
+      return myElements.contains(childElement);
+    }
   }
 
   private boolean isUpdatingParent(DefaultMutableTreeNode kid) {
@@ -764,7 +815,7 @@ class AbstractTreeUi {
               if (TreeBuilderUtil.isNodeSelected(myTree, node)) {
                 addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)), true, Condition.FALSE);
               }
-              removeNodeFromParent((MutableTreeNode)child);
+              removeNodeFromParent((MutableTreeNode)child, false);
               i--;
             }
           }
@@ -906,7 +957,7 @@ class AbstractTreeUi {
 
       Object disposedElement = getElementFor(childNode);
 
-      removeNodeFromParent(childNode);
+      removeNodeFromParent(childNode, selectedIndex >= 0);
       disposeNode(childNode);
 
       if (selectedIndex >= 0) {
@@ -988,9 +1039,31 @@ class AbstractTreeUi {
     });
   }
 
-  private void removeNodeFromParent(final MutableTreeNode node) {
+  private static TreePath getPathFor(TreeNode node) {
+    if (node instanceof DefaultMutableTreeNode) {
+      return new TreePath(((DefaultMutableTreeNode)node).getPath());
+    } else {
+      ArrayList nodes = new ArrayList();
+      TreeNode eachParent = node;
+      while (eachParent != null) {
+        nodes.add(eachParent);
+        eachParent = eachParent.getParent();
+      }
+
+      return new TreePath(nodes.toArray(new Object[nodes.size()]));
+    }
+  }
+
+  private void removeNodeFromParent(final MutableTreeNode node, final boolean willAdjustSelection) {
     doWithUpdaterState(new Runnable() {
       public void run() {
+        if (willAdjustSelection) {
+          final TreePath path = getPathFor(node);
+          if (myTree.isPathSelected(path)) {
+            myTree.removeSelectionPath(path);
+          }
+        }
+
         myTreeModel.removeNodeFromParent(node);
       }
     });
@@ -1140,7 +1213,7 @@ class AbstractTreeUi {
         List<Object> pathsToExpand = new ArrayList<Object>();
         List<Object> selectionPaths = new ArrayList<Object>();
         TreeBuilderUtil.storePaths(getBuilder(), node, pathsToExpand, selectionPaths, false);
-        removeNodeFromParent(node);
+        removeNodeFromParent(node, false);
         myTreeModel.insertNodeInto(node, parentNode, newIndex);
         TreeBuilderUtil.restorePaths(getBuilder(), pathsToExpand, selectionPaths, false);
       }
@@ -1707,7 +1780,7 @@ class AbstractTreeUi {
 
       for (int i = 0; i < node.getChildCount(); i++) {
         if (isLoadingNode(node.getChildAt(i))) {
-          removeNodeFromParent((MutableTreeNode)node.getChildAt(i));
+          removeNodeFromParent((MutableTreeNode)node.getChildAt(i), false);
         }
       }
 
@@ -1775,7 +1848,7 @@ class AbstractTreeUi {
     }
   }
 
-  public boolean isInStructure(@NotNull Object element) {
+  public boolean isInStructure(@Nullable Object element) {
     Object eachParent = element;
     while(eachParent != null) {
       if (getTreeStructure().getRootElement().equals(eachParent)) return true;
