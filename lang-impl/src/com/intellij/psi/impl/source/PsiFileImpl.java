@@ -200,8 +200,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public ASTNode findTreeForStub(StubTree tree, StubElement stub) {
     final Iterator<StubElement<?>> stubs = tree.getPlainList().iterator();
-    stubs.next();
-    return findTreeForStub(calcTreeElement(), stubs, stub);
+    final StubElement<?> root = stubs.next();
+    final CompositeElement ast = calcTreeElement();
+    if (root == stub) return ast;
+
+    return findTreeForStub(ast, stubs, stub);
   }
 
   private static ASTNode findTreeForStub(ASTNode tree, final Iterator<StubElement<?>> stubs, final StubElement stub) {
