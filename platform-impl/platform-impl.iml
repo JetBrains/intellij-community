@@ -68,6 +68,7 @@
     <orderEntry type="library" exported="" name="commons-codec" level="project" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
+    <orderEntry type="library" name="commons-net" level="project" />
   </component>
 </module>
 
