@@ -58,9 +58,13 @@ public class FileLevelIntentionComponent extends JPanel {
 
     content.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
+        Point location = SwingUtilities.convertPoint(FileLevelIntentionComponent.this,
+                                                     new Point(0, 0),
+                                                     myEditor.getComponent().getRootPane().getLayeredPane());
         IntentionHintComponent.showIntentionHint(myProject, psiFile, myEditor,
                                                  Collections.<HighlightInfo.IntentionActionDescriptor>emptyList(),
-                                                 myIntentions, Collections.<HighlightInfo.IntentionActionDescriptor>emptyList(), true);
+                                                 myIntentions, Collections.<HighlightInfo.IntentionActionDescriptor>emptyList(),
+                                                 true, location);
       }
     });
   }

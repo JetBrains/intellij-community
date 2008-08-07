@@ -377,11 +377,22 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   public static IntentionHintComponent showIntentionHint(Project project, final PsiFile file, Editor editor,
                                                          List<HighlightInfo.IntentionActionDescriptor> intentions,
                                                          List<HighlightInfo.IntentionActionDescriptor> errorFixes,
-                                                         final List<HighlightInfo.IntentionActionDescriptor> inspectionFixes, boolean showExpanded) {
+                                                         final List<HighlightInfo.IntentionActionDescriptor> inspectionFixes,
+                                                         boolean showExpanded) {
+    final Point position = getHintPosition(editor);
+    return showIntentionHint(project, file, editor, intentions, errorFixes, inspectionFixes, showExpanded, position);
+  }
+
+  public static IntentionHintComponent showIntentionHint(Project project, final PsiFile file, Editor editor,
+                                                         List<HighlightInfo.IntentionActionDescriptor> intentions,
+                                                         List<HighlightInfo.IntentionActionDescriptor> errorFixes,
+                                                         final List<HighlightInfo.IntentionActionDescriptor> inspectionFixes,
+                                                         boolean showExpanded,
+                                                         final Point position) {
     final IntentionHintComponent component = new IntentionHintComponent(project, file, editor, intentions, errorFixes, inspectionFixes);
 
     if (showExpanded) {
-      component.showIntentionHintImpl(false);
+      component.showIntentionHintImpl(false, position);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           component.showPopup();
@@ -389,7 +400,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       });
     }
     else {
-      component.showIntentionHintImpl(true);
+      component.showIntentionHintImpl(true, position);
     }
     Disposer.register(project, component);
 
@@ -423,13 +434,12 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
   }
 
-  private void showIntentionHintImpl(final boolean delay) {
+  private void showIntentionHintImpl(final boolean delay, final Point position) {
     final int offset = myEditor.getCaretModel().getOffset();
 
     myComponentHint.setShouldDelay(delay);
 
-    HintManager.getInstance().showQuestionHint(myEditor,
-                                 getHintPosition(myEditor, offset),
+    HintManager.getInstance().showQuestionHint(myEditor, position,
                                  offset,
                                  offset,
                                  myComponentHint,
@@ -441,10 +451,11 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
                                  });
   }
 
-  private static Point getHintPosition(Editor editor, int offset) {
+  private static Point getHintPosition(Editor editor) {
+
+    final int offset = editor.getCaretModel().getOffset();
     final LogicalPosition pos = editor.offsetToLogicalPosition(offset);
     int line = pos.line;
-
 
     final Point position = editor.logicalPositionToXY(new LogicalPosition(line, 0));
     final int yShift = (ourIntentionIcon.getIconHeight() - editor.getLineHeight() - 1) / 2 - 1;
