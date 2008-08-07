@@ -25,8 +25,6 @@ import java.util.*;
 
 public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
-  @NonNls private static final String TSTAMP_TAG = "tstamp";
-
   private PsiElement myPropertiesFile;
 
   public AntPropertyImpl(final AntElement parent,
@@ -311,13 +309,18 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     for (XmlAttributeValue value : getTstampPropertyAttributeValues()) {
       if (value != null && (_propName == null || _propName.equals(value.getValue()))) {
         if (formatTag != null) {
-          final String pattern = formatTag.getAttributeValue("pattern");
-          final DateFormat format = (pattern != null) ? new SimpleDateFormat(pattern) : DateFormat.getTimeInstance();
-          final String tz = formatTag.getAttributeValue("timezone");
-          if (tz != null) {
-            format.setTimeZone(TimeZone.getTimeZone(tz));
+          final String pattern = formatTag.getAttributeValue(TSTAMP_PATTERN_ATTRIBUTE_NAME);
+          try {
+            final DateFormat format = (pattern != null) ? new SimpleDateFormat(pattern) : DateFormat.getTimeInstance();
+            final String tz = formatTag.getAttributeValue(TSTAMP_TIMEZONE_ATTRIBUTE_NAME);
+            if (tz != null) {
+              format.setTimeZone(TimeZone.getTimeZone(tz));
+            }
+            return format.format(d);
           }
-          return format.format(d);
+          catch (IllegalArgumentException ignored) {
+            return null;
+          }
         }
       }
     }

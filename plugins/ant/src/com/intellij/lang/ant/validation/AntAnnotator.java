@@ -20,6 +20,8 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 
+import java.text.SimpleDateFormat;
+
 public class AntAnnotator implements Annotator {
 
   public void annotate(PsiElement psiElement, AnnotationHolder holder) {
@@ -154,12 +156,26 @@ public class AntAnnotator implements Annotator {
           }
         }
         else {
+          final String attrValue = attr.getValue();
           if (type == AntAttributeType.INTEGER) {
             try {
-              Integer.parseInt(se.computeAttributeValue(attr.getValue()));
+              Integer.parseInt(se.computeAttributeValue(attrValue));
             }
             catch (NumberFormatException e) {
               holder.createErrorAnnotation(attrName, AntBundle.message("integer.attribute.has.invalid.value", name));
+            }
+          }
+          else if (type == AntAttributeType.STRING) {
+            if (attrValue != null && AntProperty.TSTAMP_PATTERN_ATTRIBUTE_NAME.equalsIgnoreCase(name)) {
+              final PsiElement parent = se.getParent();
+              if (parent instanceof AntProperty && ((AntProperty)parent).isTstamp()) {
+                try {
+                  new SimpleDateFormat(attrValue);
+                }
+                catch (IllegalArgumentException e) {
+                  holder.createErrorAnnotation(attr.getValueElement(), e.getMessage());
+                }
+              }
             }
           }
         }

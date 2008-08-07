@@ -82,4 +82,8 @@ public class AntBuildNumberImpl extends AntTaskImpl implements AntProperty {
   public AntElement getFormatElement(final String propName) {
     return this;
   }
+
+  public boolean isTstamp() {
+    return false;
+  }
 }
