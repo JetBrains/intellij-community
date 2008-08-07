@@ -15,7 +15,6 @@
 
 package org.jetbrains.plugins.groovy.lang.parser;
 
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -52,20 +51,17 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   GrStubElementType<GrFieldStub, GrEnumConstant> ENUM_CONSTANT = new GrEnumConstantElementType();
   GrStubElementType<GrFieldStub, GrField> FIELD = new GrFieldElementType();
-
   GrStubElementType<GrMethodStub, GrMethod> METHOD_DEFINITION = new GrMethodElementType();
 
-  GroovyElementType NONE = new GroovyElementType("no token"); //not a node
+  IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
 
+  GroovyElementType NONE = new GroovyElementType("no token"); //not a node
   // Indicates the wrongway of parsing
   GroovyElementType WRONGWAY = new GroovyElementType("Wrong way!");
 
   // Auxiliary elements
   GroovyElementType SEP = new GroovyElementType("Statement separator");
-
   GroovyElementType LITERAL = new GroovyElementType("Literal");
-  // Top-level elements
-  IFileElementType GROOVY_FILE = new IStubFileElementType(GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
   //Packaging
   GroovyElementType PACKAGE_DEFINITION = new GroovyElementType("Package definition");
   // Blocks

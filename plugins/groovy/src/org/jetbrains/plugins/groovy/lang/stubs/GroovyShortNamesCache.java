@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.stubs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
@@ -24,15 +25,16 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrShortClassNameIndex;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -61,32 +63,63 @@ public class GroovyShortNamesCache implements PsiShortNamesCache {
 
   @NotNull
   public PsiClass[] getClassesByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
-    final Collection<? extends PsiClass> classes = StubIndex.getInstance().get(GrShortClassNameIndex.KEY, name, myProject, scope);
-    if (classes.isEmpty()) return PsiClass.EMPTY_ARRAY;
-    return classes.toArray(new PsiClass[classes.size()]);
+    final Collection<? extends PsiClass> plainClasses = StubIndex.getInstance().get(GrShortClassNameIndex.KEY, name, myProject, scope);
+    Collection<PsiClass> allClasses = getAllScriptClasses(name, scope);
+    allClasses.addAll(plainClasses);
+    if (allClasses.isEmpty()) return PsiClass.EMPTY_ARRAY;
+    return allClasses.toArray(new PsiClass[plainClasses.size()]);
   }
 
   @Nullable
   public PsiClass getClassByFQName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
     final Collection<? extends PsiClass> classes = StubIndex.getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, scope);
-    return classes.size() > 0 ? classes.iterator().next() : null;
+    for (PsiClass clazz : classes) {
+      if (name.equals(clazz.getQualifiedName())) return clazz;
+    }
+    return null;
   }
 
   @NotNull
   public PsiClass[] getClassesByFQName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
-    final Collection<? extends PsiClass> classes = StubIndex.getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, scope);
-    return classes.toArray(new PsiClass[classes.size()]);
+    final Collection<PsiClass> classes = StubIndex.getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, scope);
+    ArrayList<PsiClass> list = new ArrayList<PsiClass>();
+    for (PsiClass psiClass : classes) {
+      if (name.equals(psiClass.getQualifiedName())) {
+        list.add(psiClass);
+      }
+    }
+    return list.toArray(new PsiClass[classes.size()]);
+  }
+
+  private Collection<PsiClass> getAllScriptClasses(String name, GlobalSearchScope scope) {
+    Collection<GroovyFile> files = StubIndex.getInstance().get(GrScriptClassNameIndex.KEY, name, myProject, scope);
+    files = ContainerUtil.findAll(files, new Condition<GroovyFile>() {
+      public boolean value(GroovyFile groovyFile) {
+        return groovyFile.isScript();
+      }
+    });
+    return ContainerUtil.map(files, new Function<GroovyFile, PsiClass>() {
+      public PsiClass fun(GroovyFile groovyFile) {
+        assert groovyFile.isScript();
+        return groovyFile.getScriptClass();
+      }
+    });
   }
 
   @NotNull
   public String[] getAllClassNames() {
     final Collection<String> classNames = StubIndex.getInstance().getAllKeys(GrShortClassNameIndex.KEY);
+    Collection<String> scriptNames = StubIndex.getInstance().getAllKeys(GrScriptClassNameIndex.KEY);
+    classNames.addAll(scriptNames);
     return classNames.toArray(new String[classNames.size()]);
   }
 
 
   public void getAllClassNames(@NotNull HashSet<String> dest) {
-    dest.addAll(StubIndex.getInstance().getAllKeys(GrShortClassNameIndex.KEY));
+    final Collection<String> classNames = StubIndex.getInstance().getAllKeys(GrShortClassNameIndex.KEY);
+    Collection<String> scriptNames = StubIndex.getInstance().getAllKeys(GrScriptClassNameIndex.KEY);
+    classNames.addAll(scriptNames);
+    dest.addAll(classNames);
   }
 
   @NotNull
