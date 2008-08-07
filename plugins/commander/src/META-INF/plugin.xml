@@ -1,4 +1,3 @@
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
   <id>com.intellij.commander</id>
   <name>Commander</name>
@@ -22,14 +21,12 @@
   </extensions>
 
   <actions>
-    <group id="CommanderViewGroup" class="com.intellij.ide.actions.CommanderViewActionGroup">
-      <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="CodeEditorViewGroup"/>
-      <separator/>
-      <action id="CommanderSyncViews" class="com.intellij.ide.actions.SyncViewsAction" icon="/actions/syncPanels.png"/>
-      <action id="CommanderSwapPanels" class="com.intellij.ide.actions.SwapPanelsAction" icon="/actions/swapPanels.png"/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
-    </group>
+    <action id="CommanderSyncViews" class="com.intellij.ide.actions.SyncViewsAction" icon="/actions/syncPanels.png">
+      <add-to-group group-id="PairFileActions" anchor="first"/>
+    </action>
+    <action id="CommanderSwapPanels" class="com.intellij.ide.actions.SwapPanelsAction" icon="/actions/swapPanels.png">
+      <add-to-group group-id="PairFileActions" anchor="first"/>
+    </action>
   </actions>
 </idea-plugin>
 

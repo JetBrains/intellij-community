@@ -170,6 +170,11 @@
         <group id="ViewRecentActions">
           <action id="RecentFiles" class="com.intellij.ide.actions.ShowRecentFilesAction"/>
         </group>
+        <separator/>
+        <group id="PairFileActions">
+          <reference ref="CompareTwoFiles"/>
+          <reference ref="CompareFileWithEditor"/>
+        </group>
       </group>
 
       <!-- Go to -->
