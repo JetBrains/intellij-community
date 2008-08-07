@@ -176,11 +176,9 @@
     </action>
 
     <!-- Toolbar -->
-    <group id="XPathView.Toolbar">
-      <reference id="XPathView.Actions.Evaluate" />
-
+    <reference id="XPathView.Actions.Evaluate">
       <add-to-group group-id="MainToolBar" anchor="before" relative-to-action="HelpTopics" />
-    </group>
+    </reference>
 
     <group id="XPathView.MainMenu.Search">
       <separator />
