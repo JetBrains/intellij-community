@@ -8,13 +8,8 @@ import com.intellij.lang.ant.psi.AntFilesProvider;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.impl.reference.AntElementCompletionWrapper;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlElement;
@@ -57,23 +52,13 @@ public class AntDocumentationProvider implements DocumentationProvider {
       return null;
     }
     
-    final File helpFile = getHelpFile(elem);
-    if (helpFile == null) {
-      return null;
-    }
-    final VirtualFile fileByIoFile = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      @Nullable public VirtualFile compute() {
-        return LocalFileSystem.getInstance().findFileByIoFile(helpFile);
+    final VirtualFile helpFile = getHelpFile(elem);
+    if (helpFile != null) {
+      try {
+        return VfsUtil.loadText(helpFile);
       }
-    });
-
-    if (fileByIoFile == null) {
-      return null;
-    }
-    try {
-      return VfsUtil.loadText(fileByIoFile);
-    }
-    catch (IOException ignored) {
+      catch (IOException ignored) {
+      }
     }
     return null;
   }
@@ -112,7 +97,7 @@ public class AntDocumentationProvider implements DocumentationProvider {
   }
   
   @Nullable
-  private static File getHelpFile(final PsiElement element) {
+  private static VirtualFile getHelpFile(final PsiElement element) {
     if (!(element instanceof AntElement)) {
       return null;
     }
@@ -132,54 +117,76 @@ public class AntDocumentationProvider implements DocumentationProvider {
       return null;
     }
     
-    final @NonNls String path = antHomeDir + "/docs/manual";
+    @NonNls String path = antHomeDir + "/docs/manual";
+    String url;
+    if (new File(path).exists()) {
+      url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(path));
+    }
+    else {
+      path = antHomeDir + "/docs.zip";
+      if (new File(path).exists()) {
+        url = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(path) + JarFileSystem.JAR_SEPARATOR + "docs/manual");
+      }
+      else {
+        return null;
+      }
+    }
 
-    return new File(path).exists() ? getHelpFile(antElement, path) : null;
+    final VirtualFile documentationRoot = VirtualFileManager.getInstance().findFileByUrl(url);
+    if (documentationRoot == null) {
+      return null;
+    }
+    
+    return getHelpFile(antElement, documentationRoot);
   }
   
-  @NonNls private static final String CORE_TASKS_FOLDER_NAME = "/CoreTasks/";
-  @NonNls private static final String CORE_TYPES_FOLDER_NAME = "/CoreTypes/";
-  @NonNls private static final String OPTIONAL_TYPES_FOLDER_NAME = "/OptionalTypes/";
-  @NonNls private static final String OPTIONAL_TASKS_FOLDER_NAME = "/OptionalTasks/";
+  @NonNls private static final String CORE_TASKS_FOLDER_NAME = "CoreTasks";
+  @NonNls private static final String CORE_TYPES_FOLDER_NAME = "CoreTypes";
+  @NonNls private static final String OPTIONAL_TYPES_FOLDER_NAME = "OptionalTypes";
+  @NonNls private static final String OPTIONAL_TASKS_FOLDER_NAME = "OptionalTasks";
 
   @Nullable
-  private static File getHelpFile(AntElement antElement, final String path) {
+  private static VirtualFile getHelpFile(AntElement antElement, final VirtualFile documentationRoot) {
     @NonNls final String helpFileShortName;
     if (antElement instanceof AntElementCompletionWrapper) {
       final String name = ((AntElementCompletionWrapper)antElement).getName();
       if (name == null) {
         return null; // should not happen for valid element
       }
-      helpFileShortName = name.trim()+ ".html";
+      helpFileShortName = "/" + name.trim()+ ".html";
     }
     else {
-      final XmlTag xmlTag = (XmlTag) antElement.getSourceElement();
-      helpFileShortName = xmlTag.getName()+ ".html";
+      final XmlElement xmlElement = antElement.getSourceElement();
+      if (!(xmlElement instanceof XmlTag)) {
+        return null;
+      }
+      final XmlTag xmlTag = (XmlTag)xmlElement;
+      helpFileShortName = "/" + xmlTag.getName()+ ".html";
     }
 
-    @NonNls File candidateHelpFile = new File(path + CORE_TASKS_FOLDER_NAME + helpFileShortName);
-    if (candidateHelpFile.exists()) {
+    VirtualFile candidateHelpFile = documentationRoot.findFileByRelativePath(CORE_TASKS_FOLDER_NAME + helpFileShortName);
+    if (candidateHelpFile != null) {
       return candidateHelpFile;
     }
 
-    candidateHelpFile = new File(path + OPTIONAL_TASKS_FOLDER_NAME + helpFileShortName);
-    if (candidateHelpFile.exists()) {
+    candidateHelpFile = documentationRoot.findFileByRelativePath(OPTIONAL_TASKS_FOLDER_NAME + helpFileShortName);
+    if (candidateHelpFile != null) {
       return candidateHelpFile;
     }
 
-    candidateHelpFile = new File(path + CORE_TYPES_FOLDER_NAME + helpFileShortName);
-    if (candidateHelpFile.exists()) {
+    candidateHelpFile = documentationRoot.findFileByRelativePath(CORE_TYPES_FOLDER_NAME + helpFileShortName);
+    if (candidateHelpFile != null) {
       return candidateHelpFile;
     }
 
-    candidateHelpFile = new File(path + OPTIONAL_TYPES_FOLDER_NAME + helpFileShortName);
-    if (candidateHelpFile.exists()) {
+    candidateHelpFile = documentationRoot.findFileByRelativePath(OPTIONAL_TYPES_FOLDER_NAME + helpFileShortName);
+    if (candidateHelpFile != null) {
       return candidateHelpFile;
     }
 
     if(AntElementRole.TARGET_ROLE.equals(antElement.getRole()) || AntElementRole.PROJECT_ROLE.equals(antElement.getRole())) {
-      candidateHelpFile = new File(path + "/using.html");
-      if (candidateHelpFile.exists()) {
+      candidateHelpFile = documentationRoot.findFileByRelativePath("using.html");
+      if (candidateHelpFile != null) {
         return candidateHelpFile;
       }
     }
@@ -199,11 +206,11 @@ public class AntDocumentationProvider implements DocumentationProvider {
   }
 
   public String getUrlFor(PsiElement element, PsiElement originalElement) {
-    final File helpFile = getHelpFile(originalElement);
-    if (helpFile == null) {
+    final VirtualFile helpFile = getHelpFile(originalElement);
+    if (helpFile == null || !(helpFile.getFileSystem() instanceof LocalFileSystem)) {
       return null;
     }
-    return VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(helpFile.getPath()));
+    return helpFile.getUrl();
   }
 
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
