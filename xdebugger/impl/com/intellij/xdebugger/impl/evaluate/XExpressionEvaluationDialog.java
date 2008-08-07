@@ -8,6 +8,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,12 +19,16 @@ import java.awt.*;
 public class XExpressionEvaluationDialog extends EvaluationDialogBase {
   private XDebuggerExpressionComboBox myExpressionComboBox;
 
-  public XExpressionEvaluationDialog(@NotNull final XDebugSession session, XDebuggerEditorsProvider editorsProvider, @NotNull XStackFrame stackFrame) {
+  public XExpressionEvaluationDialog(@NotNull final XDebugSession session, XDebuggerEditorsProvider editorsProvider,
+                                     @NotNull XStackFrame stackFrame, @Nullable String expression) {
     super(session, XDebuggerBundle.message("xdebugger.dialog.title.evaluate.expression"), editorsProvider, stackFrame);
     getInputPanel().add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.expression")), BorderLayout.WEST);
     myExpressionComboBox = new XDebuggerExpressionComboBox(session.getProject(), editorsProvider, "evaluateExpression", stackFrame.getSourcePosition());
     myExpressionComboBox.getComboBox().setMinimumAndPreferredWidth(250);
     getInputPanel().add(myExpressionComboBox.getComponent(), BorderLayout.CENTER);
+    if (expression != null) {
+      myExpressionComboBox.setText(expression);
+    }
     myExpressionComboBox.selectAll();
   }
 

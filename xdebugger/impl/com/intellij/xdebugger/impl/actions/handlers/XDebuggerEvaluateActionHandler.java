@@ -1,6 +1,8 @@
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -16,8 +18,10 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
     XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
     XStackFrame stackFrame = session.getCurrentStackFrame();
     if (stackFrame == null) return;
-    
-    new XExpressionEvaluationDialog(session, editorsProvider, stackFrame).show();
+
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    String expression = editor != null ? editor.getSelectionModel().getSelectedText() : null;
+    new XExpressionEvaluationDialog(session, editorsProvider, stackFrame, expression).show();
   }
 
   protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {
