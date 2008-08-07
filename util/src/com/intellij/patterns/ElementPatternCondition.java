@@ -37,7 +37,10 @@ public class ElementPatternCondition<T> {
 
   public void append(StringBuilder builder, String indent) {
     myInitialCondition.append(builder, indent);
-    for (final PatternCondition<? super T> condition : myConditions) {
+    final int conditionSize = myConditions.size();
+
+    for (int i = 0; i < conditionSize; ++i) { // for each is slower
+      final PatternCondition<? super T> condition = myConditions.get(i);
       condition.append(builder.append(".\n").append(indent), indent);
     }
   }
