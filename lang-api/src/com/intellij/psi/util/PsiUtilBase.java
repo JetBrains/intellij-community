@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.meta.PsiMetaData;
@@ -488,5 +489,9 @@ public class PsiUtilBase {
     };
     copyVisitor.visitElement(fileCopy);
     return (T) fileCopy;
+  }
+
+  public static boolean ensureElementIsWritable(final @NotNull PsiElement element) {
+    return !ReadonlyStatusHandler.getInstance(element.getProject()).ensureFilesWritable(element.getContainingFile().getVirtualFile()).hasReadonlyFiles();
   }
 }
