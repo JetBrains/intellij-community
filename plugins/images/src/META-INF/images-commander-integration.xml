@@ -4,12 +4,12 @@
 
 <idea-plugin version="2">
   <actions>
-    <group id="ImagesCommanderActions1">
+    <group id="ImagesCommanderActions1" text="Images Commander Actions (1)">
       <reference id="Images.EditExternaly"/>
       <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="EditSource"/>
     </group>
 
-    <group id="ImagesCommanderActions2">
+    <group id="ImagesCommanderActions2" text="Images Commander Actions (2)">
       <reference id="Images.ShowThumbnails"/>
       <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="AddToFavorites"/>
     </group>
