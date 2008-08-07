@@ -7,8 +7,8 @@
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.junit2.configuration.CommonJavaParameters;
 import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
 import com.intellij.execution.testframework.TestSearchScope;
@@ -394,9 +394,11 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     private Logger LOGGER = Logger.getInstance("TestNG Runner");
 
     public void actionPerformed(ActionEvent event) {
-      String className = selectListenerClass();
-      listenerModel.addListener(className);
-      LOGGER.info("Adding listener " + className + " to configuration.");
+      final String className = selectListenerClass();
+      if (className != null) {
+        listenerModel.addListener(className);
+        LOGGER.info("Adding listener " + className + " to configuration.");
+      }
     }
 
     protected GlobalSearchScope getSearchScope(Module[] modules) {
