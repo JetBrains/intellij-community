@@ -115,7 +115,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
     pane.setMinimumSize(new Dimension(width, height));
     pane.setPreferredSize(new Dimension(width, height));
 
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
 
