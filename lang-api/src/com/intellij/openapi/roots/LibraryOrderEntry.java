@@ -30,6 +30,7 @@ public interface LibraryOrderEntry extends ExportableOrderEntry {
 
   String getLibraryLevel();
 
+  @Nullable
   String getLibraryName();
 
   VirtualFile[] getRootFiles(OrderRootType type);
