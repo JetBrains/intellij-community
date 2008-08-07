@@ -6,14 +6,17 @@
  */
 package com.intellij.openapi.vfs.encoding;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,8 +27,17 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Set;
 
-public class EncodingManagerImpl extends EncodingManager {
+
+@State(
+  name = "Encoding",
+  storages = {
+      @Storage(id = "Encoding", file = "$APP_CONFIG$/encoding.xml")
+  }
+)
+public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<Element> {
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
+  private String myDefaultEncoding = "";
+  private Charset myCachedCharset = null;
 
   @NonNls
   @NotNull
@@ -39,6 +51,17 @@ public class EncodingManagerImpl extends EncodingManager {
 
   public void disposeComponent() {
 
+  }
+
+  public Element getState() {
+    Element result = new Element("x");
+    result.setAttribute("default_encoding", myDefaultEncoding);
+    return result;
+  }
+
+  public void loadState(final Element state) {
+    myCachedCharset = null;
+    myDefaultEncoding = state.getAttributeValue("default_encoding");
   }
 
   @NotNull
@@ -60,14 +83,9 @@ public class EncodingManagerImpl extends EncodingManager {
     return encodingManager.getEncoding(virtualFile, useParentDefaults);
   }
 
+  @Nullable
   private static Project guessProject(final VirtualFile virtualFile) {
-    Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
-    if (project == null) {
-      ProjectManager projectManager = ProjectManager.getInstance();
-      if (projectManager == null) return null; //tests
-      project = projectManager.getDefaultProject();
-    }
-    return project;
+    return ProjectLocator.getInstance().guessProjectForFile(virtualFile);
   }
 
   public void setEncoding(@Nullable VirtualFile virtualFileOrDir, @Nullable Charset charset) {
@@ -98,13 +116,32 @@ public class EncodingManagerImpl extends EncodingManager {
   }
 
   public Charset getDefaultCharset() {
+    Charset result = myCachedCharset;
+    if (result == null) {
+      result = cacheCharset();
+      myCachedCharset = result;
+    }
+
+    return result;
+  }
+
+  public String getDefaultCharsetName() {
+    return myDefaultEncoding;
+  }
+
+  public void setDefaultCharsetName(final String name) {
+    myDefaultEncoding = name;
+    myCachedCharset = null;
+  }
+
+  private Charset cacheCharset() {
     Charset result = CharsetToolkit.getDefaultSystemCharset();
-    Application application = ApplicationManager.getApplication();
-    if (application != null) {
-      ProjectManager projectManager = ProjectManager.getInstance();
-      EncodingProjectManager encodingManager = projectManager == null ? null : EncodingProjectManager.getInstance(projectManager.getDefaultProject());
-      if (encodingManager != null) {
-        result = encodingManager.getDefaultCharset();
+    if (!StringUtil.isEmpty(myDefaultEncoding)) {
+      try {
+        result = Charset.forName(myDefaultEncoding);
+      }
+      catch (Exception e) {
+        // Do nothing
       }
     }
 

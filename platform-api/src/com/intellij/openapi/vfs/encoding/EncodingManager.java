@@ -40,6 +40,14 @@ public abstract class EncodingManager implements ApplicationComponent {
   // returns name of default charset configured in File|Template project settings|File encoding|Project
   public abstract Charset getDefaultCharset();
 
+  public String getDefaultCharsetName() {
+    return getDefaultCharset().displayName();
+  }
+
+  public void setDefaultCharsetName(String name) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
   /**
    * @return null for system-default
    */

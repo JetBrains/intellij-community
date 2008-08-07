@@ -210,7 +210,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
   //retrieves encoding for the Project node
   public Charset getDefaultCharset() {
     Charset charset = getEncoding(null, false);
-    return charset == null ? CharsetToolkit.getDefaultSystemCharset() : charset;
+    return charset == null ? EncodingManager.getInstance().getDefaultCharset() : charset;
   }
 
   public boolean isUseUTFGuessing(final VirtualFile virtualFile) {
