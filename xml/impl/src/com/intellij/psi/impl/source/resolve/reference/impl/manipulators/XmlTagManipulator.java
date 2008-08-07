@@ -6,6 +6,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
@@ -51,5 +52,19 @@ public class XmlTagManipulator extends AbstractElementManipulator<XmlTag> {
     final int i = value.indexOf(trimmed);
     final int start = xmlText.displayToPhysical(i) + offset;    
     return trimmed.length() == 0 ? new TextRange(start, start) : new TextRange(start, xmlText.displayToPhysical(i + trimmed.length() - 1) + offset + 1);
+  }
+
+  public static TextRange[] getValueRanges(final @NotNull XmlTag tag) {
+    final XmlTagValue value = tag.getValue();
+    final XmlText[] texts = value.getTextElements();
+    if (texts.length == 0) {
+      return new TextRange[] { value.getTextRange().shiftRight(-tag.getTextOffset()) };
+    } else {
+      final TextRange[] ranges = new TextRange[texts.length];
+      for (int i = 0; i < texts.length; i++) {
+        ranges[i] = getValueRange(texts[i]);
+      }
+      return ranges;
+    }
   }
 }
