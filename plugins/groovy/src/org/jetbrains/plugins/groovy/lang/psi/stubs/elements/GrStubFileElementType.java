@@ -50,7 +50,6 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub>{
     return new GrFileStubImpl(packName, name, isScript);
   }
 
-  @Override
   public void indexStub(GrFileStub stub, IndexSink sink) {
     String name = stub.getName().toString();
     if (stub.isScript() && name != null) {
