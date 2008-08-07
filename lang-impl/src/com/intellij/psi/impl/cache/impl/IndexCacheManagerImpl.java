@@ -69,7 +69,7 @@ public class IndexCacheManagerImpl implements CacheManager{
         LOG.assertTrue(virtualFile.isValid());
         return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
           public Boolean compute() {
-            if (scope.contains(virtualFile) && (index.isInContent(virtualFile) || index.isInLibrarySource(virtualFile))) {
+            if (virtualFile.isValid() || scope.contains(virtualFile) && (index.isInContent(virtualFile) || index.isInLibrarySource(virtualFile))) {
               if (virtualFile.getFileType().isBinary()) return Boolean.TRUE;
 
               final PsiFile psiFile = myPsiManager.findFile(virtualFile);
@@ -83,14 +83,18 @@ public class IndexCacheManagerImpl implements CacheManager{
 
     final Set<VirtualFile> vFiles = new HashSet<VirtualFile>();
 
-    FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
-      public void process(final VirtualFile file, final Integer value) {
-        final int mask = value.intValue();
-        if ((mask & occurrenceMask) != 0) {
-          vFiles.add(file);
-        }
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
+          public void process(final VirtualFile file, final Integer value) {
+            final int mask = value.intValue();
+            if ((mask & occurrenceMask) != 0) {
+              vFiles.add(file);
+            }
+          }
+        }, VirtualFileFilter.ALL);
       }
-    }, VirtualFileFilter.ALL);
+    });
 
     for (VirtualFile vFile : vFiles) {
       if (!virtualFileProcessor.process(vFile)) {
