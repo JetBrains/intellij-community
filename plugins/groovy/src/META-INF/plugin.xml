@@ -21,7 +21,7 @@
   <version>VERSION</version>
   <vendor logo="/org/jetbrains/plugins/groovy/images/groovy_16x16.png" url="http://www.jetbrains.com">JetBrains Inc.
   </vendor>
-  <idea-version since-build="8632" until-build="8999"/>
+  <idea-version since-build="8660" until-build="8999"/>
   <depends optional="true" config-file="groovy-js-integration.xml">JavaScript</depends>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -72,6 +72,7 @@ public class GroovyShortNamesCache implements PsiShortNamesCache {
 
   @Nullable
   public PsiClass getClassByFQName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
+    //todo implement 4 script classes
     final Collection<? extends PsiClass> classes = StubIndex.getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, scope);
     for (PsiClass clazz : classes) {
       if (name.equals(clazz.getQualifiedName())) return clazz;
@@ -81,6 +82,7 @@ public class GroovyShortNamesCache implements PsiShortNamesCache {
 
   @NotNull
   public PsiClass[] getClassesByFQName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
+    //todo implement 4 script classes
     final Collection<PsiClass> classes = StubIndex.getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, scope);
     ArrayList<PsiClass> list = new ArrayList<PsiClass>();
     for (PsiClass psiClass : classes) {
