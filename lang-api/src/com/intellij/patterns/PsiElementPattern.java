@@ -127,11 +127,19 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
       public boolean accepts(@NotNull T t, final ProcessingContext context) {
         PsiElement element = t;
         while (true) {
-          final int offset = element.getTextRange().getStartOffset();
-          if (offset == 0) return false;
+          do {
+            while (element != null && element.getPrevSibling() == null) {
+              element = element.getParent();
+            }
+            if (element == null) return false;
+            element = element.getPrevSibling();
 
-          element = element.getContainingFile().findElementAt(offset - 1);
-          if (element == null) return false;
+            while (element.getLastChild() != null) {
+              element = element.getLastChild();
+            }
+          }
+          while (element.getTextLength() == 0);
+
           if (!skip.getCondition().accepts(element, context)) {
             return pattern.getCondition().accepts(element, context);
           }
@@ -142,13 +150,22 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
   }
 
   public Self beforeLeafSkipping(@NotNull final ElementPattern skip, @NotNull final ElementPattern pattern) {
-    return with(new PatternCondition<T>("afterLeafSkipping") {
+    return with(new PatternCondition<T>("baforeLeafSkipping") {
       public boolean accepts(@NotNull T t, final ProcessingContext context) {
         PsiElement element = t;
         while (true) {
-          final int offset = element.getTextRange().getEndOffset();
-          element = element.getContainingFile().findElementAt(offset);
-          if (element == null) return false;
+          do {
+            while (element != null && element.getNextSibling() == null) {
+              element = element.getParent();
+            }
+            if (element == null) return false;
+            element = element.getNextSibling();
+
+            while (element.getFirstChild() != null) {
+              element = element.getFirstChild();
+            }
+          }
+          while (element.getTextLength() == 0);
           if (!skip.getCondition().accepts(element, context)) {
             return pattern.getCondition().accepts(element, context);
           }
