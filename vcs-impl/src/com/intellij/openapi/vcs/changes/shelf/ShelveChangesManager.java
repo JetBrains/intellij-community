@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
@@ -173,7 +174,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       file.mkdirs();
     }
 
-    return suggestPatchName(commitMessage, file);
+    return suggestPatchName(commitMessage.length() > PatchNameChecker.MAX ? (commitMessage.substring(0, PatchNameChecker.MAX)) :
+                            commitMessage, file);
   }
 
   public static File suggestPatchName(final String commitMessage, final File file) {

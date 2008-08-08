@@ -122,10 +122,14 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
     }
 
     public boolean canExecute(Collection<Change> changes, String commitMessage) {
-      return true;
+      return myPanel.isOkToExecute();
     }
 
     public void execute(Collection<Change> changes, String commitMessage) {
+      if (! myPanel.isOkToExecute()) {
+        Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", myPanel.getError()), CommonBundle.getErrorTitle());
+        return;
+      }
       int binaryCount = 0;
       for(Change change: changes) {
         if (ChangesUtil.isBinaryChange(change)) {

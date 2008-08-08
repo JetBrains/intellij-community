@@ -1,6 +1,7 @@
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.CommonBundle;
+import com.intellij.util.Consumer;
 import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.integration.IdeaGateway;
@@ -310,9 +311,14 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   private boolean showAsDialog(CreatePatchConfigurationPanel p) {
-    DialogBuilder b = new DialogBuilder(myGateway.getProject());
+    final DialogBuilder b = new DialogBuilder(myGateway.getProject());
     b.setTitle(message("create.patch.dialog.title"));
     b.setCenterPanel(p.getPanel());
+    p.installOkEnabledListener(new Consumer<Boolean>() {
+      public void consume(final Boolean aBoolean) {
+        b.setOkActionEnabled(aBoolean);
+      }
+    });
     return b.show() == OK_EXIT_CODE;
   }
 
