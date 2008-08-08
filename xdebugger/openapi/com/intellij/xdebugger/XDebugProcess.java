@@ -56,32 +56,32 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * Called when {@link com.intellij.xdebugger.XDebugSession} is initialized and breakpoints are registered in
+   * Called when {@link XDebugSession} is initialized and breakpoints are registered in
    * {@link com.intellij.xdebugger.breakpoints.XBreakpointHandler}
    */
   public void sessionInitialized() {
   }
 
   /**
-   * Interrupt debugging process and call {@link com.intellij.xdebugger.XDebugSession#positionReached(XSourcePosition, com.intellij.xdebugger.frame.XSuspendContext)}
+   * Interrupt debugging process and call {@link XDebugSession#positionReached(com.intellij.xdebugger.frame.XSuspendContext)}
    * when next line in current method/function is reached 
    */
   public abstract void startPausing();
 
   /**
-   * Resume execution and call {@link com.intellij.xdebugger.XDebugSession#positionReached(XSourcePosition, com.intellij.xdebugger.frame.XSuspendContext)}
+   * Resume execution and call {@link XDebugSession#positionReached(com.intellij.xdebugger.frame.XSuspendContext)}
    * when next line in current method/function is reached  
    */
   public abstract void startStepOver();
 
   /**
-   * Resume execution and call {@link com.intellij.xdebugger.XDebugSession#positionReached(XSourcePosition, com.intellij.xdebugger.frame.XSuspendContext)}
+   * Resume execution and call {@link XDebugSession#positionReached(com.intellij.xdebugger.frame.XSuspendContext)}
    * when next line is reached
    */
   public abstract void startStepInto();
 
   /**
-   * Resume execution and call {@link com.intellij.xdebugger.XDebugSession#positionReached(XSourcePosition, com.intellij.xdebugger.frame.XSuspendContext)}
+   * Resume execution and call {@link XDebugSession#positionReached(com.intellij.xdebugger.frame.XSuspendContext)}
    * after returning from current method/function
    */
   public abstract void startStepOut();
@@ -97,7 +97,7 @@ public abstract class XDebugProcess {
   public abstract void resume();
 
   /**
-   * Resume execution and call {@link com.intellij.xdebugger.XDebugSession#positionReached(XSourcePosition, com.intellij.xdebugger.frame.XSuspendContext)}
+   * Resume execution and call {@link XDebugSession#positionReached(com.intellij.xdebugger.frame.XSuspendContext)}
    * when <code>position</code> is reached
    * @param position position in source code
    */
