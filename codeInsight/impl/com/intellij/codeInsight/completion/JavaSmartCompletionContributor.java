@@ -12,6 +12,7 @@ import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -380,18 +381,23 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
         //long
         for (final PsiClassType type : expectedClassTypes) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
+          final boolean shouldSearchForInheritors = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+            public Boolean compute() {
               final PsiClass psiClass = type.resolve();
               assert psiClass != null;
-              if (!psiClass.hasModifierProperty(PsiModifier.FINAL) &&
-                  !CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) {
-                for (final PsiType psiType : CodeInsightUtil.addSubtypes(type, identifierCopy, false)) {
+              return !psiClass.hasModifierProperty(PsiModifier.FINAL) &&
+                     !CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName());
+            }
+          }).booleanValue();
+          if (shouldSearchForInheritors) {
+            for (final PsiType psiType : CodeInsightUtil.addSubtypes(type, identifierCopy, false)) {
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                public void run() {
                   addExpectedType(result, psiType, parameters);
                 }
-              }
+              });
             }
-          });
+          }
         }
       }
     });

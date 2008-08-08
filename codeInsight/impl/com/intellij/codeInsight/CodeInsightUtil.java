@@ -8,7 +8,9 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -217,55 +219,59 @@ public class CodeInsightUtil {
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
 
     return new Processor<PsiClass>() {
-      public boolean process(PsiClass inheritor) {
+      public boolean process(final PsiClass inheritor) {
         ProgressManager.getInstance().checkCanceled();
 
-        if(!facade.getResolveHelper().isAccessible(inheritor, context, null)) return true;
+        return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          public Boolean compute() {
+            if(!facade.getResolveHelper().isAccessible(inheritor, context, null)) return true;
 
-        if(inheritor.getQualifiedName() == null && !manager.areElementsEquivalent(inheritor.getContainingFile(), context.getContainingFile())){
-          return true;
-        }
+            if(inheritor.getQualifiedName() == null && !manager.areElementsEquivalent(inheritor.getContainingFile(), context.getContainingFile())){
+              return true;
+            }
 
-        if (JavaCompletionUtil.isInExcludedPackage(inheritor)) return true;
+            if (JavaCompletionUtil.isInExcludedPackage(inheritor)) return true;
 
-        PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
-        if(superSubstitutor == null) return true;
-        if(getRawSubtypes){
-          result.add(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
-          return true;
-        }
-
-        PsiSubstitutor inheritorSubstitutor = PsiSubstitutor.EMPTY;
-        final Iterator<PsiTypeParameter> inheritorParamIter = PsiUtil.typeParametersIterator(inheritor);
-        while (inheritorParamIter.hasNext()) {
-          PsiTypeParameter inheritorParameter = inheritorParamIter.next();
-
-          final Iterator<PsiTypeParameter> baseParamIter = PsiUtil.typeParametersIterator(baseClass);
-          while (baseParamIter.hasNext()) {
-            PsiTypeParameter baseParameter = baseParamIter.next();
-            final PsiType substituted = superSubstitutor.substitute(baseParameter);
-            PsiType arg = baseSubstitutor.substitute(baseParameter);
-            if (arg instanceof PsiWildcardType) arg = ((PsiWildcardType)arg).getBound();
-            PsiType substitution = resolveHelper.getSubstitutionForTypeParameter(inheritorParameter,
-                                                                                 substituted,
-                                                                                 arg,
-                                                                                 true,
-                                                                                 PsiUtil.getLanguageLevel(context));
-            if (substitution == PsiType.NULL || substitution instanceof PsiWildcardType) continue;
-            if (substitution == null) {
+            PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
+            if(superSubstitutor == null) return true;
+            if(getRawSubtypes){
               result.add(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
               return true;
             }
-            inheritorSubstitutor = inheritorSubstitutor.put(inheritorParameter, substitution);
-            break;
-          }
-        }
 
-        PsiType toAdd = createType(inheritor, inheritorSubstitutor, arrayDim);
-        if (baseType.isAssignableFrom(toAdd)) {
-          result.add(toAdd);
-        }
-        return true;
+            PsiSubstitutor inheritorSubstitutor = PsiSubstitutor.EMPTY;
+            final Iterator<PsiTypeParameter> inheritorParamIter = PsiUtil.typeParametersIterator(inheritor);
+            while (inheritorParamIter.hasNext()) {
+              PsiTypeParameter inheritorParameter = inheritorParamIter.next();
+
+              final Iterator<PsiTypeParameter> baseParamIter = PsiUtil.typeParametersIterator(baseClass);
+              while (baseParamIter.hasNext()) {
+                PsiTypeParameter baseParameter = baseParamIter.next();
+                final PsiType substituted = superSubstitutor.substitute(baseParameter);
+                PsiType arg = baseSubstitutor.substitute(baseParameter);
+                if (arg instanceof PsiWildcardType) arg = ((PsiWildcardType)arg).getBound();
+                PsiType substitution = resolveHelper.getSubstitutionForTypeParameter(inheritorParameter,
+                                                                                     substituted,
+                                                                                     arg,
+                                                                                     true,
+                                                                                     PsiUtil.getLanguageLevel(context));
+                if (substitution == PsiType.NULL || substitution instanceof PsiWildcardType) continue;
+                if (substitution == null) {
+                  result.add(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
+                  return true;
+                }
+                inheritorSubstitutor = inheritorSubstitutor.put(inheritorParameter, substitution);
+                break;
+              }
+            }
+
+            PsiType toAdd = createType(inheritor, inheritorSubstitutor, arrayDim);
+            if (baseType.isAssignableFrom(toAdd)) {
+              result.add(toAdd);
+            }
+            return true;
+          }
+        }).booleanValue();
       }
     };
   }
