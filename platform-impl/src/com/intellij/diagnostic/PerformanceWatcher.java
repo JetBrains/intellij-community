@@ -31,7 +31,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   private ThreadMXBean myThreadMXBean;
   private Method myDumpAllThreadsMethod;
   private DateFormat myDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
-  private DateFormat myPrintDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+  //private DateFormat myPrintDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
   private File myLogDir;
   private int myUnresponsiveDuration = 0;
   private File myCurHangLogDir;
@@ -114,7 +114,7 @@ public class PerformanceWatcher implements ApplicationComponent {
       }
       if (mySwingThreadCounter != myLoopCounter) {
         if (myUnresponsiveDuration == 0) {
-          System.out.println("EDT is not responding at " + myPrintDateFormat.format(new Date()));
+          //System.out.println("EDT is not responding at " + myPrintDateFormat.format(new Date()));
           myCurHangLogDir = new File(myLogDir, myDateFormat.format(new Date()));
           myCurHangLogDir.mkdirs();
         }
@@ -122,7 +122,7 @@ public class PerformanceWatcher implements ApplicationComponent {
         dumpThreads();
       }
       else if (myUnresponsiveDuration > 0) {
-        System.out.println("EDT was unresponsive for " + myUnresponsiveDuration + " seconds");
+        //System.out.println("EDT was unresponsive for " + myUnresponsiveDuration + " seconds");
         myCurHangLogDir.renameTo(new File(myLogDir, getLogDirForHang()));
         myUnresponsiveDuration = 0;
         myCurHangLogDir = myLogDir;
