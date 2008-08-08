@@ -1,0 +1,20 @@
+//
+//
+//
+package org.abc
+-----
+Groovy script
+  PsiComment(line comment)('//')
+  PsiElement(new line)('\n')
+  PsiComment(line comment)('//')
+  PsiWhiteSpace('\n')
+  PsiComment(line comment)('//')
+  PsiWhiteSpace('\n')
+  Package definition
+    PsiElement(package)('package')
+    PsiWhiteSpace(' ')
+    Reference element
+      Reference element
+        PsiElement(identifier)('org')
+      PsiElement(.)('.')
+      PsiElement(identifier)('abc')
