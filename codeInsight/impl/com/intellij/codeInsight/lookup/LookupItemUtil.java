@@ -79,7 +79,7 @@ public class LookupItemUtil{
     if (object instanceof PsiElement){
       PsiElement element = (PsiElement) object;
       if(element instanceof PsiClass){
-        object = element = CompletionUtil.getOriginalElement(element);
+        //object = element = CompletionUtil.getOriginalElement(element);
         item = new LookupItem(object, "");
       }
       s = PsiUtilBase.getName(element);
