@@ -6,12 +6,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,9 +96,10 @@ public abstract class PackagingEditorPolicy {
       }
 
       public void perform(final PackagingEditor packagingEditor) {
+        List<Library> libraries = getLibrariesToAdd(packagingEditor);
+        ContainerUtil.removeDuplicates(libraries);
         ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(packagingEditor.getMainPanel(),
-                                                                 ProjectBundle.message("dialog.title.packaging.choose.library"),
-                                                                 getLibrariesToAdd(packagingEditor));
+                                                                 ProjectBundle.message("dialog.title.packaging.choose.library"), libraries);
         dialog.show();
         if (dialog.isOK()) {
           packagingEditor.addLibraries(dialog.getChosenElements());
@@ -113,7 +112,9 @@ public abstract class PackagingEditorPolicy {
       }
 
       public void perform(final PackagingEditor packagingEditor) {
-        ChooseModulesDialog dialog = new ChooseModulesDialog(packagingEditor.getMainPanel(), getModulesToAdd(packagingEditor),
+        List<Module> moduleList = getModulesToAdd(packagingEditor);
+        ContainerUtil.removeDuplicates(moduleList);
+        ChooseModulesDialog dialog = new ChooseModulesDialog(packagingEditor.getMainPanel(), moduleList,
                                                              ProjectBundle.message("dialog.title.packaging.choose.module"));
         dialog.show();
         List<Module> modules = new ArrayList<Module>(dialog.getChosenElements());
@@ -178,22 +179,7 @@ public abstract class PackagingEditorPolicy {
       final LibraryLink libraryLink = (LibraryLink)element;
       Library library = libraryLink.getLibrary();
       if (library != null) {
-        String name = library.getName();
-        VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
-        if (name != null) {
-          return "'" + name + "' " + PackagingEditorUtil.getLibraryTableDisplayName(library);
-        }
-        else if (files.length > 0) {
-          Module module = ((LibraryImpl)library).getModule();
-          final String description;
-          if (module == null) {
-            description = "(" + PackagingEditorUtil.getLibraryTableDisplayName(library) + ")";
-          }
-          else {
-            description = ProjectBundle.message("node.text.library.of.module", module.getName());
-          }
-          return files[0].getName() + " " + description;
-        }
+        return PackagingEditorUtil.getLibraryDescription(library);
       }
     }
     if (element instanceof ModuleLink) {

@@ -36,7 +36,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     if (sort) {
       Collections.sort(items, new Comparator<T>() {
         public int compare(final T o1, final T o2) {
-          return getItemText(o1).compareTo(getItemText(o2));
+          return getItemText(o1).compareToIgnoreCase(getItemText(o2));
         }
       });
     }

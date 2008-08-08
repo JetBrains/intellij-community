@@ -1,9 +1,8 @@
 package com.intellij.openapi.roots.ui.configuration.packaging;
 
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseElementsDialog;
-import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 
@@ -20,7 +19,7 @@ class ChooseLibrariesDialog extends ChooseElementsDialog<Library> {
   }
 
   protected String getItemText(final Library item) {
-    return CellAppearanceUtils.forLibrary(item).getText();
+    return PackagingEditorUtil.getLibraryItemText(item);
   }
 
   protected Icon getItemIcon(final Library item) {

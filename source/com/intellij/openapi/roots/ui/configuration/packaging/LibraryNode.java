@@ -1,16 +1,11 @@
 package com.intellij.openapi.roots.ui.configuration.packaging;
 
 import com.intellij.openapi.deployment.LibraryLink;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -59,40 +54,9 @@ class LibraryNode extends LibraryNodeBase {
       renderer.append(libraryName, SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
     else {
-      String name = library.getName();
-      if (name != null) {
-        renderer.setIcon(Icons.LIBRARY_ICON);
-        renderer.append(name, getMainAttributes());
-        renderer.append(getLibraryTableComment(library), getCommentAttributes());
-      }
-      else {
-        VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
-        if (files.length > 0) {
-          VirtualFile file = files[0];
-          renderer.setIcon(file.getIcon());
-          renderer.append(file.getName(), getMainAttributes());
-          renderer.append(getLibraryTableComment(library), getCommentAttributes());
-        }
-        else {
-          CellAppearanceUtils.forLibrary(library).customize(renderer);
-        }
-      }
+      PackagingEditorUtil.renderLibraryNode(renderer, library, getMainAttributes(), getCommentAttributes());
     }
 
-  }
-
-  private static String getLibraryTableComment(final Library library) {
-    LibraryTable libraryTable = library.getTable();
-    String displayName;
-    if (libraryTable != null) {
-      displayName = libraryTable.getPresentation().getDisplayName(false);
-    }
-    else {
-      Module module = ((LibraryImpl)library).getModule();
-      String tableName = PackagingEditorUtil.getLibraryTableDisplayName(library);
-      displayName = module != null ? "'" + module.getName() + "' " + tableName : tableName;
-    }
-    return " (" + displayName + ")";
   }
 
   public boolean canNavigate() {
