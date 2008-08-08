@@ -64,8 +64,8 @@ public class DownloadRemoteFilePanel {
         new HTTPProxySettingsDialog().show();
       }
     });
-    remoteFileInfo.startDownloading(myDownloadingListener);
     showCard(DOWNLOADING_CARD);
+    remoteFileInfo.startDownloading(myDownloadingListener);
   }
 
   private void showCard(final String name) {

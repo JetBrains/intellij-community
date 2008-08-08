@@ -85,6 +85,7 @@ public interface XDebugSession {
   void positionReached(@NotNull XSuspendContext suspendContext);
 
   boolean isStopped();
+  void stop();
 
   void setBreakpointMuted(boolean muted);
   boolean areBreakpointsMuted();
@@ -99,5 +100,4 @@ public interface XDebugSession {
 
   @NotNull
   RunContentDescriptor getRunContentDescriptor();
-
 }

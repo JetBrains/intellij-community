@@ -5,6 +5,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
@@ -414,7 +415,7 @@ public class XDebugSessionImpl implements XDebugSession {
     return myStopped;
   }
 
-  public void stop() {
+  public void stopImpl() {
     if (myStopped) return;
 
     myDebugProcess.stop();
@@ -432,6 +433,18 @@ public class XDebugSessionImpl implements XDebugSession {
 
   public boolean isDisabledSlaveBreakpoint(final XBreakpoint<?> breakpoint) {
     return myDisabledSlaveBreakpoints.contains(breakpoint);
+  }
+
+  public void stop() {
+    ProcessHandler processHandler = myDebugProcess.getProcessHandler();
+    if (processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) return; 
+
+    if (processHandler.detachIsDefault()) {
+      processHandler.detachProcess();
+    }
+    else {
+      processHandler.destroyProcess();
+    }
   }
 
   private class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {

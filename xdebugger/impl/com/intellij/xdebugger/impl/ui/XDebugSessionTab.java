@@ -138,7 +138,7 @@ public class XDebugSessionTab implements Disposable {
     ProcessHandler processHandler = debugProcess.getProcessHandler();
     processHandler.addProcessListener(new ProcessAdapter() {
       public void processTerminated(final ProcessEvent event) {
-        ((XDebugSessionImpl)session).stop();
+        ((XDebugSessionImpl)session).stopImpl();
       }
     });
     return new DefaultExecutionResult(debugProcess.createConsole(), processHandler);
