@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -51,15 +50,17 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor");
 
-  private static GroovyFixer[] ourFixers;
+  private static GrFixer[] ourFixers;
   private static EnterProcessor[] ourEnterProcessors;
 
   static {
-    final List<GroovyFixer> fixers = new ArrayList<GroovyFixer>();
+    final List<GrFixer> fixers = new ArrayList<GrFixer>();
     fixers.add(new GrMissingIfStatement());
     fixers.add(new GrIfConditionFixer());
     fixers.add(new GrLiteralFixer());
     fixers.add(new GrMethodCallFixer());
+    fixers.add(new GrMethodBodyFixer());
+    fixers.add(new GrMethodParametersFixer());
 //    fixers.add(new IfConditionFixer());
 //    fixers.add(new WhileConditionFixer());
 //    fixers.add(new CatchDeclarationFixer());
@@ -82,7 +83,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
 //    fixers.add(new MissingArrayInitializerBraceFixer());
 //    fixers.add(new EnumFieldFixer());
 //    //ourFixers.add(new CompletionFixer());
-    ourFixers = fixers.toArray(new GroovyFixer[fixers.size()]);
+    ourFixers = fixers.toArray(new GrFixer[fixers.size()]);
 
     List<EnterProcessor> processors = new ArrayList<EnterProcessor>();
 //    processors.add(new CommentBreakerEnterProcessor());
@@ -120,7 +121,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
 
     try {
       commit(editor);
-      if (myFirstErrorOffset != Integer.MAX_VALUE) {
+       if (myFirstErrorOffset != Integer.MAX_VALUE) {
         editor.getCaretModel().moveToOffset(myFirstErrorOffset);
       }
 
@@ -139,7 +140,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
       queue.add(atCaret);
 
       for (PsiElement psiElement : queue) {
-        for (GroovyFixer fixer : ourFixers) {
+        for (GrFixer fixer : ourFixers) {
           fixer.apply(editor, this, psiElement);
           if (LookupManager.getInstance(project).getActiveLookup() != null) {
             return;

@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
  * User: Dmitry.Krasilschikov
  * Date: 04.08.2008
  */
-public class GrLiteralFixer implements GroovyFixer {
+public class GrLiteralFixer implements GrFixer {
   public void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement)
           throws IncorrectOperationException {
 

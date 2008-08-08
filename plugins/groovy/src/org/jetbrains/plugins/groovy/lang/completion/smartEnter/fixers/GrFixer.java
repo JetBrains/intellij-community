@@ -10,6 +10,6 @@ import org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterP
  * User: Dmitry.Krasilschikov
  * Date: 29.07.2008
  */
-public interface GroovyFixer {
+public interface GrFixer {
     void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException;
 }
