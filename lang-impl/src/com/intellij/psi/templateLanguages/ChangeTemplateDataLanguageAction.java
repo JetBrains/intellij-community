@@ -32,7 +32,7 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
     if (project == null) return;
 
     final FileViewProvider provider = PsiManager.getInstance(project).findViewProvider(virtualFile);
-    if (provider instanceof TemplateLanguageFileViewProvider) {
+    if (provider instanceof ConfigurableTemplateLanguageFileViewProvider) {
       final TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)provider;
 
       e.getPresentation().setText(LangBundle.message("quickfix.change.template.data.language.text", viewProvider.getTemplateDataLanguage().getDisplayName()));
