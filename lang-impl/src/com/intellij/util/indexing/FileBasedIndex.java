@@ -792,7 +792,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private final class ChangedFilesUpdater extends VirtualFileAdapter implements CacheUpdater{
     private final Set<VirtualFile> myFilesToUpdate = Collections.synchronizedSet(new HashSet<VirtualFile>());
-    private final BlockingQueue<FutureTask<?>> myFutureInvalidations = new LinkedBlockingQueue<FutureTask<?>>();
+    private final Queue<FutureTask<?>> myFutureInvalidations = new LinkedBlockingQueue<FutureTask<?>>();
     private final ManagingFS myManagingFS = ManagingFS.getInstance();
     // No need to react on movement events since files stay valid, their ids don't change and all associated attributes remain intact.
 
@@ -825,7 +825,7 @@ public class FileBasedIndex implements ApplicationComponent {
         // indexes may depend on file name
         final VirtualFile file = event.getFile();
         if (!file.isDirectory()) {
-          scheduleInvalidation(file, false);
+          scheduleInvalidation(file, true);
         }
       }
     }
@@ -913,21 +913,23 @@ public class FileBasedIndex implements ApplicationComponent {
               content = ArrayUtil.EMPTY_BYTE_ARRAY;
             }
             final FileContent fc = new FileContent(file, content);
-            final FutureTask<?> future = (FutureTask<?>)myInvalidationService.submit(new Runnable() {
-              public void run() {
-                for (ID<?, ?> indexId : affectedIndices) {
-                  try {
-                    updateSingleIndex(indexId, file, null, fc);
+            synchronized (myFutureInvalidations) {
+              final FutureTask<?> future = (FutureTask<?>)myInvalidationService.submit(new Runnable() {
+                public void run() {
+                  for (ID<?, ?> indexId : affectedIndices) {
+                    try {
+                      updateSingleIndex(indexId, file, null, fc);
+                    }
+                    catch (StorageException e) {
+                      LOG.info(e);
+                      requestRebuild(indexId);
+                    }
                   }
-                  catch (StorageException e) {
-                    LOG.info(e);
-                    requestRebuild(indexId);
-                  }
+                  IndexingStamp.flushCache();
                 }
-                IndexingStamp.flushCache();
-              }
-            });
-            myFutureInvalidations.offer(future);
+              });
+              myFutureInvalidations.offer(future);
+            }
           }
           iterateIndexableFiles(file, new Processor<VirtualFile>() {
             public boolean process(final VirtualFile file) {
@@ -941,11 +943,21 @@ public class FileBasedIndex implements ApplicationComponent {
 
     private void ensureAllInvalidateTasksCompleted() {
       while (true) {
-        final FutureTask<?> future = myFutureInvalidations.poll();
+        final FutureTask<?> future;
+        synchronized (myFutureInvalidations) {
+          future = myFutureInvalidations.poll();
+        }
         if (future == null) {
           return;
         }
         future.run(); // force the task run if it is has not been run yet
+        try {
+          future.get();
+        }
+        catch (InterruptedException ignored) {
+        }
+        catch (ExecutionException ignored) {
+        }
       }
     }
 
