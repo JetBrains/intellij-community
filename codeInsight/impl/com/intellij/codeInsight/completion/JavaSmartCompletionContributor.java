@@ -153,7 +153,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
     extend(CompletionType.SMART, PlatformPatterns.or(
         psiElement().withParent(PsiExpression.class),
-        psiElement().inside(PsiClassObjectAccessExpression.class)),
+        psiElement().inside(PsiClassObjectAccessExpression.class),
+        psiElement().inside(PsiThisExpression.class),
+        psiElement().inside(PsiSuperExpression.class)
+        ),
            new CompletionProvider<CompletionParameters>(true, false) {
              public void addCompletions(@NotNull final CompletionParameters params, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
                final PsiElement position = params.getPosition();
