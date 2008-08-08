@@ -852,6 +852,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, variable.getNameIdentifier()));
     }
     else {
+      if (variable.getInitializer() == null) {
+        final PsiElement child = variable.getLastChild();
+        if (child instanceof PsiErrorElement && child.getPrevSibling() == variable.getNameIdentifier()) return;
+      }
       myHolder.add(HighlightNamesUtil.highlightVariable(variable, variable.getNameIdentifier()));
     }
   }
