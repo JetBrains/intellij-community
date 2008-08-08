@@ -24,13 +24,16 @@ abstract class BaseHtmlLexer extends LexerBase {
   private static final int SEEN_TAG = 0x80;
   private static final int SEEN_SCRIPT = 0x100;
   private static final int SEEN_ATTRIBUTE = 0x200;
-  protected static final int BASE_STATE_SHIFT = 10;
+  private static final int SEEN_CONTENT_TYPE = 0x400;
+  protected static final int BASE_STATE_SHIFT = 11;
 
   private boolean seenTag;
   private boolean seenAttribute;
   private boolean seenStyle;
   private boolean seenScript;
   private boolean caseInsensitive;
+  private boolean seenContentType;
+
   static final TokenSet TOKENS_TO_MERGE = TokenSet.create(new IElementType[]{
     XmlTokenType.XML_COMMENT_CHARACTERS,
     XmlTokenType.XML_WHITE_SPACE,
@@ -55,6 +58,21 @@ abstract class BaseHtmlLexer extends LexerBase {
       // support for style in any attribute that ends with style
       //final int i = lexer.getTokenEnd() - "style".length();
       //final char ch = i > lexer.getTokenStart() ? buffer[i]:firstCh;
+
+      if (seenScript && !seenTag) {
+        seenContentType = false;
+
+        if (((firstCh == 'l' || firstCh == 't') || (caseInsensitive && (firstCh == 'L' || firstCh == 'T')))) {
+          @NonNls String name = TreeUtil.getTokenText(lexer);
+          if (caseInsensitive) name = name.toLowerCase();
+
+          if ("language".equals(name) || "type".equals(name)) {
+            seenContentType = true;
+          }
+        }
+
+        return;
+      }
 
       if ( /*ch !='s' &&*/
           firstCh !='o' && firstCh !='s' &&
@@ -89,6 +107,7 @@ abstract class BaseHtmlLexer extends LexerBase {
         seenStyle = false; // does this is valid branch?
         seenScript = false;
         seenAttribute=false;
+        seenContentType=false;
       }
     }
   }
@@ -98,6 +117,22 @@ abstract class BaseHtmlLexer extends LexerBase {
       if (seenAttribute) {
         seenStyle = false;
         seenScript = false;
+      }
+      seenContentType = false;
+    }
+  }
+
+  class XmlAttributeValueHandler implements TokenHandler {
+    public void handleElement(Lexer lexer) {
+      if (seenContentType) {
+        assert seenScript && !seenAttribute;
+
+        @NonNls String name = TreeUtil.getTokenText(lexer);
+        if (caseInsensitive) name = name.toLowerCase();
+        if (name.indexOf("javascript") == -1 && name.indexOf("jscript") == -1) {
+          seenScript = false;
+          seenTag = true;    // will be switched of on tag name in end
+        }
       }
     }
   }
@@ -122,6 +157,7 @@ abstract class BaseHtmlLexer extends LexerBase {
       seenStyle=false;
       seenScript=false;
       seenAttribute=false;
+      seenContentType=false;
     }
   }
 
@@ -138,9 +174,22 @@ abstract class BaseHtmlLexer extends LexerBase {
     tokenHandlers.put(XmlTokenType.XML_END_TAG_START,new XmlTagEndHandler());
     tokenHandlers.put(XmlTokenType.XML_EMPTY_ELEMENT_END,new XmlTagEndHandler());
     tokenHandlers.put(XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER,new XmlAttributeValueEndHandler());
+    tokenHandlers.put(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,new XmlAttributeValueHandler());
   }
 
   protected void registerHandler(IElementType elementType, TokenHandler value) {
+    final TokenHandler tokenHandler = tokenHandlers.get(elementType);
+
+    if (tokenHandler != null) {
+      final TokenHandler newHandler = value;
+      value = new TokenHandler() {
+        public void handleElement(final Lexer lexer) {
+          tokenHandler.handleElement(lexer);
+          newHandler.handleElement(lexer);
+        }
+      };
+    }
+
     tokenHandlers.put(elementType,value);
   }
 
@@ -160,6 +209,7 @@ abstract class BaseHtmlLexer extends LexerBase {
     seenStyle = (initialState & SEEN_STYLE)!=0;
     seenTag = (initialState & SEEN_TAG)!=0;
     seenAttribute = (initialState & SEEN_ATTRIBUTE)!=0;
+    seenContentType = (initialState & SEEN_CONTENT_TYPE) != 0;
   }
 
   protected int skipToTheEndOfTheEmbeddment() {
@@ -283,6 +333,7 @@ abstract class BaseHtmlLexer extends LexerBase {
     state |= ((seenTag)?SEEN_TAG:0);
     state |= ((seenStyle)?SEEN_STYLE:0);
     state |= ((seenAttribute)?SEEN_ATTRIBUTE:0);
+    state |= ((seenContentType)?SEEN_CONTENT_TYPE:0);
 
     return state;
   }
