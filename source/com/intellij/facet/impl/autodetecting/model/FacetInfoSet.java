@@ -42,10 +42,13 @@ public class FacetInfoSet<M> {
   }
 
   public void removeDetectedFacets(final FacetTypeId<?> type, final M module) {
-    List<FacetInfo2<M>> infos = new ArrayList<FacetInfo2<M>>(myInfosByType.get(type).get(module));
-    for (FacetInfo2<M> info : infos) {
-      if (info instanceof DetectedFacetInfo) {
-        removeFacetInfo(info);
+    Collection<FacetInfo2<M>> facets = myInfosByType.get(type).get(module);
+    if (facets != null) {
+      List<FacetInfo2<M>> infos = new ArrayList<FacetInfo2<M>>(facets);
+      for (FacetInfo2<M> info : infos) {
+        if (info instanceof DetectedFacetInfo) {
+          removeFacetInfo(info);
+        }
       }
     }
   }
