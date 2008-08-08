@@ -52,6 +52,7 @@ public final class RequestProcessor implements IRequestProcessor {
   @NonNls private static final String CASE_REQUEST = "Case";
   @NonNls private static final String CVS_PASS_ENV_VARS_PROPERTY = "cvs.pass.env.vars";
   @NonNls private static final String NO = "no";
+  private final long myTimeout;
 
   // Setup ==================================================================
 
@@ -59,7 +60,8 @@ public final class RequestProcessor implements IRequestProcessor {
                           IGlobalOptions globalOptions,
                           IEventSender eventSender,
                           IStreamLogger streamLogger,
-                          ICvsCommandStopper commandStopper) {
+                          ICvsCommandStopper commandStopper, final long timeout) {
+    myTimeout = timeout;
     BugLog.getInstance().assertNotNull(globalOptions);
     BugLog.getInstance().assertNotNull(clientEnvironment);
     BugLog.getInstance().assertNotNull(eventSender);
@@ -151,7 +153,7 @@ public final class RequestProcessor implements IRequestProcessor {
   private boolean processRequests(Requests requests,
                                   IConnectionStreams connectionStreams,
                                   IRequestsProgressHandler communicationProgressHandler)
-    throws CommandAbortedException, IOCommandException {
+    throws CommandException, IOCommandException {
     BugLog.getInstance().assertNotNull(requests);
 
     try {
@@ -229,8 +231,10 @@ public final class RequestProcessor implements IRequestProcessor {
   }
 
   private boolean handleResponses(IConnectionStreams connectionStreams, IResponseHandler responseHandler)
-    throws CommandAbortedException, IOException {
-    final ResponseParser responseParser = new ResponseParser(responseHandler, clientEnvironment.getCharset());
+    throws CommandException, IOException {
+    final ErrorDefendingResponseHandler proxy = new ErrorDefendingResponseHandler(myTimeout, responseHandler);
+
+    final ResponseParser responseParser = new ResponseParser(proxy, clientEnvironment.getCharset());
     final StringBuffer responseBuffer = new StringBuffer(32);
     for (; ;) {
       final String responseString = readResponse(connectionStreams.getLoggedReader(), responseBuffer);
@@ -244,6 +248,9 @@ public final class RequestProcessor implements IRequestProcessor {
       }
 
       checkCanceled();
+      if (proxy.interrupt()) {
+        throw new CommandException(null, "Aborted: consequent errors stream");
+      }
     }
   }
 

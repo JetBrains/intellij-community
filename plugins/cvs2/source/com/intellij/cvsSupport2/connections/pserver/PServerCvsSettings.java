@@ -24,8 +24,11 @@ public class PServerCvsSettings extends CvsConnectionSettings {
       PASSWORD = PServerLoginProvider.getInstance().getScrambledPasswordForCvsRoot(myStringRepsentation);
     }
 
-    return CvsConnectionUtil.createPServerConnection(this, cvsRootConfiguration.PROXY_SETTINGS,
-                                                     CvsApplicationLevelConfiguration.getInstance().TIMEOUT * 1000);
+    return CvsConnectionUtil.createPServerConnection(this, cvsRootConfiguration.PROXY_SETTINGS, getTimeoutMillis());
+  }
+
+  public static int getTimeoutMillis() {
+    return CvsApplicationLevelConfiguration.getInstance().TIMEOUT * 1000;
   }
 
   public int getDefaultPort() {

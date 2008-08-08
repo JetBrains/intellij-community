@@ -1,5 +1,7 @@
 package com.intellij.cvsSupport2.cvsBrowser;
 
+import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsListenerWithProgress;
+import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,7 +18,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Future;
 
-public class CvsElement extends DefaultMutableTreeNode {
+public class CvsElement extends DefaultMutableTreeNode implements CvsTabbedWindow.DeactivateListener {
 
   protected RemoteResourceDataProvider myDataProvider;
   protected String myName;
@@ -40,7 +42,13 @@ public class CvsElement extends DefaultMutableTreeNode {
     this(icon, icon, project);
   }
 
-  public void setModel(CvsTreeModel model) { myModel = model; }
+  public void setModel(CvsTreeModel model) {
+    myModel = model;
+  }
+
+  public void deactivated() {
+    myPeriodAlarm.cancelAllRequests();
+  }
 
   public void setDataProvider(RemoteResourceDataProvider dataProvider) {
     myDataProvider = dataProvider;
@@ -92,7 +100,6 @@ public class CvsElement extends DefaultMutableTreeNode {
     return new Vector(getMyChildren()).elements();
   }
 
-
   private List getMyChildren() {
     if (children == null) {
       final LoadingNode loadingNode = new LoadingNode();
@@ -116,6 +123,7 @@ public class CvsElement extends DefaultMutableTreeNode {
         }
       };
       myPeriodAlarm.addRequest(periodRequest, 200);
+      myModel.getCvsTree().addListener(this);
     }
 
     return children;
@@ -165,11 +173,23 @@ public class CvsElement extends DefaultMutableTreeNode {
     return null;
   }
 
-  private class MyGetContentCallback implements GetContentCallback {
+  private class MyGetContentCallback implements GetContentCallback, CvsTabbedWindow.DeactivateListener {
     private final LoadingNode myLoadingNode;
+    private CvsListenerWithProgress myListener;
 
     public MyGetContentCallback(LoadingNode loadingNode) {
       myLoadingNode = loadingNode;
+      myModel.getCvsTree().addListener(MyGetContentCallback.this);
+    }
+
+    public void deactivated() {
+      if (myListener != null) {
+        myListener.indirectCancel();
+      }
+    }
+
+    public void useForCancel(final CvsListenerWithProgress listener) {
+      myListener = listener;
     }
 
     public void fillDirectoryContent(final List<CvsElement> content) {
@@ -187,6 +207,8 @@ public class CvsElement extends DefaultMutableTreeNode {
     }
 
     public void finished() {
+      myModel.getCvsTree().removeListener(this);
+
       myPeriodAlarm.cancelAllRequests();
       if (isNodeChild(myLoadingNode)) {
         remove(myLoadingNode);
@@ -196,6 +218,8 @@ public class CvsElement extends DefaultMutableTreeNode {
     }
 
     public void loginAborted() {
+      myModel.getCvsTree().removeListener(this);
+
       CvsTree cvsTree = myModel.getCvsTree();
       if (cvsTree != null) {
         cvsTree.onLoginAborted();

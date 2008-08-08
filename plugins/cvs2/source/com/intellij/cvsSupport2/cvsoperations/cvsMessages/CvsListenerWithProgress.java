@@ -9,9 +9,11 @@ import org.netbeans.lib.cvsclient.ICvsCommandStopper;
 public class CvsListenerWithProgress extends CvsMessagesAdapter implements ICvsCommandStopper,ErrorRegistry {
   private ProgressIndicator myProgressIndicator;
   private String myLastError;
+  private boolean myIndirectCancel;
 
   public CvsListenerWithProgress(ProgressIndicator progressIndicator) {
     myProgressIndicator = progressIndicator;
+    myIndirectCancel = false;
   }
 
   public static CvsListenerWithProgress createOnProgress() {
@@ -31,8 +33,13 @@ public class CvsListenerWithProgress extends CvsMessagesAdapter implements ICvsC
     return myProgressIndicator;
   }
 
+  public void indirectCancel() {
+    myIndirectCancel = true;
+  }
+
   public boolean isAborted() {
     if (myLastError != null) throw new CvsProcessException(myLastError);
+    if (myIndirectCancel) return true;
     final ProgressIndicator progressIndicator = getProgressIndicator();
     if (progressIndicator == null) return false;
     return progressIndicator.isCanceled();

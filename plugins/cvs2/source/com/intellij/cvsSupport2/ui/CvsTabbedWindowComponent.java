@@ -1,11 +1,11 @@
 package com.intellij.cvsSupport2.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.CommonBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -14,7 +14,7 @@ import java.awt.*;
 /**
  * author: lesya
  */
-public class CvsTabbedWindowComponent extends JPanel implements DataProvider {
+public class CvsTabbedWindowComponent extends JPanel implements DataProvider, CvsTabbedWindow.DeactivateListener {
   private final JComponent myComponent;
   private final ContentManager myContentManager;
   private Content myContent;
@@ -73,6 +73,14 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider {
 
     public void actionPerformed(AnActionEvent e) {
       myContentManager.removeContent(myContent, true);
+
+      deactivated();
+    }
+  }
+
+  public void deactivated() {
+    if (myComponent instanceof CvsTabbedWindow.DeactivateListener) {
+      ((CvsTabbedWindow.DeactivateListener) myComponent).deactivated();
     }
   }
 

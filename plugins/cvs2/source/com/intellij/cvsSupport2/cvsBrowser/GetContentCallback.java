@@ -1,5 +1,7 @@
 package com.intellij.cvsSupport2.cvsBrowser;
 
+import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsListenerWithProgress;
+
 import java.util.List;
 
 /**
@@ -11,4 +13,6 @@ public interface GetContentCallback {
   void loginAborted();
 
   void finished();
+
+  void useForCancel(final CvsListenerWithProgress listener);
 }

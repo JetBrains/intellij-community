@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.cvsBrowser;
 
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
+import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.ui.Tree;
@@ -16,10 +17,11 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
-public class CvsTree extends JPanel {
+public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListener {
   private CvsElement[] myCurrentSelection = new CvsElement[0];
   private Tree myTree;
   private final CvsRootConfiguration myCvsRootConfiguration;
@@ -135,4 +137,28 @@ public class CvsTree extends JPanel {
     }
   }
 
+  private final List<CvsTabbedWindow.DeactivateListener> myListeners = new ArrayList<CvsTabbedWindow.DeactivateListener>();
+
+  public void addListener(final CvsTabbedWindow.DeactivateListener listener) {
+    synchronized (myListeners) {
+      if (! myListeners.contains(listener)) {
+        myListeners.add(listener);
+      }
+    }
+  }
+
+  public void removeListener(final CvsTabbedWindow.DeactivateListener listener) {
+    synchronized (myListeners) {
+      myListeners.remove(listener);
+    }
+  }
+
+  public void deactivated() {
+    synchronized (myListeners) {
+      for (CvsTabbedWindow.DeactivateListener listener : myListeners) {
+        listener.deactivated();
+      }
+      myListeners.clear();
+    }
+  }
 }

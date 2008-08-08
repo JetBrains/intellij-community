@@ -31,10 +31,12 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.common;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
+import com.intellij.cvsSupport2.connections.pserver.PServerCvsSettings;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsIgnore.IgnoreFileFilterBasedOnCvsEntriesManager;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesListener;
@@ -53,7 +55,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.CvsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.ClientEnvironment;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
@@ -233,7 +234,8 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
                                                                       globalOptions,
                                                                       eventManager,
                                                                       new StreamLogger(),
-                                                                      executionEnvironment.getCvsCommandStopper());
+                                                                      executionEnvironment.getCvsCommandStopper(),
+                                                                      PServerCvsSettings.getTimeoutMillis());
 
       eventManager.addFileInfoListener(this);
       eventManager.addEntryListener(this);

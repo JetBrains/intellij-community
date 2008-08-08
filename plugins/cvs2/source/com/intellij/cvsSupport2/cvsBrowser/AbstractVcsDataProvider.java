@@ -10,6 +10,7 @@ import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContent;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContentProvider;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetDirectoriesListViaUpdateOperation;
+import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsListenerWithProgress;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 
@@ -53,6 +54,22 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
     return new GetDirectoriesListViaUpdateOperation(myEnvironment, path);
   }
 
+  private static class MyCancellableCvsHandler extends CommandCvsHandler {
+    private MyCancellableCvsHandler(final String title, final CvsOperation cvsOperation) {
+      super(title, cvsOperation, true);
+    }
+
+    protected boolean runInReadThread() {
+      return false;
+    }
+
+    // in order to allow progress listener retrieval
+    @Override
+    public CvsListenerWithProgress getProgressListener() {
+      return super.getProgressListener();
+    }
+  }
+
   private void executeCommand(final DirectoryContentProvider command,
                                 final GetContentCallback callback,
                                 final CvsElement parent,
@@ -62,12 +79,12 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
                                                                       parent.getTree()));
     executor1.setIsQuietOperation(true);
 
-    executor1.performActionSync(
-      new CommandCvsHandler(CvsBundle.message("browse.repository.operation.name"), (CvsOperation)command, false){
-        protected boolean runInReadThread() {
-          return false;
-        }
-      },
+    final MyCancellableCvsHandler cvsHandler =
+        new MyCancellableCvsHandler(CvsBundle.message("browse.repository.operation.name"), (CvsOperation) command);
+
+    callback.useForCancel(cvsHandler.getProgressListener());
+
+    executor1.performActionSync(cvsHandler,
       new CvsOperationExecutorCallback() {
         public void executionFinished(boolean successfully) {
           callback.finished();

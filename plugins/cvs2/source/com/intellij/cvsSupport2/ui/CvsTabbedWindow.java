@@ -101,6 +101,10 @@ public class CvsTabbedWindow {
     return i;
   }
 
+  public interface DeactivateListener {
+    void deactivated();
+  }
+
   public int addTab(String s,
                     JComponent component,
                     boolean selectTab,
@@ -113,7 +117,11 @@ public class CvsTabbedWindow {
     int existing = getComponentNumNamed(s);
     if (existing != -1) {
       Content existingContent = getContentManager().getContent(existing);
-      if (!replaceContent) {
+      final JComponent existingComponent = existingContent.getComponent();
+      if (existingComponent instanceof DeactivateListener) {
+        ((DeactivateListener) existingComponent).deactivated();
+      }
+      if (! replaceContent) {
         getContentManager().setSelectedContent(existingContent);
         return existing;
       }

@@ -14,7 +14,9 @@ import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsBrowser.CvsTree;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
+import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -40,7 +42,7 @@ import java.io.File;
 /**
  * author: lesya
  */
-public class BrowserPanel extends JPanel implements DataProvider {
+public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindow.DeactivateListener {
   private final CvsTree myTree;
   private final CheckoutHelper myCheckoutHelper;
   private final CvsRootConfiguration myCvsRootConfiguration;
@@ -223,5 +225,9 @@ public class BrowserPanel extends JPanel implements DataProvider {
     CvsElement[] currentSelection = myTree.getCurrentSelection();
     if (currentSelection.length != 1) return null;
     return new CvsLightweightFile(currentSelection[0].getCvsLightFile(), null);
+  }
+
+  public void deactivated() {
+    myTree.deactivated();
   }
 }
