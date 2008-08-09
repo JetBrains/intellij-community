@@ -95,11 +95,14 @@ public class GroovyPsiManager implements ProjectComponent {
   public void initComponent() {
     myCache = new GroovyShortNamesCache(myProject);
 
+    // TODO[ilyas] this kind of invokeLater() usage is completely bogus - please rewrite
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            JavaPsiFacade.getInstance(myProject).registerShortNamesCache(getNamesCache());
+            if (!myProject.isDisposed()) {
+              JavaPsiFacade.getInstance(myProject).registerShortNamesCache(getNamesCache());
+            }
           }
         });
       }
