@@ -71,16 +71,6 @@ public class ResolveImportUtil {
   public static PsiElement resolvePythonImport2(final PyReferenceExpression importRef, final String referencedName) {
     final String the_name = referencedName != null? referencedName : importRef.getName();
     PsiFile containing_file = importRef.getContainingFile();
-    /*
-    final PyExpression qualifier = importRef.getQualifier();
-    if (qualifier instanceof PyReferenceExpression) {
-      // resolve qualifier (all of them, recursively)
-      PsiElement qualifierElement = ((PyReferenceExpression) qualifier).resolve();
-      if (qualifierElement == null) return null;
-      //
-      return resolveChild(qualifierElement, the_name, containing_file);
-    }
-    */
     PsiElement last_resolved = null;
     List<PyReferenceExpression> ref_path = PyResolveUtil.unwindRefPath(importRef);
     Iterator<PyReferenceExpression> it = ref_path.iterator();
@@ -110,7 +100,7 @@ public class ResolveImportUtil {
     if (pfile != null) {
       PsiDirectory pdir = pfile.getContainingDirectory();
       if (pdir != null) {
-        PsiElement elt = resolveChild(pdir, the_name, null);
+        PsiElement elt = resolveChild(pdir, the_name, containing_file);
         if (elt != null) return elt;
       }
 
