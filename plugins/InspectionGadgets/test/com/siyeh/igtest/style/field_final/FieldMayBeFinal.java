@@ -25,11 +25,20 @@ public class FieldMayBeFinal {
     }
 
     private int number;
+    private String s;
     public FieldMayBeFinal() {
+        s = "";
         number = 0;
     }
 
     public FieldMayBeFinal(int number) {
+        new Runnable() {
+
+            public void run() {
+                s = "";
+
+            }
+        };
         this.number = number;
     }
 }
