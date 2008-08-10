@@ -1,0 +1,2 @@
+import y
+X = "X"

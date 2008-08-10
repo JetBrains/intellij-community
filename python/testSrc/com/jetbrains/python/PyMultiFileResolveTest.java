@@ -89,14 +89,12 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
     assertTrue(element instanceof PyFunction);
   }
 
-  /*
   // Currently fails due to inadequate stubs
   public void testCircularImport() throws Exception {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyTargetExpression);
   }
-  */
-  
+
 
   private PsiElement doResolve() throws Exception {
     String testName = getTestName(true);
