@@ -102,6 +102,9 @@ public class AntElementNameReference extends AntGenericReference {
   }
 
   public Object[] getVariants() {
+    if (getAttribute() != null) {
+      return EMPTY_ARRAY; // scriptdef or mactodef params will be handled by XML implementation
+    }
     final AntStructuredElement parent = (AntStructuredElement)getElement().getAntParent();
     if (parent == null) {
       return EMPTY_ARRAY;
