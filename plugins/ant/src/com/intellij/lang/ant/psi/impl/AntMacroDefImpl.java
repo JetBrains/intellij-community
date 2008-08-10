@@ -62,21 +62,27 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
   public void clearCaches() {
     synchronized (PsiLock.LOCK) {
       super.clearCaches();
-      final AntFile file = getAntFile();
+      clearClassesCache();
+      getAntFile().clearCaches();
+    }
+  }
+
+  public void clearClassesCache() {
+    synchronized (PsiLock.LOCK) {
       if (myMacroDefinition != null) {
-        for (AntTypeId id : myMacroDefinition.getNestedElements()) {
-          final AntTypeDefinition nestedDef = file.getBaseTypeDefinition(myMacroDefinition.getNestedClassName(id));
-          if (nestedDef != null) {
-            file.unregisterCustomType(nestedDef);
-          }
+      final AntFile file = getAntFile();
+      for (AntTypeId id : myMacroDefinition.getNestedElements()) {
+        final AntTypeDefinition nestedDef = file.getBaseTypeDefinition(myMacroDefinition.getNestedClassName(id));
+        if (nestedDef != null) {
+          file.unregisterCustomType(nestedDef);
         }
-        final AntStructuredElement parent = getAntProject();
-        if (parent != null) {
-          parent.unregisterCustomType(myMacroDefinition);
-        }
-        myMacroDefinition = null;
       }
-      file.clearCaches();
+      final AntStructuredElement parent = getAntProject();
+      if (parent != null) {
+        parent.unregisterCustomType(myMacroDefinition);
+      }
+      myMacroDefinition = null;
+    }
     }
   }
 

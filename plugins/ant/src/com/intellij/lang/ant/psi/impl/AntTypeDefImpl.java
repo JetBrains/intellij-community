@@ -160,7 +160,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   @NotNull
   public AntTypeDefinition[] getDefinitions() {
     synchronized (PsiLock.LOCK) {
-      if (myNewDefinitions == null) {
+      if (myNewDefinitions == null || (!typesLoaded() && myLocalizedError == null /*don't give up loading until the error occurres or types are loaded*/)) {
         myNewDefinitions = AntTypeDefinition.EMPTY_ARRAY;
         final String classname = getClassName();
         if (classname != null) {
@@ -203,7 +203,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
           }
         }
         myNewDefinitions = null;
-        myClassesLoaded = false;
+        //myClassesLoaded = false;
       }
     }
   }

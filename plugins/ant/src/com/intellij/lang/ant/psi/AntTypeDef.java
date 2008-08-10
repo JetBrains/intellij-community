@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface AntTypeDef extends AntTask {
+public interface AntTypeDef extends AntDefTask {
 
   @Nullable
   String getDefinedName();
@@ -33,8 +33,6 @@ public interface AntTypeDef extends AntTask {
   AntTypeDefinition[] getDefinitions();
 
   boolean typesLoaded();
-  
-  void clearClassesCache();
 
   @Nullable
   String getLocalizedError();

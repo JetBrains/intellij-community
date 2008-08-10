@@ -62,11 +62,26 @@ public class AntScriptDefImpl extends AntTaskImpl implements AntScriptDef {
     synchronized (PsiLock.LOCK) {
       super.clearCaches();
       final AntFile file = getAntFile();
+      clearClassesCache();
+      file.clearCaches();
+    }
+  }
+
+  public void clearClassesCache() {
+    synchronized (PsiLock.LOCK) {
       if (myScriptDefinition != null) {
+        final AntFile file = getAntFile();
+        final AntAllTasksContainerImpl sequential = PsiTreeUtil.getChildOfType(this, AntAllTasksContainerImpl.class);
+        if (sequential != null) {
+          sequential.unregisterCustomType(myScriptDefinition);
+        }
         for (AntTypeId id : myScriptDefinition.getNestedElements()) {
           final AntTypeDefinition nestedDef = file.getBaseTypeDefinition(myScriptDefinition.getNestedClassName(id));
           if (nestedDef != null) {
             file.unregisterCustomType(nestedDef);
+            if (sequential != null) {
+              sequential.unregisterCustomType(nestedDef);
+            }
           }
         }
         final AntStructuredElement parent = getAntProject();
@@ -75,7 +90,6 @@ public class AntScriptDefImpl extends AntTaskImpl implements AntScriptDef {
         }
         myScriptDefinition = null;
       }
-      file.clearCaches();
     }
   }
 

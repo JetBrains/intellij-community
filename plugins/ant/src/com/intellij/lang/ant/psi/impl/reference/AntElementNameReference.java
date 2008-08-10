@@ -14,6 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class AntElementNameReference extends AntGenericReference {
@@ -82,8 +83,9 @@ public class AntElementNameReference extends AntGenericReference {
       if (task.isMacroDefined() || task.isScriptDefined()) {
         final XmlAttribute attr = getAttribute();
         if (definingElement != null && attr != null) {
+          final String attribName = attr.getName();
           for (PsiElement child : definingElement.getChildren()) {
-            if (child instanceof AntStructuredElement && attr.getName().equals(((AntStructuredElement)child).getName())) {
+            if (child instanceof AntStructuredElement && attribName.equals(((AntStructuredElement)child).getName())) {
               return child;
             }
           }
@@ -100,7 +102,7 @@ public class AntElementNameReference extends AntGenericReference {
   }
 
   public Object[] getVariants() {
-    AntStructuredElement parent = (AntStructuredElement)getElement().getAntParent();
+    final AntStructuredElement parent = (AntStructuredElement)getElement().getAntParent();
     if (parent == null) {
       return EMPTY_ARRAY;
     }
@@ -119,11 +121,31 @@ public class AntElementNameReference extends AntGenericReference {
         ids.add(new AntElementCompletionWrapper(parent, id.getName() + " ", project, AntElementRole.TASK_ROLE));
       }
       if (def.isAllTaskContainer()) {
-        for (final AntTypeDefinition _def : antFile.getBaseTypeDefinitions()) {
-          if (_def.isTask()) {
-            ids.add(new AntElementCompletionWrapper(parent, _def.getTypeId().getName() + " ", project, AntElementRole.TASK_ROLE));
+        new Object() {
+          final Set<AntFile> processedFiles = new HashSet<AntFile>();
+          final Set<AntTypeId> processedTypes = new HashSet<AntTypeId>();
+          
+          void walkFiles(AntFile file) {
+            if (processedFiles.contains(file)) {
+              return;  
+            }
+            processedFiles.add(file);
+
+            for (final AntTypeDefinition _def : file.getBaseTypeDefinitions()) {
+              if (_def.isTask()) {
+                final AntTypeId typeId = _def.getTypeId();
+                if (!processedTypes.contains(typeId)) {
+                  processedTypes.add(typeId);
+                  ids.add(new AntElementCompletionWrapper(parent, typeId.getName() + " ", project, AntElementRole.TASK_ROLE));
+                }
+              }
+            }
+
+            for (AntFile imported : file.getAntProject().getImportedFiles()) {
+              walkFiles(imported);
+            }
           }
-        }
+        }.walkFiles(antFile);
       }
       return ids.toArray(new Object[ids.size()]);
     }

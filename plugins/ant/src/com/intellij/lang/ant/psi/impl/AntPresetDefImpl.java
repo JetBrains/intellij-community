@@ -56,6 +56,13 @@ public class AntPresetDefImpl extends AntAllTasksContainerImpl implements AntPre
   public void clearCaches() {
     synchronized (PsiLock.LOCK) {
       super.clearCaches();
+      clearClassesCache();
+      getAntFile().clearCaches();
+    }
+  }
+
+  public void clearClassesCache() {
+    synchronized (PsiLock.LOCK) {
       if (myPresetDefinition != null) {
         final AntStructuredElement parent = getAntProject();
         if (parent != null) {
@@ -63,7 +70,6 @@ public class AntPresetDefImpl extends AntAllTasksContainerImpl implements AntPre
         }
         myPresetDefinition = null;
       }
-      getAntFile().clearCaches();
     }
   }
 

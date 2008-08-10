@@ -59,7 +59,14 @@ public class AntChangeVisitor implements XmlChangeVisitor {
   }
 
   public void visitXmlTagChildRemoved(final XmlTagChildRemoved xmlTagChildRemoved) {
-    clearParentCaches(xmlTagChildRemoved.getTag());
+    final XmlTag tag = xmlTagChildRemoved.getTag();
+    final AntFile antFile = getAntFile(tag);
+    if (antFile != null) {
+      antFile.clearCachesWithTypeDefinitions();
+    }
+    else {
+      clearParentCaches(tag);
+    }
   }
 
   public void visitXmlTagNameChanged(final XmlTagNameChanged xmlTagNameChanged) {
@@ -78,14 +85,16 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     }
     AntElement element = file.lightFindElementAt(textRange.getStartOffset());
     final boolean shouldInvalidateProperties = element instanceof AntProperty;
-    if (element instanceof AntTypeDef) {
-      ((AntTypeDef)element).clearClassesCache();
-    }
-    if (element != null && element.isValid()) {
-      if (element instanceof AntMacroDef || element instanceof AntPresetDef || element instanceof AntScriptDef) {
+
+    if (element instanceof AntDefTask) {
+      if (element.isValid()) {
         element.clearCaches();
       }
+      else {
+        ((AntDefTask)element).clearClassesCache();
+      }
     }
+
     if (element != null) {
       do{
         element = element.getAntParent();
