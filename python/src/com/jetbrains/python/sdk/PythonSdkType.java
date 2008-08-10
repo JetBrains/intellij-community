@@ -50,15 +50,17 @@ public class PythonSdkType extends SdkType {
     return PythonFileType.INSTANCE.getIcon();
   }
 
+  @NonNls
   @Nullable
   public String suggestHomePath() {
+    @NonNls final String PYTHON_STR = "python";
     TreeSet<String> candidates = new TreeSet<String>();
     if (SystemInfo.isWindows) {
       VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath("C:\\");
       if (rootDir != null) {
         VirtualFile[] topLevelDirs = rootDir.getChildren();
         for(VirtualFile dir: topLevelDirs) {
-          if (dir.isDirectory() && dir.getName().toLowerCase().startsWith("python")) {
+          if (dir.isDirectory() && dir.getName().toLowerCase().startsWith(PYTHON_STR)) {
             candidates.add(dir.getPath());
           }
         }
@@ -69,7 +71,7 @@ public class PythonSdkType extends SdkType {
       if (rootDir != null) {
         VirtualFile[] suspect_dirs = rootDir.getChildren();
         for(VirtualFile dir: suspect_dirs) {
-          if (dir.isDirectory() && dir.getName().startsWith("python")) {
+          if (dir.isDirectory() && dir.getName().startsWith(PYTHON_STR)) {
             candidates.add(dir.getPath());
           }
         }
@@ -232,7 +234,7 @@ public class PythonSdkType extends SdkType {
   public String getVersionString(final String sdkHome) {
     String binaryPath = getInterpreterPath(sdkHome);
     final boolean isJython = isJythonSdkHome(sdkHome);
-    String version_regexp, version_opt;
+    @NonNls String version_regexp, version_opt;
     if (isJython) {
       version_regexp = "(Jython \\S+) on .*";
       version_opt = "--version";

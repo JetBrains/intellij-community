@@ -129,7 +129,7 @@ public class ResolveImportUtil {
         }
       }
       catch (NullPointerException ex) {
-        return null; // any cut corners migt result in an NPE; resolution fails, but not the IDE.
+        return null; // any cut corners might result in an NPE; resolution fails, but not the IDE.
       }
     }
     return null; // not resolved by any means

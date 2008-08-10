@@ -21,9 +21,8 @@ import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.jetbrains.python.PyElementTypes;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.impl.PyScopeProcessor;
 import com.jetbrains.python.psi.impl.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
@@ -171,43 +170,6 @@ public class PyResolveUtil {
     return treeCrawlUp(processor, elt, false);
   }
 
-
-  public static class DeclRefPair {
-    public final PsiElement decl;
-    public final PsiElement ref;
-    public DeclRefPair(PsiElement decl, PsiElement ref) {
-      this.decl = decl;
-      this.ref = ref;
-    }
-  }
-
-  /**
-   * Resolves a (qualified) reference by collecting all its (left-hand) qualifiers and resolving left to right.
-   * E.g. an attemt to resolve "z" in "x.y.z" resolves x, then y in x, then z in x.y.
-   * @param target the reference to resolve.
-   * @return a list of (declaration, ref) pairs for all qualifeirs of target, with ref == target for the last element.
-   * E.g. for "x.y.z" the result is {(X, x), (Y, y), (Z, z)}, where X, Y and Z are declarations which x, y, and z refer to.
-   * When a declaration for a reference cannot be found, null is given instead.
-   * E.g. {(X, x), (Y, y), (null, z)} means that element z failed to resolve to a declaration. 
-   */
-  @NotNull
-  public static List<DeclRefPair> resolveQualified(PyReferenceExpression target) {
-    List<DeclRefPair> ret = new LinkedList<DeclRefPair>();
-    try {
-      final ASTNode[] nodes = target.getNode().getChildren(PyElementTypes.EXPRESSIONS);
-      if (nodes.length > 0) {
-        PyExpression first = (PyExpression)nodes[nodes.length-1]; // innermost child is leftmost qualifier
-        // find nearest expression that both precedes target and defines the name of first
-        // it may be a target of assignment, a parameter definition or a global definition.
-        // for this, go from target backwards.
-      }
-    }
-    catch (NullPointerException ex) {
-      ret.add(new DeclRefPair(null, target)); // on NPE, return at least a safe "dunno"
-      // TODO: log this
-    }
-    return ret;
-  }
 
   /**
    * Tries to match two [qualified] reference expression paths; target must be a 'sublist' of source to match.
