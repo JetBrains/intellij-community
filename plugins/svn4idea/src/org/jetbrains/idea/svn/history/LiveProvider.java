@@ -38,7 +38,7 @@ public class LiveProvider implements BunchProvider {
 
   public Fragment getEarliestBunchInInterval(final long earliestRevision, final long oldestRevision, final int desirableSize,
                                              final boolean includeYoungest, final boolean includeOldest) throws SVNException {
-    if ((oldestRevision == myYoungestRevision) && ((! includeYoungest) || (! includeOldest))) {
+    if ((myEarliestRevisionWasAccessed) || ((oldestRevision == myYoungestRevision) && ((! includeYoungest) || (! includeOldest)))) {
       return null;
     }
     final SVNRevision youngRevision = (earliestRevision == -1) ? SVNRevision.HEAD : SVNRevision.create(earliestRevision);
