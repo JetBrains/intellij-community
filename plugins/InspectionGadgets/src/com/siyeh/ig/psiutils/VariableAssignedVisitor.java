@@ -29,11 +29,6 @@ public class VariableAssignedVisitor extends JavaRecursiveElementVisitor{
         this.variable = variable;
     }
 
-    @Override
-    public void visitClass(PsiClass aClass) {
-        // do not recurse into contained classes
-    }
-
     @Override public void visitElement(@NotNull PsiElement element){
         if(!assigned){
             super.visitElement(element);

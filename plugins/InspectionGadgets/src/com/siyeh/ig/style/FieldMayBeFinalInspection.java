@@ -15,12 +15,13 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeFieldFinalFix;
-import com.siyeh.ig.psiutils.VariableAccessUtils;import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.InitializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class FieldMayBeFinalInspection extends BaseInspection {
@@ -87,8 +88,9 @@ public class FieldMayBeFinalInspection extends BaseInspection {
                 if (classInitializer.hasModifierProperty(PsiModifier.STATIC)) {
                     continue;
                 }
-                if (VariableAccessUtils.variableIsAssigned(field,
-                        classInitializer)) {
+                final PsiCodeBlock block = classInitializer.getBody();
+                if (InitializationUtils.blockAssignsVariableOrFails(block,
+                        field)) {
                     if (assignedInInitializer) {
                         return false;
                     }
@@ -98,12 +100,14 @@ public class FieldMayBeFinalInspection extends BaseInspection {
             final PsiMethod[] methods = aClass.getMethods();
             for (PsiMethod method : methods) {
                 if (method.isConstructor() && !assignedInInitializer) {
-                    if (!VariableAccessUtils.variableIsAssigned(field, method)) {
+                    if (!InitializationUtils.methodAssignsVariableOrFails(
+                            method, field)) {
                         return false;
                     }
                     continue;
                 }
-                if (VariableAccessUtils.variableIsAssigned(field, method)) {
+                if (InitializationUtils.methodAssignsVariableOrFails(method,
+                        field)) {
                     return false;
                 }
             }
@@ -117,16 +121,17 @@ public class FieldMayBeFinalInspection extends BaseInspection {
                     aClass.getInitializers();
             boolean assignedInInitializer = initializer != null;
             for (PsiClassInitializer classInitializer : classInitializers) {
+                final PsiCodeBlock body = classInitializer.getBody();
                 if (classInitializer.hasModifierProperty(PsiModifier.STATIC)) {
-                    if (VariableAccessUtils.variableIsAssigned(field,
-                            classInitializer)) {
+                    if (InitializationUtils.blockAssignsVariableOrFails(body,
+                            field)) {
                         if (assignedInInitializer) {
                             return false;
                         }
                         assignedInInitializer = true;
                     }
-                } else if (VariableAccessUtils.variableIsAssigned(field,
-                        classInitializer)) {
+                } else if (InitializationUtils.blockAssignsVariableOrFails(body,
+                        field)) {
                     return false;
                 }
             }
@@ -135,7 +140,8 @@ public class FieldMayBeFinalInspection extends BaseInspection {
             }
             final PsiMethod[] methods = aClass.getMethods();
             for (PsiMethod method : methods) {
-                if (VariableAccessUtils.variableIsAssigned(field, method)) {
+                if (InitializationUtils.methodAssignsVariableOrFails(method,
+                        field)) {
                     return false;
                 }
             }
