@@ -228,6 +228,14 @@ public abstract class MavenTestCase extends TestCase {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
   }
 
+  protected <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {
+    assertOrderedElementsAreEqual(actual, expected.toArray());
+  }
+
+  protected <T, U> void assertUnorderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {
+    assertUnorderedElementsAreEqual(actual, expected.toArray());
+  }
+
   protected <T, U> void assertUnorderedElementsAreEqual(Collection<U> actual, T... expected) {
     String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + actual;
     assertEquals(s, expected.length, actual.size());

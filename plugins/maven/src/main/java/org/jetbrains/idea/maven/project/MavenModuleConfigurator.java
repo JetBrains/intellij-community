@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.core.util.Strings;
-import org.jetbrains.idea.maven.web.FacetImporter;
+import org.jetbrains.idea.maven.facets.FacetImporter;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
