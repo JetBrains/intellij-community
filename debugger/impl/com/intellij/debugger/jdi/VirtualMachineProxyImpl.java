@@ -23,7 +23,10 @@ import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.VirtualMachineProxyImpl");
@@ -543,13 +546,12 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public boolean isSuspended() {
-    //logThreads();
     for (ThreadReferenceProxyImpl thread : allThreads()) {
-      if (thread.getSuspendCount() == 0) {
-        return false;
+      if (thread.getSuspendCount() != 0) {
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
   public void logThreads() {
