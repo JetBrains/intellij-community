@@ -38,7 +38,7 @@ public abstract class SpacingTokens implements GroovyElementTypes {
       mSPREAD_DOT,
       mOPTIONAL_DOT);
 
-  protected final static TokenSet METHOD_DEFS = TokenSet.create(METHOD_DEFINITION, CONSTRUCTOR_DEFINITION);
+  protected final static TokenSet METHOD_DEFS = TokenSet.create(METHOD_DEFINITION, CONSTRUCTOR_DEFINITION, ANNOTATION_METHOD);
   protected final static TokenSet CLASS_MEMBER_DEFS = TokenSet.create(METHOD_DEFINITION, CONSTRUCTOR_DEFINITION,
       VARIABLE_DEFINITION, CLASS_INITIALIZER);
   

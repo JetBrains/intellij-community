@@ -106,7 +106,7 @@ public class VariableDefinitions implements GroovyElementTypes {
         }
 
         defaultValueMarker.done(DEFAULT_ANNOTATION_VALUE);
-        return DEFAULT_ANNOTATION_MEMBER;
+        return ANNOTATION_METHOD;
       }
       if (ParserUtils.lookAhead(builder, mNLS, kTHROWS) || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
         ParserUtils.getToken(builder, mNLS);

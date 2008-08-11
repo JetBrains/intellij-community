@@ -11,6 +11,8 @@ public interface GrFieldStub extends NamedStub<GrField> {
   //todo add type info
   //todo add initializer info
 
+  String[] getAnnotations();
+
   boolean isEnumConstant();
 
 }

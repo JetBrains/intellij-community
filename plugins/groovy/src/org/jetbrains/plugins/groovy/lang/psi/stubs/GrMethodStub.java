@@ -8,4 +8,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
  */
 public interface GrMethodStub extends NamedStub<GrMethod> {
 
+  String[] getAnnotations();
 }

@@ -25,6 +25,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -127,8 +128,10 @@ public class GroovyShortNamesCache implements PsiShortNamesCache {
   @NotNull
   public PsiMethod[] getMethodsByName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope) {
     final Collection<? extends PsiMethod> methods = StubIndex.getInstance().get(GrMethodNameIndex.KEY, name, myProject, scope);
-    if (methods.isEmpty()) return PsiMethod.EMPTY_ARRAY;
-    return methods.toArray(new PsiMethod[methods.size()]);
+    final Collection<? extends PsiMethod> annMethods = StubIndex.getInstance().get(GrAnnotationMethodNameIndex.KEY, name, myProject, scope);
+    if (methods.isEmpty() && annMethods.isEmpty()) return PsiMethod.EMPTY_ARRAY;
+    return ArrayUtil
+        .mergeArrays(annMethods.toArray(new PsiMethod[annMethods.size()]), methods.toArray(new PsiMethod[methods.size()]), PsiMethod.class);
   }
 
   @NotNull
@@ -139,6 +142,7 @@ public class GroovyShortNamesCache implements PsiShortNamesCache {
   @NotNull
   public String[] getAllMethodNames() {
     Collection<String> keys = StubIndex.getInstance().getAllKeys(GrMethodNameIndex.KEY);
+    keys.addAll(StubIndex.getInstance().getAllKeys(GrAnnotationMethodNameIndex.KEY));
     return keys.toArray(new String[keys.size()]);
   }
 
@@ -162,4 +166,5 @@ public class GroovyShortNamesCache implements PsiShortNamesCache {
   public void getAllFieldNames(@NotNull HashSet<String> set) {
     set.addAll(StubIndex.getInstance().getAllKeys(GrFieldNameIndex.KEY));
   }
+
 }

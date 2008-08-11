@@ -12,13 +12,19 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
  */
 public class GrMethodStubImpl extends StubBase<GrMethod> implements GrMethodStub {
   private final StringRef myName;
+  private final String[] myAnnotations;
 
-  public GrMethodStubImpl(StubElement parent, StringRef name) {
+  public GrMethodStubImpl(StubElement parent, StringRef name, final String[] annotations) {
     super(parent, GroovyElementTypes.METHOD_DEFINITION);
     myName = name;
+    myAnnotations = annotations;
   }
 
   public String getName() {
     return StringRef.toString(myName);
+  }
+
+  public String[] getAnnotations() {
+    return myAnnotations;
   }
 }

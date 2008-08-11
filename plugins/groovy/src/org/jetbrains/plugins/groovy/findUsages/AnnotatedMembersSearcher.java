@@ -23,7 +23,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import org.jetbrains.plugins.groovy.caches.project.GroovyCachesManager;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -32,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.stubs.GroovyCacheUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +52,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
 
     GrMember[] candidates;
     if (scope instanceof GlobalSearchScope) {
-      candidates = GroovyCachesManager.getInstance(annClass.getProject()).getAnnotatedCandidates(annClass, (GlobalSearchScope) scope);
+      candidates = GroovyCacheUtil.getAnnotatedMembers(annClass, ((GlobalSearchScope)scope));
     } else {
       PsiElement[] elements = ((LocalSearchScope) scope).getScope();
       final List<GrMember> collector = new ArrayList<GrMember>();
@@ -87,4 +87,6 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
 
     return true;
   }
+
+
 }

@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
@@ -13,7 +14,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
  */
 public abstract class GrStubElementType<S extends StubElement, T extends GroovyPsiElement> extends IStubElementType<S, T> {
 
-  public GrStubElementType(@NotNull String debugName) {
+  public GrStubElementType(@NonNls @NotNull String debugName) {
     super(debugName, GroovyFileType.GROOVY_LANGUAGE);
   }
 

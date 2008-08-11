@@ -10,6 +10,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -40,7 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -53,7 +53,7 @@ import java.util.Set;
 /**
  * @author ilyas
  */
-public abstract class GrMethodBaseImpl<T extends GrMethodStub> extends GroovyBaseElementImpl<T> implements GrMethod {
+public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseElementImpl<T> implements GrMethod {
 
   protected GrMethodBaseImpl(final T stub, IStubElementType nodeType) {
     super(stub, nodeType);

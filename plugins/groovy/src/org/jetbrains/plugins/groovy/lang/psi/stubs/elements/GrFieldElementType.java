@@ -6,12 +6,21 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.Nullable;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.ENUM_CONSTANT;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.FIELD;
 import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrFieldStubImpl;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
 
 import java.io.IOException;
@@ -34,7 +43,24 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
   }
 
   public GrFieldStub createStub(GrField psi, StubElement parentStub) {
-    return new GrFieldStubImpl(parentStub, StringRef.fromString(psi.getName()), false);
+    final GrModifierList modifiers = psi.getModifierList();
+    String[] annNames;
+    if (modifiers == null) {
+      annNames = new String[0];
+    }
+    else {
+      final GrAnnotation[] annotations = modifiers.getAnnotations();
+      annNames = ContainerUtil.map(annotations, new Function<GrAnnotation, String>() {
+        @Nullable
+        public String fun(final GrAnnotation grAnnotation) {
+          final GrCodeReferenceElement element = grAnnotation.getClassReference();
+          if (element == null) return null;
+          return element.getReferenceName();
+        }
+      }, new String[annotations.length]);
+    }
+
+    return new GrFieldStubImpl(parentStub, StringRef.fromString(psi.getName()), false, annNames, FIELD);
   }
 
   public void serialize(GrFieldStub stub, StubOutputStream dataStream) throws IOException {
@@ -55,19 +81,34 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
 
   static void serializeFieldStub(GrFieldStub stub, StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
+    final String[] annotations = stub.getAnnotations();
+    dataStream.writeByte(annotations.length);
+    for (String s : annotations) {
+      dataStream.writeName(s);
+    }
     dataStream.writeBoolean(stub.isEnumConstant());
   }
 
   static GrFieldStub deserializeFieldStub(StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef ref = dataStream.readName();
+    final byte b = dataStream.readByte();
+    final String[] annNames = new String[b];
+    for (int i = 0; i < b; i++) {
+      annNames[i] = dataStream.readName().toString();
+    }
     boolean isEnumConstant = dataStream.readBoolean();
-    return new GrFieldStubImpl(parentStub, ref, isEnumConstant);
+    return new GrFieldStubImpl(parentStub, ref, isEnumConstant, annNames, isEnumConstant ? ENUM_CONSTANT : FIELD);
   }
 
   static void indexFieldStub(GrFieldStub stub, IndexSink sink) {
     String name = stub.getName();
     if (name != null) {
       sink.occurrence(GrFieldNameIndex.KEY, name);
+    }
+    for (String annName : stub.getAnnotations()) {
+      if (annName != null) {
+        sink.occurrence(GrAnnotatedMemberIndex.KEY, annName);
+      }
     }
   }
 }
