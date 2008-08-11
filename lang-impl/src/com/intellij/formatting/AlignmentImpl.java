@@ -11,7 +11,7 @@ class AlignmentImpl extends Alignment {
   private AlignmentImpl myParentAlignment;
 
   public String getId() {
-    return String.valueOf(myFlags >>> ID_SHIFT);
+    return String.valueOf(System.identityHashCode(this));
   }
 
   public void reset() {

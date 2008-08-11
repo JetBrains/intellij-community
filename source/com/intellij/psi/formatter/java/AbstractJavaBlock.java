@@ -123,6 +123,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
            || elementType == JavaElementType.IF_STATEMENT
            || elementType == JavaElementType.METHOD
            || elementType == JavaElementType.ARRAY_INITIALIZER_EXPRESSION
+           || elementType == JavaElementType.ANNOTATION_ARRAY_INITIALIZER
            || elementType == JavaElementType.CLASS_INITIALIZER
            || elementType == JavaElementType.SYNCHRONIZED_STATEMENT
            || elementType == JavaElementType.FOREACH_STATEMENT;
@@ -182,6 +183,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (parentType == JavaDocElementType.DOC_TAG) return Indent.getNoneIndent();
     if (parentType == JavaDocElementType.DOC_INLINE_TAG) return Indent.getNoneIndent();
     if (parentType == JavaElementType.IMPORT_LIST) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.FIELD) return Indent.getContinuationWithoutFirstIndent();
     if (SourceTreeToPsiMap.treeElementToPsi(parent) instanceof PsiFile) {
       return Indent.getNoneIndent();
     }
@@ -822,10 +824,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
     else if (isAssignment()) {
       if (role == ChildRole.INITIALIZER_EQ && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+      if (role == ChildRole.INITIALIZER_EQ && !mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return null;
       if (role == ChildRole.OPERATION_SIGN && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+      if (role == ChildRole.OPERATION_SIGN && !mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return null;
       if (role == ChildRole.INITIALIZER && !mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+      if (role == ChildRole.INITIALIZER && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return null;
       if (role == ChildRole.ROPERAND && !mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
-      return null;
+      if (role == ChildRole.ROPERAND && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return null;
+      //if (role == ChildRole.TYPE) return defaultWrap;
+      return defaultWrap;
     }
 
     else if (nodeType == JavaElementType.REFERENCE_EXPRESSION) {
