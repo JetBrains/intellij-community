@@ -246,7 +246,7 @@ public class DebuggerSession {
 
 
   public void resume() {
-    final SuspendContextImpl suspendContext = getSuspendContext();
+    final SuspendContextImpl suspendContext = getContextManager().getContext().getSuspendContext();
     if(suspendContext != null) {
       mySteppingThroughThreads.remove(suspendContext.getThread());
       resumeAction(myDebugProcess.createResumeCommand(suspendContext), EVENT_RESUME);
