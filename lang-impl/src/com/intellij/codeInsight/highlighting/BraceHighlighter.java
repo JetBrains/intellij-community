@@ -1,9 +1,11 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -102,6 +104,9 @@ public class BraceHighlighter implements ProjectComponent {
   }
 
   static void updateBraces(final Editor editor, final Alarm alarm) {
+    final Document document = editor.getDocument();
+    if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
+
     BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(editor, alarm, new Processor<BraceHighlightingHandler>() {
       public boolean process(final BraceHighlightingHandler handler) {
         handler.updateBraces();
