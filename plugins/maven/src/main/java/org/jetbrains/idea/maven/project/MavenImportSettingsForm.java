@@ -24,6 +24,7 @@ public class MavenImportSettingsForm {
   private JCheckBox myCreateGroupsCheckBox;
   private JCheckBox myUseMavenOutputCheckBox;
   private JCheckBox myUpdateFoldersOnImportCheckBox;
+  private JCheckBox myImportIsBackgroundCheckBox;
 
   private JTextArea myIgnoreDependenciesTextArea;
   private JPanel myIgnorePanel;
@@ -48,6 +49,7 @@ public class MavenImportSettingsForm {
       myCreateGroupsCheckBox.setVisible(false);
       myUseMavenOutputCheckBox.setVisible(false);
       myUpdateFoldersOnImportCheckBox.setVisible(false);
+      myImportIsBackgroundCheckBox.setVisible(false);
 
       myIgnorePanel.setVisible(false);
       myIgnoreDependenciesTextArea.setVisible(false);
@@ -80,6 +82,7 @@ public class MavenImportSettingsForm {
     data.setLookForNested(myUseExhaustiveSearchCheckBox.isSelected());
     data.setUseMavenOutput(myUseMavenOutputCheckBox.isSelected());
     data.setUpdateFoldersOnImport(myUpdateFoldersOnImportCheckBox.isSelected());
+    data.setImportInBackground(myImportIsBackgroundCheckBox.isSelected());
     data.setIgnoredDependencies(Strings.tokenize(myIgnoreDependenciesTextArea.getText(), Strings.WHITESPACE + ",;"));
   }
 
@@ -93,6 +96,7 @@ public class MavenImportSettingsForm {
     myUseExhaustiveSearchCheckBox.setSelected(data.isLookForNested());
     myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
     myUpdateFoldersOnImportCheckBox.setSelected(data.isUpdateFoldersOnImport());
+    myImportIsBackgroundCheckBox.setSelected(data.isImportInBackground());
     myIgnoreDependenciesTextArea.setText(Strings.detokenize(data.getIgnoredDependencies(), ','));
 
     enableControls();

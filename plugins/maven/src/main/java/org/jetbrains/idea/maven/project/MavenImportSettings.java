@@ -16,6 +16,7 @@ public class MavenImportSettings implements Cloneable {
   private boolean createModuleGroups = false;
   private boolean useMavenOutput = true;
   private boolean updateFoldersOnImport = true;
+  private boolean importInBackground = false;
   private List<String> myIgnoredDependencies = new ArrayList<String>();
 
   @NotNull
@@ -75,6 +76,14 @@ public class MavenImportSettings implements Cloneable {
     this.updateFoldersOnImport = updateFoldersOnImport;
   }
 
+  public boolean isImportInBackground() {
+    return importInBackground;
+  }
+
+  public void setImportInBackground(boolean value) {
+    importInBackground = value;
+  }
+
   public List<String> getIgnoredDependencies() {
     return myIgnoredDependencies;
   }
@@ -95,6 +104,7 @@ public class MavenImportSettings implements Cloneable {
     if (createModulesForAggregators != that.createModulesForAggregators) return false;
     if (updateFoldersOnImport != that.updateFoldersOnImport) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
+    if (importInBackground != that.importInBackground) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
     if (myIgnoredDependencies != null ? !myIgnoredDependencies.equals(that.myIgnoredDependencies) : that.myIgnoredDependencies != null) {
       return false;
@@ -112,6 +122,7 @@ public class MavenImportSettings implements Cloneable {
     result = 31 * result + (updateFoldersOnImport ? 1 : 0);
     result = 31 * result + (createModuleGroups ? 1 : 0);
     result = 31 * result + (useMavenOutput ? 1 : 0);
+    result = 31 * result + (importInBackground ? 1 : 0);
     result = 31 * result + (myIgnoredDependencies != null ? myIgnoredDependencies.hashCode() : 0);
     return result;
   }

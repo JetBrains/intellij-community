@@ -57,7 +57,7 @@ public class MavenProcess {
   public static MavenTaskHandler runInBackground(Project project,
                                                  String title,
                                                  final boolean canBeCancelled,
-                                                 final MavenTask t) {
+                                                 final MavenTask task) {
     final Semaphore startSemaphore = new Semaphore();
     final Semaphore finishSemaphore = new Semaphore();
     final ProgressIndicator[] indicator = new ProgressIndicator[1];
@@ -70,7 +70,7 @@ public class MavenProcess {
         try {
           indicator[0] = i;
           startSemaphore.up();
-          t.run(new MavenProcess(i));
+          task.run(new MavenProcess(i));
         }
         catch (CanceledException ignore) {
         }
@@ -81,7 +81,17 @@ public class MavenProcess {
 
       @Override
       public boolean shouldStartInBackground() {
-        return !canBeCancelled;
+        return task.shouldStartInBackground();
+      }
+
+      @Override
+      public void processRestoredToForeground() {
+        task.setStartInForeground();
+      }
+
+      @Override
+      public void processSentToBackground() {
+        task.setStartInBackground();
       }
     });
 
@@ -120,7 +130,17 @@ public class MavenProcess {
     }
   }
 
-  public static interface MavenTask {
-    void run(MavenProcess p) throws CanceledException;
+  public static abstract class MavenTask {
+    public abstract void run(MavenProcess p) throws CanceledException;
+
+    public boolean shouldStartInBackground() {
+      return false;
+    }
+
+    public void setStartInBackground() {
+    }
+
+    public void setStartInForeground() {
+    }
   }
 }

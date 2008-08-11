@@ -37,18 +37,18 @@
           <root url="file://$MODULE_DIR$/../../../plexus/plexus-containers-46/plexus-containers-1.0-alpha-46/plexus-container-default/src/it/plexus-its/src/main/java" />
           <root url="file://$MODULE_DIR$/../../../plexus/plexus-containers-46/plexus-containers-1.0-alpha-46/plexus-container-default/src/it/test-fodder/component-with-plexus.xml/src/main/java" />
           <root url="file://$MODULE_DIR$/../../../plexus/plexus-containers-46/plexus-containers-1.0-alpha-46/plexus-component-annotations/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-http/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-ssh/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-provider-test/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven-src" />
           <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-file/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-http/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-ssh-common/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-http-lightweight/src/main/java" />
           <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-http-shared/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-ssh-external/src/main/java" />
           <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-webdav-jackrabbit/src/main/java" />
           <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-ftp/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-ssh-common/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-ssh/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-ssh-external/src/main/java" />
           <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-scm/src/main/java" />
           <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-provider-api/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../maven-src/wagon/wagon-providers/wagon-http-lightweight/src/main/java" />
         </SOURCES>
       </library>
     </orderEntry>
