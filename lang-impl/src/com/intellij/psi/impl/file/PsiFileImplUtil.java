@@ -4,6 +4,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -22,21 +25,25 @@ public class PsiFileImplUtil {
     PsiManagerImpl manager = (PsiManagerImpl)file.getManager();
 
     try{
-      final FileDocumentManager fdm = FileDocumentManager.getInstance();
-      final Document doc = fdm.getCachedDocument(vFile);
-      if (doc != null) {
-        EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-        
-        String trailer = editorSettings.getStripTrailingSpaces();
-        editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-        try {
-          fdm.saveDocument(doc);
-        }
-        finally {
-          editorSettings.setStripTrailingSpaces(trailer);
+      final FileType newFileType = FileTypeManager.getInstance().getFileTypeByFileName(newName);
+      if (FileTypes.UNKNOWN.equals(newFileType) || newFileType.isBinary()) {
+        // before the file becomes unknown or a binary (thus, not openable in the editor), save it to prevent data loss
+        final FileDocumentManager fdm = FileDocumentManager.getInstance();
+        final Document doc = fdm.getCachedDocument(vFile);
+        if (doc != null) {
+          EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+          
+          String trailer = editorSettings.getStripTrailingSpaces();
+          editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+          try {
+            fdm.saveDocument(doc);
+          }
+          finally {
+            editorSettings.setStripTrailingSpaces(trailer);
+          }
         }
       }
-      
+
       vFile.rename(manager, newName);
     }
     catch(IOException e){
