@@ -39,18 +39,15 @@ public class GrAnnotationMethodElementType extends GrStubElementType<GrAnnotatio
     return new GrAnnotationMethodStubImpl(parentStub, StringRef.fromString(psi.getName()));
   }
 
-  @Override
   public void serialize(GrAnnotationMethodStub stub, StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
   }
 
-  @Override
   public GrAnnotationMethodStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef ref = dataStream.readName();
     return new GrAnnotationMethodStubImpl(parentStub, ref);
   }
 
-  @Override
   public void indexStub(GrAnnotationMethodStub stub, IndexSink sink) {
     String name = stub.getName();
     if (name != null) {
