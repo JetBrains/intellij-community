@@ -6,7 +6,9 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
@@ -154,6 +156,9 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   }
 
   public void update(final Editor editor) {
+    final Document document = editor.getDocument();
+    if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
+
     for (StatusBarPatch patch : myPatches) {
       patch.updateStatusBar(editor, null);
     }

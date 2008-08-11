@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -357,8 +358,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     myIsInUpdate = false;
 
     DocumentEventImpl event = (DocumentEventImpl)e;
+    final Document document = myEditor.getDocument();
+
     if (event.isWholeTextReplaced()) {
-      int newLength = myEditor.getDocument().getTextLength();
+      int newLength = document.getTextLength();
       if (myOffset == newLength - e.getNewLength() + e.getOldLength() || newLength == 0) {
         moveToOffset(newLength);
       }
@@ -368,6 +371,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
       }
     }
     else {
+      if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
       int startOffset = e.getOffset();
       int oldEndOffset = startOffset + e.getOldLength();
 
@@ -380,7 +384,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
         newOffset = Math.min(newOffset, startOffset + e.getNewLength());
       }
 
-      newOffset = Math.min(newOffset, myEditor.getDocument().getTextLength());
+      newOffset = Math.min(newOffset, document.getTextLength());
 
       //TODO:ask max about this code
       // if (newOffset != myOffset) {
