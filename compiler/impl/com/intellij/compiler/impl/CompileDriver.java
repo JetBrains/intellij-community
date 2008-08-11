@@ -140,7 +140,7 @@ public class CompileDriver {
 
     final CompilerTask task = new CompilerTask(myProject, true, "", true);
     final CompileContextImpl compileContext =
-      new CompileContextImpl(myProject, task, scope, createDependencyCache(), this, true);
+      new CompileContextImpl(myProject, task, scope, createDependencyCache(), true);
 
     checkCachesVersion(compileContext);
     if (compileContext.isRebuildRequested()) {
@@ -292,7 +292,7 @@ public class CompileDriver {
 
     final DependencyCache dependencyCache = createDependencyCache();
     final CompileContextImpl compileContext =
-      new CompileContextImpl(myProject, compileTask, scope, dependencyCache, this, !isRebuild && !forceCompile);
+      new CompileContextImpl(myProject, compileTask, scope, dependencyCache, !isRebuild && !forceCompile);
     compileContext.putUserData(COMPILATION_START_TIMESTAMP, LocalTimeCounter.currentTime());
     for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
       final Pair<VirtualFile, VirtualFile> outputs = myGenerationCompilerModuleToOutputDirMap.get(pair);
@@ -1442,7 +1442,7 @@ public class CompileDriver {
   public void executeCompileTask(final CompileTask task, final CompileScope scope, final String contentName, final Runnable onTaskFinished) {
     final CompilerTask progressManagerTask =
       new CompilerTask(myProject, CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND, contentName, false);
-    final CompileContextImpl compileContext = new CompileContextImpl(myProject, progressManagerTask, scope, null, this, false);
+    final CompileContextImpl compileContext = new CompileContextImpl(myProject, progressManagerTask, scope, null, false);
 
     FileDocumentManager.getInstance().saveAllDocuments();
 

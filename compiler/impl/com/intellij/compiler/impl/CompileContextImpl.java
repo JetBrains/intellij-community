@@ -13,7 +13,6 @@ import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -40,13 +39,11 @@ import java.util.Set;
 
 
 public class CompileContextImpl extends UserDataHolderBase implements CompileContextEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileContextImpl");
   private final Project myProject;
   private final CompilerTask myTask;
   private final Map<CompilerMessageCategory, Collection<CompilerMessage>> myMessages = new HashMap<CompilerMessageCategory, Collection<CompilerMessage>>();
   private CompileScope myCompileScope;
   private final DependencyCache myDependencyCache;
-  private final CompileDriver myCompileDriver;
   private final boolean myMake;
   private boolean myRebuildRequested = false;
   private String myRebuildReason;
@@ -57,21 +54,18 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final Set<VirtualFile> myTestOutputDirectories;
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
   private final ProjectCompileScope myProjectCompileScope;
-  private Map<Module, VirtualFile> myModuleOutputPaths = new HashMap<Module, VirtualFile>();
-  private Map<Module, VirtualFile> myModuleTestOutputPaths = new HashMap<Module, VirtualFile>();
+  private final long myStartCompilationStamp;
 
   public CompileContextImpl(Project project,
                             CompilerTask indicator,
                             CompileScope compileScope,
-                            DependencyCache dependencyCache,
-                            CompileDriver compileDriver,
-                            boolean isMake) {
+                            DependencyCache dependencyCache, boolean isMake) {
     myProject = project;
     myTask = indicator;
     myCompileScope = compileScope;
     myDependencyCache = dependencyCache;
-    myCompileDriver = compileDriver;
     myMake = isMake;
+    myStartCompilationStamp = System.currentTimeMillis();
     final Module[] allModules = ModuleManager.getInstance(project).getModules();
 
     final Set<VirtualFile> allDirs = new OrderedSet<VirtualFile>((TObjectHashingStrategy<VirtualFile>)TObjectHashingStrategy.CANONICAL);
@@ -98,7 +92,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myTestOutputDirectories = Collections.unmodifiableSet(testOutputDirs);
     myProjectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     myProjectCompileScope = new ProjectCompileScope(myProject);
-    
+  }
+
+  public long getStartCompilationStamp() {
+    return myStartCompilationStamp;
   }
 
   public Project getProject() {

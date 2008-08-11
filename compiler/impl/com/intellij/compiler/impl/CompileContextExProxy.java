@@ -27,6 +27,10 @@ public class CompileContextExProxy implements CompileContextEx {
     myDelegate = delegate;
   }
 
+  public long getStartCompilationStamp() {
+    return myDelegate.getStartCompilationStamp();
+  }
+
   public Project getProject() {
     return myDelegate.getProject();
   }

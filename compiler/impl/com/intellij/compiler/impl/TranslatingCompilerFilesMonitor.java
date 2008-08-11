@@ -6,6 +6,7 @@ import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -187,12 +188,21 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       }
     }
 
+    final long compilationStartStamp = ((CompileContextEx)context).getStartCompilationStamp();
+
     for (Map.Entry<VirtualFile, SourceFileInfo> entry : compiledSources.entrySet()) {
       final SourceFileInfo info = entry.getValue();
       final VirtualFile file = entry.getKey();
-      info.updateTimestamp(projectId, file.getTimeStamp());
+      final long fileStamp = file.getTimeStamp();
+      info.updateTimestamp(projectId, fileStamp);
       saveSourceInfo(file, info);
       removeSourceForRecompilation(projectId, getFileId(file));
+      if (fileStamp > compilationStartStamp) {
+        // changes were made during compilation, need to re-schedule compilation
+        // it is important to invoke removeSourceForRecompilation() before to make sure
+        // the corresponding output paths will be scheduled for deletion
+        addSourceForRecompilation(projectId, file, info);
+      }
     }
 
     for (VirtualFile file : filesToRecompile) {
@@ -514,11 +524,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       if (myProjectToOutputPathMap != null) {
         myProjectToOutputPathMap.remove(projectId);
       }
-    }
-
-    public long getLastCompilationTimestamp(final Project project) throws IOException {
-      final int projectId = getProjectId(project);
-      return getTimestamp(projectId);
     }
 
     long getTimestamp(final int projectId) {
