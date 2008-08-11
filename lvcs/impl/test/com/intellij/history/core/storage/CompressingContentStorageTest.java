@@ -45,6 +45,29 @@ public class CompressingContentStorageTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testCompressionAndDecompressionOfEmptyContent() throws Exception {
+    final byte[][] compressed = new byte[1][];
+
+    IContentStorage mock = createMock(IContentStorage.class);
+    expect(mock.store((byte[])anyObject())).andAnswer(new IAnswer<Integer>() {
+      public Integer answer() throws Throwable {
+        compressed[0] = (byte[])getCurrentArguments()[0];
+        return 1;
+      }
+    });
+    expect(mock.load(anyInt())).andAnswer(new IAnswer<byte[]>() {
+      public byte[] answer() throws Throwable {
+        return compressed[0];
+      }
+    });
+    replay(mock);
+
+    CompressingContentStorage s = new CompressingContentStorage(mock);
+    s.store(new byte[0]);
+    assertArrayEquals(new byte[0], s.load(1));
+  }
+
+  @Test
   public void testClosingOfInputAndOutputStreams() throws Exception {
     IContentStorage subject = createStrictMock(IContentStorage.class);
     expect(subject.store((byte[])anyObject())).andReturn(1);
@@ -83,6 +106,14 @@ public class CompressingContentStorageTest extends LocalVcsTestCase {
     assertTrue(closeCalled[0]);
     assertTrue(closeCalled[1]);
   }
+  //
+  //@Test
+  //public void testCompressuonDecompressionOfEmptyArray() throws Exception {
+  //  Inflater i = new Inflater();
+  //  ByteArrayOutputStream output = new ByteArrayOutputStream();
+  //  InflaterInputStream input = new InflaterInputStream(new ByteArrayInputStream(new byte[0]), i);
+  //  FileUtil.copy(input, output);
+  //}
 
   private IContentStorage createStoredBytesRecordingMock(final byte[][] compressed) throws Exception {
     IContentStorage subject = createMock(IContentStorage.class);

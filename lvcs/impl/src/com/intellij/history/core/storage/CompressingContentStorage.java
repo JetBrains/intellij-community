@@ -29,10 +29,15 @@ public class CompressingContentStorage implements IContentStorage {
     try {
       ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-      OutputStream s = createDeflaterOutputStream(output);
-      s.write(content);
-      s.close();
       myDeflater.reset();
+      OutputStream s = createDeflaterOutputStream(output);
+      try {
+        s.write(content);
+      }
+      finally {
+        s.close();
+        myDeflater.reset();
+      }
 
       return mySubject.store(output.toByteArray());
     }
@@ -46,6 +51,8 @@ public class CompressingContentStorage implements IContentStorage {
       ByteArrayOutputStream output = new ByteArrayOutputStream();
 
       byte[] content = mySubject.load(id);
+
+      myInflater.reset();
       InputStream s = createInflaterOutputStream(content);
       try {
         FileUtil.copy(s, output);
@@ -56,9 +63,10 @@ public class CompressingContentStorage implements IContentStorage {
         IOException newEx = new IOException(m);
         newEx.initCause(e);
         throw newEx;
+      } finally {
+        s.close();
+        myInflater.reset();
       }
-      s.close();
-      myInflater.reset();
 
       return output.toByteArray();
     }

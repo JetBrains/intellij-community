@@ -5,6 +5,7 @@ import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.ThreadSafeLocalVcs;
+import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.storage.Storage;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.PathManager;
@@ -208,7 +209,13 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
       return false;
     }
 
-    return myVcs.getEntry(f.getPath()).hasUnavailableContent();
+    Entry entry = myVcs.findEntry(f.getPath());
+    // TODO hook for IDEADEV-26645
+    if (entry == null) {
+      LocalHistoryLog.LOG.warn("Entry does not exist for " + f);
+      return false;
+    }
+    return entry.hasUnavailableContent();
   }
 
   @NonNls
