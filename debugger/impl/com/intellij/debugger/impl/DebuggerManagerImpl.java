@@ -40,6 +40,7 @@ import com.intellij.util.Function;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -184,7 +185,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
         debugProcess.removeDebugProcessListener(this);
       }
     });
-    DebuggerSession session = new DebuggerSession(profile.getName(), debugProcess);
+    final DebuggerSession session = new DebuggerSession(profile.getName(), debugProcess);
 
     final ExecutionResult executionResult = session.attach(executor, runner, profile, state, remoteConnection, pollConnection);
     if (executionResult == null) {
@@ -199,7 +200,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       mySessions.put(processHandler, session);
     }
     
-    if (ApplicationManager.getApplication().isUnitTestMode() && !(processHandler instanceof RemoteDebugProcessHandler)) {
+    if (!(processHandler instanceof RemoteDebugProcessHandler)) {
       // Not needed for production code anymore because the problem below has been fixed in JDKs
       // Left for debugger tests only because this listener makes their output deterministic
       
@@ -210,15 +211,24 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       // so we shouldn't add the listener to avoid calling stop() twice
       processHandler.addProcessListener(new ProcessAdapter() {
         public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-          final DebugProcessImpl debugProcess = getDebugProcess(event.getProcessHandler());
-          if (debugProcess != null) {
-            // if current thread is a "debugger manager thread", stop will execute synchronously
-            debugProcess.stop(willBeDestroyed);
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            final DebugProcessImpl debugProcess = getDebugProcess(event.getProcessHandler());
+            if (debugProcess != null) {
+              // if current thread is a "debugger manager thread", stop will execute synchronously
+               debugProcess.stop(willBeDestroyed);
 
-            // wait at most 10 seconds: the problem is that debugProcess.stop() can hang if there are troubles in the debuggee
-            // if processWillTerminate() is called from AWT thread debugProcess.waitFor() will block it and the whole app will hang
-            if (!DebuggerManagerThreadImpl.isManagerThread()) {
-              debugProcess.waitFor(10000);
+               // wait at most 10 seconds: the problem is that debugProcess.stop() can hang if there are troubles in the debuggee
+               // if processWillTerminate() is called from AWT thread debugProcess.waitFor() will block it and the whole app will hang
+               if (!DebuggerManagerThreadImpl.isManagerThread()) {
+                 debugProcess.waitFor(10000);
+               }
+            }
+          }
+          else {
+            final DebuggerSession session = getDebugSession(event.getProcessHandler());
+            if (session != null) {
+              // on OSX the process should be resumed before calling destroyProcess(), otherwise the process will stay in memory
+              session.resume();
             }
           }
         }
@@ -234,6 +244,13 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     synchronized (mySessions) {
       DebuggerSession session = mySessions.get(processHandler);
       return session != null ? session.getProcess() : null;
+    }
+  }
+
+  @Nullable
+  public DebuggerSession getDebugSession(final ProcessHandler processHandler) {
+    synchronized (mySessions) {
+      return mySessions.get(processHandler);
     }
   }
 
