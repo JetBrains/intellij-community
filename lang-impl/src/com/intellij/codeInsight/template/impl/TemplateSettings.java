@@ -125,11 +125,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       }
 
       public void initScheme(final TemplateGroup scheme) {
-        Collection<TemplateImpl> templates = scheme.getTemplates();
-
-        for (TemplateImpl template : templates) {
-          addTemplate(template);
-        }
       }
 
       public void onSchemeAdded(final TemplateGroup scheme) {
@@ -349,7 +344,15 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   private void loadTemplates() {
 
-    mySchemesManager.loadSchemes();
+    Collection<TemplateGroup> loaded = mySchemesManager.loadSchemes();
+    for (TemplateGroup group : loaded) {
+      Collection<TemplateImpl> templates = group.getTemplates();
+
+      for (TemplateImpl template : templates) {
+        addTemplate(template);
+      }
+
+    }
 
 
     try {
