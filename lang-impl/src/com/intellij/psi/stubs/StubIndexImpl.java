@@ -19,6 +19,7 @@ import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -167,7 +168,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                       final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);
 
                       if (tree != null) {
-                        if (tree.getElementType() == stub.getStubType()) {
+                        if (tree.getElementType() == stubType(stub)) {
                           result.add((Psi)tree.getPsi());
                         }
                         else {
@@ -218,6 +219,14 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
 
     return result;
+  }
+
+  private static IElementType stubType(final StubElement<?> stub) {
+    if (stub instanceof PsiFileStub) {
+      return ((PsiFileStub)stub).getType();
+    }
+
+    return stub.getStubType();
   }
 
   private void forceRebuild(Throwable e) {
