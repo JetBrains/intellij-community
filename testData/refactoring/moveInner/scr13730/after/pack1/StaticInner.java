@@ -1,6 +1,6 @@
 package pack1;
 
-public class StaticInner {        
+public class StaticInner {
     public class NonStaticInnerInner {
         private String name;
 

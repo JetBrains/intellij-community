@@ -1,7 +1,7 @@
 package pack1;
 
 public class TopLevel { 
-    public static class StaticInner {        
+    public static class StaticInner {
         public class NonStaticInnerInner {
             private String name;
             
