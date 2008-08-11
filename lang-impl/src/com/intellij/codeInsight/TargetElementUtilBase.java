@@ -6,7 +6,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
 import com.intellij.ide.util.EditSourceUtil;
@@ -171,7 +171,7 @@ public class TargetElementUtilBase {
 
   @Nullable
   private static PsiElement getLookupItem(Lookup activeLookup) {
-    LookupItem item = activeLookup.getCurrentItem();
+    LookupElement item = activeLookup.getCurrentItem();
     if (item == null) return null;
     Object o = item.getObject();
 

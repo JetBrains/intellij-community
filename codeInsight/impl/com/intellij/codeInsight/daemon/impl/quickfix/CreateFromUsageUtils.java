@@ -23,12 +23,12 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -36,6 +36,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -722,20 +723,24 @@ public class CreateFromUsageUtils {
     return isInNamedElement || element.getTextRange().contains(offset-1);
   }
 
-  public static void addClassesWithMethod(String methodName, final PsiFile file, final Set<String> possibleClassNames) {
+  public static void addClassesWithMember(String memberName, final PsiFile file, final Set<String> possibleClassNames, final boolean method,
+                                          final boolean staticAccess) {
     final Project project = file.getProject();
     final Module moduleForFile = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(file.getVirtualFile());
     GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleForFile, false);
     GlobalSearchScope descendantsSearchScope = GlobalSearchScope.moduleWithDependenciesScope(moduleForFile);
-    final PsiMethod[] psiMethods = JavaPsiFacade.getInstance(project).getShortNamesCache().getMethodsByName(methodName, searchScope
-      );
-    for(int i = 0; i < psiMethods.length; ++i) {
-      final PsiClass containingClass = psiMethods[i].getContainingClass();
-      for(PsiClass clazz: ClassInheritorsSearch.search(containingClass, descendantsSearchScope, true, true, false).findAll()) {
-        possibleClassNames.add(clazz.getQualifiedName());
+    final PsiShortNamesCache cache = JavaPsiFacade.getInstance(project).getShortNamesCache();
+    final PsiMember[] members = method ? cache.getMethodsByName(memberName, searchScope) : cache.getFieldsByName(memberName, searchScope);
+    for (int i = 0; i < members.length; ++i) {
+      final PsiMember member = members[i];
+      if (!member.hasModifierProperty(PsiModifier.PRIVATE) && member.hasModifierProperty(PsiModifier.STATIC) == staticAccess) {
+        final PsiClass containingClass = member.getContainingClass();
+        for(PsiClass clazz: ClassInheritorsSearch.search(containingClass, descendantsSearchScope, true, true, false).findAll()) {
+          possibleClassNames.add(clazz.getQualifiedName());
+        }
+        possibleClassNames.add(containingClass.getQualifiedName());
       }
-      possibleClassNames.add(containingClass.getQualifiedName());
-      psiMethods[i] = null;
+      members[i] = null;
     }
   }
 

@@ -3,7 +3,7 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.CharFilter;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -32,7 +32,7 @@ class TypedHandler implements TypedActionHandler {
       return;
     }
 
-    final LookupItem<?> currentItem = lookup.getCurrentItem();
+    final LookupElement currentItem = lookup.getCurrentItem();
     final CharFilter.Result result = getLookupAction(charTyped, currentItem, lookup);
 
     CommandProcessor.getInstance().executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), new Runnable() {
@@ -56,7 +56,7 @@ class TypedHandler implements TypedActionHandler {
     }
     else{
       if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP){
-        LookupItem item = lookup.getCurrentItem();
+        LookupElement item = lookup.getCurrentItem();
         if (item != null){
           FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
           lookup.finishLookup(charTyped);
@@ -69,7 +69,7 @@ class TypedHandler implements TypedActionHandler {
     }
   }
 
-  private static CharFilter.Result getLookupAction(final char charTyped, final LookupItem<?> currentItem, final LookupImpl lookup) {
+  private static CharFilter.Result getLookupAction(final char charTyped, final LookupElement currentItem, final LookupImpl lookup) {
     if (currentItem != null && charTyped != ' ') {
       final PrefixMatcher matcher = currentItem.getPrefixMatcher();
       if (matcher.cloneWithPrefix(matcher.getPrefix() + charTyped).prefixMatches(currentItem)) {

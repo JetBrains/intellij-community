@@ -2,7 +2,7 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.parameterInfo.LanguageParameterInfo;
@@ -55,7 +55,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     Lookup lookup = LookupManager.getInstance(project).getActiveLookup();
 
     if (lookup != null) {
-      LookupItem item = lookup.getCurrentItem();
+      LookupElement item = lookup.getCurrentItem();
 
       if (item != null) {
         for(ParameterInfoHandler handler:handlers) {

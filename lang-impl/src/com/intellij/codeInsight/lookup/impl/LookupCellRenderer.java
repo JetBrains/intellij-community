@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -28,7 +28,6 @@ class LookupCellRenderer implements ListCellRenderer {
   private Icon myEmptyIcon = new EmptyIcon(5);
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
-  private final Font SMALL_FONT;
   private final int myFontWidth;
 
   public static final Color BACKGROUND_COLOR = new Color(235, 244, 254);
@@ -58,7 +57,6 @@ class LookupCellRenderer implements ListCellRenderer {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     NORMAL_FONT = scheme.getFont(EditorFontType.PLAIN);
     BOLD_FONT = scheme.getFont(EditorFontType.BOLD);
-    SMALL_FONT = NORMAL_FONT;
 
     myIconFlags = CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS ? Iconable.ICON_FLAG_VISIBILITY : 0;
 
@@ -87,7 +85,7 @@ class LookupCellRenderer implements ListCellRenderer {
     label.setFont(BOLD_FONT);
     myFontWidth = label.getPreferredSize().width;
 
-    final LookupItem[] items = lookup.getItems();
+    final LookupElement[] items = lookup.getItems();
     if (items.length > 0) lookup.getList().setPrototypeCellValue(items[0]);
 
     myLookupElementPresentation.setItems(items);
@@ -112,7 +110,7 @@ class LookupCellRenderer implements ListCellRenderer {
       boolean isSelected,
       boolean hasFocus) {
 
-    final LookupItem item = (LookupItem)value;
+    final LookupElement item = (LookupElement)value;
     Color background = isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
     final Color foreground = isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
     final int preferredCount = myLookup.getPreferredItemsCount();
@@ -129,9 +127,8 @@ class LookupCellRenderer implements ListCellRenderer {
     return myPanel;
   }
 
-  private void setItemTextLabels(LookupItem item, final Color background, final Color foreground, final boolean selected, final String name,
-                                 final boolean toStrikeout){
-    boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
+  private void setItemTextLabels(LookupElement item, final Color background, final Color foreground, final boolean selected, final String name,
+                                 final boolean toStrikeout, boolean bold) {
     myNameComponent.setFont(bold ? BOLD_FONT : NORMAL_FONT);
     myNameComponent.setBackground(background);
 
@@ -150,8 +147,8 @@ class LookupCellRenderer implements ListCellRenderer {
     }
   }
 
-  private void setTailTextLabel(final LookupItem item, final Color background, Color foreground, final boolean selected, final String text,
-                                final Font forceFont, final boolean strikeout) {
+  private void setTailTextLabel(final Color background, Color foreground, final boolean selected, final String text,
+                                final Font font, final boolean strikeout) {
     StrikeoutLabel label = myLabel2;
     if (text != null){
       label.setText(text);
@@ -159,20 +156,14 @@ class LookupCellRenderer implements ListCellRenderer {
     else{
       label.setText("");
     }
-    boolean isSmall = item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null;
-    Font font = forceFont;
-    if (font == null) font = isSmall ? SMALL_FONT : NORMAL_FONT;
     label.setStrikeout(strikeout);
 
     label.setBackground(background);
     label.setForeground(foreground);
     label.setFont(font);
-    if (isSmall){
-      label.setForeground(selected ? SELECTED_GRAYED_FOREGROUND_COLOR : GRAYED_FOREGROUND_COLOR);
-    }
   }
 
-  private void setTypeTextLabel(LookupItem item, final Color background, Color foreground, JList list, final String text3, final Icon icon){
+  private void setTypeTextLabel(LookupElement item, final Color background, Color foreground, JList list, final String text3, final Icon icon){
     myLabel3.setHorizontalTextPosition(SwingConstants.RIGHT);
     myLabel3.setIcon(icon);
 
@@ -216,7 +207,7 @@ class LookupCellRenderer implements ListCellRenderer {
       label.setText("  ");
     }
 
-    if (item.getAttribute(LookupImpl.EMPTY_ITEM_ATTRIBUTE) != null){
+    if (item instanceof EmptyLookupItem) {
       foreground = EMPTY_ITEM_FOREGROUND_COLOR;
     }
     label.setBackground(sampleBackground);
@@ -238,7 +229,7 @@ class LookupCellRenderer implements ListCellRenderer {
     return icon;
   }
 
-  public int updateMaximumWidth(final LookupItem item){
+  public int updateMaximumWidth(final LookupElement item){
     WidthCalculatingPresentation p = new WidthCalculatingPresentation(myLookupElementPresentation);
     item.renderElement(p);
     int maxWidth = p.myTotalWidth;
@@ -254,33 +245,45 @@ class LookupCellRenderer implements ListCellRenderer {
   }
 
   private class LookupElementPresentationImpl extends UserDataHolderBase implements LookupElementPresentationEx {
-    private LookupItem myItem;
+    private LookupElement myItem;
     private Color myBackground;
     private Color myForeground;
     private JList myList;
     private boolean mySelected;
-    private LookupItem[] myItems;
+    private LookupElement[] myItems;
+
+    public boolean isSelected() {
+      return mySelected;
+    }
 
     public void setIcon(final Icon icon) {
       myNameComponent.setIcon(getIcon(icon));
     }
 
     public void setItemText(final String text) {
-      setItemTextLabels(myItem, myBackground, myForeground, mySelected, text, false);
+      setItemText(text, false, false);
     }
 
-    public void setItemText(final String text, boolean strikeout) {
-      setItemTextLabels(myItem, myBackground, myForeground, mySelected, text, strikeout);
+    public void setItemText(@Nullable final String text, final boolean strikeout, final boolean bold) {
+      setItemTextLabels(myItem, myBackground, myForeground, mySelected, text, strikeout, bold);
     }
 
     public void setTailText(final String text) {
-      setTailTextLabel(myItem, myBackground, myForeground, mySelected, text, null, false);
+      setTailText(text, null, false, false);
+    }
+
+    public void setTailText(@Nullable final String text, final boolean grayed, final boolean bold, final boolean strikeout) {
+      final Color foreground = grayed
+                               ? mySelected ? SELECTED_GRAYED_FOREGROUND_COLOR : GRAYED_FOREGROUND_COLOR
+                               : null;
+      setTailText(text, foreground, bold, strikeout);
     }
 
     public void setTailText(final String text, final Color foreground, final boolean bold, final boolean strikeout) {
-      setTailTextLabel(myItem, myBackground,
-                       mySelected ? SELECTED_FOREGROUND_COLOR : foreground == null ? myForeground : foreground,
-                       mySelected, text, bold ? BOLD_FONT : null, strikeout);
+      final Color fg = foreground == null
+                       ? mySelected ? SELECTED_FOREGROUND_COLOR : myForeground
+                       : foreground;
+      setTailTextLabel(myBackground, fg, mySelected, text, bold ? BOLD_FONT : NORMAL_FONT, strikeout);
     }
 
     public void setTypeText(final String text) {
@@ -291,7 +294,7 @@ class LookupCellRenderer implements ListCellRenderer {
       setTypeTextLabel(myItem, myBackground, myForeground, myList, text, icon);
     }
 
-    public void setContext(final LookupItem item, final Color background, final Color foreground, final JList list, final boolean selected) {
+    public void setContext(final LookupElement item, final Color background, final Color foreground, final JList list, final boolean selected) {
       myItem = item;
       myBackground = background;
       myForeground = foreground;
@@ -299,11 +302,11 @@ class LookupCellRenderer implements ListCellRenderer {
       mySelected = selected;
     }
 
-    public void setItems(final LookupItem[] items) {
+    public void setItems(final LookupElement[] items) {
       myItems = items;
     }
 
-    public LookupItem[] getItems() {
+    public LookupElement[] getItems() {
       return myItems;
     }
 
@@ -336,7 +339,13 @@ class LookupCellRenderer implements ListCellRenderer {
       addWidth(text);
     }
 
-    public void setItemText(final String text, final boolean strikeout) {
+    @Override
+    public void setItemText(@Nullable final String text, final boolean strikeout, final boolean bold) {
+      addWidth(text);
+    }
+
+    @Override
+    public void setTailText(@Nullable final String text, final boolean grayed, final boolean bold, final boolean strikeout) {
       addWidth(text);
     }
 
@@ -370,7 +379,7 @@ class LookupCellRenderer implements ListCellRenderer {
       }
     }
 
-    public LookupItem[] getItems() {
+    public LookupElement[] getItems() {
       return myBasePresentation.getItems();
     }
 

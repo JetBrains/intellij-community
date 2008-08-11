@@ -419,11 +419,11 @@ public class TemplateState implements Disposable {
     });
   }
 
-  private void itemSelected(final LookupItem<?> item, final PsiFile psiFile, final int currentSegmentNumber, final char completionChar) {
+  private void itemSelected(final LookupElement item, final PsiFile psiFile, final int currentSegmentNumber, final char completionChar) {
     if (item != null) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-      Integer bracketCount = (Integer)item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
+      Integer bracketCount = item instanceof LookupItem ? (Integer)((LookupItem)item).getAttribute(LookupItem.BRACKETS_COUNT_ATTR) : null;
       if (bracketCount != null) {
         StringBuilder tail = new StringBuilder();
         for (int i = 0; i < bracketCount.intValue(); i++) {
@@ -433,7 +433,7 @@ public class TemplateState implements Disposable {
         PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
       }
 
-      final TemplateLookupSelectionHandler handler = item.getAttribute(TemplateLookupSelectionHandler.KEY_IN_LOOKUP_ITEM);
+      final TemplateLookupSelectionHandler handler = item instanceof LookupItem ? ((LookupItem<?>)item).getAttribute(TemplateLookupSelectionHandler.KEY_IN_LOOKUP_ITEM) : null;
       if (handler != null) {
         handler.itemSelected(item, psiFile, myDocument,
                              mySegments.getSegmentStart(currentSegmentNumber), mySegments.getSegmentEnd(currentSegmentNumber));
@@ -441,11 +441,6 @@ public class TemplateState implements Disposable {
 
       if (completionChar == '.') {
         EditorModificationUtil.insertStringAtCaret(myEditor, ".");
-        AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor, null);
-        return;
-      }
-
-      if (item.getAttribute(Expression.AUTO_POPUP_NEXT_LOOKUP) != null) {
         AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor, null);
         return;
       }

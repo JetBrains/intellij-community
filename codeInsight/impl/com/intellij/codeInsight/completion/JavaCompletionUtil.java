@@ -637,8 +637,10 @@ public class JavaCompletionUtil {
   }
 
   @Nullable
-  public static List<? extends PsiElement> getAllPsiElements(final LookupItem<?> item) {
-    List<PsiMethod> allMethods = item.getAttribute(ALL_METHODS_ATTRIBUTE);
+  public static List<? extends PsiElement> getAllPsiElements(final LookupElement item) {
+    if (!(item instanceof LookupItem)) return null;
+
+    List<PsiMethod> allMethods = ((LookupItem<?>)item).getAttribute(ALL_METHODS_ATTRIBUTE);
     if (allMethods != null) return allMethods;
     if (item.getObject() instanceof PsiElement) return Arrays.asList((PsiElement)item.getObject());
     return null;

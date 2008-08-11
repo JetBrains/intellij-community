@@ -1,9 +1,10 @@
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.MessageBus;
@@ -37,19 +38,19 @@ public class TestLookupManager extends LookupManagerImpl{
 
   public void forceSelection(char completion, int index){
     if(myActiveLookup == null) throw new RuntimeException("There are no items in this lookup");
-    final LookupItem[] items = myActiveLookup.getItems();
-    final LookupItem lookupItem = items[index];
+    final LookupElement[] items = myActiveLookup.getItems();
+    final LookupElement lookupItem = items[index];
     myActiveLookup.setCurrentItem(lookupItem);
     myActiveLookup.finishLookup(completion);
   }
 
-  public void forceSelection(char completion, LookupItem item){
+  public void forceSelection(char completion, LookupElement item){
     myActiveLookup.setCurrentItem(item);
     myActiveLookup.finishLookup(completion);
   }
 
 
-  public LookupItem[] getItems(){
+  public LookupElement[] getItems(){
     return myActiveLookup != null ? myActiveLookup.getItems() : null;
   }
 }

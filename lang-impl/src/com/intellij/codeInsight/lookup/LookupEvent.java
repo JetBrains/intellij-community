@@ -7,14 +7,14 @@ import java.util.EventObject;
 public class LookupEvent extends EventObject {
 
   private final Lookup myLookup;
-  private final LookupItem myItem;
+  private final LookupElement myItem;
   private final char myCompletionChar;
 
-  public LookupEvent(Lookup lookup, LookupItem item){
+  public LookupEvent(Lookup lookup, LookupElement item){
     this(lookup, item, (char)0);
   }
 
-  public LookupEvent(Lookup lookup, LookupItem item, char completionChar){
+  public LookupEvent(Lookup lookup, LookupElement item, char completionChar){
     super(lookup);
     myLookup = lookup;
     myItem = item;
@@ -26,7 +26,7 @@ public class LookupEvent extends EventObject {
   }
 
   @Nullable("in case ENTER was pressed when no suggestions were available")
-  public LookupItem getItem(){
+  public LookupElement getItem(){
     return myItem;
   }
 

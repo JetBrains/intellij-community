@@ -1,10 +1,8 @@
 package com.intellij.lang.ant;
 
 import com.intellij.codeInsight.completion.CodeCompletionHandler;
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.LookupData;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.TestLookupManager;
 import com.intellij.openapi.application.PathManager;
@@ -72,7 +70,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
   public void testSimplePropertyWithDotAndMulityReference() throws Exception {
     configureByFile("test7.xml");
     performNormalCompletion();
-    final LookupItem[] items = getItems();
+    final LookupElement[] items = getItems();
     assertNotNull(items);
     assertTrue(items.length > 0);
     Arrays.sort(items);
@@ -144,7 +142,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     configureByFile(testName + ".xml");
     performNormalCompletion();
 
-    final LookupItem[] lookupItems = getItems();
+    final LookupElement[] lookupItems = getItems();
     assertNotNull("Target attributes should be present", lookupItems);
     assertTrue(lookupItems.length > 0);
 
@@ -187,22 +185,18 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
   }
 
   private void performNormalCompletion() {
-    CodeCompletionHandler handler = new CodeCompletionHandler() {
-      protected void handleEmptyLookup(CompletionContext context, LookupData lookupData) {
-      }
-    };
-    handler.invoke(getProject(), getEditor(), AntSupport.getAntFile(myFile));
+    new CodeCompletionHandler().invoke(getProject(), getEditor(), AntSupport.getAntFile(myFile));
   }
 
-  private void select(char completionChar, LookupItem item) {
+  private void select(char completionChar, LookupElement item) {
     ((TestLookupManager)LookupManager.getInstance(getProject())).forceSelection(completionChar, item);
   }
 
-  private LookupItem getSelected() {
+  private LookupElement getSelected() {
     return LookupManager.getInstance(getProject()).getActiveLookup().getCurrentItem();
   }
 
-  private LookupItem[] getItems() {
+  private LookupElement[] getItems() {
     return ((TestLookupManager)LookupManager.getInstance(getProject())).getItems();
   }
 

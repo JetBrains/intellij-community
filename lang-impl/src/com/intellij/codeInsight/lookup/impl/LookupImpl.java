@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -45,14 +44,13 @@ import java.util.List;
 public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
   private static final int MAX_PREFERRED_COUNT = 5;
-  static final Object EMPTY_ITEM_ATTRIBUTE = Key.create("emptyItem");
 
   private static final LookupItem EMPTY_LOOKUP_ITEM = new LookupItem("preselect", "preselect");
 
   private final Project myProject;
   private final Editor myEditor;
-  private final SortedSet<LookupItem> myItems;
-  private final SortedMap<LookupItemWeightComparable, SortedSet<LookupItem>> myItemsMap;
+  private final SortedSet<LookupElement> myItems;
+  private final SortedMap<LookupItemWeightComparable, SortedSet<LookupElement>> myItemsMap;
   private int myMinPrefixLength;
   private int myPreferredItemsCount;
   private int myInitialOffset;
@@ -69,17 +67,17 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
 
   private boolean myDisposed = false;
-  private LookupItem myPreselectedItem = EMPTY_LOOKUP_ITEM;
+  private LookupElement myPreselectedItem = EMPTY_LOOKUP_ITEM;
   private boolean myDirty;
   private String myAdditionalPrefix = "";
   private PsiElement myElement;
   private final AsyncProcessIcon myProcessIcon;
-  private final Comparator<? super LookupItem> myComparator;
+  private final Comparator<? super LookupElement> myComparator;
   private volatile boolean myCalculating;
 
   public LookupImpl(Project project,
                     Editor editor,
-                    LookupItem[] items, LookupItemPreferencePolicy itemPreferencePolicy, final String bottomText){
+                    LookupElement[] items, LookupItemPreferencePolicy itemPreferencePolicy, final String bottomText){
     super(new JPanel(new BorderLayout()));
     myProject = project;
     myEditor = editor;
@@ -91,17 +89,19 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myElement = psiFile == null ? null : psiFile.findElementAt(myEditor.getCaretModel().getOffset());
 
     final PsiProximityComparator proximityComparator = new PsiProximityComparator(myElement == null ? psiFile : myElement);
-    myComparator = new Comparator<LookupItem>() {
-      public int compare(LookupItem o1, LookupItem o2) {
-        double priority1 = o1.getPriority();
-        double priority2 = o2.getPriority();
-        if (priority1 > priority2) return -1;
-        if (priority2 > priority1) return 1;
+    myComparator = new Comparator<LookupElement>() {
+      public int compare(LookupElement o1, LookupElement o2) {
+        if (o1 instanceof LookupItem && o2 instanceof LookupItem) {
+          double priority1 = ((LookupItem)o1).getPriority();
+          double priority2 = ((LookupItem)o2).getPriority();
+          if (priority1 > priority2) return -1;
+          if (priority2 > priority1) return 1;
 
-        int grouping1 = o1.getGrouping();
-        int grouping2 = o2.getGrouping();
-        if (grouping1 > grouping2) return -1;
-        if (grouping2 > grouping1) return 1;
+          int grouping1 = ((LookupItem)o1).getGrouping();
+          int grouping2 = ((LookupItem)o2).getGrouping();
+          if (grouping1 > grouping2) return -1;
+          if (grouping2 > grouping1) return 1;
+        }
 
         int stringCompare = o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
         if (stringCompare != 0) return stringCompare;
@@ -112,8 +112,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         return o1.hashCode() - o2.hashCode();
       }
     };
-    myItems = new TreeSet<LookupItem>(myComparator);
-    myItemsMap = new TreeMap<LookupItemWeightComparable, SortedSet<LookupItem>>();
+    myItems = new TreeSet<LookupElement>(myComparator);
+    myItemsMap = new TreeMap<LookupItemWeightComparable, SortedSet<LookupElement>>();
 
     myProcessIcon = new AsyncProcessIcon("Completion progress");
     myProcessIcon.setVisible(false);
@@ -122,7 +122,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myList.setCellRenderer(myCellRenderer);
     myList.setFixedCellWidth(50);
 
-    for (final LookupItem item : items) {
+    for (final LookupElement item : items) {
       addItem(item);
     }
 
@@ -172,29 +172,29 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   @TestOnly
   public void resort() {
-    final ArrayList<LookupItem> items = new ArrayList<LookupItem>(myItems);
+    final ArrayList<LookupElement> items = new ArrayList<LookupElement>(myItems);
     myDirty = false;
     myPreselectedItem = EMPTY_LOOKUP_ITEM;
     myItemsMap.clear();
     myItems.clear();
-    for (final LookupItem item : items) {
+    for (final LookupElement item : items) {
       addItem(item);
     }
     updateList();
   }
 
-  public synchronized void addItem(LookupItem item) {
+  public synchronized void addItem(LookupElement item) {
     myItems.add(item);
     addItemWeight(item);
     int maxWidth = myCellRenderer.updateMaximumWidth(item);
     myList.setFixedCellWidth(Math.max(maxWidth, myList.getFixedCellWidth()));
   }
 
-  private void addItemWeight(final LookupItem item) {
+  private void addItemWeight(final LookupElement item) {
     final Comparable[] weight = getWeight(myItemPreferencePolicy, myElement, item);
-    final LookupItemWeightComparable key = new LookupItemWeightComparable(item.getPriority(), weight);
-    SortedSet<LookupItem> list = myItemsMap.get(key);
-    if (list == null) myItemsMap.put(key, list = new TreeSet<LookupItem>(myComparator));
+    final LookupItemWeightComparable key = new LookupItemWeightComparable(item instanceof LookupItem ? ((LookupItem)item).getPriority() : 0, weight);
+    SortedSet<LookupElement> list = myItemsMap.get(key);
+    if (list == null) myItemsMap.put(key, list = new TreeSet<LookupElement>(myComparator));
     list.add(item);
   }
 
@@ -203,7 +203,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private static Comparable[] getWeight(final LookupItemPreferencePolicy itemPreferencePolicy, final PsiElement context,
-                                        final LookupItem item) {
+                                        final LookupElement item) {
     if (itemPreferencePolicy instanceof CompletionPreferencePolicy) {
       return ((CompletionPreferencePolicy)itemPreferencePolicy).getWeight(item);
     }
@@ -222,8 +222,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myList;
   }
 
-  public LookupItem[] getItems(){
-    return myItems.toArray(new LookupItem[myItems.size()]);
+  public LookupElement[] getItems(){
+    return myItems.toArray(new LookupElement[myItems.size()]);
   }
 
   public String getAdditionalPrefix() {
@@ -238,7 +238,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public final synchronized void updateList() {
     int minPrefixLength = myItems.isEmpty() ? 0 : Integer.MAX_VALUE;
-    for (final LookupItem item : myItems) {
+    for (final LookupElement item : myItems) {
       minPrefixLength = Math.min(item.getPrefixMatcher().getPrefix().length(), minPrefixLength);
     }
     if (myMinPrefixLength != minPrefixLength) {
@@ -250,22 +250,22 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     DefaultListModel model = (DefaultListModel)myList.getModel();
     model.clear();
 
-    ArrayList<LookupItem> allItems = new ArrayList<LookupItem>();
-    Set<LookupItem> firstItems = new THashSet<LookupItem>();
+    ArrayList<LookupElement> allItems = new ArrayList<LookupElement>();
+    Set<LookupElement> firstItems = new THashSet<LookupElement>();
 
     final boolean hasPreselectedItem = !myDirty && myPreselectedItem != EMPTY_LOOKUP_ITEM;
     boolean addPreselected = hasPreselectedItem;
 
     for (final LookupItemWeightComparable comparable : myItemsMap.keySet()) {
-      final List<LookupItem> suitable = new SmartList<LookupItem>();
-      for (final LookupItem item : myItemsMap.get(comparable)) {
+      final List<LookupElement> suitable = new SmartList<LookupElement>();
+      for (final LookupElement item : myItemsMap.get(comparable)) {
         if (prefixMatches(item)) {
           suitable.add(item);
         }
       }
 
       if (allItems.size() + suitable.size() + (addPreselected ? 1 : 0) > MAX_PREFERRED_COUNT) break;
-      for (final LookupItem item : suitable) {
+      for (final LookupElement item : suitable) {
         allItems.add(item);
         firstItems.add(item);
         model.addElement(item);
@@ -283,7 +283,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     myPreferredItemsCount = allItems.size();
 
-    for (LookupItem<?> item : myItems) {
+    for (LookupElement item : myItems) {
       if (!firstItems.contains(item) && prefixMatches(item)) {
         model.addElement(item);
         allItems.add(item);
@@ -291,9 +291,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
     boolean isEmpty = allItems.isEmpty();
     if (isEmpty) {
-      LookupItem<String> item = new LookupItem<String>(myCalculating ? " " : LangBundle.message("completion.no.suggestions"), "                       ");
+      LookupItem<String> item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"));
       item.setPrefixMatcher(new CamelHumpMatcher(""));
-      item.setAttribute(EMPTY_ITEM_ATTRIBUTE, "");
       model.addElement(item);
       allItems.add(item);
     }
@@ -319,7 +318,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  private boolean prefixMatches(final LookupItem item) {
+  private boolean prefixMatches(final LookupElement item) {
     if (myAdditionalPrefix.length() == 0) return item.isPrefixMatched();
 
     return item.getPrefixMatcher().cloneWithPrefix(item.getPrefixMatcher().getPrefix() + myAdditionalPrefix).prefixMatches(item);
@@ -358,12 +357,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void finishLookup(final char completionChar) {
-    final LookupItem item = (LookupItem)myList.getSelectedValue();
+    final LookupElement item = (LookupElement)myList.getSelectedValue();
     doHide(false);
     if (item == null ||
-        item.getAttribute(EMPTY_ITEM_ATTRIBUTE) != null ||
-        item.getObject() instanceof DeferredUserLookupValue &&
-        !((DeferredUserLookupValue)item.getObject()).handleUserSelection(item, myProject)) {
+        item instanceof EmptyLookupItem ||
+        item.getObject() instanceof DeferredUserLookupValue && item instanceof LookupItem &&
+        !((DeferredUserLookupValue)item.getObject()).handleUserSelection((LookupItem)item, myProject)) {
       fireItemSelected(null, completionChar);
       return;
     }
@@ -411,7 +410,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myEditorCaretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e){
         int curOffset = myEditor.getCaretModel().getOffset();
-        final LookupItem item = getCurrentItem();
+        final LookupElement item = getCurrentItem();
         if (item == null || item == EMPTY_LOOKUP_ITEM) return;
 
         if (curOffset != myInitialOffset + myAdditionalPrefix.length()) {
@@ -431,10 +430,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     myList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e){
-        LookupItem item = (LookupItem)myList.getSelectedValue();
-        if (item != null && item.getAttribute(EMPTY_ITEM_ATTRIBUTE) != null){
-          item = null;
-        }
+        LookupElement item = getCurrentItem();
         fireCurrentItemChanged(item);
       }
     });
@@ -478,15 +474,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   @Nullable
-  public LookupItem getCurrentItem(){
-    LookupItem item = (LookupItem)myList.getSelectedValue();
-    if (item != null && item.getAttribute(EMPTY_ITEM_ATTRIBUTE) != null){
-      return null;
-    }
-    return item;
+  public LookupElement getCurrentItem(){
+    LookupElement item = (LookupElement)myList.getSelectedValue();
+    return item instanceof EmptyLookupItem ? null : item;
   }
 
-  public void setCurrentItem(LookupItem item){
+  public void setCurrentItem(LookupElement item){
     ListScrollingUtil.selectItem(myList, item);
   }
 
@@ -516,7 +509,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return itmBounds;
   }
 
-  public void fireItemSelected(final LookupItem item, char completionChar){
+  public void fireItemSelected(final LookupElement item, char completionChar){
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     if (item != null && myItemPreferencePolicy != null){
@@ -552,7 +545,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  private void fireCurrentItemChanged(LookupItem item){
+  private void fireCurrentItemChanged(LookupElement item){
     if (!myListeners.isEmpty()){
       LookupEvent event = new LookupEvent(this, item);
       LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
@@ -580,8 +573,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     if (listModel.getSize() == 0) return false;
 
-    final LookupItem firstItem = (LookupItem)listModel.getElementAt(0);
-    if (listModel.getSize() == 1 && firstItem.getAttribute(EMPTY_ITEM_ATTRIBUTE) != null) return false;
+    final LookupElement firstItem = (LookupElement)listModel.getElementAt(0);
+    if (listModel.getSize() == 1 && firstItem instanceof EmptyLookupItem) return false;
 
     final PrefixMatcher matcher = firstItem.getPrefixMatcher();
     String lookupString = firstItem.getLookupString();
@@ -593,7 +586,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     String presentPrefix = matcher.getPrefix();
 
     for (int i = 1; i < listModel.getSize(); i++) {
-      LookupItem item = (LookupItem)listModel.getElementAt(i);
+      LookupElement item = (LookupElement)listModel.getElementAt(i);
       if (!presentPrefix.equals(item.getPrefixMatcher().getPrefix())) return false;
 
       lookupString = item.getLookupString();
@@ -637,7 +630,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myEditor.getDocument().insertString(offset + i, afterCaret.substring(i));
 
     final String newPrefix = presentPrefix + afterCaret;
-    for (Iterator<LookupItem> it = myItems.iterator(); it.hasNext();) {
+    for (Iterator<LookupElement> it = myItems.iterator(); it.hasNext();) {
       LookupElement item = it.next();
       if (!item.setPrefixMatcher(item.getPrefixMatcher().cloneWithPrefix(newPrefix))) {
         it.remove();
@@ -717,11 +710,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       return -1;
     }
     else{
-      LookupItem prefItem = null;
+      LookupElement prefItem = null;
       int prefItemIndex = -1;
 
       for(int i = 0; i < items.length; i++){
-        LookupItem item = (LookupItem)items[i];
+        LookupElement item = (LookupElement)items[i];
         final Object obj = item.getObject();
         if (obj instanceof PsiElement && !((PsiElement)obj).isValid()) continue;
         if (prefItem == null){
@@ -746,9 +739,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  public LookupItem[] getSortedItems() {
-    final LookupItem[] result = new LookupItem[myList.getModel().getSize()];
+  public LookupElement[] getSortedItems() {
+    final LookupElement[] result = new LookupElement[myList.getModel().getSize()];
     ((DefaultListModel)myList.getModel()).copyInto(result);
     return result;
   }
+
 }

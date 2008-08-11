@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.Nullable;
 
 public interface Expression {
-  Key AUTO_POPUP_NEXT_LOOKUP = Key.create("AUTO_POPUP_NEXT_LOOKUP");
 
   @Nullable
   Result calculateResult(ExpressionContext context);

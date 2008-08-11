@@ -14,8 +14,8 @@ public interface Lookup extends UserDataHolder{
   char COMPLETE_STATEMENT_SELECT_CHAR = '\r';
 
   @Nullable
-  LookupItem getCurrentItem();
-  void setCurrentItem(LookupItem item);
+  LookupElement getCurrentItem();
+  void setCurrentItem(LookupElement item);
 
   void addLookupListener(LookupListener listener);
   void removeLookupListener(LookupListener listener);

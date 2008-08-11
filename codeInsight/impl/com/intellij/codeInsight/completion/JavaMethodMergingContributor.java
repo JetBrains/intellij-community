@@ -29,6 +29,11 @@ public class JavaMethodMergingContributor extends CompletionContributor {
     final boolean toContinue =
         CompletionService.getCompletionService().getVariantsFromContributors(EP_NAME, parameters, this, new Consumer<LookupElement>() {
           public void consume(final LookupElement element) {
+            if (!(element instanceof LookupItem)) {
+              result.addElement(element);
+              return;
+            }
+
             LookupItem item = (LookupItem)element;
             item.setAttribute(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE, null);
             Object o = item.getObject();

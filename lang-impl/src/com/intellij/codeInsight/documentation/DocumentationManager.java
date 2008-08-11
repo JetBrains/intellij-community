@@ -5,7 +5,7 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
@@ -300,7 +300,7 @@ public class DocumentationManager implements ProjectComponent {
       final Lookup activeLookup = LookupManager.getInstance(myProject).getActiveLookup();
 
       if (activeLookup != null) {
-        LookupItem item = activeLookup.getCurrentItem();
+        LookupElement item = activeLookup.getCurrentItem();
         if (item == null) return null;
 
         final DocumentationProvider documentationProvider = getProviderFromElement(file);

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
@@ -165,10 +166,10 @@ public class CompletionUtil {
   }
 
 
-  static boolean isOverwrite(final LookupItem item, final char completionChar) {
+  static boolean isOverwrite(final LookupElement item, final char completionChar) {
     return completionChar != 0
       ? completionChar == Lookup.REPLACE_SELECT_CHAR
-      : item.getAttribute(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
+      : item instanceof LookupItem && ((LookupItem)item).getAttribute(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
   }
 
 

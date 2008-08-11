@@ -24,11 +24,12 @@ import java.util.Map;
 public class JavaMethodResolveHelper {
   private final Map<MethodSignature, PsiMethod> myMethods = new LinkedHashMap<MethodSignature, PsiMethod>();
   @Nullable private final PsiType[] myParameterTypes;
-  private MyApplicability myApplicability = MyApplicability.NotApplicable;
+  private MyApplicability myApplicability;
 
   enum MyApplicability {
     NotApplicable,
     ParamCount,
+    Static,
     Applicable,
   }
 
@@ -36,7 +37,7 @@ public class JavaMethodResolveHelper {
     myParameterTypes = parameterTypes;
   }
 
-  public void addMethod(PsiMethod method, PsiSubstitutor substitutor) {
+  public void addMethod(PsiMethod method, PsiSubstitutor substitutor, boolean staticError) {
     final MethodSignature signature = method.getSignature(substitutor);
     final PsiMethod psiMethod = myMethods.get(signature);
 
@@ -48,7 +49,8 @@ public class JavaMethodResolveHelper {
     }
 
     if (myParameterTypes != null) {
-      MyApplicability applicability = getApplicability(method, myParameterTypes);
+      if (myApplicability == null) myApplicability = MyApplicability.NotApplicable;
+      MyApplicability applicability = allowStaticErrors(getApplicability(method, myParameterTypes), staticError);
 
       if (applicability.compareTo(myApplicability) > 0) {
         myMethods.clear();
@@ -58,8 +60,17 @@ public class JavaMethodResolveHelper {
         myMethods.put(signature, method);
       }
     } else {
+      if (myApplicability == null) myApplicability = MyApplicability.Applicable;
+      myApplicability = allowStaticErrors(myApplicability, staticError);
       myMethods.put(signature, method);
     }
+  }
+
+  private static MyApplicability allowStaticErrors(MyApplicability applicability, final boolean staticError) {
+    if (applicability == MyApplicability.Applicable && staticError) {
+      applicability = MyApplicability.Static;
+    }
+    return applicability;
   }
 
   private static MyApplicability getApplicability(final PsiMethod method, @NotNull final PsiType[] parameterTypes) {
@@ -75,8 +86,15 @@ public class JavaMethodResolveHelper {
     return MyApplicability.NotApplicable;
   }
 
-  public boolean hasResolveError() {
-    return myApplicability == MyApplicability.NotApplicable || myApplicability == MyApplicability.ParamCount && myMethods.size() > 1;
+  @NotNull
+  public ErrorType getResolveError() {
+    if (myApplicability == MyApplicability.Static) return ErrorType.STATIC;
+    if (myApplicability == MyApplicability.NotApplicable || myApplicability == MyApplicability.ParamCount && myMethods.size() > 1) return ErrorType.RESOLVE;
+    return ErrorType.NONE;
+  }
+
+  public static enum ErrorType {
+    NONE, STATIC, RESOLVE
   }
 
   public Collection<PsiMethod> getMethods() {

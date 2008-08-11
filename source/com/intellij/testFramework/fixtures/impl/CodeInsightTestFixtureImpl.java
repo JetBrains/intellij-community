@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -333,7 +334,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       protected void run() throws Throwable {
         configureByFilesInner(filesBefore);
-        final LookupItem[] items = completeBasic();
+        final LookupElement[] items = completeBasic();
         if (items != null) {
           System.out.println("items = " + Arrays.toString(items));
         }
@@ -357,10 +358,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       protected void run() throws Throwable {
         configureByFilesInner(fileBefore);
-        LookupItem[] lookupItems = completeBasic();
+        LookupElement[] lookupItems = completeBasic();
         Assert.assertNotNull("No lookup was shown, probably there was only one lookup element that was inserted automatically", lookupItems);
-        result.addAll(ContainerUtil.map(lookupItems, new Function<LookupItem, String>() {
-          public String fun(final LookupItem lookupItem) {
+        result.addAll(ContainerUtil.map(lookupItems, new Function<LookupElement, String>() {
+          public String fun(final LookupElement lookupItem) {
             return lookupItem.getLookupString();
           }
         }));
@@ -535,7 +536,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
 
   @Nullable
-  public LookupItem[] completeBasic() {
+  public LookupElement[] completeBasic() {
     final Ref<Boolean> empty = Ref.create(false);
     new WriteCommandAction(getProject()) {
       protected void run(final Result result) throws Throwable {
@@ -571,7 +572,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return getLookupElements();
   }
 
-  public LookupItem[] getLookupElements() {
+  public LookupElement[] getLookupElements() {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
     return lookup == null ? null : lookup.getSortedItems();
   }

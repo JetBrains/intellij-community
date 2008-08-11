@@ -1,8 +1,9 @@
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
 import com.intellij.codeInsight.lookup.impl.LookupElementPresentationEx;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.util.Key;
 
@@ -48,7 +49,7 @@ public class TemplateLookupRenderer implements ElementLookupRenderer<Template> {
     if (data == null) {
       data = new TemplateItemsData();
       presentation.putUserData(KEY, data);
-      for (LookupItem item : presentation.getItems()) {
+      for (LookupElement item : presentation.getItems()) {
         if (!(item.getObject() instanceof Template)) {
           data.hasNonTemplates = true;
           break;

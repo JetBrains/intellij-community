@@ -5,10 +5,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.LookupAdapter;
-import com.intellij.codeInsight.lookup.LookupEvent;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -60,11 +57,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
         cancel();
         finishCompletion();
 
-        LookupItem item = event.getItem();
+        LookupElement item = event.getItem();
         if (item == null) return;
 
         contextOriginal.setStartOffset(myEditor.getCaretModel().getOffset() - item.getLookupString().length());
-        myHandler.selectLookupItem(item, CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS || item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null,
+        myHandler.selectLookupItem(item, CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS ||
+                                         (item instanceof LookupItem &&
+                                          ((LookupItem)item).getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null),
                                    event.getCompletionChar(), contextOriginal, new LookupData(myLookup.getItems()));
       }
 
@@ -142,7 +141,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
     return ourCurrentCompletion;
   }
 
-  public synchronized void addItem(final LookupItem item) {
+  public synchronized void addItem(final LookupElement item) {
     if (!isRunning()) return;
     ProgressManager.getInstance().checkCanceled();
 

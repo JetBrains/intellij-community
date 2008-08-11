@@ -28,11 +28,14 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
   public void renderElement(final LookupItem item, final Object element, final LookupElementPresentationEx presentation) {
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item));
 
+    final boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
+    final boolean grayed = item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null;
+
     boolean strikeout = isToStrikeout(item);
-    presentation.setItemText(getName(element, item), strikeout);
+    presentation.setItemText(getName(element, item), strikeout, bold);
 
     final String tailText = getTailText(element, item);
-    presentation.setTailText(tailText != null ? tailText : "", null, false, strikeout);
+    presentation.setTailText(tailText != null ? tailText : "", grayed, false, strikeout);
 
     final String typeText = getTypeText(element, item);
     presentation.setTypeText(typeText != null ? typeText : "");

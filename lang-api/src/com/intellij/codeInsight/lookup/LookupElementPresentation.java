@@ -17,9 +17,11 @@ public interface LookupElementPresentation {
 
   void setItemText(@Nullable String text);
 
-  void setItemText(@Nullable String text, boolean strikeout);
+  void setItemText(@Nullable String text, boolean strikeout, final boolean bold);
 
   void setTailText(@Nullable String text);
+
+  void setTailText(@Nullable String text, boolean grayed, boolean bold, boolean strikeout);
 
   void setTailText(@Nullable String text, @Nullable Color foreground, boolean bold, boolean strikeout);
 

@@ -252,7 +252,17 @@ public class JavaAwareCompletionData extends CompletionData{
   }
 
   public static LookupItem<PsiClass> setShowFQN(final LookupItem<PsiClass> ret) {
-    @NonNls String packageName = ret.getObject().getQualifiedName();
+    final PsiClass psiClass = ret.getObject();
+    @NonNls String packageName = getPackageDisplayName(psiClass);
+
+    final String tailText = (String)ret.getAttribute(LookupItem.TAIL_TEXT_ATTR);
+    ret.setAttribute(LookupItem.TAIL_TEXT_ATTR, StringUtil.notNullize(tailText) + " (" + packageName + ")");
+    ret.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
+    return ret;
+  }
+
+  public static String getPackageDisplayName(@NotNull final PsiClass psiClass) {
+    @NonNls String packageName = psiClass.getQualifiedName();
     if (packageName != null && packageName.lastIndexOf('.') > 0) {
       packageName = packageName.substring(0, packageName.lastIndexOf('.'));
     }
@@ -262,10 +272,6 @@ public class JavaAwareCompletionData extends CompletionData{
     if (packageName.length() == 0) {
       packageName = "default package";
     }
-
-    final String tailText = (String)ret.getAttribute(LookupItem.TAIL_TEXT_ATTR);
-    ret.setAttribute(LookupItem.TAIL_TEXT_ATTR, StringUtil.notNullize(tailText) + " (" + packageName + ")");
-    ret.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
-    return ret;
+    return packageName;
   }
 }

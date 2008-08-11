@@ -59,6 +59,11 @@ public abstract class LookupElement extends UserDataHolderBase {
     return myPrefixMatcher;
   }
 
+  @NotNull
+  public Object getObject() {
+    return this;
+  }
+
   public abstract InsertHandler<? extends LookupElement> getInsertHandler();
 
   public void handleInsert(InsertionContext context) {

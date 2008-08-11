@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -127,7 +128,7 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
       final ListModel model = lookup.getList().getModel();
       final int count = lookup.getPreferredItemsCount();
       for (int i = 0; i < model.getSize(); i++) {
-        final LookupItem item = (LookupItem)model.getElementAt(i);
+        final LookupElement item = (LookupElement)model.getElementAt(i);
         System.out.println(item.getLookupString() + Arrays.toString(item.getUserData(LookupItem.WEIGHT)));
         if (i == count - 1) {
           System.out.println("------------");

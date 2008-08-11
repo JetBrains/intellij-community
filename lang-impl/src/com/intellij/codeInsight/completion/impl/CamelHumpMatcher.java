@@ -38,10 +38,10 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
 
   public boolean prefixMatches(@NotNull final LookupElement element) {
-    final LookupItem<?> item = (LookupItem)element;
-    final boolean itemCaseInsensitive = Boolean.TRUE.equals(item.getAttribute(LookupItem.CASE_INSENSITIVE));
+    final boolean itemCaseInsensitive = element instanceof LookupItem && 
+                                        Boolean.TRUE.equals(((LookupItem)element).getAttribute(LookupItem.CASE_INSENSITIVE));
     boolean result = false;
-    for (final String name : item.getAllLookupStrings()) {
+    for (final String name : element.getAllLookupStrings()) {
       if (itemCaseInsensitive && StringUtil.startsWithIgnoreCase(name, myPrefix) || prefixMatches(name)) {
         result = true;
         break;
@@ -49,13 +49,14 @@ public class CamelHumpMatcher extends PrefixMatcher {
     }
     //todo dirty hack
     if (result && itemCaseInsensitive) {
-      final String currentString = ContainerUtil.find(item.getAllLookupStrings(), new Condition<String>() {
+      final String currentString = ContainerUtil.find(element.getAllLookupStrings(), new Condition<String>() {
         public boolean value(final String s) {
           return StringUtil.startsWithIgnoreCase(s, myPrefix);
         }
       });
       if (currentString != null) {
         final String newString = handleCaseInsensitiveVariant(myPrefix, currentString);
+        final LookupItem<?> item = (LookupItem)element;
         item.setLookupString(newString);
         if (item.getObject().equals(currentString)) {
           ((LookupItem)item).setObject(newString);

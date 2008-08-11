@@ -21,8 +21,11 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
 
   public void renderElement(final LookupItem item, final LookupElementPresentation presentation) {
     presentation.setIcon(getRawIcon(item));
-    presentation.setItemText(getName(item), isToStrikeout(item));
-    presentation.setTailText(getText2(item), null, false, isToStrikeout(item));
+    final boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
+    final boolean grayed = item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null;
+
+    presentation.setItemText(getName(item), isToStrikeout(item), bold);
+    presentation.setTailText(getText2(item), grayed, false, isToStrikeout(item));
     presentation.setTypeText(getText3(item), null);
   }
 

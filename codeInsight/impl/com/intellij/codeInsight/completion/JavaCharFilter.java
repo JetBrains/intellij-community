@@ -10,7 +10,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 
 public class JavaCharFilter extends CharFilter {
@@ -23,7 +23,7 @@ public class JavaCharFilter extends CharFilter {
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
     if (lookup.isCompletion() && c == '!') {
       if (lookup.getPsiFile() instanceof PsiJavaFile) {
-        final LookupItem item = lookup.getCurrentItem();
+        final LookupElement item = lookup.getCurrentItem();
         if (item == null) return null;
 
         final Object o = item.getObject();

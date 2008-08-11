@@ -22,7 +22,7 @@ public abstract class PopupUpdateProcessor extends JBPopupAdapter {
       activeLookup.addLookupListener(new LookupAdapter() {
         public void currentItemChanged(LookupEvent event) {
           if (jbPopup.isVisible()) { //was not canceled yet
-            final LookupItem item = event.getItem();
+            final LookupElement item = event.getItem();
             if (item != null) {
               jbPopup.cancel(); //close this one
               updatePopup(item.getObject()); //open next

@@ -24,7 +24,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     myLocation = new CompletionLocation(parameters);
   }
 
-  public void itemSelected(LookupItem item, final Lookup lookup) {
+  public void itemSelected(LookupElement item, final Lookup lookup) {
     final StatisticsManager manager = StatisticsManager.getInstance();
     manager.incUseCount(CompletionService.STATISTICS_KEY, item, myLocation);
     final LookupImpl lookupImpl = (LookupImpl)lookup;
@@ -44,7 +44,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     return info.getContext() + "###" + info.getValue();
   }
 
-  public Comparable[] getWeight(final LookupItem<?> item) {
+  public Comparable[] getWeight(final LookupElement item) {
     if (item.getUserData(LookupItem.WEIGHT) != null) return item.getUserData(LookupItem.WEIGHT);
 
     final Comparable[] result = new Comparable[]{WeighingService.weigh(CompletionService.WEIGHER_KEY, item, myLocation)};
@@ -55,18 +55,20 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   }
 
 
-  public int compare(final LookupItem item1, final LookupItem item2) {
+  public int compare(final LookupElement item1, final LookupElement item2) {
     if (item1 == item2) return 0;
 
-    double priority1 = item1.getPriority();
-    double priority2 = item2.getPriority();
-    if (priority1 > priority2) return -1;
-    if (priority1 < priority2) return 1;
+    if (item1 instanceof LookupItem && item2 instanceof LookupItem) {
+      double priority1 = ((LookupItem)item1).getPriority();
+      double priority2 = ((LookupItem)item2).getPriority();
+      if (priority1 > priority2) return -1;
+      if (priority1 < priority2) return 1;
+    }
 
     return preselectWeigh(item2).compareTo(preselectWeigh(item1));
   }
 
-  private WeighingComparable<LookupElement, CompletionLocation> preselectWeigh(final LookupItem item) {
+  private WeighingComparable<LookupElement, CompletionLocation> preselectWeigh(final LookupElement item) {
     WeighingComparable<LookupElement, CompletionLocation> data = item.getUserData(PRESELECT_WEIGHT);
     if (data == null) {
       item.putUserData(PRESELECT_WEIGHT, data = WeighingService.weigh(CompletionService.PRESELECT_KEY, item, myLocation));

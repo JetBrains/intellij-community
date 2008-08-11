@@ -117,17 +117,8 @@ public abstract class BaseCompleteMacro implements Macro {
     }
 
     public void itemSelected(LookupEvent event) {
-      LookupItem item = event.getItem();
+      LookupElement item = event.getItem();
       if (item == null) return;
-
-      if (item.getAttribute(Expression.AUTO_POPUP_NEXT_LOOKUP) != null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            invokeCompletion(myContext);
-          }
-        });
-        return;
-      }
 
       final List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements(item);
 
