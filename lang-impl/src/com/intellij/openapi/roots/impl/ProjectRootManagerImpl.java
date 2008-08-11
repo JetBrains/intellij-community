@@ -7,6 +7,7 @@ import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
@@ -83,8 +84,78 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   private final MessageBusConnection myConnection;
 
+  private final BatchUpdateListener myHandler;
+
+  class BatchSession {
+    int myBatchLevel = 0;
+    boolean myChanged = false;
+
+    final boolean myFileTypes;
+
+    protected BatchSession(final boolean fileTypes) {
+      myFileTypes = fileTypes;
+    }
+
+    void levelUp() {
+      if (myBatchLevel ==0) {
+        myChanged = false;
+      }
+      myBatchLevel += 1;
+    }
+
+    public void levelDown() {
+      myBatchLevel -= 1;
+      if (myChanged && myBatchLevel == 0) {
+        try {
+          fireChange();
+        }
+        finally {
+          myChanged = false;
+        }
+      }
+    }
+
+    public void fireChange() {
+      fireRootsChanged(myFileTypes);
+    }
+
+    public void beforeRootsChanged() {
+      if (myBatchLevel == 0 || !myChanged) {
+        try {
+          fireBeforeRootsChanged(myFileTypes);
+        }
+        finally {
+          myChanged =  true;
+        }
+      }
+    }
+
+    public void rootsChanged() {
+      if (myBatchLevel == 0) {
+        fireChange();
+      }
+    }
+  }
+
+  private final BatchSession myRootsChanged = new BatchSession(false);
+  private final BatchSession myFileTypesChanged = new BatchSession(true);
+
   public static ProjectRootManagerImpl getInstanceImpl(Project project) {
     return (ProjectRootManagerImpl)getInstance(project);
+  }
+
+  private void fireBeforeRootsChanged(final boolean filetypes) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    if (myRootsChangeCounter == 0) {
+      if (myIsRootsChangedOnDemandStartedButNotDemanded) {
+        myIsRootsChangedOnDemandStartedButNotDemanded = false;
+        myRootsChangeCounter++; // blocks all firing until finishRootsChangedOnDemand
+      }
+      myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, filetypes));
+    }
+
+    myRootsChangeCounter++;
+
   }
 
   public ProjectRootManagerImpl(Project project, FileTypeManager fileTypeManager, DirectoryIndex directoryIndex, StartupManager startupManager) {
@@ -106,6 +177,19 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
         myStartupActivityPerformed = true;
       }
     });
+
+    myHandler = new BatchUpdateListener(){
+      public void onBatchUpdateStarted() {
+        myRootsChanged.levelUp();
+        myFileTypesChanged.levelUp();
+      }
+
+      public void onBatchUpdateFinished() {
+        myRootsChanged.levelDown();
+        myFileTypesChanged.levelDown();
+      }
+    };
+
   }
 
   public void registerChangeUpdater(CacheUpdater updater) {
@@ -280,6 +364,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   public void initComponent() {
+    myConnection.subscribe(BatchUpdateListener.TOPIC, myHandler);
+
   }
 
   public void disposeComponent() {
@@ -342,16 +428,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   public void beforeRootsChange(boolean filetypes) {
     if (myProject.isDisposed()) return;
 
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    if (myRootsChangeCounter == 0) {
-      if (myIsRootsChangedOnDemandStartedButNotDemanded) {
-        myIsRootsChangedOnDemandStartedButNotDemanded = false;
-        myRootsChangeCounter++; // blocks all firing until finishRootsChangedOnDemand
-      }
-      myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, filetypes));
-    }
 
-    myRootsChangeCounter++;
+    getBatchSession(filetypes).beforeRootsChanged();
+  }
+
+  private BatchSession getBatchSession(final boolean filetypes) {
+    return filetypes ? myFileTypesChanged : myRootsChanged;
   }
 
   private void clearScopesCaches () {
@@ -369,6 +451,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   public void rootsChanged(boolean filetypes) {
+    getBatchSession(filetypes).rootsChanged();
+  }
+
+  private void fireRootsChanged(final boolean filetypes) {
     if (myProject.isDisposed()) return;
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();

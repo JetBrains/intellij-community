@@ -62,6 +62,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private final Map<OrderRootType, Set<VirtualFilePointer>> myCachedExportedFiles = new THashMap<OrderRootType, Set<VirtualFilePointer>>();
   private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<RootModelImpl, Throwable>();
 
+
   public ModuleRootManagerImpl(Module module,
                                DirectoryIndex directoryIndex,
                                ProjectRootManagerImpl projectRootManager,
@@ -90,7 +91,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return "NewModuleRootManager";
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
   public void disposeComponent() {
     myRootModel.dispose();

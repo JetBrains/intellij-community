@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -683,5 +684,39 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());
     }
   }
+
+  public boolean reload(final Set<Pair<VirtualFile, StateStorage>> changedFiles) throws IOException, StateStorage.StateStorageException {
+    final SaveSession saveSession = startSave();
+    final Set<String> componentNames = saveSession.analyzeExternalChanges(changedFiles);
+    try {
+      if (componentNames == null) return false;
+
+      // TODO[mike]: This is a hack to prevent NPE (assert != null) in StateStorageManagerImpl.reload, storage is null for...
+      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
+        if (pair.second == null) return false;
+      }
+
+      if (!isReloadPossible(componentNames)) return false;
+    }
+    finally {
+      finishSave(saveSession);
+    }
+
+    myProject.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateStarted();
+
+    try {
+      doReload(changedFiles, componentNames);
+      reinitComponents(componentNames);
+    }
+    finally {
+      myProject.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished();
+    }
+
+
+
+    return true;
+  }
+
+
 }
 

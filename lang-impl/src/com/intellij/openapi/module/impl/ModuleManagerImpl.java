@@ -55,8 +55,7 @@ import java.util.*;
   storages = {
     @Storage(id = "default", file = "$PROJECT_FILE$")
    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/modules.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    },
-  reloadable = false
+    }
 )
 public class ModuleManagerImpl extends ModuleManager implements ProjectComponent, PersistentStateComponent<Element>, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
@@ -65,7 +64,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   @NonNls public static final String COMPONENT_NAME = "ProjectModuleManager";
   private static final String MODULE_GROUP_SEPARATOR = "/";
-  private ModulePath[] myModulePaths;
+  private List<ModulePath> myModulePaths;
   private List<ModulePath> myFailedModulePaths = new ArrayList<ModulePath>();
   @NonNls public static final String ELEMENT_MODULES = "modules";
   @NonNls public static final String ELEMENT_MODULE = "module";
@@ -99,7 +98,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS);
     myConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
       public void projectComponentsInitialized(final Project project) {
-        loadModules();
+        loadModules(myModuleModel);
       }
     });
 
@@ -130,7 +129,42 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   public void loadState(Element state) {
+    List<ModulePath> prevPaths = myModulePaths;
     readExternal(state);
+    if (prevPaths != null) {
+      ModifiableModuleModel model = getModifiableModel();
+
+      Module[] existingModules = model.getModules();
+
+
+      for (Module existingModule : existingModules) {
+        ModulePath correspondingPath = findCorrespondingPath(existingModule);
+        if (correspondingPath == null) {
+          model.disposeModule(existingModule);
+        }
+        else {
+          myModulePaths.remove(correspondingPath);
+
+          String groupStr = correspondingPath.getModuleGroup();
+          String[] group = groupStr != null ? groupStr.split(MODULE_GROUP_SEPARATOR) : null;
+          if (!Arrays.equals(group, model.getModuleGroupPath(existingModule))) {
+            model.setModuleGroupPath(existingModule,  group);
+          }
+        }
+      }
+
+      loadModules((ModuleModelImpl)model);
+
+      model.commit();
+    }
+  }
+
+  private ModulePath findCorrespondingPath(final Module existingModule) {
+    for (ModulePath modulePath : myModulePaths) {
+      if (modulePath.getPath().equals(existingModule.getModuleFilePath())) return modulePath;
+    }
+
+    return null;
   }
 
   public static final class ModulePath {
@@ -174,28 +208,28 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   public void readExternal(final Element element) {
-    myModulePaths = getPathsToModuleFiles(element);
+    myModulePaths = new ArrayList<ModulePath>(Arrays.asList(getPathsToModuleFiles(element)));
   }
 
-  public void loadModules() {
-    if (myModulePaths != null && myModulePaths.length > 0) {
+  private void loadModules(final ModuleModelImpl moduleModel) {
+    if (myModulePaths != null && myModulePaths.size() > 0) {
       final Application app = ApplicationManager.getApplication();
       final Runnable swingRunnable = new Runnable() {
         public void run() {
           myFailedModulePaths.clear();
-          myFailedModulePaths.addAll(Arrays.asList(myModulePaths));
+          myFailedModulePaths.addAll(myModulePaths);
           final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
           List<ModuleLoadingErrorDescription> errors = new ArrayList<ModuleLoadingErrorDescription>();
           for (final ModulePath modulePath : myModulePaths) {
             try {
-              final Module module = myModuleModel.loadModuleInternal(modulePath.getPath());
+              final Module module = moduleModel.loadModuleInternal(modulePath.getPath());
               if (module.getModuleType() instanceof UnknownModuleType) {
                 modulesWithUnknownTypes.add(module);
               }
               final String groupPathString = modulePath.getModuleGroup();
               if (groupPathString != null) {
                 final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
-                myModuleModel.setModuleGroupPath(module, groupPath); //model should be updated too
+                moduleModel.setModuleGroupPath(module, groupPath); //model should be updated too
               }
               myFailedModulePaths.remove(modulePath);
             }

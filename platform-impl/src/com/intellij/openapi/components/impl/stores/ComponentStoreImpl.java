@@ -381,38 +381,16 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
   }
 
-  public boolean reload(final Set<Pair<VirtualFile, StateStorage>> changedFiles) throws IOException, StateStorage.StateStorageException {
-    final SaveSession saveSession = startSave();
-    final Set<String> componentNames = saveSession.analyzeExternalChanges(changedFiles);
-    try {
-      if (componentNames == null) return false;
-
-      // TODO[mike]: This is a hack to prevent NPE (assert != null) in StateStorageManagerImpl.reload, storage is null for...
-      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-        if (pair.second == null) return false;
-      }
-
-      if (!isReloadPossible(componentNames)) return false;
-    }
-    finally {
-      finishSave(saveSession);
-    }
-
-    doReload(changedFiles, componentNames);
-
-    reinitComponents(componentNames);
-
-    return true;
-  }
-
   protected boolean isReloadPossible(final Set<String> componentNames) {
     for (String componentName : componentNames) {
       final Object component = myComponents.get(componentName);
 
-      if (!(component instanceof PersistentStateComponent)) return false;
+      if (component != null) {
+        if (!(component instanceof PersistentStateComponent)) return false;
 
-      final State stateSpec = getStateSpec((PersistentStateComponent<? extends Object>)component);
-      if (stateSpec == null || !stateSpec.reloadable()) return false;
+        final State stateSpec = getStateSpec((PersistentStateComponent<? extends Object>)component);
+        if (stateSpec == null || !stateSpec.reloadable()) return false;
+      }
     }
 
     return true;
