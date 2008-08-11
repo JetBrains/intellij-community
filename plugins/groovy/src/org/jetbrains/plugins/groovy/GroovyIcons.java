@@ -30,7 +30,7 @@ public interface GroovyIcons {
   public static final Icon CLASS = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/class.png");
   public static final Icon ABSTRACT_CLASS = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/abstractClass.png");
   public static final Icon INTERFACE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/interface.png");
-  public static final Icon ANNOTATION_TYPE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/annotationtype.png");
+  public static final Icon ANNOTATION_TYPE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/annotationType.png");
   public static final Icon ENUM = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/enum.png");
   public static final Icon PROPERTY = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/property.png");
   public static final Icon METHOD = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/method.png");
