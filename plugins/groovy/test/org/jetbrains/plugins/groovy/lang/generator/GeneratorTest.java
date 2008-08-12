@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -31,16 +32,28 @@ import java.io.IOException;
  */
 public class GeneratorTest extends SimpleGroovyFileSetTestCase {
   protected static final String DATA_PATH = PathUtil.getDataPath(GeneratorTest.class);
-  protected static final File OUTPUT_DIR = new File(PathUtil.getOutputPath(GeneratorTest.class));
+  protected static final File GENERATING_OUTPUT_DIR = new File(PathUtil.getOutputPath(GeneratorTest.class) + File.separator + "generating");
+
   private final Object LOCK = new Object();
   private int mySemaphore = 0;
   private VirtualFile myOutputDirVirtualFile;
 
+  static {
+    try {
+      boolean isCreated = GENERATING_OUTPUT_DIR.mkdirs();
+
+      if (!isCreated) {
+        throw new IOException(
+            "Directory for generated java stubs wasn't create, directory has already existed:" + GENERATING_OUTPUT_DIR.getAbsolutePath());
+      }
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
   public GeneratorTest() {
-    super(System.getProperty("path") != null ?
-        System.getProperty("path") :
-        DATA_PATH
-    );
+    super(System.getProperty("path") != null ? System.getProperty("path") : DATA_PATH);
   }
 
   public void up() {
@@ -79,12 +92,12 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
         GeneratingCompiler.GenerationItem[] generationItems = groovyToJavaGeneratorTester.getGenerationItems(null);
 
         try {
-          myOutputDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(OUTPUT_DIR.getCanonicalPath().replace(File.separatorChar, '/')));
+          myOutputDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(GENERATING_OUTPUT_DIR.getCanonicalPath().replace(File.separatorChar, '/')));
 
           generatedItems[0] = groovyToJavaGeneratorTester.generate(null, generationItems, myOutputDirVirtualFile);
 
           for (GeneratingCompiler.GenerationItem generatedItem : generatedItems[0]) {
-            String path = OUTPUT_DIR + File.separator + generatedItem.getPath();
+            final String path = GENERATING_OUTPUT_DIR + File.separator + generatedItem.getPath();
 
             BufferedReader reader = new BufferedReader(new FileReader(path));
             int ch = reader.read();
@@ -97,7 +110,6 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
             buffer.append("\n");
             buffer.append("---");
             buffer.append("\n");
-            new File(path).deleteOnExit();
           }
         } catch (IOException e) {
           e.printStackTrace();
@@ -133,7 +145,8 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
         final String testName = myRelTestPath.substring(0, myRelTestPath.lastIndexOf(".test"));
         PsiFile psiFile = TestUtils.createPseudoPhysicalFile(myProject, testName + ".groovy", myFileContent);
         return new VirtualFile[]{psiFile.getVirtualFile()};
-      } catch (IncorrectOperationException e) {
+      }
+      catch (IncorrectOperationException e) {
       }
 
       return VirtualFile.EMPTY_ARRAY;
@@ -159,5 +172,26 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
 
   public static Test suite() {
     return new GeneratorTest();
+  }
+
+  static {
+    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+      public void run() {
+
+        final VirtualFile genOtputDir = LocalFileSystem.getInstance().findFileByIoFile(GENERATING_OUTPUT_DIR);
+        assert genOtputDir != null;
+
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            try {
+              genOtputDir.delete(null);
+            }
+            catch (IOException e) {
+              e.printStackTrace();
+            }
+          }
+        });
+      }
+    }));
   }
 }
