@@ -1,7 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.IconUtilEx;
-import com.intellij.ide.util.JavaUtilForVfs;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -11,7 +10,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
@@ -24,6 +22,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
@@ -34,7 +33,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -655,34 +653,7 @@ public class LibraryTableEditor implements Disposable {
     }
 
     protected VirtualFile[] scanForActualRoots(final VirtualFile[] rootCandidates) {
-      final Set<VirtualFile> result = new HashSet<VirtualFile>();
-      for (final VirtualFile candidate : rootCandidates) {
-        final Ref<List<VirtualFile>> roots = Ref.create(null);
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          public void run() {
-            List<VirtualFile> detectedRoots = JavaUtilForVfs.suggestRoots(candidate);
-            if (!detectedRoots.isEmpty() && (detectedRoots.size() > 1 || detectedRoots.get(0) != candidate)) {
-              roots.set(detectedRoots);
-            }
-          }
-        }, "Scanning for source roots", true, myProject);
-
-        if (roots.get() == null) {
-          result.add(candidate);
-        }
-        else {
-          DetectedSourceRootsDialog dlg = new DetectedSourceRootsDialog(myProject, roots.get(), candidate);
-          dlg.show();
-          if (dlg.isOK()) {
-            result.addAll(dlg.getChosenRoots());
-          }
-          else {
-            result.add(candidate);
-          }
-        }
-      }
-
-      return result.toArray(new VirtualFile[result.size()]);
+      return PathUIUtils.scandAndSelectDetectedJavaSourceRoots(myPanel, rootCandidates);
     }
   }
 

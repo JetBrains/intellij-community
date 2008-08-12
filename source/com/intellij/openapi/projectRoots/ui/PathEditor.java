@@ -178,6 +178,7 @@ public abstract class PathEditor {
   private VirtualFile[] doAdd(){
     FileChooserDescriptor descriptor = createFileChooserDescriptor();
     VirtualFile[] files = FileChooser.chooseFiles(myPanel, descriptor);
+    files = adjustAddedFileSet(myPanel, files);
     java.util.List<VirtualFile> added = new ArrayList<VirtualFile>(files.length);
     for (int i = 0; i < files.length; i++){
       VirtualFile vFile = files[i];
@@ -186,6 +187,20 @@ public abstract class PathEditor {
       }
     }
     return added.toArray(new VirtualFile[added.size()]);
+  }
+
+  /**
+   * Implement this method to ajust adding behavior, this method is called right after the files
+   * or directories are selected for added. This method allows adding UI that modify file set.
+   *
+   * The default implemenation returns a value passed the parameter files and does nothing.
+   *
+   * @param component a component that could be used as a parent.
+   * @param files a selected file set
+   * @return ajusted file set
+   */
+  protected VirtualFile[] adjustAddedFileSet(final Component component, final VirtualFile[] files) {
+    return files;
   }
 
   private void updateButtons(){

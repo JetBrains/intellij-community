@@ -22,6 +22,15 @@ import java.util.List;
 public class JavaUtilForVfs {
   private JavaUtilForVfs() {}
 
+  /**
+   * Scan directory and detect java source roots within it. The source root is detected as the following:
+   * <ol>
+   * <li>It contains at least one Java file.</li>
+   * <li>Java file is located in the subfolder that matches package statement in the file.</li>
+   * </ol>
+   * @param dir a directory to scan
+   * @return a list of found source roots within directory. If no source roots are found, a empty list is returned.
+   */
   public static List<VirtualFile> suggestRoots(VirtualFile dir) {
     ArrayList<VirtualFile> foundDirectories = new ArrayList<VirtualFile>();
     try{
