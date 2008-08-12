@@ -586,6 +586,7 @@ public class JavaDocInfoGenerator {
     PsiParameter[] parms = method.getParameterList().getParameters();
     for (int i = 0; i < parms.length; i++) {
       PsiParameter parm = parms[i];
+      generateAnnotations(buffer, parm);
       generateType(buffer, parm.getType(), method);
       buffer.append("&nbsp;");
       if (parm.getName() != null) {
