@@ -385,26 +385,30 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return injectedToHost(offset, true);
   }
 
-  private int injectedToHost(int offset, boolean strict) {
+  private int injectedToHost(int offset, boolean glueLeft) {
     if (offset < myPrefixes[0].length()) return myRelevantRangesInHostDocument[0].getStartOffset();
+    int prevEnd = 0;
     for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
       RangeMarker currentRange = myRelevantRangesInHostDocument[i];
       offset -= myPrefixes[i].length();
       int length = currentRange.getEndOffset() - currentRange.getStartOffset();
-      if (offset < length || !strict && offset == length) {
+      if (offset < 0) {
+        return glueLeft? prevEnd : currentRange.getStartOffset() - 1;
+      }
+      else if (offset < length || offset == length && !glueLeft) {
         return currentRange.getStartOffset() + offset;
       }
       offset -= length;
       offset -= mySuffixes[i].length();
+      prevEnd = currentRange.getEndOffset();
     }
     return myRelevantRangesInHostDocument[myRelevantRangesInHostDocument.length-1].getEndOffset();
   }
 
   @NotNull
   public TextRange injectedToHost(@NotNull TextRange injected) {
-    final int start = injectedToHost(injected.getStartOffset());
-    final int endProbe = injectedToHost(injected.getEndOffset(), false);
-    final int end = start > endProbe? injectedToHost(injected.getEndOffset()) : endProbe;
+    final int start = injectedToHost(injected.getStartOffset(), true);
+    final int end = injectedToHost(injected.getEndOffset(), false);
     return new ProperTextRange(start, end);
   }
 
