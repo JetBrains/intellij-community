@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,16 +26,18 @@ import java.util.Set;
 class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor{
 
     /**
-         * @noinspection StaticCollection
-         */
+     * @noinspection StaticCollection
+     */
     @NonNls private static final Set<String> updateNames =
             new HashSet<String>(29);
     static{
         updateNames.add("add");
         updateNames.add("addAll");
+        updateNames.add("addAllAbsent");
         updateNames.add("addBefore");
         updateNames.add("addElement");
         updateNames.add("addFirst");
+        updateNames.add("addIfAbsent");
         updateNames.add("addLast");
         updateNames.add("clear");
         updateNames.add("drainTo");
