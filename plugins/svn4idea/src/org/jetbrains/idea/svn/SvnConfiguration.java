@@ -50,10 +50,7 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnConfiguration");
@@ -307,4 +304,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     return myUpdateRootInfos.get(file);
   }
 
+  public Map<File, UpdateRootInfo> getUpdateInfosMap() {
+    return Collections.unmodifiableMap(myUpdateRootInfos);
+  }
 }

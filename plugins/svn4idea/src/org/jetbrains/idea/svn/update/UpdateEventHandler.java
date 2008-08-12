@@ -5,13 +5,17 @@ import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+
+import java.io.File;
 
 /**
  * @author lesya
@@ -126,6 +130,13 @@ public class UpdateEventHandler implements ISVNEventHandler {
     }
 
     updateProgressIndicator();
+  }
+
+  private boolean itemSwitched(final SVNEvent event) {
+    final File file = event.getFile();
+    final SvnFileUrlMapping urlMapping = myVCS.getSvnFileUrlMapping();
+    final SVNURL currentUrl = urlMapping.getUrlForFile(file);
+    return (currentUrl != null) && (! currentUrl.equals(event.getURL()));
   }
 
   private void updateProgressIndicator() {

@@ -144,5 +144,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
     }
   }
 
-
+  public boolean validateOptions(final Collection<FilePath> roots) {
+    return true;
+  }
 }

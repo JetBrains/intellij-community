@@ -258,6 +258,12 @@ public class SvnVcs extends AbstractVcs {
     return repos;
   }
 
+  public SVNRepository createRepository(SVNURL url) throws SVNException {
+    SVNRepository repos = SVNRepositoryFactory.create(url);
+    repos.setAuthenticationManager(myConfiguration.getAuthenticationManager(myProject));
+    return repos;
+  }
+
   public SVNUpdateClient createUpdateClient() {
     return new SVNUpdateClient(myConfiguration.getAuthenticationManager(myProject), myConfiguration.getOptions(myProject));
   }

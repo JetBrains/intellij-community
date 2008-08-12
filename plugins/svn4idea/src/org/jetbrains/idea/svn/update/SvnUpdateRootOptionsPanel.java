@@ -105,6 +105,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myRevisionText.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final Project project = vcs.getProject();
+        // todo check whether ok; rather shoudl be used if checkbox is turned on
         final SvnRepositoryLocation location = new SvnRepositoryLocation(myURLText.getText());
         final SvnChangeList repositoryVersion = SvnSelectRevisionUtil.chooseCommittedChangeList(project, location, myRoot.getVirtualFile());
         if (repositoryVersion != null) {
@@ -184,7 +185,9 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
 
   public void apply(final SvnConfiguration configuration) throws ConfigurationException {
     final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(myRoot.getIOFile(), myVcs);
-    rootInfo.setUrl(myURLText.getText());
+    if (myUpdateToSpecificUrl.isSelected()) {
+      rootInfo.setUrl(myURLText.getText());
+    }
     rootInfo.setUpdateToRevision(myRevisionBox.isSelected());
     final SVNRevision revision = SVNRevision.parse(myRevisionText.getText());
     if (!revision.isValid()) {

@@ -349,7 +349,7 @@ public class SvnChangeProvider implements ChangeProvider {
                propStatus == SVNStatusType.STATUS_MODIFIED) {
         builder.processChange(new Change(SvnContentRevision.create(myVcs, filePath, status.getRevision()),
                                          CurrentContentRevision.create(filePath), fStatus));
-        checkSwitched(filePath, builder, status, parentStatus);
+        checkSwitched(filePath, builder, status, fStatus);
       }
       else if (statusType == SVNStatusType.STATUS_ADDED) {
         builder.processChange(new Change(null, CurrentContentRevision.create(filePath), fStatus));
@@ -372,13 +372,14 @@ public class SvnChangeProvider implements ChangeProvider {
           builder.processChange(new Change(SvnContentRevision.create(myVcs, filePath, status.getRevision()),
                                            CurrentContentRevision.create(filePath), FileStatus.MODIFIED));
         }
-        checkSwitched(filePath, builder, status, parentStatus);
+        checkSwitched(filePath, builder, status, fStatus);
       }
     }
   }
 
-  private void checkSwitched(final FilePath filePath, final ChangelistBuilder builder, final SVNStatus status, final FileStatus parentStatus) {
-    if (status.isSwitched() || parentStatus == FileStatus.SWITCHED) {
+  private void checkSwitched(final FilePath filePath, final ChangelistBuilder builder, final SVNStatus status,
+                             final FileStatus convertedStatus) {
+    if (status.isSwitched() || (convertedStatus == FileStatus.SWITCHED)) {
       final VirtualFile virtualFile = filePath.getVirtualFile();
       if (virtualFile == null) return;
       final String switchUrl = status.getURL().toString();
@@ -445,8 +446,9 @@ public class SvnChangeProvider implements ChangeProvider {
       try {
         wcAccess.open(file, false, 0);
         SVNAdminArea parentDir = wcAccess.open(file.getParentFile(), false, 0);
-        if (wcAccess.getEntry(file, false) != null) {
-          childURL = wcAccess.getEntry(file, false).getURL();
+        final SVNEntry childEntry = wcAccess.getEntry(file, false);
+        if (childEntry != null) {
+          childURL = childEntry.getURL();
         }
         if (parentDir != null) {
           final SVNEntry parentDirEntry = parentDir.getEntry("", false);
