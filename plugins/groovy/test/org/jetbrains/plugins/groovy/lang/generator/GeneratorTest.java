@@ -34,6 +34,7 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
   protected static final File OUTPUT_DIR = new File(PathUtil.getOutputPath(GeneratorTest.class));
   private final Object LOCK = new Object();
   private int mySemaphore = 0;
+  private VirtualFile myOutputDirVirtualFile;
 
   public GeneratorTest() {
     super(System.getProperty("path") != null ?
@@ -77,11 +78,10 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
       public void run() {
         GeneratingCompiler.GenerationItem[] generationItems = groovyToJavaGeneratorTester.getGenerationItems(null);
 
-        VirtualFile outputDirVirtualFile;
         try {
-          outputDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(OUTPUT_DIR.getCanonicalPath().replace(File.separatorChar, '/')));
+          myOutputDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(OUTPUT_DIR.getCanonicalPath().replace(File.separatorChar, '/')));
 
-          generatedItems[0] = groovyToJavaGeneratorTester.generate(null, generationItems, outputDirVirtualFile);
+          generatedItems[0] = groovyToJavaGeneratorTester.generate(null, generationItems, myOutputDirVirtualFile);
 
           for (GeneratingCompiler.GenerationItem generatedItem : generatedItems[0]) {
             String path = OUTPUT_DIR + File.separator + generatedItem.getPath();
@@ -158,5 +158,16 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
 
   public static Test suite() {
     return new GeneratorTest();
+  }
+
+  @Override
+  protected void tearDown() {
+    try {
+      myOutputDirVirtualFile.delete(this);
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+    super.tearDown();
   }
 }
