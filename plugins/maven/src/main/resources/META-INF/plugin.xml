@@ -27,6 +27,8 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationType implementation="org.jetbrains.idea.maven.runner.execution.MavenRunConfigurationType"/>
 
+    <compiler implementation="org.jetbrains.idea.maven.compiler.ResourceFilteringCompiler" order="last"/>
+
     <selectInTarget implementation="org.jetbrains.idea.maven.navigator.SelectInMavenNavigatorTarget"/>
 
     <iconProvider implementation="org.jetbrains.idea.maven.core.MavenIconProvider"/>

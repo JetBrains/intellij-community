@@ -137,6 +137,40 @@ public class PropertyResolverTest extends MavenImportingTestCase {
     assertEquals("${prop5}", resolve("${prop4}", myProjectPom));
   }
 
+  public void testProjectPropertiesWithProfiles() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     " <prop>value1</prop>" +
+                     "</properties>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <prop>value2</prop>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <properties>" +
+                     "      <prop>value3</prop>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    importProject();
+    assertEquals("value1", resolve("${prop}", myProjectPom));
+
+    importProjectWithProfiles("one");
+    assertEquals("value2", resolve("${prop}", myProjectPom));
+
+    importProjectWithProfiles("two");
+    assertEquals("value3", resolve("${prop}", myProjectPom));
+  }
+
   public void testResolvingBasedirProperties() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

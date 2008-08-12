@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomFileElement;
@@ -8,6 +9,8 @@ import org.apache.commons.beanutils.BeanAccessLanguageException;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.maven.model.Model;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
+import org.jetbrains.idea.maven.dom.model.MavenProperties;
+import org.jetbrains.idea.maven.dom.model.Profile;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
@@ -20,6 +23,13 @@ import java.util.regex.Pattern;
 
 public class PropertyResolver {
   private static final Pattern PATTERN = Pattern.compile("\\$\\{([^}]+)\\}");
+
+  public static String resolve(Module module, String text) {
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(module.getProject());
+    MavenProjectModel mavenProject = manager.findProject(module);
+    if (mavenProject == null) return text;
+    return doResolve(text, mavenProject, new Properties(), new Stack<String>());
+  }
 
   public static String resolve(GenericDomValue<String> value) {
     String text = value.getStringValue();
@@ -35,28 +45,45 @@ public class PropertyResolver {
     MavenProjectModel mavenProject = manager.findProject(file);
     if (mavenProject == null) return text;
 
-    Properties dynamicProperties = new Properties();
-    XmlTag propsTag = dom.getRootElement().getProperties().getXmlTag();
-    if (propsTag != null) {
-      for (XmlTag each : propsTag.getSubTags()) {
-        dynamicProperties.setProperty(each.getName(), each.getValue().getText());
-      }
-    }
-    return doResolve(text, mavenProject, dynamicProperties, new Stack<String>());
+    return doResolve(text, mavenProject, collectPropertiesFromDOM(mavenProject, dom), new Stack<String>());
   }
 
-  private static String doResolve(String text, MavenProjectModel n, Properties additionalProperties, Stack<String> resolutionStack) {
+  private static Properties collectPropertiesFromDOM(MavenProjectModel project, DomFileElement<MavenModel> dom) {
+    Properties result = new Properties();
+
+    MavenModel mavenModel = dom.getRootElement();
+    collectPropertiesFromDOM(result, mavenModel.getProperties());
+
+    for (Profile each : mavenModel.getProfiles().getProfiles()) {
+      String id = each.getId().getStringValue();
+      if (id == null || !project.getActiveProfiles().contains(id)) continue;
+      collectPropertiesFromDOM(result, each.getProperties());
+    }
+
+    return result;
+  }
+
+  private static void collectPropertiesFromDOM(Properties result, MavenProperties props) {
+    XmlTag propsTag = props.getXmlTag();
+    if (propsTag != null) {
+      for (XmlTag each : propsTag.getSubTags()) {
+        result.setProperty(each.getName(), each.getValue().getText());
+      }
+    }
+  }
+
+  private static String doResolve(String text, MavenProjectModel project, Properties additionalProperties, Stack<String> resolutionStack) {
     Matcher matcher = PATTERN.matcher(text);
 
     StringBuffer buff = new StringBuffer();
     while (matcher.find()) {
       String propText = matcher.group();
       String propName = matcher.group(1);
-      String resolved = doResolveProperty(propName, n, additionalProperties);
+      String resolved = doResolveProperty(propName, project, additionalProperties);
       if (resolved == null) resolved = propText;
       if (!resolved.equals(propText) && !resolutionStack.contains(propName)) {
         resolutionStack.push(propName);
-        resolved = doResolve(resolved, n, additionalProperties, resolutionStack);
+        resolved = doResolve(resolved, project, additionalProperties, resolutionStack);
         resolutionStack.pop();
       }
       matcher.appendReplacement(buff, Matcher.quoteReplacement(resolved));
@@ -66,7 +93,7 @@ public class PropertyResolver {
     return buff.toString();
   }
 
-  private static String doResolveProperty(String propName, MavenProjectModel n, Properties additionalProperties) {
+  private static String doResolveProperty(String propName, MavenProjectModel project, Properties additionalProperties) {
     String result;
 
     result = MavenEmbedderFactory.collectSystemProperties().getProperty(propName);
@@ -81,8 +108,8 @@ public class PropertyResolver {
       }
     }
 
-    if (propName.equals("basedir")) return n.getDirectory();
-    Model m = n.getMavenProject().getModel();
+    if (propName.equals("basedir")) return project.getDirectory();
+    Model m = project.getMavenProject().getModel();
 
     try {
       result = BeanUtils.getNestedProperty(m, propName);
@@ -100,7 +127,7 @@ public class PropertyResolver {
     result = additionalProperties.getProperty(propName);
     if (result != null) return result;
 
-    result = n.getProperties().getProperty(propName);
+    result = project.getProperties().getProperty(propName);
     if (result != null) return result;
 
     return null;
