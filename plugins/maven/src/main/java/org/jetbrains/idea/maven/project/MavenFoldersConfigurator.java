@@ -113,6 +113,8 @@ public class MavenFoldersConfigurator {
   private void configFoldersUnderTargetDir() {
     File targetDir = new File(myMavenProject.getBuildDirectory());
 
+    myModel.unexcludeAllUnder(targetDir.getPath());
+
     for (File f : getChildren(targetDir)) {
       if (!f.isDirectory()) continue;
 
@@ -124,6 +126,10 @@ public class MavenFoldersConfigurator {
         if (myModel.isAlreadyExcluded(f)) continue;
         myModel.addExcludedFolder(f.getPath());
       }
+    }
+
+    if (!myModel.hasRegisteredSourceSubfolder(targetDir)) {
+      myModel.addExcludedFolder(targetDir.getPath());
     }
   }
 

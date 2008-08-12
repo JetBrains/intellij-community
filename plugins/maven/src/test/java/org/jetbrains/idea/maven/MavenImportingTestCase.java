@@ -281,7 +281,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     throw new AssertionError("content root not found");
   }
 
-  private ContentEntry[] getContentRoots(String moduleName) {
+  public ContentEntry[] getContentRoots(String moduleName) {
     return getRootManager(moduleName).getContentEntries();
   }
 

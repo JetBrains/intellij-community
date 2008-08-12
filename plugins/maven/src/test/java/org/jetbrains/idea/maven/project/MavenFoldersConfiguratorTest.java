@@ -22,9 +22,12 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
     myProjectRoot.getChildren(); // make sure fs is cached
 
     new File(myProjectRoot.getPath(), "target/foo").mkdirs();
+    new File(myProjectRoot.getPath(), "target/generated-sources/xxx").mkdirs();
     updateFolders();
 
     assertExcludes("project", "target/foo");
+    assertSources("project", "target/generated-sources/xxx");
+    
     assertNull(myProjectRoot.findChild("target"));
   }
 
@@ -51,16 +54,21 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
 
     importProject();
 
-    assertExcludes("m1");
-    assertExcludes("m2");
+    assertExcludes("m1", "target");
+    assertExcludes("m2", "target");
 
     new File(myProjectRoot.getPath(), "m1/target/foo").mkdirs();
+    new File(myProjectRoot.getPath(), "m1/target/generated-sources/xxx").mkdirs();
     new File(myProjectRoot.getPath(), "m2/target/bar").mkdirs();
+    new File(myProjectRoot.getPath(), "m2/target/generated-sources/yyy").mkdirs();
 
     updateFolders();
 
     assertExcludes("m1", "target/foo");
+    assertSources("m1", "target/generated-sources/xxx");
+
     assertExcludes("m2", "target/bar");
+    assertSources("m2", "target/generated-sources/yyy");
   }
 
   public void testDoesNotTouchSourceFolders() throws Exception {
@@ -76,19 +84,6 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
 
     assertSources("project", "src/main/java", "src/main/resources");
     assertTestSources("project", "src/test/java", "src/test/resources");
-  }
-
-  public void testDoesNotExcludeGeneratedSources() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-
-    new File(myProjectRoot.getPath(), "target/generated-sources").mkdirs();
-    new File(myProjectRoot.getPath(), "target/foo").mkdirs();
-
-    updateFolders();
-
-    assertExcludes("project", "target/foo");
   }
 
   public void testDoesNotExcludeRegisteredSources() throws Exception {
@@ -190,9 +185,9 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
       }
     });
 
-    new File(myProjectRoot.getPath(), "target/foo").mkdirs();
-    new File(m1.getPath(), "target/bar").mkdirs();
-    new File(m2.getPath(), "target/baz").mkdirs();
+    new File(myProjectRoot.getPath(), "target/generated-sources/foo").mkdirs();
+    new File(m1.getPath(), "target/generated-sources/bar").mkdirs();
+    new File(m2.getPath(), "target/generated-sources/baz").mkdirs();
 
     updateFolders();
 

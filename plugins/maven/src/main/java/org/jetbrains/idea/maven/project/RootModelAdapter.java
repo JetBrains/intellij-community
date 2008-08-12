@@ -114,8 +114,24 @@ public class RootModelAdapter {
   }
 
   public void addExcludedFolder(String path) {
+    unexcludeAllUnder(path);
     Url url = toUrl(path);
     findOrCreateContentRoot(url).addExcludeFolder(url.getUrl());
+  }
+
+  public void unexcludeAllUnder(String path) {
+    Url url = toUrl(path);
+    for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
+      for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
+        if (isAncestor(url.getUrl(), eachFolder.getUrl())) {
+          if (eachFolder.isSynthetic()) {
+            getCompilerExtension().setExcludeOutput(false);
+          } else {
+            eachEntry.removeExcludeFolder(eachFolder);
+          }
+        }
+      }
+    }
   }
 
   public void useModuleOutput(String production, String test) {
