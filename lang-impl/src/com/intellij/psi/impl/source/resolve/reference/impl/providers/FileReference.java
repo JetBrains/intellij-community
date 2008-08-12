@@ -8,6 +8,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -18,6 +19,8 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.*;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -164,8 +167,26 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
         }
       }
     }
+    final THashSet<PsiElement> set = new THashSet<PsiElement>(collector.getResults(), new TObjectHashingStrategy<PsiElement>() {
+      public int computeHashCode(final PsiElement object) {
+        if (object instanceof PsiNamedElement) {
+          final String name = ((PsiNamedElement)object).getName();
+          if (name != null) {
+            return name.hashCode();
+          }
+        }
+        return object.hashCode();
+      }
 
-    final PsiElement[] candidates = collector.toArray(new PsiElement[0]);
+      public boolean equals(final PsiElement o1, final PsiElement o2) {
+        if (o1 instanceof PsiNamedElement && o2 instanceof PsiNamedElement) {
+          return Comparing.equal(((PsiNamedElement)o1).getName(), ((PsiNamedElement)o2).getName());
+        }
+        return o1.equals(o2);
+      }
+    });
+    final PsiElement[] candidates = set.toArray(new PsiElement[set.size()]);
+
     final Object[] variants = new Object[candidates.length];
     System.arraycopy(candidates, 0, variants, 0, candidates.length);
     if (myFileReferenceSet.isUrlEncoded()) {
