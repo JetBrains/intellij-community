@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -228,7 +229,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
       if (myIndicator != null) {
         if (myIndicator.isCanceled()) {
-          SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"));
+          SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"), SVNLogType.DEFAULT);
         }
         myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
       }

@@ -250,7 +250,7 @@ public class PropertiesComponent extends JPanel {
       SVNWCClient wcClient = myVcs.createWCClient();
       SVNPropertyData propValue = null;
       try {
-        propValue = wcClient.doGetProperty(myFile, SVNProperty.KEYWORDS, SVNRevision.UNDEFINED, SVNRevision.WORKING, false);
+        propValue = wcClient.doGetProperty(myFile, SVNProperty.KEYWORDS, SVNRevision.UNDEFINED, SVNRevision.WORKING);
       } catch (SVNException e1) {
         // show error message
       }

@@ -14,6 +14,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
 
@@ -162,7 +163,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
     if (myProgressIndicator != null) {
       myProgressIndicator.checkCanceled();
       if (myProgressIndicator.isCanceled()) {
-        SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"));
+        SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"), SVNLogType.DEFAULT);
       }
     }
   }

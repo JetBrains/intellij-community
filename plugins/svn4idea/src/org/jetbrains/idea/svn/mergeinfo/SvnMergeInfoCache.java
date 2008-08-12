@@ -226,7 +226,7 @@ public class SvnMergeInfoCache {
       // go and get manually
       try {
         final SVNPropertyData mergeinfoProperty =
-            myClient.doGetProperty(SVNURL.parseURIEncoded(head), SVNProperty.MERGE_INFO, SVNRevision.HEAD, SVNRevision.HEAD, false);
+            myClient.doGetProperty(SVNURL.parseURIEncoded(head), SVNProperty.MERGE_INFO, SVNRevision.HEAD, SVNRevision.HEAD);
         boolean propertyFound = false;
         if (mergeinfoProperty != null) {
           final SVNPropertyValue value = mergeinfoProperty.getValue();

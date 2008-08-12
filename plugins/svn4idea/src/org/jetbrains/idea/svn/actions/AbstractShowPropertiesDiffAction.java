@@ -179,7 +179,7 @@ abstract class AbstractShowPropertiesDiffAction extends AnAction {
       final SvnRepositoryContentRevision svnRevision = (SvnRepositoryContentRevision) contentRevision;
       client.doGetProperty(SVNURL.parseURIEncoded(svnRevision.getFullPath()), null, revision, revision, SVNDepth.EMPTY, propertyHandler);
     } else {
-      client.doGetPropertyList(ioFile, null, revision, revision, SVNDepth.EMPTY, propertyHandler, null);
+      client.doGetProperty(ioFile, null, revision, revision, SVNDepth.EMPTY, propertyHandler, null);
     }
 
     Collections.sort(lines, new Comparator<SVNPropertyData>() {

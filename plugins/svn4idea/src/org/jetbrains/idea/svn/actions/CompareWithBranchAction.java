@@ -50,6 +50,8 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNLogType;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -138,16 +140,17 @@ public class CompareWithBranchAction extends AnAction {
               if (anchorEntry == null) {
                 SVNErrorMessage err =
                   SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", anchorPath);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
               }
               else if (anchorEntry.getURL() == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", anchorPath);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
               }
 
               SVNURL anchorURL = anchorEntry.getSVNURL();
               SVNRepository repository = vcs.createRepository(anchorURL.toString());
-              SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, true, SVNDepth.INFINITY, null);
+              SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, true, SVNDepth.INFINITY, 
+                                                     false, SVNDebugLog.getDefaultLog());
               long rev = repository.getLatestRevision();
               SvnDiffEditor diffEditor = new SvnDiffEditor((target == null) ? myVirtualFile : myVirtualFile.getParent(),
                 vcs.createRepository((target == null) ? url.toString() : url.removePathTail().toString()), rev, true);

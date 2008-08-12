@@ -53,7 +53,6 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.SoftHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,8 +75,6 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
-import org.tmatesoft.svn.core.internal.util.SVNLogInputStream;
-import org.tmatesoft.svn.core.internal.util.SVNLogOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
@@ -89,8 +86,7 @@ import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -136,8 +132,6 @@ public class SvnVcs extends AbstractVcs {
     //noinspection UseOfArchaicSystemPropertyAccessors
     final JavaSVNDebugLogger logger = new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), LOG);
     SVNDebugLog.setDefaultLog(logger);
-    SVNDebugLog.registerLog(SVNLogType.NETWORK, logger);
-    SVNDebugLog.registerLog(SVNLogType.WC, logger);
     SVNAdminAreaFactory.setSelector(new SvnFormatSelector());
 
     DAVRepositoryFactory.setup();
@@ -468,7 +462,7 @@ public class SvnVcs extends AbstractVcs {
       }
     }
 
-    final SVNPropertyData value = createWCClient().doGetProperty(ioFile, propName, SVNRevision.WORKING, SVNRevision.WORKING, false);
+    final SVNPropertyData value = createWCClient().doGetProperty(ioFile, propName, SVNRevision.WORKING, SVNRevision.WORKING);
     final SVNPropertyValue propValue = (value == null) ? null : value.getValue();
 
     if (cachedMap == null) {
@@ -641,102 +635,32 @@ public class SvnVcs extends AbstractVcs {
       myLog = log;
     }
 
-    public void log(final Throwable th, final Level logLevel) {
+    public void log(final SVNLogType logType, final Throwable th, final Level logLevel) {
       if (myLoggingEnabled) {
         myLog.info(th);
       }
     }
 
-    public void log(final String message, final Level logLevel) {
+    public void log(final SVNLogType logType, final String message, final Level logLevel) {
       if (myLoggingEnabled) {
         myLog.info(message);
       }
     }
 
-    public void logError(final String message) {
+    public void log(final SVNLogType logType, final String message, final byte[] data) {
       if (myLoggingEnabled) {
-        myLog.info(message);
+        if (data != null) {
+          try {
+            myLog.info(message + "\n" + new String(data, "UTF-8"));
+          }
+          catch (UnsupportedEncodingException e) {
+            myLog.info(message + "\n" + new String(data));
+          }
+        } else {
+          myLog.info(message);
+        }
       }
     }
-
-    public void logError(final Throwable th) {
-      if (myLoggingEnabled) {
-        myLog.info(th);
-      }
-    }
-
-    public void logSevere(final Throwable th) {
-      if (myLoggingEnabled) {
-        myLog.info(th);
-      }
-    }
-
-    public void logSevere(final String message) {
-      if (myLoggingEnabled) {
-        myLog.info(message);
-      }
-    }
-
-    public void logFine(final Throwable th) {
-      if (myLoggingEnabled) {
-        myLog.info(th);
-      }
-    }
-
-    public void logFine(final String message) {
-      if (myLoggingEnabled) {
-        myLog.info(message);
-      }
-    }
-
-    public void logFiner(final Throwable th) {
-      if (myLoggingEnabled) {
-        myLog.info(th);
-      }
-    }
-
-    public void logFiner(final String message) {
-      if (myLoggingEnabled) {
-        myLog.info(message);
-      }
-    }
-
-    public void logFinest(final Throwable th) {
-      if (myLoggingEnabled) {
-        myLog.info(th);
-      }
-    }
-
-    public void logFinest(final String message) {
-      if (myLoggingEnabled) {
-        myLog.info(message);
-      }
-    }
-
-    public void log(String message, byte[] data) {
-      if (myLoggingEnabled) {
-        myLog.info(message + " : " + new String(data == null ? ArrayUtil.EMPTY_BYTE_ARRAY : data));
-      }
-    }
-
-    public InputStream createLogStream(InputStream is) {
-      if (myLoggingEnabled && booleanProperty(TRACE_LOG_PARAMETER_NAME)) {
-          //noinspection IOResourceOpenedButNotSafelyClosed
-          //noinspection UseOfArchaicSystemPropertyAccessors
-        return new SVNLogInputStream(is, this);
-      }
-      return is;
-    }
-
-    public OutputStream createLogStream(OutputStream os) {
-      if (myLoggingEnabled && booleanProperty(TRACE_LOG_PARAMETER_NAME)) {
-          //noinspection IOResourceOpenedButNotSafelyClosed
-          //noinspection UseOfArchaicSystemPropertyAccessors
-        return new SVNLogOutputStream(os, this);
-      }
-      return os;
-    }
-
   }
 
   public FileStatus[] getProvidedStatuses() {

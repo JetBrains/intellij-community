@@ -47,7 +47,7 @@ public class SvnEditFileProvider implements EditFileProvider {
       ioFiles[i] = new File(files[i].getPath());
       try {
         SVNPropertyData property = client
-          .doGetProperty(ioFiles[i], SVNProperty.NEEDS_LOCK, SVNRevision.WORKING, SVNRevision.WORKING, false);
+          .doGetProperty(ioFiles[i], SVNProperty.NEEDS_LOCK, SVNRevision.WORKING, SVNRevision.WORKING);
         if (property == null || property.getValue() == null) {
           throw new VcsException(SvnBundle.message("exception.text.file.miss.svn", ioFiles[i].getName()));
         }

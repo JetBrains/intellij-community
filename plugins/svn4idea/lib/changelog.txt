@@ -1,3 +1,39 @@
+== version 1.2.0-beta4
+
++ Bugfixes
+
+== version 1.2.0-beta3
+
++ SASL authentication support improved.
++ Other bugfixes.
+
+== version 1.2.0-beta2
+
++ JavaHL compatiblity bugfixes
++ DAV protocol performance improvements
+
+== version 1.2.0-beta
+
++ Subversion 1.5.0 features support
+
+== version 1.1.7
+
++ SVNKit didn't work properly with Subversion 1.5.0 servers over svn protocol
++ JNA library updated to version 3.0.2
++ Trilead-SSH library updated to build 212
++ Other bugfixes
+
+== version 1.1.6
+
++ Bugfixes:
++  Copy WC to URL sometimes didn't work properly with switched directories.
++  Several NPEs in HTTP connection code fixed.
++  Authentication cancellation didn't work with SSH connection in some cases.
+
+== version 1.1.5
+
++ Connections pool has been improved.
++ New version of SSH library (Trilead build 211) is used.
 + When possible, JNA library is used for most of native calls instead of Runtime.exec(...)
 + HTTP Digest authentications works better.
 + Bug in keywords expansion code fixed.

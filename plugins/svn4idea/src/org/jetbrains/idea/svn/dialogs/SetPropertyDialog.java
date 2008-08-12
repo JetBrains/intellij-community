@@ -152,7 +152,7 @@ public class SetPropertyDialog extends DialogWrapper {
     SVNPropertyData property;
     try {
       SVNWCClient client = myVCS.createWCClient();
-      property = client.doGetProperty(file, name, SVNRevision.WORKING, SVNRevision.WORKING, false);
+      property = client.doGetProperty(file, name, SVNRevision.WORKING, SVNRevision.WORKING);
     }
     catch (SVNException e) {
       property = null;
