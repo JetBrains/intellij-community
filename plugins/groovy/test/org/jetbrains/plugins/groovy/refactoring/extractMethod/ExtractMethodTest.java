@@ -19,23 +19,18 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
+import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
@@ -46,7 +41,7 @@ import java.io.IOException;
 public class ExtractMethodTest extends ActionTestCase {
 
   @NonNls
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/extractMethod/data";
+  private static final String DATA_PATH = PathUtil.getDataPath(ExtractMethodTest.class);
 
   protected Editor myEditor;
   protected FileEditorManager fileEditorManager;

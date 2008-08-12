@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.lang.surroundWith.Surrounder;
-import com.intellij.openapi.application.PathManager;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByClosure;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.*;
+import org.jetbrains.plugins.groovy.util.PathUtil;
 
 import java.io.File;
 import java.util.HashMap;
@@ -42,7 +42,7 @@ public class SurroundStatementsTest extends TestSuite {
     for (Surrounder surrounder : surrounders) {
       path = surroundersOfStmtToPathsMap.get(surrounder.getClass());
 //      addTest(new SurroundWithTestStmts((DATA_PATH.endsWith("/") ? DATA_PATH : DATA_PATH + File.separator) + path, surrounder));
-      String dataPath = PathManager.getHomePath() + "/svnPlugins/groovy/test/org/jetbrains/plugins/groovy/lang/surroundWith/data/";
+      String dataPath = PathUtil.getDataPath(SurroundStatementsTest.class);
       addTest(new SurroundWithTestItem((dataPath.endsWith("/") ? dataPath : dataPath + File.separator) + path, surrounder));
     }
   }

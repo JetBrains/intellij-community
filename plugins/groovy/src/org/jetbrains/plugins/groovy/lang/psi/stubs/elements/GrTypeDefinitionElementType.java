@@ -12,7 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrTypeDefinitionStubImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrShortClassNameIndex;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrSuperClassIndex;
 
 import java.io.IOException;
 
@@ -59,10 +58,6 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
     final String fqn = stub.getQualifiedName();
     if (fqn != null) {
       sink.occurrence(GrFullClassNameIndex.KEY, fqn.hashCode());
-    }
-
-    for (String s : stub.getSuperClassNames()) {
-      sink.occurrence(GrSuperClassIndex.KEY, s);
     }
   }
 }

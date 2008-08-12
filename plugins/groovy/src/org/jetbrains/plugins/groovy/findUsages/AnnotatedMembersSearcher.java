@@ -52,7 +52,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
 
     GrMember[] candidates;
     if (scope instanceof GlobalSearchScope) {
-      candidates = GroovyCacheUtil.getAnnotatedMembers(annClass, ((GlobalSearchScope)scope));
+      candidates = GroovyCacheUtil.getAnnotatedMemberCandidates(annClass, ((GlobalSearchScope)scope));
     } else {
       PsiElement[] elements = ((LocalSearchScope) scope).getScope();
       final List<GrMember> collector = new ArrayList<GrMember>();

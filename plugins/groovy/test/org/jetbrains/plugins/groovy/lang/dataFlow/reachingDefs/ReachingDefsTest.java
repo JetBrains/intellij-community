@@ -5,11 +5,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.*;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
+import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -17,7 +20,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
  */
 public class ReachingDefsTest extends SimpleGroovyFileSetTestCase {
   @NonNls
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/lang/dataFlow/reachingDefs/data/";
+  private static final String DATA_PATH = PathUtil.getDataPath(ReachingDefsTest.class);
 
   public ReachingDefsTest() {
     super(DATA_PATH);

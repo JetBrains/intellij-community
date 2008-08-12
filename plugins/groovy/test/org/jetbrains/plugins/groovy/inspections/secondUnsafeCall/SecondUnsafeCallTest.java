@@ -21,13 +21,14 @@ import junit.framework.Test;
 import org.jetbrains.plugins.groovy.annotator.inspections.SecondUnsafeCallQuickFix;
 import org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection;
 import org.jetbrains.plugins.groovy.inspections.InspectionTestCase;
+import org.jetbrains.plugins.groovy.util.PathUtil;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 15.11.2007
  */
 public class SecondUnsafeCallTest extends InspectionTestCase {
-  protected static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/inspections/secondUnsafeCall/data";
+  protected static final String DATA_PATH = PathUtil.getDataPath(SecondUnsafeCallTest.class);
 
   public SecondUnsafeCallTest () {
     super(System.getProperty("path") != null ?

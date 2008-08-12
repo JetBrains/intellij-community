@@ -17,6 +17,7 @@ import com.intellij.util.IncorrectOperationException;
 import junit.framework.Test;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
+import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.BufferedReader;
@@ -29,8 +30,8 @@ import java.io.IOException;
  * Date: 06.06.2007
  */
 public class GeneratorTest extends SimpleGroovyFileSetTestCase {
-  protected static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/lang/generator/data/";
-  protected static final File OUTPUT_DIR = new File("test/org/jetbrains/plugins/groovy/lang/generator/output/");
+  protected static final String DATA_PATH = PathUtil.getDataPath(GeneratorTest.class);
+  protected static final File OUTPUT_DIR = new File(PathUtil.getOutputPath(GeneratorTest.class));
   private final Object LOCK = new Object();
   private int mySemaphore = 0;
 

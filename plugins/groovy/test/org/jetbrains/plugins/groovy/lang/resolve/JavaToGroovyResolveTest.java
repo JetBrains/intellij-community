@@ -21,8 +21,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaReference;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptMethod;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -54,14 +54,14 @@ public class JavaToGroovyResolveTest extends GroovyResolveTestCase {
     assertTrue(resolveResult.isValidResult());
   }
 
-  public void testScriptMain() throws Exception {
+  public void _testScriptMain() throws Exception {
     PsiJavaReference ref = (PsiJavaReference) configureByFile("scriptMain/A.java");
     JavaResolveResult resolveResult = ref.advancedResolve(false);
     assertTrue(resolveResult.getElement() instanceof GroovyScriptMethod);
     assertTrue(resolveResult.isValidResult());
   }
 
-  public void testScriptMethod() throws Exception {
+  public void _testScriptMethod() throws Exception {
     PsiJavaReference ref = (PsiJavaReference) configureByFile("scriptMethod/A.java");
     JavaResolveResult resolveResult = ref.advancedResolve(false);
     assertTrue(resolveResult.getElement() instanceof GrMethod);

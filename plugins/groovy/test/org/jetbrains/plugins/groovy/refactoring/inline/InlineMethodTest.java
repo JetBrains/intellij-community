@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.CommonRefactoringTestCase;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.BufferedWriter;
@@ -49,7 +50,7 @@ import java.io.IOException;
  */
 public class InlineMethodTest extends CommonRefactoringTestCase {
 
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/inline/data/method/";
+  private static final String DATA_PATH = PathUtil.getDataPath(InlineMethodTest.class) + "/mathod";
 
   public InlineMethodTest() {
     super(System.getProperty("path") != null ?

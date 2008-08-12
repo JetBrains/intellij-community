@@ -25,6 +25,7 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -33,7 +34,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 public class ReferenceCompletionTest extends CompletionTestBase {
 
   @NonNls
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/lang/completion/data/reference";
+  private static final String DATA_PATH = PathUtil.getDataPath(ReferenceCompletionTest.class) + "/reference";
 
   protected String myNewDocumentText;
 

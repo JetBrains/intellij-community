@@ -22,7 +22,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import org.jetbrains.plugins.groovy.caches.project.GroovyCachesManager;
+import org.jetbrains.plugins.groovy.lang.stubs.GroovyCacheUtil;
 
 /**
  * @author ven
@@ -35,10 +35,9 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
     final PsiClass clazz = queryParameters.getClassToProcess();
     final SearchScope scope = queryParameters.getScope();
     if (scope instanceof GlobalSearchScope) {
-      final GroovyCachesManager cachesManager = GroovyCachesManager.getInstance(clazz.getProject());
       return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         public Boolean compute() {
-          final PsiClass[] candidates = cachesManager.getDeriverCandidates(clazz, (GlobalSearchScope) scope);
+          final PsiClass[] candidates = GroovyCacheUtil.getDeriverCandidates(clazz, (GlobalSearchScope) scope);
           for (PsiClass candidate : candidates) {
             if (candidate.isInheritor(clazz, false)) {
               if (!consumer.process(candidate)) return false;

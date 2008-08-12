@@ -20,7 +20,7 @@ public abstract class GrStubElementType<S extends StubElement, T extends GroovyP
 
   public abstract PsiElement createElement(final ASTNode node);
 
-  public void indexStub(final T stub, final IndexSink sink) {
+  public void indexStub(final S stub, final IndexSink sink) {
   }
 
   public String getExternalId() {

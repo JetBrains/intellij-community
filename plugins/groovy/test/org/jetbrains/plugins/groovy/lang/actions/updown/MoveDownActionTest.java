@@ -29,6 +29,7 @@ import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
+import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
@@ -39,7 +40,7 @@ import java.io.IOException;
 public class MoveDownActionTest extends ActionTestCase {
 
   @NonNls
-  private static final String DATA_PATH = "./test/org/jetbrains/plugins/groovy/lang/actions/updown/data/down";
+  private static final String DATA_PATH = PathUtil.getDataPath(MoveDownActionTest.class) + "/down";
 
   protected Editor myEditor;
   protected FileEditorManager fileEditorManager;

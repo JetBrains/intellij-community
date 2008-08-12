@@ -1,36 +1,43 @@
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.psi.*;
-import com.intellij.refactoring.RefactoringActionHandlerFactory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import junit.framework.Test;
-import org.jetbrains.plugins.groovy.lang.psi.*;
-import org.jetbrains.plugins.groovy.refactoring.CommonRefactoringTestCase;
-import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.refactoring.CommonRefactoringTestCase;
+import org.jetbrains.plugins.groovy.util.PathUtil;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 /**
  * @author ven
  */
 public class RenameTest extends CommonRefactoringTestCase {
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/rename/data/";
+  private static final String DATA_PATH = PathUtil.getDataPath(RenameTest.class);
 
   public RenameTest() {
     super(System.getProperty("path") != null ?

@@ -17,19 +17,28 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.StubBasedPsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public class GrImplementsClauseImpl extends GroovyPsiElementImpl implements GrImplementsClause {
+public class GrImplementsClauseImpl extends GroovyBaseElementImpl<GrReferenceListStub>
+    implements GrImplementsClause, StubBasedPsiElement<GrReferenceListStub> {
+
   public GrImplementsClauseImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public GrImplementsClauseImpl(final GrReferenceListStub stub) {
+    super(stub, GroovyElementTypes.IMPLEMENTS_CLAUSE);
   }
 
   public void accept(GroovyElementVisitor visitor) {

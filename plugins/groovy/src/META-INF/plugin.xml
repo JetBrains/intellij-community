@@ -87,12 +87,12 @@
     <!--Stubs index-->
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrShortClassNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex"/>
-    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrSuperClassIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotationMethodNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrScriptClassNameIndex"/>
+    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrDirectInheritorsIndex"/>
 
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.ConstructorReferencesSearcher"/>-->
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.PropertyReferencesSearcher"/>-->
@@ -143,10 +143,6 @@
   <project-components>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsProvider</implementation-class>
-    </component>
-    <component>
-      <interface-class>org.jetbrains.plugins.groovy.caches.project.GroovyCachesManager</interface-class>
-      <implementation-class>org.jetbrains.plugins.groovy.caches.project.GroovyCachesManagerImpl</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager</implementation-class>

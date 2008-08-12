@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
+package org.jetbrains.plugins.groovy.refactoring.introduceVariable.validator;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -30,7 +30,11 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableBase;
+import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableHandler;
+import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyVariableValidator;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
+import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
@@ -41,7 +45,7 @@ import java.io.IOException;
 public class IntroduceVariableValidatorTest extends ActionTestCase {
 
   @NonNls
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/introduceVariable/validator/data";
+  private static final String DATA_PATH = PathUtil.getDataPath(IntroduceVariableValidatorTest.class);
 
   protected static final String ALL_MARKER = "<all>";
 

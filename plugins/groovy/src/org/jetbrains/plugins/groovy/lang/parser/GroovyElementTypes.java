@@ -23,17 +23,11 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnnotationTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrAnnotationMethodStub;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.*;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.*;
 
 /**
@@ -55,6 +49,10 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GrStubElementType<GrFieldStub, GrField> FIELD = new GrFieldElementType();
   GrStubElementType<GrMethodStub, GrMethod> METHOD_DEFINITION = new GrMethodElementType();
   GrStubElementType<GrAnnotationMethodStub, GrAnnotationMethod> ANNOTATION_METHOD = new GrAnnotationMethodElementType();
+
+  GrStubElementType<GrReferenceListStub, GrImplementsClause> IMPLEMENTS_CLAUSE = new GrImplementsClauseElementType();
+  GrStubElementType<GrReferenceListStub, GrExtendsClause> EXTENDS_CLAUSE = new GrExtendsClauseElementType();
+
 
   IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
 
@@ -156,9 +154,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   //types
   GroovyElementType REFERENCE_ELEMENT = new GroovyElementType("reference element");
   GroovyElementType ARRAY_DECLARATOR = new GroovyElementType("array declarator");
-
-  GroovyElementType IMPLEMENTS_CLAUSE = new GroovyElementType("implements clause");
-  GroovyElementType EXTENDS_CLAUSE = new GroovyElementType("super class clause");
 
   GroovyElementType TYPE_ARGUMENTS = new GroovyElementType("type arguments");
   GroovyElementType TYPE_ARGUMENT = new GroovyElementType("type argument");

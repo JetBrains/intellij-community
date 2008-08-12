@@ -12,6 +12,7 @@ import junit.framework.Assert;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
+import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.List;
  */
 public class StubsTest extends SimpleGroovyFileSetTestCase {
   @NonNls
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/lang/stubs/data";
+  private static final String DATA_PATH = PathUtil.getDataPath(StubsTest.class);
 
   public StubsTest() {
     super(System.getProperty("path") != null ?

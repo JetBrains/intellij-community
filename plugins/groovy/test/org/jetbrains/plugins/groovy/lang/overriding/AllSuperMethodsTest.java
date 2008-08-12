@@ -1,14 +1,15 @@
 package org.jetbrains.plugins.groovy.lang.overriding;
 
-import junit.framework.Test;
 import com.intellij.psi.PsiMethod;
+import junit.framework.Test;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 02.08.2007
  */
 public class AllSuperMethodsTest extends OverridingTester {
-  private static final String DATA_PATH = "testdata/overriding/allSuperMethods/";
+  private static final String DATA_PATH = TestUtils.getTestDataPath() + "/overriding/allSuperMethods/";
 
   public AllSuperMethodsTest() {
     super(System.getProperty("path") != null ?

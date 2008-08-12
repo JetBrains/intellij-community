@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.lang.surroundWith.Surrounder;
-import com.intellij.openapi.application.PathManager;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor;
@@ -11,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImp
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfElseExprSurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfExprSurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithWhileExprSurrounder;
+import org.jetbrains.plugins.groovy.util.PathUtil;
 
 import java.io.File;
 import java.util.HashMap;
@@ -25,7 +25,7 @@ public class SurroundExpressionTest extends TestSuite {
 
   static {
     {
-      String exprPrefix = "expr" + File.separator;
+      String exprPrefix = "/expr" + File.separator;
       surroundersOfExprToPathsMap.put(GroovyWithIfExprSurrounder.class.getCanonicalName(), exprPrefix + "if");
       surroundersOfExprToPathsMap.put(GroovyWithIfElseExprSurrounder.class.getCanonicalName(), exprPrefix + "if_else");
       surroundersOfExprToPathsMap.put(GroovyWithWhileExprSurrounder.class.getCanonicalName(), exprPrefix + "while");
@@ -41,7 +41,7 @@ public class SurroundExpressionTest extends TestSuite {
     String path;
     for (Surrounder surrounder : surrounders) {
       path = surroundersOfExprToPathsMap.get(surrounder.getClass().getCanonicalName());
-      String dataPath = PathManager.getHomePath() + "/svnPlugins/groovy/test/org/jetbrains/plugins/groovy/lang/surroundWith/data/";
+      String dataPath = PathUtil.getDataPath(SurroundExpressionTest.class);
       addTest(new SurroundWithTestItem((dataPath.endsWith("/") ? dataPath : dataPath + File.separator) + path, surrounder));
     }
   }

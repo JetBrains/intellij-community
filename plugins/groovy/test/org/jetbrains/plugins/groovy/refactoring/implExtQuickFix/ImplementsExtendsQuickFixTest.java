@@ -4,19 +4,20 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import junit.framework.Test;
 import org.jetbrains.plugins.groovy.annotator.intentions.ChangeExtendsImplementsQuickFix;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
+import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import junit.framework.Test;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 11.10.2007
  */
 public class ImplementsExtendsQuickFixTest extends SimpleGroovyFileSetTestCase {
-    private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/implExtQuickFix";
+    private static final String DATA_PATH = PathUtil.getDataPath(ImplementsExtendsQuickFixTest.class);
 
     public ImplementsExtendsQuickFixTest(String path) {
         super(path);

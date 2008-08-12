@@ -26,13 +26,14 @@ import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
+import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
@@ -43,7 +44,7 @@ import java.io.IOException;
 public class IntroduceVariableTest extends ActionTestCase {
 
   @NonNls
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/introduceVariable/data";
+  private static final String DATA_PATH = PathUtil.getDataPath(IntroduceVariableTest.class);
 
   protected static final String ALL_MARKER = "<all>";
 

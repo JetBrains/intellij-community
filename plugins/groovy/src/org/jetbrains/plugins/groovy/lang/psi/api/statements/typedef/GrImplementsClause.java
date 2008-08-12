@@ -15,13 +15,9 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public interface GrImplementsClause extends GroovyPsiElement {
-  GrCodeReferenceElement[] getReferenceElements();
+public interface GrImplementsClause extends GrReferenceList {
 }

@@ -28,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
+import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -38,7 +39,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
  */
 public class FormatterTest extends SimpleGroovyFileSetTestCase {
   @NonNls
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/lang/formatter/data/";
+  private static final String DATA_PATH = PathUtil.getDataPath(FormatterTest.class);
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.formatter.FormatterTest");
 

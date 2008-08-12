@@ -30,6 +30,7 @@ import junit.framework.Assert;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
+import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
@@ -40,7 +41,7 @@ import java.io.IOException;
 public class EnterActionTest extends ActionTestCase {
 
   @NonNls
-  private static final String DATA_PATH = "./test/org/jetbrains/plugins/groovy/lang/formatter/enterAction/data/";
+  private static final String DATA_PATH = PathUtil.getDataPath(EnterActionTest.class);
 
   protected Editor myEditor;
   protected FileEditorManager fileEditorManager;
