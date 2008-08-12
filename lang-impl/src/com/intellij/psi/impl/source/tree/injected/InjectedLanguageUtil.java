@@ -291,15 +291,21 @@ public class InjectedLanguageUtil {
         while (true) {
           if (range.getEndOffset() <= shred.range.getEndOffset()) {
             int end = range.getEndOffset() - prevHostsCombinedLength;
-            int endOffsetInHost = escapers.get(currentHostNum).getOffsetInHost(end - prefixLength, rangeInsideHost);
-            assert endOffsetInHost != -1;
-            leafEncodedText += hostText.substring(startOffsetInHost, endOffsetInHost);
+            if (end < prefixLength) {
+              leafEncodedText += shred.prefix.substring(0, end);
+            }
+            else {
+              int endOffsetInHost = escapers.get(currentHostNum).getOffsetInHost(end - prefixLength, rangeInsideHost);
+              assert endOffsetInHost != -1;
+              leafEncodedText += hostText.substring(startOffsetInHost, endOffsetInHost);
+            }
             break;
           }
           String rest = hostText.substring(startOffsetInHost, rangeInsideHost.getEndOffset());
           leafEncodedText += rest;
           incHostNum(shred.range.getEndOffset());
           startOffsetInHost = shred.getRangeInsideHost().getStartOffset();
+          prefixLength = shredHostRange.getStartOffset();
         }
 
         if (leaf.getElementType() == TokenType.WHITE_SPACE && prevElementTail != null) {
