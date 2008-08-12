@@ -333,7 +333,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
       if (LOG.isDebugEnabled()) {
         LOG.debug("DO_STEP: creating step request for " + stepThread.getThreadReference());
       }
-      deleteStepRequests();
       EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
       StepRequest stepRequest = requestManager.createStepRequest(stepThread.getThreadReference(), StepRequest.STEP_LINE, depth);
       DebuggerSettings settings = DebuggerSettings.getInstance();

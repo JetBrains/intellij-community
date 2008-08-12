@@ -295,6 +295,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
     //noinspection HardCodedStringLiteral
     RequestHint hint = (RequestHint)event.request().getProperty("hint");
 
+    deleteStepRequests();
+    
     boolean shouldResume = false;
 
     if (hint != null) {
