@@ -97,6 +97,7 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
             buffer.append("\n");
             buffer.append("---");
             buffer.append("\n");
+            new File(path).deleteOnExit();
           }
         } catch (IOException e) {
           e.printStackTrace();
@@ -158,16 +159,5 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
 
   public static Test suite() {
     return new GeneratorTest();
-  }
-
-  @Override
-  protected void tearDown() {
-    try {
-      myOutputDirVirtualFile.delete(this);
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-    super.tearDown();
   }
 }
