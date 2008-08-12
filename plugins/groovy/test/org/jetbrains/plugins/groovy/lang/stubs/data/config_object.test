@@ -255,6 +255,8 @@ class ConfigObject extends LinkedHashMap implements Writable {
 -----
 [Groovy script]
   [Class definition : ConfigObject]
+    [Extends clause]
+    [Implements clause]
     [Field : KEYWORDS]
     [Field : TAB_CHARACTER]
     [Field : configFile]

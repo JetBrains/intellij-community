@@ -1,8 +1,8 @@
 def c = {
-    <caret>it
+  <caret>it
 }
 -----
 def c = {
-    newName ->
-    newName
+  newName ->
+  newName
 }

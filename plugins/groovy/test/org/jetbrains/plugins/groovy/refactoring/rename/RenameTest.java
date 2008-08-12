@@ -15,8 +15,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
@@ -82,10 +80,8 @@ public class RenameTest extends CommonRefactoringTestCase {
       assert ref != null;
 
 
-      final RefactoringActionHandler renameHandler = RefactoringActionHandlerFactory.getInstance().createRenameHandler();
       final PsiElement resolved = ref.resolve();
       assert resolved != null;
-      final PsiFile file1 = file;
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {

@@ -288,5 +288,6 @@ class ConfigBinding extends Binding {
     [Method : parse]
     [Method : parse]
   [Class definition : ConfigBinding]
+    [Extends clause]
     [Field : callable]
     [Method : setVariable]
