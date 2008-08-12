@@ -437,8 +437,9 @@ public class PsiFormatUtil {
         return builder.toString() + " " + ((PsiField)owner).getName();
       }
       else if (owner instanceof PsiParameter) {
-        final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(owner, PsiMethod.class);
-        if (psiMethod != null) {
+        final PsiElement declarationScope = ((PsiParameter)owner).getDeclarationScope();
+        if (declarationScope instanceof PsiMethod) {
+          final PsiMethod psiMethod = (PsiMethod)declarationScope;
           return builder.toString() + " " + formatMethod(psiMethod, PsiSubstitutor.EMPTY,
                                                          SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
                                                          showParamName ? (SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES) : (SHOW_TYPE | SHOW_FQ_CLASS_NAMES)) + " " +
