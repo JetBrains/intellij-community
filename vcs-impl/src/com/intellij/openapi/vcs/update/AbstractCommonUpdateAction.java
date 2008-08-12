@@ -100,9 +100,16 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
         final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles = createVcsToFilesMap(roots, project);
 
-
         if (showUpdateOptions || OptionsDialog.shiftIsPressed(context.getModifiers())) {
           showOptionsDialog(vcsToVirtualFiles, project, context);
+        }
+
+        for (AbstractVcs vcs : vcsToVirtualFiles.keySet()) {
+          final UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
+          if ((updateEnvironment != null) && (! updateEnvironment.validateOptions(vcsToVirtualFiles.get(vcs)))) {
+            // messages already shown
+            return;
+          }
         }
 
         Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles);

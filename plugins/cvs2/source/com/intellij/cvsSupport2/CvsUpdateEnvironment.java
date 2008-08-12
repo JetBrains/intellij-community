@@ -216,4 +216,8 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
     CvsConfiguration.getInstance(myProject).RESET_STICKY = false;
     return new UpdateConfigurable(myProject, files);
   }
+
+  public boolean validateOptions(final Collection<FilePath> roots) {
+    return true;
+  }
 }

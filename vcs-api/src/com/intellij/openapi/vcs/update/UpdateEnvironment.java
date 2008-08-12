@@ -18,8 +18,8 @@ package com.intellij.openapi.vcs.update;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,4 +68,6 @@ public interface UpdateEnvironment {
    */
   @Nullable
   Configurable createConfigurable(Collection<FilePath> files);
+
+  boolean validateOptions(final Collection<FilePath> roots);
 }

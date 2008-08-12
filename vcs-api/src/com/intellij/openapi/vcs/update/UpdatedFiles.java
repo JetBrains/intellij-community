@@ -97,6 +97,7 @@ public class UpdatedFiles implements JDOMExternalizable {
     result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.not.in.repository"), VcsBundle.message("status.group.name.not.in.repository"), true, FileGroup.UNKNOWN_ID, false));
     result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.locally.added"), VcsBundle.message("status.group.name.locally.added"), false, FileGroup.LOCALLY_ADDED_ID, false));
     result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.locally.removed"), VcsBundle.message("status.group.name.locally.removed"), false, FileGroup.LOCALLY_REMOVED_ID, false));
+    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.switched"), VcsBundle.message("status.group.name.switched"), false, FileGroup.SWITCHED_ID, false));
     return result;
   }
 

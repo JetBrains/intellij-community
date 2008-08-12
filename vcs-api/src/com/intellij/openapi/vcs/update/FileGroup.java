@@ -59,6 +59,7 @@ public class FileGroup implements JDOMExternalizable {
   @NonNls public static final String RESTORED_ID = "RESTORED";
   @NonNls public static final String CHANGED_ON_SERVER_ID = "CHANGED_ON_SERVER";
   @NonNls public static final String SKIPPED_ID = "SKIPPED";
+  @NonNls public static final String SWITCHED_ID = "SWITCHED";
 
   /**
    * @param updateName - Name for "update" action

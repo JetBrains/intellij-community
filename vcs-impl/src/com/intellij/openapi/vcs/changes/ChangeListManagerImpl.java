@@ -573,6 +573,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                 myUpdateException = e;
               }
             }
+            switchedHolder.calculateChildren();
           }
         }
         finally {
