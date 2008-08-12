@@ -109,10 +109,11 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
           if (document != null) {
             final XmlTag rootTag = document.getRootTag();
             if (rootTag != null) {
-              final String externalName = getNormalizedExternalName(listOwner);
+              final String externalName = PsiFormatUtil.getExternalName(listOwner, false);
+              final String oldExternalName = getNormalizedExternalName(listOwner);
               for (final XmlTag tag : rootTag.getSubTags()) {
                 final String className = tag.getAttributeValue("name");
-                if (Comparing.strEqual(className, externalName)) {
+                if (Comparing.strEqual(className, externalName) || Comparing.strEqual(className, oldExternalName)) {
                   for (XmlTag annotationTag : tag.getSubTags()) {
                     final String annotationFQN = annotationTag.getAttributeValue("name");
                     final StringBuilder buf = new StringBuilder();
@@ -280,10 +281,11 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
           if (document != null) {
             final XmlTag rootTag = document.getRootTag();
             if (rootTag != null) {
-              final String externalName = getNormalizedExternalName(listOwner);
+              final String externalName = PsiFormatUtil.getExternalName(listOwner, false);
+              final String oldExternalName = getNormalizedExternalName(listOwner);
               for (final XmlTag tag : rootTag.getSubTags()) {
                 final String className = tag.getAttributeValue("name");
-                if (Comparing.strEqual(className, externalName)) {
+                if (Comparing.strEqual(className, externalName) || Comparing.strEqual(className, oldExternalName)) {
                   for (XmlTag annotationTag : tag.getSubTags()) {
                     if (Comparing.strEqual(annotationTag.getAttributeValue("name"), annotationFQN)) {
                       if (ReadonlyStatusHandler.getInstance(file.getProject())
@@ -404,7 +406,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       final XmlDocument document = xmlFile.getDocument();
       if (document != null) {
         final XmlTag rootTag = document.getRootTag();
-        final String externalName = getNormalizedExternalName(listOwner);
+        final String externalName = PsiFormatUtil.getExternalName(listOwner, false);
         if (rootTag != null) {
           for (XmlTag tag : rootTag.getSubTags()) {
             if (Comparing.strEqual(tag.getAttributeValue("name"), externalName)) {

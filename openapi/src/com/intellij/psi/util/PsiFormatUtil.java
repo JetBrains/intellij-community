@@ -414,6 +414,11 @@ public class PsiFormatUtil {
 
   @Nullable
   public static String getExternalName(PsiModifierListOwner owner) {
+    return getExternalName(owner, true);
+  }
+
+  @Nullable
+  public static String getExternalName(PsiModifierListOwner owner, final boolean showParamName) {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       if (owner instanceof PsiClass) {
@@ -426,7 +431,7 @@ public class PsiFormatUtil {
       if (owner instanceof PsiMethod) {
         return builder.toString() + " " + formatMethod((PsiMethod)owner, PsiSubstitutor.EMPTY,
                                                        SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
-                                                       SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES);
+                                                       showParamName ? (SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES) : (SHOW_TYPE | SHOW_FQ_CLASS_NAMES));
       }
       else if (owner instanceof PsiField) {
         return builder.toString() + " " + ((PsiField)owner).getName();
@@ -436,8 +441,8 @@ public class PsiFormatUtil {
         if (psiMethod != null) {
           return builder.toString() + " " + formatMethod(psiMethod, PsiSubstitutor.EMPTY,
                                                          SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
-                                                         SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES) + " " + formatVariable(
-            (PsiVariable)owner, SHOW_NAME, PsiSubstitutor.EMPTY);
+                                                         showParamName ? (SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES) : (SHOW_TYPE | SHOW_FQ_CLASS_NAMES)) + " " +
+                 (showParamName ? formatVariable((PsiVariable)owner, SHOW_NAME, PsiSubstitutor.EMPTY) : psiMethod.getParameterList().getParameterIndex((PsiParameter)owner));
         }
       }
     }
