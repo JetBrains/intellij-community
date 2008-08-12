@@ -84,7 +84,9 @@ public class SelectCvsElementStep extends WizardStep {
   }
 
   protected void dispose() {
-    myCvsTree.deactivated();
+    if (myCvsTree != null) {
+      myCvsTree.deactivated();
+    }
   }
 
   public CvsElement getSelectedCvsElement() {
