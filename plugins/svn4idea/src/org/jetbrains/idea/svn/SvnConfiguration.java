@@ -195,7 +195,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     myUpgradeMode = element.getChild("upgradeMode") != null ? element.getChild("upgradeMode").getText() : null;
     final Element useProxy = element.getChild("myIsUseDefaultProxy");
     if (useProxy == null) {
-      myIsUseDefaultProxy = true;
+      myIsUseDefaultProxy = false;
     } else {
       myIsUseDefaultProxy = Boolean.parseBoolean(useProxy.getText());
     }
