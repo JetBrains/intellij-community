@@ -449,7 +449,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
       offset += length;
       offset += mySuffixes[i].length();
     }
-    if (startOffset == -1 || startOffset == endOffset) return null;
+    if (startOffset == -1) return null;
     return new ProperTextRange(startOffset, endOffset);
   }
 
