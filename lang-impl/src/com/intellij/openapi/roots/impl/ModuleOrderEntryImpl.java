@@ -46,7 +46,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     myModule = null;
   }
 
-  ModuleOrderEntryImpl(Element element, RootModelImpl rootModel) throws InvalidDataException {
+  ModuleOrderEntryImpl(Element element, RootModelImpl rootModel, ModuleManager moduleManager) throws InvalidDataException {
     super(rootModel);
     myExported = element.getAttributeValue(EXPORTED_ATTR) != null;
     final String moduleName = element.getAttributeValue(MODULE_NAME_ATTR);
@@ -54,8 +54,13 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
       throw new InvalidDataException();
     }
 
-    myModule = null;
-    myModuleName = moduleName;
+    myModule = moduleManager.findModuleByName(moduleName);
+    if (myModule == null) {
+      myModuleName = moduleName;
+    }
+    else {
+      myModuleName = null;
+    }
     //addListeners(); // Q????
   }
 

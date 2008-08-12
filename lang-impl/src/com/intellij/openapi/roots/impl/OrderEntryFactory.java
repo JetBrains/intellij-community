@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -40,7 +41,7 @@ public class OrderEntryFactory {
       return new ModuleLibraryOrderEntryImpl(element, rootModel, projectRootManager, filePointerManager);
     }
     else if (ModuleOrderEntryImpl.ENTRY_TYPE.equals(type)) {
-      return new ModuleOrderEntryImpl(element, rootModel);
+      return new ModuleOrderEntryImpl(element, rootModel, ModuleManager.getInstance(projectRootManager.getProject()));
     }
     else throw new InvalidDataException("Unknown order entry type:" + type);
   }
