@@ -175,7 +175,9 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     List<PsiReference> result = new ArrayList<PsiReference>(5);
     while (!resolvingRefs.isEmpty()) {
       final List<PsiReference> list = new ArrayList<PsiReference>(5);
-      addToResult(element, soft, result, list, addIntersectingReferences(nonResolvingRefs, list, getFirstIntersectingReferences(resolvingRefs, list)));
+      final TextRange range = getFirstIntersectingReferences(resolvingRefs, list);
+      final TextRange textRange = addIntersectingReferences(nonResolvingRefs, list, range);
+      addToResult(element, soft, result, list, textRange);
     }
 
     while (!nonResolvingRefs.isEmpty()) {
