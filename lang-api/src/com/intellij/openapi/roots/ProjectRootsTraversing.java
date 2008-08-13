@@ -76,7 +76,7 @@ public class ProjectRootsTraversing {
     state.getCurrentModuleManager().processOrder(policy, state);
   }
 
-  static class TraverseState implements UserDataHolder {
+  public static class TraverseState implements UserDataHolder {
     private final UserDataHolderBase myUserData = new UserDataHolderBase();
     private final PathsList myCollectedPath;
     private final HashSet<Module> myKnownModules = new HashSet<Module>();
