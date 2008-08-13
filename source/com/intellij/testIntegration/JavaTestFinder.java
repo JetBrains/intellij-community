@@ -19,8 +19,16 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public class JavaTestFinder implements TestFinder {
-  public PsiClass findSourceElement(PsiElement from) {
-    return PsiTreeUtil.getParentOfType(from, PsiClass.class, false);
+  public PsiClass findSourceElement(PsiElement element) {
+    PsiClass result = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
+    if (result == null) return null;
+
+    do {
+      PsiClass nextParent = PsiTreeUtil.getParentOfType(result, PsiClass.class, true);
+      if (nextParent == null) return result;
+      result = nextParent;
+    }
+    while (true);
   }
 
   public Collection<PsiElement> findClassesForTest(PsiElement element) {
@@ -29,8 +37,12 @@ public class JavaTestFinder implements TestFinder {
 
     GlobalSearchScope scope;
     Module module = getModule(element);
-    if (module != null) scope = GlobalSearchScope.moduleWithDependenciesScope(module);
-    else scope = GlobalSearchScope.projectScope(element.getProject());
+    if (module != null) {
+      scope = GlobalSearchScope.moduleWithDependenciesScope(module);
+    }
+    else {
+      scope = GlobalSearchScope.projectScope(element.getProject());
+    }
 
     PsiShortNamesCache cache = JavaPsiFacade.getInstance(element.getProject()).getShortNamesCache();
 
@@ -91,8 +103,12 @@ public class JavaTestFinder implements TestFinder {
 
     GlobalSearchScope scope;
     Module module = getModule(element);
-    if (module != null) scope = GlobalSearchScope.moduleWithDependentsScope(module);
-    else scope = GlobalSearchScope.projectScope(element.getProject());
+    if (module != null) {
+      scope = GlobalSearchScope.moduleWithDependentsScope(module);
+    }
+    else {
+      scope = GlobalSearchScope.projectScope(element.getProject());
+    }
 
     PsiShortNamesCache cache = JavaPsiFacade.getInstance(element.getProject()).getShortNamesCache();
 
