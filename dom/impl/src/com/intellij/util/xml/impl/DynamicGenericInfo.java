@@ -53,33 +53,20 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     if (myInitialized) return;
     if (myComputing.get() == Boolean.TRUE) return;
 
-    synchronized (myInvocationHandler) {
-      if (myInitialized) return;
-      myComputing.set(Boolean.TRUE);
-
-      try {
+    myComputing.set(Boolean.TRUE);
+    try {
+      synchronized (myInvocationHandler) {
+        if (myInitialized) return;
         myStaticGenericInfo.buildMethodMaps();
         myAttributes = myStaticGenericInfo.getAttributes();
         myFixeds = myStaticGenericInfo.getFixed();
         myCollections = myStaticGenericInfo.getCollections();
+      }
 
-        DomExtensionsRegistrarImpl registrar = null;
-        final DomElement domElement = myInvocationHandler.getProxy();
-        for (final DomExtenderEP extenderEP : Extensions.getExtensions(DomExtenderEP.EP_NAME)) {
-          registrar = extenderEP.extend(myProject, domElement, registrar);
-        }
+      DomExtensionsRegistrarImpl registrar = runDomExtenders();
 
-        final AbstractDomChildDescriptionImpl description = myInvocationHandler.getChildDescription();
-        if (description != null) {
-          final List<DomExtender> extenders = description.getUserData(DomExtensionImpl.DOM_EXTENDER_KEY);
-          if (extenders != null) {
-            if (registrar == null) registrar = new DomExtensionsRegistrarImpl();
-            for (final DomExtender extender : extenders) {
-              extender.registerExtensions(domElement, registrar);
-            }
-          }
-        }
-
+      synchronized (myInvocationHandler) {
+        if (myInitialized) return;
         if (registrar != null) {
           final List<DomExtensionImpl> attributes = registrar.getAttributes();
           if (!attributes.isEmpty()) {
@@ -109,10 +96,31 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
         }
         myInitialized = true;
       }
-      finally {
-        myComputing.set(null);
+    }
+    finally {
+      myComputing.set(null);
+    }
+  }
+
+  @Nullable
+  private DomExtensionsRegistrarImpl runDomExtenders() {
+    DomExtensionsRegistrarImpl registrar = null;
+    final DomElement domElement = myInvocationHandler.getProxy();
+    for (final DomExtenderEP extenderEP : Extensions.getExtensions(DomExtenderEP.EP_NAME)) {
+      registrar = extenderEP.extend(myProject, domElement, registrar);
+    }
+
+    final AbstractDomChildDescriptionImpl description = myInvocationHandler.getChildDescription();
+    if (description != null) {
+      final List<DomExtender> extenders = description.getUserData(DomExtensionImpl.DOM_EXTENDER_KEY);
+      if (extenders != null) {
+        if (registrar == null) registrar = new DomExtensionsRegistrarImpl();
+        for (final DomExtender extender : extenders) {
+          extender.registerExtensions(domElement, registrar);
+        }
       }
     }
+    return registrar;
   }
 
   public XmlElement getNameElement(DomElement element) {
