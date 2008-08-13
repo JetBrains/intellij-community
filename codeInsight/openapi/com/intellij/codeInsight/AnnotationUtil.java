@@ -17,6 +17,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +60,10 @@ public class AnnotationUtil {
   @NonNls public static final String TEST_ONLY_SIMPLE_NAME = "TestOnly";
 
   public static final Set<String> ALL_ANNOTATIONS;
+
+  @NonNls private static final String[] SIMPLE_NAMES =
+    new String[]{NOT_NULL_SIMPLE_NAME, NULLABLE_SIMPLE_NAME, NON_NLS_SIMPLE_NAME, PROPERTY_KEY_SIMPLE_NAME, TEST_ONLY_SIMPLE_NAME,
+      "Language", "Identifier", "Pattern", "PrintFormat", "RegExp", "Subst"};
 
   static {
     ALL_ANNOTATIONS = new HashSet<String>(2);
@@ -223,8 +228,6 @@ public class AnnotationUtil {
   }
 
   public static boolean isJetbrainsAnnotation(@NonNls final String simpleName) {
-    return NOT_NULL_SIMPLE_NAME.equals(simpleName) || NULLABLE_SIMPLE_NAME.equals(simpleName) ||
-           NON_NLS_SIMPLE_NAME.equals(simpleName) || PROPERTY_KEY_SIMPLE_NAME.equals(simpleName) ||
-           TEST_ONLY_SIMPLE_NAME.equals(simpleName);
+    return ArrayUtil.find(SIMPLE_NAMES, simpleName) != -1;
   }
 }
