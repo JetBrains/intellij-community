@@ -72,6 +72,9 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
         for (PsiReference ref : refs) {
           if (ref.getRangeInElement().contains(offsetInElement)) {
             for (PsiMethod method : methods) {
+              if (ref instanceof ResolvingHint && !((ResolvingHint)ref).canResolveTo(method)) {
+                return true;
+              }
               if (ref.isReferenceTo(method)) {
                 return consumer.process(ref);
               }
