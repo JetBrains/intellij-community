@@ -138,6 +138,9 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       for (FilePath root : roots) {
         final File ioFile = root.getIOFile();
         final UpdateRootInfo value = map.get(ioFile);
+        if (value == null) {
+          continue;
+        }
         final SVNURL url = value.getUrl();
         if (url != null && (! url.equals(getSourceUrl(myVcs, root.getIOFile())))) {
           // switch
