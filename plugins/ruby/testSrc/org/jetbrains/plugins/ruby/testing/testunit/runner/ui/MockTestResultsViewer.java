@@ -22,7 +22,7 @@ public class MockTestResultsViewer implements TestResultsViewer {
     myRootSuite = suite;
   }
 
-  public void addTab(final String name, final Component contentPane) {}
+  public void addTab(final String name, final Icon icon, final Component contentPane) {}
 
   public void addTestsProxySelectionListener(final TestProxyTreeSelectionListener listener) {}
 

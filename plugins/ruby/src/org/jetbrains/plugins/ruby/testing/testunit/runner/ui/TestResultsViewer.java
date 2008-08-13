@@ -16,9 +16,10 @@ public interface TestResultsViewer extends Disposable {
   /**
    * Add tab to viwer
    * @param name Tab name
+   * @param icon
    * @param contentPane Tab content pane
    */
-  void addTab(final String name, final Component contentPane);
+  void addTab(final String name, @Nullable final Icon icon, final Component contentPane);
 
   /**
    * Subscribe on test proxy selection events

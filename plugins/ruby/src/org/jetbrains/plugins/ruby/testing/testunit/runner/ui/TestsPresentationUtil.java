@@ -4,6 +4,7 @@ import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
@@ -144,4 +145,25 @@ public class TestsPresentationUtil {
     }
     return null;
   }
+
+  @Nullable
+  public static String getTestStatusPresentation(final RTestUnitTestProxy proxy) {
+    return proxy.getMagnitudeInfo().getTitle();
+  }
+
+  @Nullable
+  public static String getSuiteStatusPresentation(final RTestUnitTestProxy proxy) {
+    //TODO[romeo] improove
+    return String.valueOf(proxy.getChildren().size());
+  }
+
+  /**
+   * @param proxy Test or Suite
+   * @return Duration presentation for given proxy
+   */
+  @Nullable
+  public static String getDurationPresentation(final RTestUnitTestProxy proxy) {
+    //TODO[romeo] implement
+    return "<unknown>";
+  }  
 }

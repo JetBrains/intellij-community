@@ -1,13 +1,14 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner.ui;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.utils.IdeaInternalUtil;
 
 import javax.swing.*;
@@ -16,6 +17,8 @@ import javax.swing.*;
  * @author: Roman Chernyatchik
  */
 public class RTestUnitConsoleView extends BaseTestsOutputConsoleView {
+  private static final Icon OUTPUT_TAB_ICON = TestsUIUtil.loadIcon("testOuput");
+
   private TestResultsViewer myResultsViewer;
 
   public RTestUnitConsoleView(final TestConsoleProperties consoleProperties,
@@ -25,7 +28,9 @@ public class RTestUnitConsoleView extends BaseTestsOutputConsoleView {
 
     // Results View
     myResultsViewer = resultsViewer;
-    myResultsViewer.addTab(RBundle.message("ruby.test.runner.ui.tabs.output.title"),
+
+    // Console
+    myResultsViewer.addTab(ExecutionBundle.message("output.tab.title"), OUTPUT_TAB_ICON,
                            getConsole().getComponent());
     myResultsViewer.addTestsProxySelectionListener(new TestProxyTreeSelectionListener() {
       public void onSelected(@Nullable final PrintableTestProxy selectedTestProxy) {
@@ -41,7 +46,7 @@ public class RTestUnitConsoleView extends BaseTestsOutputConsoleView {
       }
     });
 
-    //TODO[romeo] add tabs: statistics
+    // init
     myResultsViewer.initLogFilesManager();
   }
 

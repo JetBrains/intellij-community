@@ -316,6 +316,106 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
 
   }
 
+  public void testGetTestStatusPresentation_NotRun() {
+    assertEquals("Not run", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
+  }
+
+  public void testGetTestStatusPresentation_Progress() {
+    mySimpleTest.setStarted();
+    assertEquals("Running...", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
+  }
+
+  public void testGetTestStatusPresentation_Passed() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setFinished();
+    assertEquals("Passed", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
+  }
+
+  public void testGetTestStatusPresentation_Failed() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", false);
+    assertEquals("Assertion failed", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
+    mySimpleTest.setFinished();
+    assertEquals("Assertion failed", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
+  }
+
+  public void testGetTestStatusPresentation_TestError() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", true);
+    assertEquals("Error", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
+    mySimpleTest.setFinished();
+    assertEquals("Error", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
+  }
+
+  public void testGetTestStatusPresentation_Terminated() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTerminated();
+    assertEquals("Terminated", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
+  }
+
+  //TODO
+  //public void testGetSuiteStatusPresentation_NotRun() {
+  //   fail("Not implemented");
+  //}
+  //
+  //public void testGetSuiteStatusPresentation_Progress() {
+  //   fail("Not implemented");
+  //}
+  //
+  //public void testGetSuiteStatusPresentation_Passed() {
+  //   fail("Not implemented");
+  //}
+  //
+  //public void testGetSuiteStatusPresentation_Failed() {
+  //   fail("Not implemented");
+  //}
+  //
+  //public void testGetSuiteStatusPresentation_TestError() {
+  //   fail("Not implemented");
+  //}
+  //
+  //public void testGetSuiteStatusPresentation_Terminated() {
+  //   fail("Not implemented");
+  //}
+
+  public void testGetDurationPresentation_NotRun() {
+    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
+  }
+
+  public void testGetDurationPresentation_Progress() {
+    mySimpleTest.setStarted();
+    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
+  }
+
+  public void testGetDurationPresentation_Passed() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setFinished();
+    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
+  }
+
+  public void testGetDurationPresentation_Failed() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", false);
+    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
+    mySimpleTest.setFinished();
+    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
+  }
+
+
+  public void testGetDurationPresentation_TestError() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("", "", true);
+    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
+    mySimpleTest.setFinished();
+    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
+  }
+
+  public void testGetDurationPresentation_Terminated() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTerminated();
+    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
+  }
+
   private void assertProxyPresentation(final String expectedPresentation, final String parentName,
                                        final String childName) {
     assertEquals(expectedPresentation,

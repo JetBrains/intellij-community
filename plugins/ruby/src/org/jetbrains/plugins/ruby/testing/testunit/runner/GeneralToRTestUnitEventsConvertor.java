@@ -8,8 +8,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.support.UIUtil;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
@@ -37,7 +37,7 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onStartTesting() {
-    addToInvokeLater(new Runnable() {
+    UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
         mySuitesStack.pushSuite(myTestsRootNode);
         myTestsRootNode.setStarted();
@@ -49,7 +49,7 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onFinishTesting() {
-    addToInvokeLater(new Runnable() {
+    UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
         if (myIsTestingFinished) {
           // has been already invoked!
@@ -76,7 +76,7 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onTestStarted(final String testName) {
-    addToInvokeLater(new Runnable() {
+    UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final String fullName = getFullTestName(testName);
 
@@ -104,7 +104,7 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onSuiteStarted(final String suiteName) {
-    addToInvokeLater(new Runnable() {
+    UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final RTestUnitTestProxy parentSuite = getCurrentSuite();
         //new suite
@@ -122,8 +122,8 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
     });
   }
 
-  public void onTestFinished(final String testName) {
-    addToInvokeLater(new Runnable() {
+  public void onTestFinished(final String testName, final int duration) {
+    UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final String fullTestName = getFullTestName(testName);
         final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
@@ -132,6 +132,7 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
           return;
         }
 
+        //TODO pass duration
         testProxy.setFinished();
         myRunningTestsFullNameToProxy.remove(fullTestName);
 
@@ -142,7 +143,7 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onSuiteFinished(final String suiteName) {
-    addToInvokeLater(new Runnable() {
+    UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final RTestUnitTestProxy mySuite = mySuitesStack.popSuite(suiteName);
         mySuite.setFinished();
@@ -154,7 +155,7 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onUncapturedOutput(final String text, final Key outputType) {
-    addToInvokeLater(new Runnable() {
+    UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
         //if we can locate test - we will send outout to it, otherwise to current test suite
         final RTestUnitTestProxy currentProxy;
@@ -182,7 +183,7 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
   public void onTestFailure(final String testName,
                             final String localizedMessage, final String stackTrace,
                             final boolean isTestError) {
-    addToInvokeLater(new Runnable() {
+    UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final String fullTestName = getFullTestName(testName);
         final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
@@ -210,7 +211,7 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
 
   public void onTestOutput(final String testName,
                            final String text, final boolean stdOut) {
-    addToInvokeLater(new Runnable() {
+    UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final String fullTestName = getFullTestName(testName);
         final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
@@ -229,7 +230,7 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onTestsCountInSuite(final int count) {
-    addToInvokeLater(new Runnable() {
+    UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
         fireOnTestsCountInSuite(count);
       }
@@ -330,7 +331,7 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
    * Remove listeners,  etc
    */
   public void dispose() {
-    addToInvokeLater(new Runnable() {
+    UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
         myEventsListeners.clear();
 
@@ -344,14 +345,5 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
         mySuitesStack.clear();
       }
     });
-  }
-
-  private static void addToInvokeLater(final Runnable runnable) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isHeadlessEnvironment() || application.isUnitTestMode()) {
-      runnable.run();
-    } else {
-      SwingUtilities.invokeLater(runnable);
-    }
   }
 }

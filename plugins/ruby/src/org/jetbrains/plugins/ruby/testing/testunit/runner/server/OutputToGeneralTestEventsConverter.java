@@ -135,9 +135,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnTestFinished(final String testName) {
+  private void fireOnTestFinished(final String testName, final int duration) {
     for (GeneralTestEventsProcessor processor : myProcessors) {
-      processor.onTestFinished(testName);
+      processor.onTestFinished(testName, duration);
     }
   }
 
@@ -156,6 +156,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private class MyServiceMessageVisitor extends DefaultServiceMessageVisitor {
     @NonNls public static final String KEY_TESTS_COUNT = "testCount";
     @NonNls private static final String ATTR_KEY_TEST_ERROR = "error";
+    @NonNls private static final String ATTR_KEY_TEST_DURATION = "duration";
 
     public void visitTestSuiteStarted(@NotNull final TestSuiteStarted suiteStarted) {
       fireOnSuiteStarted(suiteStarted.getSuiteName());
@@ -170,7 +171,16 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     public void visitTestFinished(@NotNull final TestFinished testFinished) {
-      fireOnTestFinished(testFinished.getTestName());
+      final String durationStr = testFinished.getAttributes().get(ATTR_KEY_TEST_DURATION);
+
+      // Test's duration in milliseconds
+      int duration = 0;
+      try {
+        duration = Integer.parseInt(durationStr);
+      } catch (NumberFormatException ex) {
+        LOG.error(ex);
+      }
+      fireOnTestFinished(testFinished.getTestName(), duration);
     }
 
     public void visitTestIgnored(@NotNull final TestIgnored testIgnored) {

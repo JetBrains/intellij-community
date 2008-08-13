@@ -122,7 +122,7 @@ public class GeneralToRTestUnitEventsConvertorTest extends BaseRUnitTestsTestCas
     onTestStarted("some_test");
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final RTestUnitTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
-    myEventsProcessor.onTestFinished("some_test");
+    myEventsProcessor.onTestFinished("some_test", 10);
 
     assertEquals(0, myEventsProcessor.getRunningTestsQuantity());
     assertEquals(0, myEventsProcessor.getFailedTestsSet().size());
@@ -167,7 +167,7 @@ public class GeneralToRTestUnitEventsConvertorTest extends BaseRUnitTestsTestCas
   public void testOnFinishedTesting_WithFailure() {
     onTestStarted("test");
     myEventsProcessor.onTestFailure("test", "", "", false);
-    myEventsProcessor.onTestFinished("test");
+    myEventsProcessor.onTestFinished("test", 10);
     myEventsProcessor.onFinishTesting();
 
     //Tree
@@ -183,7 +183,7 @@ public class GeneralToRTestUnitEventsConvertorTest extends BaseRUnitTestsTestCas
   public void testOnFinishedTesting_WithError() {
     onTestStarted("test");
     myEventsProcessor.onTestFailure("test", "", "", true);
-    myEventsProcessor.onTestFinished("test");
+    myEventsProcessor.onTestFinished("test", 10);
     myEventsProcessor.onFinishTesting();
 
     //Tree
@@ -228,7 +228,7 @@ public class GeneralToRTestUnitEventsConvertorTest extends BaseRUnitTestsTestCas
     assertEquals("suite3", test2.getParent().getName());
     assertEquals("suite2", test2.getParent().getParent().getName());
 
-    myEventsProcessor.onTestFinished("test2");
+    myEventsProcessor.onTestFinished("test2", 10);
 
     //check that after finishing suite (suite3), current will be parent of finished suite (i.e. suite2)
     myEventsProcessor.onSuiteFinished("suite3");

@@ -12,7 +12,7 @@ public interface GeneralTestEventsProcessor extends Disposable {
   void onTestsCountInSuite(final int count);
 
   void onTestStarted(final String testName);
-  void onTestFinished(final String testName);
+  void onTestFinished(final String testName, final int duration);
   void onTestFailure(final String testName, final String localizedMessage, final String stackTrace,
                      final boolean testError);
   void onTestOutput(final String testName, final String text, final boolean stdOut);

@@ -136,8 +136,10 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     return myContentPane;
   }
 
-  public void addTab(@NotNull final String tabTitle, @NotNull final Component component) {
-    myTabbedPane.addTab(tabTitle, component);
+  public void addTab(@NotNull final String tabTitle,
+                     @Nullable final Icon icon,
+                     @NotNull final Component component) {
+    myTabbedPane.addTab(tabTitle, icon, component);
   }
 
   public void addTestsProxySelectionListener(final TestProxyTreeSelectionListener listener) {
