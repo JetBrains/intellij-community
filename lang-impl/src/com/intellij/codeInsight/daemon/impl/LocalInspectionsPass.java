@@ -337,9 +337,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         HighlightInfoType level = highlightTypeFromDescriptor(descriptor, severity);
         HighlightInfo info = createHighlightInfo(descriptor, tool, level,emptyActionRegistered);
         if (info == null) continue;
-        //TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
-        //if (editable == null) continue;
-        TextRange hostRange = documentRange.injectedToHost(new TextRange(info.startOffset, info.endOffset));
+
+        // todo we got to separate our "internal" prefixes/suffixes from user-defined ones
+        // todo in the latter case the erors should be highlighted, otherwise not
+        TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
+        if (editable == null) continue;
+        TextRange hostRange = documentRange.injectedToHost(editable);
+        //TextRange hostRange = documentRange.injectedToHost(new TextRange(info.startOffset, info.endOffset));
+
         HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, psiElement, hostRange.getStartOffset(), hostRange.getEndOffset(), info.description, info.toolTip);
         if (patched != null) {
           registerQuickFixes(tool, descriptor, patched,emptyActionRegistered);
