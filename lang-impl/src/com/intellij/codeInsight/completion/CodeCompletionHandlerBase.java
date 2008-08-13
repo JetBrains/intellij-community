@@ -6,10 +6,10 @@ import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.DeferredUserLookupValue;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -18,8 +18,8 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -451,7 +451,18 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     });
     final Runnable runnable = context1.getLaterRunnable();
     if (runnable != null) {
-      runnable.run();
+      final Runnable runnable1 = new Runnable() {
+        public void run() {
+          final Project project = context1.getProject();
+          if (project.isDisposed()) return;
+          runnable.run();
+        }
+      };
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        ApplicationManager.getApplication().invokeLater(runnable1);
+      } else {
+        runnable1.run();
+      }
     }
   }
 

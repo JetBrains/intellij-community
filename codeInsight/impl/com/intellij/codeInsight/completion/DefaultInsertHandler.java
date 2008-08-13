@@ -184,6 +184,14 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       return false;
     }
 
+    if (completionChar == '#') {
+      context.setLaterRunnable(new Runnable() {
+        public void run() {
+           new CodeCompletionHandler().invoke(myProject, myEditor, myFile);
+        }
+      });
+    }
+
     if (insertingAnnotation()) {
       // Check if someone inserts annotation class that require @
       final Document document = context.getEditor().getDocument();
@@ -442,6 +450,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       case '\'': return TailType.QUOTE;
       case '<':
       case '>':
+      case '#':
       case '\"':
       case '[': return TailType.createSimpleTailType(completionChar);
       case Lookup.COMPLETE_STATEMENT_SELECT_CHAR: return TailType.SMART_COMPLETION;

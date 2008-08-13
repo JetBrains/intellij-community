@@ -12,6 +12,8 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiTreeUtil;
 
 public class JavaCharFilter extends CharFilter {
 
@@ -21,7 +23,9 @@ public class JavaCharFilter extends CharFilter {
   }
 
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
-    if (lookup.isCompletion() && c == '!') {
+    if (!lookup.isCompletion()) return null;
+
+    if (c == '!') {
       if (lookup.getPsiFile() instanceof PsiJavaFile) {
         final LookupElement item = lookup.getCurrentItem();
         if (item == null) return null;
@@ -38,7 +42,14 @@ public class JavaCharFilter extends CharFilter {
         return null;
       }
     }
-    if (lookup.isCompletion() && c == '.' && isWithinLiteral(lookup)) return Result.ADD_TO_PREFIX;
+    if (c == '.' && isWithinLiteral(lookup)) return Result.ADD_TO_PREFIX;
+
+    if (c == '#' && PsiTreeUtil.getParentOfType(lookup.getPsiElement(), PsiDocComment.class) != null) {
+      final LookupElement item = lookup.getCurrentItem();
+      if (item != null && item.getObject() instanceof PsiClass) {
+        return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+      }
+    }
     return null;
   }
 

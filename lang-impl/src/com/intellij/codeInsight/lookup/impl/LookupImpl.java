@@ -385,9 +385,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         myEditor.getCaretModel().moveToOffset(offset);
         myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         myEditor.getSelectionModel().removeSelection();
-        fireItemSelected(item, completionChar);
       }
     });
+
+    fireItemSelected(item, completionChar);
   }
 
   public int getLookupStart() {
