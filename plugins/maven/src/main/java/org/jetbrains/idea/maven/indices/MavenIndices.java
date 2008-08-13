@@ -61,7 +61,7 @@ public class MavenIndices {
       }
       catch (Exception e) {
         FileUtil.delete(each);
-        MavenLog.warn(e);
+        MavenLog.LOG.warn(e);
       }
     }
   }

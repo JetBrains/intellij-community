@@ -70,7 +70,7 @@ public class MavenArtifactUtil extends DummyProjectComponent {
       if (children == null) return "";
     }
     catch (Exception e) {
-      MavenLog.warn(e);
+      MavenLog.LOG.warn(e);
       return "";
     }
 
@@ -95,7 +95,7 @@ public class MavenArtifactUtil extends DummyProjectComponent {
       ZipEntry entry = jar.getEntry(MAVEN_PLUGIN_DESCRIPTOR);
 
       if (entry == null) {
-        MavenLog.info(IndicesBundle.message("repository.plugin.corrupt", file));
+        MavenLog.LOG.info(IndicesBundle.message("repository.plugin.corrupt", file));
         return null;
       }
 
@@ -109,7 +109,7 @@ public class MavenArtifactUtil extends DummyProjectComponent {
       }
     }
     catch (IOException e) {
-      MavenLog.info(e);
+      MavenLog.LOG.info(e);
       return null;
     }
   }

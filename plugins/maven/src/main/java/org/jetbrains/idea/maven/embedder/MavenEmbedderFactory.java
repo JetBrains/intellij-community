@@ -218,7 +218,7 @@ public class MavenEmbedderFactory {
       return new MavenEmbedderWrapper(new MavenEmbedder(configuration));
     }
     catch (MavenEmbedderException e) {
-      MavenLog.info(e);
+      MavenLog.LOG.info(e);
       throw new RuntimeException(e);
     }
   }
@@ -235,7 +235,7 @@ public class MavenEmbedderFactory {
         }
       }
       catch (IOException e) {
-        MavenLog.warn(e);
+        MavenLog.LOG.warn(e);
       }
 
       mySystemPropertiesCache = result;

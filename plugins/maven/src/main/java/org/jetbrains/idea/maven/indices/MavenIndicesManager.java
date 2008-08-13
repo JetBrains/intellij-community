@@ -86,7 +86,7 @@ public class MavenIndicesManager implements ApplicationComponent {
         myIndices.close();
       }
       catch (Exception e) {
-        MavenLog.error(e);
+        MavenLog.LOG.error("", e);
       }
       myIndices = null;
     }
@@ -96,7 +96,7 @@ public class MavenIndicesManager implements ApplicationComponent {
         myEmbedder.stop();
       }
       catch (Exception e) {
-        MavenLog.error(e);
+        MavenLog.LOG.error("", e);
       }
       myEmbedder = null;
     }
@@ -121,7 +121,7 @@ public class MavenIndicesManager implements ApplicationComponent {
       }
     }
     catch (MavenIndexException e) {
-      MavenLog.warn(e);
+      MavenLog.LOG.warn(e);
     }
 
     for (String eachRepo : remoteRepositories) {
@@ -129,7 +129,7 @@ public class MavenIndicesManager implements ApplicationComponent {
         result.add(indicesObjectCache.add(eachRepo, MavenIndex.Kind.REMOTE));
       }
       catch (MavenIndexException e) {
-        MavenLog.warn(e);
+        MavenLog.LOG.warn(e);
       }
     }
 

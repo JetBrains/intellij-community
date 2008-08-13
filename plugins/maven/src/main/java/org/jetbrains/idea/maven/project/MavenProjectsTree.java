@@ -103,7 +103,7 @@ public class MavenProjectsTree {
     p.checkCanceled();
 
     if (updateStack.contains(project)) {
-      MavenLog.info("Recursion detected in " + project.getFile());
+      MavenLog.LOG.info("Recursion detected in " + project.getFile());
       return;
     }
     updateStack.push(project);
@@ -175,7 +175,7 @@ public class MavenProjectsTree {
       else {
         MavenProjectModel currentAggregator = findAggregator(child);
         if (currentAggregator != null && currentAggregator != project) {
-          MavenLog.info("Module " + each + " is already included into " + project.getFile());
+          MavenLog.LOG.info("Module " + each + " is already included into " + project.getFile());
           continue;
         }
       }

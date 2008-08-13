@@ -133,9 +133,7 @@
           <root url="jar://$MODULE_DIR$/lib/nexus-indexer-1.0.0-SNAPSHOT.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../../../nexus-indexer/src/main/java" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="openapi" />

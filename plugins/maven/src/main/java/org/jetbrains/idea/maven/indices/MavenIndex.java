@@ -120,7 +120,7 @@ public class MavenIndex {
         doOpen();
       }
       catch (Exception e1) {
-        MavenLog.info(e1);
+        MavenLog.LOG.info(e1);
         try {
           doOpen();
         }
@@ -159,7 +159,7 @@ public class MavenIndex {
       if (myData != null) myData.close();
     }
     catch (IOException e) {
-      MavenLog.warn(e);
+      MavenLog.LOG.warn(e);
     }
     myData = null;
   }
@@ -185,7 +185,7 @@ public class MavenIndex {
       }
     }
     catch (IOException e) {
-      MavenLog.info(e);
+      MavenLog.LOG.info(e);
     }
   }
 
@@ -244,15 +244,18 @@ public class MavenIndex {
       myFailureMessage = null;
     }
     catch (IOException e) {
-      myFailureMessage = e.getMessage();
-      MavenLog.info(e);
+      handleUpdateException(e);
     }
     catch (UnsupportedExistingLuceneIndexException e) {
-      myFailureMessage = e.getMessage();
-      MavenLog.info(e);
+      handleUpdateException(e);
     }
 
     save();
+  }
+
+  private void handleUpdateException(Exception e) {
+    myFailureMessage = e.getMessage();
+    MavenLog.LOG.info("Failed to update Maven indices for: " + myRepositoryPathOrUrl, e);
   }
 
   private IndexingContext createContext(NexusIndexer indexer) throws IOException, UnsupportedExistingLuceneIndexException {
@@ -550,14 +553,14 @@ public class MavenIndex {
         return task.doTask();
       }
       catch (Exception e1) {
-        MavenLog.warn(e1);
+        MavenLog.LOG.warn(e1);
 
         cleanupBrokenData();
         try {
           open();
         }
         catch (MavenIndexException e2) {
-          MavenLog.warn(e2);
+          MavenLog.LOG.warn(e2);
         }
       }
     }

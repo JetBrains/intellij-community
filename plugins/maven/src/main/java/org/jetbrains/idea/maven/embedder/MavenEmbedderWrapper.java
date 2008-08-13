@@ -47,7 +47,7 @@ public class MavenEmbedderWrapper {
       wagon.setDownloadMonitor(new TransferListenerAdapter());
     }
     catch (ComponentLookupException e) {
-      MavenLog.info(e);
+      MavenLog.LOG.info(e);
     }
   }
 
@@ -72,7 +72,7 @@ public class MavenEmbedderWrapper {
       return result;
     }
     catch (ComponentLookupException e) {
-      MavenLog.info(e);
+      MavenLog.LOG.info(e);
       return Collections.emptySet();
     }
   }
@@ -171,7 +171,7 @@ public class MavenEmbedderWrapper {
       myEmbedder.stop();
     }
     catch (MavenEmbedderException e) {
-      MavenLog.info(e);
+      MavenLog.LOG.info(e);
     }
   }
 }
