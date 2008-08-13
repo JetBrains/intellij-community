@@ -62,6 +62,10 @@ public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, P
     myNameElement = getNameElement(myElement);
   }
 
+  public void setElement(final T element) {
+    myElement = element;
+  }
+
   @Nullable
   protected GenericDomValue getNameElement(final T t) {
     return myElement.getGenericInfo().getNameDomElement(t);

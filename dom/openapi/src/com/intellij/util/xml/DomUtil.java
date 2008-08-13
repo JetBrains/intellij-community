@@ -356,4 +356,22 @@ public class DomUtil {
     assert i >= 0;
     return (T)childDescription.addValue(parent, i + 1);
   }
+
+  @Nullable
+  public static <T extends DomElement> T findDomElement(@Nullable final PsiElement element, final Class<T> beanClass) {
+    if (element == null) return null;
+
+    XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+    DomElement domElement;
+
+    while (tag != null) {
+      domElement = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
+
+      if (domElement != null) {
+        return domElement.getParentOfType(beanClass, false);
+      }
+      tag = tag.getParentTag();
+    }
+    return null;
+  }
 }

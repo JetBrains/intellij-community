@@ -60,7 +60,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -87,10 +86,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -487,32 +483,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public PsiClass addClass(@NotNull @NonNls final String classText) throws IOException {
-    final PsiClass aClass = ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", classText)).getClasses()[0];
-    final String qName = aClass.getQualifiedName();
-    assert qName != null;
-
-    final PsiFile psiFile = addFileToProject(qName.replace('.', '/') + ".java", classText);
-
-    myAddedClasses.add(psiFile.getVirtualFile());
-    return ((PsiJavaFile)psiFile).getClasses()[0];
+    final PsiClass psiClass = ((HeavyIdeaTestFixture)myProjectFixture).addClass(getTempDirPath(), classText);
+    myAddedClasses.add(psiClass.getContainingFile().getVirtualFile());
+    return psiClass;
   }
 
   public PsiFile addFileToProject(@NonNls final String relativePath, @NonNls final String fileText) throws IOException {
-    VirtualFile root = ModuleRootManager.getInstance(myProjectFixture.getModule()).getSourceRoots()[0];
-    if (root.getParent() == null) {
-      // no real module in fixture
-      root = LocalFileSystem.getInstance().findFileByPath(getTempDirPath());
-    }
-    final VirtualFile[] virtualFile = new VirtualFile[1];
-    final VirtualFile dir = VfsUtil.createDirectories(root.getPath() + "/" + StringUtil.getPackageName(relativePath, '/'));
-
-    new WriteCommandAction.Simple(getProject()) {
-      protected void run() throws Throwable {
-        virtualFile[0] = dir.createChildData(this, StringUtil.getShortName(relativePath, '/'));
-        VfsUtil.saveText(virtualFile[0], fileText);
-      }
-    }.execute();
-    return getPsiManager().findFile(virtualFile[0]);
+    return ((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(getTempDirPath(), relativePath, fileText);
   }
 
   public <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> epName, final T extension) {

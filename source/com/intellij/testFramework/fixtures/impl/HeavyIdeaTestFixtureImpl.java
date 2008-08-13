@@ -10,6 +10,7 @@ import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
@@ -19,18 +20,25 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -39,7 +47,7 @@ import java.util.Set;
 /**
  * @author mike
  */
-class HeavyIdeaTestFixtureImpl extends BaseFixture implements IdeaProjectTestFixture {
+class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixture {
 
   @NonNls private static final String PROJECT_FILE_PREFIX = "temp";
   @NonNls private static final String PROJECT_FILE_SUFFIX = ".ipr";
@@ -151,5 +159,37 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements IdeaProjectTestFix
     if (!b && file.exists()) {
       throw new IllegalStateException("Can't delete " + file.getAbsolutePath());
     }
+  }
+
+  public PsiClass addClass(@NonNls String rootPath, @NotNull @NonNls final String classText) throws IOException {
+    final PsiClass aClass = ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", classText)).getClasses()[0];
+    final String qName = aClass.getQualifiedName();
+    assert qName != null;
+
+    final PsiFile psiFile = addFileToProject(rootPath, qName.replace('.', '/') + ".java", classText);
+
+    return ((PsiJavaFile)psiFile).getClasses()[0];
+  }
+
+
+  public PsiFile addFileToProject(@NonNls String rootPath, @NonNls final String relativePath, @NonNls final String fileText) throws IOException {
+    final VirtualFile[] roots = ModuleRootManager.getInstance(getModule()).getSourceRoots();
+    final VirtualFile root;
+    if (roots.length == 0 || roots[0].getParent() == null) {
+      // no real module in fixture
+      root = LocalFileSystem.getInstance().findFileByPath(rootPath);
+    } else {
+      root = roots[0];
+    }
+    final VirtualFile[] virtualFile = new VirtualFile[1];
+    final VirtualFile dir = VfsUtil.createDirectories(root.getPath() + "/" + StringUtil.getPackageName(relativePath, '/'));
+
+    new WriteCommandAction.Simple(getProject()) {
+      protected void run() throws Throwable {
+        virtualFile[0] = dir.createChildData(this, StringUtil.getShortName(relativePath, '/'));
+        VfsUtil.saveText(virtualFile[0], fileText);
+      }
+    }.execute();
+    return PsiManager.getInstance(getProject()).findFile(virtualFile[0]);
   }
 }

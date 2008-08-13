@@ -11,6 +11,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.pico.IdeaPicoContainer;
 import org.picocontainer.MutablePicoContainer;
@@ -50,7 +51,7 @@ class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestF
     throw new UnsupportedOperationException("setLanguageLevel is not implemented in : " + getClass());
   }
 
-  public HeavyIdeaTestFixtureImpl getFixture() {
+  public HeavyIdeaTestFixture getFixture() {
     return myFixture;
   }
 
