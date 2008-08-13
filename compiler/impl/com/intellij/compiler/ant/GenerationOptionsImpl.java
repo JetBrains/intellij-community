@@ -21,15 +21,22 @@ import java.io.File;
 import java.util.*;
 
 /**
+ * Implementation class for Ant generation options
  * @author Eugene Zhuravlev
  *         Date: Mar 25, 2004
  */
 public class GenerationOptionsImpl extends GenerationOptions {
-  private final ReplacePathToMacroMap myMacroReplacementMap; // from absolute path to macro substitutions
-  private final Map<String, String> myOutputUrlToPropertyRefMap; // from absolute path to macro substitutions
+  /** from absolute path to macro substitutions */
+  private final ReplacePathToMacroMap myMacroReplacementMap;
+  /** from absolute path to macro substitutions */
+  private final Map<String, String> myOutputUrlToPropertyRefMap;
+  /** module chunks */
   private final ModuleChunk[] myModuleChunks;
+  /** the project to be converted */
   private final Project myProject;
   private Set<String> myJdkUrls;
+  /** map from modules to chunks */
+  private Map<Module,ModuleChunk> myModuleToChunkMap = new HashMap<Module,ModuleChunk>();
 
   public GenerationOptionsImpl(Project project,
                            boolean generateSingleFile,
@@ -42,6 +49,20 @@ public class GenerationOptionsImpl extends GenerationOptions {
     myOutputUrlToPropertyRefMap = createOutputUrlToPropertyRefMap(myModuleChunks);
   }
 
+  /** {@inheritDoc}  */
+  @Override
+  public ModuleChunk getChunkByModule(final Module module) {
+    if(myModuleToChunkMap.isEmpty()) {
+      for(ModuleChunk c  : myModuleChunks) {
+        for(Module m : c.getModules()) {
+          myModuleToChunkMap.put(m,c);
+        }
+      }
+    }
+    return myModuleToChunkMap.get(module);
+  }
+
+  @Override
   public String subsitutePathWithMacros(String path) {
     if (myMacroReplacementMap.size() == 0) {
       return path; // optimization
@@ -87,6 +108,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
     return map;
   }
 
+  @Override
   public ModuleChunk[] getModuleChunks() {
     return myModuleChunks;
   }
@@ -162,7 +184,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
     return myJdkUrls;
   }
 
-  private class ChunksComparator implements Comparator<ModuleChunk> {
+  private static class ChunksComparator implements Comparator<ModuleChunk> {
     final Map<ModuleChunk, Integer> myCachedLevels = new HashMap<ModuleChunk, Integer>();
 
     public int compare(final ModuleChunk o1, final ModuleChunk o2) {
@@ -180,10 +202,10 @@ public class GenerationOptionsImpl extends GenerationOptions {
           for (ModuleChunk dependent : chunks) {
             maxLevel = Math.max(maxLevel, getChunkLevel(dependent));
           }
-          level = new Integer(1 + maxLevel);
+          level = 1 + maxLevel;
         }
         else {
-          level = new Integer(0);
+          level = 0;
         }
         myCachedLevels.put(chunk, level);
       }

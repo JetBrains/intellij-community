@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * Generate module chunk classspath. The class used to generate both runtime and compile time classpaths.
  * @author Eugene Zhuravlev
  *         Date: Nov 22, 2004
  */
@@ -30,8 +31,11 @@ public class ModuleChunkClasspath extends Path{
     final OrderedSet<ClasspathItem> pathItems = new OrderedSet<ClasspathItem>((TObjectHashingStrategy<ClasspathItem>)TObjectHashingStrategy.CANONICAL);
     final String moduleChunkBasedirProperty = BuildProperties.getModuleChunkBasedirProperty(chunk);
     final Module[] modules = chunk.getModules();
+    /// processed chunks (used only in runtime classpath), every chunk is referenced exactly once
+    final Set<ModuleChunk> processedChunks = new HashSet<ModuleChunk>();
     for (final Module module : modules) {
       new Object() {
+        /** pocessed modules */
         final Set<Module> processed = new HashSet<Module>();
         public void processModule(final Module module, final int dependencyLevel, final boolean isModuleExported) {
           if (processed.contains(module)) {
@@ -64,7 +68,7 @@ public class ModuleChunkClasspath extends Path{
             }
             
             if (orderEntry instanceof JdkOrderEntry) {
-              if (genOptions.forceTargetJdk) {
+              if (genOptions.forceTargetJdk && !generateRuntimeClasspath) {
                 pathItems.add(new PathRefItem(BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkClasspathProperty(chunk.getName()))));
               }
             }
@@ -72,7 +76,16 @@ public class ModuleChunkClasspath extends Path{
               final ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
               final Module dependentModule = moduleOrderEntry.getModule();
               if (!chunk.contains(dependentModule)) {
-                processModule(dependentModule, dependencyLevel + 1, moduleOrderEntry.isExported());
+                if(generateRuntimeClasspath) {
+                  final ModuleChunk depChunk = genOptions.getChunkByModule(dependentModule);
+                  if(!processedChunks.contains(depChunk)) {
+                    processedChunks.add(depChunk);
+                    pathItems.add(new PathRefItem(BuildProperties.getRuntimeClasspathProperty(depChunk.getName())));
+                  }
+                }
+                else {
+                  processModule(dependentModule, dependencyLevel + 1, moduleOrderEntry.isExported());
+                }
               }
             }
             else if (orderEntry instanceof LibraryOrderEntry && !((LibraryOrderEntry)orderEntry).isModuleLevel()) {
