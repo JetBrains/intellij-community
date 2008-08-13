@@ -228,8 +228,10 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
     }
 
     public void dispose() {
-      myTreeView.removeTreeSelectionListener(this);
-      myTreeView.removeFocusListener(this);
+      if (myTreeView != null) {
+        myTreeView.removeTreeSelectionListener(this);
+        myTreeView.removeFocusListener(this);
+      }
     }
   }
 }
