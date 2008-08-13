@@ -96,6 +96,7 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
 
     extend(not(psiElement().afterLeaf(".")), new CompletionProvider<JavaSmartCompletionParameters>() {
       protected void addCompletions(@NotNull final JavaSmartCompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+        final PsiElement position = parameters.getPosition();
         final PsiType expectedType = parameters.getExpectedType();
         final ClassLiteralGetter classGetter =
             new ClassLiteralGetter(new FilterGetter(new ContextGetter() {
@@ -103,11 +104,11 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
                 return new Object[]{expectedType};
               }
             }, new ExcludeDeclaredFilter(new ClassFilter(PsiClass.class))));
-        for (final MutableLookupElement<PsiExpression> element : classGetter.get(parameters.getPosition(), null)) {
+        for (final MutableLookupElement<PsiExpression> element : classGetter.get(position, null)) {
           result.addElement(element.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
         }
 
-        for (final Object o : new TemplatesGetter().get(parameters.getPosition(), null)) {
+        for (final Object o : new TemplatesGetter().get(position, null)) {
           result.addElement(LookupItemUtil.objectToLookupItem(o));
         }
 
@@ -116,12 +117,15 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
           MembersGetter.addMembers(parameters.getPosition(), parameters.getDefaultType(), result);
         }
 
-        final PsiElement position = parameters.getPosition();
+
         addKeyword(result, position, PsiKeyword.TRUE);
         addKeyword(result, position, PsiKeyword.FALSE);
 
-        for (final PsiExpression expression : ThisGetter.getThisExpressionVariants(position)) {
-          result.addElement(LookupItemUtil.objectToLookupItem(expression));
+        final PsiElement parent = position.getParent();
+        if (parent != null && !(parent.getParent() instanceof PsiSwitchLabelStatement)) {
+          for (final PsiExpression expression : ThisGetter.getThisExpressionVariants(position)) {
+            result.addElement(LookupItemUtil.objectToLookupItem(expression));
+          }
         }
       }
     });

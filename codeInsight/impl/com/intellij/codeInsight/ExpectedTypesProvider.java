@@ -353,6 +353,19 @@ public class ExpectedTypesProvider {
       myResult = new ExpectedTypeInfo[] {info, enumInfo};
     }
 
+    @Override
+    public void visitSwitchLabelStatement(final PsiSwitchLabelStatement statement) {
+      final PsiSwitchStatement switchStatement = statement.getEnclosingSwitchStatement();
+      if (switchStatement != null) {
+        final PsiExpression expression = switchStatement.getExpression();
+        if (expression != null) {
+          final PsiType type = expression.getType();
+          if (type != null) {
+            myResult = new ExpectedTypeInfo[]{createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.CASE_COLON)};
+          }
+        }
+      }
+    }
 
     @Override public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
       PsiElementFactory factory = JavaPsiFacade.getInstance(statement.getProject()).getElementFactory();

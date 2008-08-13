@@ -149,8 +149,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.SMART, PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.CASE), new EnumConstantsGetter());
-
     extend(CompletionType.SMART, PlatformPatterns.or(
         psiElement().withParent(PsiExpression.class),
         psiElement().inside(PsiClassObjectAccessExpression.class),

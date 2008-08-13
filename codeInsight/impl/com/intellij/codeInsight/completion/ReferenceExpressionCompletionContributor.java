@@ -9,6 +9,7 @@ import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -33,7 +34,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +60,11 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
       ), TailType.SEMICOLON);
     }
 
-    if (psiElement().inside(PsiAnnotationParameterList.class).accepts(element)) {
+    if (psiElement().inside(
+        PsiJavaPatterns.or(
+            psiElement(PsiAnnotationParameterList.class),
+            psiElement(PsiSwitchLabelStatement.class))
+    ).accepts(element)) {
       return new Pair<ElementFilter, TailType>(new ElementExtractorFilter(new AndFilter(
           new ClassFilter(PsiField.class),
           new ModifierFilter(PsiKeyword.STATIC, PsiKeyword.FINAL)
