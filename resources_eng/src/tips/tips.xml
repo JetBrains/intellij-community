@@ -89,4 +89,5 @@
     <tip file="HighlightImplements.html"/>
     <tip file="RecentSearch.html"/>
     <tip file="CodeCompletionInSearch.html"/>
+    <tip file="HighlightMethodExitPoint.html"/>
 </tips>
