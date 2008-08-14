@@ -2,17 +2,16 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ruby.support.UITestUtil;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.text.NumberFormat;
 
 /**
@@ -21,12 +20,14 @@ import java.text.NumberFormat;
 public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
   @NonNls private static final String FAKE_TEST_NAME = "my test";
   private TestsPresentationUtilTest.MyRenderer myRenderer;
+  private UITestUtil.FragmentsContainer myFragContainer;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    myRenderer = new MyRenderer(false);
+    myRenderer = new MyRenderer(false, new UITestUtil.FragmentsContainer());
+    myFragContainer = myRenderer.getFragmentsContainer();
   }
 
   public void testProgressText() {
@@ -45,20 +46,20 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
     assertEquals(PoolOfTestIcons.NOT_RAN, myRenderer.getIcon());
-    assertOneElement(myRenderer.getFragments());
-    assertEquals(FAKE_TEST_NAME, myRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals(FAKE_TEST_NAME, myFragContainer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
   }
 
   public void testFormatTestProxyTest_NewTestPaused() {
     //paused
-    final MyRenderer pausedRenderer = new MyRenderer(true);
+    final MyRenderer pausedRenderer = new MyRenderer(true, myFragContainer = new UITestUtil.FragmentsContainer());
     TestsPresentationUtil.formatTestProxy(mySimpleTest, pausedRenderer);
 
     assertEquals(PoolOfTestIcons.NOT_RAN, pausedRenderer.getIcon());
-    assertEquals(1, pausedRenderer.getFragments().size());
-    assertEquals(FAKE_TEST_NAME, pausedRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, pausedRenderer.getAttribsAt(0));
+    assertEquals(1, myFragContainer.getFragments().size());
+    assertEquals(FAKE_TEST_NAME, myFragContainer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
   }
 
   public void testFormatTestProxyTest_Started() {
@@ -67,22 +68,22 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
     assertIsAnimatorProgressIcon(myRenderer.getIcon());
-    assertEquals(1, myRenderer.getFragments().size());
-    assertEquals(FAKE_TEST_NAME, myRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+    assertEquals(1, myFragContainer.getFragments().size());
+    assertEquals(FAKE_TEST_NAME, myFragContainer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
   }
 
   public void testFormatTestProxyTest_StartedAndPaused() {
     //paused
-    final MyRenderer pausedRenderer = new MyRenderer(true);
+    final MyRenderer pausedRenderer = new MyRenderer(true, myFragContainer = new UITestUtil.FragmentsContainer());
 
     mySimpleTest.setStarted();
     TestsPresentationUtil.formatTestProxy(mySimpleTest, pausedRenderer);
 
     assertEquals(TestsProgressAnimator.PAUSED_ICON, pausedRenderer.getIcon());
-    assertEquals(1, pausedRenderer.getFragments().size());
-    assertEquals(FAKE_TEST_NAME, pausedRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, pausedRenderer.getAttribsAt(0));
+    assertEquals(1, myFragContainer.getFragments().size());
+    assertEquals(FAKE_TEST_NAME, myFragContainer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
   }
 
   public void testFormatTestProxyTest_Passed() {
@@ -91,9 +92,9 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
     assertEquals(PoolOfTestIcons.PASSED_ICON, myRenderer.getIcon());
-    assertOneElement(myRenderer.getFragments());
-    assertEquals(FAKE_TEST_NAME, myRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals(FAKE_TEST_NAME, myFragContainer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
   }
 
   public void testFormatTestProxyTest_Failed() {
@@ -102,9 +103,9 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
     assertEquals(PoolOfTestIcons.FAILED_ICON, myRenderer.getIcon());
-    assertOneElement(myRenderer.getFragments());
-    assertEquals(FAKE_TEST_NAME, myRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals(FAKE_TEST_NAME, myFragContainer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
 
     mySimpleTest.setFinished();
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
@@ -117,9 +118,9 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
     assertEquals(PoolOfTestIcons.ERROR_ICON, myRenderer.getIcon());
-    assertOneElement(myRenderer.getFragments());
-    assertEquals(FAKE_TEST_NAME, myRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals(FAKE_TEST_NAME, myFragContainer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
 
     mySimpleTest.setFinished();
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
@@ -132,9 +133,9 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
     assertEquals(PoolOfTestIcons.TERMINATED_ICON, myRenderer.getIcon());
-    assertOneElement(myRenderer.getFragments());
-    assertEquals(FAKE_TEST_NAME, myRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals(FAKE_TEST_NAME, myFragContainer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
 
     mySimpleTest.setFinished();
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
@@ -147,13 +148,13 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatRootNodeWithChildren(mySimpleTest, myRenderer);
 
     assertIsAnimatorProgressIcon(myRenderer.getIcon());
-    assertOneElement(myRenderer.getFragments());
-    assertEquals("Running tests...", myRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals("Running tests...", myFragContainer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
   }
 
   public void testFormatRootNodeWithChildren_Failed() {
-    final MyRenderer renderer1 = new MyRenderer(false);
+    final MyRenderer renderer1 = new MyRenderer(false, myFragContainer = new UITestUtil.FragmentsContainer());
 
     mySuite.addChild(mySimpleTest);
     mySuite.setStarted();
@@ -165,20 +166,20 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatRootNodeWithChildren(mySuite, renderer1);
 
     assertEquals(PoolOfTestIcons.FAILED_ICON, renderer1.getIcon());
-    assertOneElement(renderer1.getFragments());
-    assertEquals("Test Results.", renderer1.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getAttribsAt(0));
+    assertOneElement(renderer1.getFragmentsContainer().getFragments());
+    assertEquals("Test Results.", renderer1.getFragmentsContainer().getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getFragmentsContainer().getAttribsAt(0));
 
-    final MyRenderer renderer2 = new MyRenderer(false);
+    final MyRenderer renderer2 = new MyRenderer(false, myFragContainer = new UITestUtil.FragmentsContainer());
     TestsPresentationUtil.formatRootNodeWithChildren(mySuite, renderer2);
     mySuite.setFinished();
     assertEquals(PoolOfTestIcons.FAILED_ICON, renderer1.getIcon());
-    assertOneElement(renderer1.getFragments());
-    assertEquals("Test Results.", renderer1.getFragmentAt(0));
+    assertOneElement(renderer1.getFragmentsContainer().getFragments());
+    assertEquals("Test Results.", renderer1.getFragmentsContainer().getFragmentAt(0));
   }
 
   public void testFormatRootNodeWithChildren_Error() {
-    final MyRenderer renderer1 = new MyRenderer(false);
+    final MyRenderer renderer1 = new MyRenderer(false, myFragContainer = new UITestUtil.FragmentsContainer());
 
     mySuite.addChild(mySimpleTest);
     mySuite.setStarted();
@@ -190,16 +191,16 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatRootNodeWithChildren(mySuite, renderer1);
 
     assertEquals(PoolOfTestIcons.ERROR_ICON, renderer1.getIcon());
-    assertOneElement(renderer1.getFragments());
-    assertEquals("Test Results.", renderer1.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getAttribsAt(0));
+    assertOneElement(renderer1.getFragmentsContainer().getFragments());
+    assertEquals("Test Results.", renderer1.getFragmentsContainer().getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getFragmentsContainer().getAttribsAt(0));
 
-    final MyRenderer renderer2 = new MyRenderer(false);
+    final MyRenderer renderer2 = new MyRenderer(false, myFragContainer = new UITestUtil.FragmentsContainer());
     TestsPresentationUtil.formatRootNodeWithChildren(mySuite, renderer2);
     mySuite.setFinished();
     assertEquals(PoolOfTestIcons.ERROR_ICON, renderer1.getIcon());
-    assertOneElement(renderer1.getFragments());
-    assertEquals("Test Results.", renderer1.getFragmentAt(0));
+    assertOneElement(renderer1.getFragmentsContainer().getFragments());
+    assertEquals("Test Results.", renderer1.getFragmentsContainer().getFragmentAt(0));
   }
 
   public void testFormatRootNodeWithChildren_Passed() {
@@ -212,9 +213,9 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatRootNodeWithChildren(mySuite, myRenderer);
 
     assertEquals(PoolOfTestIcons.PASSED_ICON, myRenderer.getIcon());
-    assertOneElement(myRenderer.getFragments());
-    assertEquals("Test Results.", myRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+    assertOneElement(myRenderer.getFragmentsContainer().getFragments());
+    assertEquals("Test Results.", myRenderer.getFragmentsContainer().getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getFragmentsContainer().getAttribsAt(0));
   }
 
   public void testFormatRootNodeWithChildren_Terminated() {
@@ -227,9 +228,9 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatRootNodeWithChildren(mySuite, myRenderer);
 
     assertEquals(PoolOfTestIcons.TERMINATED_ICON, myRenderer.getIcon());
-    assertOneElement(myRenderer.getFragments());
-    assertEquals("Terminated.", myRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals("Terminated.", myFragContainer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
   }
 
   public void testFormatRootNodeWithChildren_TerminatedAndFinished() {
@@ -244,18 +245,18 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatRootNodeWithChildren(mySuite, myRenderer);
     mySuite.setFinished();
     assertEquals(PoolOfTestIcons.TERMINATED_ICON, myRenderer.getIcon());
-    assertOneElement(myRenderer.getFragments());
-    assertEquals("Terminated.", myRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals("Terminated.", myFragContainer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
   }
 
   public void testFormatRootNodeWithoutChildren() {
     TestsPresentationUtil.formatRootNodeWithoutChildren(mySimpleTest, myRenderer);
 
     assertEquals(PoolOfTestIcons.NOT_RAN, myRenderer.getIcon());
-    assertOneElement(myRenderer.getFragments());
-    assertEquals("No Test Results.", myRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals("No Test Results.", myFragContainer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
 
   }
 
@@ -264,9 +265,9 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatRootNodeWithoutChildren(mySimpleTest, myRenderer);
 
     assertIsAnimatorProgressIcon(myRenderer.getIcon());
-    assertOneElement(myRenderer.getFragments());
-    assertEquals("Instantiating tests...", myRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals("Instantiating tests...", myFragContainer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
 
   }
 
@@ -276,9 +277,9 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatRootNodeWithoutChildren(mySimpleTest, myRenderer);
 
     assertEquals(PoolOfTestIcons.NOT_RAN, myRenderer.getIcon());
-    assertOneElement(myRenderer.getFragments());
-    assertEquals("No tests were found.", myRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals("No tests were found.", myFragContainer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
 
   }
 
@@ -288,9 +289,9 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatRootNodeWithoutChildren(mySimpleTest, myRenderer);
 
     assertEquals(PoolOfTestIcons.TERMINATED_ICON, myRenderer.getIcon());
-    assertOneElement(myRenderer.getFragments());
-    assertEquals("Terminated.", myRenderer.getFragmentAt(0));
-    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getAttribsAt(0));
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals("Terminated.", myFragContainer.getFragmentAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
 
   }
 
@@ -454,42 +455,28 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
   }
 
   private class MyRenderer extends RTestUnitTestTreeRenderer {
-    private ListOfFragments myFragments;
+    private UITestUtil.FragmentsContainer myFragmentsContainer;
 
-    public MyRenderer(final boolean isPaused) {
+    public MyRenderer(final boolean isPaused,
+                      final UITestUtil.FragmentsContainer fragmentsContainer) {
       super(new RTestUnitConsoleProperties(createRTestsRunConfiguration()) {
         @Override
         public boolean isPaused() {
           return isPaused;
         }
       });
-
-      myFragments = new ListOfFragments();
+      myFragmentsContainer = fragmentsContainer;
     }
 
     @Override
     public void append(@NotNull @Nls final String fragment,
                        @NotNull final SimpleTextAttributes attributes,
                        final boolean isMainText) {
-      myFragments.add(fragment, attributes);
+      myFragmentsContainer.append(fragment, attributes);
     }
 
-    public ListOfFragments getFragments() {
-      return myFragments;
-    }
-
-    public String getFragmentAt(final int index) {
-      return myFragments.get(index).first;
-    }
-
-    public SimpleTextAttributes getAttribsAt(final int index) {
-      return myFragments.get(index).second;
-    }
-  }
-
-  private static class ListOfFragments extends ArrayList<Pair<String, SimpleTextAttributes>> {
-    public void add(@NotNull @Nls final String fragment, @NotNull final SimpleTextAttributes attributes) {
-      add(new Pair<String, SimpleTextAttributes>(fragment, attributes));
+    public UITestUtil.FragmentsContainer getFragmentsContainer() {
+      return myFragmentsContainer;
     }
   }
 }
