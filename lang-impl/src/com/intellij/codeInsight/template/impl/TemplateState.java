@@ -6,12 +6,14 @@ import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Result;
 import com.intellij.lang.LanguageLiteralEscapers;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -425,11 +427,16 @@ public class TemplateState implements Disposable {
 
       Integer bracketCount = item instanceof LookupItem ? (Integer)((LookupItem)item).getAttribute(LookupItem.BRACKETS_COUNT_ATTR) : null;
       if (bracketCount != null) {
-        StringBuilder tail = new StringBuilder();
+        final StringBuilder tail = new StringBuilder();
         for (int i = 0; i < bracketCount.intValue(); i++) {
           tail.append("[]");
         }
-        EditorModificationUtil.insertStringAtCaret(myEditor, tail.toString());
+        new WriteCommandAction(myProject) {
+          protected void run(com.intellij.openapi.application.Result result) throws Throwable {
+            EditorModificationUtil.insertStringAtCaret(myEditor, tail.toString());
+
+          }
+        }.execute();
         PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
       }
 
