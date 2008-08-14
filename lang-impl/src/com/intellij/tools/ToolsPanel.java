@@ -298,12 +298,12 @@ class ToolsPanel extends JPanel {
   private void moveNode(final Direction direction) {
     CheckedTreeNode node = getSelectedNode();
     if (node != null) {
-      if (!isMovingAvailable(node, direction)) {
+      if (isMovingAvailable(node, direction)) {
         moveNode(node, direction);
         if (node.getUserObject() instanceof Tool) {
           ToolsGroup group = (ToolsGroup)(((CheckedTreeNode)node.getParent()).getUserObject());
           Tool tool = (Tool)node.getUserObject();
-          moveElementInsideGroup(tool, group);
+          moveElementInsideGroup(tool, group, direction);
         }
         TreePath path = new TreePath(node.getPath());
         myTree.getSelectionModel().setSelectionPath(path);
@@ -313,8 +313,14 @@ class ToolsPanel extends JPanel {
     }
   }
 
-  private void moveElementInsideGroup(final Tool tool, final ToolsGroup group) {
-    group.moveElementUp(tool);
+  private void moveElementInsideGroup(final Tool tool, final ToolsGroup group, Direction dir) {
+    if (dir == Direction.UP) {
+      group.moveElementUp(tool);
+    }
+    else {
+      group.moveElementDown(tool);
+    }
+
   }
 
   private void moveNode(final CheckedTreeNode toolNode, Direction dir) {
@@ -368,11 +374,47 @@ class ToolsPanel extends JPanel {
   @Nullable
   private Tool getSelectedTool() {
     CheckedTreeNode node = getSelectedToolNode();
-    return node == null ? null : (Tool)node.getUserObject();
+    if (node == null) return null;
+    return node.getUserObject() instanceof Tool ? (Tool)node.getUserObject() : null;
+  }
+
+  @Nullable
+  private ToolsGroup getSelectedToolGroup() {
+    CheckedTreeNode node = getSelectedToolNode();
+    if (node == null) return null;
+    return node.getUserObject() instanceof ToolsGroup ? (ToolsGroup)node.getUserObject() : null;
   }
 
   private void update() {
-    //TODO update buttons
+    CheckedTreeNode node = getSelectedToolNode();
+    Tool selectedTool = getSelectedTool();
+    ToolsGroup selectedGroup = getSelectedToolGroup();
+
+    if (selectedTool != null) {
+      myAddButton.setEnabled(true);
+      myCopyButton.setEnabled(true);
+      myEditButton.setEnabled(true);
+      myMoveDownButton.setEnabled(isMovingAvailable(node, Direction.DOWN));
+      myMoveUpButton.setEnabled(isMovingAvailable(node, Direction.UP));
+      myRemoveButton.setEnabled(true);
+    }
+    else if (selectedGroup != null) {
+      myAddButton.setEnabled(true);
+      myCopyButton.setEnabled(false);
+      myEditButton.setEnabled(false);
+      myMoveDownButton.setEnabled(isMovingAvailable(node, Direction.DOWN));
+      myMoveUpButton.setEnabled(isMovingAvailable(node, Direction.UP));
+      myRemoveButton.setEnabled(true);
+
+    }
+    else {
+      myAddButton.setEnabled(true);
+      myCopyButton.setEnabled(false);
+      myEditButton.setEnabled(false);
+      myMoveDownButton.setEnabled(false);
+      myMoveUpButton.setEnabled(false);
+      myRemoveButton.setEnabled(false);
+    }
 
     (getModel()).nodeStructureChanged(null);
 
@@ -392,12 +434,17 @@ class ToolsPanel extends JPanel {
         return;
       }
       myIsModified = true;
-      Tool tool = (Tool)node.getUserObject();
-      CheckedTreeNode parentNode = (CheckedTreeNode)node.getParent();
-      ((ToolsGroup)parentNode.getUserObject()).removeElement(tool);
-      removeNodeFromParent(node);
-      if (parentNode.getChildCount() == 0) {
-        removeNodeFromParent(parentNode);
+      if (node.getUserObject() instanceof Tool) {
+        Tool tool = (Tool)node.getUserObject();
+        CheckedTreeNode parentNode = (CheckedTreeNode)node.getParent();
+        ((ToolsGroup)parentNode.getUserObject()).removeElement(tool);
+        removeNodeFromParent(node);
+        if (parentNode.getChildCount() == 0) {
+          removeNodeFromParent(parentNode);
+        }
+      }
+      else if (node.getUserObject() instanceof ToolsGroup) {
+        removeNodeFromParent(node);
       }
       update();
       myTree.requestFocus();
@@ -415,7 +462,7 @@ class ToolsPanel extends JPanel {
 
   private void editSelected() {
     CheckedTreeNode node = getSelectedToolNode();
-    if (node != null) {
+    if (node != null && node.getUserObject() instanceof Tool) {
       Tool selected = (Tool)node.getUserObject();
       if (selected != null) {
         String oldGroupName = selected.getGroup();
@@ -448,8 +495,7 @@ class ToolsPanel extends JPanel {
   private CheckedTreeNode getSelectedToolNode() {
     TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null) {
-      CheckedTreeNode node = (CheckedTreeNode)selectionPath.getLastPathComponent();
-      if (node.getUserObject() instanceof Tool) return node;
+      return (CheckedTreeNode)selectionPath.getLastPathComponent();
     }
     return null;
   }
