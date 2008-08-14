@@ -17,6 +17,8 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import com.intellij.psi.PsiElement;
 
 /**
  * @autor: ilyas
@@ -27,5 +29,8 @@ public interface GrForStatement extends GrControlStatement, GrLoopStatement {
 
   public GrStatement getBody();
 
+  public PsiElement getRParenth();
+
+  public PsiElement getLParenth();
 
 }

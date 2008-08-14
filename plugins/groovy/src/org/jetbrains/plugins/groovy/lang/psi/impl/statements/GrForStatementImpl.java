@@ -91,4 +91,11 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
     return (GrCondition) newNode.getPsi();
   }
 
+  public PsiElement getRParenth() {
+    return findChildByType(GroovyTokenTypes.mRPAREN);
+  }
+
+  public PsiElement getLParenth() {
+    return findChildByType(GroovyTokenTypes.mLPAREN);
+  }
 }

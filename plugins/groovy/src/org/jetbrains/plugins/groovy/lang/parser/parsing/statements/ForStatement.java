@@ -49,7 +49,7 @@ public class ForStatement implements GroovyElementTypes {
     ParserUtils.getToken(builder, mNLS);
     
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
-      while (!builder.eof() && !mNLS.equals(builder.getTokenType()) && !mRPAREN.equals(builder.getTokenType())){
+      while (!builder.eof() && mNLS.equals(builder.getTokenType())){
         builder.advanceLexer();
       }
       marker.done(FOR_STATEMENT);

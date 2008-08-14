@@ -1,0 +1,5 @@
+while (<caret>
+-----
+while () {
+  <caret>
+}

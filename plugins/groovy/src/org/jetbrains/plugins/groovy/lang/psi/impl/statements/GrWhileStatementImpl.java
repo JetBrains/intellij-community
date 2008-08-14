@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -44,18 +45,22 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
   }
 
   public GrCondition getCondition() {
-    GroovyPsiElement condition = findChildByClass(GrCondition.class);
-    if (condition != null) {
-      return (GrCondition) condition;
-    }
+    PsiElement lParenth = getLParenth();
+
+    if (lParenth == null) return null;
+    PsiElement afterLParen = lParenth.getNextSibling();
+
+    if (afterLParen instanceof GrCondition) return ((GrCondition) afterLParen);
+
     return null;
   }
 
   public GrStatement getBody() {
     GrStatement[] statements = findChildrenByClass(GrStatement.class);
-    if (statements.length == 2) {
-      return statements[1];
-    }
+
+    if (getCondition() == null && statements.length > 0) return statements[0];
+    else if (statements.length > 1 && (statements[1] instanceof GrStatement)) return statements[1];
+
     return null;
   }
 
@@ -76,6 +81,14 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
       throw new IncorrectOperationException();
     }
     return (GrCondition) newNode.getPsi();
+  }
+
+  public PsiElement getRParenth() {
+    return findChildByType(GroovyTokenTypes.mRPAREN);
+  }
+
+  public PsiElement getLParenth() {
+    return findChildByType(GroovyTokenTypes.mLPAREN);
   }
 
 }

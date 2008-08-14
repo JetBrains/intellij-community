@@ -1,9 +1,8 @@
 package org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor;
 
 /**

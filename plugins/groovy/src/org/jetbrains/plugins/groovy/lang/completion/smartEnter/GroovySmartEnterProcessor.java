@@ -26,10 +26,7 @@ import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -61,6 +58,9 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     fixers.add(new GrMethodCallFixer());
     fixers.add(new GrMethodBodyFixer());
     fixers.add(new GrMethodParametersFixer());
+    fixers.add(new GrWhileConditionFixer());
+    fixers.add(new GrWhileBodyFixer());
+    fixers.add(new GrForBodyFixer());
 //    fixers.add(new IfConditionFixer());
 //    fixers.add(new WhileConditionFixer());
 //    fixers.add(new CatchDeclarationFixer());
@@ -221,13 +221,18 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
       recurse = false;
     }
 
-    if (atCaret instanceof GrClosableBlock && atCaret.getParent() instanceof GrString) {
-      res.add(atCaret.getParent());
+    PsiElement parent = atCaret.getParent();
+    if (atCaret instanceof GrClosableBlock && parent instanceof GrString) {
+      res.add(parent);
     }
 
-    if (atCaret.getParent() instanceof GrArgumentList) {
-      res.add(atCaret.getParent().getParent());
+    if (parent instanceof GrArgumentList) {
+      res.add(parent.getParent());
     }
+
+    //if (parent instanceof GrWhileStatement) {
+    //  res.add(parent);
+    //}
 
     final PsiElement[] children = getChildren(atCaret);
 
@@ -262,6 +267,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
 
     GrIfStatement ifStatement = PsiTreeUtil.getParentOfType(statementAtCaret, GrIfStatement.class);
     GrForStatement forStatement = PsiTreeUtil.getParentOfType(statementAtCaret, GrForStatement.class);
+    GrWhileStatement whileStatement = PsiTreeUtil.getParentOfType(statementAtCaret, GrWhileStatement.class);
 
     if (ifStatement != null && !PsiTreeUtil.hasErrorElements(statementAtCaret)) {
       return ifStatement;
@@ -269,6 +275,10 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
 
     if (forStatement != null && !PsiTreeUtil.hasErrorElements(statementAtCaret)) {
       return forStatement;
+    }
+
+    if (whileStatement != null && !PsiTreeUtil.hasErrorElements(statementAtCaret)) {
+      return whileStatement;
     }
 
     return statementAtCaret instanceof GrStatement ||
