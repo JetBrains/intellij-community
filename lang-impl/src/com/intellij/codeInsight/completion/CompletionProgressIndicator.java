@@ -23,6 +23,8 @@ import com.intellij.util.ui.update.Update;
 
 import java.awt.*;
 import java.util.EventObject;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 /**
  * @author peter
@@ -90,7 +92,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
 
   private void registerItself() {
     if (ourCurrentCompletion != null) {
-      throw new RuntimeException("SHe's not dead yet!", ourTrace);
+      final StringWriter writer = new StringWriter();
+      ourTrace.printStackTrace(new PrintWriter(writer));
+      throw new RuntimeException("SHe's not dead yet!\nthis=" + this + "\ncurrent=" + ourCurrentCompletion + "\ntrace=" + writer.toString());
     }
     ourCurrentCompletion = this;
     ourTrace = new Throwable();
