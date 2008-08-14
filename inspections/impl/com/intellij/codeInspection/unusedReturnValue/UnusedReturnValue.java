@@ -4,16 +4,18 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author max
@@ -96,6 +98,7 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
 
   private static class MakeVoidQuickFix implements LocalQuickFix {
     private ProblemDescriptionsProcessor myProcessor;
+    private static final Logger LOG = Logger.getInstance("#" + MakeVoidQuickFix.class.getName());
 
     public MakeVoidQuickFix(final ProblemDescriptionsProcessor processor) {
       myProcessor = processor;
@@ -127,6 +130,31 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
     }
 
     private static void makeMethodVoid(Project project, PsiMethod psiMethod) {
+      final PsiCodeBlock body = psiMethod.getBody();
+      assert body != null;
+      final List<PsiReturnStatement> returnStatements = new ArrayList<PsiReturnStatement>();
+      body.accept(new JavaRecursiveElementVisitor(){
+        @Override
+        public void visitReturnStatement(final PsiReturnStatement statement) {
+          super.visitReturnStatement(statement);
+          returnStatements.add(statement);
+        }
+      });
+      final PsiStatement[] psiStatements = body.getStatements();
+      final PsiStatement lastStatement =  psiStatements[psiStatements.length - 1];
+      for (PsiReturnStatement returnStatement : returnStatements) {
+        try {
+          if (returnStatement == lastStatement) {
+            returnStatement.delete();
+          }
+          else {
+            returnStatement.replace(JavaPsiFacade.getInstance(project).getElementFactory().createStatementFromText("return;", returnStatement));
+          }
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
       PsiParameter[] params = psiMethod.getParameterList().getParameters();
       ParameterInfo[] infos = new ParameterInfo[params.length];
       for (int i = 0; i < params.length; i++) {
