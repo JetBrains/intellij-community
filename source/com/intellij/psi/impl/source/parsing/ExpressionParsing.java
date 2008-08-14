@@ -664,7 +664,9 @@ public class ExpressionParsing extends Parsing {
         element = ASTFactory.composite(REFERENCE_EXPRESSION);
       }
 
+      TreeUtil.addChildren(element, ASTFactory.composite(REFERENCE_PARAMETER_LIST));
       TreeUtil.addChildren(element, thisKeyword);
+
       return element;
     }
     else if (tokenType == SUPER_KEYWORD) {
