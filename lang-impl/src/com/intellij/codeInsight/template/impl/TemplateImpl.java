@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.options.SchemeElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 
@@ -14,7 +15,7 @@ import java.util.Set;
 /**
  *
  */
-public class TemplateImpl implements Template {
+public class TemplateImpl implements Template, SchemeElement {
   private String myKey;
   private String myString = null;
   private String myDescription;

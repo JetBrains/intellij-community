@@ -18,8 +18,9 @@ public class ExternalToolsGroup extends SimpleActionGroup {
       return;
     }
     presentation.setEnabled(true);
-    String[] groups = ToolManager.getInstance().getGroups();
-    for (String groupName : groups) {
+    ToolsGroup[] groups = ToolManager.getInstance().getGroups();
+    for (ToolsGroup group : groups) {
+      String groupName = group.getName();
       if (groupName != null && groupName.trim().length() > 0) {
         SimpleActionGroup subgroup = new SimpleActionGroup();
         subgroup.getTemplatePresentation().setText(groupName, false);

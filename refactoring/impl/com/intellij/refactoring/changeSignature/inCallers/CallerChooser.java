@@ -196,11 +196,7 @@ public abstract class CallerChooser extends DialogWrapper {
         }
       }
     };
-    Tree tree = new CheckboxTree(cellRenderer, root) {
-      protected void checkNode(CheckedTreeNode node, boolean checked) {
-        adjustParentsAndChildren(node, checked);
-      }
-    };
+    Tree tree = new CheckboxTree(cellRenderer, root);
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.getSelectionModel().setSelectionPath(new TreePath(myRoot.getPath()));
 

@@ -116,6 +116,6 @@ class FilterInfo implements JDOMExternalizable {
   }
 
   public static String convertString(String s) {
-    return ToolSettings.convertString(s);
+    return ToolManager.convertString(s);
   }
 }

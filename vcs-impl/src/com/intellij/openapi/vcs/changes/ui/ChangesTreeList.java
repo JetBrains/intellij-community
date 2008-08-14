@@ -14,10 +14,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.ListSpeedSearch;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.Icons;
@@ -246,8 +243,8 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
           while (enumeration.hasMoreElements()) {
             ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
-            final NodeState state = getNodeStatus(node);
-            if (node != root && state == NodeState.CLEAR) {
+            final CheckboxTree.NodeState state = getNodeStatus(node);
+            if (node != root && state == CheckboxTree.NodeState.CLEAR) {
               myTree.collapsePath(new TreePath(node.getPath()));
             }
           }
@@ -256,8 +253,8 @@ public abstract class ChangesTreeList<T> extends JPanel {
           int scrollRow = 0;
           while (enumeration.hasMoreElements()) {
             ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
-            final NodeState state = getNodeStatus(node);
-            if (state == NodeState.FULL && node.isLeaf()) {
+            final CheckboxTree.NodeState state = getNodeStatus(node);
+            if (state == CheckboxTree.NodeState.FULL && node.isLeaf()) {
               scrollRow = myTree.getRowForPath(new TreePath(node.getPath()));
               break;
             }
@@ -435,9 +432,9 @@ public abstract class ChangesTreeList<T> extends JPanel {
       if (myShowCheckboxes) {
         ChangesBrowserNode node = (ChangesBrowserNode)value;
 
-        NodeState state = getNodeStatus(node);
-        myCheckBox.setSelected(state != NodeState.CLEAR);
-        myCheckBox.setEnabled(state != NodeState.PARTIAL);
+        CheckboxTree.NodeState state = getNodeStatus(node);
+        myCheckBox.setSelected(state != CheckboxTree.NodeState.CLEAR);
+        myCheckBox.setEnabled(state != CheckboxTree.NodeState.PARTIAL);
         revalidate();
 
         return this;
@@ -448,11 +445,8 @@ public abstract class ChangesTreeList<T> extends JPanel {
     }
   }
 
-  private static enum NodeState {
-    FULL, CLEAR, PARTIAL
-  }
 
-  private NodeState getNodeStatus(ChangesBrowserNode node) {
+  private CheckboxTree.NodeState getNodeStatus(ChangesBrowserNode node) {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
@@ -465,9 +459,9 @@ public abstract class ChangesTreeList<T> extends JPanel {
       }
     }
 
-    if (hasIncluded && hasExcluded) return NodeState.PARTIAL;
-    if (hasIncluded) return NodeState.FULL;
-    return NodeState.CLEAR;
+    if (hasIncluded && hasExcluded) return CheckboxTree.NodeState.PARTIAL;
+    if (hasIncluded) return CheckboxTree.NodeState.FULL;
+    return CheckboxTree.NodeState.CLEAR;
   }
 
   private class MyListCellRenderer extends JPanel implements ListCellRenderer {

@@ -56,7 +56,7 @@ public class IntentionManagerImpl extends IntentionManager {
     try {
       final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
       final String[] categories = extension.getCategories();
-      final IntentionAction instance = extension.instantiate();
+      final IntentionAction instance = createIntentionActionWrapper(extension.instantiate(), categories);
       if (categories == null) {
         addAction(instance);
       }
@@ -75,14 +75,23 @@ public class IntentionManagerImpl extends IntentionManager {
     }
   }
 
+  private IntentionAction createIntentionActionWrapper(final IntentionAction intentionAction, final String[] categories) {
+    return new IntentionActionWrapper(intentionAction,categories);
+  }
+
   public void registerIntentionAndMetaData(IntentionAction action, String... category) {
     registerIntentionAndMetaData(action, category, getDescriptionDirectoryName(action));
   }
 
   @NotNull
   private static String getDescriptionDirectoryName(final IntentionAction action) {
-    final String fqn = action.getClass().getName();
-    return fqn.substring(fqn.lastIndexOf('.') + 1).replaceAll("\\$", "");
+    if (action instanceof IntentionActionWrapper) {
+      return  getDescriptionDirectoryName(((IntentionActionWrapper)action).getDelegate());
+    }
+    else {
+      final String fqn = action.getClass().getName();
+      return fqn.substring(fqn.lastIndexOf('.') + 1).replaceAll("\\$", "");
+    }
   }
 
   public void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String[] category, @NotNull @NonNls String descriptionDirectoryName) {

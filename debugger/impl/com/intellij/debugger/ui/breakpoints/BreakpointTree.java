@@ -411,30 +411,8 @@ public class BreakpointTree extends CheckboxTree {
     }
   }
 
-  protected void checkNode(final CheckedTreeNode node, final boolean checked) {
-    TreeUtil.traverseDepth(node, new TreeUtil.Traverse() {
-      public boolean accept(Object _node) {
-        CheckedTreeNode node = (CheckedTreeNode)_node;
-        doCheckNode(node, checked);
-        return true;
-      }
-    });
-    boolean parentChecked = checked;
-    for (CheckedTreeNode parent = (CheckedTreeNode)node.getParent(); parent != null; parent = (CheckedTreeNode)parent.getParent()) {
-      if (!parentChecked) {
-        final int childCount = parent.getChildCount();
-        for (int idx = 0; idx < childCount && !parentChecked; idx++) {
-          parentChecked = ((CheckedTreeNode)parent.getChildAt(idx)).isChecked();
-        }
-      }
-      if (parentChecked == parent.isChecked()) {
-        break;
-      }
-      doCheckNode(parent, parentChecked);
-    }
-  }
-
-  private void doCheckNode(CheckedTreeNode node, boolean parentChecked) {
+  @Override
+  protected void onNodeStateChanged(final CheckedTreeNode node) {
     final Object descriptor = node.getUserObject();
     final Breakpoint breakpoint;
     if (descriptor instanceof BreakpointDescriptor) {
@@ -447,11 +425,10 @@ public class BreakpointTree extends CheckboxTree {
       breakpoint = null;
     }
 
-    super.checkNode(node, parentChecked);
-
     if (breakpoint != null) {
       myBreakpointManager.setBreakpointEnabled(breakpoint, node.isChecked());
     }
+
   }
 
   public void addBreakpoint(final Breakpoint breakpoint) {
@@ -600,19 +577,10 @@ public class BreakpointTree extends CheckboxTree {
     CheckedTreeNode parentNode = myDescriptorToNodeMap.get(parentDescriptor);
     try {
       if (parentNode != null) {
-        final boolean parentChecked = parentNode.isChecked() || childNode.isChecked();
-        final boolean checkedValueChanged = parentNode.isChecked() != parentChecked;
-        parentNode.setChecked(parentChecked);
         parentNode.add(childNode);
-        if (checkedValueChanged && parentChecked) {
-          for (CheckedTreeNode parent = (CheckedTreeNode)parentNode.getParent(); parent != null; parent = (CheckedTreeNode)parent.getParent()) {
-            parent.setChecked(true);
-          }
-        }
         return null;  // added to already existing, so stop iteration over appenders
       }
       parentNode = createNode(parentDescriptor);
-      parentNode.setChecked(childNode.isChecked());
       parentNode.add(childNode);
       return parentNode;
     }

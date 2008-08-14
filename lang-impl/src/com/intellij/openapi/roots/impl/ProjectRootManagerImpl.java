@@ -46,6 +46,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -150,12 +152,23 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       if (myIsRootsChangedOnDemandStartedButNotDemanded) {
         myIsRootsChangedOnDemandStartedButNotDemanded = false;
         myRootsChangeCounter++; // blocks all firing until finishRootsChangedOnDemand
+        putRootsChangedStachTrace();
       }
       myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, filetypes));
     }
 
     myRootsChangeCounter++;
+    putRootsChangedStachTrace();
+  }
 
+  private final Stack<String> myRootsChangedEvents = new Stack<String>();
+
+  private void putRootsChangedStachTrace() {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    PrintStream stream = new PrintStream(out);
+    new RuntimeException().printStackTrace(stream);
+    stream.close();
+    myRootsChangedEvents.push(new String(out.toByteArray()));
   }
 
   public ProjectRootManagerImpl(Project project, FileTypeManager fileTypeManager, DirectoryIndex directoryIndex, StartupManager startupManager) {
@@ -417,7 +430,16 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
       else {
         if (myRootsChangeCounter != 1) {
-          LOG.assertTrue(false, "myRootsChangedCounter = " + myRootsChangeCounter);
+          String message = "myRootsChangedCounter = " + myRootsChangeCounter;
+          if (myRootsChangeCounter > 1) {
+            for (String rootsChangedEvent : myRootsChangedEvents) {
+              message += "\n" + rootsChangedEvent + "\n";                            
+            }
+            LOG.assertTrue(false, message);
+          }
+          else {
+            LOG.assertTrue(false, "myRootsChangedCounter = " + myRootsChangeCounter);
+          }
         }
         myIsRootsChangedOnDemandStartedButNotDemanded = false;
         rootsChanged(false);
@@ -459,6 +481,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myRootsChangeCounter--;
+    popRootsChangedStachTrace();
     if (myRootsChangeCounter > 0) return;
 
     clearScopesCaches();
@@ -470,6 +493,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     doSynchronize();
 
     addRootsToWatch();
+  }
+
+  private void popRootsChangedStachTrace() {
+    myRootsChangedEvents.pop();
   }
 
   public Project getProject() {

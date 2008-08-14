@@ -66,6 +66,10 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
         public boolean isExportAvailable() {
           return false;
         }
+
+        public File getRootDirectory() {
+          return null;
+        }
       };
     }
   }

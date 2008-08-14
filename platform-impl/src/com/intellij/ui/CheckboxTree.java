@@ -22,6 +22,12 @@ public class CheckboxTree extends CheckboxTreeBase {
     super(cellRenderer, root);
 
     TreeToolTipHandler.install(this);
+    installSpeedSearch();    
+  }
+  public CheckboxTree(final CheckboxTreeCellRenderer cellRenderer, CheckedTreeNode root, final CheckPolicy checkPolicy) {
+    super(cellRenderer, root, checkPolicy);
+
+    TreeToolTipHandler.install(this);
     installSpeedSearch();
   }
 
@@ -33,4 +39,6 @@ public class CheckboxTree extends CheckboxTreeBase {
   protected boolean isToggleEvent(KeyEvent e) {
     return super.isToggleEvent(e) &&  !SpeedSearchBase.hasActiveSpeedSearch(this);
   }
+
+
 }

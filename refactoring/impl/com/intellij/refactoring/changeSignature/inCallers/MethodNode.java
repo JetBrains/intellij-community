@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -74,7 +73,6 @@ public class MethodNode extends CheckedTreeNode {
     final List<PsiMethod> callers = new ArrayList<PsiMethod>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        final PsiSearchHelper searchHelper = PsiManager.getInstance(project).getSearchHelper();
         final PsiReference[] refs =
           MethodReferencesSearch.search(myMethod, GlobalSearchScope.allScope(project), true).toArray(PsiReference.EMPTY_ARRAY);
         for (PsiReference ref : refs) {

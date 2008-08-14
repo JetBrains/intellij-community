@@ -2,24 +2,25 @@ package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunnerRegistry;
-import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 
-public class Tool {
+public class Tool implements SchemeElement {
   @NonNls public final static String ACTION_ID_PREFIX = "Tool_";
 
   private String myName;
@@ -291,4 +292,17 @@ public class Tool {
     return commandLine;
   }
 
+  public void setGroupName(final String name) {
+    setGroup(name);
+  }
+
+  public String getKey() {
+    return getName();
+  }
+
+  public SchemeElement copy() {
+    Tool copy = new Tool();
+    copy.copyFrom(this);
+    return copy;
+  }
 }

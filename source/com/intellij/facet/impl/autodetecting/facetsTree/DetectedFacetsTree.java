@@ -46,10 +46,6 @@ public class DetectedFacetsTree extends CheckboxTreeBase {
     return root;
   }
 
-  protected void checkNode(final CheckedTreeNode node, final boolean checked) {
-    adjustParentsAndChildren(node, checked);
-  }
-
   @Nullable
   public CheckedTreeNode getSelectedNode() {
     TreePath path = getSelectionPath();

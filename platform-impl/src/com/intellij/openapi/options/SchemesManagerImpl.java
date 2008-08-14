@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -138,6 +139,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myBaseDir);
         result.setResult(dir);
         if (dir != null) {
+          ((NewVirtualFile)dir).markDirtyRecursively();
           dir.refresh(false, false);
         }
       }
@@ -716,6 +718,13 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private void doSave() throws WriteExternalException {
     Collection<T> schemes = getAllSchemes();
     myBaseDir.mkdirs();
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ((NewVirtualFile)myVFSBaseDir).markDirtyRecursively();
+        myVFSBaseDir.refresh(false, true);
+      }
+    });
 
 
     UniqueFileNamesProvider fileNameProvider = new UniqueFileNamesProvider();

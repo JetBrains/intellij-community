@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.io.File;
 
 public interface SchemesManager <T extends Scheme, E extends ExternalizableScheme>{
   SchemesManager EMPTY = new SchemesManager(){
@@ -69,6 +70,10 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
     public Collection loadScharedSchemes(final Collection currentSchemeList) {
       return loadScharedSchemes();
     }
+
+    public File getRootDirectory() {
+      return null;
+    }
   };
 
   Collection<E> loadSchemes();
@@ -104,4 +109,6 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
   void removeScheme(final T scheme);
 
   Collection<String> getAllSchemeNames();
+
+  File getRootDirectory();
 }

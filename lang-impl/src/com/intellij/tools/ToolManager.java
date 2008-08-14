@@ -4,33 +4,45 @@ package com.intellij.tools;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
 
 public class ToolManager implements ExportableApplicationComponent {
-  private final ArrayList<Tool> myTools = new ArrayList<Tool>();
+
+  
   private ActionManagerEx myActionManager;
+  private final SchemesManager<ToolsGroup,ToolsGroup> mySchemesManager;
 
   public static ToolManager getInstance() {
     return ApplicationManager.getApplication().getComponent(ToolManager.class);
   }
 
-  public ToolManager(ActionManagerEx actionManagerEx) {
+  public ToolManager(ActionManagerEx actionManagerEx, SchemesManagerFactory factory) {
     myActionManager = actionManagerEx;
 
-    Tool[] tools = new ToolSettings().loadTools();
-    setTools(tools);
+    mySchemesManager = factory.createSchemesManager(
+        "$ROOT_CONFIG$/tools", new ToolsProcessor(), RoamingType.PER_USER);
+
+    mySchemesManager.loadSchemes();
+    registerActions();
+  }
+
+  @Nullable
+  public static String convertString(String s) {
+    if (s != null && s.trim().length() == 0) return null;
+    return s;
   }
 
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{ToolSettings.getToolDirectory()};
+    return new File[]{mySchemesManager.getRootDirectory()};
   }
 
   @NotNull
@@ -44,16 +56,18 @@ public class ToolManager implements ExportableApplicationComponent {
   public void initComponent() { }
 
   public Tool[] getTools() {
-    return myTools.toArray(new Tool[myTools.size()]);
+    ArrayList<Tool> result = new ArrayList<Tool>();
+    for (ToolsGroup group : mySchemesManager.getAllSchemes()) {
+      result.addAll(group.getElements());
+    }
+    return result.toArray(new Tool[result.size()]);
   }
 
   public Tool[] getTools(String group) {
     ArrayList<Tool> list = new ArrayList<Tool>();
-    for (Iterator<Tool> iterator = myTools.iterator(); iterator.hasNext();) {
-      Tool tool = iterator.next();
-      if (Comparing.equal(group, tool.getGroup())) {
-        list.add(tool);
-      }
+    ToolsGroup groupByName = mySchemesManager.findSchemeByName(group);
+    if (groupByName != null) {
+      list.addAll(groupByName.getElements());
     }
     return list.toArray(new Tool[list.size()]);
   }
@@ -73,8 +87,7 @@ public class ToolManager implements ExportableApplicationComponent {
   }
 
   public String getGroupByActionId(String actionId) {
-    for (Iterator<Tool> iterator = myTools.iterator(); iterator.hasNext();) {
-      Tool tool = iterator.next();
+    for (Tool tool : getTools()) {
       if (Comparing.equal(actionId, tool.getActionId())) {
         return tool.getGroup();
       }
@@ -82,22 +95,19 @@ public class ToolManager implements ExportableApplicationComponent {
     return null;
   }
 
-  public String[] getGroups() {
-    return getGroups(myTools.toArray(new Tool[myTools.size()]));
+  public ToolsGroup[] getGroups() {
+    Collection<ToolsGroup> groups = mySchemesManager.getAllSchemes();
+    return groups.toArray(new ToolsGroup[groups.size()]);
   }
 
-  public void setTools(Tool[] tools) {
-    myTools.clear();
-    for (int i = 0; i < tools.length; i++) {
-      Tool tool = tools[i];
-      myTools.add(tool);
+  public void setTools(ToolsGroup[] tools) {
+    mySchemesManager.clearAllSchemes();
+    for (ToolsGroup newGroup : tools) {
+      mySchemesManager.addNewScheme(newGroup, true);
     }
     registerActions();
   }
 
-  void writeTools() throws IOException{
-    new ToolSettings().saveTools(getTools());
-  }
 
   void registerActions() {
     unregisterActions();

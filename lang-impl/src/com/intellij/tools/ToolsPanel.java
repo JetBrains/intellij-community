@@ -2,55 +2,86 @@ package com.intellij.tools;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TableUtil;
-import com.intellij.util.ui.ItemRemovable;
-import com.intellij.util.ui.Table;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.ui.*;
+import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 
 class ToolsPanel extends JPanel {
-  private final MyModel myModel;
-  private final JTable myTable;
+  static enum Direction {
+    UP {
+      @Override
+      public boolean isAvailable(final int index, final int childCount) {
+        return index != 0;
+      }
+      public int newIndex(final int index) {
+        return index - 1;
+      }
+    }, DOWN{
+    @Override
+    public boolean isAvailable(final int index, final int childCount) {
+      return index < childCount - 1;
+    }
+    public int newIndex(final int index) {
+      return index + 1;
+    }
+  };
+
+    public abstract boolean isAvailable(final int index, final int childCount);
+
+    public abstract int newIndex(final int index);
+  }
+
+  private final CheckboxTree myTree;
+
   private final JButton myAddButton = new JButton(ToolsBundle.message("tools.add.button"));
   private final JButton myCopyButton = new JButton(ToolsBundle.message("tools.copy.button"));
   private final JButton myEditButton = new JButton(ToolsBundle.message("tools.edit.button"));
   private final JButton myMoveUpButton = new JButton(ToolsBundle.message("tools.move.up.button"));
   private final JButton myMoveDownButton = new JButton(ToolsBundle.message("tools.move.down.button"));
   private final JButton myRemoveButton = new JButton(ToolsBundle.message("tools.remove.button"));
+  private boolean myIsModified = false;
 
   ToolsPanel() {
-    myModel = new MyModel();
-    myTable = new Table(myModel);
 
-    myTable.setShowGrid(false);
-    myTable.setIntercellSpacing(new Dimension(0, 0));
-    myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-    myTable.setColumnSelectionAllowed(false);
-    myTable.setPreferredScrollableViewportSize(new Dimension(400, 300));
-    JScrollPane tableScrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    myTree = new CheckboxTree(
+        new CheckboxTree.CheckboxTreeCellRenderer(){
+          public void customizeCellRenderer(final JTree tree,
+                                            final Object value,
+                                            final boolean selected,
+                                            final boolean expanded,
+                                            final boolean leaf,
+                                            final int row,
+                                            final boolean hasFocus) {
+            Object object = ((CheckedTreeNode)value).getUserObject();
+            if (object instanceof ToolsGroup) {
+              getTextRenderer().append(((ToolsGroup)object).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+            }
+            else if (object instanceof Tool) {
+              getTextRenderer().append(((Tool)object).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+            }
+          }
+        },
+        new CheckedTreeNode(null)){
+      @Override
+      protected void onDoubleClick(final CheckedTreeNode node) {
+        editSelected();
+      }
+    };
 
-    int width = new JCheckBox().getPreferredSize().width;
-    TableColumnModel columnModel = myTable.getColumnModel();
-    TableColumn column = columnModel.getColumn(0);
-    column.setPreferredWidth(width);
-    column.setMaxWidth(width);
+    myTree.setRootVisible(false);
 
-    DefaultTableCellRenderer renderer = new MyTableCellRenderer();
-    columnModel.getColumn(1).setCellRenderer(renderer);
-    columnModel.getColumn(2).setCellRenderer(renderer);
-    columnModel.getColumn(3).setCellRenderer(renderer);
+    JScrollPane tableScrollPane = ScrollPaneFactory.createScrollPane(myTree);
+
 
     setLayout(new GridBagLayout());
     GridBagConstraints constr;
@@ -73,7 +104,10 @@ class ToolsPanel extends JPanel {
     constr.fill = GridBagConstraints.BOTH;
     constr.anchor = GridBagConstraints.WEST;
     add(tableScrollPane, constr);
-    myTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+    myTree.setSelectionModel(new DefaultTreeSelectionModel());
+    myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+
 
     // right side buttons
     constr = new GridBagConstraints();
@@ -116,87 +150,76 @@ class ToolsPanel extends JPanel {
   }
 
   void reset() {
-    Tool[] tools = ToolManager.getInstance().getTools();
-    while (myModel.getRowCount() > 0) {
-      myModel.removeRow(0);
+    ToolsGroup[] groups = ToolManager.getInstance().getGroups();
+
+    for (ToolsGroup group : groups) {
+      insertNewGroup((ToolsGroup)group.copy());
     }
-    for (int i = 0; i < tools.length; i++) {
-      Tool tool = tools[i];
-      Tool toolCopy = new Tool();
-      toolCopy.copyFrom(tool);
-      addRow(new ToolWrapper(toolCopy));
-    }
-    if (myModel.getRowCount() > 0) {
-      myTable.setRowSelectionInterval(0, 0);
+    
+    if ((getTreeRoot()).getChildCount() > 0) {
+      myTree.setSelectionInterval(0, 0);
     }
     else {
-      myTable.getSelectionModel().clearSelection();
+      myTree.getSelectionModel().clearSelection();
     }
+    (getModel()).nodeStructureChanged(null);
+
+    TreeUtil.expand(myTree, 5);
+
+    myIsModified = false;
+
     update();
   }
 
-  private void addRow(ToolWrapper toolWrapper) {
-    myModel.addRow(new Object[]{toolWrapper.getTool().isEnabled() ? Boolean.TRUE : Boolean.FALSE, toolWrapper});
+  private CheckedTreeNode insertNewGroup(final ToolsGroup groupCopy) {
+    CheckedTreeNode root = getTreeRoot();
+    CheckedTreeNode groupNode = new CheckedTreeNode(groupCopy);
+    root.add(groupNode);
+    for (Tool tool : groupCopy.getElements()) {
+      insertNewTool(groupNode, tool);
+    }
+
+    return groupNode;
+  }
+
+  private CheckedTreeNode insertNewTool(final CheckedTreeNode groupNode, final Tool toolCopy) {
+    CheckedTreeNode toolNode = new CheckedTreeNode(toolCopy);
+    ((ToolsGroup)groupNode.getUserObject()).addElement(toolCopy);
+    groupNode.add(toolNode);
+    nodeWasInserted(toolNode);
+    return toolNode;
+  }
+
+  private CheckedTreeNode getTreeRoot() {
+    return (CheckedTreeNode)myTree.getModel().getRoot();
   }
 
   void apply() throws IOException{
     // unregister removed tools
     ToolManager toolManager = ToolManager.getInstance();
 
-    for (int i = 0; i < myModel.getRowCount(); i++) {
-      ToolWrapper wrapper = myModel.getToolWrapper(i);
-      wrapper.commit();
+    toolManager.setTools(getGroupList());
+    myIsModified = false;
+  }
+
+  private ToolsGroup[] getGroupList() {
+    ArrayList<ToolsGroup> result = new ArrayList<ToolsGroup>();
+    MutableTreeNode root = (MutableTreeNode)myTree.getModel().getRoot();
+    for (int i = 0; i < root.getChildCount(); i++) {
+      result.add((ToolsGroup)((CheckedTreeNode)root.getChildAt(i)).getUserObject());
     }
-    toolManager.setTools(getTools());
-    toolManager.writeTools();
+
+    return result.toArray(new ToolsGroup[result.size()]);
   }
 
   boolean isModified() {
-    Tool[] tools = new Tool[myModel.getRowCount()];
-    for (int i = 0; i < myModel.getRowCount(); i++) {
-      ToolWrapper wrapper = myModel.getToolWrapper(i);
-      tools[i] = wrapper.getTool();
-    }
-    return !Arrays.equals(ToolManager.getInstance().getTools(), tools);
-  }
-
-  /**
-   * Tool info shown in list
-   */
-  private static class ToolWrapper {
-    private Tool myTool;
-
-    public ToolWrapper(Tool tool) {
-      myTool = tool;
-    }
-
-    public String toString() {
-      return myTool.getName();
-    }
-
-    public Tool getTool() {
-      return myTool;
-    }
-
-    public void commit() {
-      Tool newTool = new Tool();
-      newTool.copyFrom(myTool);
-      myTool = newTool;
-    }
+    return myIsModified;
   }
 
   private void addListeners() {
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
+    myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      public void valueChanged(TreeSelectionEvent e) {
         update();
-      }
-    });
-
-    myTable.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 && myTable.columnAtPoint(e.getPoint()) != 0) {
-          editSelected();
-        }
       }
     });
 
@@ -211,37 +234,31 @@ class ToolsPanel extends JPanel {
         tool.setShownInProjectViews(true);
         tool.setShownInSearchResultsPopup(true);
         tool.setEnabled(true);
-        dlg.setData(tool, ToolManager.getInstance().getGroups(getTools()));
+        dlg.setData(tool, getGroups());
         dlg.show();
         if (dlg.isOK()) {
-          addRow(new ToolWrapper(dlg.getData()));
-          int lastIndex = myModel.getRowCount()-1;
-          myTable.setRowSelectionInterval(lastIndex, lastIndex);
+          insertNewTool(dlg.getData(), true);
         }
-        myTable.requestFocus();
+        myTree.requestFocus();
       }
     });
 
     myCopyButton.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          int index = myTable.getSelectionModel().getMinSelectionIndex();
-          if (index == -1 || myTable.getSelectionModel().getMaxSelectionIndex() != index) return;
+          Tool originalTool = getSelectedTool();
 
-          ToolWrapper toolWrapper = myModel.getToolWrapper(index);
-          Tool originalTool = toolWrapper.getTool();
-
-          ToolEditorDialog dlg = new ToolEditorDialog(ToolsPanel.this);
-          Tool toolCopy = new Tool();
-          toolCopy.copyFrom(originalTool);
-          dlg.setData(toolCopy, ToolManager.getInstance().getGroups(getTools()));
-          dlg.show();
-          if (dlg.isOK()) {
-            addRow(new ToolWrapper(dlg.getData()));
-            int lastIndex = myModel.getRowCount()-1;
-            myTable.getSelectionModel().setSelectionInterval(lastIndex, lastIndex);
+          if (originalTool != null) {
+            ToolEditorDialog dlg = new ToolEditorDialog(ToolsPanel.this);
+            Tool toolCopy = new Tool();
+            toolCopy.copyFrom(originalTool);
+            dlg.setData(toolCopy, getGroups());
+            dlg.show();
+            if (dlg.isOK()) {
+              insertNewTool(dlg.getData(), true);
+            }
+            myTree.requestFocus();
           }
-          myTable.requestFocus();
         }
       }
     );
@@ -249,7 +266,7 @@ class ToolsPanel extends JPanel {
     myEditButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         editSelected();
-        myTable.requestFocus();
+        myTree.requestFocus();
       }
     });
 
@@ -259,182 +276,198 @@ class ToolsPanel extends JPanel {
       }
     });
 
+
     myMoveUpButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myModel.setSynchronize(false);
-        TableUtil.moveSelectedItemsUp(myTable);
-        myModel.setSynchronize(true);
-        myTable.requestFocus();
+        moveNode(Direction.UP);
+        myIsModified = true;
       }
     });
 
     myMoveDownButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myModel.setSynchronize(false);
-        TableUtil.moveSelectedItemsDown(myTable);
-        myModel.setSynchronize(true);
-        myTable.requestFocus();
+        moveNode(Direction.DOWN);
+        myIsModified = true;
       }
     });
 
 
-    InputMap inputMap = myTable.getInputMap();
-    @NonNls Object o = inputMap.get(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
-    if (o == null) {
-      o = "enable_disable";
-      inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), o);
-    }
-    myTable.getActionMap().put(o, new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        if (myTable.isEditing()) return;
-        ListSelectionModel selectionModel = myTable.getSelectionModel();
-        for (int i = 0; i < myModel.getRowCount(); i++) {
-          if (selectionModel.isSelectedIndex(i)) {
-            Boolean aValue = (Boolean)myModel.getValueAt(i, 0);
-            myModel.setValueAt(aValue.booleanValue() ? Boolean.FALSE : Boolean.TRUE, i, 0);
-          }
+    //TODO check edit and delete
+  }
+
+  private void moveNode(final Direction direction) {
+    CheckedTreeNode node = getSelectedNode();
+    if (node != null) {
+      if (!isMovingAvailable(node, direction)) {
+        moveNode(node, direction);
+        if (node.getUserObject() instanceof Tool) {
+          ToolsGroup group = (ToolsGroup)(((CheckedTreeNode)node.getParent()).getUserObject());
+          Tool tool = (Tool)node.getUserObject();
+          moveElementInsideGroup(tool, group);
         }
+        TreePath path = new TreePath(node.getPath());
+        myTree.getSelectionModel().setSelectionPath(path);
+        myTree.expandPath(path);
+        myTree.requestFocus();
       }
-    });
-
-    o = inputMap.get(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));
-    if (o == null) {
-      o = "edit_selected";
-      inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), o);
     }
-    myTable.getActionMap().put(o, new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        editSelected();
-      }
-    });
+  }
 
-    o = inputMap.get(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
-    if (o == null) {
-      o = "remove_selected";
-      inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), o);
+  private void moveElementInsideGroup(final Tool tool, final ToolsGroup group) {
+    group.moveElementUp(tool);
+  }
+
+  private void moveNode(final CheckedTreeNode toolNode, Direction dir) {
+    CheckedTreeNode parentNode = (CheckedTreeNode)toolNode.getParent();
+    int index = parentNode.getIndex(toolNode);
+    removeNodeFromParent(toolNode);
+    int newIndex = dir.newIndex(index);
+    parentNode.insert(toolNode, newIndex);
+    getModel().nodesWereInserted(parentNode, new int[]{newIndex});
+  }
+
+  private boolean isMovingAvailable(final CheckedTreeNode toolNode, Direction dir) {
+    TreeNode parent = toolNode.getParent();
+    int index = parent.getIndex(toolNode);
+    return dir.isAvailable(index, parent.getChildCount());
+  }
+
+  private void insertNewTool(final Tool newTool, boolean setSelection) {
+    CheckedTreeNode groupNode = findGroupNode(newTool.getGroup());
+    if (groupNode == null) {
+      groupNode = insertNewGroup(new ToolsGroup(newTool.getGroup()));
+      nodeWasInserted(groupNode);
     }
-    myTable.getActionMap().put(o, new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        removeSelected();
-      }
-    });
+    CheckedTreeNode tool = insertNewTool(groupNode, newTool);
+    if (setSelection) {
+      TreePath treePath = new TreePath(tool.getPath());
+      myTree.expandPath(treePath);
+      myTree.getSelectionModel().setSelectionPath(treePath);
+    }
+    myIsModified = true;
+  }
+
+  private void nodeWasInserted(final CheckedTreeNode groupNode) {
+    (getModel()).nodesWereInserted(groupNode.getParent(), new int[]{groupNode.getParent().getChildCount() - 1});
+  }
+
+  private DefaultTreeModel getModel() {
+    return (DefaultTreeModel)myTree.getModel();
+  }
+
+  private CheckedTreeNode findGroupNode(final String group) {
+    for (int i = 0; i < getTreeRoot().getChildCount(); i++) {
+      CheckedTreeNode node = (CheckedTreeNode)getTreeRoot().getChildAt(i);
+      ToolsGroup g = (ToolsGroup)node.getUserObject();
+      if (group.equals(g.getName())) return node;
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private Tool getSelectedTool() {
+    CheckedTreeNode node = getSelectedToolNode();
+    return node == null ? null : (Tool)node.getUserObject();
   }
 
   private void update() {
-    int minSelectionIndex = myTable.getSelectionModel().getMinSelectionIndex();
-    int maxSelectionIndex = myTable.getSelectionModel().getMaxSelectionIndex();
+    //TODO update buttons
 
-    // enable buttons
-    myRemoveButton.setEnabled(minSelectionIndex != -1);
-    myMoveUpButton.setEnabled(minSelectionIndex > 0);
-    myMoveDownButton.setEnabled(maxSelectionIndex != -1 && maxSelectionIndex < myModel.getRowCount()-1);
-    boolean selectedOne = minSelectionIndex != -1 && minSelectionIndex == maxSelectionIndex;
-    myCopyButton.setEnabled(selectedOne);
-    myEditButton.setEnabled(selectedOne);
+    (getModel()).nodeStructureChanged(null);
 
-    myTable.repaint();
-  }
-
-  private Tool[] getTools() {
-    Tool[] tools = new Tool[myModel.getRowCount()];
-    for (int i = 0; i < tools.length; i++) {
-      tools[i] = myModel.getToolWrapper(i).getTool();
-    }
-    return tools;
+    myTree.repaint();
   }
 
   private void removeSelected() {
-    int result = Messages.showYesNoDialog(
-      this,
-      ToolsBundle.message("tools.delete.confirmation"),
-      CommonBundle.getWarningTitle(),
-      Messages.getWarningIcon()
-    );
-    if (result != 0) {
-      return;
+    CheckedTreeNode node = getSelectedToolNode();
+    if (node != null) {
+      int result = Messages.showYesNoDialog(
+        this,
+        ToolsBundle.message("tools.delete.confirmation"),
+        CommonBundle.getWarningTitle(),
+        Messages.getWarningIcon()
+      );
+      if (result != 0) {
+        return;
+      }
+      myIsModified = true;
+      Tool tool = (Tool)node.getUserObject();
+      CheckedTreeNode parentNode = (CheckedTreeNode)node.getParent();
+      ((ToolsGroup)parentNode.getUserObject()).removeElement(tool);
+      removeNodeFromParent(node);
+      if (parentNode.getChildCount() == 0) {
+        removeNodeFromParent(parentNode);
+      }
+      update();
+      myTree.requestFocus();
     }
-    TableUtil.removeSelectedItems(myTable);
-    update();
-    myTable.requestFocus();
   }
+
+  private void removeNodeFromParent(DefaultMutableTreeNode node) {
+    TreeNode parent = node.getParent();
+    int idx = parent.getIndex(node);
+    node.removeFromParent();
+
+    (getModel()).nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{node});
+  }
+
 
   private void editSelected() {
-    int index = myTable.getSelectionModel().getMinSelectionIndex();
-    if (index == -1 || index != myTable.getSelectionModel().getMaxSelectionIndex()) return;
-    ToolWrapper toolWrapper = myModel.getToolWrapper(index);
-    if (toolWrapper != null) {
-      ToolEditorDialog dlg = new ToolEditorDialog(this);
-      dlg.setData(toolWrapper.getTool(), ToolManager.getInstance().getGroups(getTools()));
-      dlg.show();
-      if (dlg.isOK()) {
-        toolWrapper.getTool().copyFrom(dlg.getData());
-        update();
-      }
-    }
-  }
+    CheckedTreeNode node = getSelectedToolNode();
+    if (node != null) {
+      Tool selected = (Tool)node.getUserObject();
+      if (selected != null) {
+        String oldGroupName = selected.getGroup();
+        ToolEditorDialog dlg = new ToolEditorDialog(this);
+        dlg.setData(selected, getGroups());
+        dlg.show();
+        if (dlg.isOK()) {
+          selected.copyFrom(dlg.getData());
+          String newGroupName = selected.getGroup();
+          if (!oldGroupName.equals(newGroupName)) {
+            CheckedTreeNode oldGroupNode = (CheckedTreeNode)node.getParent();
+            removeNodeFromParent(node);
+            ((ToolsGroup)oldGroupNode.getUserObject()).removeElement(selected);
+            if (oldGroupNode.getChildCount() == 0) {
+              removeNodeFromParent(oldGroupNode);
+            }
 
-  class MyModel extends DefaultTableModel implements ItemRemovable {
-    private boolean myDoSynchronize = true;
-
-    public MyModel() {
-      super(new Object[0][], new Object[]{" ",
-        ToolsBundle.message("tools.name.column"),
-        ToolsBundle.message("tools.group.column"),
-        ToolsBundle.message("tools.description.column")
-      });
-    }
-
-    public Class getColumnClass(int columnIndex) {
-      if (columnIndex == 0) return Boolean.class;
-      return super.getColumnClass(columnIndex);
-    }
-
-    public boolean isCellEditable(int row, int column) {
-      return column == 0;
-    }
-
-    public void setValueAt(Object aValue, int row, int column) {
-      if (myDoSynchronize) {
-        if (column == 0) {
-          getToolWrapper(row).getTool().setEnabled(((Boolean)aValue).booleanValue());
+            insertNewTool(selected, true);
+          }
+          else {
+            (getModel()).nodeChanged(node);
+          }
+          myIsModified = true;
+          update();
         }
       }
-      super.setValueAt(aValue, row, column);
-      myTable.repaint();
-    }
-
-    public Object getValueAt(int row, int column) {
-      switch (column) {
-        case 2:
-          return getToolWrapper(row).getTool().getGroup();
-        case 3:
-          return getToolWrapper(row).getTool().getDescription();
-        default:
-          return super.getValueAt(row, column);
-      }
-    }
-
-    public ToolWrapper getToolWrapper(int row) {
-      return (ToolWrapper)getValueAt(row, 1);
-    }
-
-    public void setSynchronize(boolean flag) {
-      myDoSynchronize = flag;
     }
   }
 
-  private final class MyTableCellRenderer extends DefaultTableCellRenderer{
-    public Component getTableCellRendererComponent(
-      JTable table,
-      Object value,
-      boolean isSelected,
-      boolean hasFocus,
-      int row,
-      int column
-    ) {
-      super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      setEnabled(myModel.getToolWrapper(row).getTool().isEnabled());
-      return this;
+  private CheckedTreeNode getSelectedToolNode() {
+    TreePath selectionPath = myTree.getSelectionPath();
+    if (selectionPath != null) {
+      CheckedTreeNode node = (CheckedTreeNode)selectionPath.getLastPathComponent();
+      if (node.getUserObject() instanceof Tool) return node;
     }
+    return null;
+  }
+
+  private CheckedTreeNode getSelectedNode() {
+    TreePath selectionPath = myTree.getSelectionPath();
+    if (selectionPath != null) {
+      return (CheckedTreeNode)selectionPath.getLastPathComponent();
+    }
+    return null;
+  }
+
+  private String[] getGroups() {
+    ArrayList<String> result = new ArrayList<String>();
+    ToolsGroup[] groups = getGroupList();
+    for (ToolsGroup group : groups) {
+      result.add(group.getName());
+    }
+    return result.toArray(new String[result.size()]);
   }
 }

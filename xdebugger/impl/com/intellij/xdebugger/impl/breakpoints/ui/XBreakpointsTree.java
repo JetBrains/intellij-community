@@ -56,9 +56,6 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
       BreakpointNode<B> node = new BreakpointNode<B>(breakpoint);
       CheckedTreeNode parent = getParentNode(breakpoint);
       parent.add(node);
-      if (node.isChecked()) {
-        checkParents(node);
-      }
       myNodes.put(breakpoint, node);
     }
     TreeUtil.sort(myRoot, myComparator);
@@ -66,14 +63,6 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
     expandPath(new TreePath(myRoot));
   }
 
-
-  private static void checkParents(final CheckedTreeNode node) {
-    CheckedTreeNode parent = (CheckedTreeNode)node.getParent();
-    while (parent != null) {
-      parent.setChecked(true);
-      parent = (CheckedTreeNode)parent.getParent();
-    }
-  }
 
   @NotNull
   private CheckedTreeNode getParentNode(final B breakpoint) {
@@ -123,26 +112,6 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
     if (selectedBreakpoints.size() > 0) {
       selectBreakpoint(selectedBreakpoints.get(0));
     }
-  }
-
-  protected void checkNode(final CheckedTreeNode node, final boolean checked) {
-    if (node instanceof BreakpointNode) {
-      ((BreakpointNode)node).getBreakpoint().setEnabled(checked);
-    }
-    else if (node instanceof BreakpointsGroupNode) {
-      TreeUtil.traverseDepth(node, new TreeUtil.Traverse() {
-        public boolean accept(final Object node) {
-          ((CheckedTreeNode)node).setChecked(checked);
-          if (node instanceof BreakpointNode) {
-            ((BreakpointNode)node).getBreakpoint().setEnabled(checked);
-          }
-          return true;
-        }
-      });
-    }
-    node.setChecked(checked);
-    adjustParents(node, checked);
-    repaint();
   }
 
   public List<B> getSelectedBreakpoints() {

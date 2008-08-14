@@ -541,7 +541,7 @@ public class EditTemplateDialog extends DialogWrapper {
     }
 
     for (TemplateGroup templateGroup : myTemplateGroups) {
-      for (TemplateImpl template : templateGroup.getTemplates()) {
+      for (TemplateImpl template : templateGroup.getElements()) {
         if (template.getKey().equals(key) && myTemplate != template) {
           Messages.showMessageDialog(
             getContentPane(),

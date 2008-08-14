@@ -11,24 +11,14 @@ import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.dualView.TreeTableView;
+import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
-import com.intellij.util.ui.treetable.TreeTable;
-import com.intellij.util.ui.treetable.TreeTableModel;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -38,7 +28,7 @@ import java.util.List;
 
 class TemplateListPanel extends JPanel {
 
-  private TreeTable myTreeTable;
+  private CheckboxTree myTree;
   private JButton myCopyButton;
   private JButton myEditButton;
   private JButton myRemoveButton;
@@ -51,13 +41,8 @@ class TemplateListPanel extends JPanel {
   private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
   private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
   private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
-  private static final String[] myColumnNames = {
-    CodeInsightBundle.message("templates.dialog.table.column.abbreviation"),
-    CodeInsightBundle.message("templates.dialog.table.column.description"),
-    CodeInsightBundle.message("templates.dialog.table.column.active")};
 
-  private DefaultMutableTreeNode myTreeRoot = new DefaultMutableTreeNode();
-  private DefaultTreeModel myTreeTableModel;
+  private CheckedTreeNode myTreeRoot = new CheckedTreeNode(null);
 
   private Alarm myAlarm = new Alarm();
   private boolean myUpdateNeeded = false;
@@ -175,7 +160,7 @@ class TemplateListPanel extends JPanel {
         public void actionPerformed(final ActionEvent e) {
           new SchemesToImportPopup<TemplateGroup, TemplateGroup>(TemplateListPanel.this){
             protected void onSchemeSelected(final TemplateGroup scheme) {
-              for (TemplateImpl newTemplate : scheme.getTemplates()) {
+              for (TemplateImpl newTemplate : scheme.getElements()) {
                 for (TemplateImpl existingTemplate : collectAllTemplates()) {
                   if (existingTemplate.getKey().equals(newTemplate.getKey())) {
                     Messages.showMessageDialog(
@@ -189,7 +174,7 @@ class TemplateListPanel extends JPanel {
                 }
               }
               insertNewGroup(scheme);
-              for (TemplateImpl template : scheme.getTemplates()) {
+              for (TemplateImpl template : scheme.getElements()) {
                 addTemplate(template);
                 isModified =  true;
               }
@@ -251,13 +236,13 @@ class TemplateListPanel extends JPanel {
   private Iterable<? extends TemplateImpl> collectAllTemplates() {
     ArrayList<TemplateImpl> result = new ArrayList<TemplateImpl>();
     for (TemplateGroup templateGroup : myTemplateGroups) {
-      result.addAll(templateGroup.getTemplates());
+      result.addAll(templateGroup.getElements());
     }
     return result;
   }
 
   private void exportCurrentGroup() {
-    int selected = myTreeTable.getSelectedRow();
+    int selected = getSelectedIndex();
     if (selected < 0) return;
 
     ExportSchemeAction.doExport(getGroup(selected), getSchemesManager());
@@ -271,7 +256,7 @@ class TemplateListPanel extends JPanel {
   private static JButton createButton(final JPanel tableButtonsPanel, final GridBagConstraints gbConstraints, final String message) {
     JButton button = new JButton(message);
     button.setEnabled(false);
-    button.setMargin(new Insets(2, 4, 2, 4));
+    //button.setMargin(new Insets(2, 4, 2, 4));
     tableButtonsPanel.add(button, gbConstraints);
     return button;
   }
@@ -301,7 +286,7 @@ class TemplateListPanel extends JPanel {
   }
 
   private TemplateKey getTemplateKey(int row) {
-    JTree tree = myTreeTable.getTree();
+    JTree tree = myTree;
     TreePath path = tree.getPathForRow(row);
     if (path != null) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -314,7 +299,7 @@ class TemplateListPanel extends JPanel {
   }
 
   private TemplateImpl getTemplate(int row) {
-    JTree tree = myTreeTable.getTree();
+    JTree tree = myTree;
     TreePath path = tree.getPathForRow(row);
     if (path != null) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -327,7 +312,7 @@ class TemplateListPanel extends JPanel {
   }
 
   private TemplateGroup getGroup(int row) {
-    JTree tree = myTreeTable.getTree();
+    JTree tree = myTree;
     TreePath path = tree.getPathForRow(row);
     if (path != null) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -340,7 +325,7 @@ class TemplateListPanel extends JPanel {
   }
 
   private void edit() {
-    int selected = myTreeTable.getSelectedRow();
+    int selected = getSelectedIndex();
     if (selected < 0) return;
 
     TemplateImpl template = getTemplate(selected);
@@ -360,15 +345,15 @@ class TemplateListPanel extends JPanel {
 
     dialog.apply();
 
-    AbstractTableModel model = (AbstractTableModel)myTreeTable.getModel();
+    DefaultTreeModel model = (DefaultTreeModel)myTree.getModel();
 
     if (!oldGroupName.equals(template.getGroupName())) {
       TemplateGroup oldGroup = getTemplateGroup(oldGroupName);
-      oldGroup.removeTemplate(template);
+      oldGroup.removeElement(template);
 
       template.setId(null);//To make it not equal with default template with the same name
 
-      JTree tree = myTreeTable.getTree();
+      JTree tree = myTree;
       DefaultMutableTreeNode parent = (DefaultMutableTreeNode)oldTemplateNode.getParent();
       removeNodeFromParent(oldTemplateNode);
       if (parent.getChildCount() == 0) removeNodeFromParent(parent);
@@ -380,18 +365,17 @@ class TemplateListPanel extends JPanel {
 
       selected = tree.getRowForPath(newTemplatePath);
 
-      model.fireTableStructureChanged();
+      ((DefaultTreeModel)myTree.getModel()).nodeStructureChanged(myTreeRoot);
     }
 
-    model.fireTableRowsUpdated(selected, selected);
-    myTreeTable.setRowSelectionInterval(selected, selected);
+    myTree.setSelectionInterval(selected, selected);
 
     updateTemplateTextArea();
     isModified = true;
   }
 
   private DefaultMutableTreeNode getNode(final int row) {
-    JTree tree = myTreeTable.getTree();
+    JTree tree = myTree;
     TreePath path = tree.getPathForRow(row);
     if (path != null) {
       return (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -433,7 +417,7 @@ class TemplateListPanel extends JPanel {
   }
 
   private void copyRow() {
-    int selected = myTreeTable.getSelectedRow();
+    int selected = getSelectedIndex();
     if (selected < 0) return;
 
     TemplateImpl orTemplate = getTemplate(selected);
@@ -449,8 +433,19 @@ class TemplateListPanel extends JPanel {
     isModified = true;
   }
 
+  private int getSelectedIndex() {
+    TreePath selectionPath = myTree.getSelectionPath();
+    if (selectionPath == null) {
+      return -1;
+    }
+    else {
+      return myTree.getRowForPath(selectionPath);
+    }
+
+  }
+
   private void removeRow() {
-    int selected = myTreeTable.getSelectedRow();
+    int selected = getSelectedIndex(); // TODO
     if (selected < 0) return;
     TemplateKey templateKey = getTemplateKey(selected);
     if (templateKey != null) {
@@ -470,7 +465,7 @@ class TemplateListPanel extends JPanel {
                                                  Messages.getQuestionIcon());
         if (result != DialogWrapper.OK_EXIT_CODE) return;
 
-        JTree tree = myTreeTable.getTree();
+        JTree tree = myTree;
         TreePath path = tree.getPathForRow(selected);
 
         myTemplateGroups.remove(group);
@@ -486,54 +481,109 @@ class TemplateListPanel extends JPanel {
   }
 
   private JScrollPane createTable() {
-    ColumnInfo[] columnInfos = {new MyColumnInfo(myColumnNames[0]) {
-      public Class getColumnClass() {
-        return TreeTableModel.class;
-      }
+    myTreeRoot = new CheckedTreeNode(null);
 
-      public boolean isCellEditable(Object o) {
-        return true;
-      }
-    }, new MyColumnInfo(myColumnNames[1]), new ActivationStateColumnInfo(myColumnNames[2])};
-
-    myTreeRoot = new DefaultMutableTreeNode();
-
-    myTreeTableModel = new ListTreeTableModelOnColumns(myTreeRoot, columnInfos);
-    myTreeTable = new MyTable((ListTreeTableModelOnColumns)myTreeTableModel);
-    myTreeTable.setRootVisible(false);
-    myTreeTable.setDefaultRenderer(Boolean.class, new BooleanTableCellRenderer());
-    myTreeTable.getTree().setShowsRootHandles(true);
-    myTreeTable.getTableHeader().setReorderingAllowed(false);
-
-    myTreeTable.setTreeCellRenderer(new ColoredTreeCellRenderer () {
-      public void customizeCellRenderer(JTree tree,
+    myTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer(){
+      public void customizeCellRenderer(final JTree tree,
                                         Object value,
-                                        boolean selected,
-                                        boolean expanded,
-                                        boolean leaf,
-                                        int row,
-                                        boolean hasFocus) {
+                                        final boolean selected,
+                                        final boolean expanded,
+                                        final boolean leaf,
+                                        final int row,
+                                        final boolean hasFocus) {
+
         value = ((DefaultMutableTreeNode)value).getUserObject();
 
-        setPaintFocusBorder(false);
         if (value instanceof TemplateImpl) {
-          setIcon(TEMPLATE_ICON);
-          append (((TemplateImpl)value).getKey(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          //getTextRenderer().setIcon(TEMPLATE_ICON);
+          getTextRenderer().append (((TemplateImpl)value).getKey(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          String description = ((TemplateImpl)value).getDescription();
+          if (description != null && description.length() > 0) {
+            getTextRenderer().append (" (" + description + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
         }
         else if (value instanceof TemplateGroup) {
-          setIcon(TEMPLATE_GROUP_ICON);
-          append (((TemplateGroup)value).getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          //getTextRenderer().setIcon(TEMPLATE_GROUP_ICON);
+          getTextRenderer().append (((TemplateGroup)value).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
+
+
+      }
+    }, myTreeRoot) {
+      @Override
+      protected void onNodeStateChanged(final CheckedTreeNode node) {
+        Object obj = node.getUserObject();
+        if (obj instanceof TemplateImpl) {
+          ((TemplateImpl)obj).setDeactivated(!node.isChecked());
+        }
+      }
+
+    };
+    myTree.setRootVisible(false);
+    myTree.setShowsRootHandles(true);
+
+    DefaultTreeSelectionModel selModel = new DefaultTreeSelectionModel();
+    myTree.setSelectionModel(selModel);
+    selModel.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+
+    myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener(){
+      public void valueChanged(final TreeSelectionEvent e) {
+        boolean enableEditButton = false;
+        boolean enableRemoveButton = false;
+        boolean enableCopyButton = false;
+        boolean enableExportButton = false;
+
+        int selected = getSelectedIndex();
+        if (selected >= 0 && selected < myTree.getRowCount()) {
+          TemplateSettings templateSettings = TemplateSettings.getInstance();
+          TemplateImpl template = getTemplate(selected);
+          if (template != null) {
+            templateSettings.setLastSelectedTemplateKey(template.getKey());
+          } else {
+            templateSettings.setLastSelectedTemplateKey(null);
+          }
+          DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getPathForRow(selected).getLastPathComponent();
+          enableExportButton = false;
+          enableEditButton = false;
+          enableCopyButton = false;
+          if (node.getUserObject() instanceof TemplateImpl) {
+            enableCopyButton = true;
+            TemplateGroup group = getTemplateGroup(template.getGroupName());
+            if (group != null && !getSchemesManager().isShared(group)) {
+              enableEditButton = true;
+              enableRemoveButton = true;
+            }
+          }
+          if (node.getUserObject() instanceof TemplateGroup) {
+            enableRemoveButton = true;
+            TemplateGroup group = (TemplateGroup)node.getUserObject();
+            enableExportButton = !getSchemesManager().isShared(group);
+
+          }
+
+        }
+        updateTemplateTextArea();
+        myEditor.getComponent().setEnabled(enableEditButton);
+
+        if (myCopyButton != null) {
+          myCopyButton.setEnabled(enableCopyButton);
+          myEditButton.setEnabled(enableEditButton);
+          myRemoveButton.setEnabled(enableRemoveButton);
+        }
+
+        if (myExportButton != null) {
+          myExportButton.setEnabled(enableExportButton);
+        }
+
+        if (myImportButton != null) {
+          myImportButton.setEnabled(true);
+        }
+
       }
     });
 
-    myTreeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myTreeTable.setPreferredScrollableViewportSize(new Dimension(300, myTreeTable.getRowHeight() * 10));
-    myTreeTable.getColumn(myColumnNames[0]).setPreferredWidth(80);
-    myTreeTable.getColumn(myColumnNames[1]).setPreferredWidth(260);
-    myTreeTable.getColumn(myColumnNames[2]).setPreferredWidth(12);
 
-    myTreeTable.registerKeyboardAction(
+    myTree.registerKeyboardAction(
       new ActionListener() {
         public void actionPerformed(ActionEvent event) {
           addRow();
@@ -543,7 +593,7 @@ class TemplateListPanel extends JPanel {
       JComponent.WHEN_FOCUSED
     );
 
-    myTreeTable.registerKeyboardAction(
+    myTree.registerKeyboardAction(
       new ActionListener() {
         public void actionPerformed(ActionEvent event) {
           removeRow();
@@ -553,19 +603,19 @@ class TemplateListPanel extends JPanel {
       JComponent.WHEN_FOCUSED
     );
 
-    myTreeTable.addMouseListener(
+    myTree.addMouseListener(
       new MouseAdapter() {
         public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2 && myTreeTable.columnAtPoint(e.getPoint()) != 2) {
+          if (e.getClickCount() == 2) {
             edit();
           }
         }
       }
     );
 
-    JScrollPane scrollpane = ScrollPaneFactory.createScrollPane(myTreeTable);
+    JScrollPane scrollpane = ScrollPaneFactory.createScrollPane(myTree);
     if (myTemplateGroups.size() > 0) {
-      myTreeTable.setRowSelectionInterval(0, 0);
+      myTree.setSelectionInterval(0, 0);
     }
     scrollpane.setPreferredSize(new Dimension(600, 400));
     return scrollpane;
@@ -579,7 +629,7 @@ class TemplateListPanel extends JPanel {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            int selected = myTreeTable.getSelectedRow();
+            int selected = getSelectedIndex();
             if (selected < 0) {
               myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), "");
             }
@@ -606,10 +656,11 @@ class TemplateListPanel extends JPanel {
       insertNewGroup(newGroup);
     }
     if (!newGroup.contains(template)) {
-      newGroup.addTemplate(template);
+      newGroup.addElement(template);
     }
 
-    DefaultMutableTreeNode node = new DefaultMutableTreeNode(template);
+    CheckedTreeNode node = new CheckedTreeNode(template);
+    node.setChecked(template.isDeactivated());
     if (myTreeRoot.getChildCount() > 0) {
       for (DefaultMutableTreeNode child = (DefaultMutableTreeNode)myTreeRoot.getFirstChild();
            child != null;
@@ -617,7 +668,7 @@ class TemplateListPanel extends JPanel {
         if (((TemplateGroup)child.getUserObject()).getName().equals(template.getGroupName())) {
           int index = getIndexToInsert (child, template.getKey());
           child.insert(node, index);
-          myTreeTableModel.nodesWereInserted(child, new int[]{index});
+          ((DefaultTreeModel)myTree.getModel()).nodesWereInserted(child, new int[]{index});
           setSelectedNode(node);
           return node;
         }
@@ -631,9 +682,9 @@ class TemplateListPanel extends JPanel {
     myTemplateGroups.add(newGroup);
 
     int index = getIndexToInsert(myTreeRoot, newGroup.getName());
-    DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode(newGroup);
+    DefaultMutableTreeNode groupNode = new CheckedTreeNode(newGroup);
     myTreeRoot.insert(groupNode, index);
-    myTreeTableModel.nodesWereInserted(myTreeRoot, new int[]{index});
+    ((DefaultTreeModel)myTree.getModel()).nodesWereInserted(myTreeRoot, new int[]{index});
   }
 
   private int getIndexToInsert(DefaultMutableTreeNode parent, String key) {
@@ -652,22 +703,22 @@ class TemplateListPanel extends JPanel {
   }
 
   private void setSelectedNode(DefaultMutableTreeNode node) {
-    JTree tree = myTreeTable.getTree();
+    JTree tree = myTree;
     TreePath path = new TreePath(node.getPath());
     tree.expandPath(path.getParentPath());
     int row = tree.getRowForPath(path);
-    myTreeTable.getSelectionModel().setSelectionInterval(row, row);
-    myTreeTable.scrollRectToVisible(myTreeTable.getCellRect(row, 0, true));
+    myTree.setSelectionInterval(row, row);
+    //myTree.scrollRectToVisible(myTree.getR(row, 0, true));  TODO
   }
 
   private void removeTemplateAt(int row) {
-    JTree tree = myTreeTable.getTree();
+    JTree tree = myTree;
     TreePath path = tree.getPathForRow(row);
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
     LOG.assertTrue(node.getUserObject() instanceof TemplateImpl);
 
     TemplateImpl template = (TemplateImpl)node.getUserObject();
-    getTemplateGroup(template.getGroupName()).removeTemplate(template);
+    getTemplateGroup(template.getGroupName()).removeElement(template);
 
     DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
     TreePath treePathToSelect = (parent.getChildAfter(node) != null || parent.getChildCount() == 1 ?
@@ -687,22 +738,23 @@ class TemplateListPanel extends JPanel {
 
   private void removeNodeFromParent(DefaultMutableTreeNode node) {
     TreeNode parent = node.getParent();
-    int idx = myTreeTableModel.getIndexOfChild(parent, node);
+    int idx = parent.getIndex(node);
     node.removeFromParent();
-    myTreeTableModel.nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{node});
+
+    ((DefaultTreeModel)myTree.getModel()).nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{node});
   }
 
   private void initTemplates(List<TemplateGroup> groups, String lastSelectedKey) {
     myTreeRoot.removeAllChildren();
     myTemplateGroups.clear();
     for (TemplateGroup group : groups) {
-      myTemplateGroups.add(group.copy());
+      myTemplateGroups.add((TemplateGroup)group.copy());
     }
 
     DefaultMutableTreeNode nodeToSelect = null;
     for (TemplateGroup group : myTemplateGroups) {
-      DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode(group);
-      List<TemplateImpl> templates = new ArrayList<TemplateImpl>(group.getTemplates());
+      CheckedTreeNode groupNode = new CheckedTreeNode(group);
+      List<TemplateImpl> templates = new ArrayList<TemplateImpl>(group.getElements());
       Collections.sort(templates, new Comparator<TemplateImpl>(){
         public int compare(final TemplateImpl o1, final TemplateImpl o2) {
           return o1.getKey().compareTo(o2.getKey());
@@ -710,7 +762,8 @@ class TemplateListPanel extends JPanel {
       });
       for (final Object groupTemplate : templates) {
         TemplateImpl template = (TemplateImpl)groupTemplate;
-        DefaultMutableTreeNode node = new DefaultMutableTreeNode(template);
+        CheckedTreeNode node = new CheckedTreeNode(template);
+        node.setChecked(!template.isDeactivated());
         groupNode.add(node);
 
         if (lastSelectedKey != null && lastSelectedKey.equals(template.getKey())) {
@@ -721,85 +774,23 @@ class TemplateListPanel extends JPanel {
 
     }
 
-    myTreeTableModel.nodeStructureChanged(myTreeRoot);
+    ((DefaultTreeModel)myTree.getModel()).nodeStructureChanged(myTreeRoot);
 
     if (nodeToSelect != null) {
-      JTree tree = myTreeTable.getTree();
+      JTree tree = myTree;
       TreePath path = new TreePath(nodeToSelect.getPath());
       tree.expandPath(path.getParentPath());
       int rowToSelect = tree.getRowForPath(path);
-      myTreeTable.getSelectionModel().setSelectionInterval(rowToSelect, rowToSelect);
+      myTree.setSelectionInterval(rowToSelect, rowToSelect);
+      /*       TODO
       final Rectangle rect = myTreeTable.getCellRect(rowToSelect, 0, true);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               myTreeTable.scrollRectToVisible(rect);
             }
-          });
+          });*/
     }
   }
-
-  private class MyTable extends TreeTableView {
-
-    public MyTable(ListTreeTableModelOnColumns model) {
-      super(model);
-    }
-
-    public void valueChanged(ListSelectionEvent event) {
-      super.valueChanged(event);
-
-      boolean enableEditButton = false;
-      boolean enableRemoveButton = false;
-      boolean enableCopyButton = false;
-      boolean enableExportButton = false;
-
-      int selected = getSelectedRow();
-      if (selected >= 0 && selected < myTreeTable.getRowCount()) {
-        TemplateSettings templateSettings = TemplateSettings.getInstance();
-        TemplateImpl template = getTemplate(selected);
-        if (template != null) {
-          templateSettings.setLastSelectedTemplateKey(template.getKey());
-        } else {
-          templateSettings.setLastSelectedTemplateKey(null);
-        }
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTreeTable.getTree().getPathForRow(selected).getLastPathComponent();
-        enableExportButton = false;
-        enableEditButton = false;
-        enableCopyButton = false;
-        if (node.getUserObject() instanceof TemplateImpl) {
-          enableCopyButton = true;
-          TemplateGroup group = getTemplateGroup(template.getGroupName());
-          if (group != null && !getSchemesManager().isShared(group)) {
-            enableEditButton = true;
-            enableRemoveButton = true;
-          }
-        }
-        if (node.getUserObject() instanceof TemplateGroup) {
-          enableRemoveButton = true;
-          TemplateGroup group = (TemplateGroup)node.getUserObject();
-          enableExportButton = !getSchemesManager().isShared(group);
-
-        }
-
-      }
-      updateTemplateTextArea();
-      myEditor.getComponent().setEnabled(enableEditButton);
-
-      if (myCopyButton != null) {
-        myCopyButton.setEnabled(enableCopyButton);
-        myEditButton.setEnabled(enableEditButton);
-        myRemoveButton.setEnabled(enableRemoveButton);
-      }
-
-      if (myExportButton != null) {
-        myExportButton.setEnabled(enableExportButton);
-      }
-
-      if (myImportButton != null) {
-        myImportButton.setEnabled(true);
-      }
-    }
-  }
-
 
   private static class TemplateKey implements Comparable {
     private String myKey;
@@ -872,51 +863,5 @@ class TemplateListPanel extends JPanel {
 
   }
 
-  class MyColumnInfo extends ColumnInfo {
-    public MyColumnInfo(String name) {super(name);}
-
-    public Object valueOf(Object object) {
-      object = ((DefaultMutableTreeNode)object).getUserObject();
-      if (object instanceof TemplateImpl) {
-        TemplateImpl template = (TemplateImpl)object;
-        if (getName().equals(myColumnNames[0])) {
-          return template.getKey();
-        }
-        else if (getName().equals(myColumnNames[1])) {
-          return template.getDescription();
-        }
-      }
-      else if (object instanceof TemplateGroup) {
-        if (getName().equals(myColumnNames[0])) {
-          return ((TemplateGroup)object).getName();
-        }
-        else {
-          return null;
-        }
-      }
-      LOG.assertTrue(false);
-      return null;
-    }
-
-    public Comparator getComparator() {
-      if (myColumnNames[0].equals(getName())) {
-        return new Comparator() {
-          public int compare(Object o, Object o1) {
-            o = ((DefaultMutableTreeNode)o).getUserObject();
-            o1 = ((DefaultMutableTreeNode)o1).getUserObject();
-            if (o instanceof TemplateImpl && o1 instanceof TemplateImpl) {
-              return ((TemplateImpl)o).getKey().compareTo(((TemplateImpl)o1).getKey());
-            }
-            else if (o instanceof TemplateGroup && o1 instanceof TemplateGroup) {
-              return ((TemplateGroup)o).getName().compareTo(((TemplateGroup)o1).getName());
-            }
-            return 0;
-          }
-        };
-      }
-
-      return null;
-    }
-  }
 }
 

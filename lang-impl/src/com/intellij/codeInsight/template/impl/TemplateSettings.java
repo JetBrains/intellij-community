@@ -103,7 +103,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
 
       public boolean shouldBeSaved(final TemplateGroup template) {
-        for (TemplateImpl t : template.getTemplates()) {
+        for (TemplateImpl t : template.getElements()) {
           if (!t.equals(myDefaultTemplates.get(t.getKey()))) {
             return true;
           }
@@ -115,7 +115,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         Element templateSetElement = new Element(TEMPLATE_SET);
         templateSetElement.setAttribute(GROUP, template.getName());
 
-        for (TemplateImpl t : template.getTemplates()) {
+        for (TemplateImpl t : template.getElements()) {
           if (!t.equals(myDefaultTemplates.get(t.getKey()))) {
             saveTemplate(t, templateSetElement);
           }
@@ -125,16 +125,21 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       }
 
       public void initScheme(final TemplateGroup scheme) {
+        Collection<TemplateImpl> templates = scheme.getElements();
+
+        for (TemplateImpl template : templates) {
+          addTemplateImpl(template);
+        }
       }
 
       public void onSchemeAdded(final TemplateGroup scheme) {
-        for (TemplateImpl template : scheme.getTemplates()) {
-          addTemplate(template);
+        for (TemplateImpl template : scheme.getElements()) {
+          addTemplateImpl(template);
         }
       }
 
       public void onSchemeDeleted(final TemplateGroup scheme) {
-        for (TemplateImpl template : scheme.getTemplates()) {
+        for (TemplateImpl template : scheme.getElements()) {
           removeTemplate(template);
         }
       }
@@ -263,7 +268,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       LOG.info("Template with key " + template.getKey() + " and id " + template.getId() + " already registered");
       TemplateGroup group = mySchemesManager.findSchemeByName(existing.getGroupName());
       if (group != null) {
-        group.removeTemplate(existing);
+        group.removeElement(existing);
         if (group.isEmpty()) {
           mySchemesManager.removeScheme(group);
         }
@@ -296,7 +301,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     TemplateGroup group = mySchemesManager.findSchemeByName(groupName);
 
     if (group != null) {
-      group.removeTemplate((TemplateImpl)template);
+      group.removeElement((TemplateImpl)template);
       if (group.isEmpty()) {
         mySchemesManager.removeScheme(group);
       }
@@ -346,10 +351,10 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
     Collection<TemplateGroup> loaded = mySchemesManager.loadSchemes();
     for (TemplateGroup group : loaded) {
-      Collection<TemplateImpl> templates = group.getTemplates();
+      Collection<TemplateImpl> templates = group.getElements();
 
       for (TemplateImpl template : templates) {
-        addTemplate(template);
+        addTemplateImpl(template);
       }
 
     }
@@ -454,7 +459,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         addTemplate(template);
       }
 
-      result.addTemplate(template);
+      result.addElement(template);
     }
 
     if (registerTemplate) {
@@ -522,7 +527,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     for (TemplateGroup group : newGroups) {
       if (!group.isEmpty()) {
         mySchemesManager.addNewScheme(group, true);
-        for (TemplateImpl template : group.getTemplates()) {
+        for (TemplateImpl template : group.getElements()) {
           addTemplate(template);
         }
       }

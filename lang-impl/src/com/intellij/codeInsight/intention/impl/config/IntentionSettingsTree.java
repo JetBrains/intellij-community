@@ -12,10 +12,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
-import com.intellij.ui.CheckboxTree;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.FilterComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -61,13 +58,7 @@ public abstract class IntentionSettingsTree {
                                      getTextRenderer());
         }
       }
-    }, new CheckedTreeNode(null)){
-      protected void checkNode(CheckedTreeNode node, boolean checked) {
-        super.checkNode(node,checked);
-        checkRecursively(node, checked);
-        updateCheckMarkInParents(node);
-      }
-    };
+    }, new CheckedTreeNode(null));
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
@@ -120,21 +111,6 @@ public abstract class IntentionSettingsTree {
     actions.add(actionManager.createCollapseAllAction(treeExpander, myTree));
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, actions, true);
-  }
-
-  private static void updateCheckMarkInParents(CheckedTreeNode node) {
-    while (node.getParent() != null) {
-      final CheckedTreeNode parent = (CheckedTreeNode)node.getParent();
-      parent.setChecked(false);
-      visitChildren(parent, new CheckedNodeVisitor() {
-        public void visit(CheckedTreeNode node) {
-          if (node.isChecked()) {
-            parent.setChecked(true);
-          }
-        }
-      });
-      node = parent;
-    }
   }
 
   protected abstract void selectionChanged(Object selected);
@@ -203,18 +179,6 @@ public abstract class IntentionSettingsTree {
         }
       });
       return root.isChecked();
-    }
-  }
-
-  private static void checkRecursively(CheckedTreeNode root, final boolean check) {
-    Object userObject = root.getUserObject();
-    root.setChecked(check);
-    if (!(userObject instanceof IntentionActionMetaData)) {
-      visitChildren(root, new CheckedNodeVisitor() {
-        public void visit(CheckedTreeNode node) {
-          checkRecursively(node, check);
-        }
-      });
     }
   }
 

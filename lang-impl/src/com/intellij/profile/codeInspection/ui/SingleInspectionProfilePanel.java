@@ -51,9 +51,13 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.DefaultTreeSelectionModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
@@ -287,7 +291,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private void reloadModel() {
     try {
       myIsInRestore = true;
-      ((DefaultTreeModel)myTree.getModel()).reload();      
+      ((DefaultTreeModel)myTree.getModel()).reload();
     }
     finally {
       myIsInRestore = false;
@@ -367,35 +371,19 @@ public class SingleInspectionProfilePanel extends JPanel {
     fillTreeData(null, true);
 
     final MyTreeCellRenderer renderer = new MyTreeCellRenderer();
-    myTree = new Tree(myRoot) {
+    myTree = new CheckboxTree(renderer, myRoot) {
       public Dimension getPreferredScrollableViewportSize() {
         Dimension size = super.getPreferredScrollableViewportSize();
         size = new Dimension(size.width + 10, size.height);
         return size;
       }
-
-      protected void processMouseEvent(MouseEvent e) {
-        if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-          int row = myTree.getRowForLocation(e.getX(), e.getY());
-          if (row >= 0) {
-            Rectangle rowBounds = myTree.getRowBounds(row);
-            renderer.setBounds(rowBounds);
-            Rectangle checkBounds = renderer.myCheckbox.getBounds();
-
-            checkBounds.setLocation(rowBounds.getLocation());
-
-            if (checkBounds.contains(e.getPoint())) {
-              MyTreeNode node = (MyTreeNode)myTree.getPathForRow(row).getLastPathComponent();
-              toggleNode(node);
-              myTree.setSelectionRow(row);
-            }
-          }
-        }
-        super.processMouseEvent(e);
-      }
-
       public int getToggleClickCount() {
         return -1;
+      }
+
+      @Override
+      protected void onNodeStateChanged(final CheckedTreeNode node) {
+        toggleToolNode((MyTreeNode)node);
       }
     };
 
@@ -407,23 +395,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
 
-    myTree.addKeyListener(new KeyAdapter() {
-      public void keyPressed(KeyEvent e) {
-        if (!e.isConsumed() && e.getKeyCode() == KeyEvent.VK_SPACE && !SpeedSearchBase.hasActiveSpeedSearch(myTree)) {
-          final int selectionRow = myTree.getLeadSelectionRow();
-          final int[] rows = myTree.getSelectionRows();
-          for (int i = 0; rows != null && i < rows.length; i++) {
-            final TreePath path = myTree.getPathForRow(rows[i]);
-            final MyTreeNode node = (MyTreeNode)path.getLastPathComponent();
-            if (Arrays.binarySearch(rows, myTree.getRowForPath(path.getParentPath())) < 0) {
-              toggleNode(node);
-            }
-          }
-          myTree.setSelectionRow(selectionRow);
-          e.consume();
-        }
-      }
-    });
 
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
@@ -542,49 +513,11 @@ public class SingleInspectionProfilePanel extends JPanel {
     return InspectionsBundle.message("inspection.as", severity.toString().toLowerCase());
   }
 
-  private void toggleNode(MyTreeNode node) {
-    List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
-    node.isEnabled = !node.isEnabled;
-    Object userObject = node.getUserObject();
-    final MyTreeNode parent = (MyTreeNode)node.getParent();
-    if (userObject instanceof Descriptor) {
-      toggleToolNode(node);
-    }
-    else {
-      final Enumeration children = node.children();
-      node.isProperSetting = false;
-      while (children.hasMoreElements()) {
-        MyTreeNode child = (MyTreeNode)children.nextElement();
-        child.isEnabled = node.isEnabled;
-        child.isProperSetting = false;
-        if (child.getUserObject()instanceof Descriptor) {
-          toggleToolNode(child);
-        }
-        else {
-          final Enumeration descriptorNodes = child.children();
-          while (descriptorNodes.hasMoreElements()) {
-            MyTreeNode descriptorNode = (MyTreeNode)descriptorNodes.nextElement();
-            descriptorNode.isEnabled = child.isEnabled;
-            if (descriptorNode.getUserObject()instanceof Descriptor) {
-              toggleToolNode(descriptorNode);
-            }
-            child.isProperSetting |= descriptorNode.isProperSetting;
-          }
-        }
-        node.isProperSetting |= child.isProperSetting;
-      }
-    }
-    updateUpHierarchy(node, parent);
-    reloadModel();
-    updateOptionsAndDescriptionPanel(new TreePath(node.getPath()));
-    TreeUtil.restoreExpandedPaths(myTree, expandedPaths);
-  }
-
   private void toggleToolNode(final MyTreeNode toolNode) {
     final Descriptor descriptor = (Descriptor)toolNode.getUserObject();
     final HighlightDisplayKey key = descriptor.getKey();
     final String toolShortName = key.toString();
-    if (toolNode.isEnabled) {
+    if (toolNode.isChecked()) {
       mySelectedProfile.enableTool(toolShortName);
     }
     else {
@@ -657,7 +590,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private void fillTreeData(String filter, boolean forceInclude) {
     if (mySelectedProfile == null) return;
     myRoot.removeAllChildren();
-    myRoot.isEnabled = false;
+    myRoot.setChecked(false);
     myRoot.isProperSetting = false;
     List<Set<String>> keySetList = new ArrayList<Set<String>>();
     final Set<String> quated = new HashSet<String>();
@@ -675,9 +608,8 @@ public class SingleInspectionProfilePanel extends JPanel {
       final MyTreeNode node = new MyTreeNode(descriptor, enabled, properSetting);
       final MyTreeNode groupNode = getGroupNode(myRoot, descriptor.getGroup());
       groupNode.add(node);
-      groupNode.isEnabled |= enabled;
       groupNode.isProperSetting |= properSetting;
-      myRoot.isEnabled |= enabled;
+      myRoot.setEnabled(myRoot.isEnabled() || enabled);
       myRoot.isProperSetting |= properSetting;
     }
     if (filter != null && forceInclude && myRoot.getChildCount() == 0) {
@@ -796,7 +728,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       myOptionsPanel.removeAll();
       myOptionsPanel.add(withSeverity);
       myOptionsPanel.validate();
-      GuiUtils.enableChildren(myOptionsPanel, node.isEnabled);
+      GuiUtils.enableChildren(myOptionsPanel, node.isChecked());
     }
     else {
       initOptionsAndDescriptionPanel();
@@ -1009,20 +941,19 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
   }
 
-  public static class MyTreeNode extends DefaultMutableTreeNode {
-    public boolean isEnabled;
+  public static class MyTreeNode extends CheckedTreeNode {
     public boolean isProperSetting;
 
     public MyTreeNode(Object userObject, boolean enabled, boolean properSetting) {
       super(userObject);
-      isEnabled = enabled;
       isProperSetting = properSetting;
+      setChecked(enabled);
     }
 
     public boolean equals(Object obj) {
       if (!(obj instanceof MyTreeNode)) return false;
       MyTreeNode node = (MyTreeNode)obj;
-      return isEnabled == node.isEnabled &&
+      return isChecked() == node.isChecked() &&
              (getUserObject() != null ? node.getUserObject().equals(getUserObject()) : node.getUserObject() == null);
     }
 
@@ -1151,44 +1082,23 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
   }
 
-  private class MyTreeCellRenderer extends JPanel implements TreeCellRenderer {
-    private final ColoredTreeCellRenderer myTextRenderer;
-    public final JCheckBox myCheckbox;
+  private class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
 
-    public MyTreeCellRenderer() {
-      super(new BorderLayout());
-      myCheckbox = new JCheckBox();
-      myTextRenderer = new ColoredTreeCellRenderer() {
-        public void customizeCellRenderer(JTree tree,
-                                          Object value,
-                                          boolean selected,
-                                          boolean expanded,
-                                          boolean leaf,
-                                          int row,
-                                          boolean hasFocus) {
-        }
-      };
-      myTextRenderer.setOpaque(true);
-      add(myCheckbox, BorderLayout.WEST);
-      add(myTextRenderer, BorderLayout.CENTER);
-    }
+    public void customizeCellRenderer(final JTree tree,
+                                      final Object value,
+                                      final boolean selected,
+                                      final boolean expanded,
+                                      final boolean leaf,
+                                      final int row,
+                                      final boolean hasFocus) {
 
-    public Component getTreeCellRendererComponent(JTree tree,
-                                                  Object value,
-                                                  boolean selected,
-                                                  boolean expanded,
-                                                  boolean leaf,
-                                                  int row,
-                                                  boolean hasFocus) {
-      invalidate();
       MyTreeNode node = (MyTreeNode)value;
+
       Object object = node.getUserObject();
-      setOpaque(true);
+
       final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
       setBackground(background);
-      myCheckbox.setSelected(node.isEnabled);
-      myCheckbox.setOpaque(true);
-      myCheckbox.setBackground(background);
+
       @NonNls String text = null;
       int style = Font.PLAIN;
       String hint = null;
@@ -1203,20 +1113,17 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
       Color foreground =
         selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting ? Color.BLUE : UIUtil.getTreeTextForeground();
-      myTextRenderer.clear();
       if (text != null) {
         SearchUtil.appendFragments(myProfileFilter != null ? myProfileFilter.getFilter() : null, text, style, foreground, background,
-                                   myTextRenderer);
+                                   getTextRenderer());
       }
       if (hint != null) {
-        myTextRenderer
+        getTextRenderer()
           .append(" " + hint, selected ? new SimpleTextAttributes(Font.PLAIN, foreground) : SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       setForeground(foreground);
-      myCheckbox.setForeground(foreground);
-      myTextRenderer.setForeground(foreground);
-      return this;
     }
+
   }
 
   private class MyFilterComponent extends FilterComponent {

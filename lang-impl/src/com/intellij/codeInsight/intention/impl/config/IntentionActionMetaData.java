@@ -135,7 +135,7 @@ public final class IntentionActionMetaData {
     if (myDirURL == null) { //plugin compatibility
       myDirURL = getIntentionDescriptionDirURL(myIntentionLoader, myFamily);
     }
-    LOG.assertTrue(myDirURL != null, "Intention Description Dir URL is null: " + myFamily+"; "+myDescriptionDirectoryName);
+    LOG.assertTrue(myDirURL != null, "Intention Description Dir URL is null: " + myFamily+"; "+myDescriptionDirectoryName + ", " + myIntentionLoader);
     return myDirURL;
   }
 
