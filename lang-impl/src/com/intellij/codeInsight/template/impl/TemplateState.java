@@ -473,7 +473,9 @@ public class TemplateState implements Disposable {
               Expression defaultValue = myTemplate.getDefaultValueAt(i);
               String oldValue = getVariableValue(variableName).getText();
               recalcSegment(segmentNumber, isQuick, expression, defaultValue);
-              String newValue = getVariableValue(variableName).getText();
+              final TextResult value = getVariableValue(variableName);
+              assert value != null : "name=" + variableName + "\ntext=" + myTemplate.getTemplateText();
+              String newValue = value.getText();
               if (!newValue.equals(oldValue)) {
                 calcedSegments.set(segmentNumber);
               }
