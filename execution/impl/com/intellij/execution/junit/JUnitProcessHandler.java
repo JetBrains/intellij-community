@@ -54,7 +54,7 @@ public class JUnitProcessHandler extends OSProcessHandler {
   }
 
   public static JUnitProcessHandler runJava(final JavaParameters javaParameters) throws ExecutionException {
-    return runCommandLine(CommandLineBuilder.createFromJavaParameters(javaParameters));
+    return runCommandLine(CommandLineBuilder.createFromJavaParameters(javaParameters, true));
   }
 
   public static JUnitProcessHandler runCommandLine(final GeneralCommandLine commandLine) throws ExecutionException {

@@ -16,8 +16,8 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -42,7 +42,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   protected abstract JavaParameters createJavaParameters() throws ExecutionException;
 
   protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    return CommandLineBuilder.createFromJavaParameters(getJavaParameters());
+    return CommandLineBuilder.createFromJavaParameters(getJavaParameters(), true);
   }
 
 }
