@@ -12,6 +12,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 
@@ -51,7 +53,11 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
     lookup.addLookupListener(
       new LookupAdapter() {
         public void itemSelected(LookupEvent event) {
-          TemplateManager.getInstance(project).startTemplate(editor, '\0');
+          new WriteCommandAction(project) {
+            protected void run(Result result) throws Throwable {
+              TemplateManager.getInstance(project).startTemplate(editor, '\0');
+            }
+          }.execute();
         }
       }
     );
