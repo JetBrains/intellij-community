@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -178,6 +179,11 @@ public final class CustomLanguageInjector implements ProjectComponent {
             break;
           }
         }
+      }
+    }
+    else {
+      for (CustomLanguageInjectorExtension o : Extensions.getExtensions(CustomLanguageInjectorExtension.EP_NAME)) {
+        o.getInjectedLanguage(myInjectionConfiguration, place, processor);
       }
     }
   }
@@ -408,7 +414,12 @@ public final class CustomLanguageInjector implements ProjectComponent {
 
     @NotNull
     public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-      return Arrays.asList(XmlTag.class, PsiLiteralExpression.class, XmlAttributeValue.class, PsiReferenceExpression.class);
+      final ArrayList<Class<? extends PsiElement>> elements = new ArrayList<Class<? extends PsiElement>>();
+      for (CustomLanguageInjectorExtension o : Extensions.getExtensions(CustomLanguageInjectorExtension.EP_NAME)) {
+        o.elementsToInjectIn(elements);
+      }
+      elements.addAll(Arrays.asList(XmlTag.class, PsiLiteralExpression.class, XmlAttributeValue.class, PsiReferenceExpression.class));
+      return elements;
     }
 
     public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {

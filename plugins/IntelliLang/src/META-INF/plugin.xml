@@ -1,6 +1,6 @@
 <idea-plugin url="http://www.jetbrains.net/confluence/display/CONTEST/IntelliLang" version="2">
   <name>IntelliLang</name>
-
+  <id>org.intellij.intelliLang</id>
   <description>
     <![CDATA[
     This plugin provides the following features, inspired by <a href="http://www.jetbrains.net/jira/browse/IDEADEV-2599">IDEADEV-2599</a>:
@@ -28,6 +28,10 @@
 
   <!--<depends optional="true">XPathView</depends>-->
 
+  <extensionPoints>
+    <extensionPoint name="CustomLanguageInjectorExtension"
+                    interface="org.intellij.plugins.intelliLang.inject.CustomLanguageInjectorExtension"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
     <intentionAction>
