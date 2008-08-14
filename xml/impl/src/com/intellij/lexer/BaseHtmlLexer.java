@@ -34,14 +34,9 @@ abstract class BaseHtmlLexer extends LexerBase {
   private boolean caseInsensitive;
   private boolean seenContentType;
 
-  static final TokenSet TOKENS_TO_MERGE = TokenSet.create(new IElementType[]{
-    XmlTokenType.XML_COMMENT_CHARACTERS,
-    XmlTokenType.XML_WHITE_SPACE,
-    XmlTokenType.XML_REAL_WHITE_SPACE,
-    XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
-    XmlTokenType.XML_DATA_CHARACTERS,
-    XmlTokenType.XML_TAG_CHARACTERS
-  });
+  static final TokenSet TOKENS_TO_MERGE = TokenSet.create(XmlTokenType.XML_COMMENT_CHARACTERS, XmlTokenType.XML_WHITE_SPACE, XmlTokenType.XML_REAL_WHITE_SPACE,
+                                                          XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, XmlTokenType.XML_DATA_CHARACTERS,
+                                                          XmlTokenType.XML_TAG_CHARACTERS);
 
   public interface TokenHandler {
     void handleElement(Lexer lexer);
@@ -103,11 +98,6 @@ abstract class BaseHtmlLexer extends LexerBase {
         if (!isHtmlTagState(state)) {
           seenAttribute=true;
         }
-      } else if (seenAttribute) {
-        seenStyle = false; // does this is valid branch?
-        seenScript = false;
-        seenAttribute=false;
-        seenContentType=false;
       }
     }
   }
@@ -117,6 +107,7 @@ abstract class BaseHtmlLexer extends LexerBase {
       if (seenAttribute) {
         seenStyle = false;
         seenScript = false;
+        seenAttribute = false;
       }
       seenContentType = false;
     }
