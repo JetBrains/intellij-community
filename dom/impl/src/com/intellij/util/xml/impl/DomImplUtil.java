@@ -6,6 +6,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.*;
@@ -237,6 +238,8 @@ public class DomImplUtil {
     }
     return ContainerUtil.findAll(subTags, new Condition<XmlTag>() {
       public boolean value(final XmlTag tag) {
+        if (StringUtil.isEmpty(tag.getName())) return false;
+
         for (final XmlName name : usedNames) {
           if (isNameSuitable(name, tag, handler, file)) {
             return false;
