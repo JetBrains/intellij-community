@@ -156,9 +156,7 @@ public class FileStructureDialog extends DialogWrapper {
     }
 
     PsiFile psiFile = getPsiFile(myProject);
-    StructureViewBuilder viewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(psiFile);
-    boolean showRoot =
-      viewBuilder instanceof TreeBasedStructureViewBuilder && ((TreeBasedStructureViewBuilder)viewBuilder).isRootNodeShown();
+    boolean showRoot = isShowRoot(psiFile);
     ProjectListBuilder projectListBuilder = new ProjectListBuilder(myProject, myCommanderPanel, myTreeStructure, null, showRoot) {
       protected boolean nodeIsAcceptableForElement(AbstractTreeNode node, Object element) {
         return Comparing.equal(((StructureViewTreeElement)node.getValue()).getValue(), element);
@@ -205,6 +203,11 @@ public class FileStructureDialog extends DialogWrapper {
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     return panel;
+  }
+
+  protected boolean isShowRoot(final PsiFile psiFile) {
+    StructureViewBuilder viewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(psiFile);
+    return viewBuilder instanceof TreeBasedStructureViewBuilder && ((TreeBasedStructureViewBuilder)viewBuilder).isRootNodeShown();
   }
 
   private void addNarrowDownCheckbox(final JPanel panel) {
