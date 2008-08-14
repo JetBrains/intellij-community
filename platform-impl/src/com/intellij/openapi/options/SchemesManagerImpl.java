@@ -139,14 +139,15 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myBaseDir);
         result.setResult(dir);
         if (dir != null) {
+          dir.getChildren();
           ((NewVirtualFile)dir).markDirtyRecursively();
-          dir.refresh(false, false);
+          dir.refresh(false, true);
         }
       }
     }.execute().getResultObject();
 
 
-    myVFSBaseDir.getChildren();
+
 
     system.addVirtualFileListener(new VirtualFileAdapter() {
       @Override
@@ -158,7 +159,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       public void fileCreated(final VirtualFileEvent event) {
         VirtualFile file = event.getFile();
 
-        if (event.getRequestor() == null && isFileUnder(file, myVFSBaseDir)) {
+        if (event.getRequestor() == null && isFileUnder(file, myVFSBaseDir) && !myInsideSave) {
           ArrayList<E> read = new ArrayList<E>();
           readSchemeFromFile(read, file, true);
           if (!read.isEmpty()) {
@@ -174,7 +175,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       public void fileDeleted(final VirtualFileEvent event) {
         VirtualFile parent = event.getParent();
 
-        if (event.getRequestor() == null && parent != null && parent.equals(myVFSBaseDir)) {
+        if (event.getRequestor() == null && parent != null && parent.equals(myVFSBaseDir) && !myInsideSave) {
           File ioFile = new File(event.getFileName());
           E scheme = findSchemeFor(ioFile.getName());
           T oldCurrentScheme = null;
@@ -210,7 +211,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private void onFileContentChanged(final VirtualFileEvent event, final VirtualFile baseDirFile) {
     VirtualFile file = event.getFile();
 
-    if (event.getRequestor() == null && isFileUnder(file, baseDirFile)) {
+    if (event.getRequestor() == null && isFileUnder(file, baseDirFile) && !myInsideSave) {
       File ioFile = new File(file.getPath());
       E scheme = findSchemeFor(ioFile.getName());
       ArrayList<E> read = new ArrayList<E>();
@@ -722,46 +723,54 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     }
   }
 
+  private boolean myInsideSave = false;
+
   private void doSave() throws WriteExternalException {
-    Collection<T> schemes = getAllSchemes();
-    myBaseDir.mkdirs();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        ((NewVirtualFile)myVFSBaseDir).markDirtyRecursively();
-        myVFSBaseDir.refresh(false, true);
-      }
-    });
-
-
-    UniqueFileNamesProvider fileNameProvider = new UniqueFileNamesProvider();
-
-    reserveUsingFileNames(schemes, fileNameProvider);
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        deleteFilesFromDeletedSchemes();
-      }
-    });
-
-
-    saveSchemes(schemes, fileNameProvider);
-
-    if (myDeletedNames.size() > 0) {
-      for (StreamProvider provider : getEnabledProviders()) {
-        try {
-          provider.saveContent(getFileFullPath(DELETED_XML), createDeletedDocument(), myRoamingType);
+    myInsideSave = true;
+    try {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          ((NewVirtualFile)myVFSBaseDir).markDirtyRecursively();
+          myVFSBaseDir.refresh(false, true);
         }
-        catch (IOException e) {
-          LOG.debug(e);
+      });
+
+      Collection<T> schemes = getAllSchemes();
+      myBaseDir.mkdirs();
+
+      UniqueFileNamesProvider fileNameProvider = new UniqueFileNamesProvider();
+
+      reserveUsingFileNames(schemes, fileNameProvider);
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          deleteFilesFromDeletedSchemes();
         }
+      });
+
+
+      saveSchemes(schemes, fileNameProvider);
+
+      if (myDeletedNames.size() > 0) {
+        for (StreamProvider provider : getEnabledProviders()) {
+          try {
+            provider.saveContent(getFileFullPath(DELETED_XML), createDeletedDocument(), myRoamingType);
+          }
+          catch (IOException e) {
+            LOG.debug(e);
+          }
+        }
+      }
+      else {
+        for (StreamProvider provider : getEnabledProviders()) {
+          provider.deleteFile(getFileFullPath(DELETED_XML), myRoamingType);
+        }
+
       }
     }
-    else {
-      for (StreamProvider provider : getEnabledProviders()) {
-        provider.deleteFile(getFileFullPath(DELETED_XML), myRoamingType);
-      }
-
+    finally {
+      myInsideSave = false;
     }
   }
 

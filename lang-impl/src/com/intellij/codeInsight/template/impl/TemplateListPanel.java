@@ -72,6 +72,8 @@ class TemplateListPanel extends JPanel {
 
     initTemplates(groups, templateSettings.getLastSelectedTemplateKey());
 
+
+
     if (templateSettings.getDefaultShortcutChar() == TemplateSettings.TAB_CHAR) {
       myExpandByCombo.setSelectedItem(TAB);
     }
@@ -81,8 +83,13 @@ class TemplateListPanel extends JPanel {
     else {
       myExpandByCombo.setSelectedItem(SPACE);
     }
+
+    updateTemplateText();
+
     isModified = false;
     myUpdateNeeded = true;
+
+
   }
 
   public void apply() {
@@ -627,26 +634,30 @@ class TemplateListPanel extends JPanel {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            int selected = getSelectedIndex();
-            if (selected < 0) {
-              myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), "");
-            }
-            else {
-              TemplateImpl template = getTemplate(selected);
-              if (template != null) {
-                String text = template.getString();
-                myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), text);
-                TemplateEditorUtil.setHighlighter(myEditor, template.getTemplateContext());
-              } else {
-                myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), "");
-              }
-            }
-          }
-        });
+        updateTemplateText();
       }
     }, 100);
+  }
+
+  private void updateTemplateText() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        int selected = getSelectedIndex();
+        if (selected < 0) {
+          myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), "");
+        }
+        else {
+          TemplateImpl template = getTemplate(selected);
+          if (template != null) {
+            String text = template.getString();
+            myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), text);
+            TemplateEditorUtil.setHighlighter(myEditor, template.getTemplateContext());
+          } else {
+            myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), "");
+          }
+        }
+      }
+    });
   }
 
   private DefaultMutableTreeNode addTemplate(TemplateImpl template) {
