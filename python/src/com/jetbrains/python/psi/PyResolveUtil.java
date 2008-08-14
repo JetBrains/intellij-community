@@ -31,11 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
+ * Ref resolution routines.
  * User: yole
  * Date: 14.06.2005
- * Time: 23:45:32
- * To change this template use File | Settings | File Templates.
  */
 public class PyResolveUtil {
 
@@ -110,7 +108,7 @@ public class PyResolveUtil {
    * Crawls up the PSI tree, checking nodes as if crawling backwards through source lexemes.
    * @param processor a visitor that says when the crawl is done and collects info.
    * @param elt element from which we start (not checked by processor); if null, the search immediately fails. 
-   * @param fromunder if true, search not above elt, but from an [possibly imaginary] node right below elt; so elt gets analyzed, too.
+   * @param fromunder if true, search not above elt, but from a [possibly imaginary] node right below elt; so elt gets analyzed, too.
    * @return first element that the processor accepted.
    */
   @Nullable
@@ -146,9 +144,8 @@ public class PyResolveUtil {
         if ((cap != null) && PsiTreeUtil.isAncestor(local_cap, cap, true)) break; // seeker is in a context above elt's
       }
       // maybe we're capped by a class
-      PsiElement possible_class_cap = getConcealingParent(seeker);
-      if (possible_class_cap instanceof PyClass) continue; // class implicitly qualifies things, and we're looking for unqualified.
-      // check
+      if (refersFromMethodToClass(cap, seeker)) continue;
+      // check what we got
       if (seeker != null) {
         if (!processor.execute(seeker, ResolveState.initial())) {
           if (processor instanceof ResolveProcessor) {
@@ -159,6 +156,45 @@ public class PyResolveUtil {
       }
     } while (seeker != null);
     return null;
+  }
+
+  @Nullable
+  public static PsiElement resolveOffContext(@NotNull PyReferenceExpression refex) {
+    // if we're under a cap, an external object that we want to use might be also defined below us.
+    // look through all contexts, closest first.
+    PsiElement ret = null;
+    PsiElement our_cap = getConcealingParent(refex);
+    ResolveProcessor proc = new ResolveProcessor(refex.getReferencedName()); // processor reusable till first hit
+    if (our_cap != null) {
+      PsiElement cap = our_cap;
+      while (true) {
+        cap = getConcealingParent(cap);
+        if (cap == null) cap = refex.getContainingFile();
+        ret = treeCrawlUp(proc, cap, true);
+        if ((ret != null) && !PsiTreeUtil.isAncestor(our_cap, ret, true)) { // found something and it is below our cap
+          // maybe we're in a method, and what we found is in its class context?
+          if (! refersFromMethodToClass(our_cap, ret)) {
+            break; // not in method -> must be all right
+          }
+        }
+        if (cap instanceof PsiFile) break; // file level, can't try more
+      }
+    }
+    return ret;
+  }
+
+  /**
+   * @param inner an element presumably inside a method within a class, or a method itself.
+   * @param outer an element presumably in the class context.
+   * @return true if an outer element is in a class context, while the cap is a method or function inside it.
+   * @see com.jetbrains.python.psi.PyResolveUtil#getConcealingParent(com.intellij.psi.PsiElement)
+   */
+  protected static boolean refersFromMethodToClass(final PsiElement inner, final PsiElement outer) {
+    return (
+      //(PsiTreeUtil.isAncestor(outer, cap, true)) && // just to make sure
+      (getConcealingParent(outer) instanceof PyClass) && // outer is in a class context
+      (PsiTreeUtil.getParentOfType(inner, PyFunction.class, false) != null) // cap is a function or method within the class
+    );
   }
 
   /**

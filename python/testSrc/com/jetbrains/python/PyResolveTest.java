@@ -106,6 +106,11 @@ public class PyResolveTest extends ResolveTestCase {
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
+  public void testClassPeerMembers() throws Exception {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PyFunction);
+  }
+
   public void testTuple() throws Exception {
     PsiElement targetElement = resolve();
     assertTrue(targetElement instanceof PyTargetExpression);

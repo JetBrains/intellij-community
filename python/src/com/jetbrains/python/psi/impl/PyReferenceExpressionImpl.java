@@ -163,22 +163,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       ret = PyResolveUtil.treeCrawlUp(new PyResolveUtil.ResolveProcessor(referencedName), bfile, true); 
     }
     if (ret == null) {
-      // if we're under a cap, an external object that we want to use might be also defined below us.
-      // look through all contexts, closest first.
-      PsiElement our_cap = PyResolveUtil.getConcealingParent(this);
-      PyResolveUtil.ResolveProcessor proc = new PyResolveUtil.ResolveProcessor(referencedName); // reusable till first hit
-      if (our_cap != null) {
-        PsiElement cap = our_cap;
-        while (true) {
-          cap = PyResolveUtil.getConcealingParent(cap);
-          if (cap == null) cap = this.getContainingFile();
-          ret = PyResolveUtil.treeCrawlUp(proc, cap, true);
-          if ((ret != null) && !PsiTreeUtil.isAncestor(our_cap, ret, true)) {
-            break;
-          }
-          if (cap instanceof PsiFile) break; // file level, can't try more
-        }
-      }
+      ret = PyResolveUtil.resolveOffContext(this);
     }
     return ret;
   }

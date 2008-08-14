@@ -11,6 +11,10 @@ public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
     return PathManager.getHomePath() + "/plugins/python/testData/highlighting/";
   }
 
+  public void testImportInTry() throws Exception {
+    doTest();
+  }
+
   public void testReturnOutsideOfFunction() throws Exception {
     doTest();
   }

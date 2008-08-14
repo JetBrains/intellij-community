@@ -1,5 +1,8 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -10,8 +13,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.python.psi.*;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -113,7 +116,10 @@ public class ResolveImportUtil {
         @Nullable
         public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
           if (value != null) return value;
-          return resolveInRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), the_name, importRef);
+          LookupRootVisitor visitor = new LookupRootVisitor(the_name, importRef.getManager());
+          visitRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), visitor);
+          return visitor.getResult();
+          /*return resolveInRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), the_name, importRef);*/
         }
       };
       return ModuleRootManager.getInstance(module).processOrder(resolvePolicy, null);
@@ -157,8 +163,14 @@ public class ResolveImportUtil {
     return null;
   }
 
+  public static void visitRoots(final VirtualFile[] roots, SdkRootVisitor visitor) {
+    for (VirtualFile root: roots) {
+      if (! visitor.visitRoot(root)) break;
+    }
+  }
+
   /**
-  Tries to find referencedName under a root. Only used for resolution of import statements.
+  Tries to find referencedName under a root.
   @param root where to look for the referenced name.
   @param referencedName which name to look for.
   @param importRef import reference which resolution led to this call.
@@ -178,6 +190,78 @@ public class ResolveImportUtil {
     }
 
     return null;
+  }
+
+
+  interface SdkRootVisitor {
+    /**
+     * @param root what we're visiting.
+     * @return false when visiting must stop.
+     */
+    boolean visitRoot(VirtualFile root);
+  }
+
+  static class LookupRootVisitor implements SdkRootVisitor {
+    String name;
+    PsiManager psimgr;
+    PsiElement result;
+
+    public LookupRootVisitor(String name, PsiManager psimgr) {
+      this.name = name;
+      this.psimgr = psimgr;
+      this.result = null;
+    }
+
+    public boolean visitRoot(final VirtualFile root) {
+      final VirtualFile childFile = root.findChild(name + PY_SUFFIX);
+      if (childFile != null) {
+        result = psimgr.findFile(childFile);
+        return (result == null);
+      }
+
+      final VirtualFile childDir = root.findChild(name);
+      if (childDir != null) {
+        result = psimgr.findDirectory(childDir);
+        return (result == null);
+      }
+      return true;
+    }
+
+    public PsiElement getResult() {
+      return result;
+    }
+  }
+
+  static class CollectingRootVisitor implements SdkRootVisitor {
+    List<String> result;
+    PsiManager psimgr;
+
+    static String cutExt(String name) {
+      return name.substring(0, Math.max(name.length() - PY_SUFFIX.length(), 0));
+    }
+
+    public CollectingRootVisitor(PsiManager psimgr) {
+      result = new ArrayList<String>(25);
+      this.psimgr = psimgr;
+    }
+
+    public boolean visitRoot(final VirtualFile root) {
+      for (VirtualFile vfile : root.getChildren()) {
+        if (vfile.getName().endsWith(PY_SUFFIX)) {
+          PsiFile pfile = psimgr.findFile(vfile);
+          if (pfile != null) result.add(cutExt(pfile.getName()));
+        }
+        else if (vfile.isDirectory() && (vfile.findChild(INIT_PY) != null)) {
+          PsiDirectory pdir = psimgr.findDirectory(vfile);
+          if (pdir != null) result.add(pdir.getName());
+        }
+      }
+      return true; // continue forever
+    }
+
+    public List<String> getResult() {
+      return result;
+    }
   }
 
   /**
@@ -240,32 +324,49 @@ public class ResolveImportUtil {
   /**
    * Finds reasonable names to import to complete a patrial name.
    * @param partial_ref reference containing the partial name.
-   * @return an array of names ready for gtVariants().
+   * @return an array of names ready for getVariants().
    */
-  public static String[] suggestImportVariants(PyReferenceExpression partial_ref) {
+  public static String[] suggestImportVariants(final PyReferenceExpression partial_ref) {
+    // look in builtins
     List<String> variants = new ArrayList<String>();
-    String prefix_u = partial_ref.getNode().getText().toUpperCase(); // we try case-insensitively
-    //
+    DataContext dataContext = DataManager.getInstance().getDataContext();
     // look at current dir
-    final VirtualFile pfile = partial_ref.getContainingFile().getVirtualFile();
+    final VirtualFile pfile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (pfile != null) {
       VirtualFile pdir = pfile.getParent();
-      _siftDir(pdir, prefix_u, variants, pfile) ;
+      if (pdir != null) {
+        for (VirtualFile a_file : pdir.getChildren()) {
+          if (a_file != pfile) {
+            if (pfile.isDirectory()) {
+              if (pfile.findChild(INIT_PY) != null) variants.add(a_file.getName());
+            }
+            else { // plain file
+              String fname = a_file.getName();
+              if (fname.endsWith(PY_SUFFIX)) {
+                variants.add(fname.substring(0, fname.length() - PY_SUFFIX.length()));
+              }
+            }
+          }
+        }
+      }
     }
     // look in SDK
-    // TODO: implement, reusing resolver code
-    return variants.toArray(new String[variants.size()]); 
-  }
+    final CollectingRootVisitor visitor = new CollectingRootVisitor(partial_ref.getManager());
+    final Module module = ModuleUtil.findModuleForPsiElement(partial_ref);
+    if (module != null) {
+      RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
+        @Nullable
+        public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
+          if (value != null) return value;
+          visitRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), visitor);
+          return null;
+        }
+      };
+      ModuleRootManager.getInstance(module).processOrder(resolvePolicy, null);
+      variants.addAll(visitor.getResult());
+    }
 
-   static void _siftDir(VirtualFile pdir, String prefix, List<String> variants, VirtualFile pfile) {
-     if (pdir != null) {
-       for (VirtualFile a_file : pdir.getChildren()) {
-         // TODO: check extensions, chack subdirs with __init__.py
-         if ((a_file != pfile) && (a_file.getName().toUpperCase().startsWith(prefix))) {
-           variants.add(a_file.getName());
-         }
-       }
-     }
-   }
+    return variants.toArray(new String[variants.size()]);
+  }
 
 }
