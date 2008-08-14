@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.openapi.fileChooser.TestFileChooserFactory;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -538,7 +539,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
 
     TestFileChooserFactory factory = new TestFileChooserFactory();
     factory.setFiles(new VirtualFile[]{libFile});
-    ((ChooseFileIntentionAction)action).setTestFileChooserFactory(factory);
+    ((ChooseFileIntentionAction)((IntentionActionWrapper)action).getDelegate()).setTestFileChooserFactory(factory);
 
     int prevValue = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().XML_TEXT_WRAP;
     try {
