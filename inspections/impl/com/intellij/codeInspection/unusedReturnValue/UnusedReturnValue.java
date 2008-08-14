@@ -144,11 +144,14 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
       final PsiStatement lastStatement =  psiStatements[psiStatements.length - 1];
       for (PsiReturnStatement returnStatement : returnStatements) {
         try {
-          if (returnStatement == lastStatement) {
-            returnStatement.delete();
-          }
-          else {
-            returnStatement.replace(JavaPsiFacade.getInstance(project).getElementFactory().createStatementFromText("return;", returnStatement));
+          final PsiExpression expression = returnStatement.getReturnValue();
+          if (expression instanceof PsiLiteralExpression || expression instanceof PsiThisExpression) {
+            if (returnStatement == lastStatement) {
+              returnStatement.delete();
+            }
+            else {
+              returnStatement.replace(JavaPsiFacade.getInstance(project).getElementFactory().createStatementFromText("return;", returnStatement));
+            }
           }
         }
         catch (IncorrectOperationException e) {
