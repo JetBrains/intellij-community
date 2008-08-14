@@ -1,9 +1,10 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
@@ -19,11 +20,15 @@ import java.util.List;
  * @author: Roman Chernyatchik
  */
 public class RTestUnitTestProxy extends CompositePrintable implements PrintableTestProxy {
+  private static final Logger LOG = Logger.getInstance(RTestUnitTestProxy.class.getName());
+
   private List<RTestUnitTestProxy> myChildren;
   private RTestUnitTestProxy myParent;
 
   private AbstractState myState = NotRunState.getInstance();
   private String myName;
+  private Integer myDuration = null; // duration is unknown
+  private boolean myDurationIsCached = false; // is used for separating unknown and unset duration
 
 
   private Printer myPrinter = Printer.DEAF;
@@ -125,6 +130,46 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
 
   public void setStarted() {
     myState = !myIsSuite ? TestInProgressState.TEST : new SuiteInProgressState(this);
+  }
+
+  /**
+   * Calculates and caches duration of test or suite
+   * @return null if duration is unknown, otherwise duration value in millisec;
+   */
+  @Nullable
+  public Integer getDuration() {
+    // Returns duration value for tests
+    // or cached duration for suites
+    if (myDurationIsCached || !isSuite()) {
+      return myDuration;
+    }
+
+    //For suites couns and caches durations of its childs. Also it evaluates partial duration,
+    //i.e. if duration is unknown it will be ignored in sumary value.
+    //If duration for all children is unknown sumary duration will be also unknown
+    myDuration = calcSuiteDuration();
+    myDurationIsCached = true;
+
+    return myDuration;
+  }
+
+  /**
+   * Sets duration of test
+   * @param duration In milleseconds
+   */
+  public void setDuration(final int duration) {
+    invalidateCachedDurationForContainerSuites();
+
+    if (!isSuite()) {
+      myDurationIsCached = true;
+      myDuration = (duration >= 0) ? duration : null;
+      return;
+    }
+
+    // Not allow to diractly set duration for suites.
+    // It should be the sum of children. This requirement is only
+    // for safety of current model and may be changed
+    LOG.warn("Unsupported operation");
   }
 
   public void setFinished() {
@@ -310,5 +355,37 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
       }
     }
     return state;
+  }
+
+  @Nullable
+  private Integer calcSuiteDuration() {
+    int partialDuration = 0;
+    boolean durationOfChildrenIsUnknown = true;
+
+    for (RTestUnitTestProxy child : getChildren()) {
+      final Integer duration = child.getDuration();
+      if (duration != null) {
+        durationOfChildrenIsUnknown = false;
+        partialDuration += duration.intValue();
+      }
+    }
+    // Lets convert partial duration in integer object. Negative partial duration
+    // means that duration of all children is unknown
+    return durationOfChildrenIsUnknown ? null : partialDuration;
+  }
+
+  /**
+   * Recursicely invalidates cached duration for container(parent) suites
+   */
+  private void invalidateCachedDurationForContainerSuites() {
+    // Invalidates duration of this suite
+    myDuration = null;
+    myDurationIsCached = false;
+
+    // Invalidates duration of container suite
+    final RTestUnitTestProxy containerSuite = getParent();
+    if (containerSuite != null) {
+      containerSuite.invalidateCachedDurationForContainerSuites();
+    }
   }
 }

@@ -538,4 +538,106 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     suite.setStarted();
     assertTrue(suite.isSuite());
   }
+
+  public void testDuration_ForTest() {
+    assertNull(mySimpleTest.getDuration());
+
+    mySimpleTest.setDuration(0);
+    assertEquals(0, mySimpleTest.getDuration().intValue());
+
+    mySimpleTest.setDuration(10);
+    assertEquals(10, mySimpleTest.getDuration().intValue());
+
+    mySimpleTest.setDuration(5);
+    assertEquals(5, mySimpleTest.getDuration().intValue());
+
+    mySimpleTest.setDuration(-2);
+    assertNull(mySimpleTest.getDuration());
+  }
+
+  public void testDuration_ForSuiteEmpty() {
+    final RTestUnitTestProxy suite = createSuiteProxy("root");
+    assertNull(suite.getDuration());
+  }
+
+  public void testSetDuration_Suite() {
+    mySuite.setDuration(5);
+    assertNull(mySuite.getDuration());
+
+    final RTestUnitTestProxy test = createTestProxy("test", mySuite);
+    test.setDuration(2);
+    mySuite.setDuration(5);
+    assertEquals(2, mySuite.getDuration().intValue());
+  }
+
+  public void testDuration_ForSuiteWithTests() {
+    final RTestUnitTestProxy suite = createSuiteProxy("root");
+    final RTestUnitTestProxy test1 = createTestProxy("test1", suite);
+    final RTestUnitTestProxy test2 = createTestProxy("test2", suite);
+
+    assertNull(suite.getDuration());
+
+    test1.setDuration(5);
+    assertEquals(5, suite.getDuration().intValue());
+
+    test2.setDuration(6);
+    assertEquals(11, suite.getDuration().intValue());
+  }
+
+  public void testDuration_OnFinished() {
+    final RTestUnitTestProxy suite = createSuiteProxy("root");
+    final RTestUnitTestProxy test = createTestProxy("test1", suite);
+
+    assertNull(suite.getDuration());
+
+    test.setDuration(5);
+    assertEquals(5, suite.getDuration().intValue());
+
+    test.setDuration(7);
+    assertEquals(7, suite.getDuration().intValue());
+
+    suite.setFinished();
+    assertEquals(7, suite.getDuration().intValue());
+
+    test.setDuration(8);
+    assertEquals(8, suite.getDuration().intValue());
+  }
+
+  public void testDuration_OnTerminated() {
+    final RTestUnitTestProxy suite = createSuiteProxy("root");
+    final RTestUnitTestProxy test = createTestProxy("test1", suite);
+
+    assertNull(suite.getDuration());
+
+    test.setDuration(5);
+    assertEquals(5, suite.getDuration().intValue());
+
+    test.setDuration(7);
+    assertEquals(7, suite.getDuration().intValue());
+
+    suite.setTerminated();
+    assertEquals(7, suite.getDuration().intValue());
+
+    test.setDuration(8);
+    assertEquals(8, suite.getDuration().intValue());
+  }
+
+  public void testDuration_ForSuiteWithSuites() {
+    final RTestUnitTestProxy root = createSuiteProxy("root");
+    final RTestUnitTestProxy suite1 = createSuiteProxy("suite1", root);
+    final RTestUnitTestProxy suite2 = createSuiteProxy("suite2", root);
+
+    final RTestUnitTestProxy test11 = createTestProxy("test11", suite1);
+    final RTestUnitTestProxy test12 = createTestProxy("test12", suite1);
+    final RTestUnitTestProxy test21 = createTestProxy("test21", suite2);
+
+    test11.setDuration(5);
+    assertEquals(5, root.getDuration().intValue());
+
+    test12.setDuration(6);
+    assertEquals(11, root.getDuration().intValue());
+
+    test21.setDuration(9);
+    assertEquals(20, root.getDuration().intValue());
+  }
 }

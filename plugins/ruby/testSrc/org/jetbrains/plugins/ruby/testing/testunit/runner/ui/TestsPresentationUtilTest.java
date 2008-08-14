@@ -38,7 +38,7 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     //here number format is platform-dependent
     assertEquals("Done: 10 of 0  Failed: 1  (" + NumberFormat.getInstance().format((double)5/1000.0) + " s)  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 5, 0, 10, 1));
-    assertEquals("Done: 10 of 1  (0.0 s)  ",
+    assertEquals("Done: 10 of 1  (" + String.valueOf((float)0) + " s)  ",
                  TestsPresentationUtil.getProgressStatus_Text(5, 5, 1, 10, 0));
   }
 
@@ -378,44 +378,6 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
   //public void testGetSuiteStatusPresentation_Terminated() {
   //   fail("Not implemented");
   //}
-
-  public void testGetDurationPresentation_NotRun() {
-    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
-  }
-
-  public void testGetDurationPresentation_Progress() {
-    mySimpleTest.setStarted();
-    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
-  }
-
-  public void testGetDurationPresentation_Passed() {
-    mySimpleTest.setStarted();
-    mySimpleTest.setFinished();
-    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
-  }
-
-  public void testGetDurationPresentation_Failed() {
-    mySimpleTest.setStarted();
-    mySimpleTest.setTestFailed("", "", false);
-    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
-    mySimpleTest.setFinished();
-    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
-  }
-
-
-  public void testGetDurationPresentation_TestError() {
-    mySimpleTest.setStarted();
-    mySimpleTest.setTestFailed("", "", true);
-    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
-    mySimpleTest.setFinished();
-    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
-  }
-
-  public void testGetDurationPresentation_Terminated() {
-    mySimpleTest.setStarted();
-    mySimpleTest.setTerminated();
-    assertEquals("<unknown>", TestsPresentationUtil.getDurationPresentation(mySimpleTest));
-  }
 
   private void assertProxyPresentation(final String expectedPresentation, final String parentName,
                                        final String childName) {

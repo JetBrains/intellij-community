@@ -4,6 +4,7 @@ import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
@@ -19,6 +20,13 @@ import java.text.NumberFormat;
 public class TestsPresentationUtil {
   @NonNls private static final String DOUBLE_SPACE = "  ";
   @NonNls private static final String WORLD_CREATION_TIME = "0.0";
+  @NonNls private static final String SECONDS_SUFFIX = " " + RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.seconds");
+  @NonNls private static final String DURATION_UNKNOWN = RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.duration.unknown");
+  @NonNls private static final String DURATION_NO_TESTS = RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.duration.no.tests");
+  @NonNls private static final String DURATION_NOT_RUN = RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.duration.not.run");
+  @NonNls private static final String DURATION_RUNNING_PREFIX = RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.duration.prefix.running");
+  @NonNls private static final String DURATION_TERMINATED_PREFIX = RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.duration.prefix.terminated");
+  @NonNls private static final String COLON = ": ";
 
   private TestsPresentationUtil() {
   }
@@ -47,7 +55,7 @@ public class TestsPresentationUtil {
       final long time = endTime - startTime;
       sb.append(DOUBLE_SPACE);
       sb.append('(').append(time == 0 ? WORLD_CREATION_TIME : NumberFormat.getInstance().format((double)time/1000.0));
-      sb.append(' ').append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.seconds")).append(')');
+      sb.append(SECONDS_SUFFIX).append(')');
     }
     sb.append(DOUBLE_SPACE);
 
@@ -163,7 +171,57 @@ public class TestsPresentationUtil {
    */
   @Nullable
   public static String getDurationPresentation(final RTestUnitTestProxy proxy) {
-    //TODO[romeo] implement
-    return "<unknown>";
-  }  
+    switch (proxy.getMagnitudeInfo()) {
+      case COMPLETE_INDEX:
+      case PASSED_INDEX:
+      case FAILED_INDEX:
+      case ERROR_INDEX:
+        return getDurationTimePresentation(proxy);
+
+      case IGNORED_INDEX:
+      case SKIPPED_INDEX:
+      case NOT_RUN_INDEX:
+        return DURATION_NOT_RUN;
+
+      case RUNNING_INDEX:
+        return getDurationWithPrefixPresentation(proxy, DURATION_RUNNING_PREFIX);
+
+      case TERMINATED_INDEX:
+        return getDurationWithPrefixPresentation(proxy, DURATION_TERMINATED_PREFIX);
+
+      default:
+        return DURATION_UNKNOWN;
+    }
+  }
+
+  private static String getDurationWithPrefixPresentation(final RTestUnitTestProxy proxy,
+                                                          final String prefix) {
+    // If duration is known
+    if (proxy.getDuration() != null) {
+      return prefix + COLON + getDurationTimePresentation(proxy);
+    }
+
+    return '<' + prefix + '>';
+  }
+
+  private static String getDurationTimePresentation(final RTestUnitTestProxy proxy) {
+    final Integer duration = proxy.getDuration();
+
+    if (duration == null) {
+      // if suite without children
+      return proxy.isSuite() && proxy.isLeaf()
+             ? DURATION_NO_TESTS
+             : DURATION_UNKNOWN;
+    } else {
+      return String.valueOf(convertToSeconds(duration)) + SECONDS_SUFFIX;
+    }
+  }
+
+  /**
+   * @param duration In milliseconds
+   * @return Value in seconds
+   */
+  private static float convertToSeconds(@NotNull final Integer duration) {
+    return duration.floatValue() / 1000;
+  }
 }

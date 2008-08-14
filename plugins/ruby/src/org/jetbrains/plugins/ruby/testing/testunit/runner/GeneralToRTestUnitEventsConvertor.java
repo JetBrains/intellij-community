@@ -132,7 +132,7 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
           return;
         }
 
-        //TODO pass duration
+        testProxy.setDuration(duration);
         testProxy.setFinished();
         myRunningTestsFullNameToProxy.remove(fullTestName);
 
