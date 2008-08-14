@@ -100,7 +100,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     myDescriptors = new ArrayList<ProblemDescriptor>();
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
-    
+
     Map<LocalInspectionTool, LocalInspectionToolWrapper> tool2Wrapper = new THashMap<LocalInspectionTool, LocalInspectionToolWrapper>(toolWrappers.length);
     for (InspectionProfileEntry toolWrapper : toolWrappers) {
       tool2Wrapper.put(((LocalInspectionToolWrapper)toolWrapper).getTool(), (LocalInspectionToolWrapper)toolWrapper);
@@ -187,10 +187,13 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             if(elementVisitor == null) {
               LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
             }
+            final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
+            tool.inspectionStarted(session);
             for (PsiElement element : elements) {
               progressManager.checkCanceled();
               element.accept(elementVisitor);
             }
+            tool.inspectionFinished(session);
             advanceProgress(elements.length);
 
             if (holder.hasResults()) {

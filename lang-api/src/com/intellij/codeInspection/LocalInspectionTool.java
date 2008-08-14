@@ -72,4 +72,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   public PsiNamedElement getProblemElement(PsiElement psiElement) {
     return PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiFile.class);
   }
+
+  public void inspectionStarted(LocalInspectionToolSession session) {}
+
+  public void inspectionFinished(LocalInspectionToolSession session) {}
 }
