@@ -436,6 +436,13 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
           document = JDOMUtil.loadDocument(file.getInputStream());
         }
         catch (JDOMException e) {
+          try {
+            file.copy(this, file.getParent(), file.getName() + ".copy");
+          }
+          catch (IOException e1) {
+            LOG.info(e1);
+            //ignore
+          }
           LOG.info("Error reading file " + file.getPath() + ": " + e.getLocalizedMessage());
           throw e;
         }
@@ -454,7 +461,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
             new Runnable(){
               public void run() {
                 String msg = "Cannot read scheme " + file.getName() + "  from '" + myFileSpec + "': " + e.getLocalizedMessage();
-                LOG.warn(msg, e);
+                LOG.info(msg, e);
                 Messages.showErrorDialog(msg, "Load Settings");
               }
             }
