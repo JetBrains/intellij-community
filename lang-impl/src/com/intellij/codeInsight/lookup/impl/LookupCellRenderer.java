@@ -122,6 +122,9 @@ class LookupCellRenderer implements ListCellRenderer {
 
     myNameComponent.clear();
     myLabel2.setBackground(background);
+    myLabel2.setText(null);
+    myLabel3.setText(null);
+    myNameComponent.setIcon(myEmptyIcon);
     item.renderElement(myLookupElementPresentation);
 
     return myPanel;
