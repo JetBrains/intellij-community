@@ -57,22 +57,18 @@ public class AutoUnboxingInspection extends BaseInspection {
         s_unboxingMethods.put("char", "charValue");
     }
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("auto.unboxing.display.name");
     }
 
-    @NotNull
+    @Override @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "auto.unboxing.problem.descriptor");
     }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new AutoUnboxingVisitor();
-    }
-
-    @Nullable
+    @Override @Nullable
     public InspectionGadgetsFix buildFix(Object... infos){
         if (!isFixApplicable((PsiExpression)infos[0])) {
             return null;
@@ -126,6 +122,7 @@ public class AutoUnboxingInspection extends BaseInspection {
                     "auto.unboxing.make.unboxing.explicit.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiExpression expression =
@@ -147,12 +144,20 @@ public class AutoUnboxingInspection extends BaseInspection {
                 newExpressionText = '(' + expressionText + ")." +
                         boxClassName + "()";
             } else{
-                newExpressionText = expressionText + '.' + boxClassName + "()";
+                final String constantText =
+                        computeConstantBooleanText(expression);
+                if (constantText != null) {
+                    newExpressionText = constantText;
+                } else {
+                    newExpressionText =
+                            expressionText + '.' + boxClassName + "()";
+                }
             }
-            final PsiManager manager = expression.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory factory = psiFacade.getElementFactory();
             final PsiElement parent = expression.getParent();
-            if (parent instanceof PsiPrefixExpression) {
+            if (parent instanceof PsiPrefixExpression &&
+                    !unboxedType.equalsToText("boolean") ) {
                 final PsiPrefixExpression prefixExpression =
                         (PsiPrefixExpression)parent;
                 final PsiJavaToken operationSign =
@@ -232,6 +237,39 @@ public class AutoUnboxingInspection extends BaseInspection {
                 replaceExpression(expression, newExpressionText);
             }
         }
+
+        @NonNls
+        private static String computeConstantBooleanText(
+                PsiExpression expression) {
+            if (!(expression instanceof PsiReferenceExpression)) {
+                return null;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) expression;
+            final PsiElement target = referenceExpression.resolve();
+            if (!(target instanceof PsiField)) {
+                return null;
+            }
+            final PsiField field = (PsiField) target;
+            final PsiClass containingClass = field.getContainingClass();
+            final String qualifiedName = containingClass.getQualifiedName();
+            if (!"java.lang.Boolean".equals(qualifiedName)) {
+                return null;
+            }
+            final String name = field.getName();
+            if ("TRUE".equals(name)) {
+                return "true";
+            } else if ("FALSE".equals(name)) {
+                return "false";
+            } else {
+                return null;
+            }
+        }
+    }
+
+    @Override
+    public BaseInspectionVisitor buildVisitor(){
+        return new AutoUnboxingVisitor();
     }
 
     private static class AutoUnboxingVisitor extends BaseInspectionVisitor{
@@ -275,7 +313,8 @@ public class AutoUnboxingInspection extends BaseInspection {
             checkExpression(expression);
         }
 
-        @Override public void visitTypeCastExpression(PsiTypeCastExpression expression){
+        @Override public void visitTypeCastExpression(
+                PsiTypeCastExpression expression){
             super.visitTypeCastExpression(expression);
             checkExpression(expression);
         }
