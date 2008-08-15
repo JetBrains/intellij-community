@@ -134,6 +134,147 @@
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsTagSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsTagBodySelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsHtmlTagBodySelectioner"/>
+
+    <!-- control flow -->
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.DemorgansLawIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.MergeIfAndIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.ExpandBooleanIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.FlipConjunctionIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.FlipComparisonIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.NegateComparisonIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.MergeElseIfIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.SplitElseIfIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.FlipConditionalIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.ConditionalToElvisIntention</className>
+    </intentionAction>
+
+    <!-- closures -->
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.closures</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.closure.MakeClosureCallExplicitIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.closures</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.closure.MakeClosureCallImplicitIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.closures</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.closure.ForToEachIntention</className>
+    </intentionAction>
+    <!--
+    todo make this work
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.closures</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.closure.ConvertClosureArgToItIntention</className>
+    </intentionAction>
+    -->
+
+    <!-- comments -->
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.comments</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.comments.ChangeToCStyleCommentIntention</className>
+    </intentionAction>
+    <!--
+    todo make this work
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.comments</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.comments.ChangeToEndOfLineCommentIntention</className>
+    </intentionAction>
+    -->
+
+    <!-- conversions -->
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertIntegerToDecimalIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertIntegerToHexIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertIntegerToOctalIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.IndexingMethodConversionIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.IndexedExpressionConversionIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertStringToGStringIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertGStringToStringIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.RemoveParenthesesFromMethodCallIntention</className>
+    </intentionAction>
+
+    <!-- groovy style -->
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.style</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.style.JavaStylePropertiesInvocationIntention</className>
+    </intentionAction>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
@@ -141,9 +282,6 @@
   </extensions>
 
   <project-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsProvider</implementation-class>
-    </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager</implementation-class>
     </component>
