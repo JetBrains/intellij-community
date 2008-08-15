@@ -20,9 +20,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
-  private final PsiMethodCallExpression myMethodCall;
+  private final PsiCall myMethodCall;
 
-  public SurroundWithArrayFix(final PsiMethodCallExpression methodCall) {
+  public SurroundWithArrayFix(final PsiCall methodCall) {
     myMethodCall = methodCall;
   }
 
@@ -42,13 +42,12 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
 
   @Nullable
   private PsiExpression getExpression(PsiElement element) {
-    final PsiReferenceExpression methodExpression = myMethodCall.getMethodExpression();
-    final PsiElement method = methodExpression.resolve();
+    final PsiElement method = myMethodCall.resolveMethod();
     if (method != null) {
       final PsiMethod psiMethod = (PsiMethod)method;
       return checkMethod(element, psiMethod);
-    } else {
-      final Collection<PsiElement> psiElements = TargetElementUtil.getInstance().getTargetCandidates(methodExpression);
+    } else if (myMethodCall instanceof PsiMethodCallExpression){
+      final Collection<PsiElement> psiElements = TargetElementUtil.getInstance().getTargetCandidates(((PsiMethodCallExpression)myMethodCall).getMethodExpression());
       for (PsiElement psiElement : psiElements) {
         if (psiElement instanceof PsiMethod) {
           final PsiExpression expression = checkMethod(element, (PsiMethod)psiElement);

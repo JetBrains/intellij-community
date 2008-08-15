@@ -1119,6 +1119,7 @@ public class HighlightMethodUtil {
             ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info, getFixRange(infoElement));
             ChangeMethodSignatureFromUsageFix.registerIntentions(results, list, info, null);
             PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list));
+            QuickFixAction.registerQuickFixAction(info, getFixRange(list), new SurroundWithArrayFix(constructorCall), null);
           }
           info.navigationShift = +1;
           holder.add(info);
