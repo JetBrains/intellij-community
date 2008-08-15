@@ -118,12 +118,14 @@ public class ImportClassFix implements HintAction {
   }
 
   public boolean showHint(final Editor editor) {
+    if (myRef.isQualified()) return false;
     return doFix(editor, true, false);
   }
 
   public boolean doFix(@NotNull final Editor editor, boolean doShow, final boolean allowCaretNearRef) {
     List<PsiClass> classesToImport = getClassesToImport();
     if (classesToImport.isEmpty()) return false;
+
     try {
       String name = myRef.getQualifiedName();
       Pattern pattern = Pattern.compile(DaemonCodeAnalyzerSettings.getInstance().NO_AUTO_IMPORT_PATTERN);
