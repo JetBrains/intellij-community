@@ -2,6 +2,7 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -23,6 +24,8 @@ public class HighlightExitPointsHandler implements HighlightUsagesHandlerDelegat
     PsiElement target = file.findElementAt(offset);
     if (target instanceof PsiKeyword) {
       if (PsiKeyword.RETURN.equals(target.getText()) || PsiKeyword.THROW.equals(target.getText())) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.return");
+
         PsiElement parent = target.getParent();
         if (!(parent instanceof PsiReturnStatement) && !(parent instanceof PsiThrowStatement)) return true;
 

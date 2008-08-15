@@ -317,6 +317,13 @@
       successive-show="5"
       min-usage-count="5"
       />
+     <feature
+      id="codeassists.highlight.return"
+      tip-file="HighlightMethodExitPoint.html"
+      first-show="3"
+      successive-show="5"
+      min-usage-count="5"
+      />
   </group>
 
   <group id="refactoring">
