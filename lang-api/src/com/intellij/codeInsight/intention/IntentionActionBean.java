@@ -18,8 +18,10 @@ package com.intellij.codeInsight.intention;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +46,16 @@ public class IntentionActionBean extends CustomLoadingExtensionPointBean {
     if (categoryKey != null) {
       final String baseName = bundleName != null ? bundleName : ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName();
       final ResourceBundle bundle = ResourceBundle.getBundle(baseName, Locale.getDefault(), myPluginDescriptor.getPluginClassLoader());
+
+      final String[] keys = categoryKey.split("/");
+      if (keys.length > 1) {
+        return ContainerUtil.map2Array(keys, String.class, new Function<String, String>() {
+          public String fun(final String s) {
+            return CommonBundle.message(bundle, s);
+          }
+        });
+      }
+
       category = CommonBundle.message(bundle, categoryKey);
     }
     if (category == null) return null;
