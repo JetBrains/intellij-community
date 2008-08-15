@@ -77,6 +77,14 @@ public class JavacOutputParserPool {
     final CompilerParsingThread setupProcessParsingThread = new CompilerParsingThreadImpl(setupProcess, myContext, outputParser, true, true);
     final Future<?> parsingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(setupProcessParsingThread);
     try {
+      setupProcess.waitFor();
+    }
+    catch (InterruptedException ignored) {
+    }
+    finally {
+      setupProcessParsingThread.setProcessTerminated(true);
+    }
+    try {
       parsingThreadFuture.get();
     }
     catch (InterruptedException e) {
