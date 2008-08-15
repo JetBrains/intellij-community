@@ -55,6 +55,13 @@ public final class RequestProcessor implements IRequestProcessor {
   private final long myTimeout;
 
   // Setup ==================================================================
+  public RequestProcessor(IClientEnvironment clientEnvironment,
+                          IGlobalOptions globalOptions,
+                          IEventSender eventSender,
+                          IStreamLogger streamLogger,
+                          ICvsCommandStopper commandStopper) {
+    this(clientEnvironment, globalOptions, eventSender, streamLogger, commandStopper, -1);
+  }
 
   public RequestProcessor(IClientEnvironment clientEnvironment,
                           IGlobalOptions globalOptions,
