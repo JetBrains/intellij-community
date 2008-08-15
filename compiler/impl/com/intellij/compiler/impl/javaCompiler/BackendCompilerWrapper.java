@@ -455,21 +455,14 @@ public class BackendCompilerWrapper {
         process.destroy();
         exitValue = process.exitValue();
       }
-      finally {
-        if (errorParsingThread != null) {
-          errorParsingThread.setProcessTerminated(true);
-        }
-        if (outputParsingThread != null) {
-          outputParsingThread.setProcessTerminated(true);
-        }
-        joinThread(errorParsingThreadFuture);
-        joinThread(outputParsingThreadFuture);
-        classParsingThread.stopParsing();
-        joinThread(classParsingThreadFuture);
 
-        registerParsingException(outputParsingThread);
-        registerParsingException(errorParsingThread);
-      }
+      joinThread(errorParsingThreadFuture);
+      joinThread(outputParsingThreadFuture);
+      classParsingThread.stopParsing();
+      joinThread(classParsingThreadFuture);
+
+      registerParsingException(outputParsingThread);
+      registerParsingException(errorParsingThread);
     }
     finally {
       compileFinished(exitValue, chunk, outputDir);

@@ -241,15 +241,6 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
     final Future<?> parsingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(parsingThread);
     try {
-      process.waitFor();
-    }
-    catch (InterruptedException ignored) {
-    }
-    finally {
-      parsingThread.setProcessTerminated(true);
-    }
-
-    try {
       parsingThreadFuture.get();
     }
     catch (InterruptedException e) {
