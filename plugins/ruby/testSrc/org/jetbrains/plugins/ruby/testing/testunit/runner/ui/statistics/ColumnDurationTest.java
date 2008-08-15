@@ -1,85 +1,80 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner.ui.statistics;
 
-import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ruby.support.UITestUtil;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 
 /**
  * @author Roman Chernyatchik
  */
-public class ColumnDurationTest extends BaseRUnitTestsTestCase {
-  private ColumnDuration myColumnDuration;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    myColumnDuration = new ColumnDuration();
-  }
-
+public class ColumnDurationTest extends BaseColumnRenderingTest {
+  
   public void testValueOf_NotRun() {
-    assertEquals("<NOT RUN>", myColumnDuration.valueOf(mySimpleTest));
+    assertEquals("<NOT RUN>", myColumn.valueOf(mySimpleTest));
   }
 
   public void testValueOf_InProgress() {
     mySimpleTest.setStarted();
-    assertEquals("<RUNNING>", myColumnDuration.valueOf(mySimpleTest));
+    assertEquals("<RUNNING>", myColumn.valueOf(mySimpleTest));
   }
 
   public void testValueOf_TestFailure() {
     mySimpleTest.setStarted();
     mySimpleTest.setTestFailed("", "", false);
-    assertEquals("<UNKNOWN>", myColumnDuration.valueOf(mySimpleTest));
+    assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
 
     mySimpleTest.setDuration(10000);
-    assertEquals(String.valueOf((float)10) + " s", myColumnDuration.valueOf(mySimpleTest));
+    assertEquals(String.valueOf((float)10) + " s", myColumn.valueOf(mySimpleTest));
   }
 
   public void testValueOf_TestPassed() {
     mySimpleTest.setStarted();
     mySimpleTest.setFinished();
-    assertEquals("<UNKNOWN>", myColumnDuration.valueOf(mySimpleTest));
+    assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
 
     mySimpleTest.setDuration(10000);
-    assertEquals(String.valueOf((float)10) + " s", myColumnDuration.valueOf(mySimpleTest));
+    assertEquals(String.valueOf((float)10) + " s", myColumn.valueOf(mySimpleTest));
   }
 
   public void testValueOf_TestError() {
     mySimpleTest.setStarted();
     mySimpleTest.setTestFailed("", "", true);
-    assertEquals("<UNKNOWN>", myColumnDuration.valueOf(mySimpleTest));
+    assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
 
     mySimpleTest.setDuration(10000);
-    assertEquals(String.valueOf((float)10) + " s", myColumnDuration.valueOf(mySimpleTest));
+    assertEquals(String.valueOf((float)10) + " s", myColumn.valueOf(mySimpleTest));
   }
 
   public void testValueOf_TestTerminated() {
     mySimpleTest.setStarted();
     mySimpleTest.setTerminated();
-    assertEquals("<TERMINATED>", myColumnDuration.valueOf(mySimpleTest));
+    assertEquals("<TERMINATED>", myColumn.valueOf(mySimpleTest));
 
     mySimpleTest.setDuration(10000);
-    assertEquals("TERMINATED: " + String.valueOf((float)10) + " s", myColumnDuration.valueOf(mySimpleTest));
+    assertEquals("TERMINATED: " + String.valueOf((float)10) + " s", myColumn.valueOf(mySimpleTest));
   }
 
   public void testValueOf_SuiteEmpty() {
     final RTestUnitTestProxy suite = createSuiteProxy();
     suite.setStarted();
     suite.setFinished();
-    assertEquals("<NO TESTS>", myColumnDuration.valueOf(suite));
+    assertEquals("<NO TESTS>", myColumn.valueOf(suite));
 
     suite.setFinished();
-    assertEquals("<NO TESTS>", myColumnDuration.valueOf(suite));
+    assertEquals("<NO TESTS>", myColumn.valueOf(suite));
   }
 
   public void testValueOf_SuiteNotRun() {
     final RTestUnitTestProxy suite = createSuiteProxy();
-    assertEquals("<NOT RUN>", myColumnDuration.valueOf(suite));
+    assertEquals("<NOT RUN>", myColumn.valueOf(suite));
 
     final RTestUnitTestProxy test = createTestProxy("test", suite);
-    assertEquals("<NOT RUN>", myColumnDuration.valueOf(suite));
+    assertEquals("<NOT RUN>", myColumn.valueOf(suite));
 
     test.setDuration(5);
-    assertEquals("<NOT RUN>", myColumnDuration.valueOf(suite));
+    assertEquals("<NOT RUN>", myColumn.valueOf(suite));
   }
 
   public void testValueOf_SuiteFailed() {
@@ -90,10 +85,10 @@ public class ColumnDurationTest extends BaseRUnitTestsTestCase {
     test.setTestFailed("", "", false);
     suite.setFinished();
 
-    assertEquals("<UNKNOWN>", myColumnDuration.valueOf(suite));
+    assertEquals("<UNKNOWN>", myColumn.valueOf(suite));
 
     test.setDuration(10000);
-    assertEquals(String.valueOf((float)10) + " s", myColumnDuration.valueOf(suite));
+    assertEquals(String.valueOf((float)10) + " s", myColumn.valueOf(suite));
   }
 
   public void testValueOf_SuiteError() {
@@ -104,10 +99,10 @@ public class ColumnDurationTest extends BaseRUnitTestsTestCase {
     test.setTestFailed("", "", true);
     suite.setFinished();
 
-    assertEquals("<UNKNOWN>", myColumnDuration.valueOf(suite));
+    assertEquals("<UNKNOWN>", myColumn.valueOf(suite));
 
     test.setDuration(10000);
-    assertEquals(String.valueOf((float)10) + " s", myColumnDuration.valueOf(suite));
+    assertEquals(String.valueOf((float)10) + " s", myColumn.valueOf(suite));
   }
 
   public void testValueOf_SuitePassed() {
@@ -118,10 +113,10 @@ public class ColumnDurationTest extends BaseRUnitTestsTestCase {
     test.setFinished();
     suite.setFinished();
 
-    assertEquals("<UNKNOWN>", myColumnDuration.valueOf(suite));
+    assertEquals("<UNKNOWN>", myColumn.valueOf(suite));
 
     test.setDuration(10000);
-    assertEquals(String.valueOf((float)10) + " s", myColumnDuration.valueOf(suite));
+    assertEquals(String.valueOf((float)10) + " s", myColumn.valueOf(suite));
   }
 
   public void testValueOf_SuiteTerminated() {
@@ -131,10 +126,10 @@ public class ColumnDurationTest extends BaseRUnitTestsTestCase {
     suite.setStarted();
     suite.setTerminated();
 
-    assertEquals("<TERMINATED>", myColumnDuration.valueOf(suite));
+    assertEquals("<TERMINATED>", myColumn.valueOf(suite));
 
     test.setDuration(10000);
-    assertEquals("TERMINATED: " + String.valueOf((float)10) + " s", myColumnDuration.valueOf(suite));
+    assertEquals("TERMINATED: " + String.valueOf((float)10) + " s", myColumn.valueOf(suite));
   }
 
   public void testValueOf_SuiteRunning() {
@@ -144,9 +139,63 @@ public class ColumnDurationTest extends BaseRUnitTestsTestCase {
     suite.setStarted();
     test.setStarted();
 
-    assertEquals("<RUNNING>", myColumnDuration.valueOf(suite));
+    assertEquals("<RUNNING>", myColumn.valueOf(suite));
 
     test.setDuration(10000);
-    assertEquals("RUNNING: " + String.valueOf((float)10) + " s", myColumnDuration.valueOf(suite));
+    assertEquals("RUNNING: " + String.valueOf((float)10) + " s", myColumn.valueOf(suite));
+  }
+
+  public void testTotal_Test() {
+    mySuite.addChild(mySimpleTest);
+
+    doRender(mySimpleTest, 0);
+    assertFragmentsSize(1);
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
+    assertEquals(myColumn.valueOf(mySimpleTest), myFragmentsContainer.getTextAt(0));
+
+    myFragmentsContainer.clear();
+    doRender(mySimpleTest, 1);
+    assertFragmentsSize(1);
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
+    assertEquals(myColumn.valueOf(mySimpleTest), myFragmentsContainer.getTextAt(0));
+  }
+
+  public void testTotal_RegularSuite() {
+    doRender(mySuite, 1);
+    assertFragmentsSize(1);
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
+    assertEquals(myColumn.valueOf(mySuite), myFragmentsContainer.getTextAt(0));
+  }
+
+  public void testTotal_TotalSuite() {
+    doRender(mySuite, 0);
+    assertFragmentsSize(1);
+    assertEquals(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
+    assertEquals(myColumn.valueOf(mySuite), myFragmentsContainer.getTextAt(0));
+  }
+  
+  protected ColoredRenderer createRenderer(final RTestUnitTestProxy rTestUnitTestProxy,
+                                                    final UITestUtil.FragmentsContainer fragmentsContainer) {
+    return new MyRenderer(rTestUnitTestProxy, fragmentsContainer);
+  }
+
+  protected ColumnInfo<RTestUnitTestProxy, String> createColumn() {
+    return new ColumnDuration();
+  }
+
+  private class MyRenderer extends ColumnDuration.DurationCellRenderer {
+    private UITestUtil.FragmentsContainer myFragmentsContainer;
+
+    public MyRenderer(final RTestUnitTestProxy proxy,
+                       final UITestUtil.FragmentsContainer fragmentsContainer) {
+      super(proxy);
+      myFragmentsContainer = fragmentsContainer;
+    }
+
+    @Override
+    public void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes,
+                       final boolean isMainText) {
+      myFragmentsContainer.append(fragment, attributes);
+    }
   }
 }

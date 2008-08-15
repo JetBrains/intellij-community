@@ -294,6 +294,7 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
     myPrinter.onNewAvaliable(printable);
   }
 
+  @NotNull
   public String getPresentableName() {
     return TestsPresentationUtil.getPresentableName(this);
   }

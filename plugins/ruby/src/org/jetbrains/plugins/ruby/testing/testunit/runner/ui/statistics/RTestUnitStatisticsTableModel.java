@@ -57,8 +57,11 @@ public class RTestUnitStatisticsTableModel extends ListTableModel<RTestUnitTestP
     }
 
     final List<RTestUnitTestProxy> list = new ArrayList<RTestUnitTestProxy>();
+    // suite's total statistics
+    list.add(suite);
+    // chiled's statistics
     list.addAll(suite.getChildren());
-    //TODO totatl -- black bolded
+
     return list;
   }
 

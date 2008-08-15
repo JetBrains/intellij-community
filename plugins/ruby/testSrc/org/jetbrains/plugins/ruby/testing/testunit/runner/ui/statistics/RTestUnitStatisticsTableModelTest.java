@@ -108,7 +108,7 @@ public class RTestUnitStatisticsTableModelTest extends BaseRUnitTestsTestCase {
     final RTestUnitTestProxy test2 = createTestProxy("test2", myRootSuite);
     mySelectionListener.onSelected(test1);
 
-    assertSameElements(getItems(), test1, test2);
+    assertSameElements(getItems(), myRootSuite, test1, test2);
   }
 
   public void testOnSelected_Suite() {
@@ -119,13 +119,13 @@ public class RTestUnitStatisticsTableModelTest extends BaseRUnitTestsTestCase {
     final RTestUnitTestProxy suite2 = createSuiteProxy("suite2", myRootSuite);
 
     mySelectionListener.onSelected(suite1);
-    assertSameElements(getItems(), test1, test2);
+    assertSameElements(getItems(), suite1, test1, test2);
 
     mySelectionListener.onSelected(suite2);
-    assertEmpty(getItems());
+    assertSameElements(getItems(), suite2);
 
     mySelectionListener.onSelected(myRootSuite);
-    assertSameElements(getItems(), suite1, suite2);
+    assertSameElements(getItems(), myRootSuite, suite1, suite2);
   }
 
   public void testOnSuiteStarted_NoCurrent() {
@@ -143,37 +143,37 @@ public class RTestUnitStatisticsTableModelTest extends BaseRUnitTestsTestCase {
     final RTestUnitTestProxy suite = createSuiteProxy("suite1", myRootSuite);
 
     mySelectionListener.onSelected(suite);
-    assertEmpty(getItems());
+    assertSameElements(getItems(), suite);
 
     final RTestUnitTestProxy test1 = createTestProxy("test1", suite);
     final RTestUnitTestProxy test2 = createTestProxy("test2", suite);
     myTestEventsListener.onSuiteStarted(suite);
-    assertSameElements(getItems(), test1, test2);
+    assertSameElements(getItems(), suite, test1, test2);
   }
 
   public void testOnSuiteStarted_Child() {
     final RTestUnitTestProxy suite = createSuiteProxy("suite1", myRootSuite);
 
     mySelectionListener.onSelected(suite);
-    assertEmpty(getItems());
+    assertSameElements(getItems(), suite);
 
     final RTestUnitTestProxy test1 = createTestProxy("test1", suite);
     final RTestUnitTestProxy test2 = createTestProxy("test2", suite);
     myTestEventsListener.onSuiteStarted(test1);
-    assertSameElements(getItems(), test1, test2);
+    assertSameElements(getItems(), suite, test1, test2);
   }
 
   public void testOnSuiteStarted_Other() {
-    final RTestUnitTestProxy suite = createSuiteProxy("suite1", myRootSuite);
+    final RTestUnitTestProxy suite = createSuiteProxy("suite", myRootSuite);
     final RTestUnitTestProxy other_suite = createSuiteProxy("other_suite", myRootSuite);
 
     mySelectionListener.onSelected(suite);
-    assertEmpty(getItems());
+    assertSameElements(getItems(), suite);
 
     createTestProxy("test1", suite);
     createTestProxy("test2", suite);
     myTestEventsListener.onSuiteStarted(other_suite);
-    assertEmpty(getItems());
+    assertSameElements(getItems(), suite);
   }
 
   public void testOnSuiteFinished_NoCurrent() {
@@ -191,37 +191,37 @@ public class RTestUnitStatisticsTableModelTest extends BaseRUnitTestsTestCase {
     final RTestUnitTestProxy suite = createSuiteProxy("suite1", myRootSuite);
 
     mySelectionListener.onSelected(suite);
-    assertEmpty(getItems());
+    assertSameElements(getItems(), suite);
 
     final RTestUnitTestProxy test1 = createTestProxy("test1", suite);
     final RTestUnitTestProxy test2 = createTestProxy("test2", suite);
     myTestEventsListener.onSuiteFinished(suite);
-    assertSameElements(getItems(), test1, test2);
+    assertSameElements(getItems(), suite, test1, test2);
   }
 
   public void testOnSuiteFinished_Child() {
     final RTestUnitTestProxy suite = createSuiteProxy("suite1", myRootSuite);
 
     mySelectionListener.onSelected(suite);
-    assertEmpty(getItems());
+    assertSameElements(getItems(), suite);
 
     final RTestUnitTestProxy test1 = createTestProxy("test1", suite);
     final RTestUnitTestProxy test2 = createTestProxy("test2", suite);
     myTestEventsListener.onSuiteFinished(test1);
-    assertSameElements(getItems(), test1, test2);
+    assertSameElements(getItems(), suite, test1, test2);
   }
 
   public void testOnSuiteFinished_Other() {
-    final RTestUnitTestProxy suite = createSuiteProxy("suite1", myRootSuite);
+    final RTestUnitTestProxy suite = createSuiteProxy("suite", myRootSuite);
     final RTestUnitTestProxy other_suite = createSuiteProxy("other_suite", myRootSuite);
 
     mySelectionListener.onSelected(suite);
-    assertEmpty(getItems());
+    assertSameElements(getItems(), suite);
 
     createTestProxy("test1", suite);
     createTestProxy("test2", suite);
     myTestEventsListener.onSuiteFinished(other_suite);
-    assertEmpty(getItems());
+    assertSameElements(getItems(), suite);
   }
 
   public void testOnTestStarted_NoCurrent() {
@@ -239,11 +239,11 @@ public class RTestUnitStatisticsTableModelTest extends BaseRUnitTestsTestCase {
     final RTestUnitTestProxy test1 = createTestProxy("test1", myRootSuite);
 
     mySelectionListener.onSelected(test1);
-    assertSameElements(getItems(), test1);
+    assertSameElements(getItems(), myRootSuite, test1);
 
     final RTestUnitTestProxy test2 = createTestProxy("test2", myRootSuite);
     myTestEventsListener.onTestStarted(test1);
-    assertSameElements(getItems(), test1, test2);
+    assertSameElements(getItems(), myRootSuite, test1, test2);
   }
 
   public void testOnTestStarted_Other() {
@@ -253,11 +253,11 @@ public class RTestUnitStatisticsTableModelTest extends BaseRUnitTestsTestCase {
     final RTestUnitTestProxy other_test = createTestProxy("other_test", suite);
 
     mySelectionListener.onSelected(test1);
-    assertSameElements(getItems(), test1, suite);
+    assertSameElements(getItems(), myRootSuite, test1, suite);
 
     createTestProxy("test2", myRootSuite);
     myTestEventsListener.onTestStarted(other_test);
-    assertSameElements(getItems(), test1, suite);
+    assertSameElements(getItems(), myRootSuite, test1, suite);
   }
 
   public void testOnTestFinished_NoCurrent() {
@@ -276,11 +276,11 @@ public class RTestUnitStatisticsTableModelTest extends BaseRUnitTestsTestCase {
     final RTestUnitTestProxy test1 = createTestProxy("test1", myRootSuite);
 
     mySelectionListener.onSelected(test1);
-    assertSameElements(getItems(), test1);
+    assertSameElements(getItems(), myRootSuite, test1);
 
     final RTestUnitTestProxy test2 = createTestProxy("test2", myRootSuite);
     myTestEventsListener.onTestFinished(test1);
-    assertSameElements(getItems(), test1, test2);
+    assertSameElements(getItems(), myRootSuite, test1, test2);
   }
 
   public void testOnTestFinished_Other() {
@@ -290,11 +290,11 @@ public class RTestUnitStatisticsTableModelTest extends BaseRUnitTestsTestCase {
     final RTestUnitTestProxy other_test = createTestProxy("other_test", suite);
 
     mySelectionListener.onSelected(test1);
-    assertSameElements(getItems(), test1, suite);
+    assertSameElements(getItems(), myRootSuite, test1, suite);
 
     createTestProxy("test2", myRootSuite);
     myTestEventsListener.onTestFinished(other_test);
-    assertSameElements(getItems(), test1, suite);
+    assertSameElements(getItems(), myRootSuite, test1, suite);
   }
 
   private List<RTestUnitTestProxy> getItems() {

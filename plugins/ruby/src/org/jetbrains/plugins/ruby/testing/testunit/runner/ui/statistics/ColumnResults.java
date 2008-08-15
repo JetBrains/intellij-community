@@ -35,14 +35,14 @@ public class ColumnResults extends ColumnInfo<RTestUnitTestProxy, String> {
     return new ResultsCellRenderer(proxy);
   }
 
-  public static class ResultsCellRenderer extends ColoredTableCellRenderer {
+  public static class ResultsCellRenderer extends ColoredTableCellRenderer implements ColoredRenderer {
     private final RTestUnitTestProxy myProxy;
 
     public ResultsCellRenderer(final RTestUnitTestProxy proxy) {
       myProxy = proxy;
     }
 
-    protected void customizeCellRenderer(final JTable table,
+    public void customizeCellRenderer(final JTable table,
                                          final Object value,
                                          final boolean selected,
                                          final boolean hasFocus,

@@ -1,36 +1,21 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner.ui.statistics;
 
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.support.UITestUtil;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestsPresentationUtil;
 
 /**
  * @author Roman Chernyatchik
  */
-public class ColumnResultsTest extends BaseRUnitTestsTestCase {
-  private ColumnResults myColumnResults;
-  private MyRenderer mySimpleTestRenderer;
-  private MyRenderer mySuiteRenderer;
-  private UITestUtil.FragmentsContainer myFragmentsContainer;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    myColumnResults = new ColumnResults();
-
-    myFragmentsContainer = new UITestUtil.FragmentsContainer();
-
-    mySimpleTestRenderer = createRenderer(mySimpleTest, myFragmentsContainer);
-    mySuiteRenderer = createRenderer(mySuite, myFragmentsContainer);
-  }
+public class ColumnResultsTest extends BaseColumnRenderingTest {
 
   public void testPresentation_TestNotRun() {
     doRender(mySimpleTest);
 
+    assertFragmentsSize(1);
     assertEquals(1, myFragmentsContainer.getFragments().size());
     assertEquals(SimpleTextAttributes.GRAYED_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("Not run", myFragmentsContainer.getTextAt(0));
@@ -40,6 +25,7 @@ public class ColumnResultsTest extends BaseRUnitTestsTestCase {
     mySimpleTest.setStarted();
 
     doRender(mySimpleTest);
+    assertFragmentsSize(1);
     assertEquals(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("Running...", myFragmentsContainer.getTextAt(0));
   }
@@ -49,6 +35,7 @@ public class ColumnResultsTest extends BaseRUnitTestsTestCase {
     mySimpleTest.setTestFailed("", "", false);
 
     doRender(mySimpleTest);
+    assertFragmentsSize(1);
     assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("Assertion failed", myFragmentsContainer.getTextAt(0));
   }
@@ -58,6 +45,7 @@ public class ColumnResultsTest extends BaseRUnitTestsTestCase {
     mySimpleTest.setFinished();
 
     doRender(mySimpleTest);
+    assertFragmentsSize(1);
     assertEquals(TestsPresentationUtil.PASSED_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("Passed", myFragmentsContainer.getTextAt(0));
   }
@@ -67,6 +55,7 @@ public class ColumnResultsTest extends BaseRUnitTestsTestCase {
     mySimpleTest.setTestFailed("", "", true);
 
     doRender(mySimpleTest);
+    assertFragmentsSize(1);
     assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("Error", myFragmentsContainer.getTextAt(0));
   }
@@ -76,54 +65,59 @@ public class ColumnResultsTest extends BaseRUnitTestsTestCase {
     mySimpleTest.setTerminated();
 
     doRender(mySimpleTest);
+    assertFragmentsSize(1);
     assertEquals(TestsPresentationUtil.TERMINATED_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("Terminated", myFragmentsContainer.getTextAt(0));
   }
 
   public void testValueOf_Test() {
-    assertEquals("<underfined>", myColumnResults.valueOf(mySimpleTest));
+    assertEquals("<underfined>", myColumn.valueOf(mySimpleTest));
 
     mySimpleTest.setStarted();
-    assertEquals("<underfined>", myColumnResults.valueOf(mySimpleTest));
+    assertEquals("<underfined>", myColumn.valueOf(mySimpleTest));
 
     mySimpleTest.setFinished();
-    assertEquals("<underfined>", myColumnResults.valueOf(mySimpleTest));
+    assertEquals("<underfined>", myColumn.valueOf(mySimpleTest));
   }
 
   public void testValueOf_Suite() {
-    assertEquals("<underfined>", myColumnResults.valueOf(mySuite));
+    assertEquals("<underfined>", myColumn.valueOf(mySuite));
 
     mySuite.setStarted();
-    assertEquals("<underfined>", myColumnResults.valueOf(mySuite));
+    assertEquals("<underfined>", myColumn.valueOf(mySuite));
 
     createTestProxy(mySuite);
-    assertEquals("<underfined>", myColumnResults.valueOf(mySuite));
+    assertEquals("<underfined>", myColumn.valueOf(mySuite));
 
     mySuite.setFinished();
-    assertEquals("<underfined>", myColumnResults.valueOf(mySuite));
+    assertEquals("<underfined>", myColumn.valueOf(mySuite));
   }
 
   public void testPresentation_SuiteNotRun() {
     doRender(mySuite);
 
+    assertFragmentsSize(1);
     assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("<NO TESTS>", myFragmentsContainer.getTextAt(0));
   }
 
   public void testPresentation_SuiteEmpty() {
     doRender(mySuite);
+    assertFragmentsSize(1);
     assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("<NO TESTS>", myFragmentsContainer.getTextAt(0));
 
     myFragmentsContainer.clear();
     mySuite.setStarted();
     doRender(mySuite);
+    assertFragmentsSize(1);
     assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("<NO TESTS>", myFragmentsContainer.getTextAt(0));
 
     myFragmentsContainer.clear();
     mySuite.setFinished();
     doRender(mySuite);
+    assertFragmentsSize(1);
     assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("<NO TESTS>", myFragmentsContainer.getTextAt(0));
   }
@@ -148,6 +142,7 @@ public class ColumnResultsTest extends BaseRUnitTestsTestCase {
     test1.setFinished();
 
     doRender(mySuite);
+    assertFragmentsSize(1);
     assertEquals(TestsPresentationUtil.PASSED_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("P:1", myFragmentsContainer.getTextAt(0));
   }
@@ -163,6 +158,7 @@ public class ColumnResultsTest extends BaseRUnitTestsTestCase {
     test1.setTestFailed("", "", false);
 
     doRender(mySuite);
+    assertFragmentsSize(1);
     assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("F:1 ", myFragmentsContainer.getTextAt(0));
   }
@@ -178,6 +174,7 @@ public class ColumnResultsTest extends BaseRUnitTestsTestCase {
     test1.setTestFailed("", "", true);
 
     doRender(mySuite);
+    assertFragmentsSize(1);
     assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("E:1 ", myFragmentsContainer.getTextAt(0));
   }
@@ -221,6 +218,7 @@ public class ColumnResultsTest extends BaseRUnitTestsTestCase {
     mySuite.setTerminated();
 
     doRender(mySuite);
+    assertFragmentsSize(3);
     assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("F:1 ", myFragmentsContainer.getTextAt(0));
     assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(1));
@@ -263,6 +261,7 @@ public class ColumnResultsTest extends BaseRUnitTestsTestCase {
     inProgressTest.setStarted();
 
     doRender(mySuite);
+    assertFragmentsSize(3);
     assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("F:1 ", myFragmentsContainer.getTextAt(0));
     assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(1));
@@ -282,6 +281,7 @@ public class ColumnResultsTest extends BaseRUnitTestsTestCase {
     mySuite.setFinished();
 
     doRender(mySuite);
+    assertFragmentsSize(1);
     assertEquals(TestsPresentationUtil.PASSED_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("P:1", myFragmentsContainer.getTextAt(0));
   }
@@ -301,6 +301,7 @@ public class ColumnResultsTest extends BaseRUnitTestsTestCase {
     mySuite.setFinished();
 
     doRender(mySuite);
+    assertFragmentsSize(2);
     assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("F:1 ", myFragmentsContainer.getTextAt(0));
     assertEquals(TestsPresentationUtil.PASSED_ATTRIBUTES, myFragmentsContainer.getAttribsAt(1));
@@ -322,26 +323,22 @@ public class ColumnResultsTest extends BaseRUnitTestsTestCase {
     mySuite.setFinished();
 
     doRender(mySuite);
+    assertFragmentsSize(2);
     assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("E:1 ", myFragmentsContainer.getTextAt(0));
     assertEquals(TestsPresentationUtil.PASSED_ATTRIBUTES, myFragmentsContainer.getAttribsAt(1));
     assertEquals("P:1", myFragmentsContainer.getTextAt(1));
   }
 
-
-  private MyRenderer createRenderer(final RTestUnitTestProxy rTestUnitTestProxy,
-                                    final UITestUtil.FragmentsContainer fragmentsContainer) {
+  protected ColoredRenderer createRenderer(final RTestUnitTestProxy rTestUnitTestProxy,
+                                           final UITestUtil.FragmentsContainer fragmentsContainer) {
     return new MyRenderer(rTestUnitTestProxy, fragmentsContainer);
   }
 
-
-  private void doRender(final RTestUnitTestProxy proxy) {
-    if (proxy.isSuite()) {
-      mySuiteRenderer.customizeCellRenderer(null, myColumnResults.valueOf(proxy), false, false, 0, 0);
-    } else {
-      mySimpleTestRenderer.customizeCellRenderer(null, myColumnResults.valueOf(proxy), false, false, 0, 0);
-    }
+  protected ColumnInfo<RTestUnitTestProxy, String> createColumn() {
+    return new ColumnResults();
   }
+
 
   private class MyRenderer extends ColumnResults.ResultsCellRenderer {
     private UITestUtil.FragmentsContainer myFragmentsContainer;

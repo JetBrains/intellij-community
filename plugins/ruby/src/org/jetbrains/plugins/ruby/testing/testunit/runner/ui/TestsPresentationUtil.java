@@ -123,6 +123,7 @@ public class TestsPresentationUtil {
     renderer.append(testProxy.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
+  @NotNull
   public static String getPresentableName(final RTestUnitTestProxy testProxy) {
     final RTestUnitTestProxy parent = testProxy.getParent();
     final String name = testProxy.getName();
