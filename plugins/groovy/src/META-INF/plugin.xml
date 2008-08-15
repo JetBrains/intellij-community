@@ -362,7 +362,7 @@
       <add-to-group group-id="GenerateGroup" anchor="last"/>
     </action>
 
-    <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewClassAction"
+    <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewGroovyClassAction"
             text="Groovy Class" description="Create new Groovy class">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="Grails"/>
     </action>

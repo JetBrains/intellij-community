@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
-public class NewScriptAction extends NewActionBase {
+public class NewScriptAction extends NewGroovyActionBase {
   public NewScriptAction() {
     super(GroovyBundle.message("newscript.menu.action.text"),
         GroovyBundle.message("newscript.menu.action.description"),

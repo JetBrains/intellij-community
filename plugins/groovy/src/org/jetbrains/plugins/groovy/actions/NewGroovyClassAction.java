@@ -22,15 +22,15 @@ import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-public class NewClassAction extends NewActionBase {
-  public NewClassAction() {
+public class NewGroovyClassAction extends NewGroovyActionBase {
+  public NewGroovyClassAction() {
     super(GroovyBundle.message("newclass.menu.action.text"),
         GroovyBundle.message("newclass.menu.action.description"),
         GroovyIcons.CLASS);
   }
 
   protected String getActionName(PsiDirectory directory, String newName) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return GroovyBundle.message("newclass.menu.action.text"); 
   }
 
   protected String getDialogPrompt() {

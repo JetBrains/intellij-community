@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateElementActionBase;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -36,9 +33,12 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
 
-public abstract class NewActionBase extends CreateElementActionBase {
+public abstract class NewGroovyActionBase extends CreateElementActionBase {
 
-  public NewActionBase(String text, String description, Icon icon) {
+  @NonNls
+  private static final String GROOVY_EXTENSION = ".groovy";
+
+  public NewGroovyActionBase(String text, String description, Icon icon) {
     super(text, description, icon);
   }
 
@@ -58,11 +58,11 @@ public abstract class NewActionBase extends CreateElementActionBase {
     super.update(event);
     final Presentation presentation = event.getPresentation();
     final DataContext context = event.getDataContext();
-    Module module = (Module) context.getData(DataConstants.MODULE);
+    Module module = (Module) context.getData(DataKeys.MODULE.getName());
 
     if (!GroovyUtils.isSuitableModule(module) ||
         !presentation.isEnabled() ||
-        !NewActionBase.isUnderSourceRoots(event) ||
+        !isUnderSourceRoots(event) ||
         !ActionsUtil.isGroovyConfigured(event)) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
@@ -75,12 +75,12 @@ public abstract class NewActionBase extends CreateElementActionBase {
 
   public static boolean isUnderSourceRoots(final AnActionEvent e) {
     final DataContext context = e.getDataContext();
-    Module module = (Module) context.getData(DataConstants.MODULE);
+    Module module = (Module) context.getData(DataKeys.MODULE.getName());
     if (!GroovyUtils.isSuitableModule(module)) {
       return false;
     }
-    final IdeView view = (IdeView) context.getData(DataConstants.IDE_VIEW);
-    final Project project = (Project) context.getData(DataConstants.PROJECT);
+    final IdeView view = (IdeView) context.getData(DataKeys.IDE_VIEW.getName());
+    final Project project = (Project) context.getData(DataKeys.PROJECT.getName());
     if (view != null && project != null) {
       ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       PsiDirectory[] dirs = view.getDirectories();
@@ -105,7 +105,7 @@ public abstract class NewActionBase extends CreateElementActionBase {
 
   protected static PsiFile createClassFromTemplate(final PsiDirectory directory, String className, String templateName,
                                                    @NonNls String... parameters) throws IncorrectOperationException {
-    return GroovyTemplatesFactory.createFromTemplate(directory, className, className + ".groovy", templateName, parameters);
+    return GroovyTemplatesFactory.createFromTemplate(directory, className, className + GROOVY_EXTENSION, templateName, parameters);
   }
 
 
