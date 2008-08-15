@@ -514,16 +514,19 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private void toggleToolNode(final MyTreeNode toolNode) {
-    final Descriptor descriptor = (Descriptor)toolNode.getUserObject();
-    final HighlightDisplayKey key = descriptor.getKey();
-    final String toolShortName = key.toString();
-    if (toolNode.isChecked()) {
-      mySelectedProfile.enableTool(toolShortName);
+    final Object object = toolNode.getUserObject();
+    if (object instanceof Descriptor) {
+      final Descriptor descriptor = (Descriptor)object;
+      final HighlightDisplayKey key = descriptor.getKey();
+      final String toolShortName = key.toString();
+      if (toolNode.isChecked()) {
+        mySelectedProfile.enableTool(toolShortName);
+      }
+      else {
+        mySelectedProfile.disableTool(toolShortName);
+      }
+      toolNode.isProperSetting = mySelectedProfile.isProperSetting(key);
     }
-    else {
-      mySelectedProfile.disableTool(toolShortName);
-    }
-    toolNode.isProperSetting = mySelectedProfile.isProperSetting(key);
   }
 
   private void updateUpHierarchy(final MyTreeNode node, final MyTreeNode parent) {
