@@ -565,6 +565,8 @@ public class DocumentationManager implements ProjectComponent {
     }
     else if (myPreviouslyFocused != null) {
       hint.showInBestPositionFor(DataManager.getInstance().getDataContext(myPreviouslyFocused));
+    } else {
+      hint.showInBestPositionFor(DataManager.getInstance().getDataContext());
     }
   }
 
