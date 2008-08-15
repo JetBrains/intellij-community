@@ -40,8 +40,10 @@ import java.util.Arrays;
  * @author ven
  */
 public class GroovyInsertHandler extends DefaultInsertHandler {
+  private static final String CLOSURE_CLASS = "groovy.lang.Closure";
+
   public void handleInsert(InsertionContext context, LookupElement item) {
-    Object obj = ((MutableLookupElement)item).getObject();
+    @NonNls Object obj = ((MutableLookupElement)item).getObject();
     if (obj instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) obj;
       PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -73,7 +75,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
         }
         caretModel.moveToOffset(offset + 2);
       } else {
-        if (parameters.length == 1 && parameters[0].getType().getCanonicalText().equals("groovy.lang.Closure")) {
+        if (parameters.length == 1 && CLOSURE_CLASS.equals(parameters[0].getType().getCanonicalText())) {
           document.insertString(offset, " {}");
           caretModel.moveToOffset(offset + 2);
         } else {
