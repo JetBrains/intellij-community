@@ -7,7 +7,9 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +34,7 @@ public class RecursiveCallParameterWeigher extends CompletionWeigher {
     if (reference == null) return 0;
 
     final PsiExpression qualifier = reference.getQualifierExpression();
-    boolean isDelegate = qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression);
+    boolean isDelegate = qualifier != null && !(qualifier instanceof PsiThisExpression);
     if (expression != null) {
       final ExpectedTypeInfo[] expectedInfos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
       if (expectedInfos != null) {
@@ -48,10 +50,23 @@ public class RecursiveCallParameterWeigher extends CompletionWeigher {
       return 0;
     }
 
-    if (positionMethod.equals(object) && PsiTreeUtil.isAncestor(positionMethod, position, false) && PsiTreeUtil.isAncestor(reference, position, false)) {
-      return isDelegate ? 2 : -1;
+    if (object instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)object;
+      if (PsiTreeUtil.isAncestor(reference, position, false) &&
+          Comparing.equal(method.getName(), positionMethod.getName()) &&
+          method.getParameterList().getParametersCount() == positionMethod.getParameterList().getParametersCount()) {
+        if (findDeepestSuper(method).equals(findDeepestSuper(positionMethod))) {
+          return isDelegate ? 2 : -1;
+        }
+      }
     }
 
     return 1;
+  }
+
+  @NotNull
+  private static PsiMethod findDeepestSuper(@NotNull final PsiMethod method) {
+    final PsiMethod first = DeepestSuperMethodsSearch.search(method).findFirst();
+    return first == null ? method : first;
   }
 }

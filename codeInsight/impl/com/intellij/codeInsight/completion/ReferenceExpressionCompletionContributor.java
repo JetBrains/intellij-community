@@ -27,8 +27,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
-import com.intellij.psi.filters.element.ExcludeSillyAssignment;
 import com.intellij.psi.filters.element.ModifierFilter;
+import com.intellij.psi.filters.element.ExcludeSillyAssignment;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -48,14 +48,14 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
       PsiJavaPatterns.string().oneOf("hashCode", "equals", "finalize", "wait", "notify", "notifyAll", "getClass", "clone", "toString")).
       definedInClass(CommonClassNames.JAVA_LANG_OBJECT);
 
-  @Nullable
-  private static Pair<ElementFilter, TailType> getReferenceFilter(PsiElement element, boolean second) {
+  @NotNull 
+  private static Pair<ElementFilter, TailType> getReferenceFilter(PsiElement element, boolean secondBase, boolean secondChain) {
     //throw foo
     if (psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiThrowStatement.class)).accepts(element)) {
       return new Pair<ElementFilter, TailType>(TrueFilter.INSTANCE, TailType.SEMICOLON);
     }
 
-    if (psiElement().afterLeaf(PsiKeyword.RETURN).inside(PsiReturnStatement.class).accepts(element) && !second) {
+    if (psiElement().afterLeaf(PsiKeyword.RETURN).inside(PsiReturnStatement.class).accepts(element) && !secondBase && !secondChain) {
       return new Pair<ElementFilter, TailType>(new ElementExtractorFilter(new ExcludeDeclaredFilter(new ClassFilter(PsiMethod.class))
       ), TailType.SEMICOLON);
     }
@@ -71,13 +71,19 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
       )), TailType.NONE);
     }
 
-    if (psiElement().inside(PsiJavaPatterns.psiElement(PsiVariable.class)).accepts(element)) {
+    if (psiElement().inside(
+        PsiJavaPatterns.or(
+            PsiJavaPatterns.psiElement(PsiAssignmentExpression.class),
+            PsiJavaPatterns.psiElement(PsiVariable.class))).
+        andNot(psiElement().afterLeaf(".")).accepts(element) &&
+        (secondBase || !secondChain)) {
       return new Pair<ElementFilter, TailType>(
-          new AndFilter(new ElementExtractorFilter(new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class))),
-                        new ElementExtractorFilter(new ExcludeSillyAssignment())), TailType.NONE);
+          new ElementExtractorFilter(new AndFilter(new ExcludeSillyAssignment(),
+                                                   new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class)))),
+          TailType.NONE);
     }
 
-    return new Pair<ElementFilter, TailType>(new ElementExtractorFilter(new ExcludeSillyAssignment()), TailType.NONE);
+    return new Pair<ElementFilter, TailType>(TrueFilter.INSTANCE, TailType.NONE);
   }
 
   public boolean fillCompletionVariants(final JavaSmartCompletionParameters parameters, final CompletionResultSet result) {
@@ -89,7 +95,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
         final int offset = parameters.getOffset();
         final PsiReference reference = element.getContainingFile().findReferenceAt(offset);
         if (reference != null) {
-          final Pair<ElementFilter, TailType> pair = getReferenceFilter(element, false);
+          final Pair<ElementFilter, TailType> pair = getReferenceFilter(element, false, false);
           if (pair != null) {
             final PsiFile originalFile = parameters.getOriginalFile();
             final TailType tailType = pair.second;
@@ -100,7 +106,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
             }
 
             if (parameters.getInvocationCount() >= 2) {
-              ElementFilter baseFilter = getReferenceFilter(element, true).first;
+              ElementFilter baseFilter = getReferenceFilter(element, true, false).first;
               final PsiClassType stringType = PsiType.getJavaLangString(element.getManager(), element.getResolveScope());
               for (final LookupItem<?> baseItem : JavaSmartCompletionContributor.completeReference(element, reference, originalFile, tailType, baseFilter, result)) {
                 final Object object = baseItem.getObject();
@@ -119,7 +125,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
                   final PsiElement qualifier = getQualifier(reference.getElement());
                   if (!OBJECT_METHOD_PATTERN.accepts(object) || allowGetClass(object, parameters)) {
                     if (!stringType.equals(itemType)) {
-                      addChainedCallVariants(element, originalFile, tailType, baseFilter, prefix, substitutor, qualifier, result);
+                      addChainedCallVariants(element, originalFile, tailType, getReferenceFilter(element, true, true).first, prefix, substitutor, qualifier, result);
                     }
                   }
 
