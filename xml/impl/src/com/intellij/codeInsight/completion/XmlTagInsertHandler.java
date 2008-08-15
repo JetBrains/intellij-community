@@ -97,6 +97,10 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
       }
     }
 
+    if (context.getCompletionChar() == ' ' && TemplateManager.getInstance(project).getActiveTemplate(editor) != null) {
+      return;
+    }
+
     final TailType tailType = SimpleInsertHandler.DEFAULT_COMPLETION_CHAR_HANDLER.handleCompletionChar(editor, item, context.getCompletionChar());
     tailType.processTail(editor, editor.getCaretModel().getOffset());
   }
@@ -204,10 +208,10 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
     else if (completionChar == '/') {
       template.addTextSegment("/>");
     } else if (completionChar == ' ' && template.getSegmentsCount() == 0) {
-      template.addTextSegment(" ");
-      if (!isTagFromHtml(tag) || !HtmlUtil.isTagWithoutAttributes(tag.getName())) {
+      if (attributes.length > 0 || isTagFromHtml(tag) && !HtmlUtil.isTagWithoutAttributes(tag.getName())) {
+        template.addTextSegment(" ");
         final MacroCallNode completeAttrExpr = new MacroCallNode(MacroFactory.createMacro("complete"));
-        template.addVariable("attrComplete", completeAttrExpr,completeAttrExpr,true);
+        template.addVariable("attrComplete", completeAttrExpr, completeAttrExpr, true);
         weInsertedSomeCodeThatCouldBeInvalidated = true;
         template.addTextSegment("=\"");
         template.addEndVariable();
