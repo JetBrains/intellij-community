@@ -19,6 +19,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -46,18 +48,18 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignorePrivateMethodsAndFields = false;
 
-    @NotNull
+    @Override @NotNull
     public String getID(){
         return "CollectionDeclaredAsConcreteClass";
     }
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "collection.declared.by.class.display.name");
     }
 
-    @NotNull
+    @Override @NotNull
     public String buildErrorString(Object... infos) {
         final String type = (String) infos[0];
         return InspectionGadgetsBundle.message(
@@ -65,7 +67,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
                 type);
     }
 
-    @Nullable
+    @Override @Nullable
     public JComponent createOptionsPanel() {
         final MultipleCheckboxOptionsPanel optionsPanel =
                 new MultipleCheckboxOptionsPanel(this);
@@ -99,6 +101,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
                     "declare.collection.as.interface.quickfix", typeString);
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -114,15 +117,17 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             if (parameterList != null) {
                 final PsiTypeElement[] typeParameterElements =
                         parameterList.getTypeParameterElements();
-              if (typeParameterElements.length > 0) {
-                newElementText.append('<');
-                newElementText.append(StringUtil.join(Arrays.asList(typeParameterElements), new Function<PsiTypeElement, String>() {
-                  public String fun(final PsiTypeElement psiTypeElement) {
-                    return psiTypeElement.getText();
-                  }
-                }, ","));
-                newElementText.append('>');
-              }
+                if (typeParameterElements.length > 0) {
+                    final PsiTypeElement typeParameterElement1 =
+                            typeParameterElements[0];
+                    newElementText.append(typeParameterElement1.getText());
+                    for (int i = 1; i < typeParameterElements.length; i++) {
+                        newElementText.append(',');
+                        final PsiTypeElement typeParameterElement =
+                                typeParameterElements[i];
+                        newElementText.append(typeParameterElement.getText());
+                    }
+                }
             }
             final PsiElement grandParent = parent.getParent();
             if (!(grandParent instanceof PsiTypeElement)) {
@@ -134,10 +139,15 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
                     newElementText.toString(), element);
             final PsiTypeElement newTypeElement = factory.createTypeElement(
                     type);
-            grandParent.replace(newTypeElement);
+            final PsiElement insertedElement =
+                    grandParent.replace(newTypeElement);
+            final JavaCodeStyleManager styleManager =
+                    JavaCodeStyleManager.getInstance(project);
+            styleManager.shortenClassReferences(insertedElement);
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new DeclareCollectionAsInterfaceVisitor();
     }
@@ -253,7 +263,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             final PsiClass objectClass = javaLangObject.resolve();
             weaklingList.remove(objectClass);
             if (weaklingList.isEmpty()) {
-                registerError(nameElement, "java.util.collections.Collection");
+                registerError(nameElement, "java.util.Collection");
             } else {
                 final PsiClass weakling = weaklingList.get(0);
                 registerError(nameElement, weakling.getQualifiedName());
