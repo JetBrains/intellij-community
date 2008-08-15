@@ -96,6 +96,7 @@ public class GroovyPsiManager implements ProjectComponent {
     myCache = new GroovyShortNamesCache(myProject);
 
     // TODO[ilyas] this kind of invokeLater() usage is completely bogus - please rewrite
+    // todo registerPostStartup activity
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
