@@ -188,7 +188,9 @@ public class CompletionData {
     });
     if (prefix != null) return prefix;
 
-    if (insertedElement instanceof PsiPlainText) return "";
+    if (insertedElement instanceof PsiPlainText) {
+      return WordCompletionData.findPrefixSimple(insertedElement, offsetInFile);
+    }
 
     return findPrefixDefault(insertedElement, offsetInFile, not(character().javaIdentifierPart()));
   }

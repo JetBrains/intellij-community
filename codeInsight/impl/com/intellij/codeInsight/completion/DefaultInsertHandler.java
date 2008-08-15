@@ -702,7 +702,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       document.insertString(endOffset, " ");
       toDelete = document.createRangeMarker(endOffset, endOffset + 1);
     } else if (endOffset >= length) {
-      toDelete = document.createRangeMarker(length - 1, length - 1);
+      toDelete = document.createRangeMarker(length, length);
     }
     else {
       toDelete = document.createRangeMarker(endOffset, endOffset);
