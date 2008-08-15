@@ -33,7 +33,7 @@ public class UITestUtil {
       return myFragments;
     }
 
-    public String getFragmentAt(final int index) {
+    public String getTextAt(final int index) {
       return myFragments.get(index).first;
     }
 

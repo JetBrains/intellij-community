@@ -3,11 +3,10 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner.ui;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.Disposable;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author Roman Chernyatchik
@@ -19,7 +18,7 @@ public interface TestResultsViewer extends Disposable {
    * @param icon
    * @param contentPane Tab content pane
    */
-  void addTab(final String name, @Nullable final Icon icon, final Component contentPane);
+  void addTab(final String name, @Nullable final Icon icon, final JComponent contentPane);
 
   /**
    * Subscribe on test proxy selection events

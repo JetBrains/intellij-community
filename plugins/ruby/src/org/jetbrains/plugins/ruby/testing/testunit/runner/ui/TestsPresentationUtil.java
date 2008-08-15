@@ -1,18 +1,23 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
+import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
+import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.RBundle;
+import org.jetbrains.plugins.ruby.ruby.lang.TextUtil;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.states.TestStateInfo;
 
 import javax.swing.*;
+import java.awt.*;
 import java.text.NumberFormat;
+import java.util.List;
 
 /**
  * @author Roman Chernyatchik
@@ -21,12 +26,22 @@ public class TestsPresentationUtil {
   @NonNls private static final String DOUBLE_SPACE = "  ";
   @NonNls private static final String WORLD_CREATION_TIME = "0.0";
   @NonNls private static final String SECONDS_SUFFIX = " " + RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.seconds");
-  @NonNls private static final String DURATION_UNKNOWN = RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.duration.unknown");
-  @NonNls private static final String DURATION_NO_TESTS = RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.duration.no.tests");
-  @NonNls private static final String DURATION_NOT_RUN = RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.duration.not.run");
-  @NonNls private static final String DURATION_RUNNING_PREFIX = RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.duration.prefix.running");
-  @NonNls private static final String DURATION_TERMINATED_PREFIX = RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.duration.prefix.terminated");
+  @NonNls private static final String DURATION_UNKNOWN = RBundle.message(
+      "ruby.test.runner.ui.tabs.statistics.columns.duration.unknown");
+  @NonNls private static final String DURATION_NO_TESTS = RBundle.message(
+      "ruby.test.runner.ui.tabs.statistics.columns.duration.no.tests");
+  @NonNls private static final String DURATION_NOT_RUN = RBundle.message(
+      "ruby.test.runner.ui.tabs.statistics.columns.duration.not.run");
+  @NonNls private static final String DURATION_RUNNING_PREFIX = RBundle.message(
+      "ruby.test.runner.ui.tabs.statistics.columns.duration.prefix.running");
+  @NonNls private static final String DURATION_TERMINATED_PREFIX = RBundle.message(
+      "ruby.test.runner.ui.tabs.statistics.columns.duration.prefix.terminated");
   @NonNls private static final String COLON = ": ";
+  public static final SimpleTextAttributes PASSED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, TestsUIUtil.PASSED_COLOR);
+  public static final SimpleTextAttributes DEFFECT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.RED);
+  public static final SimpleTextAttributes TERMINATED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.ORANGE);
+  @NonNls private static final String RESULTS_NO_TESTS = RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.no.tests");
+
 
   private TestsPresentationUtil() {
   }
@@ -159,10 +174,74 @@ public class TestsPresentationUtil {
     return proxy.getMagnitudeInfo().getTitle();
   }
 
-  @Nullable
-  public static String getSuiteStatusPresentation(final RTestUnitTestProxy proxy) {
-    //TODO[romeo] improove
-    return String.valueOf(proxy.getChildren().size());
+  public static void appendSuiteStatusColorPresentation(final RTestUnitTestProxy proxy,
+                                                        final ColoredTableCellRenderer renderer) {
+    int passedCount = 0;
+    int errorsCount = 0;
+    int failedCount = 0;
+    int ignoredCount = 0;
+
+    if (proxy.isLeaf()) {
+      // If suite is empty, show <no tests> failure label and exit from method
+      renderer.append(RESULTS_NO_TESTS, DEFFECT_ATTRIBUTES);
+      return;
+    }
+
+    final List<RTestUnitTestProxy> allTestCases = proxy.getAllTests();
+    for (RTestUnitTestProxy testOrSuite : allTestCases) {
+      // we should ignore test suites
+      if (testOrSuite.isSuite()) {
+        continue;
+      }
+      // if test check it state
+      switch (testOrSuite.getMagnitudeInfo()) {
+        case COMPLETE_INDEX:
+        case PASSED_INDEX:
+          passedCount++;
+          break;
+        case ERROR_INDEX:
+          errorsCount++;
+          break;
+        case FAILED_INDEX:
+          failedCount++;
+          break;
+        case IGNORED_INDEX:
+        case SKIPPED_INDEX:
+          ignoredCount++;
+          break;
+        case NOT_RUN_INDEX:
+        case TERMINATED_INDEX:
+        case RUNNING_INDEX:
+          //Do nothing
+          break;
+      }
+    }
+
+    final String separator = TextUtil.SPACE_STRING;
+
+    if (failedCount > 0) {
+      renderer.append(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.count.msg.failed",
+                                      failedCount) + separator,
+                      DEFFECT_ATTRIBUTES);
+    }
+
+    if (errorsCount > 0) {
+      renderer.append(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.count.msg.errors",
+                                      errorsCount) + separator,
+                      DEFFECT_ATTRIBUTES);
+    }
+
+    if (ignoredCount > 0) {
+      renderer.append(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.count.msg.ignored",
+                                      ignoredCount) + separator,
+                      SimpleTextAttributes.EXCLUDED_ATTRIBUTES);
+    }
+
+    if (passedCount > 0) {
+      renderer.append(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.count.msg.passed",
+                                      passedCount),
+                      PASSED_ATTRIBUTES);
+    }
   }
 
   /**
@@ -223,5 +302,35 @@ public class TestsPresentationUtil {
    */
   private static float convertToSeconds(@NotNull final Integer duration) {
     return duration.floatValue() / 1000;
+  }
+
+  public static void appendTestStatusColorPresentation(final RTestUnitTestProxy proxy,
+                                                       final ColoredTableCellRenderer renderer) {
+    final String title = getTestStatusPresentation(proxy);
+
+    final TestStateInfo.Magnitude info = proxy.getMagnitudeInfo();
+    switch (info) {
+      case COMPLETE_INDEX:
+      case PASSED_INDEX:
+        renderer.append(title, PASSED_ATTRIBUTES);
+        break;
+      case RUNNING_INDEX:
+        renderer.append(title, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        break;
+      case NOT_RUN_INDEX:
+        renderer.append(title, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        break;
+      case IGNORED_INDEX:
+      case SKIPPED_INDEX:
+        renderer.append(title, SimpleTextAttributes.EXCLUDED_ATTRIBUTES);
+        break;
+      case ERROR_INDEX:
+      case FAILED_INDEX:
+        renderer.append(title, DEFFECT_ATTRIBUTES);
+        break;
+      case TERMINATED_INDEX:
+        renderer.append(title, TERMINATED_ATTRIBUTES);
+        break;
+    }
   }
 }

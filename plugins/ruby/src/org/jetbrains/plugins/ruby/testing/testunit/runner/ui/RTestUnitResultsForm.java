@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.TabbedPaneWrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,12 +55,13 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   private JSplitPane splitPane;
   private ColorProgressBar myProgressLine;
   private JLabel myStatusLabel;
-  private JTabbedPane myTabbedPane;
   private JPanel toolbarPanel;
   private RTestUnitTestTreeView tree;
+  private JPanel myTabbedPaneConatiner;
 
   private final TestsProgressAnimator myAnimator;
   private final RTestUnitToolbarPanel myToolbar;
+  private TabbedPaneWrapper myTabbedPane;
 
   /**
    * Fake parent suite for all tests and suites
@@ -105,6 +107,11 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     //noinspection HardCodedStringLiteral
     myTestsRootNode = new RTestUnitTestProxy("[root]", true);
 
+    //Adds tabs view component
+    myTabbedPane = new TabbedPaneWrapper();
+    myTabbedPaneConatiner.setLayout(new BorderLayout());
+    myTabbedPaneConatiner.add(myTabbedPane.getComponent());
+
     // Setup tests tree
     tree.setLargeModel(true);
     tree.attachToModel(this);
@@ -138,8 +145,8 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
 
   public void addTab(@NotNull final String tabTitle,
                      @Nullable final Icon icon,
-                     @NotNull final Component component) {
-    myTabbedPane.addTab(tabTitle, icon, component);
+                     @NotNull final JComponent component) {
+    myTabbedPane.addTab(tabTitle, icon, component, null);
   }
 
   public void addTestsProxySelectionListener(final TestProxyTreeSelectionListener listener) {

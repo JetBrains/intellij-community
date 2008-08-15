@@ -3,11 +3,10 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner.ui;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author Roman Chernyatchik
@@ -22,7 +21,7 @@ public class MockTestResultsViewer implements TestResultsViewer {
     myRootSuite = suite;
   }
 
-  public void addTab(final String name, final Icon icon, final Component contentPane) {}
+  public void addTab(final String name, final Icon icon, final JComponent contentPane) {}
 
   public void addTestsProxySelectionListener(final TestProxyTreeSelectionListener listener) {}
 
