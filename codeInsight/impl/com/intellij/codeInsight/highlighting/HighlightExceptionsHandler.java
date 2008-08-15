@@ -4,14 +4,15 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
-import com.intellij.lang.LangBundle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,14 +24,17 @@ public class HighlightExceptionsHandler implements HighlightUsagesHandlerDelegat
     if (target instanceof PsiKeyword) {
       PsiElement parent = target.getParent();
       if (PsiKeyword.TRY.equals(target.getText()) && parent instanceof PsiTryStatement) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.throws");
         highlightTry(editor, file, target, (PsiTryStatement) parent);
         return true;
       }
       if (PsiKeyword.CATCH.equals(target.getText()) && parent instanceof PsiCatchSection) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.throws");
         highlightCatch(editor, file, target, (PsiCatchSection) parent);
         return true;
       }
       if (PsiKeyword.THROWS.equals(target.getText())) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.throws");
         highlightThrows(editor, file, target);
         return true;
       }
