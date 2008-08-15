@@ -7,7 +7,9 @@ import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressManager;
@@ -42,6 +44,7 @@ import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -273,6 +276,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     //group.add(new GroupByFilesAction());
     group.add(new FilterLegalsAction());
     group.add(new MarkAsIllegalAction());
+    group.add(new ChooseScopeTypeAction());
     group.add(new EditDependencyRulesAction());
     group.add(new HelpAction());
 
@@ -893,6 +897,28 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
         presentation.setEnabled((provider.createPackageSet(leftNode, true) != null || provider.createPackageSet(leftNode, false) != null) &&
                                 (provider.createPackageSet(rightNode, true) != null || provider.createPackageSet(rightNode, false) != null));
       }
+    }
+  }
+
+  private final class ChooseScopeTypeAction extends ComboBoxAction {
+    @NotNull
+    protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
+      final DefaultActionGroup group = new DefaultActionGroup();
+      for (final PatternDialectProvider provider : Extensions.getExtensions(PatternDialectProvider.EP_NAME)) {
+        group.add(new AnAction(provider.getDisplayName()) {
+          public void actionPerformed(final AnActionEvent e) {
+            mySettings.SCOPE_TYPE = provider.getShortName();
+          }
+        });
+      }
+      return group;
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      final PatternDialectProvider provider = PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE);
+      e.getPresentation().setText(provider.getDisplayName());
+      e.getPresentation().setIcon(provider.getIcon());
     }
   }
 
