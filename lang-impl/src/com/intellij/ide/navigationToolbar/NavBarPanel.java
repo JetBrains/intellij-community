@@ -521,7 +521,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   private void doubleClick(final int index) {
-    Object object = myModel.getElement(index);
+    doubleClick(myModel.getElement(index));
+  }
+
+  private void doubleClick(final Object object) {
     if (object instanceof Navigatable) {
       final Navigatable navigatable = (Navigatable)object;
       if (navigatable.canNavigate()) {
@@ -564,13 +567,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         public boolean isSelectable(Object value) { return true; }
         public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
           if (!myModel.hasChildren(selectedValue)) {
-            if (selectedValue instanceof Navigatable) {
-              final Navigatable navigatable = (Navigatable)selectedValue;
-              if (navigatable.canNavigate()) {
-                navigatable.navigate(true);
-              }
-            }
-            hideHint();
+            doubleClick(selectedValue);
           }
           else {
             navigateInsideBar(selectedValue);
