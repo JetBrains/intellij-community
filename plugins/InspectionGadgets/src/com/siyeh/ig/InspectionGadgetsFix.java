@@ -53,7 +53,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
     }
 
     public final void applyFix(@NotNull Project project,
-                         @NotNull ProblemDescriptor descriptor){
+                               @NotNull ProblemDescriptor descriptor){
         final PsiElement problemElement = descriptor.getPsiElement();
         if(problemElement == null || !problemElement.isValid()){
             return;
@@ -83,25 +83,32 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             @NotNull PsiExpression expression,
             @NotNull @NonNls String newExpressionText)
             throws IncorrectOperationException{
-        final PsiManager psiManager = expression.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+        final Project project = expression.getProject();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiElementFactory factory = psiFacade.getElementFactory();
         final PsiExpression newExpression =
                 factory.createExpressionFromText(newExpressionText, expression);
         final PsiElement replacementExpression =
                 expression.replace(newExpression);
-        final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
+        final CodeStyleManager styleManager =
+                CodeStyleManager.getInstance(project);
         styleManager.reformat(replacementExpression);
     }
+
     protected static void replaceExpressionWithReferenceTo(
             @NotNull PsiExpression expression,
             @NotNull PsiMember target)
             throws IncorrectOperationException{
-        final PsiManager psiManager = expression.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
-        final PsiReferenceExpression newExpression = (PsiReferenceExpression)factory.createExpressionFromText("xxx", expression);
-        final PsiReferenceExpression replacementExpression = (PsiReferenceExpression)expression.replace(newExpression);
-      final PsiElement element = replacementExpression.bindToElement(target);
-      final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(psiManager.getProject());
+        final Project project = expression.getProject();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiElementFactory factory = psiFacade.getElementFactory();
+        final PsiReferenceExpression newExpression = (PsiReferenceExpression)
+                factory.createExpressionFromText("xxx", expression);
+        final PsiReferenceExpression replacementExpression =
+                (PsiReferenceExpression)expression.replace(newExpression);
+        final PsiElement element = replacementExpression.bindToElement(target);
+        final JavaCodeStyleManager styleManager =
+                JavaCodeStyleManager.getInstance(project);
         styleManager.shortenClassReferences(element);
     }
 
@@ -109,13 +116,17 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             @NotNull PsiExpression expression,
             @NotNull @NonNls String newExpressionText)
             throws IncorrectOperationException{
-        final PsiManager psiManager = expression.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+        final Project project = expression.getProject();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiElementFactory factory = psiFacade.getElementFactory();
         final PsiExpression newExpression =
                 factory.createExpressionFromText(newExpressionText, expression);
         final PsiElement replacementExp = expression.replace(newExpression);
-        JavaCodeStyleManager.getInstance(psiManager.getProject()).shortenClassReferences(replacementExp);
-        final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
+        final JavaCodeStyleManager javaCodeStyleManager =
+                JavaCodeStyleManager.getInstance(project);
+        javaCodeStyleManager.shortenClassReferences(replacementExp);
+        final CodeStyleManager styleManager =
+                CodeStyleManager.getInstance(project);
         styleManager.reformat(replacementExp);
     }
 
@@ -123,12 +134,14 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             @NotNull PsiStatement statement,
             @NotNull @NonNls String newStatementText)
             throws IncorrectOperationException{
-        final PsiManager psiManager = statement.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+        final Project project = statement.getProject();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiElementFactory factory = psiFacade.getElementFactory();
         final PsiStatement newStatement =
                 factory.createStatementFromText(newStatementText, statement);
         final PsiElement replacementExp = statement.replace(newStatement);
-        final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
+        final CodeStyleManager styleManager =
+                CodeStyleManager.getInstance(project);
         styleManager.reformat(replacementExp);
     }
 
@@ -136,9 +149,9 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             @NotNull PsiStatement statement,
             @NotNull @NonNls String newStatementText)
             throws IncorrectOperationException{
-        final PsiManager psiManager = statement.getManager();
-        final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
-        final Project project = psiManager.getProject();
+        final Project project = statement.getProject();
+        final CodeStyleManager styleManager =
+                CodeStyleManager.getInstance(project);
         final JavaCodeStyleManager javaStyleManager =
                 JavaCodeStyleManager.getInstance(project);
         if (PsiUtil.isInJspFile(statement)) {
@@ -195,7 +208,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
     protected static boolean isQuickFixOnReadOnlyFile(PsiElement problemElement) {
         final PsiFile containingPsiFile = problemElement.getContainingFile();
         if (containingPsiFile == null) {
-          return false;
+            return false;
         }
         final VirtualFile virtualFile = containingPsiFile.getVirtualFile();
         final Project project = problemElement.getProject();
