@@ -133,7 +133,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     params.getProgramParametersList().add("--classpath");
 
     // Clear module libraries from JDK's occurrences
-    StringBuffer buffer = RunnerUtil.getClearClassPathString(params);
+    StringBuffer buffer = RunnerUtil.getClearClassPathString(params, false);
 
     params.getProgramParametersList().add("\"" + workDir + File.pathSeparator + buffer.toString() + "\"");
     if (isDebugEnabled) {
