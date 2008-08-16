@@ -6,11 +6,10 @@ import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.support.UIUtil;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsAdapter;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsListener;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,7 +44,11 @@ public class RTestUnitStatisticsTableModel extends ListTableModel<RTestUnitTestP
         // If new suite differs from old suite we should reload table
         if (myCurrentSuite != newCurrentSuite) {
           myCurrentSuite = newCurrentSuite;
-          updateModel();
+          UIUtil.addToInvokeLater(new Runnable() {
+            public void run() {
+              updateModel();
+            }
+          });
         }
        }
     };
@@ -75,13 +78,14 @@ public class RTestUnitStatisticsTableModel extends ListTableModel<RTestUnitTestP
     return -1;
   }
 
-  private void updateModel() {
-    UIUtil.addToInvokeLater(new Runnable() {
-      public void run() {
-        // updates model
-        setItems(getItemsForSuite(myCurrentSuite));
-      }
-    });
+  /**
+   * Update module in EDT
+   */
+  protected void updateModel() {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+
+    // updates model
+    setItems(getItemsForSuite(myCurrentSuite));
   }
 
   @NotNull
@@ -142,52 +146,21 @@ public class RTestUnitStatisticsTableModel extends ListTableModel<RTestUnitTestP
     }
     return suite;
   }
-  
-  public RTestUnitEventsListener createTestEventsListener() {
-    return new RTestUnitEventsAdapter() {
-      @Override
-      public void onSuiteStarted(@NotNull final RTestUnitTestProxy suite) {
-        if (shouldUpdateModelBySuite(suite)) {
-          updateModel();
-        }
-      }
 
-      @Override
-      public void onSuiteFinished(@NotNull final RTestUnitTestProxy suite) {
-        if (shouldUpdateModelBySuite(suite)) {
-          updateModel();
-        }
-      }
 
-      @Override
-      public void onTestStarted(@NotNull final RTestUnitTestProxy test) {
-        if (shouldUpdateModelByTest(test)) {
-          updateModel();
-        }
-      }
+  protected boolean shouldUpdateModelByTest(final RTestUnitTestProxy test) {
+    // if some suite in statistics is selected
+    // and test is child of current suite
+    return isSomeSuiteSelected() && (test.getParent() == myCurrentSuite);
+  }
 
-      @Override
-      public void onTestFinished(@NotNull final RTestUnitTestProxy test) {
-        if (shouldUpdateModelByTest(test)) {
-          updateModel();
-        }
-      }
+  protected boolean shouldUpdateModelBySuite(final RTestUnitTestProxy suite) {
+    // If some suite in statistics is selected
+    // and suite is current suite in statistics tab or child of current suite
+    return isSomeSuiteSelected() && (suite == myCurrentSuite || suite.getParent() == myCurrentSuite);
+  }
 
-      private boolean shouldUpdateModelByTest(final RTestUnitTestProxy test) {
-        // if some suite in statistics is selected
-        // and test is child of current suite
-        return isSomeSuiteSelected() && (test.getParent() == myCurrentSuite);
-      }
-
-      private boolean shouldUpdateModelBySuite(final RTestUnitTestProxy suite) {
-        // If some suite in statistics is selected
-        // and suite is current suite in statistics tab or child of current suite
-        return isSomeSuiteSelected() && (suite == myCurrentSuite || suite.getParent() == myCurrentSuite);
-      }
-
-      private boolean isSomeSuiteSelected() {
-        return myCurrentSuite != null;
-      }
-    };
+  private boolean isSomeSuiteSelected() {
+    return myCurrentSuite != null;
   }
 }

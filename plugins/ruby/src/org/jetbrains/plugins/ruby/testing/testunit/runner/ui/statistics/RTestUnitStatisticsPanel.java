@@ -3,9 +3,11 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner.ui.statistics;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.ui.table.TableView;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.support.UIUtil;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsListener;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsAdapter;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestProxySelectionChangedListener;
 
@@ -86,7 +88,55 @@ public class RTestUnitStatisticsPanel extends JPanel {
   }
 
   public RTestUnitEventsListener createTestEventsListener() {
-    return myTableModel.createTestEventsListener();
+    return new RTestUnitEventsAdapter() {
+      @Override
+      public void onSuiteStarted(@NotNull final RTestUnitTestProxy suite) {
+        if (myTableModel.shouldUpdateModelBySuite(suite)) {
+          updateAndRestoreSelection();
+        }
+      }
+
+      @Override
+      public void onSuiteFinished(@NotNull final RTestUnitTestProxy suite) {
+        if (myTableModel.shouldUpdateModelBySuite(suite)) {
+          updateAndRestoreSelection();
+        }
+      }
+
+      @Override
+      public void onTestStarted(@NotNull final RTestUnitTestProxy test) {
+        if (myTableModel.shouldUpdateModelByTest(test)) {
+          updateAndRestoreSelection();
+        }
+      }
+
+      @Override
+      public void onTestFinished(@NotNull final RTestUnitTestProxy test) {
+        if (myTableModel.shouldUpdateModelByTest(test)) {
+          updateAndRestoreSelection();
+        }
+      }
+
+      private void updateAndRestoreSelection() {
+        UIUtil.addToInvokeLater(new Runnable() {
+          public void run() {
+            // statisticsTableView can be null in JUnit tests
+            final RTestUnitTestProxy oldSelection = myStatisticsTableView.getSelectedObject();
+
+            // update module
+            myTableModel.updateModel();
+
+            // restore selection if it is possible
+            if (oldSelection != null) {
+              final int newRow = myTableModel.getIndexOf(oldSelection);
+              if (newRow > -1) {
+                myStatisticsTableView.setRowSelectionInterval(newRow, newRow);
+              }
+            }
+          }
+        });
+      }
+    };
   }
 
   public void addChangeSelectionListener(final RTestUnitTestProxySelectionChangedListener listener) {
@@ -154,6 +204,10 @@ public class RTestUnitStatisticsPanel extends JPanel {
   @Nullable
   protected RTestUnitTestProxy getSelectedItem() {
     return myStatisticsTableView.getSelectedObject();
+  }
+
+  protected List<RTestUnitTestProxy> getTableItems() {
+    return myTableModel.getItems();
   }
 
   private void findAndSelectInTable(final RTestUnitTestProxy proxy) {
