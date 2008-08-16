@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
@@ -111,7 +112,10 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     return null;
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
     for (final GrTypeParameter typeParameter : getTypeParameters()) {
       if (!ResolveUtil.processElement(processor, typeParameter)) return false;
     }
@@ -233,8 +237,12 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     return new JavaIdentifier(getManager(), getContainingFile(), getNameIdentifierGroovy().getTextRange());
   }
 
-  private void findSuperMethodRecursilvely(Set<PsiMethod> methods, PsiClass psiClass, boolean allowStatic,
-                                           Set<PsiClass> visited, MethodSignature signature, @NotNull Set<MethodSignature> discoveredSupers) {
+  private void findSuperMethodRecursilvely(Set<PsiMethod> methods,
+                                           PsiClass psiClass,
+                                           boolean allowStatic,
+                                           Set<PsiClass> visited,
+                                           MethodSignature signature,
+                                           @NotNull Set<MethodSignature> discoveredSupers) {
     if (psiClass == null) return;
     if (visited.contains(psiClass)) return;
     visited.add(psiClass);
@@ -291,7 +299,8 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
         MethodSignature superMethodSignature = superClassMethod.getHierarchicalMethodSignature();
         final HierarchicalMethodSignature thisMethodSignature = getHierarchicalMethodSignature();
 
-        if (superMethodSignature.equals(thisMethodSignature) && !superClassMethod.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
+        if (superMethodSignature.equals(thisMethodSignature) &&
+            !superClassMethod.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
           checkForMethodOverriding(collectedMethods, superClassMethod);
         }
         findDeepestSuperMethodsForClass(collectedMethods, superClassMethod);
@@ -303,7 +312,8 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     int i = 0;
     while (i < collectedMethods.size()) {
       PsiMethod collectedMethod = collectedMethods.get(i);
-      if (collectedMethod.getContainingClass().equals(superClassMethod.getContainingClass()) || collectedMethod.getContainingClass().isInheritor(superClassMethod.getContainingClass(), true)) {
+      if (collectedMethod.getContainingClass().equals(superClassMethod.getContainingClass()) ||
+          collectedMethod.getContainingClass().isInheritor(superClassMethod.getContainingClass(), true)) {
         collectedMethods.remove(collectedMethod);
         continue;
       }
@@ -317,7 +327,8 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     PsiClass containingClass = getContainingClass();
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
-    findSuperMethodRecursilvely(methods, containingClass, false, new HashSet<PsiClass>(), createMethodSignature(this), new HashSet<MethodSignature>());
+    findSuperMethodRecursilvely(methods, containingClass, false, new HashSet<PsiClass>(), createMethodSignature(this),
+                                new HashSet<MethodSignature>());
 
     return methods.toArray(new PsiMethod[methods.size()]);
   }
@@ -325,7 +336,8 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
   @NotNull
   public PsiMethod[] findSuperMethods(PsiClass parentClass) {
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
-    findSuperMethodRecursilvely(methods, parentClass, false, new HashSet<PsiClass>(), createMethodSignature(this), new HashSet<MethodSignature>());
+    findSuperMethodRecursilvely(methods, parentClass, false, new HashSet<PsiClass>(), createMethodSignature(this),
+                                new HashSet<MethodSignature>());
     return methods.toArray(new PsiMethod[methods.size()]);
   }
 
@@ -360,7 +372,8 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     if (containingClass == null) return PsiMethod.EMPTY_ARRAY;
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
-    findSuperMethodRecursilvely(methods, containingClass, false, new HashSet<PsiClass>(), createMethodSignature(this), new HashSet<MethodSignature>());
+    findSuperMethodRecursilvely(methods, containingClass, false, new HashSet<PsiClass>(), createMethodSignature(this),
+                                new HashSet<MethodSignature>());
 
     return methods.toArray(new PsiMethod[methods.size()]);
   }
@@ -430,14 +443,14 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     if (parent instanceof GrTypeDefinitionBody) {
       final PsiElement pparent = parent.getParent();
       if (pparent instanceof PsiClass) {
-        return (PsiClass) pparent;
+        return (PsiClass)pparent;
       }
     }
 
 
     final PsiFile file = getContainingFile();
     if (file instanceof GroovyFileBase) {
-      return ((GroovyFileBase) file).getScriptClass();
+      return ((GroovyFileBase)file).getScriptClass();
     }
 
     return null;
@@ -460,7 +473,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
   public PsiElement getOriginalElement() {
     final PsiClass containingClass = getContainingClass();
     if (containingClass == null) return this;
-    PsiClass originalClass = (PsiClass) containingClass.getOriginalElement();
+    PsiClass originalClass = (PsiClass)containingClass.getOriginalElement();
     final PsiMethod originalMethod = originalClass.findMethodBySignature(this, false);
     return originalMethod != null ? originalMethod : this;
   }
@@ -468,5 +481,18 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
   public PsiElement getContext() {
     return getParent();
   }
+
+  public void delete() throws IncorrectOperationException {
+    PsiElement parent = getParent();
+    if (parent instanceof GroovyFileImpl || parent instanceof GrTypeDefinitionBody) {
+      ASTNode astNode = parent.getNode();
+      if (astNode != null) {
+        astNode.removeChild(getNode());
+      }
+      return;
+    }
+    throw new IncorrectOperationException("Invalid enclosing type definition");
+  }
+
 
 }
