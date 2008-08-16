@@ -64,7 +64,7 @@ public class MissingReturnInspection extends LocalInspectionTool {
         Instruction[] flow = block.getControlFlow();
         if (!ControlFlowUtil.alwaysReturns(flow)) {
           final PsiElement lastChild = block.getLastChild();
-          if (lastChild == null) {
+          if (lastChild == null || !lastChild.isValid() || !lastChild.isPhysical()) {
             return;
           }
           holder.registerProblem(lastChild, GroovyInspectionBundle.message("no.return.message"));
