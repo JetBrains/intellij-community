@@ -4,8 +4,8 @@ import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.Marker;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsListener;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestProxySelectionChangedListener;
 

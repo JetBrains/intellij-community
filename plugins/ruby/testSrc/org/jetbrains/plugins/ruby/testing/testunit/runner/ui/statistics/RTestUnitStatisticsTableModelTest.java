@@ -108,6 +108,61 @@ public class RTestUnitStatisticsTableModelTest extends BaseRUnitTestsTestCase {
     assertOrderedEquals(getItems(), myRootSuite, firstTest, firstSuite, lastSuite, lastTest);
   }
 
+  public void testGotoParentSuite_ResultsRoot() {
+    // create test sturcure
+    final RTestUnitTestProxy rootSuite = createSuiteProxy("rootSuite");
+
+    final RTestUnitTestProxy suite3 = createSuiteProxy("A_suite3", rootSuite);
+    final RTestUnitTestProxy failedTest31 = createTestProxy("failedTest31", suite3);
+    final RTestUnitTestProxy errorTest31 = createTestProxy("errorTest31", suite3);
+    doFailTest(failedTest31);
+    doErrorTest(errorTest31);
+
+    final RTestUnitTestProxy suite1 = createSuiteProxy("B_suite1", rootSuite);
+    final RTestUnitTestProxy passedTest11 = createTestProxy("passedTest11", suite1);
+    final RTestUnitTestProxy passedTest12 = createTestProxy("passedTest12", suite1);
+    doPassTest(passedTest11);
+    doPassTest(passedTest12);
+
+    final RTestUnitTestProxy suite2 = createSuiteProxy("C_suite1", rootSuite);
+    final RTestUnitTestProxy passedTest21 = createTestProxy("passedTest21", suite2);
+    final RTestUnitTestProxy errorTest21 = createTestProxy("errorTest21", suite2);
+    doPassTest(passedTest21);
+    doErrorTest(errorTest21);
+
+    final RTestUnitTestProxy suite4 = createSuiteProxy("D_suite4", rootSuite);
+    final RTestUnitTestProxy failedTest41 = createTestProxy("failedTest41", suite4);
+    final RTestUnitTestProxy errorTest41 = createTestProxy("errorTest41", suite4);
+    final RTestUnitTestProxy errorTest42 = createTestProxy("errorTest42", suite4);
+    doFailTest(failedTest41);
+    doErrorTest(errorTest41);
+    doErrorTest(errorTest42);
+
+    final RTestUnitTestProxy passedTest1 = createTestProxy("passedTest1", rootSuite);
+    final RTestUnitTestProxy failedTest1 = createTestProxy("failedTest1", rootSuite);
+    final RTestUnitTestProxy errorTest1 = createTestProxy("errotTest1", rootSuite);
+    doPassTest(passedTest1);
+    doFailTest(failedTest1);
+    doErrorTest(errorTest1);
+
+    mySelectionListener.onSelectedRequest(rootSuite);
+
+    //sort with another sort type
+    myStatisticsTableModel.sortByColumn(0, SortableColumnModel.SORT_ASCENDING);
+    //resort
+    myStatisticsTableModel.sortByColumn(2, SortableColumnModel.SORT_DESCENDING);
+    assertOrderedEquals(getItems(),
+                        rootSuite, suite4, suite3, suite2, suite1, errorTest1, failedTest1, passedTest1);
+    //reverse
+    myStatisticsTableModel.sortByColumn(2, SortableColumnModel.SORT_ASCENDING);
+    assertOrderedEquals(getItems(),
+                        rootSuite, passedTest1, failedTest1, errorTest1, suite1, suite2, suite3, suite4);
+    //direct
+    myStatisticsTableModel.sortByColumn(2, SortableColumnModel.SORT_DESCENDING);
+    assertOrderedEquals(getItems(),
+                        rootSuite, suite4, suite3, suite2, suite1, errorTest1, failedTest1, passedTest1);
+  }
+
   private List<RTestUnitTestProxy> getItems() {
     return myStatisticsTableModel.getItems();
   }

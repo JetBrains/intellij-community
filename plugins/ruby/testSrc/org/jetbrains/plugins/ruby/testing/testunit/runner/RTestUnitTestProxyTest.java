@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
 import com.intellij.execution.testframework.Filter;
+import static org.jetbrains.plugins.ruby.testing.testunit.runner.states.TestStateInfo.Magnitude;
 import static org.jetbrains.plugins.ruby.testing.testunit.runner.states.TestStateInfo.Magnitude.*;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.states.TestStateInfo;
 
 /**
  * @author Roman Chernyatchik
@@ -150,7 +150,7 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     assertFalse(mySimpleTest.isInProgress());
     assertTrue(mySimpleTest.wasLaunched());
     assertTrue(mySimpleTest.isDefect());
-    assertTrue(mySimpleTest.getMagnitudeInfo() == TestStateInfo.Magnitude.FAILED_INDEX);
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
 
     mySimpleTest.setFinished();
 
@@ -158,7 +158,7 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     assertTrue(mySimpleTest.wasLaunched());
     assertTrue(mySimpleTest.isDefect());
 
-    assertTrue(mySimpleTest.getMagnitudeInfo() == TestStateInfo.Magnitude.FAILED_INDEX);
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
   }
 
   public void testTestFailed_InSuite() {
@@ -183,8 +183,8 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     assertFalse(mySuite.isInProgress());
     assertTrue(mySuite.isDefect());
 
-    assertTrue(mySimpleTest.getMagnitudeInfo() == TestStateInfo.Magnitude.FAILED_INDEX);
-    assertTrue(mySuite.getMagnitudeInfo() == TestStateInfo.Magnitude.FAILED_INDEX);
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
+    assertTrue(mySuite.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
   }
 
   public void testTestError() {
@@ -194,7 +194,7 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     assertFalse(mySimpleTest.isInProgress());
     assertTrue(mySimpleTest.wasLaunched());
     assertTrue(mySimpleTest.isDefect());
-    assertTrue(mySimpleTest.getMagnitudeInfo() == TestStateInfo.Magnitude.ERROR_INDEX);
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.ERROR_INDEX);
 
     mySimpleTest.setFinished();
 
@@ -202,7 +202,7 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     assertTrue(mySimpleTest.wasLaunched());
     assertTrue(mySimpleTest.isDefect());
 
-    assertTrue(mySimpleTest.getMagnitudeInfo() == TestStateInfo.Magnitude.ERROR_INDEX);
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.ERROR_INDEX);
   }
 
   public void testTestError_InSuite() {
@@ -227,8 +227,8 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     assertFalse(mySuite.isInProgress());
     assertTrue(mySuite.isDefect());
 
-    assertTrue(mySimpleTest.getMagnitudeInfo() == TestStateInfo.Magnitude.ERROR_INDEX);
-    assertTrue(mySuite.getMagnitudeInfo() == TestStateInfo.Magnitude.ERROR_INDEX);
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.ERROR_INDEX);
+    assertTrue(mySuite.getMagnitudeInfo() == Magnitude.ERROR_INDEX);
   }
 
   public void testSuiteTerminated() {
@@ -639,5 +639,20 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
 
     test21.setDuration(9);
     assertEquals(20, root.getDuration().intValue());
+  }
+
+  public void testMagnitudeWeight() {
+    assertWeightsOrder(Magnitude.NOT_RUN_INDEX, Magnitude.SKIPPED_INDEX);
+    assertWeightsOrder(Magnitude.SKIPPED_INDEX, Magnitude.IGNORED_INDEX);
+    assertWeightsOrder(Magnitude.IGNORED_INDEX, Magnitude.COMPLETE_INDEX);
+    assertEquals(Magnitude.COMPLETE_INDEX.getSortWeitht() , Magnitude.PASSED_INDEX.getSortWeitht());
+    assertWeightsOrder(Magnitude.PASSED_INDEX, Magnitude.FAILED_INDEX);
+    assertWeightsOrder(Magnitude.FAILED_INDEX, Magnitude.ERROR_INDEX);
+    assertWeightsOrder(Magnitude.ERROR_INDEX, Magnitude.TERMINATED_INDEX);
+    assertWeightsOrder(Magnitude.TERMINATED_INDEX, Magnitude.RUNNING_INDEX);
+  }
+
+  protected void assertWeightsOrder(final Magnitude previous, final Magnitude next) {
+    assertTrue(previous.getSortWeitht() < next.getSortWeitht());
   }
 }

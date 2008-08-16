@@ -86,4 +86,21 @@ public abstract class BaseRUnitTestsTestCase extends LightIdeaTestCase {
                                     environment.getRunnerSettings(),
                                     environment.getConfigurationSettings());
   }
+
+  protected void doPassTest(final RTestUnitTestProxy test) {
+    test.setStarted();
+    test.setFinished();
+  }
+
+  protected void doFailTest(final RTestUnitTestProxy test) {
+    test.setStarted();
+    test.setTestFailed("", "", false);
+    test.setFinished();
+  }
+
+  protected void doErrorTest(final RTestUnitTestProxy test) {
+    test.setStarted();
+    test.setTestFailed("", "", true);
+    test.setFinished();
+  }
 }
