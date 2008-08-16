@@ -69,7 +69,20 @@ public class RTestUnitStatisticsPanel extends JPanel {
    * @return
    */
   public RTestUnitResultsForm.FormSelectionListener createSelectionListener() {
-    return myTableModel.createSelectionListener(myStatisticsTableView);
+    final RTestUnitResultsForm.FormSelectionListener modelSelectionListener =
+        myTableModel.createSelectionListener();
+
+    return new RTestUnitResultsForm.FormSelectionListener() {
+      public void onSelectedRequest(@Nullable final RTestUnitTestProxy selectedTestProxy) {
+        // Send event to model
+        modelSelectionListener.onSelectedRequest(selectedTestProxy);
+
+        // Now we want to select proxy in table (if it is possible)
+        if (selectedTestProxy != null) {
+          findAndSelectInTable(selectedTestProxy);
+        }
+      }
+    };
   }
 
   public RTestUnitEventsListener createTestEventsListener() {
@@ -141,6 +154,17 @@ public class RTestUnitStatisticsPanel extends JPanel {
   @Nullable
   protected RTestUnitTestProxy getSelectedItem() {
     return myStatisticsTableView.getSelectedObject();
+  }
+
+  private void findAndSelectInTable(final RTestUnitTestProxy proxy) {
+    UIUtil.addToInvokeLater(new Runnable() {
+      public void run() {
+        final int rowIndex = myTableModel.getIndexOf(proxy);
+        if (rowIndex >= 0) {
+          myStatisticsTableView.setRowSelectionInterval(rowIndex, rowIndex);
+        }
+      }
+    });
   }
 
   private void fireOnSelectionChanged(final RTestUnitTestProxy selectedTestProxy) {

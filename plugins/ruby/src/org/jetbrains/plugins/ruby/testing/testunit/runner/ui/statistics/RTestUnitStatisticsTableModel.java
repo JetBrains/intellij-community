@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner.ui.statistics;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.table.TableView;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +37,7 @@ public class RTestUnitStatisticsTableModel extends ListTableModel<RTestUnitTestP
     super(new ColumnTest(), new ColumnDuration(), new ColumnResults());
   }
 
-  public RTestUnitResultsForm.FormSelectionListener createSelectionListener(@Nullable final TableView<RTestUnitTestProxy> statisticsTableView) {
+  public RTestUnitResultsForm.FormSelectionListener createSelectionListener() {
     return new RTestUnitResultsForm.FormSelectionListener() {
       public void onSelectedRequest(@Nullable final RTestUnitTestProxy proxy) {
 
@@ -48,49 +47,33 @@ public class RTestUnitStatisticsTableModel extends ListTableModel<RTestUnitTestP
           myCurrentSuite = newCurrentSuite;
           updateModel();
         }
-
-        // Now we want to select proxy in table (if it is possible)
-        // We will find row with proxy by presentable name and select it!
-        if (proxy != null && statisticsTableView != null) {
-          findAndSelectInTable(proxy, statisticsTableView);
-        }
-      }
+       }
     };
   }
 
-  private void findAndSelectInTable(final RTestUnitTestProxy proxy, final TableView<RTestUnitTestProxy> statisticsTableView) {
-    UIUtil.addToInvokeLater(new Runnable() {
-      public void run() {
-        //TODO reimplement
-        final String presentableName = proxy.getPresentableName();
-        final int rowCount = statisticsTableView.getRowCount();
-        final int columnnCount = statisticsTableView.getColumnCount();
-        for (int rowInd = 0; rowInd < rowCount; rowInd++) {
-          for (int columnInd = 0; columnInd < columnnCount; columnInd++) {
-            if (presentableName.equals(statisticsTableView.getValueAt(rowInd, columnInd))) {
-              statisticsTableView.setRowSelectionInterval(rowInd, rowInd);
-            }
-          }
-        }
-      }
-    });
+   @Nullable
+   public RTestUnitTestProxy getTestAt(final int rowIndex) {
+    if (rowIndex < 0 || rowIndex > getItems().size()) {
+      return null;
+    }
+    return getItems().get(rowIndex);
   }
 
-  // public TestProxy getTestAt(final int rowIndex) {
-  //  if (rowIndex < 0 || rowIndex > getItems().size())
-  //    return null;
-  //  return (rowIndex == 0) ? myTest : (TestProxy)getItems().get(rowIndex - 1);
-  //}
-  //
-  //public int getIndexOf(final Object test) {
-  //  if (test == myTest)
-  //    return 0;
-  //  for (int i = 0; i < getItems().size(); i++) {
-  //    final Object child = getItems().get(i);
-  //    if (child == test) return i + 1;
-  //  }
-  //  return -1;
-  //}
+
+  /**
+   * Searches index of given test or suite. If finds nothing will retun -1
+   * @param test Test or suite
+   * @return Proxy's index or -1
+   */
+  public int getIndexOf(final RTestUnitTestProxy test) {
+    for (int i = 0; i < getItems().size(); i++) {
+      final RTestUnitTestProxy child = getItems().get(i);
+      if (child == test) {
+        return i;
+      }
+    }
+    return -1;
+  }
 
   private void updateModel() {
     UIUtil.addToInvokeLater(new Runnable() {

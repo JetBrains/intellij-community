@@ -22,7 +22,7 @@ public class RTestUnitStatisticsTableModelTest extends BaseRUnitTestsTestCase {
     super.setUp();
 
     myStatisticsTableModel = new RTestUnitStatisticsTableModel();
-    mySelectionListener = myStatisticsTableModel.createSelectionListener(null);
+    mySelectionListener = myStatisticsTableModel.createSelectionListener();
     myTestEventsListener = myStatisticsTableModel.createTestEventsListener();
 
     myRootSuite = createSuiteProxy("root");
