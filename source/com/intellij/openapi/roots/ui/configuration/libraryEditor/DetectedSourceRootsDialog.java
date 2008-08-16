@@ -192,7 +192,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
   @Override
   protected JComponent createTitlePane() {
     return new TitlePanel("Choose Source Roots", "<html><body>IntelliJ IDEA just scanned files and detected following source root(s).<br>" +
-                                                 "Mark items in the list below or press Cancel to attach original root.</body></html>");
+                                                 "Select items in the tree below or press Cancel to cancel operation.</body></html>");
   }
 
   @Nullable
