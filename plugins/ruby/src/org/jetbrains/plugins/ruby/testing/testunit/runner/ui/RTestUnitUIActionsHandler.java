@@ -44,10 +44,9 @@ public class RTestUnitUIActionsHandler implements TestResultsViewer.EventsListen
     if (TestConsoleProperties.SELECT_FIRST_DEFECT.value(myConsoleProperties)) {
       final AbstractTestProxy firstDefect =
           Filter.DEFECTIVE_LEAF.detectIn(testsRootNode.getAllTests());
-      testProxy = firstDefect != null ? firstDefect : testsRootNode;
-    } else {
-      testProxy = testsRootNode;
+      if (firstDefect != null) {
+        sender.selectAndNotify(firstDefect);
+      }
     }
-    sender.selectAndNotify(testProxy);
   }
 }

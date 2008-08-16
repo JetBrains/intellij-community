@@ -19,7 +19,10 @@ public class ColumnResults extends ColumnInfo<RTestUnitTestProxy, String> {
   ////TODO sort
   // @Nullable
   //public Comparator<RTestUnitTestProxy> getComparator(){
-  //  return null;
+  //  return new Comparator<RTestUnitTestProxy>() {
+  //    public int compare(final RTestUnitTestProxy o1, final RTestUnitTestProxy o2) {
+  //    }
+  //  };
   //}
 
   public ColumnResults() {

@@ -218,7 +218,7 @@ public class RTestUnitUIActionsHandlerTest extends BaseRUnitTestsTestCase {
 
 
     //failed test 2
-    final RTestUnitTestProxy testFailed2 = createTestProxy("testFailed1", testsSuite);
+    final RTestUnitTestProxy testFailed2 = createTestProxy("testFailed2", testsSuite);
     testFailed2.setStarted();
     myUIActionsHandler.onTestNodeAdded(myResultsViewer, testFailed2);
     assertEquals(testFailed2, mySelectedTestProxy);
@@ -238,6 +238,6 @@ public class RTestUnitUIActionsHandlerTest extends BaseRUnitTestsTestCase {
 
     //testing finished
     myUIActionsHandler.onTestingFinished(myResultsViewer);
-    assertEquals(myResultsViewer.getTestsRootNode(), mySelectedTestProxy);
+    assertEquals(lastSelectedTest, mySelectedTestProxy);
   }
 }
