@@ -72,9 +72,11 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   private final RTestUnitTestProxy myTestsRootNode;
   private final RTestUnitTreeBuilder myTreeBuilder;
   private final TestConsoleProperties myConsoleProperties;
+
   private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
-  private List<EventsListener> myEventListeners = new ArrayList<EventsListener>();
-  private final List<RTestUnitTestProxySelectionChangedListener> mySelectionChangeListeners = new ArrayList<RTestUnitTestProxySelectionChangedListener>();
+  private final List<EventsListener> myEventListeners = new ArrayList<EventsListener>();
+  private final List<RTestUnitTestProxySelectionChangedListener> myChangeSelectionListeners = new ArrayList<RTestUnitTestProxySelectionChangedListener>();
+  private final List<FormSelectionListener> myFormSelectionListeners = new ArrayList<FormSelectionListener>();
 
   // Manages console tabs for runConfigurations's log files
   private final LogFilesManager myLogFilesManager;
@@ -142,8 +144,8 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
    * Is used for navigation from tree view to other UI components
    * @param listener
    */
-  public void addSelectionChangedListener(final RTestUnitTestProxySelectionChangedListener listener) {
-    mySelectionChangeListeners.add(listener);
+  public void addChangeSelectionListener(final RTestUnitTestProxySelectionChangedListener listener) {
+    myChangeSelectionListeners.add(listener);
   }
 
   public void attachToProcess(final ProcessHandler processHandler) {
@@ -179,6 +181,10 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
         //}
       }
     });
+  }
+
+  public void addFormSelectionRequestedListener(final FormSelectionListener l)  {
+    myFormSelectionListeners.add(l);
   }
 
   public void addLogConsole(@NotNull final String name, @NotNull final String path,
@@ -253,7 +259,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     myProgressLine.setColor(ColorProgressBar.GREEN);
 
     // Tests tree
-    selectWithoutNotify(myTestsRootNode);
+    selectAndNotify(myTestsRootNode);
 
     myStartTime = System.currentTimeMillis();
     updateStatusLabel();
@@ -369,11 +375,17 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
    * @param testProxy Test or suite
    */
   public void selectAndNotify(@Nullable final AbstractTestProxy testProxy) {
-    //is used by Test Runner actions - go to next failed, passed, first failed, etc
-    //if (testProxy != getTestsRootNode()) {
-    //  //notify
-    //}
     selectWithoutNotify(testProxy);
+
+    // Is used by Statistic tab to differ use selection in tree
+    // from programmatical selection from test runner events
+    fireOnSelectedRequest((RTestUnitTestProxy)testProxy);
+  }
+
+  private void fireOnSelectedRequest(final RTestUnitTestProxy selectedTestProxy) {
+    for (FormSelectionListener formSelectionListener : myFormSelectionListeners) {
+      formSelectionListener.onSelectedRequest(selectedTestProxy);
+    }
   }
 
   public void addEventsListener(final EventsListener listener) {
@@ -384,8 +396,10 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     for (ModelListener listener : myListeners) {
       listener.onDispose();
     }
-    mySelectionChangeListeners.clear();
+    myChangeSelectionListeners.clear();
     myEventListeners.clear();
+    myFormSelectionListeners.clear();
+
     myAnimator.dispose();
     myToolbar.dispose();
     Disposer.dispose(myTreeBuilder);
@@ -512,8 +526,8 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   }
 
   private void fireOnSelectionChanged(final RTestUnitTestProxy selectedTestProxy) {
-    for (RTestUnitTestProxySelectionChangedListener listener : mySelectionChangeListeners) {
-      listener.onSelected(selectedTestProxy, true);
+    for (RTestUnitTestProxySelectionChangedListener listener : myChangeSelectionListeners) {
+      listener.onChangeSelection(selectedTestProxy, true);
     }
   }
 
@@ -524,9 +538,14 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     myTreeBuilder.performUpdate();
   }
 
-  public RTestUnitTestProxySelectionChangedListener createSelectionChangedListener() {
+  /**
+   * On event change selection and probably requests focus. Is used when we want
+   * navigate from other component to this
+   * @return Listener
+   */
+  public RTestUnitTestProxySelectionChangedListener createOnChangeSelectionListener() {
     return new RTestUnitTestProxySelectionChangedListener() {
-      public void onSelected(@Nullable final RTestUnitTestProxy selectedTestProxy,
+      public void onChangeSelection(@Nullable final RTestUnitTestProxy selectedTestProxy,
                              final boolean requestFocus) {
         UIUtil.addToInvokeLater(new Runnable() {
           public void run() {
@@ -547,5 +566,16 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     public MyAnimator(final AbstractTestTreeBuilder builder) {
       init(builder);
     }
+  }
+
+  public interface FormSelectionListener {
+
+    /**
+     * When some class asked form to select element.
+     * E.g. before running test Form selected root element, or
+     * after testing finished UI action asked to select first failedtest
+     * @param selectedTestProxy
+     */
+    void onSelectedRequest(@Nullable final RTestUnitTestProxy selectedTestProxy);
   }
 }

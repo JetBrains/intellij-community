@@ -2,15 +2,18 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner.ui.statistics;
 
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.ui.table.TableView;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.support.UIUtil;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsListener;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestProxySelectionChangedListener;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestProxyTreeSelectionListener;
-import org.jetbrains.plugins.ruby.support.UIUtil;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -25,7 +28,7 @@ public class RTestUnitStatisticsPanel extends JPanel {
   private JPanel myContentPane;
 
   private RTestUnitStatisticsTableModel myTableModel;
-  private final List<RTestUnitTestProxySelectionChangedListener> mySelectionListeners = new ArrayList<RTestUnitTestProxySelectionChangedListener>();
+  private final List<RTestUnitTestProxySelectionChangedListener> myChangeSelectionListeners = new ArrayList<RTestUnitTestProxySelectionChangedListener>();
 
   public RTestUnitStatisticsPanel() {
     myTableModel = new RTestUnitStatisticsTableModel();
@@ -61,16 +64,20 @@ public class RTestUnitStatisticsPanel extends JPanel {
     return myContentPane;
   }
 
-  public TestProxyTreeSelectionListener createSelectionListener() {
-    return myTableModel.createSelectionListener();
+  /**
+   * Show and selects suite in table by event
+   * @return
+   */
+  public RTestUnitResultsForm.FormSelectionListener createSelectionListener() {
+    return myTableModel.createSelectionListener(myStatisticsTableView);
   }
 
   public RTestUnitEventsListener createTestEventsListener() {
     return myTableModel.createTestEventsListener();
   }
 
-  public void addSelectionChangedListener(final RTestUnitTestProxySelectionChangedListener listener) {
-    mySelectionListeners.add(listener);
+  public void addChangeSelectionListener(final RTestUnitTestProxySelectionChangedListener listener) {
+    myChangeSelectionListeners.add(listener);
   }
 
   protected Runnable createChangeSelectionAction() {
@@ -89,7 +96,7 @@ public class RTestUnitStatisticsPanel extends JPanel {
   }
 
   protected Runnable createGotoSuiteOrParentAction() {
-    final TestProxyTreeSelectionListener selectionListener = createSelectionListener();
+    final RTestUnitResultsForm.FormSelectionListener selectionListener = createSelectionListener();
 
     // Expand selected or go to parent
     return new Runnable() {
@@ -137,8 +144,8 @@ public class RTestUnitStatisticsPanel extends JPanel {
   }
 
   private void fireOnSelectionChanged(final RTestUnitTestProxy selectedTestProxy) {
-    for (RTestUnitTestProxySelectionChangedListener listener : mySelectionListeners) {
-      listener.onSelected(selectedTestProxy, true);
+    for (RTestUnitTestProxySelectionChangedListener listener : myChangeSelectionListeners) {
+      listener.onChangeSelection(selectedTestProxy, true);
     }
   }
 
@@ -147,18 +154,23 @@ public class RTestUnitStatisticsPanel extends JPanel {
   }
 
   private void showInTableAndSelectFirstRow(final RTestUnitTestProxy suite,
-                                              final TestProxyTreeSelectionListener selectionListener) {
-    selectionListener.onSelected(suite);
+                                            final RTestUnitResultsForm.FormSelectionListener selectionListener) {
+    selectionListener.onSelectedRequest(suite);
     selectRow(0);
   }
 
-  public RTestUnitTestProxySelectionChangedListener createSelectionChangedListener() {
-    final TestProxyTreeSelectionListener selectionListener = createSelectionListener();
+  /**
+   * On event change selection and probably requests focus. Is used when we want
+   * navigate from other component to this
+   * @return Listener
+   */
+  public RTestUnitTestProxySelectionChangedListener createOnChangeSelectionListener() {
+    final RTestUnitResultsForm.FormSelectionListener selectionListener = createSelectionListener();
 
     return new RTestUnitTestProxySelectionChangedListener() {
-      public void onSelected(@Nullable final RTestUnitTestProxy selectedTestProxy, final boolean requestFocus) {
+      public void onChangeSelection(@Nullable final RTestUnitTestProxy selectedTestProxy, final boolean requestFocus) {
         if (requestFocus) {
-          selectionListener.onSelected(selectedTestProxy);
+          selectionListener.onSelectedRequest(selectedTestProxy);
           UIUtil.addToInvokeLater(new Runnable() {
             public void run() {
               myStatisticsTableView.requestFocusInWindow();

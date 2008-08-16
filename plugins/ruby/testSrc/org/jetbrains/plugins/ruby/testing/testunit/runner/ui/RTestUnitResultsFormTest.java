@@ -118,8 +118,8 @@ public class RTestUnitResultsFormTest extends BaseRUnitTestsTestCase {
     final Ref<RTestUnitTestProxy> proxyRef = new Ref<RTestUnitTestProxy>();
     final Ref<Boolean> focusRequestedRef = new Ref<Boolean>();
 
-    myResultsViewer.addSelectionChangedListener(new RTestUnitTestProxySelectionChangedListener() {
-      public void onSelected(@Nullable final RTestUnitTestProxy selectedTestProxy, final boolean requestFocus) {
+    myResultsViewer.addChangeSelectionListener(new RTestUnitTestProxySelectionChangedListener() {
+      public void onChangeSelection(@Nullable final RTestUnitTestProxy selectedTestProxy, final boolean requestFocus) {
         onSelectedHappend.set();
         proxyRef.set(selectedTestProxy);
         focusRequestedRef.set(requestFocus);

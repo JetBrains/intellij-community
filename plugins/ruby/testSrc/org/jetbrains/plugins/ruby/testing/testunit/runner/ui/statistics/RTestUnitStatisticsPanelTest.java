@@ -5,15 +5,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.Marker;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestProxySelectionChangedListener;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestProxyTreeSelectionListener;
 
 /**
  * @author Roman Chernyatchik
  */
 public class RTestUnitStatisticsPanelTest extends BaseRUnitTestsTestCase {
   private RTestUnitStatisticsPanel myRTestUnitStatisticsPanel;
-  private TestProxyTreeSelectionListener mySelectionListener;
+  private RTestUnitResultsForm.FormSelectionListener mySelectionListener;
 
   @Override
   protected void setUp() throws Exception {
@@ -30,7 +30,7 @@ public class RTestUnitStatisticsPanelTest extends BaseRUnitTestsTestCase {
     final RTestUnitTestProxy test1 = createTestProxy("test1", suite1);
 
     // show suite in table
-    mySelectionListener.onSelected(suite1);
+    mySelectionListener.onSelectedRequest(suite1);
     // selects row that corresponds to test1
     myRTestUnitStatisticsPanel.selectRow(1);
 
@@ -52,7 +52,7 @@ public class RTestUnitStatisticsPanelTest extends BaseRUnitTestsTestCase {
     final RTestUnitTestProxy suite1 = createSuiteProxy("suite1", rootSuite);
 
     // show root suite in table
-    mySelectionListener.onSelected(rootSuite);
+    mySelectionListener.onSelectedRequest(rootSuite);
     // selects row that corresponds to suite1
     myRTestUnitStatisticsPanel.selectRow(1);
 
@@ -74,7 +74,7 @@ public class RTestUnitStatisticsPanelTest extends BaseRUnitTestsTestCase {
     final RTestUnitTestProxy suite1 = createSuiteProxy("suite1", rootSuite);
 
     // show suite in table
-    mySelectionListener.onSelected(suite1);
+    mySelectionListener.onSelectedRequest(suite1);
     // selects Total row
     myRTestUnitStatisticsPanel.selectRow(0);
 
@@ -96,7 +96,7 @@ public class RTestUnitStatisticsPanelTest extends BaseRUnitTestsTestCase {
     createSuiteProxy("suite1", rootSuite);
 
     // show root suite in table
-    mySelectionListener.onSelected(rootSuite);
+    mySelectionListener.onSelectedRequest(rootSuite);
     // selects Total row
     myRTestUnitStatisticsPanel.selectRow(0);
 
@@ -112,13 +112,28 @@ public class RTestUnitStatisticsPanelTest extends BaseRUnitTestsTestCase {
     assertEquals(rootSuite, myRTestUnitStatisticsPanel.getSelectedItem());
   }
 
+  public void testChangeSelectionListener() {
+    // create data fixture
+    final RTestUnitTestProxy rootSuite = createSuiteProxy("rootSuite");
+    final RTestUnitTestProxy suite1 = createSuiteProxy("suite1", rootSuite);
+    final RTestUnitTestProxy test1 = createTestProxy("test1", suite1);
+
+    //test
+    mySelectionListener.onSelectedRequest(test1);
+    assertEquals(test1, myRTestUnitStatisticsPanel.getSelectedItem());
+
+    //suite
+    mySelectionListener.onSelectedRequest(suite1);
+    assertEquals(suite1, myRTestUnitStatisticsPanel.getSelectedItem());
+  }
+
   public void testChangeSelectionAction() {
     final Marker onSelectedHappend = new Marker();
     final Ref<RTestUnitTestProxy> proxyRef = new Ref<RTestUnitTestProxy>();
     final Ref<Boolean> focusRequestedRef = new Ref<Boolean>();
 
-    myRTestUnitStatisticsPanel.addSelectionChangedListener(new RTestUnitTestProxySelectionChangedListener() {
-      public void onSelected(@Nullable final RTestUnitTestProxy selectedTestProxy, final boolean requestFocus) {
+    myRTestUnitStatisticsPanel.addChangeSelectionListener(new RTestUnitTestProxySelectionChangedListener() {
+      public void onChangeSelection(@Nullable final RTestUnitTestProxy selectedTestProxy, final boolean requestFocus) {
         onSelectedHappend.set();
         proxyRef.set(selectedTestProxy);
         focusRequestedRef.set(requestFocus);
@@ -131,7 +146,7 @@ public class RTestUnitStatisticsPanelTest extends BaseRUnitTestsTestCase {
     final RTestUnitTestProxy test1 = createTestProxy("test1", suite1);
 
     //on test
-    mySelectionListener.onSelected(suite1);
+    mySelectionListener.onSelectedRequest(suite1);
     myRTestUnitStatisticsPanel.selectRow(1);
     assertEquals(test1, myRTestUnitStatisticsPanel.getSelectedItem());
 
@@ -146,7 +161,7 @@ public class RTestUnitStatisticsPanelTest extends BaseRUnitTestsTestCase {
     proxyRef.set(null);
     focusRequestedRef.set(null);
 
-    mySelectionListener.onSelected(rootSuite);
+    mySelectionListener.onSelectedRequest(rootSuite);
     myRTestUnitStatisticsPanel.selectRow(1);
     assertEquals(suite1, myRTestUnitStatisticsPanel.getSelectedItem());
 
@@ -161,7 +176,7 @@ public class RTestUnitStatisticsPanelTest extends BaseRUnitTestsTestCase {
     proxyRef.set(null);
     focusRequestedRef.set(null);
 
-    mySelectionListener.onSelected(rootSuite);
+    mySelectionListener.onSelectedRequest(rootSuite);
     myRTestUnitStatisticsPanel.selectRow(0);
     assertEquals(rootSuite, myRTestUnitStatisticsPanel.getSelectedItem());
 
