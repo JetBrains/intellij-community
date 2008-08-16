@@ -101,7 +101,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     if (text == null || text.length() == 0)
       return false;
     final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
-    if (caret < 1 || caret > text.length() - 2) {
+    if (caret < 1 || caret > text.length() - 1) {
       return false;
     }
     HighlighterIterator iterator = highlighter.createIterator(caret - 1);
