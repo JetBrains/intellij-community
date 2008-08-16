@@ -15,7 +15,7 @@ import java.util.Comparator;
 /**
  * @author Roman Chernyatchik
 */
-public class ColumnTest extends BaseColumn {
+public class ColumnTest extends BaseColumn implements Comparator<RTestUnitTestProxy>{
   public ColumnTest() {
     super(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.test.title"));
   }
@@ -27,11 +27,11 @@ public class ColumnTest extends BaseColumn {
 
   @Nullable
   public Comparator<RTestUnitTestProxy> getComparator(){
-    return new Comparator<RTestUnitTestProxy>() {
-      public int compare(final RTestUnitTestProxy o1, final RTestUnitTestProxy o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    };
+    return this;
+  }
+
+  public int compare(final RTestUnitTestProxy proxy1, final RTestUnitTestProxy proxy2) {
+    return proxy1.getName().compareTo(proxy2.getName());
   }
 
   @Override

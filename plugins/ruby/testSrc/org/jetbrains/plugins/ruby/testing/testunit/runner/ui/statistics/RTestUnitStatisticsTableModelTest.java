@@ -250,6 +250,36 @@ public class RTestUnitStatisticsTableModelTest extends BaseRUnitTestsTestCase {
     assertOrderedEquals(getItems(), myRootSuite, firstTest, firstSuite, lastSuite, lastTest);
   }
 
+  public void testSort_DurationTest() {
+    final RTestUnitTestProxy firstSuite = createSuiteProxy("A_suite1", myRootSuite);
+    final RTestUnitTestProxy firstSuite_Test = createTestProxy("test", firstSuite);
+    firstSuite_Test.setDuration(10);
+
+    final RTestUnitTestProxy lastSuite = createSuiteProxy("L_suite1", myRootSuite);
+    final RTestUnitTestProxy lastSuite_Test = createTestProxy("test", lastSuite);
+    lastSuite_Test.setDuration(90);
+
+    final RTestUnitTestProxy firstTest = createTestProxy("K_test", myRootSuite);
+    firstTest.setDuration(1);
+    final RTestUnitTestProxy lastTest = createTestProxy("Z_test", myRootSuite);
+    lastTest.setDuration(100);
+
+    mySelectionListener.onSelectedRequest(myRootSuite);
+    //assertOrderedEquals(getItems(), myRootSuite, firstTest, firstSuite, lastSuite, lastTest);
+
+    //sort with another sort type
+    myStatisticsTableModel.sortByColumn(0, SortableColumnModel.SORT_ASCENDING);
+    //resort
+    myStatisticsTableModel.sortByColumn(1, SortableColumnModel.SORT_ASCENDING);
+    assertOrderedEquals(getItems(), myRootSuite, firstTest, firstSuite, lastSuite, lastTest);
+    //reverse
+    myStatisticsTableModel.sortByColumn(1, SortableColumnModel.SORT_DESCENDING);
+    assertOrderedEquals(getItems(), myRootSuite, lastTest, lastSuite, firstSuite, firstTest);
+    //direct
+    myStatisticsTableModel.sortByColumn(1, SortableColumnModel.SORT_ASCENDING);
+    assertOrderedEquals(getItems(), myRootSuite, firstTest, firstSuite, lastSuite, lastTest);
+  }
+
   private List<RTestUnitTestProxy> getItems() {
     return myStatisticsTableModel.getItems();
   }

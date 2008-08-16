@@ -5,14 +5,16 @@ import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestsPresentationUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
+import java.util.Comparator;
 
 /**
  * @author Roman Chernyatchik
 */
-public class ColumnDuration extends BaseColumn {
+public class ColumnDuration extends BaseColumn implements Comparator<RTestUnitTestProxy> {
   public ColumnDuration() {
     super(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.duration.title"));
   }
@@ -21,15 +23,23 @@ public class ColumnDuration extends BaseColumn {
     return TestsPresentationUtil.getDurationPresentation(testProxy);
   }
 
-  //@Nullable
-  //public Comparator<RTestUnitTestProxy> getComparator(){
-  //  return new Comparator<RTestUnitTestProxy>() {
-  //    public int compare(final RTestUnitTestProxy o1, final RTestUnitTestProxy o2) {
-  //      //Invariant: comparator should left Total row as uppermost element!
-  //
-  //    }
-  //  };
-  //}
+  @Nullable
+  public Comparator<RTestUnitTestProxy> getComparator(){
+    return this;
+  }
+
+  public int compare(final RTestUnitTestProxy proxy1, final RTestUnitTestProxy proxy2) {
+    final Integer duration1 = proxy1.getDuration();
+    final Integer duration2 = proxy2.getDuration();
+
+    if (duration1 == null) {
+      return duration2 == null ? 0 : -1;
+    }
+    if (duration2 == null) {
+      return +1;
+    }
+    return duration1.compareTo(duration2);
+  }
 
 
   @Override
