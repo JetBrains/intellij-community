@@ -130,13 +130,9 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
       mySortingType = SortableColumnModel.SORT_ASCENDING;
     }
     if (myIsSortable && myColumnInfos[columnIndex].isSortable()) {
-      reverseModelItems(myItems);
+      Collections.reverse(myItems);
       fireTableDataChanged();
     }
-  }
-
-  protected void reverseModelItems(final List<Item> items) {
-    Collections.reverse(items);
   }
 
   protected Object getAspectOf(int aspectIndex, Object item) {
@@ -149,7 +145,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
       if (columnInfo.isSortable()) {
         columnInfo.sort(myItems);
         if (mySortingType == SortableColumnModel.SORT_DESCENDING) {
-          reverseModelItems(myItems);
+          Collections.reverse(myItems);
         }
         fireTableDataChanged();
       }
