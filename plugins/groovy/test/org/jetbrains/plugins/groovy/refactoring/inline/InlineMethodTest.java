@@ -50,7 +50,7 @@ import java.io.IOException;
  */
 public class InlineMethodTest extends CommonRefactoringTestCase {
 
-  private static final String DATA_PATH = PathUtil.getDataPath(InlineMethodTest.class) + "/mathod";
+  private static final String DATA_PATH = PathUtil.getDataPath(InlineMethodTest.class) + "/method";
 
   public InlineMethodTest() {
     super(System.getProperty("path") != null ?
