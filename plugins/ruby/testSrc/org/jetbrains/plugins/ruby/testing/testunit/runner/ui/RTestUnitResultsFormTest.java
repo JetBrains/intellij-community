@@ -1,9 +1,12 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner.ui;
 
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
+import org.jetbrains.plugins.ruby.Marker;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Roman Chernyatchik
@@ -108,5 +111,43 @@ public class RTestUnitResultsFormTest extends BaseRUnitTestsTestCase {
     assertEquals(0, myResultsViewer.getTestsCurrentCount());
     myResultsViewer.onSuiteStarted(createSuiteProxy(myTestsRootNode));
     assertEquals(0, myResultsViewer.getTestsCurrentCount());
+  }
+
+  public void testChangeSelectionAction() {
+    final Marker onSelectedHappend = new Marker();
+    final Ref<RTestUnitTestProxy> proxyRef = new Ref<RTestUnitTestProxy>();
+    final Ref<Boolean> focusRequestedRef = new Ref<Boolean>();
+
+    myResultsViewer.addSelectionChangedListener(new RTestUnitTestProxySelectionChangedListener() {
+      public void onSelected(@Nullable final RTestUnitTestProxy selectedTestProxy, final boolean requestFocus) {
+        onSelectedHappend.set();
+        proxyRef.set(selectedTestProxy);
+        focusRequestedRef.set(requestFocus);
+      }
+    });
+
+    final RTestUnitTestProxy suite = createSuiteProxy("suite", myTestsRootNode);
+    final RTestUnitTestProxy test = createTestProxy("test", myTestsRootNode);
+    myResultsViewer.onSuiteStarted(suite);
+    myResultsViewer.onTestStarted(test);
+
+    //On test
+    myResultsViewer.selectAndNotify(test);
+    myResultsViewer.createChangeSelectionAction().run();
+    assertTrue(onSelectedHappend.isSet());
+    assertEquals(test, proxyRef.get());
+    assertTrue(focusRequestedRef.get());
+
+    //on suite
+    //reset markers
+    onSelectedHappend.reset();
+    proxyRef.set(null);
+    focusRequestedRef.set(null);
+
+    myResultsViewer.selectAndNotify(suite);
+    myResultsViewer.createChangeSelectionAction().run();
+    assertTrue(onSelectedHappend.isSet());
+    assertEquals(suite, proxyRef.get());
+    assertTrue(focusRequestedRef.get());
   }
 }

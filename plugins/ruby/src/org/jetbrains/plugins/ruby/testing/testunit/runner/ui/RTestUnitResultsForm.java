@@ -37,6 +37,8 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -72,6 +74,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   private final TestConsoleProperties myConsoleProperties;
   private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
   private List<EventsListener> myEventListeners = new ArrayList<EventsListener>();
+  private final List<RTestUnitTestProxySelectionChangedListener> mySelectionChangeListeners = new ArrayList<RTestUnitTestProxySelectionChangedListener>();
 
   // Manages console tabs for runConfigurations's log files
   private final LogFilesManager myLogFilesManager;
@@ -123,10 +126,24 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     myToolbar = initToolbarPanel(consoleProperties, runnerSettings, configurationSettings);
 
     makeSplitterSettingsExternalizable(splitPane);
+
+    // Fire selection changed and move focus on SHIFT+ENTER
+    final KeyStroke shiftEnterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
+    UIUtil.registerAsAction(shiftEnterKey, "change-selection-on-test-proxy",
+                            createChangeSelectionAction(),
+                            myTreeView);
   }
 
   public void addTestsTreeSelectionListener(final TreeSelectionListener listener) {
     myTreeView.getSelectionModel().addTreeSelectionListener(listener);
+  }
+
+  /**
+   * Is used for navigation from tree view to other UI components
+   * @param listener
+   */
+  public void addSelectionChangedListener(final RTestUnitTestProxySelectionChangedListener listener) {
+    mySelectionChangeListeners.add(listener);
   }
 
   public void attachToProcess(final ProcessHandler processHandler) {
@@ -367,6 +384,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     for (ModelListener listener : myListeners) {
       listener.onDispose();
     }
+    mySelectionChangeListeners.clear();
     myEventListeners.clear();
     myAnimator.dispose();
     myToolbar.dispose();
@@ -403,6 +421,21 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
 
   protected long getEndTime() {
     return myEndTime;
+  }
+
+  /**
+   * Fire about selction changed. Is used fo navigatin from tree view to it's listener
+   * @return Runnable action
+   */
+  protected Runnable createChangeSelectionAction() {
+    return new Runnable() {
+      public void run() {
+        final AbstractTestProxy selectedProxy = myTreeView.getSelectedTest();
+        if (selectedProxy instanceof RTestUnitTestProxy) {
+          fireOnSelectionChanged((RTestUnitTestProxy)selectedProxy);
+        }
+      }
+    };
   }
 
   private void _addTestOrSuite(@NotNull final RTestUnitTestProxy newTestOrSuite) {
@@ -444,6 +477,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
     //PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
 
+    //TODO[romeo] for different runners should differ
     splitterProportions.externalizeFromDimensionService(RTEST_UNIT_SPLITTER_PROPERTY);
     final Container container = splitPane.getParent();
     GuiUtils.replaceJSplitPaneWithIDEASplitter(splitPane);
@@ -477,6 +511,12 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
                                                                        myTestsFailuresCount));
   }
 
+  private void fireOnSelectionChanged(final RTestUnitTestProxy selectedTestProxy) {
+    for (RTestUnitTestProxySelectionChangedListener listener : mySelectionChangeListeners) {
+      listener.onSelected(selectedTestProxy, true);
+    }
+  }
+
   /**
    * for java unit tests
    */
@@ -484,8 +524,8 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     myTreeBuilder.performUpdate();
   }
 
-  public RTestUnitTestProxySelectionListener createSelectionListener() {
-    return new RTestUnitTestProxySelectionListener() {
+  public RTestUnitTestProxySelectionChangedListener createSelectionChangedListener() {
+    return new RTestUnitTestProxySelectionChangedListener() {
       public void onSelected(@Nullable final RTestUnitTestProxy selectedTestProxy,
                              final boolean requestFocus) {
         UIUtil.addToInvokeLater(new Runnable() {

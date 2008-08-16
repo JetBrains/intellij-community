@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.Marker;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestProxySelectionListener;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestProxySelectionChangedListener;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestProxyTreeSelectionListener;
 
 /**
@@ -117,7 +117,7 @@ public class RTestUnitStatisticsPanelTest extends BaseRUnitTestsTestCase {
     final Ref<RTestUnitTestProxy> proxyRef = new Ref<RTestUnitTestProxy>();
     final Ref<Boolean> focusRequestedRef = new Ref<Boolean>();
 
-    myRTestUnitStatisticsPanel.addSelectionListener(new RTestUnitTestProxySelectionListener() {
+    myRTestUnitStatisticsPanel.addSelectionChangedListener(new RTestUnitTestProxySelectionChangedListener() {
       public void onSelected(@Nullable final RTestUnitTestProxy selectedTestProxy, final boolean requestFocus) {
         onSelectedHappend.set();
         proxyRef.set(selectedTestProxy);

@@ -4,7 +4,7 @@ import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.ui.table.TableView;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsListener;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestProxySelectionListener;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestProxySelectionChangedListener;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestProxyTreeSelectionListener;
 import org.jetbrains.plugins.ruby.support.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +25,7 @@ public class RTestUnitStatisticsPanel extends JPanel {
   private JPanel myContentPane;
 
   private RTestUnitStatisticsTableModel myTableModel;
-  private final List<RTestUnitTestProxySelectionListener> mySelectionListeners = new ArrayList<RTestUnitTestProxySelectionListener>();
+  private final List<RTestUnitTestProxySelectionChangedListener> mySelectionListeners = new ArrayList<RTestUnitTestProxySelectionChangedListener>();
 
   public RTestUnitStatisticsPanel() {
     myTableModel = new RTestUnitStatisticsTableModel();
@@ -46,11 +46,15 @@ public class RTestUnitStatisticsPanel extends JPanel {
 
     // Fire selection changed and move focus on SHIFT+ENTER
     final KeyStroke shiftEnterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
-    registerAsAction(shiftEnterKey, "change-selection-on-test-proxy", createChangeSelectionAction());
+    UIUtil.registerAsAction(shiftEnterKey, "change-selection-on-test-proxy",
+                            createChangeSelectionAction(),
+                            myStatisticsTableView);
 
     // Expand selected or go to parent on ENTER
     final KeyStroke enterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
-    registerAsAction(enterKey, "go-to-selected-suite-or-parent", createGotoSuiteOrParentAction());
+    UIUtil.registerAsAction(enterKey, "go-to-selected-suite-or-parent",
+                            createGotoSuiteOrParentAction(),
+                            myStatisticsTableView);
   }
 
   public JPanel getContentPane() {
@@ -65,7 +69,7 @@ public class RTestUnitStatisticsPanel extends JPanel {
     return myTableModel.createTestEventsListener();
   }
 
-  public void addSelectionListener(final RTestUnitTestProxySelectionListener listener) {
+  public void addSelectionChangedListener(final RTestUnitTestProxySelectionChangedListener listener) {
     mySelectionListeners.add(listener);
   }
 
@@ -133,7 +137,7 @@ public class RTestUnitStatisticsPanel extends JPanel {
   }
 
   private void fireOnSelectionChanged(final RTestUnitTestProxy selectedTestProxy) {
-    for (RTestUnitTestProxySelectionListener listener : mySelectionListeners) {
+    for (RTestUnitTestProxySelectionChangedListener listener : mySelectionListeners) {
       listener.onSelected(selectedTestProxy, true);
     }
   }
@@ -142,22 +146,26 @@ public class RTestUnitStatisticsPanel extends JPanel {
     myStatisticsTableView = new TableView<RTestUnitTestProxy>();
   }
 
-  private void registerAsAction(final KeyStroke keyStroke,
-                                final String actionKey,
-                                final Runnable action) {
-    final InputMap inputMap = myStatisticsTableView.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-
-    inputMap.put(keyStroke, actionKey);
-    myStatisticsTableView.getActionMap().put(inputMap.get(keyStroke), new AbstractAction() {
-      public void actionPerformed(final ActionEvent e) {
-        action.run();
-      }
-    });
-  }
-
   private void showInTableAndSelectFirstRow(final RTestUnitTestProxy suite,
                                               final TestProxyTreeSelectionListener selectionListener) {
     selectionListener.onSelected(suite);
     selectRow(0);
+  }
+
+  public RTestUnitTestProxySelectionChangedListener createSelectionChangedListener() {
+    final TestProxyTreeSelectionListener selectionListener = createSelectionListener();
+
+    return new RTestUnitTestProxySelectionChangedListener() {
+      public void onSelected(@Nullable final RTestUnitTestProxy selectedTestProxy, final boolean requestFocus) {
+        if (requestFocus) {
+          selectionListener.onSelected(selectedTestProxy);
+          UIUtil.addToInvokeLater(new Runnable() {
+            public void run() {
+              myStatisticsTableView.requestFocusInWindow();
+            }
+          });
+        }
+      }
+    };
   }
 }
