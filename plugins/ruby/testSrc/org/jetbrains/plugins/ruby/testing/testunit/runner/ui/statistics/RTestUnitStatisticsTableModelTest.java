@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner.ui.statistics;
 
+import com.intellij.util.ui.SortableColumnModel;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsListener;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
@@ -225,6 +226,28 @@ public class RTestUnitStatisticsTableModelTest extends BaseRUnitTestsTestCase {
     createTestProxy("test2", myRootSuite);
     myTestEventsListener.onTestFinished(other_test);
     assertSameElements(getItems(), myRootSuite, test1, suite);
+  }
+
+  public void testSort_ColumnTest() {
+    final RTestUnitTestProxy firstSuite = createSuiteProxy("K_suite1", myRootSuite);
+    final RTestUnitTestProxy lastSuite = createSuiteProxy("L_suite1", myRootSuite);
+    final RTestUnitTestProxy firstTest = createTestProxy("A_test", myRootSuite);
+    final RTestUnitTestProxy lastTest = createTestProxy("Z_test", myRootSuite);
+
+    mySelectionListener.onSelectedRequest(myRootSuite);
+    assertOrderedEquals(getItems(), myRootSuite, firstTest, firstSuite, lastSuite, lastTest);
+
+    //sort with another sort type
+    myStatisticsTableModel.sortByColumn(2, SortableColumnModel.SORT_ASCENDING);
+    //resort
+    myStatisticsTableModel.sortByColumn(0, SortableColumnModel.SORT_ASCENDING);
+    assertOrderedEquals(getItems(), myRootSuite, firstTest, firstSuite, lastSuite, lastTest);
+    //reverse
+    myStatisticsTableModel.sortByColumn(0, SortableColumnModel.SORT_DESCENDING);
+    assertOrderedEquals(getItems(), myRootSuite, lastTest, lastSuite, firstSuite, firstTest);
+    //direct
+    myStatisticsTableModel.sortByColumn(0, SortableColumnModel.SORT_ASCENDING);
+    assertOrderedEquals(getItems(), myRootSuite, firstTest, firstSuite, lastSuite, lastTest);
   }
 
   private List<RTestUnitTestProxy> getItems() {

@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner.ui.statistics;
 
 import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
@@ -13,7 +12,7 @@ import javax.swing.table.TableCellRenderer;
 /**
  * @author Roman Chernyatchik
 */
-public class ColumnResults extends ColumnInfo<RTestUnitTestProxy, String> {
+public class ColumnResults extends BaseColumn {
   @NonNls private static final String UNDERFINED = "<underfined>";
 
   ////TODO sort

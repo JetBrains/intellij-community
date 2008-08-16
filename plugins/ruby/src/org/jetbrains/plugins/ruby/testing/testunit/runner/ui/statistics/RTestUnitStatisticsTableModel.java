@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner.ui.statistics;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +20,19 @@ import java.util.List;
  * @author Roman Chernyatchik
  */
 public class RTestUnitStatisticsTableModel extends ListTableModel<RTestUnitTestProxy> {
+  private static final Logger LOG = Logger.getInstance(RTestUnitStatisticsTableModel.class.getName());
+
   private RTestUnitTestProxy myCurrentSuite;
+
+  private NullableFunction<List<RTestUnitTestProxy>, Object> oldReverseModelItemsFun =
+      new NullableFunction<List<RTestUnitTestProxy>, Object>() {
+        @Nullable
+        public Object fun(final List<RTestUnitTestProxy> proxies) {
+          RTestUnitStatisticsTableModel.super.reverseModelItems(proxies);
+
+          return null;
+        }
+      };
 
   public RTestUnitStatisticsTableModel() {
     super(new ColumnTest(), new ColumnDuration(), new ColumnResults());
@@ -47,6 +61,7 @@ public class RTestUnitStatisticsTableModel extends ListTableModel<RTestUnitTestP
   private void findAndSelectInTable(final RTestUnitTestProxy proxy, final TableView<RTestUnitTestProxy> statisticsTableView) {
     UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
+        //TODO reimplement
         final String presentableName = proxy.getPresentableName();
         final int rowCount = statisticsTableView.getRowCount();
         final int columnnCount = statisticsTableView.getColumnCount();
@@ -60,6 +75,22 @@ public class RTestUnitStatisticsTableModel extends ListTableModel<RTestUnitTestP
       }
     });
   }
+
+  // public TestProxy getTestAt(final int rowIndex) {
+  //  if (rowIndex < 0 || rowIndex > getItems().size())
+  //    return null;
+  //  return (rowIndex == 0) ? myTest : (TestProxy)getItems().get(rowIndex - 1);
+  //}
+  //
+  //public int getIndexOf(final Object test) {
+  //  if (test == myTest)
+  //    return 0;
+  //  for (int i = 0; i < getItems().size(); i++) {
+  //    final Object child = getItems().get(i);
+  //    if (child == test) return i + 1;
+  //  }
+  //  return -1;
+  //}
 
   private void updateModel() {
     UIUtil.addToInvokeLater(new Runnable() {
@@ -83,6 +114,32 @@ public class RTestUnitStatisticsTableModel extends ListTableModel<RTestUnitTestP
     list.addAll(suite.getChildren());
 
     return list;
+  }
+
+  @Override
+  protected void reverseModelItems(final List<RTestUnitTestProxy> rTestUnitTestProxies) {
+    //Invariant: comparator should left Total(initally at row = 0) row as uppermost element!
+    applySortOperation(rTestUnitTestProxies, oldReverseModelItemsFun);
+  }
+
+  /**
+   * This function allow sort operation to all except first element(e.g. Total row)
+   * @param proxies Tests or suites
+   * @param sortOperation Closure
+   */
+  protected static void applySortOperation(final List<RTestUnitTestProxy> proxies,
+                                           final NullableFunction<List<RTestUnitTestProxy>, Object> sortOperation) {
+
+    //Invariant: comparator should left Total(initally at row = 0) row as uppermost element!
+    final int size = proxies.size();
+    if (size > 1) {
+      sortOperation.fun(proxies.subList(1, size));
+    }
+  }
+
+  public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
+    // Setting value is prevented!
+    LOG.assertTrue(false, "value: " + aValue + " row: " + rowIndex + " column: " + columnIndex);
   }
 
   @Nullable

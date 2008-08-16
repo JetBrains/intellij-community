@@ -2,7 +2,6 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner.ui.statistics;
 
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestsPresentationUtil;
@@ -13,7 +12,7 @@ import javax.swing.table.TableCellRenderer;
 /**
  * @author Roman Chernyatchik
 */
-public class ColumnDuration extends ColumnInfo<RTestUnitTestProxy, String> {
+public class ColumnDuration extends BaseColumn {
   public ColumnDuration() {
     super(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.duration.title"));
   }
@@ -22,7 +21,16 @@ public class ColumnDuration extends ColumnInfo<RTestUnitTestProxy, String> {
     return TestsPresentationUtil.getDurationPresentation(testProxy);
   }
 
-  //TODO sort
+  //@Nullable
+  //public Comparator<RTestUnitTestProxy> getComparator(){
+  //  return new Comparator<RTestUnitTestProxy>() {
+  //    public int compare(final RTestUnitTestProxy o1, final RTestUnitTestProxy o2) {
+  //      //Invariant: comparator should left Total row as uppermost element!
+  //
+  //    }
+  //  };
+  //}
+
 
   @Override
   public TableCellRenderer getRenderer(final RTestUnitTestProxy proxy) {

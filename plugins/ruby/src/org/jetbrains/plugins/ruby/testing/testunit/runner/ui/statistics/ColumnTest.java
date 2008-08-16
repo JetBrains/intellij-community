@@ -2,19 +2,20 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner.ui.statistics;
 
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.ColumnInfo;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
+import java.util.Comparator;
 
 /**
  * @author Roman Chernyatchik
 */
-public class ColumnTest extends ColumnInfo<RTestUnitTestProxy, String> {
+public class ColumnTest extends BaseColumn {
   public ColumnTest() {
     super(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.test.title"));
   }
@@ -22,6 +23,15 @@ public class ColumnTest extends ColumnInfo<RTestUnitTestProxy, String> {
   @NotNull
   public String valueOf(final RTestUnitTestProxy testProxy) {
     return testProxy.getPresentableName();
+  }
+
+  @Nullable
+  public Comparator<RTestUnitTestProxy> getComparator(){
+    return new Comparator<RTestUnitTestProxy>() {
+      public int compare(final RTestUnitTestProxy o1, final RTestUnitTestProxy o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    };
   }
 
   @Override
