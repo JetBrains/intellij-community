@@ -25,6 +25,7 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
   private final boolean myIsUnitTestMode;
   private String myClassFileToProcess = null;
   private String myLastReadLine = null;
+  private boolean myProcessExited = false;
 
 
   public CompilerParsingThread(Process process, OutputParser outputParser, final boolean readErrorStream, boolean trimLines) {
@@ -122,7 +123,7 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
     try {
       boolean first = true;
       while (true) {
-        int c = reader.read();
+        int c = readNextByte(reader);
         if (c == -1) break;
         first = false;
         if (c == '\n') {
@@ -149,5 +150,32 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
     finally {
       StringBuilderSpinAllocator.dispose(buffer);
     }
+  }
+
+  private int readNextByte(final Reader reader) {
+    try {
+      while(!reader.ready()) {
+        if (isProcessTerminated()) {
+          return -1;
+        }
+        try {
+          Thread.sleep(1L);
+        }
+        catch (InterruptedException ignore) {
+        }
+      }
+      return reader.read();
+    }
+    catch (IOException e) {
+      return -1; // When process terminated Process.getInputStream()'s underlaying stream becomes closed on Linux.
+    }
+  }
+
+  private synchronized boolean isProcessTerminated() {
+    return myProcessExited;
+  }
+
+  public synchronized void setProcessTerminated(final boolean procesExited) {
+    myProcessExited = procesExited;
   }
 }
