@@ -15,14 +15,15 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -95,9 +96,7 @@ public class GroovyPsiManager implements ProjectComponent {
   public void initComponent() {
     myCache = new GroovyShortNamesCache(myProject);
 
-    // TODO[ilyas] this kind of invokeLater() usage is completely bogus - please rewrite
-    // todo registerPostStartup activity
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
