@@ -16,20 +16,20 @@ def result = 26
 
 int result1
 if (42 > 42) {
-    println("preved!")
-    println("medved")
+  println("preved!")
+  println("medved")
 } else {
-    println "bugoga"
+  println "bugoga"
 }
 result1 = 3
 int i = result1
 
 def foo(int i, def j) {
-    if (i > 42) {
-        println("preved!")
-        println("medved")
-    } else {
-        println "bugoga"
-    }
-    return 3
+  if (i > 42) {
+    println("preved!")
+    println("medved")
+  } else {
+    println "bugoga"
+  }
+  return 3
 }

@@ -17,12 +17,12 @@ def tail(int jjj) {
     if (true)
         return 1 + fact(jjj)
     else {
-        int result
-        if (jjj > 0) {
-            result = jjj * fact(jjj - 1)
-        }
-        else result = 1
-        1 + result
+      int result
+      if (jjj > 0) {
+        result = jjj * fact(jjj - 1)
+      }
+      else result = 1
+      1 + result
     }
 }
 

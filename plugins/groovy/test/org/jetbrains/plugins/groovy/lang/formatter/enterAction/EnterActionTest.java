@@ -41,7 +41,7 @@ import java.io.IOException;
 public class EnterActionTest extends ActionTestCase {
 
   @NonNls
-  private static final String DATA_PATH = PathUtil.getDataPath(EnterActionTest.class)+ "/actual";
+  private static final String DATA_PATH = PathUtil.getDataPath(EnterActionTest.class);
 
   protected Editor myEditor;
   protected FileEditorManager fileEditorManager;

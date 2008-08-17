@@ -15,19 +15,19 @@ def foo(int i, def j) {
 def result = 26
 
 if (42 > 42) {
-    println("preved!")
-    println("medved")
+  println("preved!")
+  println("medved")
 } else {
-    println "bugoga"
+  println "bugoga"
 }
 int i = 239
 
 def foo(int i, def j) {
-    if (i > 42) {
-        println("preved!")
-        println("medved")
-    } else {
-        println "bugoga"
-    }
-    239
+  if (i > 42) {
+    println("preved!")
+    println("medved")
+  } else {
+    println "bugoga"
+  }
+  239
 }

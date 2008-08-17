@@ -30,15 +30,15 @@ class QQQ {
 -----
 def getGeneratedFileNames() {
     if (true) {
-        def qqq = new QQQ()
-        int result
-        foo = 42
-        qqq.boo()
-        qqq.boo1()
-        def qual = 48
-        println(foo)
-        result = foo
-        return result
+      def qqq = new QQQ()
+      int result
+      foo = 42
+      qqq.boo()
+      qqq.boo1()
+      def qual = 48
+      println(foo)
+      result = foo
+      return result
     }
     else 42
 }

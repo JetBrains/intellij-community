@@ -23,11 +23,11 @@ class QQQ {
 def getGeneratedFileNames() {
     def qqq = 239
     if (true) {
-        def qqq1 = new QQQ()
-        int result
-        println "boo!"
-        result = qqq1.boo()
-        return result
+      def qqq1 = new QQQ()
+      int result
+      println "boo!"
+      result = qqq1.boo()
+      return result
     }
     else 42
 }

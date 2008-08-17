@@ -17,12 +17,12 @@ static Serializable asd() {
 protected static def getGeneratedFileNames() {
     def foo = 0
     while (true) {
-        String result
-        Serializable foo1 = 42
-        println(foo1)
-        foo1 = ""
-        result = foo1
-        foo = result
+      String result
+      Serializable foo1 = 42
+      println(foo1)
+      foo1 = ""
+      result = foo1
+      foo = result
     }
 
     int t = foo

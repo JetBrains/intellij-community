@@ -11,18 +11,18 @@ void edronax(int g) {
 }
 -----
 if (32 > 40) {
-    println(32++)
+  println(32++)
 } else {
-    println 32
+  println 32
 }
 def foo = null
 
 void edronax(int g) {
-    if (g > 40) {
-        println (g++)
-        return
-    } else {
-        println g
-        return
-    }
+  if (g > 40) {
+    println (g++)
+    return
+  } else {
+    println g
+    return
+  }
 }

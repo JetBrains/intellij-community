@@ -17,12 +17,12 @@ boolean result
 if (cond) result = true;
 else result = false
 if (result) {
-    println "a"
+  println "a"
 } else {
-    println ("b")
+  println ("b")
 }
 
 private def qqqqq(boolean cond) {
-    if (cond) return true;
-    else return false;
+  if (cond) return true;
+  else return false;
 }

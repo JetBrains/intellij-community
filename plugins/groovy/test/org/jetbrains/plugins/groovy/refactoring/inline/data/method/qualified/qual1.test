@@ -36,15 +36,15 @@ class R {
 -----
 def getGeneratedFileNames() {
     if (true) {
-        def f = QasdWfsdEdfgh.foo().f
-        int result
-        foo = 42
-        f.boo()
-        f.boo1()
-        def qual = 48
-        println(foo)
-        result = foo
-        return result
+      def f = QasdWfsdEdfgh.foo().f
+      int result
+      foo = 42
+      f.boo()
+      f.boo1()
+      def qual = 48
+      println(foo)
+      result = foo
+      return result
     }
     else 42
 }

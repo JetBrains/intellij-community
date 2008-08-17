@@ -5,10 +5,10 @@ int fact(int n) {
 -----
 int fact(int n) {
     if (n > 0) {
-        int result
-        if (n - 1 > 0) result = (n - 1) * fact(n - 1 - 1);
-        else result = 1
-        return n * result
+      int result
+      if (n - 1 > 0) result = (n - 1) * fact(n - 1 - 1);
+      else result = 1
+      return n * result
     };
     else return 1;
 }

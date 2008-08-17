@@ -12,9 +12,9 @@ class DC {
 -----
 class DC {
     def r() {
-        String s1 = ""
-        String interned = s1.intern()
-        interned.bytes
+      String s1 = ""
+      String interned = s1.intern()
+      interned.bytes
     }
 
     private byte[] getBytes(String s1) {

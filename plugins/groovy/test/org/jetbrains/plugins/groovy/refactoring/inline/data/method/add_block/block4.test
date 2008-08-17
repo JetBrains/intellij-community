@@ -13,12 +13,12 @@ int fact(int n) {
 -----
 def baal(int jjj) {
     while (true) {
-        int result
-        if (jjj > 0) {
-            result = jjj * fact(jjj - 1)
-        }
-        else result = 1
-        println(result)
+      int result
+      if (jjj > 0) {
+        result = jjj * fact(jjj - 1)
+      }
+      else result = 1
+      println(result)
     }
 }
 

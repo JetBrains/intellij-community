@@ -7,9 +7,9 @@ int bar(i = 8, k = i + 1, j = k) {
 def t = <begin>bar<end>()
 -----
 int bar(i = 8, k = i + 1, j = k) {
-    def q = 6
-    print j
-    return i + k + j + q + q + q
+  def q = 6
+  print j
+  return i + k + j + q + q + q
 }
 
 int result

@@ -13,7 +13,7 @@ result = call + 45
 def cl = result
 
 def qwerty(int i, Closure cl){
-    def call = cl(42)
-    println (call)
-    return call + i;
+  def call = cl(42)
+  println (call)
+  return call + i;
 }

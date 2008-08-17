@@ -21,10 +21,10 @@ def tail(int jjj) {
     if (true)
         return fact(jjj)
     else {
-        if (jjj > 0) {
-            return jjj * fact(jjj - 1)
-        }
-        else return 1
+      if (jjj > 0) {
+        return jjj * fact(jjj - 1)
+      }
+      else return 1
     }
 }
 
