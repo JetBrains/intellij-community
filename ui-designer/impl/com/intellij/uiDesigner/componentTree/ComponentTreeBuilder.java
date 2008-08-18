@@ -58,7 +58,10 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
 
   public void dispose() {
     myEditor.removeHierarchyChangeListener(myHierarchyChangeListener);
-    getTree().getSelectionModel().removeTreeSelectionListener(myTreeSelectionListener);
+    if (myTreeSelectionListener != null) {
+      getTree().getSelectionModel().removeTreeSelectionListener(myTreeSelectionListener);
+      myTreeSelectionListener = null;
+    }
     mySelectionWatcher.dispose();
     super.dispose();
   }
