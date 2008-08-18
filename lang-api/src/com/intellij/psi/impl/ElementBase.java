@@ -1,13 +1,18 @@
 package com.intellij.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.*;
+import com.intellij.util.IconUtil;
+import com.intellij.util.Icons;
+import com.intellij.util.PsiIconUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -15,20 +20,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.ElementBase");
+
   public static final int FLAGS_LOCKED = 0x800;
 
   @Nullable
   public Icon getIcon(int flags) {
     if (!(this instanceof PsiElement)) return null;
 
-    final PsiElement element = (PsiElement)this;
+    try {
+      final PsiElement element = (PsiElement)this;
 
-    final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
-    if (providersIcon != null) {
-      return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags);
+      final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
+      if (providersIcon != null) {
+        return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags);
+      }
+
+      return getElementIcon(flags);
     }
-
-    return getElementIcon(flags);
+    catch (Exception e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   protected Icon getElementIcon(final int flags) {
