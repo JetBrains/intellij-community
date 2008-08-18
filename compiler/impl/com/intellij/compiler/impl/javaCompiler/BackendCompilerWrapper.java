@@ -17,7 +17,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -654,7 +654,8 @@ public class BackendCompilerWrapper {
     final ContentIterator contentIterator = new ContentIterator() {
       public boolean processFile(final VirtualFile child) {
         try {
-          if (!child.isDirectory() && StdFileTypes.JAVA.equals(typeManager.getFileTypeByFile(child))) {
+          final FileType fileType = typeManager.getFileTypeByFile(child);
+          if (!child.isDirectory() && myCompiler.getCompilableFileTypes().contains(fileType)) {
             updateOutputItemsList(outputDir, child, compiledWithErrors, sourceRoot, packagePrefix);
           }
           return true;

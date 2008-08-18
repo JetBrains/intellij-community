@@ -10,6 +10,8 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +20,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Arrays;
 
 
 public class EclipseEmbeddedCompiler implements BackendCompiler {
@@ -51,6 +55,11 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   @NotNull
   public Configurable createConfigurable() {
     return new EclipseCompilerConfigurable(EclipseEmbeddedCompilerSettings.getInstance(myProject));
+  }
+
+  @NotNull
+  public Collection<? extends FileType> getCompilableFileTypes() {
+    return Arrays.asList(StdFileTypes.JAVA);
   }
 
   @Nullable
