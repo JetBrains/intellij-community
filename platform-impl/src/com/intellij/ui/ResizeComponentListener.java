@@ -173,8 +173,8 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
   private void clearBorder(final Window popupWindow) {
     if (isToShowBorder()){
       myComponent.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-      setWindowCursor(popupWindow, Cursor.DEFAULT_CURSOR);
     }
+    setWindowCursor(popupWindow, Cursor.DEFAULT_CURSOR);
   }
 
   public void mouseDragged(MouseEvent e) {
