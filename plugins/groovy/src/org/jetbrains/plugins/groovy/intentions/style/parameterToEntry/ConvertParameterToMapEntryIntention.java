@@ -83,7 +83,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         performRefactoring(owner, occurrences, false);
         break;
       }
-      case NOT_MAP: {
+      case IS_NOT_MAP: {
         performRefactoring(owner, occurrences, true);
         break;
       }
@@ -95,7 +95,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
             performRefactoring(owner, occurrences, !dialog.createNewFirst());
           }
         }
-        else {
+        else { 
           performRefactoring(owner, occurrences, true);
         }
         break;
@@ -138,7 +138,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     else if (firstOwnerParameterMustBeMap(owner)) {
       return MAY_BE_MAP;
     }
-    return NOT_MAP;
+    return IS_NOT_MAP;
   }
 
   private static boolean firstOwnerParameterMustBeMap(final GrParametersOwner owner) {
@@ -162,7 +162,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   }
 
   protected static enum FIRST_PARAMETER_KIND {
-    NOT_MAP, MAY_BE_MAP, MUST_BE_MAP, ERROR
+    IS_NOT_MAP, MAY_BE_MAP, MUST_BE_MAP, ERROR
   }
 
   @Nullable
