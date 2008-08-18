@@ -44,10 +44,12 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     return "Arguments";
   }
 
+  @NotNull
   public GrNamedArgument[] getNamedArguments() {
     return findChildrenByClass(GrNamedArgument.class);
   }
 
+  @NotNull
   public GrExpression[] getExpressionArguments() {
     return findChildrenByClass(GrExpression.class);
   }

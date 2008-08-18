@@ -40,23 +40,26 @@ public class CommandArguments implements GroovyElementTypes {
       }
       marker.done(COMMAND_ARGUMENTS);
       return true;
-    } else {
+    }
+    else {
       marker.drop();
       return false;
     }
   }
 
-  private static boolean commandArgParse(PsiBuilder builder){
+  private static boolean commandArgParse(PsiBuilder builder) {
     PsiBuilder.Marker commandMarker = builder.mark();
-    if (ArgumentList.argumentLabelStartCheck(builder)){
+    if (ArgumentList.argumentLabelStartCheck(builder)) {
       ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
-      if (!ExpressionStatement.argParse(builder)){
+      if (!ExpressionStatement.argParse(builder)) {
         commandMarker.error(GroovyBundle.message("expression.expected"));
-      } else {
-        commandMarker.done(COMMAND_ARGUMENT);
+      }
+      else {
+        commandMarker.done(ARGUMENT);
       }
       return true;
-    } else {
+    }
+    else {
       commandMarker.drop();
       return ExpressionStatement.argParse(builder);
     }

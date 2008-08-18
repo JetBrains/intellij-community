@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 
 /**
  * @author ilyas
@@ -25,5 +26,5 @@ public interface GrApplicationStatement extends GrStatement, GrCall {
 
   GrExpression[] getArguments();
 
-  GrCommandArgumentList getArgumentList();
+  GrArgumentList getArgumentList();
 }

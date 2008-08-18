@@ -10,7 +10,7 @@ Groovy script
         PsiElement(Integer)('1')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      Command argument
+      Named argument
         Argument label
           PsiElement(identifier)('b')
         PsiElement(:)(':')

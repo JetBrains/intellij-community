@@ -121,10 +121,6 @@ public abstract class GroovyElementVisitor {
     visitElement(argumentList);
   }
 
-  public void visitCommandArgument(GrCommandArgument argument) {
-    visitElement(argument);
-  }
-
   public void visitConditionalExpression(GrConditionalExpression expression) {
     visitExpression(expression);
   }

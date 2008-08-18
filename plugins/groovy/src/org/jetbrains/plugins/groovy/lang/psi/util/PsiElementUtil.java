@@ -20,7 +20,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
 
 /**
@@ -69,10 +68,10 @@ public class PsiElementUtil {
           args.getNamedArguments().length == 0;
     }
 
-    GrCommandArgumentList args = ((GrApplicationStatement) call).getArgumentList();
+    GrArgumentList args = call.getArgumentList();
     return args != null &&
-        args.getArguments().length == 1 &&
-        args.getLabeledArguments().length == 0;
+        args.getExpressionArguments().length == 1 &&
+        args.getNamedArguments().length == 0;
 
   }
 

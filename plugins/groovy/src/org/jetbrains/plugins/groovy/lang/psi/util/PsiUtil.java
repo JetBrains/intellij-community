@@ -95,16 +95,18 @@ public class PsiUtil {
   public static boolean isLValue(GroovyPsiElement element) {
     if (element instanceof GrExpression) {
       PsiElement parent = element.getParent();
-      if (parent instanceof GrListOrMap && !((GrListOrMap) parent).isMap()) {
-        return isLValue((GroovyPsiElement) parent);
+      if (parent instanceof GrListOrMap && !((GrListOrMap)parent).isMap()) {
+        return isLValue((GroovyPsiElement)parent);
       }
-      return parent instanceof GrAssignmentExpression &&
-          element.equals(((GrAssignmentExpression) parent).getLValue());
+      return parent instanceof GrAssignmentExpression && element.equals(((GrAssignmentExpression)parent).getLValue());
     }
     return false;
   }
 
-  public static boolean isApplicable(@Nullable PsiType[] argumentTypes, PsiMethod method, PsiSubstitutor substitutor, boolean isInUseCategory) {
+  public static boolean isApplicable(@Nullable PsiType[] argumentTypes,
+                                     PsiMethod method,
+                                     PsiSubstitutor substitutor,
+                                     boolean isInUseCategory) {
     if (argumentTypes == null) return true;
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -126,7 +128,8 @@ public class PsiUtil {
         final PsiType[] trimmed = new PsiType[parameterTypes.length - 1];
         System.arraycopy(parameterTypes, 1, trimmed, 0, trimmed.length);
         parameterTypes = trimmed;
-      } else if (!method.isVarArgs()) return false;
+      }
+      else if (!method.isVarArgs()) return false;
     }
 
     for (int i = 0; i < argumentTypes.length; i++) {
@@ -134,19 +137,21 @@ public class PsiUtil {
       PsiType parameterTypeToCheck;
       if (i < parameterTypes.length - 1) {
         parameterTypeToCheck = parameterTypes[i];
-      } else {
+      }
+      else {
         PsiType lastParameterType = parameterTypes[parameterTypes.length - 1];
         if (lastParameterType instanceof PsiArrayType && !(argType instanceof PsiArrayType)) {
-          parameterTypeToCheck = ((PsiArrayType) lastParameterType).getComponentType();
-        } else if (parameterTypes.length == argumentTypes.length) {
+          parameterTypeToCheck = ((PsiArrayType)lastParameterType).getComponentType();
+        }
+        else if (parameterTypes.length == argumentTypes.length) {
           parameterTypeToCheck = lastParameterType;
-        } else {
+        }
+        else {
           return false;
         }
       }
 
-      if (!TypesUtil.isAssignableByMethodCallConversion(parameterTypeToCheck, argType, method.getManager(), scope))
-        return false;
+      if (!TypesUtil.isAssignableByMethodCallConversion(parameterTypeToCheck, argType, method.getManager(), scope)) return false;
     }
 
     return true;
@@ -156,7 +161,7 @@ public class PsiUtil {
     int diff = parameters.length - argNum;
     List<PsiType> result = new ArrayList<PsiType>(argNum);
     for (PsiParameter parameter : parameters) {
-      if (diff > 0 && parameter instanceof GrParameter && ((GrParameter) parameter).isOptional()) {
+      if (diff > 0 && parameter instanceof GrParameter && ((GrParameter)parameter).isOptional()) {
         diff--;
         continue;
       }
@@ -175,11 +180,13 @@ public class PsiUtil {
   public static GroovyPsiElement getArgumentsElement(PsiElement methodRef) {
     PsiElement parent = methodRef.getParent();
     if (parent instanceof GrMethodCallExpression) {
-      return ((GrMethodCallExpression) parent).getArgumentList();
-    } else if (parent instanceof GrApplicationStatement) {
-      return ((GrApplicationStatement) parent).getArgumentList();
-    } else if (parent instanceof GrNewExpression) {
-      return ((GrNewExpression) parent).getArgumentList();
+      return ((GrMethodCallExpression)parent).getArgumentList();
+    }
+    else if (parent instanceof GrApplicationStatement) {
+      return ((GrApplicationStatement)parent).getArgumentList();
+    }
+    else if (parent instanceof GrNewExpression) {
+      return ((GrNewExpression)parent).getArgumentList();
     }
     return null;
   }
@@ -191,7 +198,7 @@ public class PsiUtil {
     PsiElement parent = place.getParent();
     if (parent instanceof GrCallExpression) {
       List<PsiType> result = new ArrayList<PsiType>();
-      GrCallExpression call = (GrCallExpression) parent;
+      GrCallExpression call = (GrCallExpression)parent;
 
       if (!forConstructor) {
         GrNamedArgument[] namedArgs = call.getNamedArguments();
@@ -205,7 +212,8 @@ public class PsiUtil {
         PsiType type = getArgumentType(expression);
         if (type == null) {
           result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(call));
-        } else {
+        }
+        else {
           result.add(type);
         }
       }
@@ -220,21 +228,29 @@ public class PsiUtil {
 
       return result.toArray(new PsiType[result.size()]);
 
-    } else if (parent instanceof GrApplicationStatement) {
-      GrExpression[] args = ((GrApplicationStatement) parent).getArguments();
-      PsiType[] result = new PsiType[args.length];
-      for (int i = 0; i < result.length; i++) {
+    }
+    else if (parent instanceof GrApplicationStatement) {
+      final GrApplicationStatement call = (GrApplicationStatement)parent;
+      GrExpression[] args = call.getArguments();
+      final GrArgumentList argList = call.getArgumentList();
+      GrNamedArgument[] namedArgs = argList != null ? argList.getNamedArguments() : GrNamedArgument.EMPTY_ARRAY;
+      final ArrayList<PsiType> result = new ArrayList<PsiType>();
+      if (namedArgs.length > 0) {
+        result.add(factory.createTypeByFQClassName("java.util.HashMap", place.getResolveScope()));
+      }
+      for (int i = 0; i < args.length; i++) {
         PsiType argType = getArgumentType(args[i]);
         if (argType == null) {
-          result[i] = nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject((GroovyPsiElement) parent);
-        } else {
-          result[i] = argType;
+          result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject((GroovyPsiElement)parent));
+        }
+        else {
+          result.add(argType);
         }
       }
-
-      return result;
-    } else if (parent instanceof GrConstructorInvocation || parent instanceof GrEnumConstant) {
-      final GrArgumentList argList = (GrArgumentList) ((GrCall) parent).getArgumentList();
+      return result.toArray(PsiType.EMPTY_ARRAY);
+    }
+    else if (parent instanceof GrConstructorInvocation || parent instanceof GrEnumConstant) {
+      final GrArgumentList argList = (GrArgumentList)((GrCall)parent).getArgumentList();
       if (argList == null) return PsiType.EMPTY_ARRAY;
 
       List<PsiType> result = new ArrayList<PsiType>();
@@ -247,7 +263,8 @@ public class PsiUtil {
         PsiType type = getArgumentType(expression);
         if (type == null) {
           result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(argList));
-        } else {
+        }
+        else {
           result.add(type);
         }
       }
@@ -260,10 +277,11 @@ public class PsiUtil {
 
   private static PsiType getArgumentType(GrExpression expression) {
     if (expression instanceof GrReferenceExpression) {
-      final PsiElement resolved = ((GrReferenceExpression) expression).resolve();
+      final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
       if (resolved instanceof PsiClass) {
         //this argument is passed as java.lang.Class
-        return JavaPsiFacade.getInstance(resolved.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Class", expression.getResolveScope());
+        return JavaPsiFacade.getInstance(resolved.getProject()).getElementFactory()
+            .createTypeByFQClassName("java.lang.Class", expression.getResolveScope());
       }
     }
 
@@ -275,7 +293,8 @@ public class PsiUtil {
       public SearchScope compute() {
         final SearchScope originalScope = originalScopeComputation.compute();
         if (originalScope instanceof GlobalSearchScope) {
-          return GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope) originalScope, GroovyFileType.GROOVY_FILE_TYPE, GspFileType.GSP_FILE_TYPE);
+          return GlobalSearchScope
+              .getScopeRestrictedByFileTypes((GlobalSearchScope)originalScope, GroovyFileType.GROOVY_FILE_TYPE, GspFileType.GSP_FILE_TYPE);
         }
         return originalScope;
       }
@@ -310,7 +329,8 @@ public class PsiUtil {
     String methodName = method.getName();
     if (methodName.length() <= "is".length()) return false;
 
-    if (!methodName.startsWith("get") || methodName.length() <= "get".length() ||
+    if (!methodName.startsWith("get") ||
+        methodName.length() <= "get".length() ||
         !Character.isUpperCase(methodName.charAt("get".length()))) {
       if (!methodName.startsWith("is") || !Character.isUpperCase(methodName.charAt("is".length()))) return false;
     }
@@ -323,7 +343,9 @@ public class PsiUtil {
   private static boolean checkPropertyName(PsiMethod method, @NotNull String propertyName) {
     String methodName = method.getName();
     String accessorNamePart;
-    if (method instanceof GrAccessorMethod) accessorNamePart = ((GrAccessorMethod) method).getProperty().getName();
+    if (method instanceof GrAccessorMethod) {
+      accessorNamePart = ((GrAccessorMethod)method).getProperty().getName();
+    }
     else {
       accessorNamePart = methodName.startsWith("is") ? methodName.substring(2) : methodName.substring(3); //"set" or "get" or "is"
       if (Character.isLowerCase(accessorNamePart.charAt(0))) return false;
@@ -345,8 +367,9 @@ public class PsiUtil {
 
     String methodName = method.getName();
 
-    if (!methodName.startsWith("set") || methodName.length() <= "set".length() ||
-        !Character.isUpperCase(methodName.charAt("set".length()))) return false;
+    if (!methodName.startsWith("set") || methodName.length() <= "set".length() || !Character.isUpperCase(methodName.charAt("set".length()))) {
+      return false;
+    }
 
     if (propertyName != null && !checkPropertyName(method, propertyName)) return false;
 
@@ -361,7 +384,7 @@ public class PsiUtil {
     PsiElement child = element.getFirstChild();
     while (child != null) {
       if (child instanceof GrCodeReferenceElement) {
-        shortenReference((GrCodeReferenceElement) child);
+        shortenReference((GrCodeReferenceElement)child);
       }
 
       doShorten(child);
@@ -376,7 +399,8 @@ public class PsiUtil {
         ref.setQualifier(null);
         try {
           ref.bindToElement(resolved);
-        } catch (IncorrectOperationException e) {
+        }
+        catch (IncorrectOperationException e) {
           LOG.error(e);
         }
       }
@@ -397,21 +421,17 @@ public class PsiUtil {
     }
 
     if (parent == null) return null;
-    return ((GrTopLevelDefintion) parent);
+    return ((GrTopLevelDefintion)parent);
   }
 
   public static String getPropertyNameByGetter(PsiMethod getterMethod) {
     @NonNls String methodName = getterMethod.getName();
-    return methodName.startsWith("get") && methodName.length() > 3 ?
-        decapitalize(methodName.substring(3)) :
-        methodName;
+    return methodName.startsWith("get") && methodName.length() > 3 ? decapitalize(methodName.substring(3)) : methodName;
   }
 
   public static String getPropertyNameBySetter(PsiMethod setterMethod) {
     @NonNls String methodName = setterMethod.getName();
-    return methodName.startsWith("set") && methodName.length() > 3 ?
-        decapitalize(methodName.substring(3)) :
-        methodName;
+    return methodName.startsWith("set") && methodName.length() > 3 ? decapitalize(methodName.substring(3)) : methodName;
   }
 
   private static String decapitalize(String s) {
@@ -423,18 +443,20 @@ public class PsiUtil {
   public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place) {
     if (!owner.hasModifierProperty(PsiModifier.STATIC)) {
       if (place instanceof GrReferenceExpression) {
-        GrExpression qualifier = ((GrReferenceExpression) place).getQualifierExpression();
+        GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
         if (qualifier instanceof GrReferenceExpression) {
-          PsiElement qualifierResolved = ((GrReferenceExpression) qualifier).resolve();
+          PsiElement qualifierResolved = ((GrReferenceExpression)qualifier).resolve();
           if (qualifierResolved instanceof PsiClass) {
 
             if (owner instanceof PsiMember) {
               //members from java.lang.Class can be invoked without ".class"
               PsiClass javaLangClass = JavaPsiFacade.getInstance(place.getProject()).findClass("java.lang.Class", place.getResolveScope());
               if (javaLangClass != null) {
-                PsiClass containingClass = ((PsiMember) owner).getContainingClass();
+                PsiClass containingClass = ((PsiMember)owner).getContainingClass();
                 if (containingClass == null || //default groovy method
-                    InheritanceUtil.isInheritorOrSelf(javaLangClass, containingClass, true)) return true;
+                    InheritanceUtil.isInheritorOrSelf(javaLangClass, containingClass, true)) {
+                  return true;
+                }
               }
             }
             return false;
@@ -450,7 +472,7 @@ public class PsiUtil {
 
     if (PsiTreeUtil.getParentOfType(place, GrDocComment.class) != null) return true;
 
-    if (place instanceof GrReferenceExpression && ((GrReferenceExpression) place).getQualifierExpression() == null) {
+    if (place instanceof GrReferenceExpression && ((GrReferenceExpression)place).getQualifierExpression() == null) {
       if (member.getContainingClass() instanceof GroovyScriptClass) { //calling toplevel script members from the same script file
         return true;
       }
@@ -461,9 +483,10 @@ public class PsiUtil {
   public static void reformatCode(final PsiElement element) {
     final TextRange textRange = element.getTextRange();
     try {
-      CodeStyleManager.getInstance(element.getProject()).reformatText(element.getContainingFile(),
-          textRange.getStartOffset(), textRange.getEndOffset());
-    } catch (IncorrectOperationException e) {
+      CodeStyleManager.getInstance(element.getProject())
+          .reformatText(element.getContainingFile(), textRange.getStartOffset(), textRange.getEndOffset());
+    }
+    catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }
@@ -471,13 +494,12 @@ public class PsiUtil {
   public static boolean isInStaticContext(GrReferenceExpression refExpression, GrMemberOwner targetClass) {
     if (refExpression.isQualified()) {
       GrExpression qualifer = refExpression.getQualifierExpression();
-      if (qualifer instanceof GrReferenceExpression)
-        return ((GrReferenceExpression) qualifer).resolve() instanceof PsiClass;
-    } else {
+      if (qualifer instanceof GrReferenceExpression) return ((GrReferenceExpression)qualifer).resolve() instanceof PsiClass;
+    }
+    else {
       PsiElement run = refExpression;
       while (run != null && run != targetClass) {
-        if (run instanceof PsiModifierListOwner && ((PsiModifierListOwner) run).hasModifierProperty(PsiModifier.STATIC))
-          return true;
+        if (run instanceof PsiModifierListOwner && ((PsiModifierListOwner)run).hasModifierProperty(PsiModifier.STATIC)) return true;
         run = run.getParent();
       }
     }
@@ -499,7 +521,8 @@ public class PsiUtil {
             if (includeSelf) {
               current = psiClass;
               nextObtained = true;
-            } else {
+            }
+            else {
               current = null;
               nextObtained = false;
             }
@@ -562,17 +585,18 @@ public class PsiUtil {
 
   public static PsiClass getContextClass(PsiElement context) {
     GroovyPsiElement parent = PsiTreeUtil.getParentOfType(context, GrTypeDefinition.class, GroovyFileBase.class);
-    if (parent instanceof GrTypeDefinition) return (PsiClass) parent;
-    else if (parent instanceof GroovyFileBase) return ((GroovyFileBase) parent).getScriptClass();
+    if (parent instanceof GrTypeDefinition) {
+      return (PsiClass)parent;
+    }
+    else if (parent instanceof GroovyFileBase) return ((GroovyFileBase)parent).getScriptClass();
     return null;
   }
 
   public static boolean mightBeLVlaue(GrExpression expr) {
-    if (expr instanceof GrParenthesizedExpression)
-      return mightBeLVlaue(((GrParenthesizedExpression) expr).getOperand());
+    if (expr instanceof GrParenthesizedExpression) return mightBeLVlaue(((GrParenthesizedExpression)expr).getOperand());
 
     if (expr instanceof GrListOrMap) {
-      GrListOrMap listOrMap = (GrListOrMap) expr;
+      GrListOrMap listOrMap = (GrListOrMap)expr;
       if (listOrMap.isMap()) return false;
       GrExpression[] initializers = listOrMap.getInitializers();
       for (GrExpression initializer : initializers) {
@@ -580,9 +604,7 @@ public class PsiUtil {
       }
       return true;
     }
-    return expr instanceof GrReferenceExpression ||
-        expr instanceof GrIndexProperty ||
-        expr instanceof GrPropertySelection;
+    return expr instanceof GrReferenceExpression || expr instanceof GrIndexProperty || expr instanceof GrPropertySelection;
   }
 
   public static PsiType[] skipOptionalClosureParameters(int argsNum, GrClosureType closureType) {

@@ -52,13 +52,13 @@ public class JavaStylePropertiesInvocationIntention extends Intention {
       name = StringUtil.decapitalize(name);
       GrExpression value;
       if (call instanceof GrMethodCallExpression) {
-        GrArgumentList args = ((GrMethodCallExpression) call).getArgumentList();
+        GrArgumentList args = call.getArgumentList();
         assert args != null;
         value = args.getExpressionArguments()[0];
       } else {
-        GrCommandArgumentList args = ((GrApplicationStatement) call).getArgumentList();
+        GrArgumentList args = call.getArgumentList();
         assert args != null;
-        value = args.getArguments()[0];
+        value = args.getExpressionArguments()[0];
       }
       replaceWithSetter(call, name, value);
     }

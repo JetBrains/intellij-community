@@ -17,16 +17,15 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgument;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentListImpl;
 
 /**
  * @author ilyas
  */
-public class GrCommandArgumentListImpl extends GroovyPsiElementImpl implements GrCommandArgumentList {
+public class GrCommandArgumentListImpl extends GrArgumentListImpl implements GrCommandArgumentList {
 
   public GrCommandArgumentListImpl(@NotNull ASTNode node) {
     super(node);
@@ -42,9 +41,5 @@ public class GrCommandArgumentListImpl extends GroovyPsiElementImpl implements G
 
   public GrExpression[] getArguments() {
     return findChildrenByClass(GrExpression.class);
-  }
-
-  public GrCommandArgument[] getLabeledArguments() {
-    return findChildrenByClass(GrCommandArgument.class);
   }
 }

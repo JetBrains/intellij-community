@@ -23,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * @author ilyas
@@ -47,7 +46,9 @@ public class GrApplicationStatementImpl extends GrExpressionImpl implements GrAp
   }
 
   public GrExpression[] getArguments() {
-    return getArgumentList().getArguments();
+    final GrCommandArgumentList list = getArgumentList();
+    if (list == null) return GrExpression.EMPTY_ARRAY;
+    return list.getExpressionArguments();
   }
 
   public GrCommandArgumentList getArgumentList() {

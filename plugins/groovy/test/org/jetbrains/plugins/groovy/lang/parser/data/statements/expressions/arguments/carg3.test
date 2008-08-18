@@ -13,7 +13,7 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      Command argument
+      Named argument
         Argument label
           PsiElement(identifier)('b')
         PsiElement(:)(':')
@@ -22,7 +22,7 @@ Groovy script
           PsiElement(Integer)('2')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      Command argument
+      Named argument
         Argument label
           PsiElement(Gstring)('"c"')
         PsiElement(:)(':')

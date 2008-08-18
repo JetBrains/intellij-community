@@ -190,21 +190,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
         if (expr.getTextRange().contains(offset)) return idx;
         idx++;
       }
-    } else if (place instanceof GrCommandArgumentList) {
-      final GrCommandArgumentList list = (GrCommandArgumentList) place;
-      final GrCommandArgument[] labeledArguments = list.getLabeledArguments();
-      for (GrCommandArgument labeledArgument : labeledArguments) {
-        if (labeledArgument.getTextRange().contains(offset)) return 0; //first Map parameter
-      }
-
-      int idx = labeledArguments.length > 0 ? 1 : 0;
-
-      final GrExpression[] exprs = list.getArguments();
-      for (GrExpression expr : exprs) {
-        if (expr.getTextRange().contains(offset)) return idx;
-        idx++;
-      }
-    }
+    } 
 
     return -1;
   }
