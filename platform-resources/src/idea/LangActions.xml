@@ -361,7 +361,7 @@
       <reference ref="ProjectViewPopupMenuRunGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
-      <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction"/>
+      <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction" icon="/actions/sync.png"/>
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
       <separator/>
