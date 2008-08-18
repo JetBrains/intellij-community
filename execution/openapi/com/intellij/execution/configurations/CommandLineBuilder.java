@@ -14,9 +14,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.util.PathUtil;
-import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.lang.CommandLineWrapper;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,8 +78,7 @@ public class CommandLineBuilder {
                   }
 
                   commandLine.addParameter("-classpath");
-                  commandLine.addParameter(PathUtil.getJarPathForClass(CommandLineWrapper.class) + File.pathSeparator +
-                                           PathUtil.getJarPathForClass(UrlClassLoader.class));
+                  commandLine.addParameter(PathUtil.getJarPathForClass(CommandLineWrapper.class));
                 }
                 catch (IOException e) {
                   LOG.error(e);
