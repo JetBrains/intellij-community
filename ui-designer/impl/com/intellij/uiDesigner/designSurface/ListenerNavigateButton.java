@@ -4,7 +4,6 @@
 
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -17,6 +16,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -76,7 +76,7 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
   @Nullable
   public static DefaultActionGroup prepareActionGroup(final RadComponent component) {
     final IRootContainer root = FormEditingUtil.getRoot(component);
-    final String classToBind = root.getClassToBind();
+    final String classToBind = root == null ? null : root.getClassToBind();
     if (classToBind != null) {
       final PsiClass aClass = FormEditingUtil.findClassToBind(component.getModule(), classToBind);
       if (aClass != null) {
@@ -171,8 +171,7 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
 
   private static boolean isAbstractOrInterface(final PsiClass element) {
     return element.isInterface() ||
-           (element.getModifierList() != null &&
-            element.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT));
+           element.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 
   private static class MyNavigateAction extends AnAction {
