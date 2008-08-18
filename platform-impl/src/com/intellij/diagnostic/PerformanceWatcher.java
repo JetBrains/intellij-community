@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -139,7 +140,7 @@ public class PerformanceWatcher implements ApplicationComponent {
     name.append("-").append(myUnresponsiveDuration);
     if (myStacktraceCommonPart != null && !myStacktraceCommonPart.isEmpty()) {
       final StackTraceElement element = myStacktraceCommonPart.get(0);
-      name.append("-").append(element.getClassName()).append(".").append(element.getMethodName());
+      name.append("-").append(StringUtil.getShortName(element.getClassName())).append(".").append(element.getMethodName());
     }
     return name.toString();
   }
