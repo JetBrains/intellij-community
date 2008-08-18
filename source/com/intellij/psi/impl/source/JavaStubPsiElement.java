@@ -9,6 +9,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.StubBasedPsiElement;
@@ -129,7 +130,10 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   }
 
   public void navigate(boolean requestFocus) {
-    EditSourceUtil.getDescriptor(this).navigate(requestFocus);
+    final Navigatable navigatable = EditSourceUtil.getDescriptor(this);
+    if (navigatable != null) {
+      navigatable.navigate(requestFocus);
+    }
   }
 
   public boolean canNavigate() {
