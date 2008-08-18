@@ -577,18 +577,21 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     final LookupElement firstItem = (LookupElement)listModel.getElementAt(0);
     if (listModel.getSize() == 1 && firstItem instanceof EmptyLookupItem) return false;
 
-    final PrefixMatcher matcher = firstItem.getPrefixMatcher();
+    final PrefixMatcher firstItemMatcher = firstItem.getPrefixMatcher();
+    final String oldPrefix = firstItemMatcher.getPrefix();
+    String presentPrefix = oldPrefix + myAdditionalPrefix;
+    final PrefixMatcher matcher = firstItemMatcher.cloneWithPrefix(presentPrefix);
     String lookupString = firstItem.getLookupString();
     int div = divideString(lookupString, matcher);
     if (div < 0) return false;
 
     String beforeCaret = lookupString.substring(0, div);
     String afterCaret = lookupString.substring(div);
-    String presentPrefix = matcher.getPrefix();
+
 
     for (int i = 1; i < listModel.getSize(); i++) {
       LookupElement item = (LookupElement)listModel.getElementAt(i);
-      if (!presentPrefix.equals(item.getPrefixMatcher().getPrefix())) return false;
+      if (!oldPrefix.equals(item.getPrefixMatcher().getPrefix())) return false;
 
       lookupString = item.getLookupString();
       div = divideString(lookupString, item.getPrefixMatcher());
@@ -596,7 +599,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
       String _afterCaret = lookupString.substring(div);
       if (beforeCaret != null) {
-        if (div != beforeCaret.length() || !lookupString.startsWith(beforeCaret)) beforeCaret = null;
+        if (div != beforeCaret.length() || !lookupString.startsWith(beforeCaret)) {
+          beforeCaret = null;
+        }
       }
 
       while (afterCaret.length() > 0) {
@@ -609,14 +614,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
 
     int offset = myEditor.getCaretModel().getOffset();
-    final int typedLength = myAdditionalPrefix.length();
-    if (typedLength > 0) {
-      myAdditionalPrefix = "";
-      myEditor.getDocument().deleteString(offset - typedLength, offset);
-    }
-    EditorModificationUtil.deleteSelectedText(myEditor);
-
-    offset = myEditor.getCaretModel().getOffset();
     if (beforeCaret != null) { // correct case, expand camel-humps
       final int start = offset - presentPrefix.length();
       myInitialOffset = start + beforeCaret.length();
@@ -625,10 +622,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
 
     offset = myEditor.getCaretModel().getOffset();
-    int i = 0;
-    final CharSequence text = myEditor.getDocument().getCharsSequence();
-    while (offset + i < text.length() && i < afterCaret.length() && text.charAt(offset + i) == afterCaret.charAt(i)) i++;
-    myEditor.getDocument().insertString(offset + i, afterCaret.substring(i));
+    myEditor.getDocument().insertString(offset, afterCaret);
 
     final String newPrefix = presentPrefix + afterCaret;
     for (Iterator<LookupElement> it = myItems.iterator(); it.hasNext();) {
