@@ -146,7 +146,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public VirtualFile copyFileToProject(@NonNls final String sourceFilePath, @NonNls final String targetPath) throws IOException {
     final File destFile = new File(getTempDirPath() + "/" + targetPath);
     if (!destFile.exists()) {
-      final File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
+      File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
+      if (!fromFile.exists()) {
+        fromFile = new File(sourceFilePath);
+      }
+
       if (fromFile.isDirectory()) {
         destFile.mkdirs();
       } else {
@@ -392,6 +396,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (c == '\n') {
       actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(getEditor(), dataContext);
       return;
+    }
+    if (c == '\t') {
+      if (LookupManager.getInstance(getProject()).getActiveLookup() != null) {
+        actionManager.getActionHandler(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE).execute(getEditor(), dataContext);
+        return;
+      }
     }
 
     actionManager.getTypedAction().actionPerformed(getEditor(), c, dataContext);
