@@ -98,6 +98,9 @@ public class SubmitPerformanceReportAction extends AnAction {
       if (!ftp.changeWorkingDirectory(directory)) {
         return "Failed to change directory";
       }
+      if (!ftp.setFileType(FTPClient.BINARY_FILE_TYPE)) {
+       return "Failed to switch to binary mode";
+      }
       FileInputStream readStream = new FileInputStream(reportPath);
       try {
         if (!ftp.storeFile(reportPath.getName(), readStream)) {
