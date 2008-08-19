@@ -2,11 +2,10 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,13 +13,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.ConcurrentHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class RefCountHolder {
@@ -31,7 +28,6 @@ public class RefCountHolder {
 
   private final Map<PsiNamedElement, Boolean> myDclsUsedMap = new ConcurrentHashMap<PsiNamedElement, Boolean>();
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new ConcurrentHashMap<PsiReference, PsiImportStatementBase>();
-  private final Set<PsiNamedElement> myUsedElements = new ConcurrentHashSet<PsiNamedElement>();
   private final Map<PsiElement,Boolean> myPossiblyDuplicateElements = new ConcurrentHashMap<PsiElement, Boolean>();
   private final AtomicInteger myState = new AtomicInteger(State.VIRGIN);
 
@@ -61,21 +57,12 @@ public class RefCountHolder {
     myLocalRefsMap.clear();
     myImportStatements.clear();
     myDclsUsedMap.clear();
-    myUsedElements.clear();
     myPossiblyDuplicateElements.clear();
   }
 
   public void registerLocallyReferenced(@NotNull PsiNamedElement result) {
     assertIsAnalyzing();
     myDclsUsedMap.put(result,Boolean.TRUE);
-  }
-
-  private static void addStatistics(final PsiNamedElement dcl) {
-    final PsiType typeByPsiElement = PsiUtil.getTypeByPsiElement(dcl);
-    final JavaStatisticsManager.NameContext context = JavaStatisticsManager.getContext(dcl);
-    if(typeByPsiElement != null && context != null) {
-      JavaStatisticsManager.incNameUseCount(typeByPsiElement, context, dcl.getName());
-    }
   }
 
   public void registerReference(@NotNull PsiJavaReference ref, JavaResolveResult resolveResult) {
@@ -110,9 +97,6 @@ public class RefCountHolder {
     }
     if(refElement instanceof PsiNamedElement) {
       PsiNamedElement namedElement = (PsiNamedElement)refElement;
-      if(myUsedElements.add(namedElement)) {
-        addStatistics(namedElement);
-      }
     }
   }
 
@@ -137,7 +121,6 @@ public class RefCountHolder {
       }
     }
     removeInvalidFrom(myDclsUsedMap.keySet());
-    removeInvalidFrom(myUsedElements);
     removeInvalidFrom(myPossiblyDuplicateElements.keySet());
   }
   private static void removeInvalidFrom(Iterable<? extends PsiElement> collection) {

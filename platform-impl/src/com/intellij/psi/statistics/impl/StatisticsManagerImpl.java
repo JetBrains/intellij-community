@@ -45,6 +45,7 @@ public class StatisticsManagerImpl extends StatisticsManager {
     StatisticsUnit unit = getUnit(unitNumber);
     unit.incData(key1, info.getValue());
     myModifiedUnits.add(unit);
+    ApplicationManager.getApplication().assertIsDispatchThread();
   }
 
   public StatisticsInfo[] getAllValues(final String context) {
@@ -59,6 +60,7 @@ public class StatisticsManagerImpl extends StatisticsManager {
 
   public void save() {
     if (!ApplicationManager.getApplication().isUnitTestMode()){
+      ApplicationManager.getApplication().assertIsDispatchThread();
       for (StatisticsUnit unit : myModifiedUnits) {
         saveUnit(unit.getNumber());
       }
