@@ -69,7 +69,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
       }
     }
     else if (columnIdx == COLUMN_CATEGORY) {
-      return base instanceof PluginNode ? base.getCategory() : "";
+      return base.getCategory();
     }
     else
     // For COLUMN_STATUS - set of icons show the actual state of installed plugins.

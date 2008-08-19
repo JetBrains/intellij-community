@@ -44,21 +44,14 @@ public class PluginTable extends Table {
       }
     }
 
-    if (getColumnCount() > 2) {
-      //  Specify columns widths for particular columns:
-      //  Icon/Status
-      TableColumn column;/* = getColumnModel().getColumn(0);
-      column.setMinWidth(30);
-      column.setMaxWidth(30);*/
-
-      //  Downloads
-      column = getColumnModel().getColumn(1);
-      column.setMinWidth(70);
-      column.setMaxWidth(70);
-    }
-
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     setShowGrid(false);
+  }
+
+  public void setColumnWidth(final int columnIndex, final int width) {
+    TableColumn column = getColumnModel().getColumn(columnIndex);
+    column.setMinWidth(width);
+    column.setMaxWidth(width);
   }
 
   public void setValueAt(final Object aValue, final int row, final int column) {

@@ -113,6 +113,8 @@ public class PluginManagerMain {
 
     availablePluginsModel = new AvailablePluginsTableModel(availableProvider);
     availablePluginsTable = new PluginTable(availablePluginsModel);
+    //  Downloads
+    availablePluginsTable.setColumnWidth(1, 70);
     JScrollPane availableScrollPane = ScrollPaneFactory.createScrollPane(availablePluginsTable);
 
     installTableActions(installedPluginTable);
