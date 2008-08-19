@@ -27,6 +27,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.EventDispatcher;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -152,6 +153,11 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   }
 
   public void commit(final Project project) {
+    commitModule(project);
+  }
+
+  public Module commitModule(final Project project) {
+    final Ref<Module> result = new Ref<Module>();
     if (canCreateModule()) {
       if (myName == null) {
         myName = project.getName();
@@ -163,7 +169,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
         public Exception compute() {
           try {
             final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-            createAndCommit(moduleModel, true);
+            result.set(createAndCommit(moduleModel, true));
             return null;
           }
           catch (Exception e) {
@@ -175,6 +181,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
         Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", ex.getMessage()), IdeBundle.message("title.add.module"));
       }
     }
+    return result.get();
   }
 
   public static abstract class ModuleConfigurationUpdater {

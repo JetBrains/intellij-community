@@ -6,6 +6,7 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
@@ -25,6 +26,7 @@ public class NewModuleAction extends AnAction {
     if (project == null) {
       return;
     }
+    Object dataFromContext = prepareDataFromContext(e);
     final AddModuleWizard wizard = new AddModuleWizard(project, new DefaultModulesProvider(project), null);
 
     wizard.show();
@@ -43,8 +45,22 @@ public class NewModuleAction extends AnAction {
       if (!builder.validate(project, project)) {
         return;
       }
-      builder.commit(project);
+      if (builder instanceof ModuleBuilder) {
+        Module module = ((ModuleBuilder) builder).commitModule(project);
+        processCreatedModule(module, dataFromContext);
+      }
+      else {
+        builder.commit(project);
+      }
     }
+  }
+
+  @Nullable
+  protected Object prepareDataFromContext(final AnActionEvent e) {
+    return null;
+  }
+
+  protected void processCreatedModule(final Module module, final Object dataFromContext) {
   }
 
   public void update(AnActionEvent e) {

@@ -63,6 +63,8 @@
       <action id="NewAnnotationType" class="com.intellij.ide.actions.CreateAnnotationTypeAction"/>
       <action id="NewHtmlType" class="com.intellij.ide.actions.CreateHtmlAction"/>
       <action id="NewXhtmlType" class="com.intellij.ide.actions.CreateXhtmlAction"/>
+      <action id="NewModuleInGroup" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleInGroupAction"
+              icon="/nodes/ModuleClosed.png"/>
 
       <add-to-group group-id="NewGroup" anchor="first"/>
     </group>
