@@ -1,0 +1,35 @@
+class Test {
+   void foo() {
+      int i = 0;
+
+       Inner inner = new Inner(i).invoke();
+       int k = inner.getK();
+       int j = inner.getJ();
+      
+      int m = k + j;
+   }
+
+    private class Inner {
+        private int j;
+        private int k;
+        private int i;
+
+        public Inner(int i) {
+            this.i = i;
+        }
+
+        public int getJ() {
+            return j;
+        }
+
+        public int getK() {
+            return k;
+        }
+
+        public Inner invoke() {
+            j = i;
+            k = 0;
+            return this;
+        }
+    }
+}

@@ -36,6 +36,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   private final boolean myStaticFlag;
   private final boolean myCanBeStatic;
   private PsiElement[] myElementsToExtract;
+  private final boolean myMultipleExitPoints;
 
   private final ParameterTablePanel.VariableData[] myVariableData;
   private final PsiClass myTargetClass;
@@ -66,7 +67,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
 
   public ExtractMethodObjectDialog(Project project, PsiClass targetClass, final PsiVariable[] inputVariables, PsiType returnType,
                                    PsiTypeParameterList typeParameterList, PsiType[] exceptions, boolean isStatic, boolean canBeStatic,
-                                   final PsiElement[] elementsToExtract) {
+                                   final PsiElement[] elementsToExtract, final boolean multipleExitPoints) {
     super(project);
     myProject = project;
     myTargetClass = targetClass;
@@ -76,6 +77,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     myStaticFlag = isStatic;
     myCanBeStatic = canBeStatic;
     myElementsToExtract = elementsToExtract;
+    myMultipleExitPoints = multipleExitPoints;
 
     final List<ParameterTablePanel.VariableData> variableData = new ArrayList<ParameterTablePanel.VariableData>(inputVariables.length);
     boolean canBeVarargs = false;
@@ -222,6 +224,8 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     };
     myCreateInnerClassRb.addActionListener(enableDisableListener);
     myCreateAnonymousClassWrapperRb.addActionListener(enableDisableListener);
+    myCreateAnonymousClassWrapperRb.setEnabled(!myMultipleExitPoints);
+
     myParametersTableContainer.add(createParametersPanel(), BorderLayout.CENTER);
 
     final ActionListener updateSugnatureListener = new ActionListener() {

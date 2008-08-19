@@ -77,18 +77,18 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected PsiClass myTargetClass; // class to create the extracted method in
   private PsiElement myAnchor; // anchor to insert extracted method after it
 
-  private ControlFlow myControlFlow; // control flow of myCodeFragment
+  protected ControlFlow myControlFlow; // control flow of myCodeFragment
   private int myFlowStart; // offset in control flow corresponding to the start of the code to be extracted
   private int myFlowEnd; // offset in control flow corresponding to position just after the end of the code to be extracted
 
   protected PsiVariable[] myInputVariables; // input variables
-  private PsiVariable[] myOutputVariables; // output variables
-  private PsiVariable myOutputVariable; // the only output variable
+  protected PsiVariable[] myOutputVariables; // output variables
+  protected PsiVariable myOutputVariable; // the only output variable
   private Collection<PsiStatement> myExitStatements;
 
   private boolean myHasReturnStatement; // there is a return statement
   private boolean myHasReturnStatementOutput; // there is a return statement and its type is not void
-  private boolean myHasExpressionOutput; // extracted code is an expression with non-void type
+  protected boolean myHasExpressionOutput; // extracted code is an expression with non-void type
   private boolean myNeedChangeContext; // target class is not immediate container of the code to be extracted
 
   private boolean myShowErrorDialogs = true;
@@ -101,6 +101,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private boolean myGenerateConditionalExit;
   private PsiStatement myFirstExitStatementCopy;
   private PsiMethod myExtractedMethod;
+  private PsiMethodCallExpression myMethodCall;
 
   public ExtractMethodProcessor(Project project,
                                 Editor editor,
@@ -324,12 +325,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     myHasReturnStatementOutput = returnStatementType != null && returnStatementType != PsiType.VOID;
 
-    if (!myHasReturnStatementOutput) {
-      int outputCount = (myHasExpressionOutput ? 1 : 0) + (myGenerateConditionalExit ? 1 : 0) + myOutputVariables.length;
-      if (outputCount > 1) {
-        showMultipleOutputMessage(expressionType);
-        return false;
-      }
+    if (!myHasReturnStatementOutput && checkOutputVariablesCount()) {
+      showMultipleOutputMessage(expressionType);
+      return false;
     }
 
     myOutputVariable = myOutputVariables.length > 0 ? myOutputVariables[0] : null;
@@ -388,6 +386,14 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     return true;
+  }
+
+  protected boolean checkOutputVariablesCount() {
+    int outputCount = (myHasExpressionOutput ? 1 : 0) + (myGenerateConditionalExit ? 1 : 0) + myOutputVariables.length;
+    if (outputCount > 1) {
+      return true;
+    }
+    return false;
   }
 
   private void checkCanBeChainedConstructor() {
@@ -568,19 +574,19 @@ public class ExtractMethodProcessor implements MatchProvider {
     final Map<PsiMethodCallExpression, PsiMethod> overloadsResolveMap =
       ExtractMethodUtil.encodeOverloadTargets(myTargetClass, processConflictsScope, myMethodName, myCodeFragmentMember);
 
-    PsiMethodCallExpression methodCall = doExtract();
+    doExtract();
     ExtractMethodUtil.decodeOverloadTargets(overloadsResolveMap, myExtractedMethod, myCodeFragmentMember);
 
     LogicalPosition pos1 = new LogicalPosition(line, col);
     myEditor.getCaretModel().moveToLogicalPosition(pos1);
-    int offset = methodCall.getMethodExpression().getTextRange().getStartOffset();
+    int offset = myMethodCall.getMethodExpression().getTextRange().getStartOffset();
     myEditor.getCaretModel().moveToOffset(offset);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     myEditor.getSelectionModel().removeSelection();
     myEditor.getSelectionModel().removeSelection();
   }
 
-  private PsiMethodCallExpression doExtract() throws IncorrectOperationException {
+  private void doExtract() throws IncorrectOperationException {
     renameInputVariables();
 
     PsiMethod newMethod = generateEmptyMethod(myThrownExceptions, myStatic);
@@ -588,7 +594,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     LOG.assertTrue(myElements[0].isValid());
 
     PsiCodeBlock body = newMethod.getBody();
-    PsiMethodCallExpression methodCall = generateMethodCall(null, true);
+    myMethodCall = generateMethodCall(null, true);
 
     LOG.assertTrue(myElements[0].isValid());
 
@@ -674,7 +680,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (myGenerateConditionalExit) {
         PsiIfStatement ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (a) b;", null);
         ifStatement = (PsiIfStatement)addToMethodCallLocation(ifStatement);
-        methodCall = (PsiMethodCallExpression)ifStatement.getCondition().replace(methodCall);
+        myMethodCall = (PsiMethodCallExpression)ifStatement.getCondition().replace(myMethodCall);
         ifStatement.getThenBranch().replace(myFirstExitStatementCopy);
         CodeStyleManager.getInstance(myProject).reformat(ifStatement);
       }
@@ -686,26 +692,26 @@ public class ExtractMethodProcessor implements MatchProvider {
           statement = (PsiExpressionStatement)myStyleManager.reformat(statement);
           statement = (PsiExpressionStatement)addToMethodCallLocation(statement);
           PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
-          methodCall = (PsiMethodCallExpression)assignment.getRExpression().replace(methodCall);
+          myMethodCall = (PsiMethodCallExpression)assignment.getRExpression().replace(myMethodCall);
         }
         else {
           PsiDeclarationStatement statement =
-            myElementFactory.createVariableDeclarationStatement(name, myOutputVariable.getType(), methodCall);
+            myElementFactory.createVariableDeclarationStatement(name, myOutputVariable.getType(), myMethodCall);
           statement = (PsiDeclarationStatement)addToMethodCallLocation(statement);
           PsiVariable var = (PsiVariable)statement.getDeclaredElements()[0];
-          methodCall = (PsiMethodCallExpression)var.getInitializer();
+          myMethodCall = (PsiMethodCallExpression)var.getInitializer();
           var.getModifierList().replace(myOutputVariable.getModifierList());
         }
       }
       else if (myHasReturnStatementOutput) {
         PsiStatement statement = myElementFactory.createStatementFromText("return x;", null);
         statement = (PsiStatement)addToMethodCallLocation(statement);
-        methodCall = (PsiMethodCallExpression)((PsiReturnStatement)statement).getReturnValue().replace(methodCall);
+        myMethodCall = (PsiMethodCallExpression)((PsiReturnStatement)statement).getReturnValue().replace(myMethodCall);
       }
       else {
         PsiStatement statement = myElementFactory.createStatementFromText("x();", null);
         statement = (PsiStatement)addToMethodCallLocation(statement);
-        methodCall = (PsiMethodCallExpression)((PsiExpressionStatement)statement).getExpression().replace(methodCall);
+        myMethodCall = (PsiMethodCallExpression)((PsiExpressionStatement)statement).getExpression().replace(myMethodCall);
       }
       if (myHasReturnStatement && !myHasReturnStatementOutput && !hasNormalExit) {
         PsiStatement statement = myElementFactory.createStatementFromText("return;", null);
@@ -731,7 +737,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         statement.getExpression().replace(myExpression);
         body.add(statement);
       }
-      methodCall = (PsiMethodCallExpression)myExpression.replace(methodCall);
+      myMethodCall = (PsiMethodCallExpression)myExpression.replace(myMethodCall);
     }
 
     if (myAnchor instanceof PsiField) {
@@ -745,7 +751,6 @@ public class ExtractMethodProcessor implements MatchProvider {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringUtil.createThisExpression(myManager, null));
     }
 
-    return methodCall;
   }
 
   private boolean needExitStatement(final PsiStatement exitStatement) {
@@ -871,7 +876,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  private PsiElement addToMethodCallLocation(PsiElement statement) throws IncorrectOperationException {
+  protected PsiElement addToMethodCallLocation(PsiElement statement) throws IncorrectOperationException {
     if (myEnclosingBlockStatement == null) {
       return myElements[0].getParent().addBefore(statement, myElements[0]);
     }
@@ -1049,7 +1054,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  private void declareNecessaryVariablesAfterCall(int end, PsiVariable outputVariable) throws IncorrectOperationException {
+  protected void declareNecessaryVariablesAfterCall(int end, PsiVariable outputVariable) throws IncorrectOperationException {
     List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(myControlFlow, end, myControlFlow.getSize());
     Collection<ControlFlowUtil.VariableInfo> reassigned = ControlFlowUtil.getInitializedTwice(myControlFlow, end, myControlFlow.getSize());
     for (PsiVariable variable : usedVariables) {
@@ -1068,7 +1073,11 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  private boolean isDeclaredInside(PsiVariable variable) {
+  public PsiMethodCallExpression getMethodCall() {
+    return myMethodCall;
+  }
+
+  public boolean isDeclaredInside(PsiVariable variable) {
     if (variable instanceof ImplicitVariable) return false;
     int startOffset = myElements[0].getTextRange().getStartOffset();
     int endOffset = myElements[myElements.length - 1].getTextRange().getEndOffset();
