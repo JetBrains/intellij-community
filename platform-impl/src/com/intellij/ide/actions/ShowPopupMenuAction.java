@@ -31,7 +31,7 @@ public class ShowPopupMenuAction extends AnAction {
         MouseEvent.MOUSE_PRESSED,
         System.currentTimeMillis(), 0,
         popupMenuPoint.x,
-        popupMenuPoint.y,
+        Math.max(0, popupMenuPoint.y - 1), //To avoid cursor jump to the line below. http://www.jetbrains.net/jira/browse/IDEADEV-10644
         1,
         true
       )
