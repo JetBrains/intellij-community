@@ -60,23 +60,15 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private static final FileAttribute ourOutputFileAttribute = new FileAttribute("_make_output_file_info_", 3);
   
   private final TIntObjectHashMap<TIntHashSet> mySourcesToRecompile = new TIntObjectHashMap<TIntHashSet>(); // ProjectId->set of source file paths
-  private final Map<String, SourceUrlClassNamePair> myOutputsToDelete = new HashMap<String, SourceUrlClassNamePair>(); // output path -> [sourceUrl; classname]
-  
+  private final TIntObjectHashMap<Map<String, SourceUrlClassNamePair>> myOutputsToDelete = new TIntObjectHashMap<Map<String, SourceUrlClassNamePair>>(); // Map: projectId -> Map{output path -> [sourceUrl; classname]}
+
   private final ProjectManager myProjectManager;
-  private final MyProjectManagerListener myProjectManagerListener = new MyProjectManagerListener();
-  private final MyVfsListener myVfsListener = new MyVfsListener();
 
   public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, ProjectManager projectManager) {
     myProjectManager = projectManager;
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      registerListeners(vfsManager, projectManager);
-    }
-  }
-
-  public void registerListeners(VirtualFileManager vfsManager, ProjectManager projectManager) {
-    projectManager.addProjectManagerListener(myProjectManagerListener);
-    vfsManager.addVirtualFileListener(myVfsListener);
+    projectManager.addProjectManagerListener(new MyProjectManagerListener());
+    vfsManager.addVirtualFileListener(new MyVfsListener());
   }
 
   public static TranslatingCompilerFilesMonitor getInstance() {
@@ -105,7 +97,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     final boolean _forceCompile = forceCompile || isRebuild;
     synchronized (mySourcesToRecompile) {
       final TIntHashSet pathsToRecompile = mySourcesToRecompile.get(projectId);
-      if (_forceCompile || pathsToRecompile != null && !pathsToRecompile.isEmpty()) {
+      if (_forceCompile || (pathsToRecompile != null && pathsToRecompile.size() > 0)) {
         while (scopeSrcIterator.hasNext()) {
           final VirtualFile file = scopeSrcIterator.next();
           if (configuration.isExcludedFromCompilation(file) || !compiler.isCompilableFile(file, context)) {
@@ -128,14 +120,20 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     if (!isRebuild) {
       final CompileScope compileScope = context.getCompileScope();
       synchronized (myOutputsToDelete) {
-        for (String outputPath : myOutputsToDelete.keySet()) {
-          final SourceUrlClassNamePair classNamePair = myOutputsToDelete.get(outputPath);
-          final String sourceUrl = classNamePair.getSourceUrl();
-          if (compileScope.belongs(sourceUrl)) {
+        final Map<String, SourceUrlClassNamePair> outputsToDelete = myOutputsToDelete.get(projectId);
+        if (outputsToDelete != null) {
+          for (String outputPath : outputsToDelete.keySet()) {
+            final SourceUrlClassNamePair classNamePair = outputsToDelete.get(outputPath);
+            final String sourceUrl = classNamePair.getSourceUrl();
             final VirtualFile srcFile = VirtualFileManager.getInstance().findFileByUrl(sourceUrl);
             final boolean sourcePresent = srcFile != null;
-            if (sourcePresent && !compiler.isCompilableFile(srcFile, context)) {
-              continue; // do not collect files that were compiled by another compiler
+            if (sourcePresent) {
+              if (!compiler.isCompilableFile(srcFile, context)) {
+                continue; // do not collect files that were compiled by another compiler
+              }
+              if (!compileScope.belongs(sourceUrl) && ((CompileContextEx)context).isInSourceContent(srcFile)) {
+                continue;
+              }
             }
             //noinspection UnnecessaryBoxing
             final File file = new File(outputPath);
@@ -221,18 +219,26 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     try {
       final DataInputStream is = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
       try {
-        final int size = is.readInt();
+        final int projectsCount = is.readInt();
         final LocalFileSystem lfs = LocalFileSystem.getInstance();
         synchronized (myOutputsToDelete) {
-          for (int idx = 0; idx < size; idx++) {
-            final String outputPath = CompilerIOUtil.readString(is);
-            final String srcUrl = CompilerIOUtil.readString(is);
-            final String className = CompilerIOUtil.readString(is);
-            if (lfs.findFileByPath(outputPath) != null) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("INIT path to delete: " + outputPath);
+          for (int idx = 0; idx < projectsCount; idx++) {
+            final int projectId = is.readInt();
+            final int size = is.readInt();
+            if (size > 0) {
+              final Map<String, SourceUrlClassNamePair> map = new HashMap<String, SourceUrlClassNamePair>();
+              myOutputsToDelete.put(projectId, map);
+              for (int i = 0; i < size; i++) {
+                final String outputPath = CompilerIOUtil.readString(is);
+                final String srcUrl = CompilerIOUtil.readString(is);
+                final String className = CompilerIOUtil.readString(is);
+                if (lfs.findFileByPath(outputPath) != null) {
+                  if (LOG.isDebugEnabled()) {
+                    LOG.debug("INIT path to delete: " + outputPath);
+                  }
+                  map.put(outputPath, new SourceUrlClassNamePair(srcUrl, className));
+                }
               }
-              myOutputsToDelete.put(outputPath, new SourceUrlClassNamePair(srcUrl, className));
             }
           }
         }
@@ -245,6 +251,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
     catch (IOException e) {
       LOG.error(e);
+      myOutputsToDelete.clear();
+      file.delete();
     }
   }
 
@@ -257,12 +265,23 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       final DataOutputStream os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
       try {
         synchronized (myOutputsToDelete) {
-          os.writeInt(myOutputsToDelete.size());
-          for (Map.Entry<String, SourceUrlClassNamePair> entry : myOutputsToDelete.entrySet()) {
-            CompilerIOUtil.writeString(entry.getKey(), os);
-            final SourceUrlClassNamePair pair = entry.getValue();
-            CompilerIOUtil.writeString(pair.getSourceUrl(), os);
-            CompilerIOUtil.writeString(pair.getClassName(), os);
+          final int[] keys = myOutputsToDelete.keys();
+          os.writeInt(keys.length);
+          for (int projectId : keys) {
+            final Map<String, SourceUrlClassNamePair> projectOutputs = myOutputsToDelete.get(projectId);
+            os.writeInt(projectId);
+            if (projectOutputs != null) {
+              os.writeInt(projectOutputs.size());
+              for (Map.Entry<String, SourceUrlClassNamePair> entry : projectOutputs.entrySet()) {
+                CompilerIOUtil.writeString(entry.getKey(), os);
+                final SourceUrlClassNamePair pair = entry.getValue();
+                CompilerIOUtil.writeString(pair.getSourceUrl(), os);
+                CompilerIOUtil.writeString(pair.getClassName(), os);
+              }
+            }
+            else {
+              os.writeInt(0);
+            }
           }
         }
       }
@@ -273,11 +292,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     catch (IOException e) {
       LOG.error(e);
     }
-  }
-
-  public void removeListeners() {
-    VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
-    myProjectManager.removeProjectManagerListener(myProjectManagerListener);
   }
 
   @Nullable
@@ -536,13 +550,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           final PersistentStringEnumerator symtable = FSRecords.getNames();
           final Object val = myProjectToOutputPathMap.get(projectId);
           if (val instanceof Integer)  {
-            proc.execute(symtable.valueOf(((Integer)val).intValue()));
+            proc.execute(projectId, symtable.valueOf(((Integer)val).intValue()));
           }
           else if (val instanceof TIntHashSet) {
             ((TIntHashSet)val).forEach(new TIntProcedure() {
               public boolean execute(final int value) {
                 try {
-                  proc.execute(symtable.valueOf(value));
+                  proc.execute(projectId, symtable.valueOf(value));
                   return true;
                 }
                 catch (IOException e) {
@@ -607,7 +621,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   // made public for tests
-  public void scanSourceContent(final Project project, final Collection<VirtualFile> roots, final int totalRootCount) {
+  public void scanSourceContent(final Project project, final Collection<VirtualFile> roots, final int totalRootCount, final boolean isNewRoots) {
     final int projectId = getProjectId(project);
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -618,19 +632,40 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         indicator.setText2(srcRoot.getPresentableUrl());
         indicator.setFraction(++processed / (double)totalRootCount);
       }
-      fileIndex.iterateContentUnderDirectory(srcRoot, new ContentIterator() {
-        public boolean processFile(final VirtualFile file) {
-          if (!file.isDirectory()) {
-            if (!isMarkedForRecompilation(projectId, getFileId(file))) {
-              final SourceFileInfo srcInfo = loadSourceInfo(file);
-              if (srcInfo == null || (srcInfo.getTimestamp(projectId) != file.getTimeStamp())) {
-                addSourceForRecompilation(projectId, file, srcInfo);
+      if (isNewRoots) {
+        fileIndex.iterateContentUnderDirectory(srcRoot, new ContentIterator() {
+          public boolean processFile(final VirtualFile file) {
+            if (!file.isDirectory()) {
+              if (!isMarkedForRecompilation(projectId, getFileId(file))) {
+                final SourceFileInfo srcInfo = loadSourceInfo(file);
+                if (srcInfo == null || (srcInfo.getTimestamp(projectId) != file.getTimeStamp())) {
+                  addSourceForRecompilation(projectId, file, srcInfo);
+                }
+              }
+            }
+            return true;
+          }
+        });
+      }
+      else {
+        new Object() {
+          void processFile(VirtualFile file) {
+            if (file.isDirectory()) {
+              for (VirtualFile child : file.getChildren()) {
+                processFile(child);
+              }
+            }
+            else {
+              if (!isMarkedForRecompilation(projectId, getFileId(file))) {
+                final SourceFileInfo srcInfo = loadSourceInfo(file);
+                if (srcInfo != null) {
+                  addSourceForRecompilation(projectId, file, srcInfo);
+                }
               }
             }
           }
-          return true;
-        }
-      });
+        }.processFile(srcRoot);
+      }
     }
   }
 
@@ -651,13 +686,28 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
         public void rootsChanged(final ModuleRootEvent event) {
           final VirtualFile[] rootsAfter = ProjectRootManager.getInstance(project).getContentSourceRoots();
-          Set<VirtualFile> roots = new HashSet<VirtualFile>();
-          roots.addAll(Arrays.asList(rootsAfter));
-          if (myRootsBefore != null) {
-            roots.removeAll(Arrays.asList(myRootsBefore));
-            myRootsBefore = null;
+
+          {
+            final Set<VirtualFile> newRoots = new HashSet<VirtualFile>();
+            newRoots.addAll(Arrays.asList(rootsAfter));
+            if (myRootsBefore != null) {
+              newRoots.removeAll(Arrays.asList(myRootsBefore));
+            }
+            scanSourceContent(project, newRoots, newRoots.size(), true);
           }
-          scanSourceContent(project, roots, roots.size());
+
+          {
+            final Set<VirtualFile> oldRoots = new HashSet<VirtualFile>();
+            if (myRootsBefore != null) {
+              oldRoots.addAll(Arrays.asList(myRootsBefore));
+            }
+            if (!oldRoots.isEmpty()) {
+              oldRoots.removeAll(Arrays.asList(rootsAfter));
+            }
+            scanSourceContent(project, oldRoots, oldRoots.size(), false);
+          }
+
+          myRootsBefore = null;
         }
       });
 
@@ -688,7 +738,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
               final List<VirtualFile> projectRoots = Arrays.asList(ProjectRootManager.getInstance(project).getContentSourceRoots());
               final int totalRootsCount = projectRoots.size() + intermediateRoots.size();
-              scanSourceContent(project, projectRoots, totalRootsCount);
+              scanSourceContent(project, projectRoots, totalRootsCount, true);
 
               if (intermediateRoots.size() > 0) {
                 final int projectId = getProjectId(project);
@@ -782,9 +832,19 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             synchronized (myOutputsToDelete) {
               // it is important that update of myOutputsToDelete is done at the end
               // otherwise the filePath of the file that is about to be deleted may be re-scheduled for deletion in addSourceForRecompilation()
-              final SourceUrlClassNamePair val = myOutputsToDelete.remove(filePath);
-              if (val != null && LOG.isDebugEnabled()) {
-                LOG.debug("REMOVE path to delete: " + filePath);
+              for (int projectId : myOutputsToDelete.keys()) {
+                final Map<String, SourceUrlClassNamePair> map = myOutputsToDelete.get(projectId);
+                if (map != null) {
+                  final SourceUrlClassNamePair val = map.remove(filePath);
+                  if (val != null) {
+                    if (LOG.isDebugEnabled()) {
+                      LOG.debug("REMOVE path to delete: " + filePath);
+                    }
+                    if (map.size() == 0) {
+                      myOutputsToDelete.remove(projectId);
+                    }
+                  }
+                }
               }
             }
           }
@@ -925,7 +985,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
   
   private static interface Proc {
-    boolean execute(String outputPath);
+    boolean execute(final int projectId, String outputPath);
   }
   
   private class ScheduleOutputsForDeletionProc implements Proc {
@@ -937,13 +997,18 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       myFileSystem = LocalFileSystem.getInstance();
     }
 
-    public boolean execute(String outputPath) {
+    public boolean execute(final int projectId, String outputPath) {
       final VirtualFile outFile = myFileSystem.findFileByPath(outputPath);
       if (outFile != null) { // not deleted yet
         final OutputFileInfo outputInfo = loadOutputInfo(outFile);
         final String classname = outputInfo != null? outputInfo.getClassName() : null;
         synchronized (myOutputsToDelete) {
-          myOutputsToDelete.put(outputPath, new SourceUrlClassNamePair(mySrcUrl, classname));
+          Map<String, SourceUrlClassNamePair> map = myOutputsToDelete.get(projectId);
+          if (map == null) {
+            map = new HashMap<String, SourceUrlClassNamePair>();
+            myOutputsToDelete.put(projectId, map);
+          }
+          map.put(outputPath, new SourceUrlClassNamePair(mySrcUrl, classname));
           if (LOG.isDebugEnabled()) {
             LOG.debug("ADD path to delete: " + outputPath + "; source: " + mySrcUrl);
           }

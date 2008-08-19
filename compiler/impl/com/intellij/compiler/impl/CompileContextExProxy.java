@@ -56,6 +56,10 @@ public class CompileContextExProxy implements CompileContextEx {
     return myDelegate.isInTestSourceContent(fileOrDir);
   }
 
+  public boolean isInSourceContent(@NotNull final VirtualFile fileOrDir) {
+    return myDelegate.isInSourceContent(fileOrDir);
+  }
+
   public void addScope(final CompileScope additionalScope) {
     myDelegate.addScope(additionalScope);
   }

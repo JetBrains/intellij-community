@@ -292,4 +292,16 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
     return false;
   }
+
+  public boolean isInSourceContent(@NotNull final VirtualFile fileOrDir) {
+    if (myProjectFileIndex.isInSourceContent(fileOrDir)) {
+      return true;
+    }
+    for (final VirtualFile root : myRootToModuleMap.keySet()) {
+      if (VfsUtil.isAncestor(root, fileOrDir, false)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

@@ -26,6 +26,8 @@ public interface CompileContextEx extends CompileContext {
    */
   boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir);
 
+  boolean isInSourceContent(@NotNull VirtualFile fileOrDir);
+
   void addScope(CompileScope additionalScope);
 
   long getStartCompilationStamp();

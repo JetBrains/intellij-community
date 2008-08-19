@@ -233,7 +233,7 @@ public class CompileDriver {
         lockFile.createNewFile();
       }
       else {
-        lockFile.delete();
+        deleteFile(lockFile);
       }
     }
     catch (IOException e) {
@@ -824,7 +824,7 @@ public class CompileDriver {
               final StateCache<ValidityState> cache = getGeneratingCompilerCache((GeneratingCompiler)compiler);
               final Iterator<String> urlIterator = cache.getUrlsIterator();
               while (urlIterator.hasNext()) {
-                new File(VirtualFileManager.extractPath(urlIterator.next())).delete();
+                deleteFile(new File(VirtualFileManager.extractPath(urlIterator.next())));
               }
             }
           }
@@ -847,8 +847,8 @@ public class CompileDriver {
             );
             for (Trinity<File, String, Boolean> trinity : toDelete) {
               final File file = trinity.getFirst();
-              file.delete();
-              if (isTestMode) {
+              final boolean deleted = deleteFile(file);
+              if (isTestMode && deleted) {
                 CompilerManagerImpl.addDeletedPath(FileUtil.toSystemIndependentName(file.getPath()));
               }
             }
@@ -894,7 +894,7 @@ public class CompileDriver {
       for (File file : files) {
         if (file.isDirectory() && !outPutDirectories.contains(file)) {
           if (doPrune(file, outPutDirectories)) {
-            file.delete();
+            deleteFile(file);
           }
           else {
             isEmpty = false;
@@ -959,7 +959,7 @@ public class CompileDriver {
         final File[] files = output.listFiles();
         if (files != null) {
           for (final File file : files) {
-            final boolean deleteOk = FileUtil.delete(file);
+            final boolean deleteOk = deleteFile(file);
             if (!deleteOk) {
               context.addMessage(CompilerMessageCategory.ERROR, CompilerBundle.message("compiler.error.failed.to.delete", file.getPath()),
                                  null, -1, -1);
@@ -968,6 +968,35 @@ public class CompileDriver {
         }
       }
     }
+  }
+
+  /**
+   * @param file a file to delete
+   * @return true if and only if the file existed and was successfully deleted
+   * Note: the behaviour is different from FileUtil.delete() which returns true if the file absent on the disk
+   */
+  private static boolean deleteFile(final File file) {
+    File[] files = file.listFiles();
+    if (files != null) {
+      for (File file1 : files) {
+        deleteFile(file1);
+      }
+    }
+
+    for (int i = 0; i < 10; i++){
+      if (file.delete()) {
+        return true;
+      }
+      if (!file.exists()) {
+        return false;
+      }
+      try {
+        Thread.sleep(50);
+      }
+      catch (InterruptedException ignored) {
+      }
+    }
+    return false;
   }
 
   private VirtualFile getGenerationOutputDir(final IntermediateOutputCompiler compiler, final Module module, final boolean forTestSources) {
@@ -1045,7 +1074,7 @@ public class CompileDriver {
         context.getProgressIndicator().setText(CompilerBundle.message("progress.synchronizing.output.directory"));
         for (final String path : pathsToRemove) {
           final File file = new File(path);
-          final boolean deleted = file.delete();
+          final boolean deleted = deleteFile(file);
           if (deleted) {
             cache.remove(path);
             filesToRefresh.add(file);
