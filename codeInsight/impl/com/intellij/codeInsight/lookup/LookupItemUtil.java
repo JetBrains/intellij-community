@@ -75,9 +75,7 @@ public class LookupItemUtil{
   public static LookupItem objectToLookupItem(Object object) {
     if (object instanceof LookupItem) return (LookupItem)object;
     if (object instanceof PsiClass) {
-      final JavaPsiClassReferenceElement element = new JavaPsiClassReferenceElement((PsiClass)object);
-      element.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, TailType.NONE);
-      return element;
+      return new JavaPsiClassReferenceElement((PsiClass)object).setTailType(TailType.NONE);
     }
 
     String s = null;
