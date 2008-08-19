@@ -6,11 +6,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public class ModuleContenRootSearchScope extends GlobalSearchScope {
+public class ModuleContentRootSearchScope extends GlobalSearchScope {
   private final ModuleRootManager myRootManager;
   private final Module myModule;
 
-  public ModuleContenRootSearchScope(final Module module) {
+  public ModuleContentRootSearchScope(final Module module) {
     myRootManager = ModuleRootManager.getInstance(module);
     myModule = module;
   }
