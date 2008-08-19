@@ -23,6 +23,7 @@
   </vendor>
   <idea-version since-build="8660" until-build="8999"/>
   <depends optional="true" config-file="groovy-js-integration.xml">JavaScript</depends>
+  <depends>com.intellij.css</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
