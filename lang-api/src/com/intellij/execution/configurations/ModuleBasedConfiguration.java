@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -104,5 +105,12 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
         return module == null ? Module.EMPTY_ARRAY : new Module[] {module};
       }
     });
+  }
+
+  public void restoreOriginalModule(final Module originalModule) {
+    if (originalModule == null) return;
+    final Module[] classModules = getModules();
+    final Collection<Module> modules = ModuleUtil.collectModulesDependsOn(Arrays.asList(classModules));
+    if (modules.contains(originalModule)) setModule(originalModule);
   }
 }

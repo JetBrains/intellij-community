@@ -60,8 +60,10 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
   }
 
   public void setMainClass(final PsiClass psiClass) {
+    final Module originalModule = getConfigurationModule().getModule();
     setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(psiClass));
     setModule(JavaExecutionUtil.findModule(psiClass));
+    restoreOriginalModule(originalModule);
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
