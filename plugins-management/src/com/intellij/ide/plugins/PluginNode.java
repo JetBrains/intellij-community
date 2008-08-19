@@ -292,4 +292,8 @@ public class PluginNode implements IdeaPluginDescriptor {
   public void setUntilBuild(final String untilBuild) {
     this.untilBuild = untilBuild;
   }
+
+  public boolean isBundled() {
+    return false;
+  }
 }

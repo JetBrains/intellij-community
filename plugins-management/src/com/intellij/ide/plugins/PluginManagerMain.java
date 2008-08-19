@@ -92,6 +92,9 @@ public class PluginManagerMain {
 
     installedPluginsModel = new InstalledPluginsTableModel(installedProvider);
     installedPluginTable = new PluginTable(installedPluginsModel);
+
+    installedPluginTable.setColumnWidth(1, 45);
+
     JScrollPane installedScrollPane = ScrollPaneFactory.createScrollPane(installedPluginTable);
     installedPluginTable.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

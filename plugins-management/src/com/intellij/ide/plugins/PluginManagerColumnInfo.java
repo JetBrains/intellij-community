@@ -186,7 +186,11 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   }
 
   public TableCellRenderer getRenderer(IdeaPluginDescriptor o) {
-    return new PluginTableCellRenderer();
+    return new PluginTableCellRenderer(this);
+  }
+
+  protected int getHorizontalAlignment() {
+    return SwingConstants.LEADING;
   }
 
   public Class getColumnClass() {
@@ -199,15 +203,19 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   }
 
   private static class PluginTableCellRenderer extends DefaultTableCellRenderer {
+    private PluginManagerColumnInfo myColumnInfo;
+
+    private PluginTableCellRenderer(final PluginManagerColumnInfo columnInfo) {
+      myColumnInfo = columnInfo;
+    }
+
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Object descriptor = ((PluginTable)table).getObjectAt(row);
       if (column == COLUMN_NAME) {
         setIcon(IconLoader.getIcon("/nodes/pluginnotinstalled.png"));
       }
 
-      if (column == COLUMN_DATE) {
-        setHorizontalAlignment(SwingConstants.RIGHT);
-      }
+      setHorizontalAlignment(myColumnInfo.getHorizontalAlignment());
       if (descriptor instanceof IdeaPluginDescriptorImpl) {
         final IdeaPluginDescriptorImpl ideaPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
         if (ideaPluginDescriptor.isDeleted()) {

@@ -4,9 +4,9 @@ import com.intellij.ide.ClassloaderUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.idea.Main;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -637,7 +637,15 @@ public class PluginManager {
     if (files != null) {
       for (File file : files) {
         final IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, PLUGIN_XML);
-        if (descriptor != null && !result.contains(descriptor)) {
+        if (descriptor == null) continue;
+        int oldIndex = result.indexOf(descriptor);
+        if (oldIndex >= 0) {
+          final IdeaPluginDescriptorImpl oldDescriptor = result.get(oldIndex);
+          if (IdeaPluginDescriptorImpl.compareVersion(oldDescriptor.getVersion(), descriptor.getVersion()) < 0) {
+            result.set(oldIndex, descriptor);
+          }
+        }
+        else {
           result.add(descriptor);
         }
       }

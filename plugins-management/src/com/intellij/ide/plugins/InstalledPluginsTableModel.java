@@ -13,6 +13,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.DefaultTableCellRenderer;
@@ -37,6 +38,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     super.sortableProvider = sortableProvider;
     super.columns = new ColumnInfo[]{
         new EnabledPluginInfo(),
+        new BundledColumnInfo(),
         new NameColumnInfo()
     };
     view = new ArrayList<IdeaPluginDescriptor>(Arrays.asList(PluginManager.getPlugins()));
@@ -58,7 +60,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   public int getNameColumn() {
-    return 1;
+    return 2;
   }
 
   public void addData(ArrayList<IdeaPluginDescriptor> list) {
@@ -208,6 +210,31 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           }
         }
       };
+    }
+  }
+
+  private static class BundledColumnInfo extends ColumnInfo<IdeaPluginDescriptor, Boolean> {
+    public BundledColumnInfo() {
+      super("Bundled");
+    }
+
+    @NotNull
+    public Boolean valueOf(final IdeaPluginDescriptor ideaPluginDescriptor) {
+      return ideaPluginDescriptor.isBundled();
+    }
+
+    @Override
+    public Comparator<IdeaPluginDescriptor> getComparator() {
+      return new Comparator<IdeaPluginDescriptor>() {
+        public int compare(final IdeaPluginDescriptor o1, final IdeaPluginDescriptor o2) {
+          return valueOf(o1).compareTo(valueOf(o2));
+        }
+      };
+    }
+
+    @Override
+    public TableCellRenderer getRenderer(final IdeaPluginDescriptor ideaPluginDescriptor) {
+      return new BooleanTableCellRenderer();
     }
   }
 

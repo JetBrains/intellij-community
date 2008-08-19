@@ -9,7 +9,6 @@ import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.IconLoader;
@@ -430,14 +429,13 @@ public class WelcomeScreen {
 
       int embeddedPlugins = 0;
       int installedPlugins = 0;
-      String preinstalledPrefix = PathManager.getPreinstalledPluginsPath();
 
       for (IdeaPluginDescriptor plugin : myInstalledPlugins) {
         if (plugin.getName().equals("IDEA CORE") || ((IdeaPluginDescriptorImpl) plugin).isUseCoreClassLoader()) {
           // this is not really a plugin, so it shouldn't be displayed
           continue;
         }
-        if (plugin.getPath().getAbsolutePath().startsWith(preinstalledPrefix)) {
+        if (plugin.isBundled()) {
           embeddedPlugins++;
           addListItemToPlugins(bundledPluginsPanel, (IdeaPluginDescriptorImpl)plugin);
         }

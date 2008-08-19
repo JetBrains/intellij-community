@@ -43,10 +43,14 @@ public class ActionUninstallPlugin extends AnAction {
 
     if (enabled) {
       for (IdeaPluginDescriptor descriptor : selection) {
-        if (descriptor instanceof IdeaPluginDescriptorImpl){
+        if (descriptor instanceof IdeaPluginDescriptorImpl) {
           final IdeaPluginDescriptorImpl ideaPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
-          enabled &= !ideaPluginDescriptor.isDeleted();
-        } if (descriptor instanceof PluginNode) {
+          if (ideaPluginDescriptor.isDeleted() || ideaPluginDescriptor.isBundled()) {
+            enabled = false;
+            break;
+          }
+        }
+        if (descriptor instanceof PluginNode) {
           enabled &= PluginManagerColumnInfo.getRealNodeState((PluginNode)descriptor) == PluginNode.STATUS_DOWNLOADED;
         }
       }

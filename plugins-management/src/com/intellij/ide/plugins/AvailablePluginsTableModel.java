@@ -12,6 +12,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +31,12 @@ public class AvailablePluginsTableModel extends PluginTableModel {
     super(sortableProvider, 
           new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_NAME, sortableProvider),
           new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DOWNLOADS, sortableProvider),
-          new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DATE, sortableProvider),
+          new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_DATE, sortableProvider) {
+            @Override
+            protected int getHorizontalAlignment() {
+              return SwingConstants.TRAILING;
+            }
+          },
           new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_CATEGORY, sortableProvider));
 
     view = new ArrayList<IdeaPluginDescriptor>();

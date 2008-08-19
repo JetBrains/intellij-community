@@ -2,6 +2,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
@@ -575,5 +576,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public void setSkipped(final Boolean skipped) {
     mySkipped = skipped;
+  }
+
+  public boolean isBundled() {
+    return getPath().getAbsolutePath().startsWith(PathManager.getPreinstalledPluginsPath());
   }
 }
