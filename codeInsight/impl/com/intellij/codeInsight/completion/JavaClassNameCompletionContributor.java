@@ -42,7 +42,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>(true, false) {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
         PsiElement insertedElement = parameters.getPosition();
-        String prefix = result.toString();
+        String prefix = result.getPrefixMatcher().getPrefix();
 
         final PsiFile file = parameters.getOriginalFile();
         final Project project = file.getProject();
@@ -68,12 +68,12 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
             }
           });
           for (final PsiClass psiClass : classes) {
-            result.addElement(AllClassesGetter.createLookupItem(psiClass, afterNew));
+            result.addElement(AllClassesGetter.createLookupItem(psiClass));
           }
         }
 
         if (afterNew) {
-          final PsiExpression expr = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
+          final PsiExpression expr = PsiTreeUtil.getContextOfType(insertedElement, PsiExpression.class, true);
           if (expr != null) {
             final ExpectedTypeInfo[] expectedInfos =
                 ApplicationManager.getApplication().runReadAction(new Computable<ExpectedTypeInfo[]>() {
@@ -89,7 +89,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
                 }
               });
               if (psiClass != null) {
-                result.addElement(AllClassesGetter.createLookupItem(psiClass, afterNew));
+                result.addElement(AllClassesGetter.createLookupItem(psiClass));
               }
               final PsiType defaultType = info.getDefaultType();
               if (!defaultType.equals(type)) {
@@ -99,14 +99,14 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
                   }
                 });
                 if (defClass != null) {
-                  result.addElement(AllClassesGetter.createLookupItem(defClass, afterNew));
+                  result.addElement(AllClassesGetter.createLookupItem(defClass));
                 }
               }
             }
           }
         }
 
-        getter.getClasses(insertedElement, result, afterNew, parameters.getOffset(), parameters.getInvocationCount() == 1);
+        getter.getClasses(insertedElement, result, parameters.getOffset(), parameters.getInvocationCount() == 1);
       }
     });
 

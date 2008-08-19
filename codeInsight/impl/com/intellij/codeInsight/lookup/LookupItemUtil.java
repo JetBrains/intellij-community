@@ -3,6 +3,7 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
@@ -73,16 +74,16 @@ public class LookupItemUtil{
   */
   public static LookupItem objectToLookupItem(Object object) {
     if (object instanceof LookupItem) return (LookupItem)object;
+    if (object instanceof PsiClass) {
+      final JavaPsiClassReferenceElement element = new JavaPsiClassReferenceElement((PsiClass)object);
+      element.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, TailType.NONE);
+      return element;
+    }
 
     String s = null;
     LookupItem item = new LookupItem(object, "");
     if (object instanceof PsiElement){
-      PsiElement element = (PsiElement) object;
-      if(element instanceof PsiClass){
-        //object = element = CompletionUtil.getOriginalElement(element);
-        item = new LookupItem(object, "");
-      }
-      s = PsiUtilBase.getName(element);
+      s = PsiUtilBase.getName((PsiElement) object);
     }
     if (object instanceof PsiEnumConstant) {
       item.addLookupStrings(((PsiEnumConstant)object).getName());
@@ -168,6 +169,7 @@ public class LookupItemUtil{
       item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + ((LookupValueWithTail)object).getTailText());
     }
     item.setLookupString(s);
+
     item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, tailType);
     return item;
   }

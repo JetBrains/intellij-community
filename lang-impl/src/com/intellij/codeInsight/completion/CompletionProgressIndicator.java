@@ -35,6 +35,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
   private static Throwable ourTrace = null;
 
   private final Editor myEditor;
+  private final CompletionParameters myParameters;
   private final CodeCompletionHandlerBase myHandler;
   private final LookupImpl myLookup;
   private final MergingUpdateQueue myQueue;
@@ -49,6 +50,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, String adText, CodeCompletionHandlerBase handler, final CompletionContext contextCopy, final CompletionContext contextOriginal) {
     myEditor = editor;
+    myParameters = parameters;
     myHandler = handler;
 
     myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, new LookupItem[0], "", new CompletionPreferencePolicy(
@@ -88,6 +90,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     registerItself();
+  }
+
+  public CompletionParameters getParameters() {
+    return myParameters;
   }
 
   private void registerItself() {

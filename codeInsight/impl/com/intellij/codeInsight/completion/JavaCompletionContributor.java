@@ -5,7 +5,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
@@ -23,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -72,6 +70,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
       completionData.addKeywordVariants(keywordVariants, insertedElement, parameters.getOriginalFile());
       completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile());
+
       for (final LookupItem item : lookupSet) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
@@ -82,7 +81,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         if (item.getInsertHandler() == null) {
           item.setInsertHandler(new InsertHandler() {
             public void handleInsert(final InsertionContext context, final LookupElement item) {
-              analyzeItem(context, (LookupItem)item, ((LookupItem)item).getObject(), parameters.getPosition());
+              analyzeItem((LookupItem)item, item.getObject(), parameters.getPosition());
               new DefaultInsertHandler().handleInsert(context, item);
             }
           });
@@ -242,7 +241,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     return parent.getParent() instanceof PsiTypeElement || parent.getParent() instanceof PsiExpressionStatement || parent.getParent() instanceof PsiReferenceList;
   }
 
-  public static void analyzeItem(final InsertionContext context, final LookupItem item, final Object completion, final PsiElement position) {
+  public static void analyzeItem(final LookupItem item, final Object completion, final PsiElement position) {
     if(completion instanceof PsiKeyword){
       if(PsiKeyword.BREAK.equals(((PsiKeyword)completion).getText())
          || PsiKeyword.CONTINUE.equals(((PsiKeyword)completion).getText())){
@@ -284,30 +283,6 @@ public class JavaCompletionContributor extends CompletionContributor {
       if(PsiKeyword.SYNCHRONIZED.equals(((PsiKeyword)completion).getText())){
         if (PsiTreeUtil.getParentOfType(position, PsiMember.class, PsiCodeBlock.class) instanceof PsiCodeBlock){
           item.setTailType(TailTypes.SYNCHRONIZED_LPARENTH);
-        }
-      }
-    }
-    if (completion instanceof PsiClass) {
-      final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(position);
-      if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
-        ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(context.getProject()).getExpectedTypes((PsiExpression) prevElement.getParent(), true);
-        boolean flag = true;
-        PsiTypeParameter[] typeParameters = ((PsiClass)completion).getTypeParameters();
-        for (ExpectedTypeInfo info : infos) {
-          final PsiType type = info.getType();
-
-          if (info.isArrayTypeInfo()) {
-            flag = false;
-            break;
-          }
-          if (typeParameters.length > 0 && type instanceof PsiClassType) {
-            if (!((PsiClassType)type).isRaw()) {
-              flag = false;
-            }
-          }
-        }
-        if (flag) {
-          item.setAttribute(LookupItem.NEW_OBJECT_ATTR, "");
         }
       }
     }

@@ -84,18 +84,21 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           return;
         }
         else {
-          time++;
+          time = indicator.getParameters().getInvocationCount() + 1;
         }
       }
       indicator.closeAndFinish();
     }
     HintManager.getInstance().hideAllHints();
 
-    if (time != 0 && myCompletionType == CompletionType.CLASS_NAME) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION);
+    if (time != 0) {
+      if (myCompletionType == CompletionType.CLASS_NAME) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION);
+      }
+      else if (myCompletionType == CompletionType.BASIC) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_BASIC_COMPLETION);
+      }
     }
-
-    final PsiFile file = psiFile;
 
     final CompletionInitializationContext initializationContext = new WriteCommandAction<CompletionInitializationContext>(project) {
       protected void run(Result<CompletionInitializationContext> result) throws Throwable {
@@ -103,11 +106,11 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
         EditorUtil.fillVirtualSpaceUntil(editor, editor.getCaretModel().getLogicalPosition().column, editor.getCaretModel().getLogicalPosition().line);
         documentManager.commitAllDocuments();
-        final CompletionInitializationContext initializationContext = new CompletionInitializationContext(editor, file, myCompletionType);
+        final CompletionInitializationContext initializationContext = new CompletionInitializationContext(editor, psiFile, myCompletionType);
         result.setResult(initializationContext);
 
-        DaemonCodeAnalyzer.getInstance(project).autoImportReferenceAtCursor(editor, file);
-        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(file.getViewProvider());
+        DaemonCodeAnalyzer.getInstance(project).autoImportReferenceAtCursor(editor, psiFile);
+        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(psiFile.getViewProvider());
 
         documentManager.commitAllDocuments();
         for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
@@ -120,7 +123,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final int offset1 = initializationContext.getStartOffset();
     final int offset2 = initializationContext.getSelectionEndOffset();
-    final CompletionContext context = new CompletionContext(project, editor, file, initializationContext.getOffsetMap());
+    final CompletionContext context = new CompletionContext(project, editor, psiFile, initializationContext.getOffsetMap());
 
     doComplete(offset1, offset2, context, initializationContext.getFileCopyPatcher(), editor, time);
   }
@@ -243,7 +246,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
 
 
-    if (shouldAutoComplete(items, context)) {
+    if (!indicator.isInitialized() && shouldAutoComplete(items, context)) {
       indicator.closeAndFinish();
       LookupElement item = items[0];
       context.setStartOffset(offset1 - item.getPrefixMatcher().getPrefix().length());

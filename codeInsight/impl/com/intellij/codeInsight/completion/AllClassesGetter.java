@@ -1,14 +1,9 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -16,7 +11,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.IncorrectOperationException;
@@ -34,14 +28,12 @@ import java.util.Set;
  * To change this template use Options | File Templates.
  */
 public class AllClassesGetter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.AllClassesGetter");
-
   private final ElementFilter myFilter;
-  private static final InsertHandler INSERT_HANDLER = new InsertHandler() {
+  private static final InsertHandler<JavaPsiClassReferenceElement> INSERT_HANDLER = new InsertHandler<JavaPsiClassReferenceElement>() {
 
-    public int _handleInsert(final InsertionContext context, final LookupItem item) {
+    public int _handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
       final Editor editor = context.getEditor();
-      final PsiClass psiClass = (PsiClass)item.getObject();
+      final PsiClass psiClass = item.getObject();
       int endOffset = editor.getCaretModel().getOffset();
       final String qname = psiClass.getQualifiedName();
       if (qname == null) return endOffset;
@@ -54,24 +46,8 @@ public class AllClassesGetter {
       final PsiElement element = file.findElementAt(endOffset - 1);
       if (element == null) return endOffset;
 
-      PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(element);
-      if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
-        ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(context.getProject()).getExpectedTypes((PsiExpression)prevElement.getParent(), true);
-        boolean flag = true;
-        for (ExpectedTypeInfo info : infos) {
-          if (info.isArrayTypeInfo()) {
-            flag = false;
-            break;
-          }
-        }
-        if (flag) {
-          item.setAttribute(LookupItem.NEW_OBJECT_ATTR, "");
-          item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, ""); //strange hack
-        }
-      }
-
       if (context.getFile().getLanguage() == StdLanguages.JAVA) {
-        new DefaultInsertHandler().handleInsert(context, item);
+        JavaPsiClassReferenceElement.JAVA_CLASS_INSERT_HANDLER.handleInsert(context, item);
         return editor.getCaretModel().getOffset();
       }
 
@@ -125,11 +101,11 @@ public class AllClassesGetter {
       return endOffset;
     }
 
-    public void handleInsert(final InsertionContext context, final LookupElement item) {
+    public void handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
       context.setAddCompletionChar(false);
-      int endOffset = _handleInsert(context, (LookupItem)item);
+      int endOffset = _handleInsert(context, item);
       context.getEditor().getCaretModel().moveToOffset(endOffset);
-      ((LookupItem)item).getTailType().processTail(context.getEditor(), endOffset);
+      item.getTailType().processTail(context.getEditor(), endOffset);
     }
 
   };
@@ -138,8 +114,7 @@ public class AllClassesGetter {
     myFilter = filter;
   }
 
-  public void getClasses(final PsiElement context, CompletionResultSet set, boolean afterNew, final int offset,
-                         final boolean filterByScope) {
+  public void getClasses(final PsiElement context, CompletionResultSet set, final int offset, final boolean filterByScope) {
     if(context == null || !context.isValid()) return;
 
     String packagePrefix = getPackagePrefix(context, offset);
@@ -181,7 +156,7 @@ public class AllClassesGetter {
       for (PsiClass psiClass : classes) {
         ProgressManager.getInstance().checkCanceled();
         if (isSuitable(context, packagePrefix, qnames, lookingForAnnotations, psiClass, filterByScope)) {
-          set.addElement(createLookupItem(psiClass, afterNew));
+          set.addElement(createLookupItem(psiClass));
         }
       }
     }
@@ -230,12 +205,10 @@ public class AllClassesGetter {
     });
   }
 
-  public static LookupItem<PsiClass> createLookupItem(final PsiClass psiClass, final boolean afterNew) {
+  public static LookupItem<PsiClass> createLookupItem(final PsiClass psiClass) {
     return ApplicationManager.getApplication().runReadAction(new Computable<LookupItem<PsiClass>>() {
       public LookupItem<PsiClass> compute() {
-        final LookupItem<PsiClass> item = LookupElementFactoryImpl.getInstance().createLookupElement(psiClass).setInsertHandler(INSERT_HANDLER);
-        JavaAwareCompletionData.setShowFQN(item);
-        return item;
+        return new JavaPsiClassReferenceElement(psiClass).setInsertHandler(INSERT_HANDLER);
       }
     });
   }

@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NonNls;
 public interface CodeCompletionFeatures {
   @NonNls String EXCLAMATION_FINISH = "editing.completion.finishByExclamation";
   @NonNls String SECOND_CLASS_NAME_COMPLETION = "editing.completion.second.classname";
+  @NonNls String SECOND_BASIC_COMPLETION = "editing.completion.second.basic";
   @NonNls String EDITING_COMPLETION_SMARTTYPE_GENERAL = "editing.completion.smarttype.general";
   @NonNls String EDITING_COMPLETION_BASIC = "editing.completion.basic";
   @NonNls String EDITING_COMPLETION_CLASSNAME = "editing.completion.classname";
