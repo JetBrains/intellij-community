@@ -246,7 +246,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     }
 
     List<VirtualFile> roots = Arrays.asList(ProjectRootManager.getInstance(myProject).getContentSourceRoots());
-    TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(myProject, roots, roots.size());
+    TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(myProject, roots, roots.size(), true);
 
     CompilerManager.getInstance(myProject).make(new CompileStatusNotification() {
       public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
