@@ -14,7 +14,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.util.concurrency.Semaphore;
 import junit.framework.AssertionFailedError;
@@ -83,8 +82,6 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     compilerConfiguration.projectOpened();
     compilerConfiguration.setDefaultCompiler(compilerConfiguration.getJavacCompiler());
-
-    TranslatingCompilerFilesMonitor.getInstance().registerListeners(VirtualFileManager.getInstance(), ProjectManagerEx.getInstanceEx());
   }
 
   /*
@@ -339,7 +336,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     });
     // need this to emulate project opening
     final List<VirtualFile> roots = Arrays.asList(ProjectRootManager.getInstance(myProject).getContentSourceRoots());
-    TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(myProject, roots, roots.size());
+    TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(myProject, roots, roots.size(), true);
     if (ex[0] != null) {
       throw ex[0];
     }
@@ -486,7 +483,6 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   }
 
   protected void tearDown() throws Exception {
-    TranslatingCompilerFilesMonitor.getInstance().removeListeners();
     final Exception[] exceptions = new Exception[]{null};
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
