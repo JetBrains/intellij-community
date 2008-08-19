@@ -4,7 +4,7 @@
         method that dumps the classes fields. Java body code is generated using Velocity Macro and you can change this
         to fit your needs. Full documentation included (Click hyperlink from Settings).
     </description>
-    <version>4.0.6</version>
+    <version>5.0</version>
     <vendor email="cib_rejse@yahoo.dk" url="http://generate-tostring.googlecode.com">Claus Ibsen</vendor>
     <idea-version since-build="8000"/>
 
