@@ -237,8 +237,14 @@ public class OverrideImplementUtil {
       if (insertAtOverride && !method.isConstructor()) {
         annotate(result, "java.lang.Override");
       }
-      if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NOT_NULL, false)) {
-        annotate(result, AnnotationUtil.NOT_NULL, AnnotationUtil.NULLABLE);
+
+      for (OverrideImplementsAnnotationsHandler annotationsHandler : Extensions
+        .getExtensions(OverrideImplementsAnnotationsHandler.EP_NAME)) {
+        for (String annotationFQName : annotationsHandler.getAnnotations()) {
+          if (AnnotationUtil.isAnnotated(method, annotationFQName, false)) {
+            annotate(result, annotationFQName, annotationsHandler.annotationsToRemove(annotationFQName));
+          }
+        }
       }
 
       final PsiCodeBlock body = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createCodeBlockFromText("{}", null);
