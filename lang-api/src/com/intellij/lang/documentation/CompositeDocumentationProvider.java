@@ -22,21 +22,21 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 public class CompositeDocumentationProvider extends ExtensibleDocumentationProvider{
 
-  private final Set<DocumentationProvider> myProviders;
+  private final List<DocumentationProvider> myProviders;
 
   public CompositeDocumentationProvider (DocumentationProvider ... documentationProviders) {
     this(Arrays.asList(documentationProviders));
   }
 
   public CompositeDocumentationProvider(Collection<DocumentationProvider> providers) {
-    myProviders = new HashSet<DocumentationProvider>(providers);
+    myProviders = new ArrayList<DocumentationProvider>(providers);
   }
 
   public void inject (DocumentationProvider provider) {

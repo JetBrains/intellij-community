@@ -27,8 +27,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
-import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.element.ExcludeSillyAssignment;
+import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -179,7 +179,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     item.setPresentableText(presentable);
     item.addLookupStrings(prefix, presentable, "asList(" + prefix + ")");
     item.setIcon(Icons.METHOD_ICON);
-    item.setInsertHandler(new SimpleInsertHandler() {
+    item.setInsertHandler(new SimpleInsertHandler<LookupElement>() {
       public int handleInsert(final Editor editor,
                               int startOffset,
                               final LookupElement item,

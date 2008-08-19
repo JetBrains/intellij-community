@@ -1,11 +1,12 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.simple.CompletionCharHandler;
-import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
 import com.intellij.codeInsight.lookup.impl.LookupElementPresentationEx;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -60,7 +61,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   private int myGrouping;
   private Map<Object,Object> myAttributes = null;
   public static final LookupItem[] EMPTY_ARRAY = new LookupItem[0];
-  @NotNull private CompletionCharHandler<T> myCompletionCharHandler = SimpleInsertHandler.DEFAULT_COMPLETION_CHAR_HANDLER;
   private final Set<String> myAllLookupStrings = new THashSet<String>();
   private String myPresentable;
   private AutoCompletionPolicy myAutoCompletionPolicy = AutoCompletionPolicy.SETTINGS_DEPENDENT;
@@ -163,6 +163,35 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return myInsertHandler;
   }
 
+  @Override
+  public void handleInsert(final InsertionContext context) {
+    super.handleInsert(context);
+    if (getTailType() != TailType.UNKNOWN && myInsertHandler == null) {
+      context.setAddCompletionChar(false);
+      final TailType type = handleCompletionChar(context.getEditor(), this, context.getCompletionChar());
+      type.processTail(context.getEditor(), context.getTailOffset());
+    }
+  }
+
+  @NotNull
+  public static TailType handleCompletionChar(@NotNull final Editor editor, @NotNull final LookupElement lookupElement, final char completionChar) {
+    final LookupItem<?> item = (LookupItem)lookupElement;
+    switch(completionChar){
+      case '.': return TailType.DOT;
+      case ',': return TailType.COMMA;
+      case ';': return TailType.SEMICOLON;
+      case '=': return TailType.EQ;
+      case ' ': return TailType.SPACE;
+      case '!': return TailType.EXCLAMATION;
+      case ':': return TailType.CASE_COLON; //?
+      case '\'': return TailType.QUOTE;
+      case Lookup.COMPLETE_STATEMENT_SELECT_CHAR: return TailType.SMART_COMPLETION;
+    }
+    final TailType attr = item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
+    return attr != null ? attr : TailType.NONE;
+  }
+
+
   @NotNull
   public TailType getTailType(){
     final TailType tailType = getAttribute(TAIL_TYPE_ATTR);
@@ -187,11 +216,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
 
   public LookupItem<T> setInsertHandler(@NotNull final InsertHandler<? extends LookupItem> handler) {
     myInsertHandler = handler;
-    return this;
-  }
-
-  public LookupItem<T> setCompletionCharHandler(@NotNull final CompletionCharHandler<T> completionCharHandler) {
-    myCompletionCharHandler = completionCharHandler;
     return this;
   }
 
@@ -285,11 +309,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
       myAttributes = new HashMap<Object, Object>(5);
     }
     myAttributes.putAll(item.myAttributes);
-  }
-
-  @NotNull
-  public CompletionCharHandler<T> getCompletionCharHandler() {
-    return myCompletionCharHandler;
   }
 
 }

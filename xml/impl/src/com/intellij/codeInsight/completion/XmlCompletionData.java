@@ -123,7 +123,7 @@ public class XmlCompletionData extends CompletionData {
   private static class XmlAttributeValueInsertHandler extends BasicInsertHandler {
     public void handleInsert(InsertionContext context, LookupElement item) {
       super.handleInsert(context, item);
-
+      context.setAddCompletionChar(false);
       eatClosingQuote(context.getCompletionChar(), context.getEditor());
 
     }
@@ -289,7 +289,7 @@ public class XmlCompletionData extends CompletionData {
   protected static class EntityRefInsertHandler extends BasicInsertHandler {
     public void handleInsert(InsertionContext context, LookupElement item) {
       super.handleInsert(context, item);
-
+      context.setAddCompletionChar(false);
       final CaretModel caretModel = context.getEditor().getCaretModel();
       context.getEditor().getDocument().insertString(caretModel.getOffset(), ";");
       caretModel.moveToOffset(caretModel.getOffset() + 1);

@@ -24,6 +24,7 @@ public abstract class TemplateInsertHandler implements InsertHandler {
   protected static final Object EXPANDED_TEMPLATE_ATTR = Key.create("EXPANDED_TEMPLATE_ATTR");
 
   public void handleInsert(final InsertionContext context, final LookupElement item) {
+    context.setAddCompletionChar(false);
     if (isTemplateToBeCompleted(item)) {
       handleTemplate((LookupItem) item, context);
     }

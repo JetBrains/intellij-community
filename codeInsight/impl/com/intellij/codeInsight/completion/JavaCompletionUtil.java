@@ -1,22 +1,23 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypeInfoImpl;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
-import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.PsiElementPattern;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.html.HtmlTag;
@@ -31,7 +32,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -273,22 +273,9 @@ public class JavaCompletionUtil {
   }
 
   public static void tunePreferencePolicy(final List<LookupItem> list, final SuggestedNameInfo suggestedNameInfo) {
-    final SimpleInsertHandler insertHandler = new SimpleInsertHandler() {
-        public int handleInsert(final Editor editor,
-                                final int startOffset,
-                                final LookupElement item,
-                                final LookupElement[] allItems,
-                                final TailType tailType, final char completionChar) throws IncorrectOperationException {
-          suggestedNameInfo.nameChoosen(item.getLookupString());
-          return editor.getCaretModel().getOffset();
-        }
-
-      public boolean equals(final Object obj) {
-        return obj.getClass() == getClass();
-      }
-
-      public int hashCode() {
-        return 42;
+    final InsertHandler insertHandler = new InsertHandler() {
+      public void handleInsert(final InsertionContext context, final LookupElement item) {
+        suggestedNameInfo.nameChoosen(item.getLookupString());
       }
     };
 

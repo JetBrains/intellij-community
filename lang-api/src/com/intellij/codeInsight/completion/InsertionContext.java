@@ -14,13 +14,16 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class InsertionContext {
+  public static final OffsetKey TAIL_OFFSET = OffsetKey.create("tailOffset", true);
+
   private final OffsetMap myOffsetMap;
   private final char myCompletionChar;
   private final boolean mySignatureSelected;
   private final LookupElement[] myElements;
-  private final PsiFile file;
-  private final Editor editor;
+  private final PsiFile myFile;
+  private final Editor myEditor;
   private Runnable myLaterRunnable;
+  private boolean myAddCompletionChar = true;
 
   public InsertionContext(final OffsetMap offsetMap, final char completionChar, final boolean signatureSelected, final LookupElement[] elements,
                           final PsiFile file,
@@ -29,8 +32,17 @@ public class InsertionContext {
     myCompletionChar = completionChar;
     mySignatureSelected = signatureSelected;
     myElements = elements;
-    this.file = file;
-    this.editor = editor;
+    myFile = file;
+    myEditor = editor;
+    setTailOffset(editor.getCaretModel().getOffset());
+  }
+
+  public void setTailOffset(final int offset) {
+    myOffsetMap.addOffset(TAIL_OFFSET, offset);
+  }
+
+  public int getTailOffset() {
+    return myOffsetMap.getOffset(TAIL_OFFSET);
   }
 
   public boolean isSignatureSelected() {
@@ -38,11 +50,11 @@ public class InsertionContext {
   }
 
   public PsiFile getFile() {
-    return file;
+    return myFile;
   }
 
   public Editor getEditor() {
-    return editor;
+    return myEditor;
   }
 
   public OffsetMap getOffsetMap() {
@@ -62,7 +74,7 @@ public class InsertionContext {
   }
 
   public Project getProject() {
-    return file.getProject();
+    return myFile.getProject();
   }
 
   public int getSelectionEndOffset() {
@@ -76,5 +88,18 @@ public class InsertionContext {
 
   public void setLaterRunnable(@Nullable final Runnable laterRunnable) {
     myLaterRunnable = laterRunnable;
+  }
+
+  /**
+   * Whether completionChar should be added to document at tail offset (see {@link #TAIL_OFFSET}) after insert handler.
+   * By default this value is true (should be added).
+   * @param addCompletionChar
+   */
+  public void setAddCompletionChar(final boolean addCompletionChar) {
+    myAddCompletionChar = addCompletionChar;
+  }
+
+  public boolean shouldAddCompletionChar() {
+    return myAddCompletionChar;
   }
 }

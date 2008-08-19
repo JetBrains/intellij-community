@@ -6,7 +6,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.JavaAwareCompletionData;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
-import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
@@ -472,7 +471,6 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       else return null;
     }
     final LookupItem<PsiClass> lookup = LookupElementFactoryImpl.getInstance().createLookupElement(clazz, name);
-    lookup.setInsertHandler(SimpleInsertHandler.EMPTY_HANDLER);
     lookup.addLookupStrings(clazz.getName());
     return JavaAwareCompletionData.setShowFQN(lookup).setTailType(TailType.NONE);
    }

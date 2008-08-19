@@ -1,10 +1,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.completion.simple.CompletionCharHandler;
-import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
-import com.intellij.codeInsight.completion.simple.SimpleInsertHandlerFactory;
-import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
+import com.intellij.codeInsight.completion.simple.*;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
@@ -66,27 +63,22 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       if (((LookupItem)item).getObject() instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)((LookupItem)item).getObject();
         LookupItem<PsiMethod> simpleItem = LookupElementFactoryImpl.getInstance().createLookupElement(method, item.getLookupString());
-        final SimpleInsertHandler handler = SimpleInsertHandlerFactory.createInsertHandler(method);
-        if (handler != null) {
-          simpleItem.setInsertHandler(handler);
-        }
-        simpleItem.setCompletionCharHandler(new CompletionCharHandler<PsiMethod>() {
-          public TailType handleCompletionChar(@NotNull final Editor editor,
-                                               @NotNull final LookupElement element, final char completionChar) {
-            final LookupItem item = (LookupItem)element;
-            if (completionChar == '!') return item.getTailType();
+        final InsertHandler handler = new PsiMethodInsertHandler(method) {
+          @Override
+          protected TailType getTailType(final LookupItem item, final Editor editor, final char completionChar) {
+            if (completionChar == '!') return ((LookupItem)item).getTailType();
             if (completionChar == '(') {
               final PsiMethod psiMethod = (PsiMethod)item.getObject();
               return psiMethod.getParameterList().getParameters().length > 0 || psiMethod.getReturnType() != PsiType.VOID
                      ? TailType.NONE : TailType.SEMICOLON;
-            }                     
+            }
             if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) return TailType.SMART_COMPLETION;
             return null;
           }
-        });
-        final InsertHandler insertHandler = simpleItem.getInsertHandler();
+        };
+        simpleItem.setInsertHandler(handler);
         simpleItem.copyAttributes((LookupItem)item);
-        insertHandler.handleInsert(context, simpleItem);
+        simpleItem.handleInsert(context);
         return;
       }
     }

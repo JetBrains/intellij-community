@@ -410,14 +410,14 @@ public class DocumentationManager implements ProjectComponent {
 
     myUpdateDocAlarm.addRequest(new Runnable() {
       public void run() {
-        final Exception[] ex = new Exception[1];
+        final Throwable[] ex = new Throwable[1];
         final String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
           @Nullable
           public String compute() {
             try {
               return provider.getDocumentation();
             }
-            catch (Exception e) {
+            catch (Throwable e) {
               ex[0] = e;
             }
             return null;

@@ -1,9 +1,9 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
@@ -42,6 +42,7 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
   }
 
   public void handleInsert(InsertionContext context, LookupElement item) {
+    context.setAddCompletionChar(false);
     super.handleInsert(context, item);
     Project project = context.getProject();
     Editor editor = context.getEditor();
@@ -101,7 +102,7 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
       return;
     }
 
-    final TailType tailType = SimpleInsertHandler.DEFAULT_COMPLETION_CHAR_HANDLER.handleCompletionChar(editor, item, context.getCompletionChar());
+    final TailType tailType = LookupItem.handleCompletionChar(editor, item, context.getCompletionChar());
     tailType.processTail(editor, editor.getCaretModel().getOffset());
   }
 

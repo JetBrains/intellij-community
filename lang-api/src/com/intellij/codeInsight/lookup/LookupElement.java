@@ -67,8 +67,11 @@ public abstract class LookupElement extends UserDataHolderBase {
   public abstract InsertHandler<? extends LookupElement> getInsertHandler();
 
   public void handleInsert(InsertionContext context) {
-    //noinspection unchecked
-    ((InsertHandler)getInsertHandler()).handleInsert(context, this);
+    final InsertHandler<? extends LookupElement> handler = getInsertHandler();
+    if (handler != null) {
+      //noinspection unchecked
+      ((InsertHandler)handler).handleInsert(context, this);
+    }
   }
 
   public AutoCompletionPolicy getAutoCompletionPolicy() {
