@@ -16,7 +16,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.xml.Parser;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -341,12 +339,5 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
       };
     }
     return null;
-  }
-
-  public void restoreOriginalModule(final Module originalModule) {
-    if (originalModule == null) return;
-    final Module[] classModules = getModules();
-    final Collection<Module> modules = ModuleUtil.collectModulesDependsOn(Arrays.asList(classModules));
-    if (modules.contains(originalModule)) setModule(originalModule);
   }
 }

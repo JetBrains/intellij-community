@@ -30,7 +30,6 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
@@ -223,7 +222,9 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     }
 
     public void setPsiElement(final PsiClass psiClass) {
+      final Module originalModule = getConfigurationModule().getModule();
       setMainClass(psiClass);
+      restoreOriginalModule(originalModule);
     }
   };
 
@@ -251,13 +252,6 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     DefaultJDOMExternalizer.writeExternal(getPersistentData(), element);
     EnvironmentVariablesComponent.writeExternal(element, getPersistentData().getEnvs());
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
-  }
-
-  public void restoreOriginalModule(final Module originalModule) {
-    if (originalModule == null) return;
-    final Module[] classModules = getModules();
-    final Collection<Module> modules = ModuleUtil.collectModulesDependsOn(Arrays.asList(classModules));
-    if (modules.contains(originalModule)) setModule(originalModule);
   }
 
   public void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
