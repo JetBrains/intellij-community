@@ -9,19 +9,20 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 public abstract class ExternalCompiler implements BackendCompiler {
   private static final Logger LOG = Logger.getInstance("com.intellij.compiler.impl.javaCompiler.ExternalCompiler");
+  private static final Set<FileType> COMPILABLE_TYPES = Collections.<FileType>singleton(StdFileTypes.JAVA);
 
   @NotNull
   public abstract String[] createStartupCommand(ModuleChunk chunk, CompileContext context, String outputPath)
     throws IOException, IllegalArgumentException;
 
   @NotNull
-  public Collection<? extends FileType> getCompilableFileTypes() {
-    return Arrays.asList(StdFileTypes.JAVA);
+  public Set<FileType> getCompilableFileTypes() {
+    return COMPILABLE_TYPES;
   }
 
   @NotNull

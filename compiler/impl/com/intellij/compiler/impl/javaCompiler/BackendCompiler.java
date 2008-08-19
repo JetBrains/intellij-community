@@ -10,13 +10,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
+import java.util.Set;
 
 public interface BackendCompiler {
   @NotNull @NonNls String getId(); // used for externalization
   @NotNull String getPresentableName();
   @NotNull Configurable createConfigurable();
-  @NotNull Collection<? extends FileType> getCompilableFileTypes();
+  @NotNull
+  Set<FileType> getCompilableFileTypes();
   @Nullable OutputParser createErrorParser(final String outputDir);
   @Nullable OutputParser createOutputParser(final String outputDir);
 
