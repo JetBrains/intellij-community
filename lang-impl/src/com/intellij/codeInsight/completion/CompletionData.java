@@ -173,6 +173,8 @@ public class CompletionData {
       if (beginIndex > endIndex) {
         LOG.error("Inconsistent reference (found at offset not included in its range): ref=" + ref + " element=" + element);
       }
+      LOG.assertTrue(beginIndex >= 0);
+      LOG.assertTrue(endIndex >= 0);
       return element.getText().substring(beginIndex, endIndex);
     }
     return null;
