@@ -4,21 +4,60 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * Model for "Go to | File" action
+ */
 public class GotoFileModel extends ContributorsBasedGotoByModel{
   private final int myMaxSize;
+  /** current file types */
+  private HashSet<FileType> myFileTypes;
 
   public GotoFileModel(Project project) {
     super(project, Extensions.getExtensions(ChooseByNameContributor.FILE_EP_NAME));
     myMaxSize = WindowManagerEx.getInstanceEx().getFrame(project).getSize().width;
+  }
+
+  /**
+   * Set file types
+   * @param fileTypes a file types to set 
+   */
+  public synchronized void setFileTypes(FileType[] fileTypes) {
+    // get and set method are called from different threads
+    myFileTypes = new HashSet<FileType>(Arrays.asList(fileTypes));
+  }
+
+  /**
+   * @return get file types
+   */
+  private synchronized Set<FileType> getFileTypes() {
+    // get and set method are called from different threads
+    return myFileTypes;
+  }
+
+  @Override
+  protected boolean acceptItem(final NavigationItem item) {
+    if(item instanceof PsiFile) {
+      final PsiFile file = (PsiFile)item;
+      final Set<FileType> types = getFileTypes();
+      return types == null || types.contains(file.getFileType());
+    } else {
+      return super.acceptItem(item);    //To change body of overridden methods use File | Settings | File Templates.
+    }
   }
 
   public String getPromptText() {

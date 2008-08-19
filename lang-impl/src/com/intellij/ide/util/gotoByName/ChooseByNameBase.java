@@ -62,6 +62,8 @@ public abstract class ChooseByNameBase{
   private JPanel myCardContainer;
   private CardLayout myCard;
   protected JCheckBox myCheckBox;
+  /** the tool area of the popup, it is just after card box */
+  protected JComponent myToolArea;
 
   protected JScrollPane myListScrollPane; // Located in the layered pane
   protected JList myList;
@@ -113,6 +115,24 @@ public abstract class ChooseByNameBase{
     myModel = model;
     myInitialText = initialText;
     myContext = new WeakReference<PsiElement>(context);
+  }
+
+  /**
+   * @return get tool area
+   */
+  public JComponent getToolArea() {
+    return myToolArea;
+  }
+
+  /**
+   * Set tool area. The method may be called only before invoke.
+   * @param toolArea a tool area component
+   */
+  public void setToolArea(JComponent toolArea) {
+    if(myCard != null) {
+      throw new IllegalStateException("Tool area is modifiable only before invoke()");
+    }
+    myToolArea = toolArea;
   }
 
   public void invoke(final ChooseByNamePopupComponent.Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
@@ -269,6 +289,10 @@ public abstract class ChooseByNameBase{
       //hBox.add(myCaseCheckBox);
       //hBox.add(myCamelCheckBox);
     }
+    if(myToolArea != null) {
+      // if too area was set, add it to hbox
+      hBox.add(myToolArea);
+    }
     myTextFieldPanel.add(hBox);
 
     myHistory = new ArrayList<Pair<String, Integer>>();
@@ -310,14 +334,14 @@ public abstract class ChooseByNameBase{
 
     myCheckBox.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
-        rebuildList(0, REBUILD_DELAY, null, ModalityState.current());
+        rebuildList();
       }
     });
     myCheckBox.setFocusable(false);
 
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
-        rebuildList(0, REBUILD_DELAY, null, ModalityState.current());
+        rebuildList();
       }
     });
 
@@ -402,6 +426,14 @@ public abstract class ChooseByNameBase{
     if (modalityState != null) {
       rebuildList(0, 0, null, modalityState);
     }
+  }
+
+  /**
+   * Default rebuild list. It uses {@link #REBUILD_DELAY} and current modality state.
+   */
+  public void rebuildList() {
+    // TODO this method is public, because the chooser does not listed for the model.
+    rebuildList(0, REBUILD_DELAY, null, ModalityState.current());
   }
 
   private void updateDocumentation() {
@@ -902,7 +934,7 @@ public abstract class ChooseByNameBase{
       myTextField.setText(newPattern);
       myTextField.setCaretPosition(newPattern.length());
 
-      rebuildList(0, REBUILD_DELAY, null, ModalityState.current());
+      rebuildList();
     }
 
     private boolean isComplexPattern(final String pattern) {

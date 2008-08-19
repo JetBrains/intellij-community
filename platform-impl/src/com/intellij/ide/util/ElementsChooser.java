@@ -169,6 +169,27 @@ public class ElementsChooser<T> extends JPanel {
     addElement(element, isMarked, element instanceof ElementProperties ? (ElementProperties)element : null);
   }
 
+  /**
+   * Check if element is marked
+   * @param element an element to test
+   * @return true if element is marked
+   */
+  public boolean isElementMarked(T element) {
+    final int elementRow = myTableModel.getElementRow(element);
+    return myTableModel.isElementMarked(elementRow);
+  }
+
+  /**
+   * Check if element is marked
+   * @param element an element to test
+   * @param marked a new value of mark.
+   */
+  public void setElementMarked(T element, boolean marked) {
+    final int elementRow = myTableModel.getElementRow(element);
+    myTableModel.setMarked(elementRow, marked);
+  }
+
+
   public void removeElement(T element) {
     final int elementRow = myTableModel.getElementRow(element);
     if (elementRow < 0) {

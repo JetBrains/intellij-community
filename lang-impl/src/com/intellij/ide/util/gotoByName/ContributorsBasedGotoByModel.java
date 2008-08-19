@@ -41,6 +41,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import javax.swing.*;
 import java.util.*;
 
+/**
+ * Contributor-based goto model
+ */
 public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ContributorsBasedGotoByModel");
 
@@ -73,11 +76,25 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
     return names.toArray(new String[names.size()]);
   }
 
+  /**
+   * Get elements by name from contributors.
+   *
+   * @param name a name
+   * @param checkBoxState if true, non-project files are considered as well
+   * @param pattern a pattern to use
+   * @return a list of navigation items from contributors for
+   *  which {@link #acceptItem(NavigationItem) returns true.
+   *
+   */
   public Object[] getElementsByName(String name, boolean checkBoxState, final String pattern) {
     List<NavigationItem> items = new ArrayList<NavigationItem>();
     for (ChooseByNameContributor contributor : myContributors) {
       try {
-        items.addAll(Arrays.asList(contributor.getItemsByName(name, pattern, myProject, checkBoxState)));
+        for(NavigationItem item : contributor.getItemsByName(name, pattern, myProject, checkBoxState)) {
+          if(acceptItem(item)) {
+            items.add(item);
+          }
+        }
       }
       catch(ProcessCanceledException ex) {
         // index corruption detected, ignore
@@ -95,5 +112,15 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
 
   protected ChooseByNameContributor[] getContributors() {
     return myContributors;
+  }
+
+  /**
+   * This method allows exetending classes to introduce additional filtering criteria to model
+   * beyoud pattern and project/non-project files. The default implementation just returns true.
+   * @param item an item to filter
+   * @return true if the item is acceptable according to additional filtering criteria.
+   */
+  protected boolean acceptItem(NavigationItem item) {
+    return true;
   }
 }
