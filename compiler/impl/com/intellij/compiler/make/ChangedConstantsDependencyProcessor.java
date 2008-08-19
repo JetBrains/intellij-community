@@ -21,7 +21,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ChangedConstantsDependencyProcessor {
+class ChangedConstantsDependencyProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.ChangedConstantsDependencyProcessor");
   private final Project myProject;
   private final CachingSearcher mySearcher;

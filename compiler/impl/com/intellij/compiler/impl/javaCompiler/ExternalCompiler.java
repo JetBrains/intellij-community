@@ -25,6 +25,10 @@ public abstract class ExternalCompiler implements BackendCompiler {
     return COMPILABLE_TYPES;
   }
 
+  public DependencyProcessor getDependencyProcessor() {
+    return null;
+  }
+
   @NotNull
   public Process launchProcess(final ModuleChunk chunk, final String outputDir, final CompileContext compileContext) throws IOException {
     final String[] commands = createStartupCommand(chunk, compileContext, outputDir);

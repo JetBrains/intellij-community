@@ -6,6 +6,7 @@ package com.intellij.compiler.make;
 
 import com.intellij.compiler.SymbolTable;
 import com.intellij.compiler.classParsing.*;
+import com.intellij.compiler.impl.javaCompiler.DependencyProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,6 +21,7 @@ import com.intellij.util.cls.ClsUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.rmi.Remote;
@@ -84,6 +86,10 @@ public class DependencyCache {
 
   public void addTraverseRoot(int qName) {
     myTraverseRoots.add(qName);
+  }
+
+  public void clearTraverseRoots() {
+    myTraverseRoots.clear();
   }
 
   public void markSourceRemoved(int qName) {
@@ -411,12 +417,15 @@ public class DependencyCache {
   /**
    * @return qualified names of the classes that should be additionally recompiled
    */
-  public Pair<int[], Set<VirtualFile>> findDependentClasses(CompileContext context, Project project, Set successfullyCompiled) throws CacheCorruptedException {
-    markDependencies(context, project, successfullyCompiled);
+  public Pair<int[], Set<VirtualFile>> findDependentClasses(CompileContext context, Project project, Set<VirtualFile> successfullyCompiled, @Nullable final DependencyProcessor additionalProcessor)
+      throws CacheCorruptedException {
+
+    markDependencies(context, project, successfullyCompiled, additionalProcessor);
     return new Pair<int[], Set<VirtualFile>>(myMarkedInfos.toArray(), Collections.unmodifiableSet(myMarkedFiles));
   }
 
-  private void markDependencies(CompileContext context, Project project, final Set successfullyCompiled) throws CacheCorruptedException {
+  private void markDependencies(CompileContext context, Project project, final Set<VirtualFile> successfullyCompiled,
+                                @Nullable final DependencyProcessor additionalProcessor) throws CacheCorruptedException {
     try {
       if (LOG.isDebugEnabled()) {
         LOG.debug("====================Marking dependent files=====================");
@@ -426,14 +435,14 @@ public class DependencyCache {
       final SourceFileFinder sourceFileFinder = new SourceFileFinder(project, context);
       final CachingSearcher searcher = new CachingSearcher(project);
       final ChangedRetentionPolicyDependencyProcessor changedRetentionPolicyDependencyProcessor = new ChangedRetentionPolicyDependencyProcessor(project, searcher, this);
-      for (int qName : qNamesToUpdate) {
+      for (final int qName : qNamesToUpdate) {
         final int oldInfoId = getCache().getClassId(qName);
         if (oldInfoId == Cache.UNKNOWN) {
           continue;
         }
         final int newInfoId = getNewClassesCache().getClassId(qName);
         if (newInfoId != Cache.UNKNOWN) { // there is a new class file created
-          new DependencyProcessor(project, this, qName).run();
+          new JavaDependencyProcessor(project, this, qName).run();
           ArrayList<ChangedConstantsDependencyProcessor.FieldChangeInfo> changed =
             new ArrayList<ChangedConstantsDependencyProcessor.FieldChangeInfo>();
           ArrayList<ChangedConstantsDependencyProcessor.FieldChangeInfo> removed =
@@ -447,6 +456,9 @@ public class DependencyCache {
             ).run();
           }
           changedRetentionPolicyDependencyProcessor.checkAnnotationRetentionPolicyChanges(qName);
+          if (additionalProcessor != null) {
+            additionalProcessor.processDependencies(context, qName);
+          }
         }
         else {
           boolean isSourceDeleted = false;
@@ -463,7 +475,8 @@ public class DependencyCache {
               }
             }).booleanValue();
             if (markAsRemovedSource) {
-              // for Inner classes: sourceFile may exist, but the inner class declaration in it - not, thus the source for the class info should be considered removed
+              // for Inner classes: sourceFile may exist, but the inner class declaration inside it may not,
+              // thus the source for the class info should be considered removed
               isSourceDeleted = true;
               markSourceRemoved(qName);
               myMarkedInfos.remove(qName); // if the info has been marked already, the mark should be removed

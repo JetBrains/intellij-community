@@ -2,6 +2,7 @@ package com.intellij.compiler.impl.javaCompiler.eclipse;
 
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
+import com.intellij.compiler.impl.javaCompiler.DependencyProcessor;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
@@ -35,6 +36,10 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
     myProject = project;
     myEclipseExternalCompiler = new EclipseCompiler(project);
     createCompileDriver();
+  }
+
+  public DependencyProcessor getDependencyProcessor() {
+    return null;
   }
 
   public boolean checkCompiler(final CompileScope scope) {

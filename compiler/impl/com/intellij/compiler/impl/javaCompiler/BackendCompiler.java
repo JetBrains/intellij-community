@@ -29,4 +29,7 @@ public interface BackendCompiler {
     final CompileContext compileContext) throws IOException;
 
   void compileFinished();
+
+  @Nullable
+  DependencyProcessor getDependencyProcessor();
 }

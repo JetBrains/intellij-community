@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
-public class DependencyProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.DependencyProcessor");
+class JavaDependencyProcessor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.JavaDependencyProcessor");
   private final DependencyCache myDependencyCache;
   private final int myQName;
   private final Set<MemberInfo> myAddedMembers = new HashSet<MemberInfo>();
@@ -46,7 +46,7 @@ public class DependencyProcessor {
   private final boolean myWereAnnotationTargetsRemoved;
   private final boolean myRetentionPolicyChanged;
 
-  public DependencyProcessor(Project project, DependencyCache dependencyCache, int qName) throws CacheCorruptedException {
+  public JavaDependencyProcessor(Project project, DependencyCache dependencyCache, int qName) throws CacheCorruptedException {
     myProject = project;
     myDependencyCache = dependencyCache;
     myQName = qName;
