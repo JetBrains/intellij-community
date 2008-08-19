@@ -156,8 +156,10 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   }
 
   public void update(final Editor editor) {
-    final Document document = editor.getDocument();
-    if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
+    if (editor != null) {
+      final Document document = editor.getDocument();
+      if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
+    }
 
     for (StatusBarPatch patch : myPatches) {
       patch.updateStatusBar(editor, null);
