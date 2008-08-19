@@ -51,10 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PostHighlightingPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
@@ -127,6 +124,12 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       progress.cancel();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
+          try {
+            Thread.sleep(new Random().nextInt(100));
+          }
+          catch (InterruptedException e) {
+            LOG.error(e);
+          }
           DaemonCodeAnalyzer.getInstance(myProject).restart();
         }
       }, myProject.getDisposed());
