@@ -819,5 +819,15 @@ public class UIUtil {
       // ignore - no JDK 6
     }
   }
+
+  public static boolean hasJdk6Dialogs() {
+    try {
+      UIUtil.class.getClassLoader().loadClass("java.awt.Dialog$ModalityType");
+    }
+    catch (Throwable e) {
+      return false;
+    }
+    return true;
+  }
 }
 

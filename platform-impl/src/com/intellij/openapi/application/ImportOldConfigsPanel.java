@@ -18,6 +18,7 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -39,7 +40,7 @@ public class ImportOldConfigsPanel extends JDialog {
   private JButton myOkButton;
 
   public ImportOldConfigsPanel() {
-    super((Dialog) null, true);
+    super(UIUtil.hasJdk6Dialogs() ? (Frame) null : JOptionPane.getRootFrame(), true);
 
     new MnemonicHelper().register(getContentPane());
 
