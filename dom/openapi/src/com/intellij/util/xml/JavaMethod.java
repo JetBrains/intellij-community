@@ -110,6 +110,26 @@ public final class JavaMethod implements AnnotatedElement{
     }
   }
 
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (!(o instanceof JavaMethod)) return false;
+
+    final JavaMethod that = (JavaMethod)o;
+
+    if (!myDeclaringClass.equals(that.myDeclaringClass)) return false;
+    if (!mySignature.equals(that.mySignature)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = mySignature.hashCode();
+    result = 31 * result + myDeclaringClass.hashCode();
+    return result;
+  }
+
   public final Class getReturnType() {
     return myMethod.getReturnType();
   }

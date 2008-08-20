@@ -19,34 +19,42 @@ package com.intellij.util.xml.ui;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTableCellRenderer {
   private final TableCellRenderer myRenderer;
   private final DomElement myRowDomElement;
   private T myCellValueDomElement;
+  private final DomFileElement<DomElement> myRoot;
 
-  public ErrorableTableCellRenderer(final T cellValueDomElement, final TableCellRenderer renderer, final DomElement rowDomElement) {
+  public ErrorableTableCellRenderer(@Nullable final T cellValueDomElement, final TableCellRenderer renderer, @NotNull final DomElement rowDomElement) {
     myCellValueDomElement = cellValueDomElement;
     myRenderer = renderer;
     myRowDomElement = rowDomElement;
 
+    myRoot = myRowDomElement.getRoot();
   }
 
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     final Component component = myRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+    if (!myRoot.isValid()) {
+      return component;
+    }
 
     final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(myRowDomElement.getManager().getProject());
-    final DomElementsProblemsHolder holder = annotationsManager.getCachedProblemHolder(myCellValueDomElement);
+    final DomElementsProblemsHolder holder = annotationsManager.getCachedProblemHolder(myRoot);
     final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(myCellValueDomElement);
     final List<DomElementProblemDescriptor> warningProblems = new ArrayList<DomElementProblemDescriptor>(holder.getProblems(myCellValueDomElement, true, HighlightSeverity.WARNING));
     warningProblems.removeAll(errorProblems);
