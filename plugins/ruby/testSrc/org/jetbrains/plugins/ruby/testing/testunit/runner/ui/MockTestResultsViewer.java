@@ -2,8 +2,8 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner.ui;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 
 import javax.swing.*;
@@ -12,10 +12,10 @@ import javax.swing.*;
  * @author Roman Chernyatchik
  */
 public class MockTestResultsViewer implements TestResultsViewer {
-  private RTestUnitConsoleProperties myProperties;
+  private TestConsoleProperties myProperties;
   private RTestUnitTestProxy myRootSuite;
 
-  public MockTestResultsViewer(final RTestUnitConsoleProperties properties,
+  public MockTestResultsViewer(final TestConsoleProperties properties,
                                final RTestUnitTestProxy suite) {
     myProperties = properties;
     myRootSuite = suite;

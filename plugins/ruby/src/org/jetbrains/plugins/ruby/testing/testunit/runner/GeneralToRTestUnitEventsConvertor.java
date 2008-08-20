@@ -209,6 +209,10 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
     });
   }
 
+  public void onTestIgnored(final String testName, final String localizedMessage) {
+    //TODO
+  }
+
   public void onTestOutput(final String testName,
                            final String text, final boolean stdOut) {
     UIUtil.addToInvokeLater(new Runnable() {
@@ -246,7 +250,8 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
   }
  
   protected String getFullTestName(final String testName) {
-    return getCurrentSuite().getName() + testName;
+    // Test name should be unique
+    return testName;
   }
 
   protected int getRunningTestsQuantity() {

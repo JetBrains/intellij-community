@@ -8,7 +8,7 @@ import org.jetbrains.plugins.ruby.support.UIUtil;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsListener;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsAdapter;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.SMTestRunnerResultsForm;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestProxySelectionChangedListener;
 
 import javax.swing.*;
@@ -70,11 +70,11 @@ public class RTestUnitStatisticsPanel extends JPanel {
    * Show and selects suite in table by event
    * @return
    */
-  public RTestUnitResultsForm.FormSelectionListener createSelectionListener() {
-    final RTestUnitResultsForm.FormSelectionListener modelSelectionListener =
+  public SMTestRunnerResultsForm.FormSelectionListener createSelectionListener() {
+    final SMTestRunnerResultsForm.FormSelectionListener modelSelectionListener =
         myTableModel.createSelectionListener();
 
-    return new RTestUnitResultsForm.FormSelectionListener() {
+    return new SMTestRunnerResultsForm.FormSelectionListener() {
       public void onSelectedRequest(@Nullable final RTestUnitTestProxy selectedTestProxy) {
         // Send event to model
         modelSelectionListener.onSelectedRequest(selectedTestProxy);
@@ -159,7 +159,7 @@ public class RTestUnitStatisticsPanel extends JPanel {
   }
 
   protected Runnable createGotoSuiteOrParentAction() {
-    final RTestUnitResultsForm.FormSelectionListener selectionListener = createSelectionListener();
+    final SMTestRunnerResultsForm.FormSelectionListener selectionListener = createSelectionListener();
 
     // Expand selected or go to parent
     return new Runnable() {
@@ -247,7 +247,7 @@ public class RTestUnitStatisticsPanel extends JPanel {
   }
 
   private void showInTableAndSelectRow(final RTestUnitTestProxy suite,
-                                            final RTestUnitResultsForm.FormSelectionListener selectionListener,
+                                            final SMTestRunnerResultsForm.FormSelectionListener selectionListener,
                                             final RTestUnitTestProxy suiteProxy) {
     selectionListener.onSelectedRequest(suite);
     selectRowOf(suiteProxy);
@@ -259,7 +259,7 @@ public class RTestUnitStatisticsPanel extends JPanel {
    * @return Listener
    */
   public RTestUnitTestProxySelectionChangedListener createOnChangeSelectionListener() {
-    final RTestUnitResultsForm.FormSelectionListener selectionListener = createSelectionListener();
+    final SMTestRunnerResultsForm.FormSelectionListener selectionListener = createSelectionListener();
 
     return new RTestUnitTestProxySelectionChangedListener() {
       public void onChangeSelection(@Nullable final RTestUnitTestProxy selectedTestProxy, final boolean requestFocus) {

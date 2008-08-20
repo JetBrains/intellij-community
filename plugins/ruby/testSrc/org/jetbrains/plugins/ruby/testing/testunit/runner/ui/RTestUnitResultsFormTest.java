@@ -1,25 +1,25 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner.ui;
 
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
-import org.jetbrains.plugins.ruby.Marker;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.Marker;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 
 /**
  * @author Roman Chernyatchik
  */
 public class RTestUnitResultsFormTest extends BaseRUnitTestsTestCase {
-  private RTestUnitResultsForm myResultsViewer;
+  private SMTestRunnerResultsForm myResultsViewer;
   private RTestUnitTestProxy myTestsRootNode;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final RTestUnitConsoleProperties consoleProperties = createConsoleProperties();
-    myResultsViewer = (RTestUnitResultsForm)createResultsViewer(consoleProperties);
+    final TestConsoleProperties consoleProperties = createConsoleProperties();
+    myResultsViewer = (SMTestRunnerResultsForm)createResultsViewer(consoleProperties);
     myTestsRootNode = myResultsViewer.getTestsRootNode();
   }
 

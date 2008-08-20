@@ -6,7 +6,7 @@ import org.jetbrains.plugins.ruby.Marker;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsListener;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.SMTestRunnerResultsForm;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestProxySelectionChangedListener;
 
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class RTestUnitStatisticsPanelTest extends BaseRUnitTestsTestCase {
   private RTestUnitStatisticsPanel myRTestUnitStatisticsPanel;
-  private RTestUnitResultsForm.FormSelectionListener mySelectionListener;
+  private SMTestRunnerResultsForm.FormSelectionListener mySelectionListener;
   private RTestUnitEventsListener myTestEventsListener;
   private RTestUnitTestProxy myRootSuite;
 

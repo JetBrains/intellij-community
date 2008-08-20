@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -10,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.ruby.lang.TextUtil;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.states.TestStateInfo;
 
@@ -144,7 +144,7 @@ public class TestsPresentationUtil {
   }
 
   private static Icon getIcon(final RTestUnitTestProxy testProxy,
-                              final RTestUnitConsoleProperties consoleProperties) {
+                              final TestConsoleProperties consoleProperties) {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
     switch (magnitude) {
       case ERROR_INDEX:

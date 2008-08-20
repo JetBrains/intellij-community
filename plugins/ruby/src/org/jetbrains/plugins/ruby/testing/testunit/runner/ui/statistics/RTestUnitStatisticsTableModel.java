@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.support.UIUtil;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.SMTestRunnerResultsForm;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -36,8 +36,8 @@ public class RTestUnitStatisticsTableModel extends ListTableModel<RTestUnitTestP
     super(new ColumnTest(), new ColumnDuration(), new ColumnResults());
   }
 
-  public RTestUnitResultsForm.FormSelectionListener createSelectionListener() {
-    return new RTestUnitResultsForm.FormSelectionListener() {
+  public SMTestRunnerResultsForm.FormSelectionListener createSelectionListener() {
+    return new SMTestRunnerResultsForm.FormSelectionListener() {
       public void onSelectedRequest(@Nullable final RTestUnitTestProxy proxy) {
 
         final RTestUnitTestProxy newCurrentSuite = getCurrentSuiteFor(proxy);

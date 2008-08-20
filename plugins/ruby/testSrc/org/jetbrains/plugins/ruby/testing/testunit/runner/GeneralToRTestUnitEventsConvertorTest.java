@@ -1,13 +1,15 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
 import com.intellij.openapi.util.Disposer;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import org.jetbrains.plugins.ruby.Marker;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitConsoleView;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.SMTestRunnerResultsForm;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestTreeView;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
+import java.util.List;
 
 /**
  * @author Roman Chernyatchik
@@ -16,14 +18,14 @@ public class GeneralToRTestUnitEventsConvertorTest extends BaseRUnitTestsTestCas
   private RTestUnitConsoleView myConsole;
   private GeneralToRTestUnitEventsConvertor myEventsProcessor;
   private TreeModel myTreeModel;
-  private RTestUnitResultsForm myResultsViewer;
+  private SMTestRunnerResultsForm myResultsViewer;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    final RTestUnitConsoleProperties consoleProperties = createConsoleProperties();
-    myResultsViewer = (RTestUnitResultsForm)createResultsViewer(consoleProperties);
+    final TestConsoleProperties consoleProperties = createConsoleProperties();
+    myResultsViewer = (SMTestRunnerResultsForm)createResultsViewer(consoleProperties);
 
     myConsole = new RTestUnitConsoleView(consoleProperties, myResultsViewer);
     myEventsProcessor = new GeneralToRTestUnitEventsConvertor(myResultsViewer.getTestsRootNode());
@@ -247,6 +249,30 @@ public class GeneralToRTestUnitEventsConvertorTest extends BaseRUnitTestsTestCas
 
     onTestSuiteStarted("my_suite");
     assertEquals("my_suite", myEventsProcessor.getCurrentSuite().getName());
+  }
+
+  public void testConcurrentSuite_intersected() {
+    myEventsProcessor.onSuiteStarted("suite1");
+    myEventsProcessor.onTestStarted("suite2.test1");
+
+    final RTestUnitTestProxy test1 =
+        myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName("suite2.test1"));
+
+    myEventsProcessor.onSuiteFinished("suite1");
+
+    myEventsProcessor.onSuiteStarted("suite2");
+    myEventsProcessor.onTestFinished("suite2.test1", 10);
+    myEventsProcessor.onSuiteFinished("suite2");
+
+    assertEquals("suite1", test1.getParent().getName());
+
+    final List<? extends RTestUnitTestProxy> children =
+        myResultsViewer.getTestsRootNode().getChildren();
+    assertEquals(2, children.size());
+    assertEquals("suite1", children.get(0).getName());
+    assertEquals(1, children.get(0).getChildren().size());
+    assertEquals("suite2", children.get(1).getName());
+    assertEquals(0, children.get(1).getChildren().size());
   }
 
   private void onTestStarted(final String testName) {

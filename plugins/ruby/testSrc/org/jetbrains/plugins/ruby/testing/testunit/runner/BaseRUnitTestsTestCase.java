@@ -7,7 +7,7 @@ import org.jetbrains.plugins.ruby.ruby.run.configuration.rubyScript.RubyRunConfi
 import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.RTestUnitRunConfiguration;
 import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.TestUnitRunConfigurationType;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestResultsViewer;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.SMTestRunnerResultsForm;
 
 /**
  * @author Roman Chernyatchik
@@ -70,18 +70,18 @@ public abstract class BaseRUnitTestsTestCase extends LightIdeaTestCase {
     return new RTestUnitRunConfiguration(getProject(), factory, "name");
   }
 
-  protected RTestUnitConsoleProperties createConsoleProperties() {
+  protected TestConsoleProperties createConsoleProperties() {
     final RTestUnitRunConfiguration runConfiguration = createRTestsRunConfiguration();
 
-    final RTestUnitConsoleProperties consoleProperties = new RTestUnitConsoleProperties(runConfiguration);
+    final TestConsoleProperties consoleProperties = new RTestUnitConsoleProperties(runConfiguration);
     TestConsoleProperties.HIDE_PASSED_TESTS.set(consoleProperties, false);
     
     return consoleProperties;
   }
 
-  protected TestResultsViewer createResultsViewer(final RTestUnitConsoleProperties consoleProperties) {
+  protected TestResultsViewer createResultsViewer(final TestConsoleProperties consoleProperties) {
     final ExecutionEnvironment environment = new ExecutionEnvironment();
-    return new RTestUnitResultsForm(consoleProperties.getConfiguration(),
+    return new SMTestRunnerResultsForm(consoleProperties.getConfiguration(),
                                     consoleProperties,
                                     environment.getRunnerSettings(),
                                     environment.getConfigurationSettings());

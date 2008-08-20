@@ -5,7 +5,6 @@ import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 
 /**
@@ -13,7 +12,7 @@ import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
  */
 public class RTestUnitUIActionsHandlerTest extends BaseRUnitTestsTestCase {
   private MockTestResultsViewer myResultsViewer;
-  private RTestUnitConsoleProperties myProperties;
+  private TestConsoleProperties myProperties;
   private RTestUnitUIActionsHandler myUIActionsHandler;
   private AbstractTestProxy mySelectedTestProxy;
 

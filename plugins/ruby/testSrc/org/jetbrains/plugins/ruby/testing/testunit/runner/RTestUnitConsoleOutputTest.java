@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Disposer;
@@ -22,7 +23,7 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    final RTestUnitConsoleProperties consoleProperties = createConsoleProperties();
+    final TestConsoleProperties consoleProperties = createConsoleProperties();
     final TestResultsViewer resultsViewer = createResultsViewer(consoleProperties);
 
     myRootSuite = resultsViewer.getTestsRootNode();

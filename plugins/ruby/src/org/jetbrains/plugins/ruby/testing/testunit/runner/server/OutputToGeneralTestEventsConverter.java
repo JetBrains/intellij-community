@@ -117,6 +117,13 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
+  private void fireOnTestIgnored(final String testName, final String ignoreComment) {
+
+    for (GeneralTestEventsProcessor processor : myProcessors) {
+      processor.onTestIgnored(testName, ignoreComment);
+    }
+  }
+
   private void fireOnTestOutput(final String testName, final String text, final boolean stdOut) {
     for (GeneralTestEventsProcessor processor : myProcessors) {
       processor.onTestOutput(testName, text, stdOut);
@@ -184,7 +191,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     public void visitTestIgnored(@NotNull final TestIgnored testIgnored) {
-      //TODO[romeo] implement
+      fireOnTestIgnored(testIgnored.getTestName(), testIgnored.getIgnoreComment());
     }
 
     public void visitTestStdOut(@NotNull final TestStdOut testStdOut) {

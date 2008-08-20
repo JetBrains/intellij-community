@@ -3,7 +3,7 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner.ui.statistics;
 import com.intellij.util.ui.SortableColumnModel;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.BaseRUnitTestsTestCase;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitResultsForm;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.SMTestRunnerResultsForm;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class RTestUnitStatisticsTableModelTest extends BaseRUnitTestsTestCase {
   private RTestUnitStatisticsTableModel myStatisticsTableModel;
-  private RTestUnitResultsForm.FormSelectionListener mySelectionListener;
+  private SMTestRunnerResultsForm.FormSelectionListener mySelectionListener;
   private RTestUnitTestProxy myRootSuite;
 
   @Override

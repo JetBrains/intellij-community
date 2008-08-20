@@ -1,11 +1,11 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner.ui;
 
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.plugins.ruby.ruby.lang.TextUtil;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitNodeDescriptor;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitConsoleProperties;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -14,9 +14,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * @author: Roman Chernyatchik
  */
 public class RTestUnitTestTreeRenderer extends ColoredTreeCellRenderer {
-  private RTestUnitConsoleProperties myConsoleProperties;
+  private TestConsoleProperties myConsoleProperties;
 
-  public RTestUnitTestTreeRenderer(final RTestUnitConsoleProperties consoleProperties) {
+  public RTestUnitTestTreeRenderer(final TestConsoleProperties consoleProperties) {
     myConsoleProperties = consoleProperties;
   }
 
@@ -53,7 +53,7 @@ public class RTestUnitTestTreeRenderer extends ColoredTreeCellRenderer {
     append(text != null ? text : TextUtil.EMPTY_STRING, SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
-  public RTestUnitConsoleProperties getConsoleProperties() {
+  public TestConsoleProperties getConsoleProperties() {
     return myConsoleProperties;
   }
 }

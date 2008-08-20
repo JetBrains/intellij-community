@@ -5,6 +5,7 @@ import com.intellij.diagnostic.logging.LogConsole;
 import com.intellij.diagnostic.logging.LogConsoleManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.support.UIUtil;
-import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.RTestUnitRunConfiguration;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsListener;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTreeBuilder;
@@ -37,8 +37,8 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -50,9 +50,9 @@ import java.util.Map;
 /**
  * @author: Roman Chernyatchik
  */
-public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConsoleManager, TestResultsViewer,
-                                             RTestUnitEventsListener {
-  @NonNls private static final String RTEST_UNIT_SPLITTER_PROPERTY = "RubyTestUnit.Splitter.Proportion";
+public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogConsoleManager, TestResultsViewer,
+                                                RTestUnitEventsListener {
+  @NonNls private static final String SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
   private JPanel myContentPane;
   private JSplitPane splitPane;
@@ -88,7 +88,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   private ProcessHandler myRunProcess;
 
   // Run configuration for Test::Unit
-  private final RTestUnitRunConfiguration myRunConfiguration;
+  private final RunConfigurationBase myRunConfiguration;
 
   private int myTestsCurrentCount;
   private int myTestsTotal;
@@ -97,7 +97,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
   private long myEndTime;
 
 
-  public RTestUnitResultsForm(final RTestUnitRunConfiguration runConfiguration,
+  public SMTestRunnerResultsForm(final RunConfigurationBase runConfiguration,
                               final TestConsoleProperties consoleProperties,
                               final RunnerSettings runnerSettings,
                               final ConfigurationPerRunnerSettings configurationSettings) {
@@ -492,7 +492,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
     //PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
 
     //TODO[romeo] for different runners should differ
-    splitterProportions.externalizeFromDimensionService(RTEST_UNIT_SPLITTER_PROPERTY);
+    splitterProportions.externalizeFromDimensionService(getSplitterPropertyName());
     final Container container = splitPane.getParent();
     GuiUtils.replaceJSplitPaneWithIDEASplitter(splitPane);
     final Splitter splitter = (Splitter)container.getComponent(0);
@@ -503,7 +503,7 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
           public void propertyChange(final PropertyChangeEvent evt) {
             if (evt.getPropertyName().equals(Splitter.PROP_PROPORTION)) {
               splitterProportions.saveSplitterProportions(container);
-              splitterProportions.externalizeToDimensionService(RTEST_UNIT_SPLITTER_PROPERTY);
+              splitterProportions.externalizeToDimensionService(getSplitterPropertyName());
             }
           }
         });
@@ -514,6 +514,10 @@ public class RTestUnitResultsForm implements TestFrameworkRunningModel, LogConso
         splitter.dispose();
       }
     });
+  }
+
+  protected String getSplitterPropertyName() {
+    return SM_RUNNER_SPLITTER_PROPERTY;
   }
 
   private void updateStatusLabel() {
