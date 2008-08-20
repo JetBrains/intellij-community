@@ -28,7 +28,7 @@ public interface PsiIncludeManager {
   }
 
   final class IncludeInfo {
-    public static IncludeInfo[] EMPTY_ARRAY = new IncludeInfo[0];
+    public static final IncludeInfo[] EMPTY_ARRAY = new IncludeInfo[0];
     public @Nullable final PsiFile targetFile;
     public @Nullable final PsiElement includeDirective;
     public @NotNull final String[] possibleTargetFileNames;
