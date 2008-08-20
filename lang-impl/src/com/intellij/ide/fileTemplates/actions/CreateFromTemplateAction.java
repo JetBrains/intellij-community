@@ -34,4 +34,8 @@ public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
     presentation.setEnabled(isEnabled);
     presentation.setVisible(isEnabled);
   }
+
+  public FileTemplate getTemplate() {
+    return myTemplate;
+  }
 }
