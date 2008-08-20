@@ -213,7 +213,7 @@ public class CodeInsightUtil {
   public static Processor<PsiClass> createInheritorsProcessor(final PsiElement context, final PsiClassType baseType,
                                                                final int arrayDim,
                                                                final boolean getRawSubtypes,
-                                                               final Set<PsiType> result, final PsiClass baseClass, final PsiSubstitutor baseSubstitutor) {
+                                                               final Set<PsiType> result, @NotNull final PsiClass baseClass, final PsiSubstitutor baseSubstitutor) {
     final PsiManager manager = context.getManager();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();

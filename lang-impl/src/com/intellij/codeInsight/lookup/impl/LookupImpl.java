@@ -222,7 +222,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myList;
   }
 
-  public LookupElement[] getItems(){
+  public synchronized LookupElement[] getItems(){
     return myItems.toArray(new LookupElement[myItems.size()]);
   }
 

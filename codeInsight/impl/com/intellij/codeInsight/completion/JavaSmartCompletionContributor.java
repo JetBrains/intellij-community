@@ -266,16 +266,20 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                final PsiTypeParameter[] typeParameters = referencedClass.getTypeParameters();
                final PsiTypeParameter targetParameter = typeParameters[parameterIndex];
 
-               ApplicationManager.getApplication().runReadAction(new Runnable() {
-                 public void run() {
+               boolean hasExpected = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+                 public Boolean compute() {
                    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
-                   for (PsiType type : ExpectedTypesGetter.getExpectedTypes(context, false)) {
+                   final PsiType[] psiTypes = ExpectedTypesGetter.getExpectedTypes(context, false);
+                   if (psiTypes.length == 0) return false;
+
+                   for (PsiType type : psiTypes) {
                      if (!(type instanceof PsiClassType)) continue;
                      final PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
                      final PsiClass typeClass = result.getElement();
                      final PsiSubstitutor substitutor = result.getSubstitutor();
 
                      if (!InheritanceUtil.isInheritorOrSelf(referencedClass, typeClass, true)) continue;
+
                      final PsiSubstitutor currentSubstitutor =
                          TypeConversionUtil.getClassSubstitutor(typeClass, referencedClass, PsiSubstitutor.EMPTY);
                      final Iterator baseParamIter = PsiUtil.typeParametersIterator(typeClass);
@@ -291,25 +295,24 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                        }
                      }
                    }
+                   return true;
                  }
-               });
+               }).booleanValue();
 
-               if (PsiTreeUtil.getParentOfType(context, PsiExpression.class) == null) {
+
+               if (!hasExpected) {
                  boolean isLast = parameterIndex == typeParameters.length - 1;
                  final TailType tail = isLast ? new CharTailType('>') : TailType.COMMA;
 
-                 final PsiClassType[] types = targetParameter.getExtendsListTypes();
+                 final List<PsiClassType> typeList = Collections.singletonList((PsiClassType)TypeConversionUtil.typeParameterErasure(targetParameter));
+                 processInheritors(parameters, context, parameters.getOriginalFile(), typeList, new Consumer<PsiType>() {
+                   public void consume(final PsiType type) {
+                     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+                     if (psiClass == null) return;
 
-                 if (types.length > 0) {
-                   processInheritors(parameters, context, parameters.getOriginalFile(), Collections.singletonList(types[0]), new Consumer<PsiType>() {
-                     public void consume(final PsiType type) {
-                       final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-                       if (psiClass == null) return;
-
-                       resultSet.addElement(new JavaPsiClassReferenceElement(psiClass).setTailType(tail));
-                     }
-                   });
-                 }
+                     resultSet.addElement(new JavaPsiClassReferenceElement(psiClass).setTailType(tail));
+                   }
+                 });
 
                }
              }
@@ -404,6 +407,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
           final PsiClassType.ClassResolveResult baseResult = JavaCompletionUtil.originalize(type).resolveGenerics();
           final PsiClass baseClass = baseResult.getElement();
+          if (baseClass == null) return;
+
           final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
 
           final THashSet<PsiType> statVariants = new THashSet<PsiType>();

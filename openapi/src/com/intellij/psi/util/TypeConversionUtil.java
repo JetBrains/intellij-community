@@ -815,8 +815,8 @@ public class TypeConversionUtil {
   }
 
   @Nullable
-  public static PsiSubstitutor getClassSubstitutor(PsiClass superClassCandidate,
-                                                   PsiClass derivedClassCandidate,
+  public static PsiSubstitutor getClassSubstitutor(@NotNull PsiClass superClassCandidate,
+                                                   @NotNull PsiClass derivedClassCandidate,
                                                    PsiSubstitutor derivedSubstitutor) {
     if (superClassCandidate.getManager().areElementsEquivalent(superClassCandidate, derivedClassCandidate)) {
       PsiTypeParameter[] baseParams = superClassCandidate.getTypeParameters();
