@@ -85,6 +85,7 @@ public class BackendCompilerWrapper {
   public TranslatingCompiler.OutputItem[] compile() throws CompilerException, CacheCorruptedException {
     VirtualFile[] dependentFiles = null;
     Application application = ApplicationManager.getApplication();
+    final Set<VirtualFile> allDependent = new HashSet<VirtualFile>();
     COMPILE:
     try {
       if (myFilesToCompile.length > 0) {
@@ -96,6 +97,7 @@ public class BackendCompilerWrapper {
         compileModules(moduleToFilesMap);
       }
 
+
       do {
         dependentFiles = findDependentFiles();
 
@@ -105,7 +107,9 @@ public class BackendCompilerWrapper {
         }
 
         if (dependentFiles.length > 0) {
-          myFilesToRecompile.addAll(Arrays.asList(dependentFiles));
+          final List<VirtualFile> deps = Arrays.asList(dependentFiles);
+          myFilesToRecompile.addAll(deps);
+          allDependent.addAll(deps);
           final VirtualFile[] filesInScope = getFilesInScope(dependentFiles);
           if (filesInScope.length == 0) {
             break;
@@ -116,7 +120,6 @@ public class BackendCompilerWrapper {
         }
       }
       while (dependentFiles.length > 0 && myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) == 0);
-
     }
     catch (IOException e) {
       throw new CompilerException(CompilerBundle.message("error.compiler.process.not.started", e.getMessage()), e);
@@ -154,6 +157,9 @@ public class BackendCompilerWrapper {
     myCompileContext.getDependencyCache().update();
 
     myFilesToRecompile.removeAll(mySuccesfullyCompiledJavaFiles);
+    if (myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) != 0) {
+      myFilesToRecompile.addAll(allDependent);
+    }
     processPackageInfoFiles();
     return myOutputItems.toArray(new TranslatingCompiler.OutputItem[myOutputItems.size()]);
   }
