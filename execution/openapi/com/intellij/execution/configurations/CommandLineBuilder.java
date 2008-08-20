@@ -63,7 +63,7 @@ public class CommandLineBuilder {
               if (charset == null) charset = CharsetToolkit.getDefaultSystemCharset();
               commandLine.setCharset(charset);
             }
-            if (dynamicClasspath && "true".equalsIgnoreCase(System.getProperty("idea.dynamic.classpath", "true"))) {
+            if (dynamicClasspath && "true".equalsIgnoreCase(System.getProperty("idea.dynamic.classpath", "false"))) {
               File classpathFile = null;
               if(!parametersList.hasParameter("-classpath") && !parametersList.hasParameter("-cp")){
                 try {
