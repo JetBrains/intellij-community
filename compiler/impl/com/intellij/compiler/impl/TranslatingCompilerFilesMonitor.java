@@ -250,7 +250,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     catch (FileNotFoundException ignored) {
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
       myOutputsToDelete.clear();
       file.delete();
     }
