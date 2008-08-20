@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
+@Deprecated
 public class SimpleLookupItem<T> extends LookupItem<T> {
 
   public SimpleLookupItem(final T o, @NotNull @NonNls final String lookupString) {
