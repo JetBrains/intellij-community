@@ -263,7 +263,7 @@ public class RunContentManagerImpl implements RunContentManager {
     if (processHandler != null) {
       final ProcessAdapter processAdapter = new ProcessAdapter() {
         public void startNotified(final ProcessEvent event) {
-          content.setIcon(executor.getIcon());
+          content.setIcon(executor.getToolWindowIcon());
         }
 
         public void processTerminated(final ProcessEvent event) {
