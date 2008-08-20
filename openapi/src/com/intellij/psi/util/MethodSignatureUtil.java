@@ -229,7 +229,7 @@ public class MethodSignatureUtil {
       if (supers1.length != supers2.length) return null;
       for (int j = 0; j < supers1.length; j++) {
         PsiType type1 = substitutor1.substitute(supers1[j]);
-        PsiType type2 = result.substitute(supers2[j]);
+        PsiType type2 = substitutor1.substitute(result.substitute(supers2[j]));
         if (!type1.equals(type2)) return null;
       }
     }

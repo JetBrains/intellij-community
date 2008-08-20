@@ -28,44 +28,32 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
-    int conflictsCount = conflicts.size();
-    if (conflictsCount <= 0) return null;
-    if (conflictsCount == 1) return conflicts.get(0);
+    if (conflicts.isEmpty()) return null;
+    if (conflicts.size() == 1) return conflicts.get(0);
     checkSameSignatures(conflicts);
 
-    conflictsCount = conflicts.size();
-    if (conflictsCount == 1) return conflicts.get(0);
+    if (conflicts.size() == 1) return conflicts.get(0);
+    checkAccessLevels(conflicts);
 
-    int maxCheckLevel = -1;
-    int[] checkLevels = new int[conflictsCount];
-    int index = 0;
-    for (final CandidateInfo conflict : conflicts) {
-      final MethodCandidateInfo method = (MethodCandidateInfo)conflict;
-      final int level = getCheckLevel(method);
-      checkLevels[index++] = level;
-      maxCheckLevel = Math.max(maxCheckLevel, level);
-    }
-
-    for (int i = conflictsCount - 1; i >= 0; i--) {
-      // check for level
-      if (checkLevels[i] < maxCheckLevel) {
-        conflicts.remove(i);
-      }
-    }
-
-    conflictsCount = conflicts.size();
-    if (conflictsCount == 1) return conflicts.get(0);
+    if (conflicts.size() == 1) return conflicts.get(0);
 
     checkParametersNumber(conflicts, myArgumentsList.getExpressions().length);
-    conflictsCount = conflicts.size();
-    if (conflictsCount == 1) return conflicts.get(0);
+    if (conflicts.size() == 1) return conflicts.get(0);
 
     final int applicabilityLevel = checkApplicability(conflicts);
+    checkSpecifics(conflicts, applicabilityLevel);
+
+    if (conflicts.size() == 1) return conflicts.get(0);
+
+    THashSet<CandidateInfo> uniques = new THashSet<CandidateInfo>(conflicts);
+    if (uniques.size() == 1) return uniques.iterator().next();
+    return null;
+  }
+
+  private void checkSpecifics(List<CandidateInfo> conflicts, int applicabilityLevel) {
     final boolean applicable = applicabilityLevel > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
 
-    conflictsCount = conflicts.size();
-    if (conflictsCount == 1) return conflicts.get(0);
-
+    int conflictsCount = conflicts.size();
     // Specifics
     if (applicable) {
       final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflicts.size()]);
@@ -87,13 +75,27 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         }
       }
     }
-    if (conflicts.size() == 1){
-      return conflicts.get(0);
+  }
+
+  private static void checkAccessLevels(List<CandidateInfo> conflicts) {
+    int conflictsCount = conflicts.size();
+
+    int maxCheckLevel = -1;
+    int[] checkLevels = new int[conflictsCount];
+    int index = 0;
+    for (final CandidateInfo conflict : conflicts) {
+      final MethodCandidateInfo method = (MethodCandidateInfo)conflict;
+      final int level = getCheckLevel(method);
+      checkLevels[index++] = level;
+      maxCheckLevel = Math.max(maxCheckLevel, level);
     }
 
-    THashSet<CandidateInfo> uniques = new THashSet<CandidateInfo>(conflicts);
-    if (uniques.size() == 1) return uniques.iterator().next();
-    return null;
+    for (int i = conflictsCount - 1; i >= 0; i--) {
+      // check for level
+      if (checkLevels[i] < maxCheckLevel) {
+        conflicts.remove(i);
+      }
+    }
   }
 
   private static void checkSameSignatures(final List<CandidateInfo> conflicts) {
@@ -107,35 +109,36 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       PsiClass class1 = method.getContainingClass();
       MethodSignature signature = method.getSignature(info.getSubstitutor());
       CandidateInfo existing = signatures.get(signature);
-      if (existing != null) {
-        PsiMethod existingMethod = (PsiMethod)existing.getElement();
-        assert existingMethod != null;
-        PsiClass existingClass = existingMethod.getContainingClass();
-        if (class1.isInterface() && "java.lang.Object".equals(existingClass.getQualifiedName())) { //prefer interface methods to methods from Object
+
+      if (existing == null) {
+        signatures.put(signature, info);
+        continue;
+      }
+      PsiMethod existingMethod = (PsiMethod)existing.getElement();
+      assert existingMethod != null;
+      PsiClass existingClass = existingMethod.getContainingClass();
+      if (class1.isInterface() && "java.lang.Object".equals(existingClass.getQualifiedName())) { //prefer interface methods to methods from Object
+        signatures.put(signature, info);
+        continue;
+      }
+      if (method == existingMethod) {
+        PsiElement scope1 = info.getCurrentFileResolveScope();
+        PsiElement scope2 = existing.getCurrentFileResolveScope();
+        if (scope1 instanceof PsiClass && scope2 instanceof PsiClass && PsiTreeUtil.isAncestor(scope1, scope2, true) && !existing.isAccessible()) { //prefer methods from outer class to inaccessible base class methods
           signatures.put(signature, info);
           continue;
         }
-        if (method == existingMethod) {
-          PsiElement scope1 = info.getCurrentFileResolveScope();
-          PsiElement scope2 = existing.getCurrentFileResolveScope();
-          if (scope1 instanceof PsiClass && scope2 instanceof PsiClass &&
-          PsiTreeUtil.isAncestor(scope1, scope2, true) && !existing.isAccessible()) { //prefer methods from outer class to inaccessible base class methods
-            signatures.put(signature, info);
-            continue;
-          }
-        }
-        PsiType returnType1 = method.getReturnType();
-        PsiType returnType2 = existingMethod.getReturnType();
-        if (returnType1 != null && returnType2 != null) {
-          returnType1 = info.getSubstitutor().substitute(returnType1);
-          returnType2 = existing.getSubstitutor().substitute(returnType2);
-          if (returnType1.isAssignableFrom(returnType2)
-              && (InheritanceUtil.isInheritorOrSelf(class1, existingClass, true) || InheritanceUtil.isInheritorOrSelf(existingClass, class1, true))
-              ) iterator.remove();
-        }
-        continue;
       }
-      signatures.put(signature, info);
+      PsiType returnType1 = method.getReturnType();
+      PsiType returnType2 = existingMethod.getReturnType();
+      if (returnType1 != null && returnType2 != null) {
+        returnType1 = info.getSubstitutor().substitute(returnType1);
+        returnType2 = existing.getSubstitutor().substitute(returnType2);
+        if (returnType1.isAssignableFrom(returnType2) && (InheritanceUtil.isInheritorOrSelf(class1, existingClass, true) ||
+                                                          InheritanceUtil.isInheritorOrSelf(existingClass, class1, true))) {
+          iterator.remove();
+        }
+      }
     }
   }
 
