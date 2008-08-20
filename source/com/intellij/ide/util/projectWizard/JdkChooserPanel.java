@@ -110,8 +110,14 @@ public class JdkChooserPanel extends JPanel {
       else if (myList.getModel().getSize() > 0) {
         myList.setSelectedIndex(0);
       }
-    } else {
-      myList.setSelectedIndices(selectedIndices);
+    }
+    else {
+      if (selectedIndices.length > 0) {
+        myList.setSelectedIndices(selectedIndices);
+      }
+      else {
+        myList.setSelectedIndex(0);
+      }
     }
 
     myCurrentJdk = (Sdk)myList.getSelectedValue();
