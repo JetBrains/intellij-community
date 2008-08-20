@@ -388,7 +388,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       if (node.getUserObject() instanceof ComponentPtrDescriptor) {
         final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)node.getUserObject();
         final ComponentPtr ptr = (ComponentPtr)descriptor.getElement();
-        LOG.assertTrue(ptr != null);
+        if (ptr == null) return;
         final RadComponent component = ptr.getComponent();
         LOG.assertTrue(component != null);
 
