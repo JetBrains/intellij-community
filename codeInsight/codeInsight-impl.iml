@@ -7,7 +7,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="action-system-impl" />
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="codeInsight-openapi" />
     <orderEntry type="module" module-name="util" />
@@ -19,7 +18,6 @@
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="refactoring-openapi" />
     <orderEntry type="module" module-name="refactoring-impl" />
-    <orderEntry type="module" module-name="ui-impl" />
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="ExtendedApi" />

@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="codeInsight-openapi" />
     <orderEntry type="module" module-name="codeInsight-impl" />
-    <orderEntry type="module" module-name="ui-impl" />
     <orderEntry type="module" module-name="idea_rt" />
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="module" module-name="refactoring-openapi" />
