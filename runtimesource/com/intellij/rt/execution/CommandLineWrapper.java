@@ -17,8 +17,8 @@ import java.util.List;
 
 public class CommandLineWrapper {
 
-  public static void main(String[] args)
-    throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException {
+  public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
+                                                IllegalAccessException, IOException, InstantiationException {
 
     final List urls = new ArrayList();
     final File file = new File(args[0]);
@@ -40,7 +40,20 @@ public class CommandLineWrapper {
     Thread.currentThread().setContextClassLoader(loader);
     Class mainArgType = (new String[0]).getClass();
     Method main = mainClass.getMethod("main", new Class[]{mainArgType});
-    Object[] argsArray = {progArgs};
-    main.invoke(null, argsArray);
+    ensureAccess(main);
+    main.invoke(null, new Object[]{progArgs});
+  }
+
+   private static void ensureAccess(Object reflectionObject) {
+    // need to call setAccessible here in order to be able to launch package-local classes
+    // calling setAccessible() via reflection because the method is missing from java version 1.1.x
+    final Class aClass = reflectionObject.getClass();
+    try {
+      final Method setAccessibleMethod = aClass.getMethod("setAccessible", new Class[] {boolean.class});
+      setAccessibleMethod.invoke(reflectionObject, new Object[] {Boolean.TRUE});
+    }
+    catch (Exception e) {
+      // the method not found
+    }
   }
 }
