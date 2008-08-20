@@ -6,6 +6,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
@@ -63,11 +64,28 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
         myCollections = myStaticGenericInfo.getCollections();
       }
 
+      final CustomDomChildrenDescriptionImpl description = myStaticGenericInfo.getCustomNameChildrenDescription();
+      final List<XmlTag> customTags = description == null ? null : CustomDomChildrenDescriptionImpl.CUSTOM_TAGS_GETTER.fun(myInvocationHandler);
+
       DomExtensionsRegistrarImpl registrar = runDomExtenders();
 
       synchronized (myInvocationHandler) {
         if (myInitialized) return;
         if (registrar != null) {
+          final List<DomExtensionImpl> fixeds = registrar.getFixeds();
+          final List<DomExtensionImpl> collections = registrar.getCollections();
+          if (!fixeds.isEmpty() || !collections.isEmpty()) {
+            if (customTags != null) {
+              for (final XmlTag tag : customTags) {
+                final DomInvocationHandler handler = myInvocationHandler.getManager().getCachedHandler(tag);
+                if (handler != null) {
+                  handler.detach();
+                }
+              }
+            }
+          }
+
+
           final List<DomExtensionImpl> attributes = registrar.getAttributes();
           if (!attributes.isEmpty()) {
             myAttributes = new ChildrenDescriptionsHolder<AttributeChildDescriptionImpl>(myStaticGenericInfo.getAttributes());
@@ -75,20 +93,19 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
               myAttributes.addDescription(extension.addAnnotations(new AttributeChildDescriptionImpl(extension.getXmlName(), extension.getType())));
             }
           }
-          final List<DomExtensionImpl> fixeds = registrar.getFixeds();
           if (!fixeds.isEmpty()) {
             myFixeds = new ChildrenDescriptionsHolder<FixedChildDescriptionImpl>(myStaticGenericInfo.getFixed());
             for (final DomExtensionImpl extension : fixeds) {
               myFixeds.addDescription(extension.addAnnotations(new FixedChildDescriptionImpl(extension.getXmlName(), extension.getType(), extension.getCount(), ArrayUtil.EMPTY_COLLECTION_ARRAY)));
             }
           }
-          final List<DomExtensionImpl> collections = registrar.getCollections();
           if (!collections.isEmpty()) {
             myCollections = new ChildrenDescriptionsHolder<CollectionChildDescriptionImpl>(myStaticGenericInfo.getCollections());
             for (final DomExtensionImpl extension : collections) {
               myCollections.addDescription(extension.addAnnotations(new CollectionChildDescriptionImpl(extension.getXmlName(), extension.getType(), Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST)));
             }
           }
+
           final DomExtensionImpl extension = registrar.getCustomChildrenType();
           if (extension != null) {
             myCustomChildren = new CustomDomChildrenDescriptionImpl(null, extension.getType());

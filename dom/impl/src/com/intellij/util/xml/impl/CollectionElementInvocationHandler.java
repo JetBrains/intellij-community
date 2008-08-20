@@ -22,16 +22,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
   public CollectionElementInvocationHandler(final Type type, @NotNull final XmlTag tag,
                                             final AbstractCollectionChildDescription description,
                                             final DomInvocationHandler parent) {
-    super(type, new PhysicalDomParentStrategy(tag) {
-      @NotNull
-      public DomParentStrategy clearXmlElement() {
-        throw new UnsupportedOperationException();
-      }
-
-      public boolean isValid() {
-        return getXmlElement().isValid();
-      }
-    }, description.createEvaluatedXmlName(parent, tag), (AbstractDomChildDescriptionImpl)description, parent.getManager(), true);
+    super(type, new PhysicalDomParentStrategy(tag), description.createEvaluatedXmlName(parent, tag), (AbstractDomChildDescriptionImpl)description, parent.getManager(), true);
     myTagQName = tag.getName();
   }
 
@@ -47,7 +38,10 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
 
   @Override
   public boolean isValid() {
-    return super.isValid() && myTagQName.equals(getXmlTag().getName());
+    if (!super.isValid()) return false;
+    final XmlTag tag = getXmlTag();
+    if (tag == null || !myTagQName.equals(tag.getName())) return false;
+    return true;
   }
 
   public final void undefineInternal() {
