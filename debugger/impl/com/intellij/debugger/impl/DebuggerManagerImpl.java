@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -224,8 +225,18 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
           else {
             final DebuggerSession session = getDebugSession(event.getProcessHandler());
             if (session != null) {
-              // on OSX the process should be resumed before calling destroyProcess(), otherwise the process will stay in memory
-              session.resume();
+              // on OSX & Linux the process should be resumed before calling destroyProcess(), otherwise the process will stay in memory
+              if (ApplicationManager.getApplication().isDispatchThread()) {
+                session.resume();
+              }
+              else {
+                //noinspection SSBasedInspection
+                SwingUtilities.invokeLater(new Runnable() {
+                  public void run() {
+                    session.resume();
+                  }
+                });
+              }
             }
           }
         }
