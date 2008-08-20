@@ -18,67 +18,69 @@ package com.intellij.openapi.util.objectTree;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.TestOnly;
+import org.junit.Assert;
 
-import java.util.Collection;
 import java.util.LinkedHashSet;
 
 public final class ObjectNode<T> {
+  private static final ObjectNode[] EMPTY_ARRAY = new ObjectNode[0];
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectNode");
 
-  private ObjectTree<T> myTree;
+  private final ObjectTree<T> myTree;
 
   private ObjectNode<T> myParent;
-  private T myObject;
+  private final T myObject;
 
   private LinkedHashSet<ObjectNode<T>> myChildren;
-  private Throwable myTrace;
+  private final Throwable myTrace;
 
   public ObjectNode(ObjectTree<T> tree, ObjectNode<T> parentNode, T object) {
     myTree = tree;
     myParent = parentNode;
     myObject = object;
 
-    if (Disposer.isDebugMode()) {
-      myTrace = new Throwable();
-    }
+    myTrace = Disposer.isDebugMode() ? new Throwable() : null;
   }
 
+  private ObjectNode<T>[] getChildrenArray() {
+    synchronized (myTree.treeLock) {
+      if (myChildren == null) return EMPTY_ARRAY;
+      return myChildren.toArray(new ObjectNode[myChildren.size()]);
+    }
+  }
   public void addChild(T childObject) {
-    ensureChildArray();
-
-    final ObjectNode<T> childNode = new ObjectNode<T>(myTree, this, childObject);
-    _add(childNode);
+    addChild(new ObjectNode<T>(myTree, this, childObject));
   }
 
   public void addChild(ObjectNode<T> child) {
-    ensureChildArray();
-    _add(child);
+    synchronized (myTree.treeLock) {
+      ensureChildArray();
+      child.setParent(this);
+      myChildren.add(child);
+      myTree.putNode(child.getObject(), child);
+    }
   }
 
   public void removeChild(ObjectNode<T> child) {
-    _remove(child);
+    synchronized (myTree.treeLock) {
+      assert myChildren != null: "No children to remove child: " + this + ' ' + child;
+      if (myChildren.remove(child)) {
+        child.setParent(null);
+        myTree.putNode(child.getObject(), null);
+      }
+    }
   }
 
   private void setParent(ObjectNode<T> parent) {
-    myParent = parent;
+    synchronized (myTree.treeLock) {
+      myParent = parent;
+    }
   }
 
   public ObjectNode<T> getParent() {
     return myParent;
-  }
-
-  private void _add(final ObjectNode<T> child) {
-    child.setParent(this);
-    myChildren.add(child);
-    myTree.getObject2NodeMap().put(child.getObject(), child);
-  }
-
-  private void _remove(final ObjectNode<T> child) {
-    assert myChildren != null: "No chindren to remove child: " + this + ' ' + child;
-    if (myChildren.remove(child)) {
-      child.setParent(null);
-      myTree.getObject2NodeMap().remove(child.getObject());
-    }
   }
 
   private void ensureChildArray() {
@@ -87,21 +89,22 @@ public final class ObjectNode<T> {
     }
   }
   
-  public boolean execute(final boolean disposeTree, final ObjectTreeAction<T> action) {
+  boolean execute(final boolean disposeTree, final ObjectTreeAction<T> action) {
     ObjectTree.executeActionWithRecursiveGuard(this, new ObjectTreeAction<ObjectNode<T>>() {
       public void execute(ObjectNode<T> each) {
         action.beforeTreeExecution(myObject);
 
-        if (myChildren != null) {
+        ObjectNode<T>[] childrenArray = getChildrenArray();
 //todo: [kirillk] optimize
-          final ObjectNode<T>[] children = myChildren.toArray(new ObjectNode[myChildren.size()]);
-          for (int i = children.length - 1; i >= 0; i--) {
-            children[i].execute(disposeTree, action);
+
+          for (int i = childrenArray.length - 1; i >= 0; i--) {
+            childrenArray[i].execute(disposeTree, action);
           }
-        }
 
         if (disposeTree) {
-          myChildren = null;
+          synchronized (myTree.treeLock) {
+            myChildren = null;
+          }
         }
 
         try {
@@ -112,12 +115,14 @@ public final class ObjectNode<T> {
         }
 
         if (disposeTree) {
-          myTree.getObject2NodeMap().remove(myObject);
-          if (myParent != null) {
-            myParent.removeChild(ObjectNode.this);
-          }
-          else {
-            myTree.getRootObjects().remove(myObject);
+          myTree.putNode(myObject, null);
+          synchronized (myTree.treeLock) {
+            if (myParent != null) {
+              myParent.removeChild(ObjectNode.this);
+            }
+            else {
+              myTree.removeRootObject(myObject);
+            }
           }
         }
       }
@@ -134,17 +139,22 @@ public final class ObjectNode<T> {
     return myObject;
   }
 
-  public Collection<ObjectNode<T>> getChildren() {
-    return myChildren;
-  }
-
   @NonNls
   public String toString() {
     return "Node: " + myObject.toString();
   }
 
-
-  public Throwable getTrace() {
+  Throwable getTrace() {
     return myTrace;
+  }
+
+  @TestOnly
+  void assertNoReferencesKept(T aDisposable) {
+    Assert.assertNotSame(getObject(), aDisposable);
+    if (myChildren != null) {
+      for (ObjectNode<T> node: myChildren) {
+        node.assertNoReferencesKept(aDisposable);
+      }
+    }
   }
 }

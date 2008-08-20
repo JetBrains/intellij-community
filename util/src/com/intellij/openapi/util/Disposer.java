@@ -16,14 +16,15 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.objectTree.ObjectNode;
 import com.intellij.openapi.util.objectTree.ObjectTree;
 import com.intellij.openapi.util.objectTree.ObjectTreeAction;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.Map;
 
 @SuppressWarnings({"SSBasedInspection"})
 public class Disposer {
@@ -46,7 +47,7 @@ public class Disposer {
   private Disposer() {
   }
 
-  private static final Map<String, Disposable> ourKeyDisposables = new WeakHashMap<String, Disposable>();
+  private static final Map<String, Disposable> ourKeyDisposables = new ConcurrentWeakHashMap<String, Disposable>();
 
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) {
     register(parent, child, null);
@@ -55,11 +56,9 @@ public class Disposer {
   public static void register(@NotNull Disposable parent, @NotNull Disposable child, @NonNls @Nullable final String key) {
     assert parent != child : " Cannot register to itself";
 
-    synchronized (ourTree) {
-      ourTree.register(parent, child);
+    ourTree.register(parent, child);
 
-      if (key == null) return;
-
+    if (key != null) {
       assert get(key) == null;
       ourKeyDisposables.put(key, child);
       register(child, new Disposable() {
@@ -71,7 +70,7 @@ public class Disposer {
   }
 
   public static boolean isDisposed(Disposable disposable) {
-    return !getTree().getObject2NodeMap().containsKey(disposable);
+    return !ourTree.containsKey(disposable);
   }
 
   public static Disposable get(String key) {
@@ -83,71 +82,27 @@ public class Disposer {
   }
 
   public static void dispose(Disposable disposable, boolean processUnregistered) {
-    synchronized (ourTree) {
-      ourTree.executeAll(disposable, true, ourDisposeAction, processUnregistered);
-    }
+    ourTree.executeAll(disposable, true, ourDisposeAction, processUnregistered);
   }
 
   public static void disposeChildAndReplace(Disposable toDipose, Disposable toReplace) {
-    synchronized (ourTree) {
-      ourTree.executeChildAndReplace(toDipose, toReplace, true, ourDisposeAction);
-    }
+    ourTree.executeChildAndReplace(toDipose, toReplace, true, ourDisposeAction);
   }
 
-  static ObjectTree getTree() {
+  @TestOnly
+  static ObjectTree<Disposable> getTree() {
     return ourTree;
   }
 
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
   public static void assertIsEmpty() {
-    boolean firstObject = true;
-
-    final Set<Disposable> objects = ourTree.getRootObjects();
-    for (Disposable object : objects) {
-      if (object == null) continue;
-      final ObjectNode<Disposable> objectNode = ourTree.getObject2NodeMap().get(object);
-      if (objectNode == null) continue;
-
-      if (firstObject) {
-        firstObject = false;
-        System.err.println("***********************************************************************************************");
-        System.err.println("***                        M E M O R Y    L E A K S   D E T E C T E D                       ***");
-        System.err.println("***********************************************************************************************");
-        System.err.println("***                                                                                         ***");
-        System.err.println("***   The following objects were not disposed: ");
-      }
-
-      System.err.println("***   " + object + " of class " + object.getClass());
-      final Throwable trace = objectNode.getTrace();
-      if (trace != null) {
-        System.err.println("***         First seen at: ");
-        trace.printStackTrace();
-      }
-    }
-
-    if (!firstObject) {
-      System.err.println("***                                                                                         ***");
-      System.err.println("***********************************************************************************************");
-    }
+    ourTree.assertIsEmpty();
   }
 
   public static void setDebugMode(final boolean b) {
     ourDebugMode = b;
   }
 
-
   public static boolean isDebugMode() {
     return ourDebugMode;
-  }
-
-  public static Collection<Disposable> getChildren(Disposable parent) {
-    ObjectNode<Disposable> node = ourTree.getObject2NodeMap().get(parent);
-    Collection<ObjectNode<Disposable>> children = node ==null ? null : node.getChildren();
-    if (children == null) return Collections.emptyList();
-    ArrayList<Disposable> res = new ArrayList<Disposable>(children.size());
-    for (ObjectNode<Disposable> child : children) {
-      res.add(child.getObject());
-    }
-    return res;
   }
 }

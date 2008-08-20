@@ -16,27 +16,25 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.objectTree.ObjectNode;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 public class DisposerTest extends TestCase {
 
-  protected MyDisposable myRoot;
+  private MyDisposable myRoot;
 
-  protected MyDisposable myFolder1;
-  protected MyDisposable myFolder2;
+  private MyDisposable myFolder1;
+  private MyDisposable myFolder2;
 
-  protected MyDisposable myLeaf1;
+  private MyDisposable myLeaf1;
   private MyDisposable myLeaf2;
 
-  private List myDisposedObjects = new ArrayList();
+  private List<MyDisposable> myDisposedObjects = new ArrayList<MyDisposable>();
 
-  private List myDisposeActions = new ArrayList();
+  @NonNls private List<String> myDisposeActions = new ArrayList<String>();
 
   protected void setUp() throws Exception {
     myRoot = new MyDisposable("root");
@@ -75,7 +73,7 @@ public class DisposerTest extends TestCase {
 
     Disposer.dispose(myRoot);
 
-    List expected = new ArrayList();
+    List<MyDisposable> expected = new ArrayList<MyDisposable>();
     expected.add(myFolder2);
     expected.add(myLeaf1);
     expected.add(myFolder1);
@@ -183,7 +181,7 @@ public class DisposerTest extends TestCase {
     Disposer.dispose(root);
 
 
-    ArrayList expected = new ArrayList();
+    @NonNls ArrayList<String> expected = new ArrayList<String>();
     expected.add("beforeDispose: root");
     expected.add("beforeDispose: subFolder");
     expected.add("dispose: leaf1");
@@ -196,25 +194,11 @@ public class DisposerTest extends TestCase {
   }
 
 
-  private void assertDisposed(MyDisposable aDisposable) {
-    assertTrue(aDisposable.isDisposed());
-    assertFalse(aDisposable.toString(), Disposer.getTree().getObject2NodeMap().containsKey(aDisposable));
+  private void assertDisposed(MyDisposable disposable) {
+    assertTrue(disposable.isDisposed());
+    assertFalse(disposable.toString(), Disposer.getTree().containsKey(disposable));
 
-    Collection nodes = Disposer.getTree().getObject2NodeMap().values();
-    for (Iterator iterator = nodes.iterator(); iterator.hasNext();) {
-      assertNoReferenceKeptInTree((ObjectNode)iterator.next(), aDisposable);
-    }
-
-  }
-
-  private void assertNoReferenceKeptInTree(ObjectNode aNode, MyDisposable aDisposable) {
-    assertNotSame(aNode.getObject(), aDisposable);
-    final Collection<ObjectNode> children = aNode.getChildren();
-    if (children != null) {
-      for (ObjectNode node:children) {
-        assertNoReferenceKeptInTree(node, aDisposable);
-      }
-    }
+    Disposer.getTree().assertNoReferenceKeptInTree(disposable);
   }
 
   private class MyDisposable implements Disposable {
@@ -222,7 +206,7 @@ public class DisposerTest extends TestCase {
     private boolean myDisposed = false;
     protected String myName;
 
-    public MyDisposable(String aName) {
+    public MyDisposable(@NonNls String aName) {
       myName = aName;
     }
 
@@ -242,7 +226,7 @@ public class DisposerTest extends TestCase {
   }
 
   private class MyParentDisposable extends MyDisposable implements Disposable.Parent {
-    private MyParentDisposable(final String aName) {
+    private MyParentDisposable(@NonNls final String aName) {
       super(aName);
     }
 
@@ -252,7 +236,7 @@ public class DisposerTest extends TestCase {
   }
 
   private class SelDisposable extends MyDisposable {
-    public SelDisposable(String aName) {
+    public SelDisposable(@NonNls String aName) {
       super(aName);
     }
 
@@ -262,12 +246,12 @@ public class DisposerTest extends TestCase {
     }
   }
 
-  private String toString(List list) {
-    StringBuffer result = new StringBuffer();
+  private static String toString(List<String> list) {
+    StringBuilder result = new StringBuilder();
 
     for (int i = 0; i < list.size(); i++) {
-      String each = (String)list.get(i);
-      result.append(each.toString());
+      String each = list.get(i);
+      result.append(each);
       if (i < list.size() - 1) {
         result.append("\n");
       }

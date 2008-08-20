@@ -17,88 +17,95 @@ package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
+import gnu.trove.Equality;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.Equality;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
 public final class ObjectTree<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
 
-  private Set<T> myRootObjects = new THashSet<T>(TObjectHashingStrategy.IDENTITY);
-  private Map<T, ObjectNode<T>> myObject2NodeMap = new IdentityHashMap<T, ObjectNode<T>>();
+  // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
+  private final Set<T> myRootObjects = new THashSet<T>(TObjectHashingStrategy.IDENTITY);
+  private final Map<T, ObjectNode<T>> myObject2NodeMap = new IdentityHashMap<T, ObjectNode<T>>();
 
-  private List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>();
-  private List<T> myExecutedUnregisteredNodes = new ArrayList<T>();
+  private final List<ObjectNode<T>> myExecutedNodes = Collections.synchronizedList(new ArrayList<ObjectNode<T>>());
+  private final List<T> myExecutedUnregisteredNodes = Collections.synchronizedList(new ArrayList<T>());
+  final Object treeLock = new Object();
 
-  public final Map<T, ObjectNode<T>> getObject2NodeMap() {
-    return myObject2NodeMap;
+  public ObjectNode<T> getNode(T object) {
+    synchronized (treeLock) {
+      return myObject2NodeMap.get(object);
+    }
+  }
+  public ObjectNode<T> putNode(T object, ObjectNode<T> node) {
+    synchronized (treeLock) {
+      return node == null ? myObject2NodeMap.remove(object) : myObject2NodeMap.put(object, node);
+    }
   }
 
   public final List<ObjectNode<T>> getNodesInExecution() {
     return myExecutedNodes;
   }
 
-  public final Set<T> getRootObjects() {
-    return myRootObjects;
-  }
-
   public final void register(T parent, T child) {
-    checkIfValid(child);
+    synchronized (treeLock) {
+      checkIfValid(child);
 
-    final ObjectNode<T> parentNode = getNodeFor(parent);
-    final ObjectNode<T> childNode = getNodeFor(child);
+      final ObjectNode<T> parentNode = getOrCreateNodeFor(parent);
+      final ObjectNode<T> childNode = getOrCreateNodeFor(child);
 
-    ObjectNode<T> childParent = childNode.getParent();
-    if (childParent != parentNode && childParent != null) {
-      childParent.removeChild(childNode);
-      parentNode.addChild(childNode);
-    }
-    else if (myRootObjects.contains(child)) {
-      parentNode.addChild(childNode);
-      myRootObjects.remove(child);
-    }
-    else {
-      parentNode.addChild(child);
+      ObjectNode<T> childParent = childNode.getParent();
+      if (childParent != parentNode && childParent != null) {
+        childParent.removeChild(childNode);
+        parentNode.addChild(childNode);
+      }
+      else if (myRootObjects.contains(child)) {
+        parentNode.addChild(childNode);
+        myRootObjects.remove(child);
+      }
+      else {
+        parentNode.addChild(child);
+      }
     }
   }
 
   private void checkIfValid(T child) {
-    ObjectNode childNode = myObject2NodeMap.get(child);
+    ObjectNode childNode = getNode(child);
     boolean childIsInTree = childNode != null && childNode.getParent() != null;
     if (!childIsInTree) return;
 
     ObjectNode eachParent = childNode.getParent();
     while (eachParent != null) {
       if (eachParent.getObject() == child) {
-        LOG.assertTrue(false, child + " was already added as a child of: " + eachParent);
+        LOG.error(child + " was already added as a child of: " + eachParent);
       }
       eachParent = eachParent.getParent();
     }
   }
 
-  private ObjectNode<T> getNodeFor(T parentObject) {
-    final ObjectNode<T> parentNode = getObject2NodeMap().get(parentObject);
+  private ObjectNode<T> getOrCreateNodeFor(T parentObject) {
+    final ObjectNode<T> parentNode = getNode(parentObject);
 
     if (parentNode != null) return parentNode;
 
     final ObjectNode<T> parentless = new ObjectNode<T>(this, null, parentObject);
     myRootObjects.add(parentObject);
-    getObject2NodeMap().put(parentObject, parentless);
+    putNode(parentObject, parentless);
     return parentless;
   }
 
-  public final boolean executeAll(T object, boolean disposeTree, ObjectTreeAction<T> action, boolean processUnregistered) {
-    assert object != null : "Unable execute action for null object";
-
-    ObjectNode<T> node = getObject2NodeMap().get(object);
+  public final boolean executeAll(@NotNull T object, boolean disposeTree, ObjectTreeAction<T> action, boolean processUnregistered) {
+    ObjectNode<T> node = getNode(object);
     if (node == null) {
       if (processUnregistered) {
         executeUnregistered(object, action);
         return true;
-      } else {
+      }
+      else {
         return false;
       }
     }
@@ -124,28 +131,67 @@ public final class ObjectTree<T> {
   }
 
   public final void executeChildAndReplace(T toExecute, T toReplace, boolean disposeTree, ObjectTreeAction<T> action) {
-    final ObjectNode<T> toExecuteNode = getObject2NodeMap().get(toExecute);
+    final ObjectNode<T> toExecuteNode = getNode(toExecute);
     assert toExecuteNode != null : "Object " + toExecute + " wasn't registered or already disposed";
 
-    final ObjectNode<T> parent = toExecuteNode.getParent();
-    assert parent != null : "Object " + toExecute + " is not connected to the tree - doesn't have parent";
+    T parentObject;
+    synchronized (treeLock) {
+      final ObjectNode<T> parent = toExecuteNode.getParent();
+      assert parent != null : "Object " + toExecute + " is not connected to the tree - doesn't have parent";
+      parentObject = parent.getObject();
+    }
 
     toExecuteNode.execute(disposeTree, action);
-    register(parent.getObject(), toReplace);
+    register(parentObject, toReplace);
   }
 
-  public final boolean isRegistered(T object) {
-    return getObject2NodeMap().containsKey(object);
+  public boolean containsKey(T object) {
+    return getNode(object) != null;
   }
 
-  @Nullable
-  public final T getParent(T object) {
-    ObjectNode<T> parent = getObject2NodeMap().get(object).getParent();
-    if (parent == null) return null;
-    return parent.getObject();
+  @TestOnly
+  public void assertNoReferenceKeptInTree(T disposable) {
+    Collection<ObjectNode<T>> nodes = myObject2NodeMap.values();
+    for (ObjectNode<T> node : nodes) {
+      node.assertNoReferencesKept(disposable);
+    }
   }
 
-  public boolean isRoot(T object) {
-    return myRootObjects.contains(object);
+  public void removeRootObject(T object) {
+    synchronized (treeLock) {
+      myRootObjects.remove(object);
+    }
+  }
+
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
+  public void assertIsEmpty() {
+    boolean firstObject = true;
+
+    for (T object : myRootObjects) {
+      if (object == null) continue;
+      final ObjectNode<T> objectNode = getNode(object);
+      if (objectNode == null) continue;
+
+      if (firstObject) {
+        firstObject = false;
+        System.err.println("***********************************************************************************************");
+        System.err.println("***                        M E M O R Y    L E A K S   D E T E C T E D                       ***");
+        System.err.println("***********************************************************************************************");
+        System.err.println("***                                                                                         ***");
+        System.err.println("***   The following objects were not disposed: ");
+      }
+
+      System.err.println("***   " + object + " of class " + object.getClass());
+      final Throwable trace = objectNode.getTrace();
+      if (trace != null) {
+        System.err.println("***         First seen at: ");
+        trace.printStackTrace();
+      }
+    }
+
+    if (!firstObject) {
+      System.err.println("***                                                                                         ***");
+      System.err.println("***********************************************************************************************");
+    }
   }
 }
