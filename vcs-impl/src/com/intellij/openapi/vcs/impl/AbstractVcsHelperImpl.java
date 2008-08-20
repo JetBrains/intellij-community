@@ -84,6 +84,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
             Disposer.register(content, errorTreeView);
             messageView.getContentManager().setSelectedContent(content);
             removeContents(content, tabDisplayName);
+
+            ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
           }
         });
       }
@@ -207,8 +209,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
           if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
           errorTreeView.addMessage(getErrorCategory(exception), messages, exception.getVirtualFile(), -1, -1, null);
         }
-
-        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
       }
     });
   }
