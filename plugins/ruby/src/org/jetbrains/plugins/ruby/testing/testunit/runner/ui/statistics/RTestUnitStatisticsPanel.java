@@ -176,12 +176,14 @@ public class RTestUnitStatisticsPanel extends JPanel {
         if (ColumnTest.TestsCellRenderer.isFirstLine(i)) {
           final RTestUnitTestProxy parentSuite = selectedProxy.getParent();
           if (parentSuite != null) {
-            showInTableAndSelectFirstRow(parentSuite, selectionListener);
+            // go to parent and current suit in it
+            showInTableAndSelectRow(parentSuite, selectionListener, selectedProxy);
           }
         } else {
           // if selected element is suite - we should expand it
           if (selectedProxy.isSuite()) {
-            showInTableAndSelectFirstRow(selectedProxy, selectionListener);
+            // expand and select first (Total) row
+            showInTableAndSelectRow(selectedProxy, selectionListener, selectedProxy);
           }
         }
       }
@@ -197,6 +199,19 @@ public class RTestUnitStatisticsPanel extends JPanel {
       public void run() {
         // updates model
         myStatisticsTableView.setRowSelectionInterval(rowIndex, rowIndex);
+      }
+    });
+  }
+
+  /**
+   * Selects row in table
+   * @param rowIndex Row's index
+   */
+  protected void selectRowOf(final RTestUnitTestProxy proxy) {
+    UIUtil.addToInvokeLater(new Runnable() {
+      public void run() {
+        final int rowIndex = myTableModel.getIndexOf(proxy);
+        myStatisticsTableView.setRowSelectionInterval(rowIndex, rowIndex >= 0 ? rowIndex : 0);
       }
     });
   }
@@ -231,10 +246,11 @@ public class RTestUnitStatisticsPanel extends JPanel {
     myStatisticsTableView = new TableView<RTestUnitTestProxy>();
   }
 
-  private void showInTableAndSelectFirstRow(final RTestUnitTestProxy suite,
-                                            final RTestUnitResultsForm.FormSelectionListener selectionListener) {
+  private void showInTableAndSelectRow(final RTestUnitTestProxy suite,
+                                            final RTestUnitResultsForm.FormSelectionListener selectionListener,
+                                            final RTestUnitTestProxy suiteProxy) {
     selectionListener.onSelectedRequest(suite);
-    selectRow(0);
+    selectRowOf(suiteProxy);
   }
 
   /**
