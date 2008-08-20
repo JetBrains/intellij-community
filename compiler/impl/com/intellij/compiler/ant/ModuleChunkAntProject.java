@@ -4,8 +4,8 @@ import com.intellij.compiler.ant.taskdefs.AntProject;
 import com.intellij.compiler.ant.taskdefs.Dirname;
 import com.intellij.openapi.project.Project;
 
-import java.io.DataOutput;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * @author Eugene Zhuravlev
@@ -21,10 +21,8 @@ public class ModuleChunkAntProject extends Generator{
 
   }
 
-  public void generate(DataOutput out) throws IOException {
-    //noinspection HardCodedStringLiteral
-    out.writeBytes("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
-    crlf(out);
+  public void generate(PrintWriter out) throws IOException {
+    writeXmlHeader(out);
     myAntProject.generate(out);
   }
 

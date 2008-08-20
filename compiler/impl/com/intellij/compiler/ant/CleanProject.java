@@ -3,8 +3,8 @@ package com.intellij.compiler.ant;
 import com.intellij.compiler.ant.taskdefs.Target;
 import com.intellij.openapi.compiler.CompilerBundle;
 
-import java.io.DataOutput;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * @author Eugene Zhuravlev
@@ -26,7 +26,7 @@ public class CleanProject extends Generator {
                           CompilerBundle.message("generated.ant.build.clean.all.task.comment"), null);
   }
 
-  public void generate(DataOutput out) throws IOException {
+  public void generate(PrintWriter out) throws IOException {
     myTarget.generate(out);
   }
 }

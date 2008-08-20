@@ -183,20 +183,32 @@ public class GenerateAntBuildAction extends CompileActionBase {
                                              final File propertiesFile) throws IOException {
     buildxmlFile.createNewFile();
     propertiesFile.createNewFile();
-    final DataOutputStream dataOutput = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(buildxmlFile)));
+    final PrintWriter dataOutput = makeWriter(buildxmlFile);
     try {
       new SingleFileProjectBuild(project, genOptions).generate(dataOutput);
     }
     finally {
       dataOutput.close();
     }
-    final DataOutputStream propertiesOut = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(propertiesFile)));
+    final PrintWriter propertiesOut = makeWriter(propertiesFile);
     try {
       new PropertyFileGenerator(project, genOptions).generate(propertiesOut);
     }
     finally {
       propertiesOut.close();
     }
+  }
+
+  /**
+   * Create print writer over file with UTF-8 encoding
+   * 
+   * @param buildxmlFile a file to write to
+   * @return a created print writer
+   * @throws UnsupportedEncodingException if endcoding not found
+   * @throws FileNotFoundException if file not found
+   */
+  private static PrintWriter makeWriter(final File buildxmlFile) throws UnsupportedEncodingException, FileNotFoundException {
+    return new PrintWriter(new OutputStreamWriter(new FileOutputStream(buildxmlFile), "UTF-8"));
   }
 
   private void ensureFilesWritable(Project project, File[] files) throws IOException {
@@ -237,7 +249,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
 
     projectBuildFile.createNewFile();
-    final DataOutputStream mainDataOutput = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(projectBuildFile)));
+    final PrintWriter mainDataOutput = makeWriter(projectBuildFile);
     try {
       final MultipleFileProjectBuild build = new MultipleFileProjectBuild(project, genOptions);
       build.generate(mainDataOutput);
@@ -258,7 +270,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
         }
 
         chunkBuildFile.createNewFile();
-        final DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(chunkBuildFile)));
+        final PrintWriter out = makeWriter(chunkBuildFile);
         try {
           new ModuleChunkAntProject(project, chunk, genOptions).generate(out);
           generated.add(chunkBuildFile);
@@ -272,7 +284,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
       mainDataOutput.close();
     }
     // properties
-    final DataOutputStream propertiesOut = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(propertiesFile)));
+    final PrintWriter propertiesOut = makeWriter(propertiesFile);
     try {
       new PropertyFileGenerator(project, genOptions).generate(propertiesOut);
       generated.add(propertiesFile);

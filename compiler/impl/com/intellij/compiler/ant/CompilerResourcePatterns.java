@@ -7,8 +7,8 @@ import com.intellij.compiler.ant.taskdefs.Include;
 import com.intellij.compiler.ant.taskdefs.PatternSet;
 import com.intellij.openapi.project.Project;
 
-import java.io.DataOutput;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * @author Eugene Zhuravlev
@@ -33,7 +33,7 @@ public class CompilerResourcePatterns extends Generator{
 
 
 
-  public void generate(DataOutput out) throws IOException {
+  public void generate(PrintWriter out) throws IOException {
     myPatternSet.generate(out);
   }
 

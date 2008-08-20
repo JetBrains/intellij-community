@@ -8,23 +8,35 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 
-import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 /**
+ * Generator for property files.
+ *
  * @author Eugene Zhuravlev
  *         Date: Nov 27, 2004
  */
 public class PropertyFileGenerator extends Generator{
+  /**
+   * List of the properties
+   */
   private List<Pair<String, String>> myProperties = new ArrayList<Pair<String, String>>();
 
+  /**
+   * A constctor that extracts all neeed properties for ant build from the project.
+   *
+   * @param project a project to examine
+   * @param genOptions generation options
+   */
   public PropertyFileGenerator(Project project, GenerationOptions genOptions) {
     // path variables
     final PathMacros pathMacros = PathMacros.getInstance();
@@ -49,23 +61,31 @@ public class PropertyFileGenerator extends Generator{
     }
   }
 
+  /**
+   * Add property. Note that property name and value
+   * are automatically escaped when the property file
+   * is generated.
+   *
+   * @param name a property name
+   * @param value a property value
+   */
   public void addProperty(String name, String value) {
     myProperties.add(new Pair<String, String>(name, value));
   }
 
-  public void generate(DataOutput out) throws IOException {
+  @Override
+  public void generate(PrintWriter out) throws IOException {
     boolean isFirst = true;
-    for (final Pair<String, String> myProperty : myProperties) {
-      final Pair<String, String> pair = (Pair<String, String>)myProperty;
+    for (final Pair<String, String> pair : myProperties) {
       if (!isFirst) {
         crlf(out);
       }
       else {
         isFirst = false;
       }
-      out.writeBytes(pair.getFirst());
-      out.writeBytes("=");
-      out.writeBytes(pair.getSecond());
+      out.print(StringUtil.escapeProperty(pair.getFirst(), true));
+      out.print("=");
+      out.print(StringUtil.escapeProperty(pair.getSecond(), false));
     }
   }
 }

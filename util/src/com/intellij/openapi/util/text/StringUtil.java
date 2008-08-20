@@ -744,7 +744,7 @@ public class StringUtil {
   }
 
   @NotNull public static String repeatSymbol(final char aChar, final int count) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(count);
     repeatSymbol(buffer, aChar, count);
     return buffer.toString();
   }
@@ -1276,5 +1276,51 @@ public class StringUtil {
     }
 
     return result.toString();
+  }
+
+  /**
+   * Escape property name or key in property file. Unicode characters are escaped as well.
+   *
+   * @param input an input to escape
+   * @param isKey if true, they rules for key escaping are applied. The leading space is escaped in that case.
+   * @return an escaped string
+   */
+  public static String escapeProperty(final String input, final boolean isKey) {
+    final StringBuilder escaped = new StringBuilder();
+    for(int i=0;i<input.length();i++) {
+      final char ch = input.charAt(i);
+      switch(ch) {
+        case ' ':
+          if(isKey && i == 0) {
+            // only the leading space has to be escaped
+            escaped.append('\\');
+          }
+          escaped.append(' ');
+          break;
+        case '\t': escaped.append("\\t"); break;
+        case '\r': escaped.append("\\r"); break;
+        case '\n': escaped.append("\\n"); break;
+        case '\f': escaped.append("\\f"); break;
+        case '\\':
+        case '#':
+        case '!':
+        case ':':
+        case '=':
+          escaped.append('\\'); escaped.append(ch);
+          break;
+        default:
+          if(20 < ch && ch < 0x7F ) {
+            escaped.append(ch);
+          } else {
+            escaped.append("\\u");
+            escaped.append(Character.forDigit((ch >> 12) & 0xF, 16));
+            escaped.append(Character.forDigit((ch >> 8) & 0xF, 16));
+            escaped.append(Character.forDigit((ch >> 4) & 0xF, 16));
+            escaped.append(Character.forDigit((ch) & 0xF, 16));
+          }
+          break;
+      }
+    }
+    return escaped.toString();
   }
 }

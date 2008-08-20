@@ -1,7 +1,7 @@
 package com.intellij.compiler.ant;
 
-import java.io.DataOutput;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * @author Eugene Zhuravlev
@@ -24,21 +24,21 @@ public class Comment extends Generator{
     myCommentedData = commentedData;
   }
 
-  public void generate(DataOutput out) throws IOException {
+  public void generate(PrintWriter out) throws IOException {
     if (myComment != null) {
-      out.writeBytes("<!-- ");
-      out.writeBytes(myComment);
-      out.writeBytes(" -->");
+      out.print("<!-- ");
+      out.print(myComment);
+      out.print(" -->");
       if (myCommentedData != null) {
         crlf(out);
       }
     }
     if (myCommentedData != null) {
-      out.writeBytes("<!-- ");
+      out.print("<!-- ");
       crlf(out);
       myCommentedData.generate(out);
       crlf(out);
-      out.writeBytes(" -->");
+      out.print(" -->");
     }
   }
 }

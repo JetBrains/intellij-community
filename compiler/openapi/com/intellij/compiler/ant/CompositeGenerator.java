@@ -18,8 +18,8 @@ package com.intellij.compiler.ant;
 
 import com.intellij.openapi.util.Pair;
 
-import java.io.DataOutput;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +46,7 @@ public class CompositeGenerator extends Generator{
     myGenerators.add(new Pair<Generator, Integer>(generator, new Integer(emptyLinesCount)));
   }
 
-  public void generate(DataOutput out) throws IOException {
+  public void generate(PrintWriter out) throws IOException {
     for (final Pair<Generator, Integer> myGenerator : myGenerators) {
       final Pair<Generator, Integer> pair = (Pair<Generator, Integer>)myGenerator;
       crlf(out);

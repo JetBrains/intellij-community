@@ -16,10 +16,8 @@
 
 package com.intellij.compiler.ant;
 
-import com.intellij.util.SystemProperties;
-
-import java.io.DataOutput;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * @author Eugene Zhuravlev
@@ -29,10 +27,10 @@ public abstract class Generator {
   private static int ourIndent = 0;
   private static final int INDENT_SHIFT = 2;
 
-  public abstract void generate(DataOutput out) throws IOException;
+  public abstract void generate(PrintWriter out) throws IOException;
 
-  protected static void crlf(DataOutput out) throws IOException {
-    out.writeBytes(SystemProperties.getLineSeparator());
+  protected static void crlf(PrintWriter out) throws IOException {
+    out.println();
     indent(out);
   }
 
@@ -44,10 +42,21 @@ public abstract class Generator {
     ourIndent -= INDENT_SHIFT;
   }
 
-  protected static void indent(DataOutput out) throws IOException {
+  protected static void indent(PrintWriter out) throws IOException {
     for (int idx = 0; idx < ourIndent; idx++) {
-      out.writeBytes(" ");
+      out.print(" ");
     }
+  }
+
+  /**
+   * Write XML header
+   * @param out a writer
+   * @throws IOException in case of IO problem
+   */
+  protected static void writeXmlHeader(final PrintWriter out) throws IOException {
+    //noinspection HardCodedStringLiteral
+    out.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+    crlf(out);
   }
 
 }

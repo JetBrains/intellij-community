@@ -17,10 +17,11 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.DataOutput;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * @author Eugene Zhuravlev
@@ -36,28 +37,28 @@ public class Tag extends CompositeGenerator {
     myTagOptions = tagOptions;
   }
 
-  public void generate(DataOutput out) throws IOException {
-    out.writeBytes("<");
-    out.writeBytes(myTagName);
+  public void generate(PrintWriter out) throws IOException {
+    out.print("<");
+    out.print(myTagName);
     if (myTagOptions != null && myTagOptions.length > 0) {
-      out.writeBytes(" ");
+      out.print(" ");
       int generated = 0;
       for (final Pair option : myTagOptions) {
         if (option == null) {
           continue;
         }
         if (generated > 0) {
-          out.writeBytes(" ");
+          out.print(" ");
         }
-        out.writeBytes((String)option.getFirst());
-        out.writeBytes("=\"");
-        out.writeBytes((String)option.getSecond());
-        out.writeBytes("\"");
+        out.print((String)option.getFirst());
+        out.print("=\"");
+        out.print(StringUtil.escapeXml((String)option.getSecond()));
+        out.print("\"");
         generated += 1;
       }
     }
     if (getGeneratorCount() > 0) {
-      out.writeBytes(">");
+      out.print(">");
       shiftIndent();
       try {
         super.generate(out);
@@ -66,12 +67,12 @@ public class Tag extends CompositeGenerator {
         unshiftIndent();
       }
       crlf(out);
-      out.writeBytes("</");
-      out.writeBytes(myTagName);
-      out.writeBytes(">");
+      out.print("</");
+      out.print(myTagName);
+      out.print(">");
     }
     else {
-      out.writeBytes("/>");
+      out.print("/>");
     }
   }
 

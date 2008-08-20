@@ -25,7 +25,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -178,9 +177,15 @@ public abstract class BuildProperties extends CompositeGenerator {
     return VfsUtil.virtualToIoFile(project.getBaseDir());
   }
 
+  /**
+   * Convert name. All double quotes are removed and spaces are replaced with underscore.
+   *
+   * @param name a name to convert
+   * @return a converted name
+   */
   public static @NonNls String convertName(@NonNls final String name) {
     //noinspection HardCodedStringLiteral
-    return JDOMUtil.escapeText(name.replaceAll("\"", "").replaceAll("\\s+", "_").toLowerCase());
+    return name.replaceAll("\"", "").replaceAll("\\s+", "_").toLowerCase();
   }
 
   public static @NonNls String getPathMacroProperty(@NonNls String pathMacro) {

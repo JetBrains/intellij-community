@@ -8,8 +8,8 @@ import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
-import java.io.DataOutput;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * @author Eugene Zhuravlev
@@ -40,7 +40,7 @@ public class CompilerExcludes extends Generator{
 
 
 
-  public void generate(DataOutput out) throws IOException {
+  public void generate(PrintWriter out) throws IOException {
     myPatternSet.generate(out);
   }
 

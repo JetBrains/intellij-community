@@ -4,8 +4,8 @@ import com.intellij.compiler.ant.taskdefs.Exclude;
 import com.intellij.compiler.ant.taskdefs.PatternSet;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 
-import java.io.DataOutput;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.StringTokenizer;
 
 /**
@@ -26,7 +26,7 @@ public class IgnoredFiles extends Generator{
 
 
 
-  public void generate(DataOutput out) throws IOException {
+  public void generate(PrintWriter out) throws IOException {
     myPatternSet.generate(out);
   }
 }

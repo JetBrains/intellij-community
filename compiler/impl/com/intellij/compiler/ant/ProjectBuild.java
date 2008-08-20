@@ -5,8 +5,8 @@ import com.intellij.compiler.ant.taskdefs.Target;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 
-import java.io.DataOutput;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * @author Eugene Zhuravlev
@@ -54,10 +54,9 @@ public abstract class ProjectBuild extends Generator {
                                 CompilerBundle.message("generated.ant.build.build.all.target.name"), null), 1);
   }
 
-  public void generate(DataOutput out) throws IOException {
+  public void generate(PrintWriter out) throws IOException {
     //noinspection HardCodedStringLiteral
-    out.writeBytes("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
-    crlf(out);
+    writeXmlHeader(out);
     myAntProject.generate(out);
   }
 
