@@ -1,10 +1,10 @@
 package com.intellij.ide.fileTemplates;
 
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.Properties;
@@ -20,16 +20,21 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
   public PsiElement createFromTemplate(final Project project, final PsiDirectory directory, String fileName, final FileTemplate template,
                                        final String templateText,
                                        final Properties props) throws IncorrectOperationException {
-    final String suggestedFileNameEnd = "." + template.getExtension();
-
-    if (!fileName.endsWith(suggestedFileNameEnd)) {
-      fileName += suggestedFileNameEnd;
-    }
+    fileName = checkAppendExtension(fileName, template);
 
     directory.checkCreateFile(fileName);
     PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, templateText);
     file = (PsiFile)directory.add(file);
     return file;
+  }
+
+  protected String checkAppendExtension(String fileName, final FileTemplate template) {
+    final String suggestedFileNameEnd = "." + template.getExtension();
+
+    if (!fileName.endsWith(suggestedFileNameEnd)) {
+      fileName += suggestedFileNameEnd;
+    }
+    return fileName;
   }
 
   public boolean canCreate(final PsiDirectory[] dirs) {

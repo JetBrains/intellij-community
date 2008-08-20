@@ -7,19 +7,14 @@ import com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
-import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog;
 import com.intellij.ide.fileTemplates.ui.SelectTemplateDialog;
-import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 public class CreateFromTemplateGroup extends ActionGroup{
@@ -109,7 +104,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
     return null;
   }
 
-  private static boolean canCreateFromTemplate(AnActionEvent e, FileTemplate template){
+  static boolean canCreateFromTemplate(AnActionEvent e, FileTemplate template){
     if (e == null) return false;
     DataContext dataContext = e.getDataContext();
     IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
@@ -119,46 +114,6 @@ public class CreateFromTemplateGroup extends ActionGroup{
     if (dirs.length == 0) return false;
 
     return FileTemplateUtil.canCreateFromTemplate(dirs, template);
-  }
-
-  private static abstract class CreateFromTemplateActionBase extends AnAction{
-
-    public CreateFromTemplateActionBase(final String title, final String description, final Icon icon) {
-      super (title,description,icon);
-    }
-
-    public final void actionPerformed(AnActionEvent e){
-      DataContext dataContext = e.getDataContext();
-
-      IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
-      if (view == null) {
-        return;
-      }
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-
-      PsiDirectory dir = DirectoryChooserUtil.getOrChooseDirectory(view);
-      if (dir == null) return;
-
-      FileTemplate selectedTemplate = getTemplate(project, dir);
-      if(selectedTemplate != null){
-        AnAction action = getReplacedAction(selectedTemplate);
-        if (action != null) {
-          action.actionPerformed(e);
-        }
-        else {
-          FileTemplateManager.getInstance().addRecentName(selectedTemplate.getName());
-          PsiElement createdElement = new CreateFromTemplateDialog(project, dir, selectedTemplate).create();
-          if (createdElement != null) {
-            view.selectElement(createdElement);
-          }
-        }
-      }
-    }
-
-    @Nullable
-    protected abstract AnAction getReplacedAction(final FileTemplate selectedTemplate);
-
-    protected abstract FileTemplate getTemplate(final Project project, final PsiDirectory dir);
   }
 
   private static class CreateFromTemplatesAction extends CreateFromTemplateActionBase{
@@ -178,30 +133,4 @@ public class CreateFromTemplateGroup extends ActionGroup{
     }
   }
 
-  private static class CreateFromTemplateAction extends CreateFromTemplateActionBase{
-
-    private FileTemplate myTemplate;
-
-    public CreateFromTemplateAction(FileTemplate template){
-      super(template.getName(), null, FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension()).getIcon());
-      myTemplate = template;
-    }
-
-    @Nullable
-    protected AnAction getReplacedAction(final FileTemplate template) {
-      return null;
-    }
-
-    protected FileTemplate getTemplate(final Project project, final PsiDirectory dir) {
-      return myTemplate;
-    }
-
-    public void update(AnActionEvent e){
-      super.update(e);
-      Presentation presentation = e.getPresentation();
-      boolean isEnabled = canCreateFromTemplate(e, myTemplate);
-      presentation.setEnabled(isEnabled);
-      presentation.setVisible(isEnabled);
-    }
-  }
 }
