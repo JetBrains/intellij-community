@@ -36,7 +36,7 @@
 
     <!-- Groovy language -->
     <treeStructureProvider implementation="org.jetbrains.plugins.groovy.projectView.GroovyTreeStructureProvider"/>
-    <syntaxHighlighter language="Groovy" key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
+    <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GroovyAnnotator"/>
     <lang.psiStructureViewFactory language="Groovy" implementationClass="org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory"/>
@@ -57,7 +57,7 @@
     <codeInsight.implementMethod language="Groovy" implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyImplementMethodsHandler"/>
     <codeInsight.parameterInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
     <refactoring.inlineHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler"/>
-    <lookup.charFilter language="Groovy" implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
+    <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
     <completion.contributor implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyCompetionContributor"/>
     
     <directClassInheritorsSearch implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyDirectInheritorsSearcher"/>
@@ -103,7 +103,7 @@
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.LateBoundReferencesSearcher"/>-->
       
     <!-- Grails and GSP -->
-    <syntaxHighlighter language="Groovy" key="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspSyntaxHiglighter"/>
+    <syntaxHighlighter key="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspSyntaxHiglighter"/>
     <annotator language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.annotator.GspAnnotator"/>
     <lang.braceMatcher language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspPairedBraceMatcher"/>
     <lang.commenter language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspCommenter"/>
