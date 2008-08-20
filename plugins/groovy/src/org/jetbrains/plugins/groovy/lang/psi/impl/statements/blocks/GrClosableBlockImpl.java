@@ -117,7 +117,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", next);
     }
 
-    parameterList.addParameter(parameter);
+    parameterList.addParameterToEnd(parameter);
   }
 
   public boolean hasParametersSection() {

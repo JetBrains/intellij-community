@@ -181,4 +181,16 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
     return ((GrReferenceExpression) invoked).getSameNameVariants();
   }
 
+  /*
+  public PsiElement addNamedArgument(final GrNamedArgument argument) {
+    final GrArgumentList argList = getArgumentList();
+    if (argList != null) {
+      return argList.addNamedArgument(argument);
+    }
+    final GrClosableBlock[] clArgs = getClosureArguments();
+    //todo implement me!
+    return null;
+
+  }
+  */
 }

@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
@@ -67,6 +68,8 @@ public abstract class GroovyPsiElementFactory {
   public abstract PsiElement createLineTerminator(int length);
 
   public abstract GrArgumentList createExpressionArgumentList(GrExpression... expressions);
+
+  public abstract GrNamedArgument createNamedArgument(String name, GrExpression expression);
 
   public abstract GrStatement createStatementFromText(String text);
 

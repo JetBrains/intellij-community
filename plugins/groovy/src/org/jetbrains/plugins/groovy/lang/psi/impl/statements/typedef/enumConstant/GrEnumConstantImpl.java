@@ -18,12 +18,14 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConsta
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
@@ -91,7 +93,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   public PsiClass getContainingClass() {
     PsiElement parent = getParent();
     assert parent instanceof GrEnumConstantList;
-    return (PsiClass) parent.getParent().getParent();
+    return (PsiClass)parent.getParent().getParent();
   }
 
   public boolean isProperty() {
@@ -118,6 +120,15 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   @Nullable
   public GrArgumentList getArgumentList() {
     return findChildByClass(GrArgumentList.class);
+  }
+
+  public GrExpression removeArgument(final int number) {
+    final GrArgumentList list = getArgumentList();
+    return list != null ? list.removeArgument(number) : null;
+  }
+
+  public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
+    return null;
   }
 
   public GrTypeDefinitionBody getAnonymousBlock() {

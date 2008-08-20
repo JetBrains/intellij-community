@@ -27,4 +27,6 @@ public interface GrApplicationStatement extends GrStatement, GrCall {
   GrExpression[] getArguments();
 
   GrArgumentList getArgumentList();
+
+  //PsiElement addNamedArgument(GrNamedArgument argument);
 }

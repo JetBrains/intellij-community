@@ -28,7 +28,9 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -55,6 +57,15 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
   @NotNull
   public GrArgumentList getArgumentList() {
     return findChildByClass(GrArgumentList.class);
+  }
+
+  @Nullable
+  public GrExpression removeArgument(final int number) {
+    return getArgumentList().removeArgument(number);
+  }
+
+  public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
+    return getArgumentList().addNamedArgument(namedArgument);
   }
 
   public boolean isSuperCall() {
@@ -138,9 +149,7 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    return element instanceof PsiMethod &&
-        ((PsiMethod) element).isConstructor() &&
-        getManager().areElementsEquivalent(element, resolve());
+    return element instanceof PsiMethod && ((PsiMethod)element).isConstructor() && getManager().areElementsEquivalent(element, resolve());
 
   }
 

@@ -41,7 +41,7 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   public Boolean EXTRACT_METHOD_SPECIFY_TYPE = null;
   public String EXTRACT_METHOD_VISIBILITY = null;
   public Boolean IS_DEBUG_ENABLED_IN_SCRIPT = null;
-  public Boolean CONVERT_PARAM_CREATE_NEW_FIRST = null;
+  public Boolean CONVERT_PARAM_SPECIFY_MAP_TYPE = null;
 
   // Groovy & Grails configuration settings
   public String DEFAULT_GROOVY_LIB_NAME = null;

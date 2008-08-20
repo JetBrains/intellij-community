@@ -630,4 +630,20 @@ public class PsiUtil {
     if (node == null) return false;
     return node.getElementType() == GroovyTokenTypes.mNLS;
   }
+
+  public static PsiElement getPrevNonSpace(final PsiElement elem) {
+    PsiElement prevSibling = elem.getPrevSibling();
+    while (prevSibling instanceof PsiWhiteSpace) {
+      prevSibling = prevSibling.getPrevSibling();
+    }
+    return prevSibling;
+  }
+
+  public static PsiElement getNextNonSpace(final PsiElement elem) {
+    PsiElement nextSibling = elem.getNextSibling();
+    while (nextSibling instanceof PsiWhiteSpace) {
+      nextSibling = nextSibling.getNextSibling();
+    }
+    return nextSibling;
+  }
 }

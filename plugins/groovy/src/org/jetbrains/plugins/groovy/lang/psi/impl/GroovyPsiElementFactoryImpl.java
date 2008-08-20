@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
@@ -358,6 +359,15 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     PsiFile file = createGroovyFile(text.toString());
     assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrMethodCallExpression);
     return (((GrMethodCallExpression) file.getChildren()[0])).getArgumentList();
+  }
+
+  public GrNamedArgument createNamedArgument(@NotNull final String name, final GrExpression expression) {
+    StringBuffer text = new StringBuffer();
+    text.append("foo (").append(name).append(":").append(expression.getText()).append(")");
+    PsiFile file = createGroovyFile(text.toString());
+    assert file.getChildren()[0] != null;
+    GrCall call = (GrCall)file.getChildren()[0];
+    return call.getArgumentList().getNamedArguments()[0];
   }
 
   public GrStatement createStatementFromText(String text) {

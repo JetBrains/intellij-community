@@ -16,13 +16,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -59,14 +62,63 @@ public class GrParameterListImpl extends GroovyPsiElementImpl implements GrParam
     return getParameters().length;
   }
 
-  public void addParameter(GrParameter parameter) {
+  public void addParameterToEnd(GrParameter parameter) {
     GrParameter[] params = getParameters();
+    final ASTNode astNode = getNode();
     if (params.length == 0) {
-      getNode().addChild(parameter.getNode());
-    } else {
+      astNode.addChild(parameter.getNode());
+    }
+    else {
       GrParameter last = params[params.length - 1];
-      getNode().addChild(parameter.getNode(), last.getNode());
-      getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", last.getNode());
+      astNode.addChild(parameter.getNode(), last.getNode());
+      astNode.addLeaf(mCOMMA, ",", last.getNode());
     }
   }
+
+  public void addParameterToHead(GrParameter parameter) {
+    GrParameter[] params = getParameters();
+    final ASTNode astNode = getNode();
+    final ASTNode paramNode = parameter.getNode();
+    assert paramNode != null;
+    if (params.length == 0) {
+      astNode.addChild(paramNode);
+    }
+    else {
+      GrParameter first = params[0];
+      astNode.addChild(paramNode, first.getNode());
+      astNode.addLeaf(mCOMMA, ",", first.getNode());
+    }
+  }
+
+  public int getParameterNumber(final GrParameter parameter) {
+    for (int i = 0; i < getParameters().length; i++) {
+      GrParameter param = getParameters()[i];
+      if (param == parameter) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  @Nullable
+  public PsiElement removeParameter(final GrParameter toRemove) {
+    final ASTNode astNode = getNode();
+    for (GrParameter param : getParameters()) {
+      if (param == toRemove) {
+        final ASTNode paramNode = param.getNode();
+        assert paramNode != null;
+        PsiElement prevSibling = PsiUtil.getPrevNonSpace(param);
+        astNode.removeChild(paramNode);
+        if (prevSibling != null) {
+          final ASTNode prev = prevSibling.getNode();
+          if (prev != null && prev.getElementType() == mCOMMA) {
+            astNode.removeChild(prev);
+          }
+        }
+        return toRemove;
+      }
+    }
+    return null;
+  }
+
 }

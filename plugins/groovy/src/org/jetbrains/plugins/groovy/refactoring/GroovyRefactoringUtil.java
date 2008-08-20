@@ -617,4 +617,5 @@ public abstract class GroovyRefactoringUtil {
     return s;
 
   }
+
 }

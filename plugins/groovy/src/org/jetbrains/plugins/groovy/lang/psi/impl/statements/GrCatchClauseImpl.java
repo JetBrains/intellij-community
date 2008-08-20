@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -60,5 +61,9 @@ public class GrCatchClauseImpl extends GroovyPsiElementImpl implements GrCatchCl
   public GrParameter[] getParameters() {
     final GrParameter parameter = getParameter();
     return parameter != null ? new GrParameter[]{parameter} : GrParameter.EMPTY_ARRAY;
+  }
+
+  public GrParameterList getParameterList() {
+    return null;
   }
 }

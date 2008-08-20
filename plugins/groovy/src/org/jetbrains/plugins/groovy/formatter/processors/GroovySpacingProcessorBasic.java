@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.formatter.processors;
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
@@ -31,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
 /**
  * @author ilyas
@@ -52,19 +54,15 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
 
     //Braces Placement
     // For multi-line strings
-    if (!child1.getNode().getTextRange().equals(child1.getTextRange()) ||
-        !child2.getNode().getTextRange().equals(child2.getTextRange())) {
+    if (!child1.getNode().getTextRange().equals(child1.getTextRange()) || !child2.getNode().getTextRange().equals(child2.getTextRange())) {
       return NO_SPACING;
     }
 
     //For type parameters
     IElementType leftType = leftNode.getElementType();
-    if (mLT == leftType &&
-        rightNode.getPsi() instanceof GrTypeParameter ||
-        mGT == rightNode.getElementType() &&
-            leftNode.getPsi() instanceof GrTypeParameter ||
-        mIDENT == leftType &&
-            rightNode.getPsi() instanceof GrTypeParameterList) {
+    if (mLT == leftType && rightNode.getPsi() instanceof GrTypeParameter ||
+        mGT == rightNode.getElementType() && leftNode.getPsi() instanceof GrTypeParameter ||
+        mIDENT == leftType && rightNode.getPsi() instanceof GrTypeParameterList) {
       return NO_SPACING;
     }
 
@@ -80,8 +78,8 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
     }
     // For left square bracket in array declarations and selections by index
     if ((mLBRACK.equals(rightNode.getElementType()) &&
-        rightNode.getPsi().getParent().getNode() != null &&
-        INDEX_OR_ARRAY.contains(rightNode.getPsi().getParent().getNode().getElementType())) ||
+         rightNode.getPsi().getParent().getNode() != null &&
+         INDEX_OR_ARRAY.contains(rightNode.getPsi().getParent().getNode().getElementType())) ||
         ARRAY_DECLARATOR.equals(rightNode.getElementType())) {
       return NO_SPACING;
     }
@@ -98,8 +96,7 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
     }
 
     // For parentheses in arguments and typecasts
-    if (LEFT_BRACES.contains(leftType) ||
-        RIGHT_BRACES.contains(rightNode.getElementType())) {
+    if (LEFT_BRACES.contains(leftType) || RIGHT_BRACES.contains(rightNode.getElementType())) {
       return NO_SPACING_WITH_NEWLINE;
     }
     // For type parameters
@@ -116,8 +113,7 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
 /********** punctuation marks ************/
     // For dots, commas etc.
     if ((PUNCTUATION_SIGNS.contains(rightNode.getElementType())) ||
-        (mCOLON.equals(rightNode.getElementType()) &&
-            !(rightNode.getPsi().getParent() instanceof GrConditionalExpression))) {
+        (mCOLON.equals(rightNode.getElementType()) && !(rightNode.getPsi().getParent() instanceof GrConditionalExpression))) {
       return NO_SPACING;
     }
 
@@ -126,21 +122,16 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
     }
 
 /********** imports ************/
-    if (IMPORT_STATEMENT.equals(leftType) &&
-        IMPORT_STATEMENT.equals(rightNode.getElementType())) {
+    if (IMPORT_STATEMENT.equals(leftType) && IMPORT_STATEMENT.equals(rightNode.getElementType())) {
       return IMPORT_BETWEEN_SPACING;
     }
     if ((IMPORT_STATEMENT.equals(leftType) &&
-        (!IMPORT_STATEMENT.equals(rightNode.getElementType()) &&
-            !mSEMI.equals(rightNode.getElementType()))) ||
-        ((!IMPORT_STATEMENT.equals(leftType) &&
-            !mSEMI.equals(leftType)) &&
-            IMPORT_STATEMENT.equals(rightNode.getElementType()))) {
+         (!IMPORT_STATEMENT.equals(rightNode.getElementType()) && !mSEMI.equals(rightNode.getElementType()))) ||
+        ((!IMPORT_STATEMENT.equals(leftType) && !mSEMI.equals(leftType)) && IMPORT_STATEMENT.equals(rightNode.getElementType()))) {
       return IMPORT_OTHER_SPACING;
     }
 
-    if ((VARIABLE_DEFINITION.equals(leftType) ||
-        VARIABLE_DEFINITION.equals(rightNode.getElementType())) &&
+    if ((VARIABLE_DEFINITION.equals(leftType) || VARIABLE_DEFINITION.equals(rightNode.getElementType())) &&
         !(leftNode.getTreeNext() instanceof PsiErrorElement)) {
       return Spacing.createSpacing(0, 0, 1, false, 100);
     }
@@ -155,13 +146,11 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
     // Unary and postfix expressions
     if (PREFIXES.contains(leftType) ||
         POSTFIXES.contains(rightNode.getElementType()) ||
-        (PREFIXES_OPTIONAL.contains(leftType) &&
-            leftNode.getPsi().getParent() instanceof GrUnaryExpression)) {
+        (PREFIXES_OPTIONAL.contains(leftType) && leftNode.getPsi().getParent() instanceof GrUnaryExpression)) {
       return NO_SPACING_WITH_NEWLINE;
     }
 
-    if (RANGES.contains(leftType) ||
-        RANGES.contains(rightNode.getElementType())) {
+    if (RANGES.contains(leftType) || RANGES.contains(rightNode.getElementType())) {
       return NO_SPACING_WITH_NEWLINE;
     }
 
@@ -184,12 +173,19 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
       return LAZY_SPACING;
     }
 
-    if (leftNode.getPsi() instanceof GrStatement && rightNode.getPsi() instanceof GrStatement) {
+    final PsiElement left = leftNode.getPsi();
+    final PsiElement right = rightNode.getPsi();
+    if (left instanceof GrStatement &&
+        right instanceof GrStatement &&
+        left.getParent() instanceof GrStatementOwner &&
+        right.getParent() instanceof GrStatementOwner) {
       return COMMON_SPACING_WITH_NL;
     }
 
-    if (rightType == mGDOC_INLINE_TAG_END || leftType == mGDOC_INLINE_TAG_START ||
-        rightType == mGDOC_INLINE_TAG_START || leftType == mGDOC_INLINE_TAG_END) {
+    if (rightType == mGDOC_INLINE_TAG_END ||
+        leftType == mGDOC_INLINE_TAG_START ||
+        rightType == mGDOC_INLINE_TAG_START ||
+        leftType == mGDOC_INLINE_TAG_END) {
       return NO_SPACING;
     }
 

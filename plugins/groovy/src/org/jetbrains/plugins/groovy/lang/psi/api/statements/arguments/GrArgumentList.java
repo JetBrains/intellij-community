@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 
 /**
  * @author ilyas
+ * Plain Argumanet list with parentheses. Cannot contain closure arguments, they are placed outside.
  */
 public interface GrArgumentList extends GroovyPsiElement {
   @NotNull GrNamedArgument[] getNamedArguments();
@@ -40,5 +41,11 @@ public interface GrArgumentList extends GroovyPsiElement {
   @Nullable
   PsiElement getRightParen();
 
+  int getExpressionArgumentIndex(GrExpression arg);
+
+  @Nullable
+  GrExpression removeArgument(int argNumber);
+
+  GrNamedArgument addNamedArgument(GrNamedArgument namedArgument);
 
 }

@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -49,6 +50,10 @@ public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInCl
 
   public GrParameter[] getParameters() {
     return getDeclaredVariables();
+  }
+
+  public GrParameterList getParameterList() {
+    return null;
   }
 
   @Nullable

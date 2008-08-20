@@ -17,13 +17,17 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
@@ -73,6 +77,22 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return null;
   }
 
+  public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
+    final GrArgumentList list = getArgumentList();
+    if (list == null) {
+      final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+      final GrArgumentList newList = factory.createExpressionArgumentList();
+      PsiElement last = getLastChild();
+      while (last.getPrevSibling() instanceof PsiWhiteSpace || last.getPrevSibling() instanceof PsiErrorElement) {
+        last = last.getPrevSibling();
+      }
+      ASTNode astNode = last.getNode();
+      assert astNode != null;
+      getNode().addChild(newList.getNode(), astNode);
+    }
+    return super.addNamedArgument(namedArgument);
+  }
+
   public GrCodeReferenceElement getReferenceElement() {
     return findChildByClass(GrCodeReferenceElement.class);
   }
@@ -90,13 +110,15 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
       final PsiElement element = classResult.getElement();
       if (element instanceof PsiClass) {
         final GroovyPsiElement context = classResult.getCurrentFileResolveContext();
-        PsiClass clazz = (PsiClass) element;
+        PsiClass clazz = (PsiClass)element;
         String className = clazz.getName();
         PsiType thisType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(clazz, classResult.getSubstitutor());
-        final MethodResolverProcessor processor = new MethodResolverProcessor(className, ref, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
+        final MethodResolverProcessor processor = new MethodResolverProcessor(className, ref, true, thisType, argTypes, PsiType.EMPTY_ARRAY)
+          ;
         processor.setCurrentFileResolveContext(context);
         PsiSubstitutor substitutor = classResult.getSubstitutor();
-        final boolean toBreak = element.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), null, ref);
+        final boolean toBreak =
+          element.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), null, ref);
         constructorResults.addAll(Arrays.asList(processor.getCandidates()));
         if (!toBreak) break;
       }
@@ -134,7 +156,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     for (GroovyResolveResult classResult : classResults) {
       final PsiElement element = classResult.getElement();
       if (element instanceof PsiClass) {
-        final PsiMethod[] constructors = ((PsiClass) element).getConstructors();
+        final PsiMethod[] constructors = ((PsiClass)element).getConstructors();
         for (PsiMethod constructor : constructors) {
           boolean isAccessible = helper.isAccessible(constructor, this, null);
           result.add(new GroovyResolveResultImpl(constructor, null, classResult.getSubstitutor(), isAccessible, true));
@@ -144,4 +166,6 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
 
     return result.toArray(new GroovyResolveResult[result.size()]);
   }
+
+
 }

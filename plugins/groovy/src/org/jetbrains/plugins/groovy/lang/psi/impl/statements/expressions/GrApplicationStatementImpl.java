@@ -17,12 +17,14 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 
 /**
  * @author ilyas
@@ -53,6 +55,17 @@ public class GrApplicationStatementImpl extends GrExpressionImpl implements GrAp
 
   public GrCommandArgumentList getArgumentList() {
     return findChildByClass(GrCommandArgumentList.class);
+  }
+
+  public GrExpression removeArgument(final int number) {
+    final GrCommandArgumentList list = getArgumentList();
+    return list != null ? list.removeArgument(number) : null;
+  }
+
+  public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
+    GrCommandArgumentList list = getArgumentList();
+    assert list != null;
+    return list.addNamedArgument(namedArgument);
   }
 
   public PsiType getType() {

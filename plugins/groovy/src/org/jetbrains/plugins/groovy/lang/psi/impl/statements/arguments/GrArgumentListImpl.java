@@ -21,7 +21,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -55,8 +57,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
   }
 
   public GrArgumentList replaceWithArgumentList(GrArgumentList newArgList) throws IncorrectOperationException {
-    if (this.getParent() == null ||
-        this.getParent().getNode() == null) {
+    if (this.getParent() == null || this.getParent().getNode() == null) {
       throw new IncorrectOperationException();
     }
     ASTNode parentNode = this.getParent().getNode();
@@ -66,7 +67,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     if (!(newNode.getPsi() instanceof GrArgumentList)) {
       throw new IncorrectOperationException();
     }
-    return ((GrArgumentList) newNode.getPsi());
+    return ((GrArgumentList)newNode.getPsi());
   }
 
   public boolean isIndexPropertiesList() {
@@ -88,5 +89,70 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     ASTNode paren = getNode().findChildByType(GroovyTokenTypes.mRPAREN);
     return paren != null ? paren.getPsi() : null;
   }
+
+  public int getExpressionArgumentIndex(final GrExpression arg) {
+    for (int i = 0; i < getExpressionArguments().length; i++) {
+      GrExpression expression = getExpressionArguments()[i];
+      if (expression == arg) return i;
+    }
+    return -1;
+  }
+
+  @Nullable
+  public GrExpression removeArgument(final int argNumber) {
+    for (int i = 0; i < getExpressionArguments().length; i++) {
+      GrExpression expression = getExpressionArguments()[i];
+      if (i == argNumber) {
+        final ASTNode exprNode = expression.getNode();
+        final PsiElement prevElem = PsiUtil.getPrevNonSpace(expression);
+        final PsiElement nextElem = PsiUtil.getNextNonSpace(expression);
+        getNode().removeChild(exprNode);
+        if (nextElem != null && nextElem.getNode() != null &&
+            (nextElem.getNode().getElementType() == mCOMMA)) {
+          getNode().removeChild(nextElem.getNode());
+        } else if (prevElem != null) {
+          final ASTNode prev = prevElem.getNode();
+          if (prev != null && prev.getElementType() == mCOMMA) {
+            getNode().removeChild(prev);
+          }
+        }
+        return expression;
+      }
+    }
+    return null;
+  }
+
+  public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) {
+    final GrNamedArgument[] namedArguments = getNamedArguments();
+    final GrExpression[] args = getExpressionArguments();
+    final ASTNode newNode = namedArgument.getNode();
+    PsiElement anchor = null;
+    final int namedCount = namedArguments.length;
+    final int exprCount = args.length;
+    if (namedCount > 0) {
+      anchor = namedArguments[namedCount - 1];
+    } else if (exprCount > 0) {
+      anchor = args[exprCount - 1];
+    }
+
+    if (anchor != null) {
+      anchor = PsiUtil.getNextNonSpace(anchor);
+    } else {
+      anchor = getRightParen();
+    }
+
+    if (anchor != null) {
+      final ASTNode astNode = anchor.getNode();
+      getNode().addChild(newNode, astNode);
+    } else {
+      getNode().addChild(newNode);
+    }
+
+    if (namedCount + exprCount > 0) {
+      getNode().addLeaf(mCOMMA, ",", newNode);
+    }
+    return namedArgument;
+  }
+
 
 }

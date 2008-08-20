@@ -27,4 +27,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
  */
 public interface GrCommandArgumentList extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement,
                                                GrArgumentList {
+
 }
