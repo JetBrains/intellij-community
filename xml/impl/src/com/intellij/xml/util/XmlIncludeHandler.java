@@ -36,6 +36,8 @@ public class XmlIncludeHandler implements PsiIncludeManager.PsiIncludeHandler {
   }
 
   public PsiIncludeManager.IncludeInfo[] findIncludes(final PsiFile psiFile) {
+    if (!(psiFile instanceof XmlFile)) return PsiIncludeManager.IncludeInfo.EMPTY_ARRAY;
+
     if (!canContainIncludeTag(psiFile)) return PsiIncludeManager.IncludeInfo.EMPTY_ARRAY;
 
     final List<PsiIncludeManager.IncludeInfo> result = new ArrayList<PsiIncludeManager.IncludeInfo>();
