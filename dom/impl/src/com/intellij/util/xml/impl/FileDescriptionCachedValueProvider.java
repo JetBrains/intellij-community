@@ -12,6 +12,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.XmlFileHeader;
@@ -24,10 +25,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author peter
  */
+@SuppressWarnings({"HardCodedStringLiteral", "StringConcatenationInsideStringBufferAppend"})
 class FileDescriptionCachedValueProvider<T extends DomElement> {
   private static final Key<CachedValue<XmlFileHeader>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
   private static final UserDataCache<CachedValue<XmlFileHeader>,XmlFile,Object> ourRootTagCache = new UserDataCache<CachedValue<XmlFileHeader>, XmlFile, Object>() {
@@ -58,7 +61,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
 
     final XmlFileHeader rootTagName = getRootTag();
     try {
-      _computeFileElement(false, rootTagName);
+      _computeFileElement(false, rootTagName, null);
     }
     finally {
       myXmlFile.putUserData(DomManagerImpl.CACHED_FILE_ELEMENT, myLastResult);
@@ -67,8 +70,12 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
     return myLastResult;
   }
 
-  private List<DomEvent> _computeFileElement(final boolean fireEvents, final XmlFileHeader rootTagName) {
+  private List<DomEvent> _computeFileElement(final boolean fireEvents, final XmlFileHeader rootTagName, @Nullable StringBuilder sb) {
     final DomFileElementImpl<T> lastResult = myLastResult;
+    if (sb != null) {
+      sb.append(rootTagName).append("\n");
+    }
+
     if (!myXmlFile.isValid()) {
       myLastResult = null;
       if (fireEvents && lastResult != null) {
@@ -76,10 +83,16 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
       }
       return Collections.emptyList();
     }
+    if (sb != null) {
+      sb.append("File is valid\n");
+    }
 
-    final DomFileDescription<T> description = findFileDescription(rootTagName);
+    final DomFileDescription<T> description = findFileDescription(rootTagName, sb);
 
     final DomFileElementImpl oldValue = getLastValue();
+    if (sb != null) {
+      sb.append("last " + oldValue + "\n");
+    }
     final List<DomEvent> events = fireEvents ? new SmartList<DomEvent>() : Collections.<DomEvent>emptyList();
     if (oldValue != null) {
       if (fireEvents) {
@@ -97,6 +110,9 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
     assert xmlName != null;
     final EvaluatedXmlNameImpl rootTagName1 = EvaluatedXmlNameImpl.createEvaluatedXmlName(xmlName, xmlName.getNamespaceKey(), false);
     myLastResult = new DomFileElementImpl<T>(myXmlFile, rootElementClass, rootTagName1, myDomManager, description);
+    if (sb != null) {
+      sb.append("success " + myLastResult + "\n");
+    }
 
     if (fireEvents) {
       events.add(new ElementDefinedEvent(myLastResult));
@@ -105,33 +121,58 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
   }
 
   @Nullable
-  private DomFileDescription<T> findFileDescription(final XmlFileHeader rootTagName) {
+  private DomFileDescription<T> findFileDescription(final XmlFileHeader rootTagName, @Nullable StringBuilder sb) {
     final DomFileDescription<T> mockDescription = myXmlFile.getUserData(DomManagerImpl.MOCK_DESCIPRTION);
     if (mockDescription != null) return mockDescription;
 
+    if (sb != null) {
+      sb.append("no mock\n");
+    }
+
     final XmlFile originalFile = (XmlFile)myXmlFile.getOriginalFile();
+    if (sb != null) {
+      sb.append("original: " + originalFile + "\n");
+    }
     if (originalFile != null) {
-      final FileDescriptionCachedValueProvider<T> provider = myDomManager.<T>getOrCreateCachedValueProvider(originalFile);
+      final FileDescriptionCachedValueProvider<T> provider = myDomManager.getOrCreateCachedValueProvider(originalFile);
       final DomFileElementImpl<T> element = provider.getFileElement();
+      if (sb != null) {
+        sb.append("originalDom " + element + "\n");
+      }
       return element == null ? null : element.getFileDescription();
     }
 
     //noinspection unchecked
-    DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(rootTagName.getRootTagLocalName()), myCondition);
+    final Set<DomFileDescription> namedDescriptions = myDomManager.getFileDescriptions(rootTagName.getRootTagLocalName());
+    if (sb != null) {
+      sb.append("named " + new HashSet<DomFileDescription>(namedDescriptions) + "\n");
+    }
+    DomFileDescription<T> description = ContainerUtil.find(namedDescriptions, myCondition);
     if (description == null) {
-      description = ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(), myCondition);
+      final Set<DomFileDescription> unnamed = myDomManager.getAcceptingOtherRootTagNameDescriptions();
+      description = ContainerUtil.find(unnamed, myCondition);
+    }
+    if (sb != null) {
+      sb.append("found " + description + "\n");
     }
     return description;
   }
 
   @Nullable
-  private XmlFileHeader getRootTag() {
+  XmlFileHeader getRootTag() {
     return myXmlFile.isValid() ? ourRootTagCache.get(ROOT_TAG_NS_KEY, myXmlFile, null).getValue() : XmlFileHeader.EMPTY;
   }
 
   @Nullable
   final DomFileElementImpl<T> getLastValue() {
     return myLastResult;
+  }
+
+  public String getFileElementWithLogging() {
+    final XmlFileHeader rootTagName = getRootTag();
+    final StringBuilder log = new StringBuilder();
+    _computeFileElement(false, rootTagName, log);
+    return log.toString();
   }
 
   private class MyCondition implements Condition<DomFileDescription> {

@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlDocument;
@@ -31,6 +32,7 @@ import java.util.Map;
  * @author peter
  */
 public class DomFileElementImpl<T extends DomElement> implements DomFileElement<T> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomFileElementImpl");
   private static final DomGenericInfo EMPTY_DOM_GENERIC_INFO = new DomGenericInfo() {
 
     @Nullable
@@ -265,12 +267,20 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
       if (!myFile.isValid()) {
         assert false: myFile + " is not valid";
       } else {
-        assert false: this + " does not equal to " + myManager.getFileElement(myFile);
+        final DomFileElementImpl<DomElement> fileElement = myManager.getFileElement(myFile);
+        if (fileElement == null) {
+          final FileDescriptionCachedValueProvider<DomElement> provider = myManager.getOrCreateCachedValueProvider(myFile);
+          String s = provider.getFileElementWithLogging();
+          LOG.assertTrue(false, "Null, log=" + s);
+        } else {
+          assert false: this + " does not equal to " + fileElement;
+        }
       }
     }
     return (T)getRootHandler().getProxy();
   }
 
+  @NotNull
   public Class<T> getRootElementClass() {
     return myRootElementClass;
   }
