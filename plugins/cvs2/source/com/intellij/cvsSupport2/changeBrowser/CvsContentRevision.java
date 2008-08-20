@@ -35,7 +35,7 @@ import java.io.File;
 public class CvsContentRevision implements ContentRevision {
   protected final RevisionOrDate myRevision;
   protected final File myFile;
-  private final File myLocalFile;
+  private final FilePath myLocalFile;
   private final CvsEnvironment myEnvironment;
   private final Project myProject;
 
@@ -47,7 +47,7 @@ public class CvsContentRevision implements ContentRevision {
                             final CvsEnvironment environment,
                             final Project project) {
     myFile = file;
-    myLocalFile = localFile;
+    myLocalFile = VcsContextFactory.SERVICE.getInstance().createFilePathOn(localFile);
     myRevision = revision;
     myEnvironment = environment;
     myProject = project;
@@ -87,7 +87,7 @@ public class CvsContentRevision implements ContentRevision {
 
   @NotNull
   public FilePath getFile() {
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(myLocalFile);
+    return myLocalFile;
   }
 
   @NotNull
