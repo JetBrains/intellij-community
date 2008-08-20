@@ -18,16 +18,16 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.XmlElementFactory;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.idea.devkit.build.ant.BuildJarTarget;
 
-import java.io.DataOutputStream;
-import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 public class GenerateAntTest extends IdeaTestCase {
 
@@ -47,13 +47,10 @@ public class GenerateAntTest extends IdeaTestCase {
   }
 
   private void checkJarTarget(ModuleChunk chunk) throws Exception {
-    final StringBuffer targetText = new StringBuffer();
-    final DataOutputStream dataOutput = new DataOutputStream(new OutputStream(){
-      public void write(int b) {
-        targetText.append((char)b);
-      }
-    });
+    final StringWriter targetText = new StringWriter();
+    final PrintWriter dataOutput = new PrintWriter(targetText);
     new BuildJarTarget(chunk, BuildTargetsFactory.getInstance().getDefaultOptions(getProject()), new PluginBuildConfiguration(getModule())).generate(dataOutput);
+    dataOutput.flush();
     final String expected = "<target name=\"plugin.build.jar."+ myModule.getName() +"\" description=\"Build plugin archive for module \'" + myModule.getName() + "\'\">\n" +
                             "  <jar destfile=\"${"+ myModule.getName() + ".path.jar}\" duplicate=\"preserve\">\n" +
                             "    <zipfileset dir=\"${module." + myModule.getName() + ".basedir}/classes\" prefix=\"\"/>\n" +
