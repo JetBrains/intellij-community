@@ -7,6 +7,7 @@ import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.utils.IdeaInternalUtil;
@@ -51,7 +52,13 @@ public class RTestUnitConsoleView extends BaseTestsOutputConsoleView {
   }
 
   public void attachToProcess(final ProcessHandler processHandler) {
-    myResultsViewer.attachToProcess(processHandler);
+    // Process handler may be null only in JUnit test's mocks
+    if (processHandler != null) {
+      myResultsViewer.attachToProcess(processHandler);
+    } else {
+      assert ApplicationManager.getApplication().isUnitTestMode();
+    }
+    getPrinter().setCollectOutput(false);
   }
 
   public JComponent getComponent() {

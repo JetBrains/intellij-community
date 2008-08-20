@@ -1,10 +1,11 @@
 package org.jetbrains.plugins.ruby.testing.testunit.runner;
 
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.MockPrinter;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitConsoleView;
@@ -14,24 +15,45 @@ import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.TestResultsViewer;
  * @author Roman Chernyatchik
  */
 public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
-  private RTestUnitConsoleView myConsole;
+  private MyConsoleView myConsole;
   private GeneralToRTestUnitEventsConvertor myEventsProcessor;
   private MockPrinter myMockResetablePrinter;
   private RTestUnitTestProxy myRootSuite;
+  private TestResultsViewer myResultsViewer;
+
+  private class MyConsoleView extends RTestUnitConsoleView {
+    private TestsOutputConsolePrinter myTestsOutputConsolePrinter;
+
+    private MyConsoleView(final TestConsoleProperties consoleProperties, final TestResultsViewer resultsViewer) {
+      super(consoleProperties, resultsViewer);
+
+      myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(MyConsoleView.this, consoleProperties) {
+        @Override
+        public void print(final String text, final ConsoleViewContentType contentType) {
+          myMockResetablePrinter.print(text, contentType);
+        }
+      };
+    }
+
+    @Override
+    public TestsOutputConsolePrinter getPrinter() {
+      return myTestsOutputConsolePrinter;
+    }
+  }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     final TestConsoleProperties consoleProperties = createConsoleProperties();
-    final TestResultsViewer resultsViewer = createResultsViewer(consoleProperties);
+    myResultsViewer = createResultsViewer(consoleProperties);
 
-    myRootSuite = resultsViewer.getTestsRootNode();
-    myConsole = new RTestUnitConsoleView(consoleProperties, resultsViewer);
-    myEventsProcessor = new GeneralToRTestUnitEventsConvertor(resultsViewer.getTestsRootNode());
+    myMockResetablePrinter = new MockPrinter(true);
+    myRootSuite = myResultsViewer.getTestsRootNode();
+    myConsole = new MyConsoleView(consoleProperties, myResultsViewer);
+    myEventsProcessor = new GeneralToRTestUnitEventsConvertor(myResultsViewer.getTestsRootNode());
 
     myEventsProcessor.onStartTesting();
-    myMockResetablePrinter = new MockPrinter(true);
   }
 
   @Override
@@ -289,6 +311,32 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
     assertEquals(sys, printer.getStdSys());
 
     printer.resetIfNecessary();
+  }
+
+  public void testStopCollectingOutput() {
+    myResultsViewer.selectAndNotify(myResultsViewer.getTestsRootNode());
+    myConsole.attachToProcess(null);
+
+    myEventsProcessor.onStartTesting();
+    myEventsProcessor.onSuiteStarted("suite");
+    final RTestUnitTestProxy suite = myEventsProcessor.getCurrentSuite();
+    myEventsProcessor.onSuiteFinished("suite");
+    myEventsProcessor.onUncapturedOutput("preved", ProcessOutputTypes.STDOUT);
+    myEventsProcessor.onFinishTesting();
+
+    //myResultsViewer.selectAndNotify(suite);
+    //the string above doesn't update tree immediately so we should simulate update
+    myConsole.getPrinter().updateOnTestSelected(suite);
+
+    //Lets reset printer /clear console/ before selection changed to
+    //get after selection event only actual ouptut
+    myMockResetablePrinter.resetIfNecessary();
+
+    //myResultsViewer.selectAndNotify(myResultsViewer.getTestsRootNode());
+    //the string above doesn't update tree immediately so we should simulate update
+    myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
+
+    assertAllOutputs(myMockResetablePrinter, "preved", "","Empty test suite.\n");
   }
 
   private RTestUnitTestProxy startTestWithPrinter(final String testName) {

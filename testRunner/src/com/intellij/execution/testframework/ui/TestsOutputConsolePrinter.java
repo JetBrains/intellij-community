@@ -13,6 +13,13 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   private Printer myOutput;
   private final DeferingPrinter myDeferingPrinter = new DeferingPrinter(false);
   private final Intermediate myOutputStorage = new DeferingPrinter(true);
+  /**
+   * It seems it is storage for uncaptured output by other printers (e.g. test proxies).
+   * To prevent duplicated output collectioning output on this printer must be paused
+   * (i.e. setCollectOutput(false)) after additional printer have been attached. You can
+   * continue to collect output after additional printers will be deattached(e.g. test runner stops
+   * sending events to test proxies).
+   */
   private Intermediate myCurrentOutputStorage = myOutputStorage;
   private int myMarkOffset = 0;
 
