@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
@@ -38,11 +39,13 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
       return getElementIcon(flags);
     }
-    catch (Exception e) {
+    catch (ProcessCanceledException e) {
+      throw e;
+    } catch(Exception e) {
       LOG.error(e);
-      return null;
+        return null;
+      }
     }
-  }
 
   protected Icon getElementIcon(final int flags) {
     final PsiElement element = (PsiElement)this;
