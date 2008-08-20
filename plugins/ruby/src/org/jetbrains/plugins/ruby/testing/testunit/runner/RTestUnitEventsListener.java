@@ -24,6 +24,7 @@ public interface RTestUnitEventsListener {
   void onTestStarted(@NotNull final RTestUnitTestProxy test);
   void onTestFinished(@NotNull final RTestUnitTestProxy test);
   void onTestFailed(@NotNull final RTestUnitTestProxy test);
+  void onTestIgnored(@NotNull final RTestUnitTestProxy test);
 
   void onSuiteFinished(@NotNull final RTestUnitTestProxy suite);
   void onSuiteStarted(@NotNull final RTestUnitTestProxy suite);

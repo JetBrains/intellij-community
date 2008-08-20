@@ -187,6 +187,50 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     assertTrue(mySuite.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
   }
 
+  public void testTestIgnored() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestIgnored("");
+
+    assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySimpleTest.wasLaunched());
+    assertTrue(mySimpleTest.isDefect());
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.IGNORED_INDEX);
+
+    mySimpleTest.setFinished();
+
+    assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySimpleTest.wasLaunched());
+    assertTrue(mySimpleTest.isDefect());
+
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.IGNORED_INDEX);    
+  }
+
+  public void testTestIgnored_InSuite() {
+    mySuite.setStarted();
+    mySuite.addChild(mySimpleTest);
+
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestIgnored("");
+
+    assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySuite.isInProgress());
+    assertTrue(mySuite.isDefect());
+    assertTrue(mySimpleTest.isDefect());
+
+    mySimpleTest.setFinished();
+
+    assertTrue(mySuite.isInProgress());
+    assertTrue(mySuite.isDefect());
+
+    mySuite.setFinished();
+
+    assertFalse(mySuite.isInProgress());
+    assertTrue(mySuite.isDefect());
+
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.IGNORED_INDEX);
+    assertTrue(mySuite.getMagnitudeInfo() == Magnitude.IGNORED_INDEX);
+  }
+
   public void testTestError() {
     mySimpleTest.setStarted();
     mySimpleTest.setTestFailed("", "", true);

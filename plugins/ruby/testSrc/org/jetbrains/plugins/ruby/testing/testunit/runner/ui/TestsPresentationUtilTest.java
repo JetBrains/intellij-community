@@ -127,6 +127,21 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     assertEquals(PoolOfTestIcons.ERROR_ICON, myRenderer.getIcon());
   }
 
+  public void testFormatTestProxyTest_Ignored() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestIgnored("");
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
+
+    assertEquals(PoolOfTestIcons.IGNORED_ICON, myRenderer.getIcon());
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals(FAKE_TEST_NAME, myFragContainer.getTextAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
+
+    mySimpleTest.setFinished();
+    TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
+    assertEquals(PoolOfTestIcons.IGNORED_ICON, myRenderer.getIcon());
+  }
+
   public void testFormatTestProxyTest_Terminated() {
     mySimpleTest.setStarted();
     mySimpleTest.setTerminated();
@@ -199,6 +214,31 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     TestsPresentationUtil.formatRootNodeWithChildren(mySuite, renderer2);
     mySuite.setFinished();
     assertEquals(PoolOfTestIcons.ERROR_ICON, renderer1.getIcon());
+    assertOneElement(renderer1.getFragmentsContainer().getFragments());
+    assertEquals("Test Results.", renderer1.getFragmentsContainer().getTextAt(0));
+  }
+
+  public void testFormatRootNodeWithChildren_Ignored() {
+    final MyRenderer renderer1 = new MyRenderer(false, myFragContainer = new UITestUtil.FragmentsContainer());
+
+    mySuite.addChild(mySimpleTest);
+    mySuite.setStarted();
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestIgnored("");
+    mySimpleTest.setFinished();
+    mySuite.setFinished();
+
+    TestsPresentationUtil.formatRootNodeWithChildren(mySuite, renderer1);
+
+    assertEquals(PoolOfTestIcons.IGNORED_ICON, renderer1.getIcon());
+    assertOneElement(renderer1.getFragmentsContainer().getFragments());
+    assertEquals("Test Results.", renderer1.getFragmentsContainer().getTextAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getFragmentsContainer().getAttribsAt(0));
+
+    final MyRenderer renderer2 = new MyRenderer(false, myFragContainer = new UITestUtil.FragmentsContainer());
+    TestsPresentationUtil.formatRootNodeWithChildren(mySuite, renderer2);
+    mySuite.setFinished();
+    assertEquals(PoolOfTestIcons.IGNORED_ICON, renderer1.getIcon());
     assertOneElement(renderer1.getFragmentsContainer().getFragments());
     assertEquals("Test Results.", renderer1.getFragmentsContainer().getTextAt(0));
   }
@@ -346,6 +386,14 @@ public class TestsPresentationUtilTest extends BaseRUnitTestsTestCase {
     assertEquals("Error", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
     mySimpleTest.setFinished();
     assertEquals("Error", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
+  }
+
+  public void testGetTestStatusPresentation_TestIgnored() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestIgnored("");
+    assertEquals("Ignored", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
+    mySimpleTest.setFinished();
+    assertEquals("Ignored", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
   }
 
   public void testGetTestStatusPresentation_Terminated() {

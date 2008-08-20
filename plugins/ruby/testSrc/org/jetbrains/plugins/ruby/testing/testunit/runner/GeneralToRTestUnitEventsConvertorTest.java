@@ -120,6 +120,17 @@ public class GeneralToRTestUnitEventsConvertorTest extends BaseRUnitTestsTestCas
     assertFalse(proxy.isInProgress());
   }
 
+  public void testOnTestIgnored() {
+    onTestStarted("some_test");
+    myEventsProcessor.onTestIgnored("some_test", "");
+
+    final String fullName = myEventsProcessor.getFullTestName("some_test");
+    final RTestUnitTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
+
+    assertTrue(proxy.isDefect());
+    assertFalse(proxy.isInProgress());
+  }
+
   public void testOnTestFinished() {
     onTestStarted("some_test");
     final String fullName = myEventsProcessor.getFullTestName("some_test");
@@ -185,6 +196,22 @@ public class GeneralToRTestUnitEventsConvertorTest extends BaseRUnitTestsTestCas
   public void testOnFinishedTesting_WithError() {
     onTestStarted("test");
     myEventsProcessor.onTestFailure("test", "", "", true);
+    myEventsProcessor.onTestFinished("test", 10);
+    myEventsProcessor.onFinishTesting();
+
+    //Tree
+    final Object rootTreeNode = myTreeModel.getRoot();
+    assertEquals(1, myTreeModel.getChildCount(rootTreeNode));
+    final RTestUnitTestProxy rootProxy = RTestUnitTestTreeView.getTestProxyFor(rootTreeNode);
+    assertNotNull(rootProxy);
+
+    assertFalse(rootProxy.isInProgress());
+    assertTrue(rootProxy.isDefect());
+  }
+
+  public void testOnFinishedTesting_WithIgnored() {
+    onTestStarted("test");
+    myEventsProcessor.onTestIgnored("test", "");
     myEventsProcessor.onTestFinished("test", 10);
     myEventsProcessor.onFinishTesting();
 

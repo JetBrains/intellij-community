@@ -209,8 +209,22 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
     });
   }
 
-  public void onTestIgnored(final String testName, final String localizedMessage) {
-    //TODO
+  public void onTestIgnored(final String testName, final String ignoreComment) {
+    UIUtil.addToInvokeLater(new Runnable() {
+      public void run() {
+        final String fullTestName = getFullTestName(testName);
+        final RTestUnitTestProxy testProxy = getProxyByFullTestName(fullTestName);
+        if (testProxy == null) {
+          LOG.error("Test wasn't started! TestIgnored event: name = {" + testName + "}, message = {" + ignoreComment + "}");
+          return;
+        }
+
+        testProxy.setTestIgnored(ignoreComment);
+
+        // fire event
+        fireOnTestIgnored(testProxy);
+      }
+    });
   }
 
   public void onTestOutput(final String testName,
@@ -315,6 +329,12 @@ public class GeneralToRTestUnitEventsConvertor implements GeneralTestEventsProce
   }
 
   private void fireOnTestFailed(final RTestUnitTestProxy test) {
+    for (RTestUnitEventsListener listener : myEventsListeners) {
+      listener.onTestFailed(test);
+    }
+  }
+
+  private void fireOnTestIgnored(final RTestUnitTestProxy test) {
     for (RTestUnitEventsListener listener : myEventsListeners) {
       listener.onTestFailed(test);
     }

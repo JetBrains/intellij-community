@@ -314,6 +314,10 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     updateStatusLabel();
   }
 
+  public void onTestIgnored(@NotNull final RTestUnitTestProxy test) {
+    //Do nothing
+  }
+
   /**
    * Adds suite to tree
    * Suite proxy should be initialized, proxy parent must be some suite (already added to tree)
@@ -491,7 +495,6 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
     //PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
 
-    //TODO[romeo] for different runners should differ
     splitterProportions.externalizeFromDimensionService(getSplitterPropertyName());
     final Container container = splitPane.getParent();
     GuiUtils.replaceJSplitPaneWithIDEASplitter(splitPane);

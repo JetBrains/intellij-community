@@ -235,7 +235,7 @@ public class TestsPresentationUtil {
     if (ignoredCount > 0) {
       renderer.append(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.count.msg.ignored",
                                       ignoredCount) + separator,
-                      SimpleTextAttributes.EXCLUDED_ATTRIBUTES);
+                      SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
     }
 
     if (passedCount > 0) {

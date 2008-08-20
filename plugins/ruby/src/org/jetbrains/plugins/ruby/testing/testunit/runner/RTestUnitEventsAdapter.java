@@ -13,6 +13,7 @@ public class RTestUnitEventsAdapter implements RTestUnitEventsListener {
   public void onTestStarted(@NotNull final RTestUnitTestProxy test) {}
   public void onTestFinished(@NotNull final RTestUnitTestProxy test) {}
   public void onTestFailed(@NotNull final RTestUnitTestProxy test) {}
+  public void onTestIgnored(@NotNull final RTestUnitTestProxy test) {}
 
   public void onSuiteStarted(@NotNull final RTestUnitTestProxy suite) {}
   public void onSuiteFinished(@NotNull final RTestUnitTestProxy suite) {}

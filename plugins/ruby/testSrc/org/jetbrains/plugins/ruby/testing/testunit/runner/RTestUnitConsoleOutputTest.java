@@ -206,6 +206,31 @@ public class RTestUnitConsoleOutputTest extends BaseRUnitTestsTestCase {
     assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
   }
 
+  public void testProcessor_OnIgnored() {
+    final RTestUnitTestProxy myTest1 = startTestWithPrinter("my_test");
+
+    myEventsProcessor.onTestIgnored("my_test", "ignored msg");
+    myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
+    myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
+
+    assertAllOutputs(myMockResetablePrinter, "stdout1 ", "stderr1 ", "\nTest ignored: ignored msg");
+
+    final MockPrinter mockPrinter1 = new MockPrinter(true);
+    mockPrinter1.onNewAvaliable(myTest1);
+    assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 ", "\nTest ignored: ignored msg");
+
+    //other output order
+    final RTestUnitTestProxy myTest2 = startTestWithPrinter("my_test2");
+    myEventsProcessor.onTestOutput("my_test2", "stdout1 ", true);
+    myEventsProcessor.onTestOutput("my_test2", "stderr1 ", false);
+    myEventsProcessor.onTestIgnored("my_test2", "ignored msg");
+
+    assertAllOutputs(myMockResetablePrinter, "stdout1 ", "stderr1 ", "\nTest ignored: ignored msg");
+    final MockPrinter mockPrinter2 = new MockPrinter(true);
+    mockPrinter2.onNewAvaliable(myTest2);
+    assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 ", "\nTest ignored: ignored msg");
+  }
+
   public void testOnUncapturedOutput_BeforeProcessStarted() {
     myRootSuite.setPrintLinstener(myMockResetablePrinter);
 

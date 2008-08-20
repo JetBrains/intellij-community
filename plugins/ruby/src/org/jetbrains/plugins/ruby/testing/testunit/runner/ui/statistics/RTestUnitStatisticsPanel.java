@@ -2,14 +2,15 @@ package org.jetbrains.plugins.ruby.testing.testunit.runner.ui.statistics;
 
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.ui.table.TableView;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ui.TableUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.support.UIUtil;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsAdapter;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsListener;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitTestProxy;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.RTestUnitEventsAdapter;
-import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.SMTestRunnerResultsForm;
 import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.RTestUnitTestProxySelectionChangedListener;
+import org.jetbrains.plugins.ruby.testing.testunit.runner.ui.SMTestRunnerResultsForm;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -199,6 +200,9 @@ public class RTestUnitStatisticsPanel extends JPanel {
       public void run() {
         // updates model
         myStatisticsTableView.setRowSelectionInterval(rowIndex, rowIndex);
+
+        // Scroll to visible
+        TableUtil.scrollSelectionToVisible(myStatisticsTableView);
       }
     });
   }
@@ -212,6 +216,8 @@ public class RTestUnitStatisticsPanel extends JPanel {
       public void run() {
         final int rowIndex = myTableModel.getIndexOf(proxy);
         myStatisticsTableView.setRowSelectionInterval(rowIndex, rowIndex >= 0 ? rowIndex : 0);
+        // Scroll to visible
+        TableUtil.scrollSelectionToVisible(myStatisticsTableView);
       }
     });
   }

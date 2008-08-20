@@ -198,6 +198,11 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
     fireOnNewPrintable(myState);
   }
 
+  public void setTestIgnored(@NotNull final String ignoreComment) {
+    myState = new TestIgnoredState(ignoreComment);
+    fireOnNewPrintable(myState);
+  }
+
   public void setParent(@Nullable final RTestUnitTestProxy parent) {
     myParent = parent;
   }
@@ -337,6 +342,16 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
     return false;
   }
 
+  private boolean containsIgnoredTests() {
+    final List<? extends RTestUnitTestProxy> children = getChildren();
+    for (RTestUnitTestProxy child : children) {
+      if (child.getMagnitudeInfo() == TestStateInfo.Magnitude.IGNORED_INDEX) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * Determines site state after it has been finished
    * @return New state
@@ -348,9 +363,13 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
     } else {
       if (isDefect()) {
         // Test suit contains errors if at least one of its tests contains error
-        state = !containsErrorTests()
-                  ?  SuiteFinishedState.FAILED_SUITE
-                  :  SuiteFinishedState.ERROR_SUITE;
+        if (containsErrorTests()) {
+          state = SuiteFinishedState.ERROR_SUITE;
+        }else {
+          state = !containsIgnoredTests()
+                   ? SuiteFinishedState.FAILED_SUITE
+                   : SuiteFinishedState.WITH_IGNORED_TESTS_SUITE;
+        }
       } else {
         state = SuiteFinishedState.PASSED_SUITE;
       }
