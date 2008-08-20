@@ -17,9 +17,11 @@
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Condition;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,6 +161,15 @@ public abstract class JBPopupFactory {
                                                    @Nullable Runnable disposeCallback,
                                                    int maxRowCount);
 
+  public abstract ListPopup createActionGroupPopup(String title,
+                                                   ActionGroup actionGroup,
+                                                   DataContext dataContext,
+                                                   boolean showNumbers,
+                                                   boolean showDisabledActions,
+                                                   boolean honorActionMnemonics,
+                                                   @Nullable Runnable disposeCallback,
+                                                   int maxRowCount,
+                                                   @Nullable Condition<AnAction> preselectActionCondition);
 
   /**
    * @deprecated use {@link #createListPopup(ListPopupStep)} instead (<code>step</code> must be a ListPopupStep in any case)

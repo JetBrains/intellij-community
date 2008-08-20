@@ -15,8 +15,9 @@ public class NewElementAction extends AnAction {
       .createActionGroupPopup(IdeBundle.message("title.popup.new.element"),
                               getGroup(),
                               dataContext,
-                              JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-                              false);
+                              false, false, false,
+                              null, -1, e.getData(LangDataKeys.PRESELECT_NEW_ACTION_CONDITION));
+
     popup.showInBestPositionFor(dataContext);
   }
 

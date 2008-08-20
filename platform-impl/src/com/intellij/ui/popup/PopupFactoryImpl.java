@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WindowManager;
@@ -91,10 +92,40 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           boolean honorActionMnemonics,
                                           final Runnable disposeCallback,
                                           final int maxRowCount) {
+    return createActionGroupPopup(title, actionGroup, dataContext, showNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
+                                  maxRowCount, null);
+  }
+
+  public ListPopup createActionGroupPopup(final String title,
+                                          final ActionGroup actionGroup,
+                                          DataContext dataContext,
+                                          boolean showNumbers,
+                                          boolean showDisabledActions,
+                                          boolean honorActionMnemonics,
+                                          final Runnable disposeCallback,
+                                          final int maxRowCount,
+                                          final Condition<AnAction> preselectActionCondition) {
     final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     LOG.assertTrue(component != null);
 
-    ListPopupStep step = createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics);
+    final ActionStepBuilder builder = new ActionStepBuilder(dataContext, showNumbers, showDisabledActions, honorActionMnemonics);
+    builder.buildGroup(actionGroup);
+    final List<ActionItem> items = builder.getItems();
+
+    int defaultOptionIndex = 0;
+    if (preselectActionCondition != null) {
+      for (int i = 0; i < items.size(); i++) {
+        final AnAction action = items.get(i).getAction();
+        if (preselectActionCondition.value(action)) {
+          defaultOptionIndex = i;
+          break;
+        }
+      }
+    }
+
+    ListPopupStep step = new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
+                                             defaultOptionIndex,
+                                             false);
 
     final ListPopupImpl popup = new ListPopupImpl(step, maxRowCount) {
       public void dispose() {
@@ -276,14 +307,14 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   private static class ActionItem {
-    private AnAction myAction;
+    private final AnAction myAction;
     private String myText;
     private boolean myIsEnabled;
     private Icon myIcon;
     private boolean myPrependWithSeparator;
     private String mySeparatorText;
 
-    public ActionItem(AnAction action, @NotNull String text, boolean enabled, Icon icon, final boolean prependWithSeparator, String separatorText) {
+    public ActionItem(@NotNull AnAction action, @NotNull String text, boolean enabled, Icon icon, final boolean prependWithSeparator, String separatorText) {
       myAction = action;
       myText = text;
       myIsEnabled = enabled;
@@ -292,6 +323,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       mySeparatorText = separatorText;
     }
 
+    @NotNull
     public AnAction getAction() {
       return myAction;
     }
