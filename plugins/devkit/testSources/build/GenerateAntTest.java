@@ -95,7 +95,10 @@ public class GenerateAntTest extends IdeaTestCase {
     for (int i = 0; i < eattributes.length; i++) {
       XmlAttribute eattribute = eattributes[i];
       XmlAttribute gattribute = gattributes[i];
-      if (!Comparing.strEqual(gattribute.getText(), eattribute.getText())) return false;
+      // logical comparison of the attributes (namespace:localname and display value)
+      if (!Comparing.strEqual(gattribute.getLocalName(), eattribute.getLocalName())) return false;
+      if (!Comparing.strEqual(gattribute.getNamespace(), eattribute.getNamespace())) return false;
+      if (!Comparing.strEqual(gattribute.getDisplayValue(), eattribute.getDisplayValue())) return false;
     }
     return true;
   }
