@@ -174,7 +174,7 @@ public class GeneralToRTestUnitEventsConvertorTest extends BaseRUnitTestsTestCas
     assertNotNull(rootProxy);
 
     assertFalse(rootProxy.isInProgress());
-    assertTrue(rootProxy.isDefect());
+    assertFalse(rootProxy.isDefect());
   }
 
   public void testOnFinishedTesting_WithFailure() {

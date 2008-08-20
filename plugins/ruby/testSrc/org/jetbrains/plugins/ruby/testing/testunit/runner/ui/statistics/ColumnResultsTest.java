@@ -17,7 +17,7 @@ public class ColumnResultsTest extends BaseColumnRenderingTest {
 
     assertFragmentsSize(1);
     assertEquals(1, myFragmentsContainer.getFragments().size());
-    assertEquals(SimpleTextAttributes.GRAYED_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
+    assertEquals(SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("Not run", myFragmentsContainer.getTextAt(0));
   }
 
@@ -111,14 +111,14 @@ public class ColumnResultsTest extends BaseColumnRenderingTest {
     mySuite.setStarted();
     doRender(mySuite);
     assertFragmentsSize(1);
-    assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
+    assertEquals(TestsPresentationUtil.PASSED_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("<NO TESTS>", myFragmentsContainer.getTextAt(0));
 
     myFragmentsContainer.clear();
     mySuite.setFinished();
     doRender(mySuite);
     assertFragmentsSize(1);
-    assertEquals(TestsPresentationUtil.DEFFECT_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
+    assertEquals(TestsPresentationUtil.PASSED_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals("<NO TESTS>", myFragmentsContainer.getTextAt(0));
   }
 

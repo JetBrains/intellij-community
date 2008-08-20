@@ -183,8 +183,8 @@ public class TestsPresentationUtil {
     int ignoredCount = 0;
 
     if (proxy.isLeaf()) {
-      // If suite is empty, show <no tests> failure label and exit from method
-      renderer.append(RESULTS_NO_TESTS, DEFFECT_ATTRIBUTES);
+      // If suite is empty show <no tests> label and exit from method
+      renderer.append(RESULTS_NO_TESTS, proxy.wasLaunched() ? PASSED_ATTRIBUTES : DEFFECT_ATTRIBUTES);
       return;
     }
 
@@ -319,7 +319,7 @@ public class TestsPresentationUtil {
         renderer.append(title, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         break;
       case NOT_RUN_INDEX:
-        renderer.append(title, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.append(title, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
         break;
       case IGNORED_INDEX:
       case SKIPPED_INDEX:

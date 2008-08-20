@@ -436,10 +436,10 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
   }
 
   public void testMagnitude_suiteWithoutTests() {
-    final RTestUnitTestProxy noTests = createSuiteProxy("failedSuite");
+    final RTestUnitTestProxy noTests = createSuiteProxy("emptySuite");
     noTests.setStarted();
     noTests.setFinished();
-    assertEquals(ERROR_INDEX.getValue(), noTests.getMagnitude());
+    assertEquals(COMPLETE_INDEX.getValue(), noTests.getMagnitude());
   }
 
   public void testMagnitude_PassedSuite() {
@@ -694,6 +694,15 @@ public class RTestUnitTestProxyTest extends BaseRUnitTestsTestCase {
     assertWeightsOrder(Magnitude.FAILED_INDEX, Magnitude.ERROR_INDEX);
     assertWeightsOrder(Magnitude.ERROR_INDEX, Magnitude.TERMINATED_INDEX);
     assertWeightsOrder(Magnitude.TERMINATED_INDEX, Magnitude.RUNNING_INDEX);
+  }
+
+  public void testEmptySuite_isntDefect() {
+    mySuite.setStarted();
+    mySuite.setFinished();
+
+    assertEmpty(mySuite.getChildren());
+    assertFalse(mySuite.isDefect());
+    assertEquals(Magnitude.COMPLETE_INDEX, mySuite.getMagnitudeInfo());
   }
 
   protected void assertWeightsOrder(final Magnitude previous, final Magnitude next) {

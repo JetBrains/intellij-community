@@ -58,7 +58,6 @@ public class RTestUnitTestProxy extends CompositePrintable implements PrintableT
     // Is used by some of Tests Filters
 
     //WARN: It is Hack, see PoolOfTestStates, API is necessary
-    //TODO ignored
     return getMagnitudeInfo().getValue();
   }
 

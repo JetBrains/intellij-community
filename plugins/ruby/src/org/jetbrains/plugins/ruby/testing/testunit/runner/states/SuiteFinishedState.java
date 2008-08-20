@@ -83,8 +83,7 @@ public abstract class SuiteFinishedState extends AbstractState {
   public static SuiteFinishedState EMPTY_SUITE = new SuiteFinishedState() {
     @Override
     public boolean isDefect() {
-      //TODO[romeo] add setting to on/off "defect" for this
-      return true;
+      return false;
     }
 
     @Override
@@ -97,7 +96,7 @@ public abstract class SuiteFinishedState extends AbstractState {
 
 
     public Magnitude getMagnitude() {
-      return Magnitude.ERROR_INDEX;
+      return Magnitude.COMPLETE_INDEX;
     }
 
     @Override
