@@ -118,7 +118,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
   public void moveToOffset(int offset) {
     validateCallContext();
     moveToLogicalPosition(myEditor.offsetToLogicalPosition(offset));
-    if (myOffset != offset) {
+    if (!myEditor.offsetToLogicalPosition(myOffset).equals(myEditor.offsetToLogicalPosition(offset))) {
       LOG.error("caret moved to wrong offset. Requested:" + offset + " but actual:" + myOffset);
     }
   }
