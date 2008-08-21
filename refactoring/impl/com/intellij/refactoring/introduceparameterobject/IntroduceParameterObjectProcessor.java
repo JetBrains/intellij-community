@@ -22,7 +22,6 @@ import com.intellij.refactoring.introduceparameterobject.usageInfo.MergeMethodAr
 import com.intellij.refactoring.introduceparameterobject.usageInfo.ReplaceParameterAssignmentWithCall;
 import com.intellij.refactoring.introduceparameterobject.usageInfo.ReplaceParameterIncrementDecrement;
 import com.intellij.refactoring.introduceparameterobject.usageInfo.ReplaceParameterReferenceWithCall;
-import com.intellij.refactoring.psi.AssignmentUtil;
 import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
 import com.intellij.refactoring.ui.ClassUtil;
@@ -179,7 +178,7 @@ public class IntroduceParameterObjectProcessor extends RPPBaseRefactoringProcess
         usages.add(new ReplaceParameterIncrementDecrement(paramUsage, fixedParamName, setter, getter));
         paramsNeedingSetters.add(replacedParameter);
       }
-      else if (AssignmentUtil.isOnLHS(paramUsage)) {
+      else if (RefactoringUtil.isAssignmentLHS(paramUsage)) {
         usages.add(new ReplaceParameterAssignmentWithCall(paramUsage, fixedParamName, setter, getter));
         paramsNeedingSetters.add(replacedParameter);
       }

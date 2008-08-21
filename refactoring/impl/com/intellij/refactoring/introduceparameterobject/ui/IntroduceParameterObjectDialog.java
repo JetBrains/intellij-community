@@ -120,9 +120,10 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog implements
       final List<String> getterNames = new ArrayList<String>();
 
 
-      final String packageName = existingClassName.substring(0, existingClassName.lastIndexOf('.'));
+      final int index = existingClassName.lastIndexOf('.');
+      final String packageName = index == -1 ? "" : existingClassName.substring(0, index);
 
-      processor = new IntroduceParameterObjectProcessor(existingClassName.substring(existingClassName.lastIndexOf('.') + 1), packageName,
+      processor = new IntroduceParameterObjectProcessor(index == -1 ? existingClassName : existingClassName.substring(index + 1), packageName,
                                                         sourceMethod, params, getterNames, keepMethod, isPreviewUsages(), useExistingClass);
     }
     invokeRefactoring(processor);

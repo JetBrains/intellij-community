@@ -73,6 +73,12 @@ public class MergeMethodArguments extends RefactorJUsageInfo {
   }
 
   private String getMergedParam(PsiCallExpression call) {
+    if (call instanceof PsiMethodCallExpression) {
+      final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)call).getMethodExpression();
+      if (methodExpression.getQualifierExpression() instanceof PsiSuperExpression){
+        return parameterName;
+      }
+    }
     final PsiExpression[] args = call.getArgumentList().getExpressions();
     StringBuffer newExpression = new StringBuffer();
     final String qualifiedName = ClassUtil.createQualifiedName(packageName, className);

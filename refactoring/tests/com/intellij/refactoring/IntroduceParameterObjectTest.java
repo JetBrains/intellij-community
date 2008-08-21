@@ -52,4 +52,12 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     doTest();
   }
 
+  public void testLhassignment() throws Exception {
+    doTest();
+  }
+
+  public void testSuperCalls() throws Exception {
+    doTest();
+  }
+
 }

@@ -80,6 +80,6 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
                                              RefactorJHelpID.IntroduceParameterObject, project);
       return;
     }
-    new IntroduceParameterObjectDialog(selectedMethod).show();
+    new IntroduceParameterObjectDialog(newMethod).show();
   }
 }
