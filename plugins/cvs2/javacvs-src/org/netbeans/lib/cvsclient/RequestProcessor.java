@@ -239,9 +239,9 @@ public final class RequestProcessor implements IRequestProcessor {
 
   private boolean handleResponses(IConnectionStreams connectionStreams, IResponseHandler responseHandler)
     throws CommandException, IOException {
-    final ErrorDefendingResponseHandler proxy = new ErrorDefendingResponseHandler(myTimeout, responseHandler);
+    //final ErrorDefendingResponseHandler proxy = new ErrorDefendingResponseHandler(myTimeout, responseHandler);
 
-    final ResponseParser responseParser = new ResponseParser(proxy, clientEnvironment.getCharset());
+    final ResponseParser responseParser = new ResponseParser(responseHandler, clientEnvironment.getCharset());
     final StringBuffer responseBuffer = new StringBuffer(32);
     for (; ;) {
       final String responseString = readResponse(connectionStreams.getLoggedReader(), responseBuffer);
@@ -255,9 +255,9 @@ public final class RequestProcessor implements IRequestProcessor {
       }
 
       checkCanceled();
-      if (proxy.interrupt()) {
+      /*if (proxy.interrupt()) {
         throw new CommandException(null, "Aborted: consequent errors stream");
-      }
+      }*/
     }
   }
 

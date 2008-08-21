@@ -8,6 +8,8 @@ import java.util.List;
  * author: lesya
  */
 public interface GetContentCallback {
+  void appendDirectoryContent(List<CvsElement> directoryContent);
+
   void fillDirectoryContent(List<CvsElement> directoryContent);
 
   void loginAborted();

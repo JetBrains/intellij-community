@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.cvsBrowser;
 
 import com.intellij.CvsBundle;
+import com.intellij.util.Consumer;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
@@ -11,6 +12,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContent;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContentProvider;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetDirectoriesListViaUpdateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsListenerWithProgress;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 
@@ -45,9 +47,20 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
                                    String path,
                                    final GetContentCallback callback,
                                    final Project project) {
-
-    executeCommand(createDirectoryContentProvider(path), callback, parent, project);
-
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      executeCommand(createDirectoryContentProvider(path), callback, parent, project);
+    } else {
+      final GetDirectoriesListViaUpdateOperation provider = new GetDirectoriesListViaUpdateOperation(myEnvironment, path);
+      provider.setStepByStepListener(new Consumer<DirectoryContent>() {
+        public void consume(final DirectoryContent directoryContent) {
+          final ArrayList<CvsElement> elements = directoryContentToElements(directoryContent, parent, project);
+          if (! elements.isEmpty()) {
+            callback.appendDirectoryContent(elements);
+          }
+        }
+      });
+      executeCommand(provider, callback, parent, project);
+    }
   }
 
   public DirectoryContentProvider createDirectoryContentProvider(String path) {
@@ -92,15 +105,8 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
             callback.loginAborted();
           }
           else {
-            ArrayList<CvsElement> children = new ArrayList<CvsElement>();
             DirectoryContent directoryContent = command.getDirectoryContent();
-            if (myShowModules) {
-              children.addAll(addModules(directoryContent, parent, project));
-            }
-            children.addAll(addSubDirectories(directoryContent, parent, project));
-            if (myShowFiles) {
-              children.addAll(addFiles(directoryContent, parent, project));
-            }
+            ArrayList<CvsElement> children = directoryContentToElements(directoryContent, parent, project);
             callback.fillDirectoryContent(children);
           }
         }
@@ -111,6 +117,18 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
         public void executionFinishedSuccessfully() {
         }
       });
+  }
+
+  private ArrayList<CvsElement> directoryContentToElements(final DirectoryContent directoryContent, final CvsElement parent, final Project project) {
+    ArrayList<CvsElement> children = new ArrayList<CvsElement>();
+    if (myShowModules) {
+      children.addAll(addModules(directoryContent, parent, project));
+    }
+    children.addAll(addSubDirectories(directoryContent, parent, project));
+    if (myShowFiles) {
+      children.addAll(addFiles(directoryContent, parent, project));
+    }
+    return children;
   }
 
   private ArrayList<CvsElement> addFiles(DirectoryContent children, CvsElement element, Project project) {

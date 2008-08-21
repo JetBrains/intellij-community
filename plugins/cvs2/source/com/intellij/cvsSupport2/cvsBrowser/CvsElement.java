@@ -11,6 +11,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
 import java.util.Enumeration;
@@ -21,6 +22,7 @@ import java.util.concurrent.Future;
 public class CvsElement extends DefaultMutableTreeNode implements CvsTabbedWindow.DeactivateListener {
 
   protected RemoteResourceDataProvider myDataProvider;
+  private boolean myLoading;
   protected String myName;
   protected String myPath;
   private final Icon myIcon;
@@ -105,6 +107,7 @@ public class CvsElement extends DefaultMutableTreeNode implements CvsTabbedWindo
       final LoadingNode loadingNode = new LoadingNode();
 
       getModel().insertNodeInto(loadingNode, this, 0);
+      myLoading = true;
       myModel.getCvsTree().getTree().setEnabled(false);
       myLoadingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
@@ -192,27 +195,39 @@ public class CvsElement extends DefaultMutableTreeNode implements CvsTabbedWindo
       myListener = listener;
     }
 
+    public void appendDirectoryContent(final List<CvsElement> directoryContent) {
+      fill(directoryContent);
+    }
+
     public void fillDirectoryContent(final List<CvsElement> content) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      //fill(content);
+    }
+
+    private void fill(final List<CvsElement> content) {
+      myPeriodAlarm.cancelAllRequests();
+      SwingUtilities.invokeLater(new Runnable() {
           public void run() {
+            final int offset = getChildCount();
             for (int i = 0; i < content.size(); i++) {
-              insert(content.get(i), i);
+              insert(content.get(i), i + offset);
             }
-            getModel().nodeStructureChanged(CvsElement.this);
-            if (getParent() == null) {
-              getModel().selectRoot();
+            if ((offset <= 1) && isNodeChild(myLoadingNode)) {
+              remove(myLoadingNode);
             }
+            getModel().reload(CvsElement.this);
+            getModel().getCvsTree().getTree().expandPath(new TreePath(getModel().getPathToRoot(CvsElement.this)));
           }
         });
     }
 
     public void finished() {
+      if (getParent() == null) {
+        getModel().selectRoot();
+      }
       myModel.getCvsTree().removeListener(this);
+      myLoading = false;
 
       myPeriodAlarm.cancelAllRequests();
-      if (isNodeChild(myLoadingNode)) {
-        remove(myLoadingNode);
-      }
       myModel.getCvsTree().getTree().setEnabled(true);
       myLoadingThreadFuture = null;
     }
@@ -246,5 +261,9 @@ public class CvsElement extends DefaultMutableTreeNode implements CvsTabbedWindo
 
   public Component getTree() {
     return myModel.getCvsTree().getTree();
+  }
+
+  public boolean isLoading() {
+    return myLoading;
   }
 }
