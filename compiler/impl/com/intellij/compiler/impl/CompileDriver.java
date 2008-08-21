@@ -325,6 +325,16 @@ public class CompileDriver {
       }
     }, new Runnable() {
       public void run() {
+        if (isRebuild) {
+          final int rv = Messages.showDialog(
+              myProject, "You are about to rebuild the whole project.\nRun 'Make Project' instead?", "Confirm Project Rebuild",
+              new String[]{"Make", "Rebuild"}, 0, Messages.getQuestionIcon()
+          );
+          if (rv == 0 /*yes, please, do run make*/) {
+            startup(scope, false, false, callback, null, checkCachesVersion, trackDependencies);
+            return;
+          }
+        }
         startup(scope, isRebuild, forceCompile, callback, message, checkCachesVersion, trackDependencies);
       }
     });
