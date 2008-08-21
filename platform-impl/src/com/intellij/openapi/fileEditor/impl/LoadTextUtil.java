@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -118,22 +119,27 @@ public final class LoadTextUtil {
   }
 
   private static int skipBOM(final VirtualFile virtualFile, byte[] content) {
+    final byte[] bom = getBOM(content, virtualFile.getCharset());
+    if (bom.length != 0) {
+      virtualFile.setBOM(bom);
+    }
+    return bom.length;
+  }
+
+  @NotNull
+  private static byte[] getBOM(byte[] content, final Charset charset) {
     if (Patches.SUN_BUG_ID_4508058) {
-      if (virtualFile.getCharset() != null && virtualFile.getCharset().name().contains(CharsetToolkit.UTF8) &&
-          CharsetToolkit.hasUTF8Bom(content)) {
-        virtualFile.setBOM(CharsetToolkit.UTF8_BOM);
-        return CharsetToolkit.UTF8_BOM.length;
+      if (charset != null && charset.name().contains(CharsetToolkit.UTF8) && CharsetToolkit.hasUTF8Bom(content)) {
+        return CharsetToolkit.UTF8_BOM;
       }
     }
     if (CharsetToolkit.hasUTF16LEBom(content)) {
-      virtualFile.setBOM(CharsetToolkit.UTF16LE_BOM);
-      return CharsetToolkit.UTF16LE_BOM.length;
+      return CharsetToolkit.UTF16LE_BOM;
     }
     if (CharsetToolkit.hasUTF16BEBom(content)) {
-      virtualFile.setBOM(CharsetToolkit.UTF16BE_BOM);
-      return CharsetToolkit.UTF16BE_BOM.length;
+      return CharsetToolkit.UTF16BE_BOM;
     }
-    return 0;
+    return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
   /**
@@ -238,14 +244,26 @@ public final class LoadTextUtil {
     return getTextByBinaryPresentation(bytes, virtualFile, true);
   }
 
-  public static CharSequence getTextByBinaryPresentation(final byte[] bytes,
-                                                         final VirtualFile virtualFile,
-                                                         final boolean rememberDetectedSeparators) {
+  public static CharSequence getTextByBinaryPresentation(final byte[] bytes, final VirtualFile virtualFile, final boolean rememberDetectedSeparators) {
     detectCharset(virtualFile, bytes);
-    int offset = skipBOM(virtualFile, bytes);
-    ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, offset, bytes.length - offset);
+    final Charset charset = virtualFile.getCharset();
+    final int offset = skipBOM(virtualFile, bytes);
 
-    Charset charset = virtualFile.getCharset();
+    final Pair<CharSequence, String> result = convertBytes(bytes, charset, offset);
+    if (rememberDetectedSeparators) {
+      virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
+    }
+    return result.getFirst();
+  }
+
+  public static CharSequence getTextByBinaryPresentation(final byte[] bytes, Charset charset) {
+    final int offset = getBOM(bytes, charset).length;
+    return convertBytes(bytes, charset, offset).getFirst();
+  }
+
+  private static Pair<CharSequence, String> convertBytes(final byte[] bytes, Charset charset, final int startOffset) {
+    ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, startOffset, bytes.length - startOffset);
+
     if (charset == null) {
       charset = CharsetToolkit.getDefaultSystemCharset();
     }
@@ -254,11 +272,7 @@ public final class LoadTextUtil {
       charset = Charset.forName("ISO-8859-1");
     }
     CharBuffer charBuffer = charset.decode(byteBuffer);
-    Pair<CharSequence, String> result = convertLineSeparators(charBuffer);
-    if (rememberDetectedSeparators) {
-      virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
-    }
-    return result.getFirst();
+    return convertLineSeparators(charBuffer);
   }
 
   private static final Key<Boolean> UTF_CHARSET_WAS_DETECTED_FROM_BYTES = new Key<Boolean>("UTF_CHARSET_WAS_DETECTED_FROM_BYTES");

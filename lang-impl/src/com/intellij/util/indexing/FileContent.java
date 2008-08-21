@@ -1,5 +1,6 @@
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -79,12 +80,7 @@ public final class FileContent {
     }
     if (myContentAsText == null) {
       if (myContent != null) {
-        try {
-          myContentAsText = new String(myContent, myCharset.name());
-        }
-        catch (UnsupportedEncodingException e) {
-          throw new RuntimeException(e);
-        }
+        myContentAsText = LoadTextUtil.getTextByBinaryPresentation(myContent, myCharset);
       }
     }
     return myContentAsText;
