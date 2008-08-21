@@ -842,6 +842,7 @@ public class FileBasedIndex implements ApplicationComponent {
     private void markDirty(final VirtualFileEvent event) {
       iterateIndexableFiles(event.getFile(), new Processor<VirtualFile>() {
         public boolean process(final VirtualFile file) {
+          FileContent fileContent = null;
           for (ID<?, ?> indexId : myIndices.keySet()) {
             if (getInputFilter(indexId).acceptInput(file)) {
               if (myNeedContentLoading.contains(indexId)) {
@@ -849,7 +850,10 @@ public class FileBasedIndex implements ApplicationComponent {
               }
               else {
                 try {
-                  updateSingleIndex(indexId, file, new FileContent(file, (byte[])null), null);
+                  if (fileContent == null) {
+                    fileContent = new FileContent(file, (byte[])null);
+                  }
+                  updateSingleIndex(indexId, file, fileContent, null);
                 }
                 catch (StorageException e) {
                   LOG.info(e);
@@ -877,6 +881,7 @@ public class FileBasedIndex implements ApplicationComponent {
         if (SingleRootFileViewProvider.isTooLarge(file)) return;
 
         final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndices.size());
+        FileContent fileContent = null;
         for (ID<?, ?> indexId : myIndices.keySet()) {
           if (shouldUpdateIndex(file, indexId)) {
             if (myNeedContentLoading.contains(indexId)) {
@@ -885,7 +890,10 @@ public class FileBasedIndex implements ApplicationComponent {
             else {
               // invalidate it synchronously
               try {
-                updateSingleIndex(indexId, file, null, new FileContent(file, (byte[])null));
+                if (fileContent == null) {
+                  fileContent = new FileContent(file, (byte[])null);
+                }
+                updateSingleIndex(indexId, file, null, fileContent);
               }
               catch (StorageException e) {
                 LOG.info(e);
@@ -1061,10 +1069,14 @@ public class FileBasedIndex implements ApplicationComponent {
               break;
             }
           }
+          FileContent fileContent = null;
           for (ID<?, ?> indexId : mySkipContentLoading) {
             if (shouldIndexFile(file, indexId)) {
               try {
-                updateSingleIndex(indexId, file, new FileContent(file, (byte[])null), null);
+                if (fileContent == null) {
+                  fileContent = new FileContent(file, (byte[])null);
+                }
+                updateSingleIndex(indexId, file, fileContent, null);
               }
               catch (StorageException e) {
                 LOG.info(e);

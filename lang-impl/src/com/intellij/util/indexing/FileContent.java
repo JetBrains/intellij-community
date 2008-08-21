@@ -1,6 +1,5 @@
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,6 +15,7 @@ public final class FileContent {
   private final VirtualFile myFile;
   private final String fileName;
   private final FileType myFileType;
+  private final Charset myCharset;
   private byte[] myContent;
   private CharSequence myContentAsText = null;
 
@@ -44,6 +44,7 @@ public final class FileContent {
     fileName = file.getName();
     myContent = content;
     myContentAsText = contentAsText;
+    myCharset = file.getCharset();
   }
 
   public VirtualFile getFile() {
@@ -54,12 +55,15 @@ public final class FileContent {
     return fileName;
   }
 
+  public Charset getCharset() {
+    return myCharset;
+  }
+
   public byte[] getContent() {
     if (myContent == null) {
       if (myContentAsText != null) {
         try {
-          final Charset charset = myFile.getCharset();
-          myContent = charset != null? myContentAsText.toString().getBytes(charset.name()) : myContentAsText.toString().getBytes();
+          myContent = myCharset != null? myContentAsText.toString().getBytes(myCharset.name()) : myContentAsText.toString().getBytes();
         }
         catch (UnsupportedEncodingException e) {
           throw new RuntimeException(e);
@@ -75,7 +79,12 @@ public final class FileContent {
     }
     if (myContentAsText == null) {
       if (myContent != null) {
-        myContentAsText = LoadTextUtil.getTextByBinaryPresentation(myContent, myFile, false);
+        try {
+          myContentAsText = new String(myContent, myCharset.name());
+        }
+        catch (UnsupportedEncodingException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
     return myContentAsText;
