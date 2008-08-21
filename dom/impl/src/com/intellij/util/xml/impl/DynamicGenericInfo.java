@@ -64,19 +64,19 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
         myCollections = myStaticGenericInfo.getCollections();
       }
 
-      final CustomDomChildrenDescriptionImpl description = myStaticGenericInfo.getCustomNameChildrenDescription();
-      final List<XmlTag> customTags = description == null ? null : CustomDomChildrenDescriptionImpl.CUSTOM_TAGS_GETTER.fun(myInvocationHandler);
-
       DomExtensionsRegistrarImpl registrar = runDomExtenders();
 
       synchronized (myInvocationHandler) {
         if (myInitialized) return;
+
+
         if (registrar != null) {
           final List<DomExtensionImpl> fixeds = registrar.getFixeds();
           final List<DomExtensionImpl> collections = registrar.getCollections();
           if (!fixeds.isEmpty() || !collections.isEmpty()) {
-            if (customTags != null) {
-              for (final XmlTag tag : customTags) {
+            final CustomDomChildrenDescriptionImpl description = myStaticGenericInfo.getCustomNameChildrenDescription();
+            if (description != null) {
+              for (final XmlTag tag : CustomDomChildrenDescriptionImpl.CUSTOM_TAGS_GETTER.fun(myInvocationHandler)) {
                 final DomInvocationHandler handler = myInvocationHandler.getManager().getCachedHandler(tag);
                 if (handler != null) {
                   handler.detach();
