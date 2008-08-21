@@ -60,4 +60,11 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     doTest();
   }
 
+  public void testTypeParameters() throws Exception {
+    doTest();
+  }
+
+  public void testMultipleTypeParameters() throws Exception {
+    doTest();
+  }
 }

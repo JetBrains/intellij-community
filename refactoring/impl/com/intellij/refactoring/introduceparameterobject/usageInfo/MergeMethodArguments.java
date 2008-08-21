@@ -1,7 +1,9 @@
 package com.intellij.refactoring.introduceparameterobject.usageInfo;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
@@ -46,7 +48,25 @@ public class MergeMethodArguments extends RefactorJUsageInfo {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(method.getProject());
     final PsiClass psiClass = psiFacade.findClass(ClassUtil.createQualifiedName(packageName, className));
     final List<ParameterInfo> parametersInfo = new ArrayList<ParameterInfo>();
-    parametersInfo.add(new ParameterInfo(-1, parameterName, new PsiImmediateClassType(psiClass, PsiSubstitutor.EMPTY), null) {
+    final PsiMethod deepestSuperMethod = method.findDeepestSuperMethod();
+    PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+    if (deepestSuperMethod != null) {
+      final PsiClass parentClass = deepestSuperMethod.getContainingClass();
+      assert psiClass != null;
+      final PsiSubstitutor parentSubstitutor =
+        TypeConversionUtil.getSuperClassSubstitutor(parentClass, method.getContainingClass(), PsiSubstitutor.EMPTY);
+      for (int i1 = 0; i1 < psiClass.getTypeParameters().length; i1++) {
+        final PsiTypeParameter typeParameter = psiClass.getTypeParameters()[i1];
+        for (PsiTypeParameter parameter : parentClass.getTypeParameters()) {
+          if (Comparing.strEqual(typeParameter.getName(), parameter.getName())) {
+            subst = subst.put(typeParameter, parentSubstitutor.substitute(
+              new PsiImmediateClassType(parameter, PsiSubstitutor.EMPTY)));
+            break;
+          }
+        }
+      }
+    }
+    parametersInfo.add(new ParameterInfo(-1, parameterName, new PsiImmediateClassType(psiClass, subst), null) {
       @Override
       public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
         return psiFacade.getElementFactory().createExpressionFromText(getMergedParam(expr), expr);
