@@ -24,6 +24,7 @@ import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.refactoring.psi.SearchUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
 import com.intellij.refactoring.ui.ClassUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.utils.StringUtils;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -597,7 +598,7 @@ class ExtractClassProcessor extends RPPBaseRefactoringProcessor {
                     if (!isPublic) {
                         fieldsRequiringSetters.add(field);
                     }
-                } else if (AssignmentUtil.isOnLHS(exp)) {
+                } else if (RefactoringUtil.isAssignmentLHS(exp)) {
                     usages.add(new ReplaceStaticVariableAssignment(exp, qualifiedName, setter, getter, isPublic));
                     if (!isPublic) {
                         fieldsRequiringSetters.add(field);
@@ -627,7 +628,7 @@ class ExtractClassProcessor extends RPPBaseRefactoringProcessor {
                     usages.add(
                             new ReplaceInstanceVariablePostIncrementDecrement(exp, delegateFieldName, setter, getter));
                     fieldsRequiringSetters.add(field);
-                } else if (AssignmentUtil.isOnLHS(exp)) {
+                } else if (RefactoringUtil.isAssignmentLHS(exp)) {
                     final PsiAssignmentExpression assignment =
                             PsiTreeUtil.getParentOfType(exp, PsiAssignmentExpression.class);
                     usages.add(new ReplaceInstanceVariableAssignment(assignment, delegateFieldName, setter, getter));
