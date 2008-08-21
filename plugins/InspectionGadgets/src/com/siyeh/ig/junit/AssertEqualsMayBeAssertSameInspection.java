@@ -24,18 +24,16 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
-import org.junit.Assert;
 
 public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "assertequals.may.be.assertsame.display.name");
     }
 
-    @NotNull
+    @Override @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "assertequals.may.be.assertsame.problem.descriptor");
@@ -54,6 +52,7 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
             return "Replace with 'assertSame()'";
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -70,6 +69,7 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new AssertEqualsMayBeAssertSameVisitor();
     }
@@ -77,6 +77,7 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
     private static class AssertEqualsMayBeAssertSameVisitor
             extends BaseInspectionVisitor {
 
+        @Override
         public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
