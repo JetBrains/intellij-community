@@ -221,8 +221,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   public PyType getType() {
     if (myType == null) {
-      PyClass the_class = PyBuiltinCache.getInstance(getProject()).getClass("object"); // really 'module', but it's nowhere to import from
-      if (the_class != null) myType = new PyClassType(the_class);
+      PyClass the_class = PyBuiltinCache.getInstance(getProject()).getClass("object"); // TODO: generate a skel for module
+      if (the_class != null) myType = new PyClassType(the_class, false); // 'module' is an instance of 'object'
     }
     return myType;
   }

@@ -17,10 +17,10 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.extensions.Extensions;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -112,10 +112,10 @@ public class PyParameterImpl extends PyPresentableElementImpl<PyParameterStub> i
       final PyParameter[] params = parameterList.getParameters();
       if (parameterList.getParent() instanceof PyFunction) {
         PyFunction func = (PyFunction) parameterList.getParent();
-        if (params [0] == this) {
+        if (params [0] == this) { // must be 'self'
           final PyClass containingClass = func.getContainingClass();
           if (containingClass != null) {
-            return new PyClassType(containingClass);
+            return new PyClassType(containingClass, false); // TODO: check for @classmethod or @staticmethod node above us  
           }
         }
         for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {

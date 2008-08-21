@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
@@ -222,6 +223,11 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
       }
       node = node.getTreeNext();
     }
+  }
+
+  @Nullable
+  public PyCallExpression getCallExpression() {
+    return PsiTreeUtil.getParentOfType(this, PyCallExpression.class);
   }
 
   @SuppressWarnings({"SuspiciousMethodCalls"})

@@ -8,16 +8,21 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.types.*;
-import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.psi.types.PyClassType;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author yole
  */
 public class PyBuiltinCache {
+
+  public static final @NonNls String BUILTIN_FILE = "__builtin__.py"; 
+
   public static PyBuiltinCache getInstance(Project project) {
     return ServiceManager.getService(project, PyBuiltinCache.class);
   }
@@ -31,7 +36,7 @@ public class PyBuiltinCache {
 
   public PyFile getBuiltinsFile() {
     if (myBuiltinsFile == null) {
-      final PsiFile[] builtinFiles = FilenameIndex.getFilesByName(myProject, "__builtin__.py", GlobalSearchScope.allScope(myProject));
+      final PsiFile[] builtinFiles = FilenameIndex.getFilesByName(myProject, BUILTIN_FILE, GlobalSearchScope.allScope(myProject));
       if (builtinFiles.length == 1) {
         myBuiltinsFile = (PyFile) builtinFiles [0];
       }
@@ -40,11 +45,11 @@ public class PyBuiltinCache {
   }
 
   @Nullable
-  public PyClass getClass(String name) {
+  public PyClass getClass(@NonNls String name) {
     PyFile builtinsFile = getBuiltinsFile();
     if (builtinsFile != null) {
       for(PsiElement element: builtinsFile.getChildren()) {
-        if (element instanceof PyClass && ((PyClass) element).getName().equals(name)) {
+        if (element instanceof PyClass && (name != null) && name.equals(((PyClass) element).getName())) {
           return (PyClass) element;
         }
       }
@@ -52,17 +57,17 @@ public class PyBuiltinCache {
     return null;
   }
 
-  protected Map<String,PyClassType> myTypeCache = new HashMap<String,PyClassType>();
+  protected Map<String,PyClassType> myTypeCache = new HashMap<String, PyClassType>();
   
   /**
   @return 
   */
   @NotNull
-  protected PyClassType _getObjectType(String name) {
+  protected PyClassType _getObjectType(@NonNls String name) {
     PyClassType val = myTypeCache.get(name);
     if (val == null) {
       PyClass cls = getClass(name);
-      val = new PyObjectType(cls);
+      val = new PyClassType(cls, false);
       myTypeCache.put(name, val);
     }
     return val;

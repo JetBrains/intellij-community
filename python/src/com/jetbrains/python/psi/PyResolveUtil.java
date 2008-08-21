@@ -25,6 +25,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.impl.PyScopeProcessor;
 import com.jetbrains.python.psi.impl.ResolveImportUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,8 +38,11 @@ import java.util.*;
  */
 public class PyResolveUtil {
 
+  private PyResolveUtil() {
+  }
 
-  @NotNull
+
+  @NotNull @NonNls
   public static String getReadableRepr(PsiElement elt) {
     if (elt == null) return "null!";
     ASTNode node = elt.getNode();
@@ -47,11 +51,8 @@ public class PyResolveUtil {
       String s = node.getText(); 
       int cut_pos = s.indexOf('\n');
       if (cut_pos < 0)  cut_pos = s.length();
-      return s.substring(0, java.lang.Math.min(cut_pos, s.length()));
+      return s.substring(0, Math.min(cut_pos, s.length()));
     }
-  }
-
-  private PyResolveUtil() {
   }
 
 
@@ -63,8 +64,7 @@ public class PyResolveUtil {
    */
   @Nullable
   public static PsiElement getConcealingParent(PsiElement elt) {
-    PsiElement top = PsiTreeUtil.getParentOfType(elt, PyClass.class, PyFunction.class);
-    return top;
+    return PsiTreeUtil.getParentOfType(elt, PyClass.class, PyFunction.class);
   }
 
   protected static PsiElement getInnermostChildOf(PsiElement elt) {
@@ -129,7 +129,7 @@ public class PyResolveUtil {
       ) {
         seeker = getPrevNodeOf(seeker, NameDefiner.class);
       }
-      // maybe we're under cap
+      // maybe we're under a cap
       while (true) {
         PsiElement local_cap = getConcealingParent(seeker);
         if (
@@ -400,6 +400,10 @@ public class PyResolveUtil {
     public LookupElement[] getResult() {
       final Collection<LookupElement> variants = myVariants.values();
       return variants.toArray(new LookupElement[variants.size()]);
+    }
+
+    public List<LookupElement> getResultList() {
+      return new ArrayList<LookupElement>(myVariants.values());
     }
 
     public boolean execute(PsiElement element, ResolveState substitutor) {

@@ -16,7 +16,10 @@
 
 package com.jetbrains.python.psi;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.EnumSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,6 +34,62 @@ public interface PyCallExpression extends PyExpression {
 
   void addArgument(PyExpression expression);
 
+  /**
+   * Resolves callee down to particular function (standalone, method, or constructor).
+   * Return's function part contains a function, never null.
+   * Return's flag part is true if the function call is qualified by an instance, or is a constructor call.
+   * Return is null if callee cannot be resolved. 
+   */
   @Nullable
-  PyElement resolveCallee();
+  PyMarkedFunction resolveCallee();
+
+  /**
+   * @return true if the call is a method call qualified by class instance. <b>Note:</b> Constructor calls return false.
+   */
+  //boolean isByInstance();
+
+  enum Flag {
+    /**
+     * First arg of the call is implicit, drop first parameter.
+     */
+    IMPLICIT_FIRST_ARG,
+    /**
+     * Called function is decorated with @classmethod, first param is the class.
+     */
+    CLASSMETHOD,
+    /**
+     * Called function is decorated with @staticmethod, first param is as in a regular function.
+     */
+    STATICMETHOD
+  }
+
+  /**
+   * Couples function with a flag showing if it is being called as an instance method.
+   */
+  class PyMarkedFunction {
+    PyFunction myFunction;
+    boolean myIsInstanceCall;
+    EnumSet<Flag> myFlags;
+
+    public PyMarkedFunction(@NotNull PyFunction function, EnumSet<Flag> flags) {
+      myFunction = function;
+      //myIsInstanceCall = instance;
+      myFlags = flags;
+    }
+
+    public PyFunction getFunction() {
+      return myFunction;
+    }
+
+    public EnumSet<Flag> getFlags() {
+      return myFlags;
+    }
+
+    /*
+    public boolean isInstanceCall() {
+      return myIsInstanceCall;
+    }
+    */
+  }
+
 }

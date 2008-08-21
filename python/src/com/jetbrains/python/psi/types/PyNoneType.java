@@ -7,7 +7,7 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 /**
  * @author yole
  */
-public class PyNoneType implements PyType {
+public class PyNoneType implements PyType { // TODO must extend ClassType. It's an honest instance.
   public static final PyNoneType INSTANCE = new PyNoneType();
 
   private PyNoneType() {

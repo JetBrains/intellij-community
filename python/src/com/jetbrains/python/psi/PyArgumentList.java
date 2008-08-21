@@ -27,11 +27,16 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 public interface PyArgumentList extends PyElement {
-    @NotNull PyExpression[] getArguments();
 
-    @Nullable PyKeywordArgument getKeywordArgument(String name);
+  @NotNull PyExpression[] getArguments();
 
-    void addArgument(PyExpression arg);
-    void addArgumentFirst(PyExpression arg);
-    void addArgumentAfter(PyExpression argument, PyExpression afterThis);
+  @Nullable PyKeywordArgument getKeywordArgument(String name);
+
+  void addArgument(PyExpression arg);
+  void addArgumentFirst(PyExpression arg);
+  void addArgumentAfter(PyExpression argument, PyExpression afterThis);
+
+  @Nullable
+  PyCallExpression getCallExpression();
+
 }

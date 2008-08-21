@@ -6,9 +6,8 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyResolveUtil;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -18,13 +17,34 @@ import java.util.*;
 public class PyClassType implements PyType {
 
   protected PyClass myClass;
-  
-  public PyClassType(final PyClass source) {
+  protected boolean myIsDefinition;
+
+  /**
+   * Describes a class-based type. Since everyting in Python is an instance of some class, this type pretty much completes
+   * the type system :)
+   * Note that classes' and instances' member list can change during execution, so it is important to construct an instance of PyClassType
+   * right in the place of reference, so that such changes could possibly be accounted for.
+   * @param source PyClass which defines this type. For builtin or external classes, skeleton files contain the definitions.
+   * @param is_definition whether this type describes an instance or a definition of the class.
+   */
+  public PyClassType(final @Nullable PyClass source, boolean is_definition) {
     myClass = source;
+    myIsDefinition = is_definition;
   }
 
+  /**
+   * @return a PyClass which defined this type.
+   */
+  @NotNull
   public PyClass getPyClass() {
     return myClass;
+  }
+
+  /**
+   * @return whether this type refers to an instance or a definition of the class.
+   */
+  public boolean isDefinition() {
+    return myIsDefinition;
   }
 
   @Nullable
@@ -55,17 +75,24 @@ public class PyClassType implements PyType {
   public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression) {
     final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();
     myClass.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
-    return processor.getResult();
+    List<Object> ret = new ArrayList<Object>();
+    ret.addAll(processor.getResultList());
+    for (PyClass ancestor : myClass.getSuperClasses()) {
+      ret.addAll(Arrays.asList((new PyClassType(ancestor, true)).getCompletionVariants(referenceExpression)));
+    }
+    return ret.toArray();
   }
   
   @NotNull
   public Set<String> getPossibleInstanceMembers() {
     Set<String> ret = new HashSet<String>();
+    /*
     if (myClass != null) {
       PyClassType otype = PyBuiltinCache.getInstance(myClass.getProject()).getObjectType();
       ret.addAll(otype.getPossibleInstanceMembers());
     }
-    // TODO: add our own ideas here, e.g. from methods other than constructor 
+    */
+    // TODO: add our own ideas here, e.g. from methods other than constructor
     return Collections.unmodifiableSet(ret); 
   }
   

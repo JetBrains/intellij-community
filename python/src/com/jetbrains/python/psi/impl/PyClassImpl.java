@@ -45,6 +45,9 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implements PyClass {
+
+  public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
+
   public PyClassImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -110,7 +113,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     final PyExpression[] superExpressions = getSuperClassExpressions();
     List<PsiElement> superClasses = new ArrayList<PsiElement>();
     for(PyExpression expr: superExpressions) {
-      if (expr instanceof PyReferenceExpression && !PyNames.OBJECT.equals(expr.getText())) {
+      if (expr instanceof PyReferenceExpression) {
         PyReferenceExpression ref = (PyReferenceExpression) expr;
         final PsiElement result = ref.resolve();
         if (result != null) {
@@ -121,6 +124,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return superClasses.toArray(new PsiElement[superClasses.size()]);
   }
 
+  @NotNull
   public PyClass[] getSuperClasses() {
     PsiElement[] superClassElements = getSuperClassElements();
     if (superClassElements != null) {
@@ -132,7 +136,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
       return result.toArray(new PyClass[result.size()]);
     }
-    return null;
+    return EMPTY_ARRAY;
   }
 
   @NotNull

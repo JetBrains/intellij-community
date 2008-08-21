@@ -1,14 +1,13 @@
 package com.jetbrains.python.psi.types;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
+// TODO: eliminate this class
 
 /**
  * Represents Python 'object' type.
@@ -29,13 +28,9 @@ public class PyObjectType extends PyClassType implements PyType {
   }
 
   public PyObjectType(PyClass source) {
-    super(source);
+    super(source, false);
   } 
   
-  public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression) {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY; // TODO: implement
-  }
-
   /**
    * Sometimes we can make a reasonable guess that a name is an instance member while we cannot directly resolve it.
    * All such guesses are listed by this method.
