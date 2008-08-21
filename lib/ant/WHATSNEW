@@ -1,14 +1,230 @@
-Changes from Ant 1.7.0 TO current SVN version
+Changes from Ant 1.7.0 TO current Ant 1.7.1 version
 =============================================
 
 Changes that could break older environments:
 -------------------------------------------
 
+* String resources only have properties single expanded. If you relied on
+  <string> resources being expanded more than once, it no longer happens.
+  Bugzilla report 42277.
+
+* A String resource's encoding attribute was only taken into account when
+  set from the resource's OutputStream; the InputStream provided the String's
+  binary content according to the platform's default encoding. Behavior has
+  been modified to encode outgoing (InputStream) content as well as encoding
+  incoming (OutputStream) content.
+
+* <java> with fork now returns gives -1 instead of 0 as result when failonerror
+  is false and some exception (including timeout) occurs. Br 42377. 
+
+* ant-type attribute has been marked as deprecated and a warning has been
+  issued if it is encountered in the build file.
+  
+* FileUtils.createTempFile now actually creates the file.
+  The TempFile task still does not create the file by default, can be instructed
+  to do so however using a new parameter.
+  Bugzilla report 33969.
+
 Fixed bugs:
 -----------
 
+* The default logger was failing to print complete stack traces for exceptions
+  other than BuildException, thus omitting often important diagnostic
+  information. Bugzilla 43398.
+
+* Error in FTP task
+  Bugzilla report 41724
+
+* Regression: Locator fails with URI encoding problem when spaces in path
+  Bugzilla report 42222
+
+* Regression in Locator: running Ant off a network share does not work:
+  message "URI has authority component" appears
+  Bugzilla report 42275
+
+* Improvements in AntClassLoader Speed.
+  Bugzilla report 42259
+
+* Error in handling of some permissions, most notably the AllPermission on
+  jdk 1.5
+  Bugzilla report 41776
+
+* Replace task summary output incorrect.
+  Bugzilla report 41544
+
+* Dependset crashes ant when timestamp on files change during Dependset
+  execution.
+  Bugzilla report 41284
+
+* Bug in org.apache.tools.ant.types.resources.comparators.Date
+  Bugzilla report 41411
+
+* <junit> in Ant 1.7.0 could throw NPE if no <classpath> was defined.
+  Bugzilla report 41422.
+
+* In Ant 1.7.0, <fileset> in <javadoc> does not by default include only
+  **/*.java as the documentation claims and earlier revisions did.
+  Bugzilla report 41264.
+
+* SPI support in jar was broken.
+  Bugzilla report 41201.
+  
+* jsch-0.1.30 causes SCP task to hang
+  Bugzilla report 41090.
+
+* Target from imported file listed twice in projecthelp.
+  Bugzilla report 41226.
+
+* <sql> task double-expands properties if expandproperties is true,
+  and expands properties if expandproperties is false.
+  Bugzilla report 41204.
+
+* Rolling back Bugzilla 32927 (set a default description for a javadoc tag
+  if not set) as it caused a BC problem.
+  Bugzilla report 41268.
+
+* <apt> forks properly and so memory settings are picked up.
+  Bug report 41280.
+
+* Regression: NPE was thrown when using <pathconvert> against a
+  (third-party instantiated) fileset with null Project reference.
+
+* Strip out all -J arguments to non forking rmic adapters, specifically
+  the Sun and Weblogic compilers.
+  Bug report 41349
+
+* Synchonization issues in PropertyHelper.  Bugzilla 41353.
+
+* <concat binary="true" append="true"> did not append.  Bugzilla 41399.
+ 
+* -autoproxy turns Java1.5+ automatic proxy support on. Bugzilla 41904
+
+* Handle null result of system getProperty(). Bugzilla 42334.
+
+* Regression: concat fixlastline="true" should not have applied to
+  nested text, but did in Ant 1.7.0. Bugzilla 42369.
+
+* Regression: ant.version was not passed down in <ant>, <subant>.
+  This worked in Ant 1.6.5, but not in 1.7.0.
+  ant.core.lib (added in 1.7.0) was also not being propagated.
+  Bugzilla bug 42263
+
+* Regression: bzip2 task created corrupted output files for some inputs.
+  Bugzilla bug 41596.
+
+* Regression: <available> with <filepath> did not work.
+  Bugzilla 42735.
+
+* ant script, cd may output to stdout.
+  Bugzilla 42739.
+
+* Modified selector doesn't update the cache if only one file has changed.
+  Bugzilla 42802.
+
+* Regression: Path subclasses that overrode list() stopped working in
+  resourceCollection contexts in Ant 1.7.0. Bugzilla 42967.
+
+* War task failed with "No WEB-INF/web.xml file was added" when called
+  a second time. Bugzilla 43121.
+
+* FilterMapper could throw an NPE.
+  Bugzilla 43292.
+
+* Regession nested macrodefs with elements could cause StackOverFlow.
+  Bugzilla 43324.
+
+* <touch> task couldn't differentiate between "no resources specified" and "no resources
+  matched." Bugzilla report 43799.
+
+* Some changes to <junit> broke third party tasks that extend it (like
+  Apache Cactus' Ant task).  The changes have been modified so that
+  subclases should now work again - without any changes to the
+  subclass.
+
 Other changes:
 --------------
+
+* Various small optimizations speed up common tasks such as <javac> on large
+  filesets, reducing both I/O and CPU usage.
+
+* Profiling logger has been added with basic profiling capabilities.
+
+* <script> now has basic support for JavaFX scripts
+
+* SSH task can now take a command parameter containing the commands to execute.
+  This allows you to connect to a server and execute a number of commands
+  without constantly reconnecting for each command.
+
+* Upgraded XML API to XML commons version 1.3.04.
+
+* Upgraded to Xerces 2.9.0
+
+* <script> can now work with bsf.jar and js.jar in its <classpath>.
+
+* add errorProperty and updatedProperty to <javac>
+  Bugzilla 35637 and 28941.
+
+* add classpathref attribute to <whichresource>
+  Bugzilla 41158.
+
+* reduce logging noise of <apply skipemptyfilesets="true">
+  Bugzilla 29154
+
+* Show Previous Revision in the tagdiff.xsl stylesheet
+  Bugzilla 29143
+
+* Allow <mapper refid> to refer directly to a FileNameMapper instance.
+
+* If you try and use a type in a namespace (or an antlib), and the type is not
+  recognized but there are other definitions in that namespace, Ant lists what
+  the known definitions are. This helps you find spelling errors.
+
+* Add a <last> resource collection, corresponding to <first>.
+
+* Add new <truncate> task.
+
+* <junitreport> xsl stylesheets allow setting the title used in <title> and <h1> tags by
+  using <report><param> element.  Bugzilla 41742.
+
+* Add IgnoreDependenciesExecutor for weird cases when the user wants to run
+  only the targets explicitly specified.
+
+* Patternset allows nested inverted patternsets using <invert>.
+
+* <manifest> checks for validity of attribute names.
+
+* JUnitVersionHelper.getTestCaseClassName is now public. Bugzilla 42231
+
+* <string> resource supports nested text. Bugzilla bug 42276
+
+* <scriptdef> now sources scripts from nested resources/resource collections. This lets you
+  define scripts in JARs, remote URLs, or any other supported resource. Bugzilla report 41597.
+
+* <concat> is now usable as a single-element ResourceCollection.
+
+* It is now possible to provide the value of a <striplinecomments> filter's
+  <comment> nested element as nested text instead of using the 'value'
+  attribute.
+
+* A new logger, BigProjectLogger, lists the project name with every target   
+
+* Default text added to macrodef. Bugzilla report 42301.
+
+* "rawblobs" attribute added to SQL task.
+
+* Add new retry task container.
+
+* <jar> has a new strict attribute that checks if the jar complies with
+  the jar packaging version specification.
+
+* <javac> has a new attribute - includeDestClasses.
+  Bugzilla 40776.
+
+* <fileset> has a new attribute - errorOnMissingDir.
+  Bugzilla 11270.
+
+* <javac> handles package-info.java files, there were repeatedly compiled.
+  Bugzilla 43114.
 
 Changes from Ant 1.6.5 to Ant 1.7.0
 ===================================
@@ -20,9 +236,6 @@ Changes that could break older environments:
   <*script*> tasks will now use javax.scripting if BSF is
   not available, or if explicitly requested by using
   a "manager" attribute.
-
-* The -noproxy option which was in the previous 1.7 alpha and beta
-  releases has been removed. It is the default behavior and not needed.
 
 * Removed launcher classes from nodeps jar.
 
@@ -37,6 +250,10 @@ Changes that could break older environments:
   an error about an undefined reference, locate the reference and move it somewhere
   where it is used, or fix the depends attribute of the target in question to
   depend on the target which defines the reference/datatype.
+  As a result of testing on real live build scripts, a fall-back mechanism
+  was put it place to allow references taht are out-of-band to be resolved. If
+  this happens a big warning message is logged. This fall-back mechanism will
+  be removed in Ant 1.8.0.
 
 * <script> and <scriptdef> now set the current thread context.
 
@@ -87,26 +304,23 @@ Changes that could break older environments:
   Scripts which previously used timediffmillis to do this compensation may
   need to be rewritten.  timediffmillis has now been deprecated.
 
-* On Java1.5+, Ant automatically sets the system property
-  java.net.useSystemProxies to true, which gives it automatic use of the local
-  IE (Windows) or Gnome2 (Unix/Linux) proxy settings. This may break any build
-  file that somehow relied on content outside the firewall being unreachable:
-  use the -noproxy command-line option to disable this new feature.
-  Note that the Java1.5 proxy configuration system still does not
-  appear to work reliably on Windows or Linux.
-
 * Support for the XSL:P XML parser has been removed.
   Bugzilla Report 23455.
 
-* Visual Age for Java optional tasks removed.
+* Visual Age for Java optional tasks removed as the required library is no
+  longer available.
 
-* Testlet (test) optional task removed.
+* Testlet (test) optional task removed as the required library is no
+  longer available.
 
-* Icontract optional task removed.
+* IContract optional task removed as the required library is no
+  longer available.
 
-* Metamata (maudit, mmetrics, and mparse tasks) removed.
+* Metamata (maudit, mmetrics, and mparse tasks) removed as the required 
+  library is no longer available.
 
-* Sitraka (jpcoverage, jpcovmerge, jpcovreport) tasks suppressed.
+* Sitraka (jpcoverage, jpcovmerge, jpcovreport) tasks suppressed as the 
+  required library is no longer available.
 
 * <fixcrlf> used \r (Mac) line endings on OS X, whose proper line separator
   is \n (Unix).  Bugzilla report 39585.
@@ -132,8 +346,8 @@ Fixed bugs:
 
 * Fixed incorrect recursion in DOMUtil.listChildNodes().
   Bugzilla 40918.
-  
-* CompressedResource.compareTo() did not 
+
+* CompressedResource.compareTo() did not
   take comparison with another CompressedResource into account.
   Bugzilla 40949.
 
@@ -149,7 +363,7 @@ Fixed bugs:
 * Recursive filtering encountered NullPointerExceptions under certain
   circumstances.  Bugzilla 41086.
 
-* XmlProperty overrides previously set property value when handling duplicate 
+* XmlProperty overrides previously set property value when handling duplicate
   elements. Bugzilla 41080.
 
 * Having many tasks causes OOM.  Bugzilla 41049.
@@ -161,7 +375,7 @@ Fixed bugs:
 * OOM caused by IH holding on to classes and thus their classloaders.
   Bugzilla 28283 and 33061.
 
-* <delete> doesnt delete when defaultexcludes="false" and no includes is set 
+* <delete> doesnt delete when defaultexcludes="false" and no includes is set
   fixed. Bugzilla 40313.
 
 * Behavior change of DirectoryScanner/AbstractFileset when conditional include
@@ -185,9 +399,9 @@ Fixed bugs:
 
 * URLResource did not close jar files, and also did not disconnect HTTPConnection (s).
 
-* Error calling junitreport. Bugzilla 40595. 
+* Error calling junitreport. Bugzilla 40595.
 
-* <junittask/> created junitvmwatcher*.properties files but did not close and delete them.  
+* <junittask/> created junitvmwatcher*.properties files but did not close and delete them.
 
 * <xmlproperty> did not create properties for empty leaf elements.
   Bugzilla report 26286.
@@ -413,7 +627,7 @@ Fixed bugs:
 * The <zip> API allowed creation of directories in file-only archives; a
   habitual offender was the subclassed <jar>, which included META-INF/ in
   the destination file regardless of whether filesonly was set to true.
-  
+
 * <rmic> has a new adapter, xnew, to use the -XNew back end on java1.5+.
   By forking rmic, this works on java1.6+. Bugzilla report 38732.
 
@@ -435,7 +649,7 @@ Other changes:
 * Add quiet attribute to loadfile/resource.
   Bugzilla 38249.
 
-* Make Locator#fromURI also append the drive letter when running under Windows 
+* Make Locator#fromURI also append the drive letter when running under Windows
   with JDK 1.3 or 1.2.
 
 * Do not uppercase the drive letters systematically in FileUtils#normalize.
@@ -449,7 +663,7 @@ Other changes:
 * Roll back automatic proxy enabling on Java 1.5. It broke things like
   Oracle JDBC drivers, and Ant itself on IBM's JVM on AIX, and didnt
   seem to work to well the rest of the time.
-  To enable the feature, use the -autoproxy command line option. 
+  To enable the feature, use the -autoproxy command line option.
 
 * Upgraded XML API and parser to Xerces 2.8.1
 
@@ -467,7 +681,7 @@ Other changes:
 
 * <war> task now allows you to omit the web.xml file. as this is optional
   in the servlet 2.5 and Java EE 5 APIs. set needxmlfile="false" to
-  avoid a missing web.xml file from halting the build.  
+  avoid a missing web.xml file from halting the build.
 
 * Diagnostics catches and logs security exceptions when accessing system properties.
 
