@@ -275,7 +275,7 @@ public class Messages {
                                        String title,
                                        Icon icon,
                                        String initialValue,
-                                       InputValidator validator) {
+                                       @Nullable InputValidator validator) {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
       return ourTestInputImplementation.show(message);
