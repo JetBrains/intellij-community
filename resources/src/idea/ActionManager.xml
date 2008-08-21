@@ -342,10 +342,6 @@
       <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
     </reference>
 
-    <action id="ShowAppliedStylesAction" class="com.intellij.psi.css.actions.ShowAppliedStylesAction">
-      <add-to-group group-id="EditorLangPopupMenu" anchor="last"/>
-    </action>
-
     <group id="EditorTabPopupMenuEx">
       <separator/>
       <reference ref="AddToFavorites"/>
