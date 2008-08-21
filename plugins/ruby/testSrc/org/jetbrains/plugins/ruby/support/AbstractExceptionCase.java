@@ -8,7 +8,7 @@ package org.jetbrains.plugins.ruby.support;
  */
 public abstract class AbstractExceptionCase {
 
-    public abstract Class<? extends Exception> getExpectedExceptionClass();
+    public abstract Class<? extends Throwable> getExpectedExceptionClass();
 
   /**
    * Suspicious code must be in implementation of this closure

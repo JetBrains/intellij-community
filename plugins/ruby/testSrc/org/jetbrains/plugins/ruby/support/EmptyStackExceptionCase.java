@@ -6,7 +6,7 @@ import java.util.EmptyStackException;
  * @author Roman Chernyatchik
  */
 public abstract class EmptyStackExceptionCase extends AbstractExceptionCase {
-  public Class<? extends Exception> getExpectedExceptionClass() {
+  public Class<? extends Throwable> getExpectedExceptionClass() {
     return EmptyStackException.class;
   }
 }
