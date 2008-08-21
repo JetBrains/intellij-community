@@ -31,7 +31,6 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.Query;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -42,7 +41,6 @@ public class FindUsagesTest extends UsefulTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> builder = fixtureFactory.createFixtureBuilder();
     myFixture = fixtureFactory.createCodeInsightFixture(builder.getFixture());
@@ -143,7 +141,6 @@ public class FindUsagesTest extends UsefulTestCase {
   }
 
   private void doTestImpl(String filePath, int expectedUsagesCount) throws Throwable {
-
     myFixture.configureByFile(filePath);
     int offset = myFixture.getEditor().getCaretModel().getOffset();
     final PsiReference ref = myFixture.getFile().findReferenceAt(offset);

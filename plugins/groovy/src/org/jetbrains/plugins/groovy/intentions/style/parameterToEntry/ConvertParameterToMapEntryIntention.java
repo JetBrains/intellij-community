@@ -96,11 +96,15 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         break;
       }
       case IS_NOT_MAP: {
-        String[] possibleNames = new String[]{"attrs", "args", "params", "map"};
-        final GroovyMapParameterDialog dialog = new GroovyMapParameterDialog(project, possibleNames);
-        dialog.show();
-        if (dialog.isOK()) {
-          performRefactoring(element, owner, occurrences, true, dialog.getEnteredName(), dialog.specifyTypeExplicitly());
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          String[] possibleNames = new String[]{"attrs", "args", "params", "map"};
+          final GroovyMapParameterDialog dialog = new GroovyMapParameterDialog(project, possibleNames);
+          dialog.show();
+          if (dialog.isOK()) {
+            performRefactoring(element, owner, occurrences, true, dialog.getEnteredName(), dialog.specifyTypeExplicitly());
+          }
+        } else {
+          performRefactoring(element, owner, occurrences, true, "attrs", false);
         }
         break;
       }
@@ -307,7 +311,8 @@ public class ConvertParameterToMapEntryIntention extends Intention {
                                                                              ? CLOSURE_CAPTION
                                                                              : METHOD_CAPTION), true) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        final Query<PsiReference> query = ReferencesSearch.search(namedElem);
+        final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(getProject());
+        final Query<PsiReference> query = ReferencesSearch.search(namedElem, projectScope);
         final Collection<PsiReference> references = query.findAll();
         for (PsiReference reference : references) {
           final PsiElement element = reference.getElement();

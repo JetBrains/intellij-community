@@ -1,0 +1,5 @@
+def test = {attrs, x ->
+  attrs.cl.call()
+}
+
+test(1, cl: {x -> x}) 
