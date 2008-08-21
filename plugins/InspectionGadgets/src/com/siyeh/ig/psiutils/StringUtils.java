@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,6 +97,12 @@ public class StringUtils{
         } else if(name.endsWith("sses") || name.endsWith("shes")){
             singularName = name.substring(0, nameLength - 2);
         } else if(name.charAt(nameLength - 1) == 's'){
+            singularName = name.substring(0, nameLength - 1);
+        } else if(name.endsWith("IES")){
+            singularName = name.substring(0, nameLength - 3) + 'Y';
+        } else if(name.endsWith("SSES") || name.endsWith("SHES")){
+            singularName = name.substring(0, nameLength - 2);
+        } else if(name.charAt(nameLength - 1) == 'S'){
             singularName = name.substring(0, nameLength - 1);
         } else{
             singularName = preprendIndefiniteArticle(name);
