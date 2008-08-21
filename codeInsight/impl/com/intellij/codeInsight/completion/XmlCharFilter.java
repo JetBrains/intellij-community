@@ -21,7 +21,6 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
-import org.jetbrains.annotations.NotNull;
 
 public class XmlCharFilter extends CharFilter {
 
@@ -64,7 +63,7 @@ public class XmlCharFilter extends CharFilter {
     return false;
   }
 
-  public Result acceptChar(char c, @NotNull final int prefixLength, final Lookup lookup) {
+  public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
     if (!isInXmlContext(lookup)) return null;
 
     if (Character.isJavaIdentifierPart(c)) return Result.ADD_TO_PREFIX;
