@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -120,5 +121,10 @@ public class ParameterInfo {
       result.add(new ParameterInfo(i, parameter.getName(), parameter.getType()));
     }
     return result.toArray(new ParameterInfo[result.size()]);
+  }
+
+  @Nullable
+  public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
+    return JavaPsiFacade.getInstance(expr.getProject()).getElementFactory().createExpressionFromText(defaultValue, expr);
   }
 }

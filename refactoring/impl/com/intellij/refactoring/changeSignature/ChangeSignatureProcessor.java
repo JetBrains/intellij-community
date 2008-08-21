@@ -566,7 +566,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         actualArg = myFactory.createExpressionFromText(myChangeInfo.oldParameterNames[newParm.oldParameterIndex], callExpression);
       }
       else {
-        actualArg = myChangeInfo.defaultValues[i];
+        actualArg = myChangeInfo.getValue(i, callExpression);
       }
       callExpression.getArgumentList().add(actualArg);
     }
@@ -942,7 +942,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         return factory.createExpressionFromText(result.getName(), list);
       }
     }
-    return factory.createExpressionFromText(info.defaultValue, list);
+    final PsiCallExpression callExpression = PsiTreeUtil.getParentOfType(list, PsiCallExpression.class);
+    return callExpression != null ? info.getValue(callExpression) : factory.createExpressionFromText(info.defaultValue, list);
   }
 
   private static void addParameterUsages(PsiParameter parameter,

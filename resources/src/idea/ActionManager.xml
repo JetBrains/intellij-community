@@ -168,6 +168,7 @@
     <group id="RefactoringMenu2">
       <action id="MethodDuplicates" class="com.intellij.refactoring.actions.MethodDuplicatesAction"/>
       <action id="InvertBoolean" class="com.intellij.refactoring.actions.InvertBooleanAction"/>
+      <action id="IntroduceParameterObject" class="com.intellij.refactoring.actions.IntroduceParameterObjectAction"/>
 
       <add-to-group group-id="RefactoringMenu" anchor="before" relative-to-action="IntroduceVariable"/>
     </group>

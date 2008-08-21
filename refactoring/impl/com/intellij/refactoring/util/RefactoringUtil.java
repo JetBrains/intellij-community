@@ -477,7 +477,7 @@ public class RefactoringUtil {
            isPlusPlusOrMinusMinus(parent);
   }
 
-  private static boolean isPlusPlusOrMinusMinus(PsiElement element) {
+  public static boolean isPlusPlusOrMinusMinus(PsiElement element) {
     if (element instanceof PsiPrefixExpression) {
       PsiJavaToken operandSign = ((PsiPrefixExpression)element).getOperationSign();
       return operandSign.getTokenType() == JavaTokenType.PLUSPLUS || operandSign.getTokenType() == JavaTokenType.MINUSMINUS;

@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -131,6 +132,7 @@ class ChangeInfo {
     for(int i = 0; i < newParms.length; i++){
       ParameterInfo info = newParms[i];
       if (info.oldParameterIndex < 0 && !info.isVarargType()){
+        if (info.defaultValue == null) continue;
         try{
           defaultValues[i] = factory.createExpressionFromText(info.defaultValue, method);
         }
@@ -225,5 +227,11 @@ class ChangeInfo {
       }
     }
     return result.toArray(new ParameterInfo[result.size()]);
+  }
+
+  @Nullable
+  public PsiExpression getValue(int i, PsiCallExpression expr) throws IncorrectOperationException {
+    if (defaultValues[i] != null) return defaultValues[i];
+    return newParms[i].getValue(expr);
   }
 }

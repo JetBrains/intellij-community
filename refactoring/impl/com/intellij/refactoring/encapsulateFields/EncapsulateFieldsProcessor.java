@@ -348,7 +348,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
           }
         }
       }
-      else if (isPlusPlusOrMinusMinus(parent)){
+      else if (RefactoringUtil.isPlusPlusOrMinusMinus(parent)){
         PsiJavaToken sign;
         if (parent instanceof PsiPrefixExpression){
           sign = ((PsiPrefixExpression)parent).getOperationSign();
@@ -482,21 +482,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return methodCall;
   }
 
-  private static boolean isPlusPlusOrMinusMinus(PsiElement expression) {
-    if (expression instanceof PsiPrefixExpression){
-      PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
-      PsiJavaToken sign = prefixExpression.getOperationSign();
-      IElementType tokenType = sign.getTokenType();
-      return tokenType == JavaTokenType.PLUSPLUS || tokenType == JavaTokenType.MINUSMINUS;
-    }
-    if (expression instanceof PsiPostfixExpression){
-      PsiPostfixExpression postfixExpression = (PsiPostfixExpression)expression;
-      PsiJavaToken sign = postfixExpression.getOperationSign();
-      IElementType tokenType = sign.getTokenType();
-      return tokenType == JavaTokenType.PLUSPLUS || tokenType == JavaTokenType.MINUSMINUS;
-    }
-    return false;
-  }
+
 
   private static class MyUsageInfo extends UsageInfo {
     public final int fieldIndex;
