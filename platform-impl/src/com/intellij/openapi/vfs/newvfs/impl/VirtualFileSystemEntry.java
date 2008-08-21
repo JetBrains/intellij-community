@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
@@ -228,7 +229,15 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     if (isDirectory()) return Charset.defaultCharset();
     if (!isDirectory() && !isCharsetSet()) {
       try {
-        LoadTextUtil.detectCharset(this, contentsToByteArray());
+        final byte[] content;
+        try {
+          content = contentsToByteArray();
+        }
+        catch (FileNotFoundException e) {
+          // file has already been deleted from disk
+          return super.getCharset();
+        }
+        LoadTextUtil.detectCharset(this, content);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
