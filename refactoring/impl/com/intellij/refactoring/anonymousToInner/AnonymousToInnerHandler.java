@@ -37,10 +37,10 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
   private PsiAnonymousClass myAnonClass;
   private PsiClass myTargetClass;
+  protected String myNewClassName;
 
   private VariableInfo[] myVariableInfos;
-  private AnonymousToInnerDialog myDialog;
-  private boolean myMakeStatic;
+  protected boolean myMakeStatic;
   private Set<PsiTypeParameter> myTypeParametersToCreate = new LinkedHashSet<PsiTypeParameter>();
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
@@ -93,18 +93,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     Map<PsiVariable,VariableInfo> variableInfoMap = new LinkedHashMap<PsiVariable, VariableInfo>();
     collectUsedVariables(variableInfoMap, myAnonClass);
     myVariableInfos = variableInfoMap.values().toArray(new VariableInfo[variableInfoMap.values().size()]);
-    final boolean needsThis = needsThis() || PsiUtil.isInnerClass(myTargetClass);
-    myDialog = new AnonymousToInnerDialog(
-            myProject,
-            myAnonClass,
-            myVariableInfos,
-            needsThis);
-    myDialog.show();
-    if (!myDialog.isOK()) {
-      return;
-    }
-    myVariableInfos = myDialog.getVariableInfos();
-    myMakeStatic = myDialog.isMakeStatic();
+    if (!showRefactoringDialog()) return;
 
     CommandProcessor.getInstance().executeCommand(
         myProject, new Runnable() {
@@ -127,9 +116,26 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
   }
 
+  protected boolean showRefactoringDialog() {
+    final boolean needsThis = needsThis() || PsiUtil.isInnerClass(myTargetClass);
+    final AnonymousToInnerDialog dialog = new AnonymousToInnerDialog(
+        myProject,
+        myAnonClass,
+        myVariableInfos,
+        needsThis);
+    dialog.show();
+    if (!dialog.isOK()) {
+      return false;
+    }
+    myNewClassName = dialog.getClassName();
+    myVariableInfos = dialog.getVariableInfos();
+    myMakeStatic = dialog.isMakeStatic();
+    return true;
+  }
+
   private void doRefactoring() throws IncorrectOperationException {
     calculateTypeParametersToCreate();
-    PsiClass aClass = createClass(myDialog.getClassName());
+    PsiClass aClass = createClass(myNewClassName);
     myTargetClass.add(aClass);
 
     PsiNewExpression newExpr = (PsiNewExpression) myAnonClass.getParent();
@@ -139,10 +145,11 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     if (!myTypeParametersToCreate.isEmpty()) {
       buf.append("<");
       int idx = 0;
+      //noinspection ForLoopThatDoesntUseLoopVariable
       for (Iterator<PsiTypeParameter> it = myTypeParametersToCreate.iterator(); it.hasNext();  idx++) {
+        if (idx > 0) buf.append(", ");
         String typeParamName = it.next().getName();
         buf.append(typeParamName);
-        if (idx > 0) buf.append(", ");
       }
       buf.append(">");
     }
