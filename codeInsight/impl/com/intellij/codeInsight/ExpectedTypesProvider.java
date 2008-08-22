@@ -809,7 +809,9 @@ public class ExpectedTypesProvider {
         PsiMethod method = (PsiMethod)candidateInfo.getElement();
         PsiSubstitutor substitutor;
         if (candidateInfo instanceof MethodCandidateInfo) {
-          substitutor = ((MethodCandidateInfo)candidateInfo).inferTypeArguments(forCompletion);
+          final MethodCandidateInfo info = (MethodCandidateInfo)candidateInfo;
+          substitutor = info.inferTypeArguments(forCompletion);
+          if (!info.isStaticsScopeCorrect() && method != null && !method.getModifierList().hasModifierProperty(PsiModifier.STATIC)) continue;
         }
         else {
           substitutor = candidateInfo.getSubstitutor();

@@ -6,10 +6,11 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.util.Consumer;
 
 /**
@@ -26,6 +27,9 @@ public class BasicToClassNameDelegator extends CompletionContributor{
 
     final PsiElement position = parameters.getPosition();
     if (!(position.getParent() instanceof PsiJavaCodeReferenceElement)) return true;
+
+    final String s = result.getPrefixMatcher().getPrefix();
+    if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return true;
 
     final Ref<Boolean> empty = Ref.create(true);
     CompletionService.getCompletionService().getVariantsFromContributors(EP_NAME, parameters, this, new Consumer<LookupElement>() {
