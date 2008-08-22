@@ -1,4 +1,4 @@
-package com.intellij.refactoring.introduceparameterobject.ui;
+package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.TreeClassChooserDialog;
@@ -10,9 +10,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactorJHelpID;
-import com.intellij.refactoring.introduceparameterobject.IntroduceParameterObjectProcessor;
 import com.intellij.refactoring.psi.PackageNameUtil;
 import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NotNull;
@@ -28,10 +28,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
-public class IntroduceParameterObjectDialog extends RefactoringDialog implements ParameterInfoChangeListener {
+public class IntroduceParameterObjectDialog extends RefactoringDialog {
 
   private final PsiMethod sourceMethod;
-  private final ParameterInfo[] parameterInfo;
+  private final ParameterTablePanel.VariableData[] parameterInfo;
   private final JTextField classNameField;
   private final JTextField packageTextField;
   private final FixedSizeButton packageChooserButton;
@@ -63,7 +63,14 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog implements
     classNameField = new JTextField();
     classNameField.getDocument().addDocumentListener(docListener);
     sourceMethodTextField = new JTextField();
-    parameterInfo = ParameterInfo.fromMethod(sourceMethod);
+    final PsiParameterList parameterList = sourceMethod.getParameterList();
+    final PsiParameter[] parameters = parameterList.getParameters();
+    parameterInfo = new ParameterTablePanel.VariableData[parameters.length];
+    for (int i = 0; i < parameterInfo.length; i++) {
+      parameterInfo[i] = new ParameterTablePanel.VariableData(parameters[i]);
+      parameterInfo[i].passAsParameter = true;
+    }
+
     classNameLabel = new JLabel(RefactorJBundle.message("name.for.wrapper.class.label"));
     packageLabel = new JLabel(RefactorJBundle.message("package.for.wrapper.class.label"));
 
@@ -76,7 +83,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog implements
     final ButtonGroup buttonGroup = new ButtonGroup();
     buttonGroup.add(useExistingClassButton);
     buttonGroup.add(createNewClassButton);
-    useExistingClassButton.setSelected(true);
+    createNewClassButton.setSelected(true);
     init();
     final ActionListener listener = new ActionListener() {
 
@@ -175,9 +182,9 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog implements
   @NotNull
   public List<PsiParameter> getParametersToExtract() {
     final List<PsiParameter> out = new ArrayList<PsiParameter>();
-    for (ParameterInfo info : parameterInfo) {
-      if (info.isChecked()) {
-        out.add(info.getParameter());
+    for (ParameterTablePanel.VariableData info : parameterInfo) {
+      if (info.passAsParameter) {
+        out.add((PsiParameter)info.variable);
       }
     }
     return out;
@@ -224,38 +231,30 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog implements
 
     box.add(Box.createVerticalStrut(10));
     final JPanel classNamePanel = new JPanel(new GridBagLayout());
-    final TitledBorder newClassBorder = IdeBorderFactory.createTitledBorder("Wrapper Class");
+    final TitledBorder newClassBorder = IdeBorderFactory.createTitledBorder("Parameter Class");
     classNamePanel.setBorder(newClassBorder);
-    final Insets indent = new Insets(0, 2, 0, 0);
-    final GridBagConstraints gbConstraints = new GridBagConstraints();
-    final Insets origInsets = gbConstraints.insets;
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.weightx = 1.0;
-    gbConstraints.weighty = 0.0;
-    gbConstraints.gridwidth = 3;
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 0;
-    gbConstraints.gridwidth = 3;
-    useExistingClassButton.setMnemonic('U');
-    classNamePanel.add(useExistingClassButton, gbConstraints);
-    gbConstraints.gridy = 1;
-    gbConstraints.insets = indent;
-    classNamePanel.add(existingClassPanel, gbConstraints);
-    gbConstraints.insets = origInsets;
-    gbConstraints.gridy = 2;
-    createNewClassButton.setMnemonic('C');
-    classNamePanel.add(createNewClassButton, gbConstraints);
-    gbConstraints.gridy = 3;
-    gbConstraints.gridwidth = 0;
+    final GridBagConstraints gc = new GridBagConstraints();
+    gc.fill = GridBagConstraints.HORIZONTAL;
+    gc.weighty = 0.0;
 
+
+    gc.gridx = 0;
+    gc.gridy = 0;
+    gc.gridwidth = 1;
+    gc.weightx = 0;
+    gc.insets.left = 5;
+    createNewClassButton.setMnemonic('C');
+    classNamePanel.add(createNewClassButton, gc);
+    gc.gridy = 1;
+    gc.gridwidth = 1;
     classNameLabel.setLabelFor(classNameField);
     classNameLabel.setDisplayedMnemonic('N');
-    gbConstraints.insets = indent;
-    classNamePanel.add(classNameLabel, gbConstraints);
-    gbConstraints.insets = origInsets;
-    gbConstraints.gridx = 1;
-    gbConstraints.gridwidth = 2;
-    classNamePanel.add(classNameField, gbConstraints);
+    gc.insets.left = 25;
+    classNamePanel.add(classNameLabel, gc);
+    gc.insets.left = 5;
+    gc.gridx = 1;
+    gc.gridwidth = 2;
+    classNamePanel.add(classNameField, gc);
 
     packageChooserButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -273,17 +272,38 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog implements
     });
     packageLabel.setLabelFor(packageTextField);
     packageLabel.setDisplayedMnemonic('P');
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 4;
-    gbConstraints.gridwidth = 1;
-    gbConstraints.insets = indent;
-    classNamePanel.add(packageLabel, gbConstraints);
-    gbConstraints.insets = origInsets;
-    gbConstraints.gridx = 1;
-    classNamePanel.add(packageTextField, gbConstraints);
-    gbConstraints.gridx = 2;
-    gbConstraints.fill = GridBagConstraints.NONE;
-    classNamePanel.add(packageChooserButton, gbConstraints);
+    gc.gridx = 0;
+    gc.gridy = 2;
+    gc.gridwidth = 1;
+    gc.insets.left = 25;
+    classNamePanel.add(packageLabel, gc);
+    gc.insets.left = 5;
+    gc.weightx = 1;
+    gc.gridx = 1;
+    classNamePanel.add(packageTextField, gc);
+    gc.gridx = 2;
+    gc.weightx = 0;
+    gc.insets.left = 2;
+    gc.fill = GridBagConstraints.NONE;
+    classNamePanel.add(packageChooserButton, gc);
+
+
+    gc.weightx = 0.0;
+    gc.gridwidth = 3;
+    gc.fill = GridBagConstraints.HORIZONTAL;
+    gc.gridx = 0;
+    gc.gridy = 3;
+    gc.insets.left = 5;
+    useExistingClassButton.setMnemonic('U');
+    classNamePanel.add(useExistingClassButton, gc);
+
+    gc.gridx = 0;
+    gc.gridy = 4;
+    gc.insets.left = 25;
+    gc.weightx = 1;
+    classNamePanel.add(existingClassPanel, gc);
+
+
     box.add(classNamePanel);
 
     box.add(Box.createVerticalStrut(10));
@@ -295,25 +315,29 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog implements
 
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
-    final ParameterSelectionPanel parameterSelectionPanel = new ParameterSelectionPanel(parameterInfo);
-    final ParameterSelectionTable table = parameterSelectionPanel.getTable();
-    table.addParameterInfoChangeListener(this);
-    panel.add(parameterSelectionPanel, BorderLayout.CENTER);
+    final ParameterTablePanel paramsPanel = new ParameterTablePanel(myProject, parameterInfo, sourceMethod) {
+      protected void updateSignature() {}
+
+      protected void doEnterAction() {}
+
+      protected void doCancelAction() {
+        IntroduceParameterObjectDialog.this.doCancelAction();
+      }
+    };
+    paramsPanel.setBorder(IdeBorderFactory.createTitledBorder("Parameters to Extract"));
+    panel.add(paramsPanel, BorderLayout.CENTER);
+    keepMethodAsDelegate.setMnemonic('l');
     panel.add(keepMethodAsDelegate, BorderLayout.SOUTH);
     return panel;
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return existingClassField;
+    return classNameField;
   }
 
   protected void doHelpAction() {
     final HelpManager helpManager = HelpManager.getInstance();
     helpManager.invokeHelp(RefactorJHelpID.IntroduceParameterObject);
-  }
-
-  public void parameterInfoChanged() {
-    validateButtons();
   }
 
   public boolean useExistingClass() {
