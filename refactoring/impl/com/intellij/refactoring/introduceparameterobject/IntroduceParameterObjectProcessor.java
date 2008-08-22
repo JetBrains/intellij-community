@@ -248,16 +248,17 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
   }
 
   protected void performRefactoring(UsageInfo[] usageInfos) {
-    buildClass();
-    super.performRefactoring(usageInfos);
+    if (buildClass()) {
+      super.performRefactoring(usageInfos);
+    }
   }
 
-  private void buildClass() {
+  private boolean buildClass() {
 
     final PsiManager manager = method.getManager();
     final Project project = method.getProject();
     if (existingClass != null) {
-      return;
+      return true;
     }
     final ParameterObjectBuilder beanClassBuilder = new ParameterObjectBuilder();
     final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
@@ -276,7 +277,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     }
     catch (IOException e) {
       logger.error(e);
-      return;
+      return false;
     }
 
     try {
@@ -293,11 +294,14 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
         final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(newFile.getProject()).shortenClassReferences(newFile);
         final PsiElement reformattedFile = codeStyleManager.reformat(shortenedFile);
         directory.add(reformattedFile);
+      } else {
+        return false;
       }
     }
     catch (IncorrectOperationException e) {
       logger.error(e);
     }
+    return true;
   }
 
   protected String getCommandName() {
