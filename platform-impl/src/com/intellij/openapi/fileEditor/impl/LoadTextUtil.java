@@ -119,7 +119,7 @@ public final class LoadTextUtil {
   }
 
   private static int skipBOM(final VirtualFile virtualFile, byte[] content) {
-    final byte[] bom = getBOM(content, virtualFile.getCharset());
+    final byte[] bom = getBOM(content, Patches.SUN_BUG_ID_4508058? virtualFile.getCharset() : null);
     if (bom.length != 0) {
       virtualFile.setBOM(bom);
     }
