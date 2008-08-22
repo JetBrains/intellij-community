@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -234,7 +235,26 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
     @Override
     public TableCellRenderer getRenderer(final IdeaPluginDescriptor ideaPluginDescriptor) {
-      return new BooleanTableCellRenderer();
+      if (ideaPluginDescriptor.isBundled()) {
+        return new BooleanTableCellRenderer() {
+          @Override
+          public Component getTableCellRendererComponent(final JTable table,
+                                                         final Object value,
+                                                         final boolean isSelected,
+                                                         final boolean hasFocus,
+                                                         final int row,
+                                                         final int column) {
+            final JCheckBox checkbox = (JCheckBox) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            checkbox.setEnabled(false);
+            return checkbox;
+          }
+        };
+      }
+      return new DefaultTableCellRenderer() {
+        protected void setValue(final Object value) {
+          setText("");
+        }
+      };
     }
   }
 
