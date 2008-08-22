@@ -64,7 +64,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
     myEditor.getCaretModel().moveToOffset(offset);
 
     final CodeInsightActionHandler handler = getCompetionHandler();
-    CompletionData data = CompletionUtil.getCompletionDataByElement(myFile.findElementAt(myOffset), myFile, myOffset);
+    CompletionData data = CompletionUtil.getCompletionDataByElement(myFile);
     LookupItem[] items = getAcceptableItems(data);
 
     try {
@@ -111,7 +111,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
   protected LookupItem[] getAcceptableItemsImpl(CompletionData completionData) throws IncorrectOperationException {
 
     // todo [DIANA] uncomment me
-    final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
+    final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
     /**
      * Create fake file with dummy element
      */

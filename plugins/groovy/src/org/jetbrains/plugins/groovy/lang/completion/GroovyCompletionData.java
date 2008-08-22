@@ -20,6 +20,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionVariant;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -196,7 +197,7 @@ public class GroovyCompletionData extends CompletionData {
 
   {
     ourReferenceVariant = new CompletionVariant() {
-      public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, final PsiFile file,
+      public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupElement> set, final PsiFile file,
                                           final CompletionData completionData) {
         completeReference(reference, position, set, TailType.NONE, file, TrueFilter.INSTANCE, this);
       }
@@ -206,7 +207,7 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   @Override
-  public void completeReference(final PsiReference reference, final Set<LookupItem> set, @NotNull final PsiElement position,
+  public void completeReference(final PsiReference reference, final Set<LookupElement> set, @NotNull final PsiElement position,
                                 final PsiFile file, final int offset) {
     final CompletionVariant[] variants = findVariants(position, file);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
