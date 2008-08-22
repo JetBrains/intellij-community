@@ -22,6 +22,7 @@ import java.util.*;
 
 /**
  * Implementation class for Ant generation options
+ * 
  * @author Eugene Zhuravlev
  *         Date: Mar 25, 2004
  */
@@ -38,16 +39,46 @@ public class GenerationOptionsImpl extends GenerationOptions {
   /** map from modules to chunks */
   private Map<Module,ModuleChunk> myModuleToChunkMap = new HashMap<Module,ModuleChunk>();
 
+  /**
+   * A constructor
+   *
+   * @param project a project to generate
+   * @param forceTargetJdk a value of corresponding option
+   * @param generateSingleFile  a value of corresponding option
+   * @param enableFormCompiler  a value of corresponding option
+   * @param backupPreviouslyGeneratedFiles  a value of corresponding option
+   * @param inlineRuntimeClasspath if true a runtiem classpaths are inlined
+   * @param representativeModuleNames a module name that represents module chunks.
+   */
   public GenerationOptionsImpl(Project project,
                            boolean generateSingleFile,
                            boolean enableFormCompiler,
-                           boolean backupPreviouslyGeneratedFiles, boolean forceTargetJdk, String[] representativeModuleNames) {
-    super(forceTargetJdk, generateSingleFile, enableFormCompiler, backupPreviouslyGeneratedFiles);
+                           boolean backupPreviouslyGeneratedFiles, boolean forceTargetJdk, boolean inlineRuntimeClasspath, String[] representativeModuleNames) {
+    super(forceTargetJdk, generateSingleFile, enableFormCompiler, backupPreviouslyGeneratedFiles, inlineRuntimeClasspath);
     myProject = project;
     myMacroReplacementMap = createReplacementMap();
     myModuleChunks = createModuleChunks(representativeModuleNames);
     myOutputUrlToPropertyRefMap = createOutputUrlToPropertyRefMap(myModuleChunks);
   }
+
+  /**
+   * A constructor
+   * @param project a project to generate
+   * @param forceTargetJdk a value of corresponding option
+   * @param generateSingleFile  a value of corresponding option
+   * @param enableFormCompiler  a value of corresponding option
+   * @param backupPreviouslyGeneratedFiles  a value of corresponding option
+   * @param inlineRuntimeClasspath if true a runtiem classpaths are inlined
+   * @param representativeModuleNames a module name that represents module chunks.
+   */
+  @Deprecated
+  public GenerationOptionsImpl(Project project,
+                           boolean generateSingleFile,
+                           boolean enableFormCompiler,
+                           boolean backupPreviouslyGeneratedFiles, boolean forceTargetJdk, String[] representativeModuleNames) {
+    this(project, forceTargetJdk, generateSingleFile, enableFormCompiler, backupPreviouslyGeneratedFiles, false, representativeModuleNames);
+  }
+
 
   /** {@inheritDoc}  */
   @Override

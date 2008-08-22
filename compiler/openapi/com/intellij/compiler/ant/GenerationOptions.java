@@ -18,7 +18,8 @@ package com.intellij.compiler.ant;
 import com.intellij.openapi.module.Module;
 
 /**
- * Ant file generation options. This object is availalbe during construction.
+ * Ant file generation options. This object is availalbe during construction of ant object tree.
+ *
  * @author anna
  */
 public abstract class GenerationOptions {
@@ -30,6 +31,25 @@ public abstract class GenerationOptions {
   public final boolean backupPreviouslyGeneratedFiles;
   /** This option specifies whether target JDK is forced during compilation or default ant JDK is used. */
   public final boolean forceTargetJdk;
+  /** if true, the runtime classpath is inlined */
+  public final boolean inlineRuntimeClasspath;
+
+  /**
+   * A constructor
+   *
+   * @param forceTargetJdk a value of corresponding option
+   * @param generateSingleFile  a value of corresponding option
+   * @param enableFormCompiler  a value of corresponding option
+   * @param backupPreviouslyGeneratedFiles  a value of corresponding option
+   * @param inlineRuntimeClasspath if true a runtiem classpaths are inlined
+   */
+  public GenerationOptions(boolean forceTargetJdk, boolean generateSingleFile, boolean enableFormCompiler, boolean backupPreviouslyGeneratedFiles, boolean inlineRuntimeClasspath) {
+    this.forceTargetJdk = forceTargetJdk;
+    this.generateSingleFile = generateSingleFile;
+    this.enableFormCompiler = enableFormCompiler;
+    this.backupPreviouslyGeneratedFiles = backupPreviouslyGeneratedFiles;
+    this.inlineRuntimeClasspath = inlineRuntimeClasspath;
+  }
 
   /**
    * A constructor
@@ -39,11 +59,9 @@ public abstract class GenerationOptions {
    * @param enableFormCompiler  a value of corresponding option
    * @param backupPreviouslyGeneratedFiles  a value of corresponding option
    */
+  @Deprecated
   public GenerationOptions(boolean forceTargetJdk, boolean generateSingleFile, boolean enableFormCompiler, boolean backupPreviouslyGeneratedFiles) {
-    this.forceTargetJdk = forceTargetJdk;
-    this.generateSingleFile = generateSingleFile;
-    this.enableFormCompiler = enableFormCompiler;
-    this.backupPreviouslyGeneratedFiles = backupPreviouslyGeneratedFiles;
+    this(forceTargetJdk, generateSingleFile, enableFormCompiler, backupPreviouslyGeneratedFiles, false);
   }
 
   /**

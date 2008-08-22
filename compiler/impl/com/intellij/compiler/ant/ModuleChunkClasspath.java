@@ -27,6 +27,7 @@ public class ModuleChunkClasspath extends Path{
 
   /**
    * A constructor
+   * 
    * @param chunk a chunk to process
    * @param genOptions a generation options
    * @param generateRuntimeClasspath if true, runtime classpath is being generated. Otherwise a compile time classpath is constructed
@@ -58,8 +59,8 @@ public class ModuleChunkClasspath extends Path{
             // the module is already processed, nothing should be done
             return;
           }
-          if(dependencyLevel > 1 && !isModuleExported) {
-            // the module is not in exports and it is not directly included
+          if(dependencyLevel > 1 && !isModuleExported && !(genOptions.inlineRuntimeClasspath && generateRuntimeClasspath)) {
+            // the module is not in exports and it is not directly included skip it in the case of library pathgeneration
             return;
           }
           processedModules.add(module);
@@ -95,7 +96,7 @@ public class ModuleChunkClasspath extends Path{
               final ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
               final Module dependentModule = moduleOrderEntry.getModule();
               if (!chunk.contains(dependentModule)) {
-                if(generateRuntimeClasspath) {
+                if(generateRuntimeClasspath && !genOptions.inlineRuntimeClasspath) {
                   // in case of runtime classpath, just an referenced to corresponding classpath is created
                   final ModuleChunk depChunk = genOptions.getChunkByModule(dependentModule);
                   if(!processedChunks.contains(depChunk)) {
@@ -105,7 +106,8 @@ public class ModuleChunkClasspath extends Path{
                   }
                 }
                 else {
-                  // in case of compile classpath, the referenced module is processed recursively
+                  // in case of compile classpath or inlined runtime classpath,
+                  // the referenced module is processed recursively
                   processModule(dependentModule, dependencyLevel + 1, moduleOrderEntry.isExported());
                 }
               }

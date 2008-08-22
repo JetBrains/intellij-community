@@ -41,12 +41,14 @@ public class GenerateAntBuildDialog extends DialogWrapper{
   private JRadioButton myRbBackupFiles;
   private JRadioButton myRbOverwriteFiles;
   private JCheckBox myCbForceTargetJdk;
+  private JCheckBox myCbInlineRuntimeClasspath;
   private JPanel myChunksPanel;
   private final Project myProject;
   private static final @NonNls String SINGLE_FILE_PROPERTY = "GenerateAntBuildDialog.generateSingleFile";
   private static final @NonNls String UI_FORM_PROPERTY = "GenerateAntBuildDialog.enableUiFormCompile";
   private static final @NonNls String FORCE_TARGET_JDK_PROPERTY = "GenerateAntBuildDialog.forceTargetJdk";
   private static final @NonNls String BACKUP_FILES_PROPERTY = "GenerateAntBuildDialog.backupFiles";
+  private static final @NonNls String INLINE_RUNTIME_CLASSPATH_PROPERTY = "GenerateAntBuildDialog.inclineRuntiemClasspath";
   private MyTableModel myTableModel;
   private Table myTable;
 
@@ -87,6 +89,9 @@ public class GenerateAntBuildDialog extends DialogWrapper{
       myRbBackupFiles.setSelected(backup);
       myRbOverwriteFiles.setSelected(!backup);
     }
+    if (properties.isValueSet(INLINE_RUNTIME_CLASSPATH_PROPERTY)) {
+      myCbInlineRuntimeClasspath.setSelected(properties.isTrueValue(INLINE_RUNTIME_CLASSPATH_PROPERTY));
+    }
   }
 
   private void saveSettings() {
@@ -95,6 +100,7 @@ public class GenerateAntBuildDialog extends DialogWrapper{
     properties.setValue(UI_FORM_PROPERTY, Boolean.toString(myCbEnableUIFormsCompilation.isSelected()));
     properties.setValue(FORCE_TARGET_JDK_PROPERTY, Boolean.toString(myCbForceTargetJdk.isSelected()));
     properties.setValue(BACKUP_FILES_PROPERTY, Boolean.toString(myRbBackupFiles.isSelected()));
+    properties.setValue(INLINE_RUNTIME_CLASSPATH_PROPERTY, Boolean.toString(myCbInlineRuntimeClasspath.isSelected()));
   }
 
   public void dispose() {
@@ -115,6 +121,7 @@ public class GenerateAntBuildDialog extends DialogWrapper{
     myRbBackupFiles.setSelected(true);
     myCbEnableUIFormsCompilation.setSelected(true);
     myCbForceTargetJdk.setSelected(true);
+    myCbInlineRuntimeClasspath.setSelected(false);
 
     initChunksPanel();
 
@@ -176,6 +183,10 @@ public class GenerateAntBuildDialog extends DialogWrapper{
 
   public boolean isBackupFiles() {
     return myRbBackupFiles.isSelected();
+  }
+
+  public boolean isRuntimeClasspathInlined() {
+    return myCbInlineRuntimeClasspath.isSelected();
   }
 
   public String[] getRepresentativeModuleNames() {
