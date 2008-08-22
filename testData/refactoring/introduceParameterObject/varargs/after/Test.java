@@ -5,6 +5,6 @@ class Test {
   }
 
   void bar(){
-    foo(new Param(1));
+    foo(new Param(1, 2));
   }
 }

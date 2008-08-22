@@ -23,7 +23,7 @@ public class MergeMethodArguments extends RefactorJUsageInfo {
   private final String packageName;
   private final String parameterName;
   private final int[] paramsToMerge;
-  private boolean lastParamIsVararg;
+  private final boolean lastParamIsVararg;
 
   public MergeMethodArguments(PsiMethod method,
                               String className,
@@ -31,15 +31,14 @@ public class MergeMethodArguments extends RefactorJUsageInfo {
                               String parameterName,
                               int[] paramsToMerge,
                               List<PsiTypeParameter> typeParams,
-                              final boolean keepMethodAsDelegate,
-                              final boolean lastParameterIsVararg) {
+                              final boolean keepMethodAsDelegate) {
     super(method);
     this.paramsToMerge = paramsToMerge;
     this.packageName = packageName;
     this.className = className;
     this.parameterName = parameterName;
     this.method = method;
-    lastParamIsVararg = lastParameterIsVararg;
+    lastParamIsVararg = method.isVarArgs();
     myKeepMethodAsDelegate = keepMethodAsDelegate;
     this.typeParams = new ArrayList<PsiTypeParameter>(typeParams);
   }
@@ -102,7 +101,7 @@ public class MergeMethodArguments extends RefactorJUsageInfo {
     final PsiExpression[] args = call.getArgumentList().getExpressions();
     StringBuffer newExpression = new StringBuffer();
     final String qualifiedName = ClassUtil.createQualifiedName(packageName, className);
-    newExpression.append("new " + qualifiedName);
+    newExpression.append("new ").append(qualifiedName);
     if (!typeParams.isEmpty()) {
       final JavaResolveResult resolvant = call.resolveMethodGenerics();
       final PsiSubstitutor substitutor = resolvant.getSubstitutor();

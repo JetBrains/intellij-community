@@ -51,7 +51,6 @@ public class IntroduceParameterObjectProcessor extends RPPBaseRefactoringProcess
   private final List<PsiParameter> parameters;
   private final int[] paramsToMerge;
   private final List<PsiTypeParameter> typeParams;
-  private final boolean lastParameterIsVararg;
   private final Set<PsiParameter> paramsNeedingSetters = new HashSet<PsiParameter>();
   private PsiClass existingClass;
   private boolean myExistingClassCompatible = true;
@@ -89,7 +88,6 @@ public class IntroduceParameterObjectProcessor extends RPPBaseRefactoringProcess
       parameter.accept(visitor);
     }
     typeParams = new ArrayList<PsiTypeParameter>(typeParamSet);
-    lastParameterIsVararg = parameters.get(parameters.size() - 1).isVarArgs();
 
     final String qualifiedName = ClassUtil.createQualifiedName(packageName, className);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
@@ -148,7 +146,7 @@ public class IntroduceParameterObjectProcessor extends RPPBaseRefactoringProcess
     final Project project = psiManager.getProject();
     final String fixedParamName = calculateNewParamNameForMethod(overridingMethod);
 
-    usages.add(new MergeMethodArguments(overridingMethod, className, packageName, fixedParamName, paramsToMerge, typeParams, keepMethodAsDelegate, lastParameterIsVararg));
+    usages.add(new MergeMethodArguments(overridingMethod, className, packageName, fixedParamName, paramsToMerge, typeParams, keepMethodAsDelegate));
 
     final ParamUsageVisitor visitor = new ParamUsageVisitor(overridingMethod, paramsToMerge);
     overridingMethod.accept(visitor);
