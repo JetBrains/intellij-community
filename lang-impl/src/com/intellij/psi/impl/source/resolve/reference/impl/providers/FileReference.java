@@ -216,7 +216,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     }
   }
 
-  private void processVariants(final PsiFileSystemItem context, final Processor<PsiElement> processor) {
+  protected final void processVariants(final PsiFileSystemItem context, final Processor<PsiElement> processor) {
     context.processChildren(createChildrenProcessor(processor));
   }
 
