@@ -22,6 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import com.siyeh.ig.psiutils.InitializationUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class FieldMayBeFinalInspection extends BaseInspection {
@@ -79,8 +80,8 @@ public class FieldMayBeFinalInspection extends BaseInspection {
         }
 
         private static boolean fieldMayBeFinal(PsiField field) {
-            final PsiExpression intializer = field.getInitializer();
             final PsiClass aClass = field.getContainingClass();
+            final PsiExpression intializer = field.getInitializer();
             final PsiClassInitializer[] classInitializers =
                     aClass.getInitializers();
             boolean assignedInInitializer = intializer != null;
@@ -108,6 +109,12 @@ public class FieldMayBeFinalInspection extends BaseInspection {
                 }
                 if (InitializationUtils.methodAssignsVariableOrFails(method,
                         field)) {
+                    return false;
+                }
+            }
+            final PsiClass[] innerClasses = aClass.getInnerClasses();
+            for (PsiClass innerClass : innerClasses) {
+                if (VariableAccessUtils.variableIsAssigned(field, innerClass)) {
                     return false;
                 }
             }

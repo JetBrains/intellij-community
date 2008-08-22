@@ -29,7 +29,7 @@ class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor{
      * @noinspection StaticCollection
      */
     @NonNls private static final Set<String> updateNames =
-            new HashSet<String>(29);
+            new HashSet<String>(31);
     static{
         updateNames.add("add");
         updateNames.add("addAll");

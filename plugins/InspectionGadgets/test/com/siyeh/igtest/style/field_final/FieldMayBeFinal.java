@@ -41,4 +41,12 @@ public class FieldMayBeFinal {
         };
         this.number = number;
     }
+
+    private String utterance = "asdfas";
+
+    private class Action {
+        public void foo() {
+            utterance = "boo!";
+        }
+    }
 }
