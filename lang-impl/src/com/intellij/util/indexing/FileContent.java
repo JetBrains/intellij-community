@@ -4,6 +4,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
@@ -16,7 +17,7 @@ public final class FileContent {
   private final VirtualFile myFile;
   private final String fileName;
   private final FileType myFileType;
-  private final Charset myCharset;
+  private Charset myCharset;
   private byte[] myContent;
   private CharSequence myContentAsText = null;
 
@@ -30,22 +31,23 @@ public final class FileContent {
     }
   }
   
-  public FileContent(final VirtualFile file, final CharSequence contentAsText) {
-    this(file, null, contentAsText);
+  public FileContent(@NotNull final VirtualFile file, final @NotNull CharSequence contentAsText, final Charset charset) {
+    this(file);
+    myContentAsText = contentAsText;
+    myCharset = charset;
   }
   
-  public FileContent(final VirtualFile file, final byte[] content) {
-    this(file, content, null);
+  public FileContent(@NotNull final VirtualFile file, @NotNull final byte[] content) {
+    this(file);
+    myContent = content;
+    myCharset = LoadTextUtil.detectCharset(file, content);
   }
-  
-  private FileContent(final VirtualFile file, final byte[] content, final CharSequence contentAsText) {
+
+  public FileContent(@NotNull final VirtualFile file) {
     myFile = file;
     myFileType = FileTypeManager.getInstance().getFileTypeByFile(file);
     // remember name explicitly because the file could be renamed afterwards
     fileName = file.getName();
-    myContent = content;
-    myContentAsText = contentAsText;
-    myCharset = file.getCharset();
   }
 
   public VirtualFile getFile() {

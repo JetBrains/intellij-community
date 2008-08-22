@@ -648,8 +648,8 @@ public class FileBasedIndex implements ApplicationComponent {
       if (lastIndexed == null) {
         lastIndexed = loadContent(vFile);
       }
-      final FileContent oldFc = new FileContent(vFile, lastIndexed);
-      final FileContent newFc = new FileContent(vFile, content.getText());
+      final FileContent oldFc = new FileContent(vFile, lastIndexed, vFile.getCharset());
+      final FileContent newFc = new FileContent(vFile, content.getText(), vFile.getCharset());
       for (ID<?, ?> indexId : myIndices.keySet()) {
         if (getInputFilter(indexId).acceptInput(vFile)) {
           final int inputId = Math.abs(getFileId(vFile));
@@ -851,7 +851,7 @@ public class FileBasedIndex implements ApplicationComponent {
               else {
                 try {
                   if (fileContent == null) {
-                    fileContent = new FileContent(file, (byte[])null);
+                    fileContent = new FileContent(file);
                   }
                   updateSingleIndex(indexId, file, fileContent, null);
                 }
@@ -891,7 +891,7 @@ public class FileBasedIndex implements ApplicationComponent {
               // invalidate it synchronously
               try {
                 if (fileContent == null) {
-                  fileContent = new FileContent(file, (byte[])null);
+                  fileContent = new FileContent(file);
                 }
                 updateSingleIndex(indexId, file, null, fileContent);
               }
@@ -1074,7 +1074,7 @@ public class FileBasedIndex implements ApplicationComponent {
             if (shouldIndexFile(file, indexId)) {
               try {
                 if (fileContent == null) {
-                  fileContent = new FileContent(file, (byte[])null);
+                  fileContent = new FileContent(file);
                 }
                 updateSingleIndex(indexId, file, fileContent, null);
               }

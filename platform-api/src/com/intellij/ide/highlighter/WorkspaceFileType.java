@@ -72,7 +72,7 @@ public class WorkspaceFileType implements FileType {
     return true;
   }
 
-  public String getCharset(@NotNull VirtualFile file) {
+  public String getCharset(@NotNull VirtualFile file, final byte[] content) {
     return CharsetToolkit.UTF8;
   }
 }

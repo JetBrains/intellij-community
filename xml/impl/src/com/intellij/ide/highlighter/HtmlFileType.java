@@ -72,15 +72,15 @@ public class HtmlFileType extends XmlLikeFileType {
     return ICON;
   }
 
-  public String getCharset(@NotNull final VirtualFile file) {
-    @NonNls String content;
+  public String getCharset(@NotNull final VirtualFile file, final byte[] content) {
+    @NonNls String strContent;
     try {
-      content = new String(file.contentsToByteArray(), "ISO-8859-1");
+      strContent = new String(content, "ISO-8859-1");
     }
     catch (IOException e) {
       return null;
     }
-    Charset charset = HtmlUtil.detectCharsetFromMetaHttpEquiv(content);
+    Charset charset = HtmlUtil.detectCharsetFromMetaHttpEquiv(strContent);
     return charset == null ? null : charset.name();
   }
 

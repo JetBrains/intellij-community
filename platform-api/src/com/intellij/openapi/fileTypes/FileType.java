@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,11 +81,12 @@ public interface FileType extends Scheme {
   /**
    * Returns the character set for the specified file.
    * @param file The file for which the character set is requested.
+   * @param content
    * @return The character set name, in the format supported by {@link java.nio.charset.Charset} class.
    */
 
   @Nullable
   @NonNls
-  String getCharset(@NotNull VirtualFile file);
+  String getCharset(@NotNull VirtualFile file, final byte[] content);
 
 }

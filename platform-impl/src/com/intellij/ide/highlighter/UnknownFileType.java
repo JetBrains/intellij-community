@@ -69,7 +69,7 @@ public class UnknownFileType implements FileType {
     return false;
   }
 
-  public String getCharset(@NotNull VirtualFile file) {
+  public String getCharset(@NotNull VirtualFile file, final byte[] content) {
     return null;
   }
 }

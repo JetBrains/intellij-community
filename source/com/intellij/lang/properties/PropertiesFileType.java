@@ -40,7 +40,7 @@ public class PropertiesFileType extends LanguageFileType {
     return FILE_ICON;
   }
 
-  public String getCharset(@NotNull VirtualFile file) {
+  public String getCharset(@NotNull VirtualFile file, final byte[] content) {
     Charset charset = EncodingManager.getInstance().getDefaultCharsetForPropertiesFiles(file);
     String defaultCharsetName = charset == null ? CharsetToolkit.getDefaultSystemCharset().name() : charset.name();
     return defaultCharsetName;

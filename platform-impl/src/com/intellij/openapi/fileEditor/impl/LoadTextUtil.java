@@ -79,14 +79,14 @@ public final class LoadTextUtil {
     return Pair.create(result, detectedLineSeparator);
   }
 
-  public static void detectCharset(final VirtualFile virtualFile, final byte[] content) {
+  public static Charset detectCharset(final VirtualFile virtualFile, final byte[] content) {
     Charset charset = dodetectCharset(virtualFile, content);
     charset = charset == null ? EncodingManager.getInstance().getDefaultCharset() : charset;
-    if (virtualFile.getFileType() == StdFileTypes.PROPERTIES
-        && EncodingManager.getInstance().isNative2AsciiForPropertiesFiles(virtualFile)) {
+    if (virtualFile.getFileType() == StdFileTypes.PROPERTIES && EncodingManager.getInstance().isNative2AsciiForPropertiesFiles(virtualFile)) {
       charset = Native2AsciiCharset.wrap(charset);
     }
     virtualFile.setCharset(charset);
+    return charset;
   }
 
   private static Charset dodetectCharset(final VirtualFile virtualFile, final byte[] content) {
@@ -109,7 +109,7 @@ public final class LoadTextUtil {
     }
 
     FileType fileType = virtualFile.getFileType();
-    String charsetName = fileType.getCharset(virtualFile);
+    String charsetName = fileType.getCharset(virtualFile, content);
 
     if (charsetName == null) {
       Charset saved = EncodingManager.getInstance().getEncoding(virtualFile, true);

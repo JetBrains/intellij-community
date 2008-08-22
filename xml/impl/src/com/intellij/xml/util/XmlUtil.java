@@ -41,7 +41,10 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.xml.*;
@@ -55,7 +58,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -1462,14 +1464,8 @@ public class XmlUtil {
   @NonNls private static final byte[] XML_PROLOG_END_BYTES = CharsetToolkit.getUtf8Bytes("?>");
 
   @Nullable
-  public static String extractXmlEncodingFromProlog(VirtualFile file) {
-    try {
-      byte[] bytes = file.contentsToByteArray();
-      return detect(bytes);
-    }
-    catch (IOException e) {
-    }
-    return null;
+  public static String extractXmlEncodingFromProlog(final byte[] content) {
+    return detect(content);
   }
 
   @Nullable

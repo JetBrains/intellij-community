@@ -10,15 +10,15 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -57,7 +57,7 @@ public class PatchFileType implements FileType {
 
   @Nullable
   @NonNls
-  public String getCharset(@NotNull VirtualFile file) {
+  public String getCharset(@NotNull VirtualFile file, final byte[] content) {
     return null;
   }
 
