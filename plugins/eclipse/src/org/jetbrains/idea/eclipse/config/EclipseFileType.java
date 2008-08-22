@@ -49,7 +49,7 @@ public class EclipseFileType implements FileType {
     return false;
   }
 
-  public String getCharset(@NotNull final VirtualFile file) {
+  public String getCharset(@NotNull final VirtualFile file, final byte[] content) {
     return CharsetToolkit.UTF8;
   }
 }
