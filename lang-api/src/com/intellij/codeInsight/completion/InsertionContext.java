@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -26,8 +27,8 @@ public class InsertionContext {
   private boolean myAddCompletionChar = true;
 
   public InsertionContext(final OffsetMap offsetMap, final char completionChar, final boolean signatureSelected, final LookupElement[] elements,
-                          final PsiFile file,
-                          final Editor editor) {
+                          @NotNull final PsiFile file,
+                          @NotNull final Editor editor) {
     myOffsetMap = offsetMap;
     myCompletionChar = completionChar;
     mySignatureSelected = signatureSelected;
@@ -49,10 +50,12 @@ public class InsertionContext {
     return mySignatureSelected;
   }
 
+  @NotNull
   public PsiFile getFile() {
     return myFile;
   }
 
+  @NotNull
   public Editor getEditor() {
     return myEditor;
   }

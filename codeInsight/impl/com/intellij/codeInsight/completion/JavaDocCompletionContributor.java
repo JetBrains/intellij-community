@@ -1,8 +1,7 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.SuppressManagerImpl;
@@ -14,22 +13,22 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.position.LeftNeighbour;
-import com.intellij.psi.filters.position.TokenTypeFilter;
+import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.ConstantExpressionEvaluator;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,85 +41,65 @@ import java.util.StringTokenizer;
  * Time: 21:40:11
  * To change this template use Options | File Templates.
  */
-public class JavaDocCompletionData extends JavaAwareCompletionData {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaDocCompletionData");
+public class JavaDocCompletionContributor extends CompletionContributor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaDocCompletionContributor");
   private static final @NonNls String VALUE_TAG = "value";
   private static final @NonNls String LINK_TAG = "link";
 
-  public JavaDocCompletionData() {
-    declareFinalScope(PsiDocTag.class);
-    declareFinalScope(PsiDocTagValue.class);
+  public JavaDocCompletionContributor() {
+    extend(CompletionType.BASIC, PsiJavaPatterns.psiElement(PsiDocToken.DOC_TAG_NAME), new TagChooser());
 
-    {
-      final CompletionVariant variant = new CompletionVariant(new TokenTypeFilter(PsiDocToken.DOC_COMMENT_DATA));
-      variant.includeScopeClass(PsiDocToken.class, true);
-      registerVariant(variant);
-    }
+    extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().inside(PsiDocTagValue.class), new CompletionProvider<CompletionParameters>(false, true) {
+      protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+        final PsiElement position = parameters.getPosition();
+        boolean isArg = PsiJavaPatterns.psiElement().afterLeaf("(").accepts(position);
+        PsiDocTag tag = PsiTreeUtil.getParentOfType(position, PsiDocTag.class);
+        boolean onlyConstants = !isArg && tag != null && tag.getName().equals(VALUE_TAG);
 
-    {
-      final ElementFilter position = new AndFilter(new NotFilter(new ScopeFilter(new ClassFilter(PsiInlineDocTag.class))),
-                                                   new TokenTypeFilter(PsiDocToken.DOC_TAG_NAME));
-      final CompletionVariant variant = new CompletionVariant(PsiDocTag.class, position);
-      variant.addCompletion(new TagChooser());
-      registerVariant(variant);
-    }
-
-    {
-      final ElementFilter position = new AndFilter(new ScopeFilter(new ClassFilter(PsiInlineDocTag.class)),
-                                                   new TokenTypeFilter(PsiDocToken.DOC_TAG_NAME));
-
-      final CompletionVariant variant = new CompletionVariant(PsiDocTag.class, position);
-      variant.setInsertHandler(new InlineInsertHandler());
-      variant.addCompletion(new TagChooser());
-      registerVariant(variant);
-    }
-
-    {
-      final CompletionVariant variant = new CompletionVariant(PsiDocTagValue.class, new LeftNeighbour(new TextFilter("(")));
-      variant.addCompletionFilter(TrueFilter.INSTANCE);
-      variant.setInsertHandler(new MethodSignatureInsertHandler());
-      variant.setItemProperty(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, Boolean.TRUE);
-      variant.setItemProperty(LookupItem.DO_NOT_AUTOCOMPLETE_ATTR, Boolean.TRUE);
-      registerVariant(variant);
-    }
-
-    {
-      final CompletionVariant variant = new CompletionVariant(PsiDocTagValue.class, new NotFilter(new LeftNeighbour(new TextFilter("("))));
-      variant.addCompletionFilter(new ElementFilter() {
-        public boolean isAcceptable(Object element, PsiElement context) {
-          if (element instanceof CandidateInfo) {
-            PsiDocTag tag = PsiTreeUtil.getParentOfType(context, PsiDocTag.class);
-            if (tag != null && tag.getName().equals(VALUE_TAG)) {
-              CandidateInfo cInfo = (CandidateInfo) element;
-              if (!(cInfo.getElement() instanceof PsiField)) return false;
-              PsiField field = (PsiField) cInfo.getElement();
-              return field.getModifierList().hasModifierProperty(PsiModifier.STATIC) &&
-                     field.getInitializer() != null &&
-                     ConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), null, false) != null;
+        final PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
+        if (ref != null) {
+          for (final LookupElement item : JavaSmartCompletionContributor
+              .completeReference(position, ref, parameters.getOriginalFile(), TailType.NONE, TrueFilter.INSTANCE, result)) {
+            if (onlyConstants) {
+              Object o = item.getObject();
+              if (!(o instanceof PsiField)) continue;
+              PsiField field = (PsiField) o;
+              if (!(field.getModifierList().hasModifierProperty(PsiModifier.STATIC) &&
+                  field.getInitializer() != null &&
+                  ConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), null, false) != null)) continue;
             }
+
+            ((LookupItem)item).setAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, Boolean.TRUE);
+            if (isArg) {
+              ((LookupItem)item).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+            }
+            ((LookupItem)item).setInsertHandler(new MethodSignatureInsertHandler());
+            result.addElement(item);
           }
-
-          return true;
         }
-
-        public boolean isClassAcceptable(Class hintClass) {
-          return true;
-        }
-      });
-      variant.setInsertHandler(new MethodSignatureInsertHandler());
-      variant.setItemProperty(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, Boolean.TRUE);
-      registerVariant(variant);
-    }
+      }
+    });
   }
 
-  private class TagChooser implements KeywordChooser {
-    public String[] getKeywords(CompletionContext context, PsiElement position) {
+  @Override
+  public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+    if (PsiJavaPatterns.psiElement(PsiDocToken.DOC_COMMENT_DATA).accepts(parameters.getPosition())) return true;
+
+    return super.fillCompletionVariants(parameters, result);
+
+    //return true; //PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiDocTag.class) == null;
+  }
+
+  private static class TagChooser extends CompletionProvider<CompletionParameters> {
+
+    protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
       List<String> ret = new ArrayList<String>();
+      final PsiElement position = parameters.getPosition();
       final PsiDocComment comment = PsiTreeUtil.getParentOfType(position, PsiDocComment.class);
       final PsiElement parent = comment.getContext();
       final boolean isInline = position.getContext() instanceof PsiInlineDocTag;
 
-      final JavadocManager manager = JavaPsiFacade.getInstance(context.file.getProject()).getJavadocManager();
+      final JavadocManager manager = JavaPsiFacade.getInstance(position.getProject()).getJavadocManager();
       final JavadocTagInfo[] infos = manager.getTagInfos(parent);
       for (JavadocTagInfo info : infos) {
         if (info.getName().equals(SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
@@ -136,7 +115,13 @@ public class JavaDocCompletionData extends JavaAwareCompletionData {
       while (tokenizer.hasMoreTokens()) {
         ret.add(tokenizer.nextToken());
       }
-      return ret.toArray(new String[ret.size()]);
+      for (final String s : ret) {
+        final LookupItem item = LookupItemUtil.objectToLookupItem(s);
+        if (isInline) {
+          item.setInsertHandler(new InlineInsertHandler());
+        }
+        result.addElement(item);
+      }
     }
 
     @SuppressWarnings({"HardCodedStringLiteral"})
@@ -145,15 +130,8 @@ public class JavaDocCompletionData extends JavaAwareCompletionData {
     }
   }
 
-  public String findPrefix(final PsiElement insertedElement, final int offsetInFile) {
-    return WordCompletionData.findPrefixSimple(insertedElement, offsetInFile);
-  }
-
-
-  private class InlineInsertHandler extends BasicInsertHandler {
-    public void handleInsert(InsertionContext context, LookupElement item) {
-      super.handleInsert(context, item);
-
+  private static class InlineInsertHandler implements InsertHandler<LookupItem> {
+    public void handleInsert(InsertionContext context, LookupItem item) {
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
         final Project project = context.getProject();
         PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -194,10 +172,9 @@ public class JavaDocCompletionData extends JavaAwareCompletionData {
     }
   }
 
-  private class MethodSignatureInsertHandler extends BasicInsertHandler {
-    public void handleInsert(InsertionContext context, LookupElement item) {
-      super.handleInsert(context, item);
-      if (!(((LookupItem)item).getObject() instanceof PsiMethod)) {
+  private static class MethodSignatureInsertHandler implements InsertHandler<LookupItem> {
+    public void handleInsert(InsertionContext context, LookupItem item) {
+      if (!(item.getObject() instanceof PsiMethod)) {
         return;
       }
       PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getEditor().getDocument());
@@ -257,7 +234,7 @@ public class JavaDocCompletionData extends JavaAwareCompletionData {
       shortenReferences(project, editor, context, afterParenth);
     }
 
-    private void shortenReferences(final Project project, final Editor editor, InsertionContext context, int offset) {
+    private static void shortenReferences(final Project project, final Editor editor, InsertionContext context, int offset) {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       final PsiElement element = context.getFile().findElementAt(offset);
       final PsiDocTagValue tagValue = PsiTreeUtil.getParentOfType(element, PsiDocTagValue.class);

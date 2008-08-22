@@ -54,12 +54,6 @@ public class JavaCompletionUtil {
       return new Java15CompletionData();
     }
   };
-  static final NotNullLazyValue<CompletionData> ourJavaDocCompletionData = new NotNullLazyValue<CompletionData>() {
-    @NotNull
-    protected CompletionData compute() {
-      return new JavaDocCompletionData();
-    }
-  };
   @NonNls
   public static final String GET_PREFIX = "get";
   @NonNls

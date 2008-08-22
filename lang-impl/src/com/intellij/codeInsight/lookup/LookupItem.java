@@ -56,7 +56,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
 
   private Object myObject;
   private String myLookupString;
-  private InsertHandler<? extends LookupItem> myInsertHandler;
+  private InsertHandler myInsertHandler;
   private double myPriority;
   private int myGrouping;
   private Map<Object,Object> myAttributes = null;
@@ -214,7 +214,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return getLookupString().compareTo(((LookupItem)o).getLookupString());
   }
 
-  public LookupItem<T> setInsertHandler(@NotNull final InsertHandler<? extends LookupItem> handler) {
+  public LookupItem<T> setInsertHandler(@NotNull final InsertHandler<? extends LookupElement> handler) {
     myInsertHandler = handler;
     return this;
   }

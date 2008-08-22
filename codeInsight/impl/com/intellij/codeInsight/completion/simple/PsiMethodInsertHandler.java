@@ -6,73 +6,62 @@ package com.intellij.codeInsight.completion.simple;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
-import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
-public class PsiMethodInsertHandler implements InsertHandler<LookupItem> {
+public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMethod>> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.simple.PsiMethodInsertHandler");
   private final PsiMethod myMethod;
 
   public PsiMethodInsertHandler(final PsiMethod method) {
     myMethod = method;
   }
 
-  public void handleInsert(final InsertionContext context, final LookupItem item) {
+  public void handleInsert(final InsertionContext context, final LookupItem<PsiMethod> item) {
     context.setAddCompletionChar(false);
     final Editor editor = context.getEditor();
     final char completionChar = context.getCompletionChar();
     TailType tailType = getTailType(item, editor, completionChar);
-    if (tailType == null) {
-      tailType = LookupItem.handleCompletionChar(editor, item, completionChar);
-    }
-    final int tailOffset;
-    try {
-      tailOffset = handleInsert(editor, context.getStartOffset(), item, context.getElements(), tailType, completionChar);
-    }
-    catch (IncorrectOperationException e) {
-      throw new RuntimeException(e);
-    }
-    tailType.processTail(editor, tailOffset);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-  }
-
-  @Nullable
-  protected TailType getTailType(final LookupItem item, final Editor editor, final char completionChar) {
-    return null;
-  }
-
-  public int handleInsert(final Editor editor, final int startOffset, final LookupElement item, final LookupElement[] allItems, final TailType tailType,
-                          final char completionChar)
-    throws IncorrectOperationException {
     final Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(myMethod.getProject()).getPsiFile(document);
+    final PsiFile file = context.getFile();
 
+    final LookupElement[] allItems = context.getElements();
     boolean signatureSelected = allItems.length > 1 && CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS ||
-                                ((LookupItem)item).getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null;
-    final boolean needLeftParenth = file == null || isToInsertParenth(file.findElementAt(startOffset));
-    final boolean hasParams = needLeftParenth && hasParams(item, allItems, signatureSelected);
+                                item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null;
+
     int offset = editor.getCaretModel().getOffset();
-    int tailOffset = SimpleInsertHandlerFactory.handleParenses(hasParams, needLeftParenth, offset, document, file, editor, tailType);
-    tailOffset = insertExplicitTypeParams(item, document, offset, tailOffset, file);
+    final boolean needLeftParenth = isToInsertParenth(file.findElementAt(context.getStartOffset()));
+    final boolean hasParams = MethodParenthesesHandler.hasParams(item, allItems, signatureSelected, myMethod);
+    if (needLeftParenth) {
+      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(context.getProject());
+      new MethodParenthesesHandler(myMethod, signatureSelected,
+                                           styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
+                                           styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams,
+                                           shouldInsertRightParenthesis(item, hasParams, tailType)
+      ).handleInsert(context, item);
+    }
+    
+    insertExplicitTypeParams(item, document, offset, file);
 
     final PsiType type = myMethod.getReturnType();
     if (completionChar == '!' && type != null && PsiType.BOOLEAN.isAssignableFrom(type)) {
@@ -82,7 +71,6 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem> {
       if (methodCall != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH);
         document.insertString(methodCall.getTextRange().getStartOffset(), "!");
-        tailOffset++;
       }
     }
 
@@ -90,7 +78,30 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem> {
       // Invoke parameters popup
       AutoPopupController.getInstance(myMethod.getProject()).autoPopupParameterInfo(editor, signatureSelected ? myMethod : null);
     }
-    return tailOffset;
+    tailType.processTail(editor, context.getTailOffset());
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  protected static boolean shouldInsertRightParenthesis(final LookupItem<PsiMethod> item, boolean hasParams, TailType tailType) {
+    if (tailType == TailType.SMART_COMPLETION) return false;
+
+    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    if (settings.INSERT_SINGLE_PARENTH && (!settings.INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS || hasParams) && tailType == TailType.NONE) {
+      return false;
+    }
+    return true;
+  }
+
+  @NotNull
+  private static TailType getTailType(final LookupItem item, final Editor editor, final char completionChar) {
+    if (completionChar == '!') return item.getTailType();
+    if (completionChar == '(') {
+      final PsiMethod psiMethod = (PsiMethod)item.getObject();
+      return psiMethod.getParameterList().getParameters().length > 0 || psiMethod.getReturnType() != PsiType.VOID
+             ? TailType.NONE : TailType.SEMICOLON;
+    }
+    if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) return TailType.SMART_COMPLETION;
+    return LookupItem.handleCompletionChar(editor, item, completionChar);
   }
 
   private boolean isToInsertParenth(PsiElement place){
@@ -101,31 +112,9 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem> {
     return !(place.getParent() instanceof PsiImportStaticReferenceElement);
   }
 
-  private boolean hasParams(LookupElement item, LookupElement[] allItems, boolean signatureSelected){
-    boolean hasParms = myMethod.getParameterList().getParametersCount() > 0;
-    if (!signatureSelected){
-      hasParms |= hasOverloads(item, allItems);
-    }
-    return hasParms;
-  }
-
-  private boolean hasOverloads(LookupElement item, LookupElement[] allItems) {
-    if (!(item instanceof MutableLookupElement)) return false;
-
-    String name = myMethod.getName();
-    for (LookupElement item1 : allItems) {
-      final Object o = item1.getObject();
-      if (item.getObject() != o && o instanceof PsiMethod && ((PsiMethod)o).getName().equals(name)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  static int insertExplicitTypeParams(final LookupElement item, final Document document, final int offset, int tailOffset, PsiFile file)
-    throws IncorrectOperationException {
-    if (((LookupItem)item).getAttribute(LookupItem.INSERT_TYPE_PARAMS) != null) {
-      final PsiSubstitutor substitutor = (PsiSubstitutor)((LookupItem)item).getAttribute(LookupItem.SUBSTITUTOR);
+  private static void insertExplicitTypeParams(final LookupItem<PsiMethod> item, final Document document, final int offset, PsiFile file) {
+    if (item.getAttribute(LookupItem.INSERT_TYPE_PARAMS) != null) {
+      final PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
       assert substitutor != null;
       final int nameLength = item.getLookupString().length();
       final PsiMethod method = (PsiMethod)((LookupItem)item).getObject();
@@ -137,24 +126,25 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem> {
         if (!first) builder.append(", ");
         first = false;
         final PsiType type = substitutor.substitute(parameter);
-        if (type == null || type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType) return tailOffset;
+        if (type == null || type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType) return;
 
         final String text = type.getCanonicalText();
-        if (text.indexOf('?') >= 0) return tailOffset;
+        if (text.indexOf('?') >= 0) return;
 
         builder.append(text);
       }
-      final RangeMarker tailMarker = document.createRangeMarker(tailOffset, tailOffset);
       final String typeParams = builder.append(">").toString();
       document.insertString(offset - nameLength, typeParams);
       PsiDocumentManager.getInstance(method.getProject()).commitDocument(document);
       final PsiReference reference = file.findReferenceAt(offset - nameLength + typeParams.length() + 1);
       if (reference instanceof PsiJavaCodeReferenceElement) {
-        CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences((PsiElement)reference));
+        try {
+          CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences((PsiElement)reference));
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
       }
-      assert tailMarker.isValid();
-      return tailMarker.getStartOffset();
     }
-    return tailOffset;
   }
 }

@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,9 +54,9 @@ public class XmlCompletionContributor extends CompletionContributor {
           }
         });
         if (reference != null && namespace.length() > 0 && parentDescriptor != null && !(parentDescriptor instanceof AnyXmlElementDescriptor)) {
-          final Set<LookupItem> set = new HashSet<LookupItem>();
+          final Set<LookupElement> set = new HashSet<LookupElement>();
           new XmlCompletionData().completeReference(reference, set, element, parameters.getOriginalFile(), parameters.getOffset());
-          for (final LookupItem item : set) {
+          for (final LookupElement item : set) {
             result.addElement(item);
           }
         } else {

@@ -60,23 +60,10 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     }
 
     if (!(item instanceof SimpleLookupItem) && item instanceof LookupItem) {
-      if (((LookupItem)item).getObject() instanceof PsiMethod) {
+      if (item.getObject() instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)((LookupItem)item).getObject();
         LookupItem<PsiMethod> simpleItem = LookupElementFactoryImpl.getInstance().createLookupElement(method, item.getLookupString());
-        final InsertHandler handler = new PsiMethodInsertHandler(method) {
-          @Override
-          protected TailType getTailType(final LookupItem item, final Editor editor, final char completionChar) {
-            if (completionChar == '!') return ((LookupItem)item).getTailType();
-            if (completionChar == '(') {
-              final PsiMethod psiMethod = (PsiMethod)item.getObject();
-              return psiMethod.getParameterList().getParameters().length > 0 || psiMethod.getReturnType() != PsiType.VOID
-                     ? TailType.NONE : TailType.SEMICOLON;
-            }
-            if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) return TailType.SMART_COMPLETION;
-            return null;
-          }
-        };
-        simpleItem.setInsertHandler(handler);
+        simpleItem.setInsertHandler(new PsiMethodInsertHandler(method));
         simpleItem.copyAttributes((LookupItem)item);
         simpleItem.handleInsert(context);
         return;

@@ -78,7 +78,6 @@ public class XmlAttributeValueGetter implements ContextGetter {
   }
 
   private static Object[] getAllWordsFromDocument(PsiElement context, CompletionContext completionContext) {
-    AllWordsGetter getter = new AllWordsGetter();
-    return getter.get(context, completionContext);
+    return new AllWordsGetter().get(context, completionContext);
   }
 }

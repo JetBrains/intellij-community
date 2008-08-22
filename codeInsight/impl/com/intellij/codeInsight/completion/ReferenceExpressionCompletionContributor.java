@@ -100,20 +100,20 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
             final PsiFile originalFile = parameters.getOriginalFile();
             final TailType tailType = pair.second;
             final ElementFilter filter = pair.first;
-            final THashSet<LookupItem> set = JavaSmartCompletionContributor.completeReference(element, reference, originalFile, tailType, filter, result);
-            for (final LookupItem item : set) {
+            final THashSet<LookupElement> set = JavaSmartCompletionContributor.completeReference(element, reference, originalFile, tailType, filter, result);
+            for (final LookupElement item : set) {
               result.addElement(item);
             }
 
             if (parameters.getInvocationCount() >= 2) {
               ElementFilter baseFilter = getReferenceFilter(element, true, false).first;
               final PsiClassType stringType = PsiType.getJavaLangString(element.getManager(), element.getResolveScope());
-              for (final LookupItem<?> baseItem : JavaSmartCompletionContributor.completeReference(element, reference, originalFile, tailType, baseFilter, result)) {
+              for (final LookupElement baseItem : JavaSmartCompletionContributor.completeReference(element, reference, originalFile, tailType, baseFilter, result)) {
                 final Object object = baseItem.getObject();
                 final String prefix = getItemText(object);
                 if (prefix == null) continue;
 
-                final PsiSubstitutor substitutor = (PsiSubstitutor)baseItem.getAttribute(LookupItem.SUBSTITUTOR);
+                final PsiSubstitutor substitutor = (PsiSubstitutor)((LookupItem)baseItem).getAttribute(LookupItem.SUBSTITUTOR);
                 try {
                   PsiType itemType = object instanceof PsiVariable ? ((PsiVariable) object).getType() :
                                      object instanceof PsiMethod ? ((PsiMethod) object).getReturnType() : null;
@@ -286,7 +286,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
     final PsiExpression ref = elementFactory.createExpressionFromText(getQualifierText(qualifier) + prefix + ".xxx", element);
     String beautifulPrefix = prefix.endsWith(" )") ? prefix.substring(0, prefix.length() - 2) + ")" : prefix;
-    for (final LookupItem<?> item : JavaSmartCompletionContributor.completeReference(element, (PsiReferenceExpression)ref, originalFile, tailType, qualifierFilter, result)) {
+    for (final LookupElement item : JavaSmartCompletionContributor.completeReference(element, (PsiReferenceExpression)ref, originalFile, tailType, qualifierFilter, result)) {
       if (item.getObject() instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)item.getObject();
         if (psiMethod().withName("toArray").withParameterCount(1)
@@ -300,15 +300,15 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
         }
 
         final QualifiedMethodLookupItem newItem = new QualifiedMethodLookupItem(method, beautifulPrefix);
-        final PsiSubstitutor newSubstitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
+        final PsiSubstitutor newSubstitutor = (PsiSubstitutor)((LookupItem)item).getAttribute(LookupItem.SUBSTITUTOR);
         if (substitutor != null || newSubstitutor != null) {
           newItem.setAttribute(LookupItem.SUBSTITUTOR, substitutor == null ? newSubstitutor :
                                                        newSubstitutor == null ? substitutor : substitutor.putAll(newSubstitutor));
         }
         result.addElement(newItem);
       } else {
-        item.setAttribute(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE, beautifulPrefix + ".");
-        item.setLookupString(beautifulPrefix + "." + item.getLookupString());
+        ((LookupItem)item).setAttribute(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE, beautifulPrefix + ".");
+        ((LookupItem)item).setLookupString(beautifulPrefix + "." + item.getLookupString());
         result.addElement(item);
       }
     }

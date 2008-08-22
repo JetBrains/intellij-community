@@ -5,11 +5,10 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
+import com.intellij.psi.PsiAnnotationMethod;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiThisExpression;
-import com.intellij.psi.PsiAnnotationMethod;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,8 +17,7 @@ import org.jetbrains.annotations.NotNull;
 public class PreferLocalVariableAndAnnoMethodsWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
-    if (!(item instanceof MutableLookupElement)) return 0;
-    final Object object = ((MutableLookupElement)item).getObject();
+    final Object object = item.getObject();
 
     if (location.getCompletionType() == CompletionType.SMART) {
       return object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression;
@@ -28,6 +26,6 @@ public class PreferLocalVariableAndAnnoMethodsWeigher extends CompletionWeigher 
       return object instanceof PsiAnnotationMethod && ((PsiAnnotationMethod) object).getContainingClass().isAnnotationType();
     }
 
-    return 0;
+    return false;
   }
 }

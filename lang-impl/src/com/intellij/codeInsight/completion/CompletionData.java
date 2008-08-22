@@ -1,10 +1,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupValueWithTail;
-import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
-import com.intellij.codeInsight.lookup.PresentableLookupValue;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -85,7 +82,7 @@ public class CompletionData {
     myCompletionVariants.add(variant);
   }
 
-  public void completeReference(final PsiReference reference, final Set<LookupItem> set, @NotNull final PsiElement position, final PsiFile file,
+  public void completeReference(final PsiReference reference, final Set<LookupElement> set, @NotNull final PsiElement position, final PsiFile file,
                                 final int offset){
     final CompletionVariant[] variants = findVariants(position, file);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -109,7 +106,7 @@ public class CompletionData {
     set.addAll(Arrays.asList(findVariants(position, file)));
   }
 
-  public void completeKeywordsBySet(final Set<LookupItem> set, Set<CompletionVariant> variants, final PsiElement position,
+  public void completeKeywordsBySet(final Set<LookupElement> set, Set<CompletionVariant> variants, final PsiElement position,
                                     final PrefixMatcher matcher,
                                     final PsiFile file){
     for (final CompletionVariant variant : variants) {
@@ -157,7 +154,7 @@ public class CompletionData {
   }
 
   protected final CompletionVariant myGenericVariant = new CompletionVariant() {
-    public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, final PsiFile file,
+    public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupElement> set, final PsiFile file,
                                         final CompletionData completionData) {
       completeReference(reference, position, set, TailType.NONE, file, TrueFilter.INSTANCE, this);
     }
@@ -191,7 +188,7 @@ public class CompletionData {
     if (prefix != null) return prefix;
 
     if (insertedElement instanceof PsiPlainText) {
-      return WordCompletionData.findPrefixSimple(insertedElement, offsetInFile);
+      return CompletionUtil.findJavaIdentifierPrefix(insertedElement, offsetInFile);
     }
 
     return findPrefixDefault(insertedElement, offsetInFile, not(character().javaIdentifierPart()));
@@ -246,11 +243,15 @@ public class CompletionData {
   }
 
 
-  @Nullable
-  protected LookupItem addLookupItem(Set<LookupItem> set, TailType tailType, @NotNull Object completion, final PsiFile file,
+  protected void addLookupItem(Set<LookupElement> set, TailType tailType, @NotNull Object completion, final PsiFile file,
                                      final CompletionVariant variant) {
+    if (completion instanceof LookupElement && !(completion instanceof LookupItem)) {
+      set.add((LookupElement)completion);
+      return;
+    }
+
     LookupItem ret = objectToLookupItem(completion);
-    if(ret == null) return null;
+    if(ret == null) return;
 
     final InsertHandler insertHandler = variant.getInsertHandler();
     if(insertHandler != null && ret.getInsertHandler() == null) {
@@ -266,10 +267,9 @@ public class CompletionData {
     }
 
     set.add(ret);
-    return ret;
   }
 
-  protected void completeReference(final PsiReference reference, final PsiElement position, final Set<LookupItem> set, final TailType tailType,
+  protected void completeReference(final PsiReference reference, final PsiElement position, final Set<LookupElement> set, final TailType tailType,
                                    final PsiFile file,
                                    final ElementFilter filter,
                                    final CompletionVariant variant) {
@@ -319,7 +319,7 @@ public class CompletionData {
     return references;
   }
 
-  protected void addKeywords(final Set<LookupItem> set, final PsiElement position, final PrefixMatcher matcher, final PsiFile file,
+  protected void addKeywords(final Set<LookupElement> set, final PsiElement position, final PrefixMatcher matcher, final PsiFile file,
                              final CompletionVariant variant, final Object comp, final TailType tailType) {
     if (comp instanceof String) {
       addKeyword(set, tailType, comp, matcher, file, variant);
@@ -342,10 +342,10 @@ public class CompletionData {
     }
   }
 
-  private void addKeyword(Set<LookupItem> set, final TailType tailType, final Object comp, final PrefixMatcher matcher,
+  private void addKeyword(Set<LookupElement> set, final TailType tailType, final Object comp, final PrefixMatcher matcher,
                           final PsiFile file,
                           final CompletionVariant variant) {
-    for (final LookupItem item : set) {
+    for (final LookupElement item : set) {
       if (item.getObject().toString().equals(comp.toString())) {
         return;
       }

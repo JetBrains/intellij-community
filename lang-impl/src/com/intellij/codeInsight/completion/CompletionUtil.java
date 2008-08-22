@@ -6,20 +6,14 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.LanguageWordCompletion;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.psi.PlainTextTokenTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.filters.TrueFilter;
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
@@ -37,8 +31,6 @@ public class CompletionUtil {
       registerVariant(variant);
     }
   };
-  private static final CompletionData ourWordCompletionData = new WordCompletionData();
-
   private static HashMap<FileType, NotNullLazyValue<CompletionData>> ourCustomCompletionDatas = new HashMap<FileType, NotNullLazyValue<CompletionData>>();
 
   public static final @NonNls String DUMMY_IDENTIFIER = CompletionInitializationContext.DUMMY_IDENTIFIER;
@@ -76,43 +68,10 @@ public class CompletionUtil {
     }
   }
 
-  private static boolean hasNonSoftReference(final PsiFile file, final int startOffset) {
-    return isNonSoftReference(file.findReferenceAt(startOffset));
-  }
-
-  private static boolean isNonSoftReference(final PsiReference reference) {
-    if (reference instanceof PsiMultiReference) {
-      for (final PsiReference psiReference : ((PsiMultiReference)reference).getReferences()) {
-        if (isNonSoftReference(psiReference)) return true;
-      }
-    }
-    return reference != null && !reference.isSoft();
-  }
-
-  public static CompletionData getCompletionDataByElement(PsiElement element, final PsiFile file, final int startOffset) {
+  public static CompletionData getCompletionDataByElement(final PsiFile file) {
 
     final CompletionData mainData = getCompletionDataByFileType(file.getFileType());
-    return getCompletionData(element, file, startOffset, mainData != null ? mainData : ourGenericCompletionData);
-  }
-
-  public static CompletionData getCompletionData(final PsiElement element, final PsiFile file,
-                                                  final int startOffset,
-                                                  final CompletionData mainCompletionData) {
-    CompletionData wordCompletionData = null;
-    final PsiReference reference = file.findReferenceAt(startOffset);
-    if (reference == null) {
-      ASTNode textContainer = element != null ? element.getNode() : null;
-      while (textContainer != null) {
-        final IElementType elementType = textContainer.getElementType();
-        if (LanguageWordCompletion.INSTANCE.isEnabledIn(elementType) || elementType == PlainTextTokenTypes.PLAIN_TEXT) {
-          wordCompletionData = ourWordCompletionData;
-        }
-        textContainer = textContainer.getTreeParent();
-      }
-    }
-
-    if (wordCompletionData != null) return new CompositeCompletionData(mainCompletionData, wordCompletionData);
-    return mainCompletionData;
+    return mainData != null ? mainData : ourGenericCompletionData;
   }
 
   public static void registerCompletionData(FileType fileType, NotNullLazyValue<CompletionData> completionData) {
@@ -177,4 +136,16 @@ public class CompletionUtil {
     return FeatureUsageTracker.getInstance().isToBeShown(id, parameters.getPosition().getProject());
   }
 
+  public static String findJavaIdentifierPrefix(final PsiElement insertedElement, final int offset) {
+    if(insertedElement == null) return "";
+    final String text = insertedElement.getText();
+    final int offsetInElement = offset - insertedElement.getTextRange().getStartOffset();
+    int start = offsetInElement - 1;
+    while(start >=0 ) {
+      if(!Character.isJavaIdentifierPart(text.charAt(start))) break;
+      --start;
+    }
+
+    return text.substring(start + 1, offsetInElement).trim();
+  }
 }

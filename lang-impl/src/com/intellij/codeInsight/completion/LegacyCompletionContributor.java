@@ -4,7 +4,7 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.PlatformPatterns;
@@ -31,13 +31,11 @@ public class LegacyCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC, everywhere, new CompletionProvider<CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet _result) {
         final PsiFile file = parameters.getOriginalFile();
-        final int offsetInFile = parameters.getOffset();
-        final int startOffset = offsetInFile;
-        final PsiElement lastElement = file.findElementAt(startOffset - 1);
+        final int startOffset = parameters.getOffset();
         final PsiElement insertedElement = parameters.getPosition();
         CompletionData completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
           public CompletionData compute() {
-            return CompletionUtil.getCompletionDataByElement(lastElement, file, startOffset);
+            return CompletionUtil.getCompletionDataByElement(file);
           }
         });
         final CompletionResultSet result = _result.withPrefixMatcher(completionData == null
@@ -47,26 +45,26 @@ public class LegacyCompletionContributor extends CompletionContributor {
           // some completion data may depend on prefix
           completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
             public CompletionData compute() {
-              return CompletionUtil.getCompletionDataByElement(lastElement, file, startOffset);
+              return CompletionUtil.getCompletionDataByElement(file);
             }
           });
         }
 
         if (completionData == null) return;
 
-        final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
+        final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
         final PsiReference ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
           public PsiReference compute() {
-            return insertedElement.getContainingFile().findReferenceAt(offsetInFile);
+            return insertedElement.getContainingFile().findReferenceAt(startOffset);
           }
         });
         if (ref instanceof PsiMultiReference) {
           for (final PsiReference reference : completionData.getReferences((PsiMultiReference)ref)) {
-            int offsetInElement = offsetInFile - reference.getElement().getTextRange().getStartOffset();
+            int offsetInElement = startOffset - reference.getElement().getTextRange().getStartOffset();
             final CompletionResultSet resultSet = result.withPrefixMatcher(
                 reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement));
-            completionData.completeReference(reference, lookupSet, insertedElement, parameters.getOriginalFile(), offsetInFile);
-            for (final LookupItem item : lookupSet) {
+            completionData.completeReference(reference, lookupSet, insertedElement, parameters.getOriginalFile(), startOffset);
+            for (final LookupElement item : lookupSet) {
               resultSet.addElement(item);
             }
             lookupSet.clear();
@@ -74,9 +72,9 @@ public class LegacyCompletionContributor extends CompletionContributor {
         }
         else if (ref != null) {
           completionData.completeReference(ref, lookupSet, insertedElement, parameters.getOriginalFile(),
-                                           offsetInFile);
+                                           startOffset);
         }
-        for (final LookupItem item : lookupSet) {
+        for (final LookupElement item : lookupSet) {
           result.addElement(item);
         }
         lookupSet.clear();
@@ -84,7 +82,7 @@ public class LegacyCompletionContributor extends CompletionContributor {
         final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
         completionData.addKeywordVariants(keywordVariants, insertedElement, parameters.getOriginalFile());
         completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile());
-        for (final LookupItem item : lookupSet) {
+        for (final LookupElement item : lookupSet) {
           result.addElement(item);
         }
       }

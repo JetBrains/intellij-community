@@ -23,7 +23,6 @@ import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,14 +49,14 @@ public class JavaCompletionContributor extends CompletionContributor {
       final int startOffset = parameters.getOffset();
       final PsiElement lastElement = file.findElementAt(startOffset - 1);
       final PsiElement insertedElement = parameters.getPosition();
-      CompletionData completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
+      final CompletionData completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
         public CompletionData compute() {
-          return CompletionUtil.getCompletionData(lastElement, file, startOffset, getCompletionDataByElementInner(lastElement));
+          return getCompletionDataByElementInner(lastElement);
         }
       });
       final CompletionResultSet result = _result.withPrefixMatcher(completionData.findPrefix(insertedElement, startOffset));
 
-      final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
+      final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
       final PsiReference ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
         public PsiReference compute() {
           return insertedElement.getContainingFile().findReferenceAt(startOffset);
@@ -71,15 +70,15 @@ public class JavaCompletionContributor extends CompletionContributor {
       completionData.addKeywordVariants(keywordVariants, insertedElement, parameters.getOriginalFile());
       completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile());
 
-      for (final LookupItem item : lookupSet) {
+      for (final LookupElement item : lookupSet) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            JavaCompletionUtil.highlightMemberOfContainer(item);
+            JavaCompletionUtil.highlightMemberOfContainer((LookupItem)item);
           }
         });
 
         if (item.getInsertHandler() == null) {
-          item.setInsertHandler(new InsertHandler() {
+          ((LookupItem)item).setInsertHandler(new InsertHandler() {
             public void handleInsert(final InsertionContext context, final LookupElement item) {
               analyzeItem((LookupItem)item, item.getObject(), parameters.getPosition());
               new DefaultInsertHandler().handleInsert(context, item);
@@ -96,9 +95,6 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   private static CompletionData getCompletionDataByElementInner(PsiElement element) {
-    if (element != null && PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null) {
-      return JavaCompletionUtil.ourJavaDocCompletionData.getValue();
-    }
     return element != null && PsiUtil.isLanguageLevel5OrHigher(element)
            ? JavaCompletionUtil.ourJava15CompletionData.getValue()
            : JavaCompletionUtil.ourJavaCompletionData.getValue();

@@ -134,11 +134,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         if (reference != null) {
           final Pair<ElementFilter, TailType> pair = getReferenceFilter(element);
           if (pair != null) {
-            for (final LookupItem item : completeReference(element, reference, parameters.getOriginalFile(), pair.second, pair.first, result)) {
+            for (final LookupElement item : completeReference(element, reference, parameters.getOriginalFile(), pair.second, pair.first, result)) {
               if (AFTER_THROW_NEW.accepts(element)) {
-                item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
+                ((LookupItem)item).setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
                 if (item.getObject() instanceof PsiClass) {
-                  JavaAwareCompletionData.setShowFQN(item);
+                  JavaAwareCompletionData.setShowFQN((LookupItem)item);
                 }
               }
               result.addElement(item);
@@ -174,7 +174,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                      ExpressionSmartCompletionContributor.CONTRIBUTORS, parameters, null,
                      new Consumer<LookupElement>() {
                        public void consume(final LookupElement lookupElement) {
-                         final Object object = ((LookupItem)lookupElement).getObject();
+                         final Object object = lookupElement.getObject();
                          if (!filter.isClassAcceptable(object.getClass())) return;
 
                          final PsiSubstitutor substitutor;
@@ -502,9 +502,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     result.addElement(item);
   }
 
-  public static THashSet<LookupItem> completeReference(final PsiElement element, final PsiReference reference, final PsiFile originalFile,
+  public static THashSet<LookupElement> completeReference(final PsiElement element, final PsiReference reference, final PsiFile originalFile,
                                                         final TailType tailType, final ElementFilter filter, final CompletionResultSet result) {
-    final THashSet<LookupItem> set = new THashSet<LookupItem>();
+    final THashSet<LookupElement> set = new THashSet<LookupElement>();
     SMART_DATA.completeReference(reference, element, set, tailType, originalFile, filter, new CompletionVariant());
     return set;
   }

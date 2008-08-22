@@ -10,6 +10,7 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import static com.intellij.patterns.StandardPatterns.character;
@@ -35,7 +36,7 @@ import java.util.Set;
 public class JavaAwareCompletionData extends CompletionData{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaAwareCompletionData");
 
-  protected void completeReference(final PsiReference reference, final PsiElement position, final Set<LookupItem> set, final TailType tailType,
+  protected void completeReference(final PsiReference reference, final PsiElement position, final Set<LookupElement> set, final TailType tailType,
                                    final PsiFile file,
                                    final ElementFilter filter,
                                    final CompletionVariant variant) {
@@ -149,10 +150,14 @@ public class JavaAwareCompletionData extends CompletionData{
     return findPrefixDefault(insertedElement, offsetInFile, not(character().javaIdentifierPart()));
   }
 
-  @Nullable
-  protected LookupItem addLookupItem(Set<LookupItem> set, TailType tailType, @NotNull Object completion, final PsiFile file, final CompletionVariant variant) {
+  protected void addLookupItem(Set<LookupElement> set, TailType tailType, @NotNull Object completion, final PsiFile file, final CompletionVariant variant) {
+    if (completion instanceof LookupElement && !(completion instanceof LookupItem)) {
+      set.add((LookupElement)completion);
+      return;
+    }
+
     LookupItem ret = LookupItemUtil.objectToLookupItem(completion);
-    if(ret == null) return null;
+    if(ret == null) return;
 
     final InsertHandler insertHandler = variant.getInsertHandler();
     if(insertHandler != null && ret.getInsertHandler() == null) {
@@ -190,7 +195,6 @@ public class JavaAwareCompletionData extends CompletionData{
       }
     }
     set.add(ret);
-    return ret;
   }
 
   public static LookupItem qualify(final LookupItem ret) {
@@ -205,7 +209,7 @@ public class JavaAwareCompletionData extends CompletionData{
   }
 
 
-  protected void addKeywords(final Set<LookupItem> set, final PsiElement position, final PrefixMatcher matcher, final PsiFile file,
+  protected void addKeywords(final Set<LookupElement> set, final PsiElement position, final PrefixMatcher matcher, final PsiFile file,
                                   final CompletionVariant variant, final Object comp, final TailType tailType) {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
     if (comp instanceof String) {
@@ -229,10 +233,10 @@ public class JavaAwareCompletionData extends CompletionData{
     }
   }
 
-  private void addKeyword(PsiElementFactory factory, Set<LookupItem> set, final TailType tailType, final Object comp, final PrefixMatcher matcher,
+  private void addKeyword(PsiElementFactory factory, Set<LookupElement> set, final TailType tailType, final Object comp, final PrefixMatcher matcher,
                                 final PsiFile file,
                                 final CompletionVariant variant) {
-    for (final LookupItem item : set) {
+    for (final LookupElement item : set) {
       if (item.getObject().toString().equals(comp.toString())) {
         return;
       }

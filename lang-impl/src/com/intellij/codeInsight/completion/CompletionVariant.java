@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
@@ -169,7 +170,7 @@ public class CompletionVariant {
     return isScopeAcceptable(scope) && myPosition.isAcceptable(position, scope);
   }
 
-  public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, final PsiFile file,
+  public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupElement> set, final PsiFile file,
                                       final CompletionData completionData){
     for (final CompletionVariantItem ce : myCompletionsList) {
       if(ce.myCompletion instanceof ElementFilter){
@@ -179,7 +180,7 @@ public class CompletionVariant {
     }
   }
 
-  public void addKeywords(Set<LookupItem> set, PsiElement position, final PrefixMatcher matcher, final PsiFile file,
+  public void addKeywords(Set<LookupElement> set, PsiElement position, final PrefixMatcher matcher, final PsiFile file,
                           final CompletionData completionData){
 
     for (final CompletionVariantItem ce : myCompletionsList) {
