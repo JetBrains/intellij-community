@@ -1,6 +1,7 @@
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -25,7 +26,6 @@ import com.intellij.refactoring.introduceparameterobject.usageInfo.ReplaceParame
 import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
 import com.intellij.refactoring.ui.ClassUtil;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -118,11 +118,10 @@ public class IntroduceParameterObjectProcessor extends RPPBaseRefactoringProcess
                     RefactorJBundle.message("there.already.exists.a.class.with.the.chosen.name"));
     }
     if (!conflicts.isEmpty()) {
-      ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
-      dialog.show();
-      if (!dialog.isOK()) {
-        return false;
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new RuntimeException(StringUtil.join(conflicts, "\n"));
       }
+      return showConflicts(conflicts);
     }
 
     return super.preprocessUsages(refUsages);

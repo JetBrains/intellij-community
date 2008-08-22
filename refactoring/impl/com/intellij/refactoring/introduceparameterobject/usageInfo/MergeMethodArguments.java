@@ -9,6 +9,7 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.ui.ClassUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -125,16 +126,26 @@ public class MergeMethodArguments extends RefactorJUsageInfo {
         newExpression.append(", ");
       }
       isFirst = false;
-      newExpression.append(args[index].getText());
+      newExpression.append(getArgument(args, index));
     }
     if (lastParamIsVararg) {
       final int lastArg = paramsToMerge[paramsToMerge.length - 1];
       for (int i = lastArg + 1; i < args.length; i++) {
         newExpression.append(',');
-        newExpression.append(args[i].getText());
+        newExpression.append(getArgument(args, i));
       }
     }
     newExpression.append(')');
     return newExpression.toString();
+  }
+
+  @Nullable
+  private String getArgument(PsiExpression[] args, int i) {
+    if (i < args.length) {
+      return args[i].getText();
+    }
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (i < parameters.length) return parameters[i].getName();
+    return null;
   }
 }

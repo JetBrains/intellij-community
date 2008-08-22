@@ -11,6 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.introduceparameterobject.IntroduceParameterObjectProcessor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class IntroduceParameterObjectTest extends MultiFileTestCase{
@@ -19,6 +20,10 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   private void doTest() throws Exception {
+    doTest(false);
+  }
+
+  private void doTest(final boolean delegate) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test");
@@ -28,7 +33,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
         final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
         IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor("Param", "", method,
                                                                                             Arrays.asList(method.getParameterList().getParameters()),
-                                                                                            null, false, false, false);
+                                                                                            null, delegate, false, false);
         processor.run();
         LocalFileSystem.getInstance().refresh(false);
         FileDocumentManager.getInstance().saveAllDocuments();
@@ -66,5 +71,45 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
 
   public void testMultipleTypeParameters() throws Exception {
     doTest();
+  }
+
+  public void testDelegate() throws Exception {
+    doTest(true);
+  }
+
+  private void doTestExistingClass(final String existingClassName, final String existingClassPackage) throws Exception {
+    doTest(new PerformAction() {
+      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
+        PsiClass aClass = myJavaFacade.findClass("Test");
+        assertNotNull("Class Test not found", aClass);
+
+        final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
+        IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor(existingClassName, existingClassPackage, method,
+                                                                                            Arrays.asList(method.getParameterList().getParameters()),
+                                                                                            new ArrayList<String>(), false, false, true);
+        processor.run();
+        LocalFileSystem.getInstance().refresh(false);
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+    });
+  }
+
+  public void testIntegerWrapper() throws Exception {
+    doTestExistingClass("Integer", "java.lang");
+  }
+
+  public void testExistentBean() throws Exception {
+    doTestExistingClass("Param", "");
+  }
+
+  public void testWrongBean() throws Exception {
+    try {
+      doTestExistingClass("Param", "");
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+      return;
+    }
+    fail("Conflic was not found");
   }
 }
