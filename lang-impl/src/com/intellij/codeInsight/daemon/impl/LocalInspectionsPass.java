@@ -346,7 +346,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
         if (editable == null) continue;
         TextRange hostRange = documentRange.injectedToHost(editable);
-        //TextRange hostRange = documentRange.injectedToHost(new TextRange(info.startOffset, info.endOffset));
 
         HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, psiElement, hostRange.getStartOffset(), hostRange.getEndOffset(), info.description, info.toolTip);
         if (patched != null) {

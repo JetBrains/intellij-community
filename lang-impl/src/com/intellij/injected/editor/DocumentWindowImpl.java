@@ -357,12 +357,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return myDelegate;
   }
 
-  //RangeMarker nextRange = i==myRelevantRangesInHostDocument.length-1 ? null : myRelevantRangesInHostDocument[i+1];
-  //if (nextRange == null || hostOffset < nextRange.getStartOffset()) {
-  //  if (hostOffset >= currentRange.getEndOffset()) hostOffset = currentRange.getEndOffset();
-  //  return offset + hostOffset - currentRange.getStartOffset();
-  //}
-
   //todo use escaper?
   public int hostToInjected(int hostOffset) {
     if (hostOffset < myRelevantRangesInHostDocument[0].getStartOffset()) return myPrefixes[0].length();
@@ -385,7 +379,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return injectedToHost(offset, true);
   }
 
-  private int injectedToHost(int offset, boolean glueLeft) {
+  private int injectedToHost(int offset, boolean preferLeftFragment) {
     if (offset < myPrefixes[0].length()) return myRelevantRangesInHostDocument[0].getStartOffset();
     int prevEnd = 0;
     for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
@@ -393,9 +387,12 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
       offset -= myPrefixes[i].length();
       int length = currentRange.getEndOffset() - currentRange.getStartOffset();
       if (offset < 0) {
-        return glueLeft? prevEnd : currentRange.getStartOffset() - 1;
+        return preferLeftFragment ? prevEnd : currentRange.getStartOffset() - 1;
       }
-      else if (offset < length || offset == length && !glueLeft) {
+      else if (offset == 0) {
+        return preferLeftFragment && i != 0 ? prevEnd : currentRange.getStartOffset();
+      }
+      else if (offset < length || offset == length && preferLeftFragment) {
         return currentRange.getStartOffset() + offset;
       }
       offset -= length;
@@ -407,8 +404,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   @NotNull
   public TextRange injectedToHost(@NotNull TextRange injected) {
-    final int start = injectedToHost(injected.getStartOffset(), true);
-    final int end = injectedToHost(injected.getEndOffset(), false);
+    final int start = injectedToHost(injected.getStartOffset(), false);
+    final int end = injectedToHost(injected.getEndOffset(), true);
     return new ProperTextRange(start, end);
   }
 
