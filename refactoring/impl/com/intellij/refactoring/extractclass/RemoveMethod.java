@@ -1,10 +1,10 @@
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class RemoveMethod extends RefactorJUsageInfo {
+class RemoveMethod extends FixableUsageInfo {
     private final PsiMethod method;
 
     RemoveMethod(PsiMethod method) {

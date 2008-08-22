@@ -1,13 +1,13 @@
 package com.intellij.refactoring.introduceparameterobject.usageInfo;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
-import com.intellij.refactoring.ui.ClassUtil;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings({"MethodWithTooManyParameters"})
-public class MergeMethodArguments extends RefactorJUsageInfo {
+public class MergeMethodArguments extends FixableUsageInfo {
   private final PsiMethod method;
   private final boolean myKeepMethodAsDelegate;
   private final List<PsiTypeParameter> typeParams;
@@ -46,7 +46,7 @@ public class MergeMethodArguments extends RefactorJUsageInfo {
 
   public void fixUsage() throws IncorrectOperationException {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(method.getProject());
-    final PsiClass psiClass = psiFacade.findClass(ClassUtil.createQualifiedName(packageName, className));
+    final PsiClass psiClass = psiFacade.findClass(StringUtil.getQualifiedName(packageName, className));
     final List<ParameterInfo> parametersInfo = new ArrayList<ParameterInfo>();
     final PsiMethod deepestSuperMethod = method.findDeepestSuperMethod();
     PsiSubstitutor subst = PsiSubstitutor.EMPTY;
@@ -101,7 +101,7 @@ public class MergeMethodArguments extends RefactorJUsageInfo {
     }
     final PsiExpression[] args = call.getArgumentList().getExpressions();
     StringBuffer newExpression = new StringBuffer();
-    final String qualifiedName = ClassUtil.createQualifiedName(packageName, className);
+    final String qualifiedName = StringUtil.getQualifiedName(packageName, className);
     newExpression.append("new ").append(qualifiedName);
     if (!typeParams.isEmpty()) {
       final JavaResolveResult resolvant = call.resolveMethodGenerics();

@@ -3,11 +3,11 @@ package com.intellij.refactoring.extractclass;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.MutationUtils;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class ReplaceThisCallWithDelegateCall extends RefactorJUsageInfo {
+class ReplaceThisCallWithDelegateCall extends FixableUsageInfo {
     private final String delegateFieldName;
     private final PsiMethodCallExpression call;
 

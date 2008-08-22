@@ -3,18 +3,18 @@ package com.intellij.refactoring.removemiddleman;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.base.BaseUsageViewDescriptor;
 import com.intellij.refactoring.psi.MyUsageViewUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-class RemoveMiddlemanUsageViewDescriptor extends BaseUsageViewDescriptor {
+class RemoveMiddlemanUsageViewDescriptor implements UsageViewDescriptor {
     private
     @NotNull
     PsiField field;
 
     RemoveMiddlemanUsageViewDescriptor(@NotNull PsiField field, UsageInfo[] usages) {
-        super(usages);
+        super();
         this.field = field;
     }
 
@@ -31,4 +31,7 @@ class RemoveMiddlemanUsageViewDescriptor extends BaseUsageViewDescriptor {
         return new PsiElement[]{field};
     }
 
+  public String getCommentReferencesText(int usagesCount, int filesCount) {
+        return null;
+    }
 }

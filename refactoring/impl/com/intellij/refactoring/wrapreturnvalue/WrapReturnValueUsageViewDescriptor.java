@@ -3,19 +3,19 @@ package com.intellij.refactoring.wrapreturnvalue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.base.BaseUsageViewDescriptor;
 import com.intellij.refactoring.psi.MyUsageViewUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-class WrapReturnValueUsageViewDescriptor extends BaseUsageViewDescriptor{
+class WrapReturnValueUsageViewDescriptor implements UsageViewDescriptor {
 
     @NotNull
     private PsiMethod method;
 
     WrapReturnValueUsageViewDescriptor(@NotNull PsiMethod method,
                                        UsageInfo[] usages){
-        super(usages);
+        super();
         this.method = method;
     }
 
@@ -30,5 +30,9 @@ class WrapReturnValueUsageViewDescriptor extends BaseUsageViewDescriptor{
     public String getCodeReferencesText(int usagesCount, int filesCount){
         return RefactorJBundle.message("references.to.be.modified.usage.view",
                 MyUsageViewUtil.getUsageCountInfo(usagesCount, filesCount, RefactorJBundle.message("reference")));
+    }
+
+  public String getCommentReferencesText(int usagesCount, int filesCount) {
+        return null;
     }
 }

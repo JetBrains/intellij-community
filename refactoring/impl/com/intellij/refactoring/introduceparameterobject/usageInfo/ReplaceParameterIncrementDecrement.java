@@ -5,11 +5,11 @@ import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiPostfixExpression;
 import com.intellij.psi.PsiPrefixExpression;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.MutationUtils;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-public class ReplaceParameterIncrementDecrement extends RefactorJUsageInfo {
+public class ReplaceParameterIncrementDecrement extends FixableUsageInfo {
   private final PsiExpression expression;
   private final String newParameterName;
   private final String parameterSetterName;

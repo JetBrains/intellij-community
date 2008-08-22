@@ -1,13 +1,13 @@
 package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.psi.PsiCallExpression;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.MutationUtils;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-class UnwrapCall extends RefactorJUsageInfo {
+class UnwrapCall extends FixableUsageInfo {
     @NotNull
     private final PsiCallExpression call;
     @NotNull

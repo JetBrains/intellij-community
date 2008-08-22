@@ -1323,4 +1323,11 @@ public class StringUtil {
     }
     return escaped.toString();
   }
+
+  public static String getQualifiedName(String packageName, String className) {
+      if (packageName == null || packageName.length() == 0) {
+          return className;
+      }
+      return packageName + '.' + className;
+  }
 }

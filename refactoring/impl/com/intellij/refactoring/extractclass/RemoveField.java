@@ -1,10 +1,10 @@
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.psi.PsiField;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class RemoveField extends RefactorJUsageInfo {
+class RemoveField extends FixableUsageInfo {
     private final PsiField field;
 
     RemoveField(PsiField field) {

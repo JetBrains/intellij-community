@@ -1,11 +1,11 @@
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.psi.*;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-class MakeMethodDelegate extends RefactorJUsageInfo {
+class MakeMethodDelegate extends FixableUsageInfo {
     private final PsiMethod method;
     private final String delegate;
 

@@ -3,15 +3,15 @@ package com.intellij.refactoring.extractclass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.base.BaseUsageViewDescriptor;
 import com.intellij.refactoring.psi.MyUsageViewUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewDescriptor;
 
-class ExtractClassUsageViewDescriptor extends BaseUsageViewDescriptor {
+class ExtractClassUsageViewDescriptor implements UsageViewDescriptor {
     private PsiClass aClass;
 
     ExtractClassUsageViewDescriptor(PsiClass aClass, UsageInfo[] usages) {
-        super(usages);
+        super();
         this.aClass = aClass;
     }
 
@@ -28,4 +28,7 @@ class ExtractClassUsageViewDescriptor extends BaseUsageViewDescriptor {
         return new PsiElement[]{aClass};
     }
 
+  public String getCommentReferencesText(int usagesCount, int filesCount) {
+        return null;
+    }
 }

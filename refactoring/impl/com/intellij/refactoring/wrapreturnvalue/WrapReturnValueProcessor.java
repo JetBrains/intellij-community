@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -12,13 +13,12 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.base.RPPBaseRefactoringProcessor;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.refactoring.psi.SearchUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
-import com.intellij.refactoring.ui.ClassUtil;
+import com.intellij.refactoring.util.FixableUsageInfo;
+import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.*;
 
-class WrapReturnValueProcessor extends RPPBaseRefactoringProcessor{
+class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor {
     @NonNls
     private static final Map<String, String> specialNames = new HashMap<String, String>();
 
@@ -58,7 +58,7 @@ class WrapReturnValueProcessor extends RPPBaseRefactoringProcessor{
                              String packageName,
                              PsiMethod method,
                              boolean previewUsages, PsiClass existingClass){
-        super(method.getProject(), previewUsages);
+        super(method.getProject());
         this.method = method;
         this.className = className;
         this.packageName = packageName;
@@ -100,14 +100,14 @@ class WrapReturnValueProcessor extends RPPBaseRefactoringProcessor{
         return new WrapReturnValueUsageViewDescriptor(method, usageInfos);
     }
 
-    public void findUsages(@NotNull List<RefactorJUsageInfo> usages){
+    public void findUsages(@NotNull List<FixableUsageInfo> usages){
         final Set<PsiMethod> siblingMethods = MethodInheritanceUtils.calculateSiblingMethods(method);
         for(PsiMethod siblingMethod : siblingMethods){
             findUsagesForMethod(siblingMethod, usages);
         }
     }
 
-    private void findUsagesForMethod(PsiMethod siblingMethod, List<RefactorJUsageInfo> usages){
+    private void findUsagesForMethod(PsiMethod siblingMethod, List<FixableUsageInfo> usages){
         final SearchScope scope = siblingMethod.getUseScope();
         final Iterable<PsiReference> calls = SearchUtils.findAllReferences(siblingMethod, scope);
         for(PsiReference reference : calls){
@@ -124,7 +124,7 @@ class WrapReturnValueProcessor extends RPPBaseRefactoringProcessor{
     }
 
     private String calculateReturnTypeString(){
-        final String qualifiedName = ClassUtil.createQualifiedName(packageName, className);
+        final String qualifiedName = StringUtil.getQualifiedName(packageName, className);
         final StringBuilder returnTypeBuffer = new StringBuilder(qualifiedName);
         if(!typeParams.isEmpty()){
             returnTypeBuffer.append('<');
@@ -201,10 +201,10 @@ class WrapReturnValueProcessor extends RPPBaseRefactoringProcessor{
 
     @SuppressWarnings({"AssignmentToCollectionOrArrayFieldFromParameter"})
     private class ReturnSearchVisitor extends JavaRecursiveElementVisitor{
-        private final List<RefactorJUsageInfo> usages;
+        private final List<FixableUsageInfo> usages;
         private final String type;
 
-        ReturnSearchVisitor(List<RefactorJUsageInfo> usages, String type){
+        ReturnSearchVisitor(List<FixableUsageInfo> usages, String type){
             super();
             this.usages = usages;
             this.type = type;

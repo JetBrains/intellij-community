@@ -17,15 +17,13 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.base.RPPBaseRefactoringProcessor;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.AssignmentUtil;
 import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.refactoring.psi.SearchUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
-import com.intellij.refactoring.ui.ClassUtil;
+import com.intellij.refactoring.util.FixableUsageInfo;
+import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.utils.StringUtils;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -38,7 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class ExtractClassProcessor extends RPPBaseRefactoringProcessor {
+class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     private static final Logger logger =
             Logger.getInstance("com.siyeh.rpp.extractclass.ExtractClassProcessor");
 
@@ -64,7 +62,7 @@ class ExtractClassProcessor extends RPPBaseRefactoringProcessor {
                           String newPackageName,
                           String newClassName,
                           boolean previewUsages) {
-        super(sourceClass.getProject(), previewUsages);
+        super(sourceClass.getProject());
         this.sourceClass = sourceClass;
         this.newPackageName = newPackageName;
         this.fields = new ArrayList<PsiField>(fields);
@@ -115,13 +113,13 @@ class ExtractClassProcessor extends RPPBaseRefactoringProcessor {
 
         final String baseName = toLowerCase(newClassName);
         String name = settings.FIELD_NAME_PREFIX + baseName + settings.FIELD_NAME_SUFFIX;
-        if (!existsFieldWithName(name) && !StringUtils.isKeyword(name)) {
+        if (!existsFieldWithName(name) && !JavaPsiFacade.getInstance(project).getNameHelper().isKeyword(name)) {
             return name;
         }
         int counter = 1;
         while (true) {
             name = settings.FIELD_NAME_PREFIX + baseName + counter + settings.FIELD_NAME_SUFFIX;
-            if (!existsFieldWithName(name) && !StringUtils.isKeyword(name)) {
+            if (!existsFieldWithName(name) && !JavaPsiFacade.getInstance(project).getNameHelper().isKeyword(name)) {
                 return name;
             }
             counter++;
@@ -336,7 +334,7 @@ class ExtractClassProcessor extends RPPBaseRefactoringProcessor {
         fieldBuffer.append(delegateVisibility + ' ');
         fieldBuffer.append("final ");
         final String fullyQualifiedName =
-                ClassUtil.createQualifiedName(newPackageName, newClassName);
+                StringUtil.getQualifiedName(newPackageName, newClassName);
         fieldBuffer.append(fullyQualifiedName);
         if (!typeParams.isEmpty()) {
             fieldBuffer.append('<');
@@ -429,7 +427,7 @@ class ExtractClassProcessor extends RPPBaseRefactoringProcessor {
         return false;
     }
 
-    public void findUsages(@NotNull List<RefactorJUsageInfo> usages) {
+    public void findUsages(@NotNull List<FixableUsageInfo> usages) {
         for (PsiField field : fields) {
             findUsagesForField(field, usages);
             usages.add(new RemoveField(field));
@@ -450,7 +448,7 @@ class ExtractClassProcessor extends RPPBaseRefactoringProcessor {
         }
     }
 
-    private void findUsagesForInnerClass(PsiClass innerClass, List<RefactorJUsageInfo> usages) {
+    private void findUsagesForInnerClass(PsiClass innerClass, List<FixableUsageInfo> usages) {
         final PsiManager psiManager = innerClass.getManager();
         final Project project = psiManager.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -475,7 +473,7 @@ class ExtractClassProcessor extends RPPBaseRefactoringProcessor {
         }
     }
 
-    private void findUsagesForMethod(PsiMethod method, List<RefactorJUsageInfo> usages) {
+    private void findUsagesForMethod(PsiMethod method, List<FixableUsageInfo> usages) {
         final PsiManager psiManager = method.getManager();
         final Project project = psiManager.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -505,7 +503,7 @@ class ExtractClassProcessor extends RPPBaseRefactoringProcessor {
         }
     }
 
-    private void findUsagesForStaticMethod(PsiMethod method, List<RefactorJUsageInfo> usages) {
+    private void findUsagesForStaticMethod(PsiMethod method, List<FixableUsageInfo> usages) {
         final PsiManager psiManager = method.getManager();
         final Project project = psiManager.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -518,7 +516,7 @@ class ExtractClassProcessor extends RPPBaseRefactoringProcessor {
                 final PsiMethodCallExpression call =
                         (PsiMethodCallExpression) parent;
                 if (!isInMovedElement(call)) {
-                    final String fullyQualifiedName = ClassUtil.createQualifiedName(newPackageName, newClassName);
+                    final String fullyQualifiedName = StringUtil.getQualifiedName(newPackageName, newClassName);
                     usages.add(new RetargetStaticMethodCall(call, fullyQualifiedName));
                 }
             }
@@ -563,7 +561,7 @@ class ExtractClassProcessor extends RPPBaseRefactoringProcessor {
         return false;
     }
 
-    private void findUsagesForField(PsiField field, List<RefactorJUsageInfo> usages) {
+    private void findUsagesForField(PsiField field, List<FixableUsageInfo> usages) {
         final PsiManager psiManager = field.getManager();
         final Project project = psiManager.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -575,7 +573,7 @@ class ExtractClassProcessor extends RPPBaseRefactoringProcessor {
                 continue;
             }
             if (field.hasModifierProperty(PsiModifier.STATIC)) {
-                final String qualifiedName = ClassUtil.createQualifiedName(newPackageName, newClassName);
+                final String qualifiedName = StringUtil.getQualifiedName(newPackageName, newClassName);
                 final String capitalizedName = StringUtil.capitalize(calculateStrippedName(field));
                 final PsiType fieldType = field.getType();
                 @NonNls final String getter;

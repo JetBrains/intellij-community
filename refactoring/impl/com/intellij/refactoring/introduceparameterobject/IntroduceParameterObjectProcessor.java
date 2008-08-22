@@ -17,15 +17,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.base.RPPBaseRefactoringProcessor;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.introduceparameterobject.usageInfo.MergeMethodArguments;
 import com.intellij.refactoring.introduceparameterobject.usageInfo.ReplaceParameterAssignmentWithCall;
 import com.intellij.refactoring.introduceparameterobject.usageInfo.ReplaceParameterIncrementDecrement;
 import com.intellij.refactoring.introduceparameterobject.usageInfo.ReplaceParameterReferenceWithCall;
 import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
-import com.intellij.refactoring.ui.ClassUtil;
+import com.intellij.refactoring.util.FixableUsageInfo;
+import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -39,7 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class IntroduceParameterObjectProcessor extends RPPBaseRefactoringProcessor {
+public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringProcessor {
   private static final Logger logger = Logger.getInstance("com.siyeh.rpp.introduceparameterobject.IntroduceParameterObjectProcessor");
 
   private final PsiMethod method;
@@ -63,7 +62,7 @@ public class IntroduceParameterObjectProcessor extends RPPBaseRefactoringProcess
                                            boolean keepMethodAsDelegate,
                                            boolean previewUsages,
                                            final boolean useExistingClass) {
-    super(method.getProject(), previewUsages);
+    super(method.getProject());
     this.method = method;
     this.className = className;
     this.packageName = packageName;
@@ -89,7 +88,7 @@ public class IntroduceParameterObjectProcessor extends RPPBaseRefactoringProcess
     }
     typeParams = new ArrayList<PsiTypeParameter>(typeParamSet);
 
-    final String qualifiedName = ClassUtil.createQualifiedName(packageName, className);
+    final String qualifiedName = StringUtil.getQualifiedName(packageName, className);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
     existingClass = JavaPsiFacade.getInstance(myProject).findClass(qualifiedName, scope);
 
@@ -127,7 +126,7 @@ public class IntroduceParameterObjectProcessor extends RPPBaseRefactoringProcess
     return super.preprocessUsages(refUsages);
   }
 
-  public void findUsages(@NotNull List<RefactorJUsageInfo> usages) {
+  public void findUsages(@NotNull List<FixableUsageInfo> usages) {
     if (myUseExistingClass && existingClass != null) {
       myExistingClassCompatible = existingClassIsCompatible(existingClass, parameters, getterNames);
       if (!myExistingClassCompatible) return;
@@ -140,7 +139,7 @@ public class IntroduceParameterObjectProcessor extends RPPBaseRefactoringProcess
     }
   }
 
-  private void findUsagesForMethod(PsiMethod overridingMethod, List<RefactorJUsageInfo> usages) {
+  private void findUsagesForMethod(PsiMethod overridingMethod, List<FixableUsageInfo> usages) {
     final PsiManager psiManager = overridingMethod.getManager();
     final Project project = psiManager.getProject();
     final String fixedParamName = calculateNewParamNameForMethod(overridingMethod);

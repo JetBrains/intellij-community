@@ -9,13 +9,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactorJHelpID;
-import com.intellij.refactoring.base.BaseRefactoringDialog;
 import com.intellij.refactoring.psi.PackageNameUtil;
+import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import java.awt.*;
@@ -23,7 +25,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
-class WrapReturnValueDialog extends BaseRefactoringDialog{
+class WrapReturnValueDialog extends RefactoringDialog {
 
     private final PsiMethod sourceMethod;
     private final JTextField existingClassField;
@@ -42,7 +44,11 @@ class WrapReturnValueDialog extends BaseRefactoringDialog{
         setModal(true);
         setTitle(RefactorJBundle.message("wrap.return.value.title"));
         this.sourceMethod = sourceMethod;
-        final DocumentListener docListener = new ValidationDocListener();
+        final DocumentListener docListener = new DocumentAdapter() {
+          protected void textChanged(final DocumentEvent e) {
+            validateButtons();
+          }
+        };
         existingClassField = new JTextField();
         final Document existingClassFieldDocument = existingClassField.getDocument();
         existingClassFieldDocument.addDocumentListener(docListener);
@@ -99,7 +105,11 @@ class WrapReturnValueDialog extends BaseRefactoringDialog{
         return "RefactorJ.WrapReturnValue";
     }
 
-    protected boolean isValid(){
+  protected void doAction() {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  protected boolean areButtonsValid(){
         if(useExistingClass()){
             return existingClassField.getText().length() != 0;
         }

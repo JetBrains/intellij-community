@@ -8,17 +8,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactorJHelpID;
-import com.intellij.refactoring.base.BaseRefactoringDialog;
 import com.intellij.refactoring.psi.PackageNameUtil;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.MemberSelectionTable;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.classMembers.DelegatingMemberInfoModel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoChange;
 import com.intellij.refactoring.util.classMembers.MemberInfoChangeListener;
+import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -27,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
-class ExtractClassDialog extends BaseRefactoringDialog implements MemberInfoChangeListener {
+class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeListener {
     private final PsiClass sourceClass;
     private final MemberInfo[] memberInfo;
     private final JTextField classNameField;
@@ -40,7 +42,11 @@ class ExtractClassDialog extends BaseRefactoringDialog implements MemberInfoChan
         setModal(true);
         setTitle(RefactorJBundle.message("extract.class.title"));
         this.sourceClass = sourceClass;
-        final DocumentListener docListener = new ValidationDocListener();
+        final DocumentListener docListener = new DocumentAdapter() {
+          protected void textChanged(final DocumentEvent e) {
+            validateButtons();
+          }
+        };
         classNameField = new JTextField();
         packageTextField = new JTextField();
         classNameField.getDocument().addDocumentListener(docListener);
@@ -84,7 +90,11 @@ class ExtractClassDialog extends BaseRefactoringDialog implements MemberInfoChan
         validateButtons();
     }
 
-    protected boolean isValid() {
+  protected void doAction() {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  protected boolean areButtonsValid() {
         final Project project = sourceClass.getProject();
         final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(project).getNameHelper();
         final List<PsiMethod> methods = getMethodsToExtract();

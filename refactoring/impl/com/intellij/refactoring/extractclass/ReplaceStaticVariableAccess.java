@@ -1,11 +1,11 @@
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.MutationUtils;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class ReplaceStaticVariableAccess extends RefactorJUsageInfo {
+class ReplaceStaticVariableAccess extends FixableUsageInfo {
     private final PsiReferenceExpression expression;
     private final String delegateClass;
     private final String getterName;

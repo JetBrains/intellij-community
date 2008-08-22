@@ -4,11 +4,11 @@ import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.MutationUtils;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-public class ReplaceParameterAssignmentWithCall extends RefactorJUsageInfo {
+public class ReplaceParameterAssignmentWithCall extends FixableUsageInfo {
   private final PsiReferenceExpression expression;
   private final String newParameterName;
   private final String setterName;

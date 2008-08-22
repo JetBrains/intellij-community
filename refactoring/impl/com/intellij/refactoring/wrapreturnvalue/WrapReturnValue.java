@@ -2,12 +2,12 @@ package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReturnStatement;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.MutationUtils;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-class WrapReturnValue extends RefactorJUsageInfo {
+class WrapReturnValue extends FixableUsageInfo {
     private final PsiReturnStatement statement;
     private final String type;
 

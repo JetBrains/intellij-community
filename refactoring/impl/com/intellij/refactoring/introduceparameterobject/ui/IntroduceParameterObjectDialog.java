@@ -5,6 +5,7 @@ import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.RefactorJBundle;
@@ -120,10 +121,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog implements
       final List<String> getterNames = new ArrayList<String>();
 
 
-      final int index = existingClassName.lastIndexOf('.');
-      final String packageName = index == -1 ? "" : existingClassName.substring(0, index);
-
-      processor = new IntroduceParameterObjectProcessor(index == -1 ? existingClassName : existingClassName.substring(index + 1), packageName,
+      processor = new IntroduceParameterObjectProcessor(StringUtil.getShortName(existingClassName), StringUtil.getPackageName(existingClassName),
                                                         sourceMethod, params, getterNames, keepMethod, isPreviewUsages(), useExistingClass);
     }
     invokeRefactoring(processor);

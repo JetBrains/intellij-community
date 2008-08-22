@@ -1,11 +1,11 @@
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.psi.*;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.MutationUtils;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class ReplaceInstanceVariableAssignment extends RefactorJUsageInfo {
+class ReplaceInstanceVariableAssignment extends FixableUsageInfo {
     private final String setterName;
     private final PsiAssignmentExpression assignment;
     private final String getterName;

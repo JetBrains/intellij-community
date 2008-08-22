@@ -1,11 +1,11 @@
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.MutationUtils;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class ReplaceClassReference extends RefactorJUsageInfo {
+class ReplaceClassReference extends FixableUsageInfo {
     private final PsiJavaCodeReferenceElement reference;
     private final String newClassName;
 

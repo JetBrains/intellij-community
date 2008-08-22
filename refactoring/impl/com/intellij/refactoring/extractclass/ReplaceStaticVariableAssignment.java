@@ -5,11 +5,11 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.MutationUtils;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class ReplaceStaticVariableAssignment extends RefactorJUsageInfo {
+class ReplaceStaticVariableAssignment extends FixableUsageInfo {
     private final PsiReferenceExpression reference;
     private final String setterName;
     private final String getterName;

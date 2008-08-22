@@ -4,11 +4,11 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.MutationUtils;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class RetargetStaticMethodCall extends RefactorJUsageInfo {
+class RetargetStaticMethodCall extends FixableUsageInfo {
     private final String delegateClassName;
     private final PsiMethodCallExpression call;
 

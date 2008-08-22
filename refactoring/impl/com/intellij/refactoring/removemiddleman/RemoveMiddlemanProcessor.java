@@ -6,11 +6,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.base.RPPBaseRefactoringProcessor;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.DelegationUtils;
 import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.refactoring.psi.SearchUtils;
+import com.intellij.refactoring.util.FixableUsageInfo;
+import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class RemoveMiddlemanProcessor extends RPPBaseRefactoringProcessor {
+class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor {
     private static final Logger logger = Logger.getInstance("com.siyeh.rpp.removemiddleman.RemoveMiddlemanProcessor");
 
     private final PsiField field;
@@ -30,7 +30,7 @@ class RemoveMiddlemanProcessor extends RPPBaseRefactoringProcessor {
 
 
     RemoveMiddlemanProcessor(PsiField field, boolean deleteMethods, boolean previewUsages) {
-        super(field.getProject(), previewUsages);
+        super(field.getProject());
         this.field = field;
         containingClass = field.getContainingClass();
         final Project project = field.getProject();
@@ -46,7 +46,7 @@ class RemoveMiddlemanProcessor extends RPPBaseRefactoringProcessor {
     }
 
 
-    public void findUsages(@NotNull List<RefactorJUsageInfo> usages) {
+    public void findUsages(@NotNull List<FixableUsageInfo> usages) {
         final Set<PsiMethod> methods = DelegationUtils.getDelegatingMethodsForField(field);
         for (final PsiMethod method : methods) {
             final Project project = method.getProject();
@@ -85,7 +85,7 @@ class RemoveMiddlemanProcessor extends RPPBaseRefactoringProcessor {
 
 
     private void processUsagesForMethod(PsiMethod method, int[] paramPermutation, String getterName, String delegatedMethodName,
-                                        List<RefactorJUsageInfo> usages) {
+                                        List<FixableUsageInfo> usages) {
 
         final Iterable<PsiReference> references = SearchUtils.findAllReferences(method);
 

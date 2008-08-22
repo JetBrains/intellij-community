@@ -1,10 +1,10 @@
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class RemoveInnerClass extends RefactorJUsageInfo{
+class RemoveInnerClass extends FixableUsageInfo {
     private final PsiClass innerClass;
 
     RemoveInnerClass(PsiClass innerClass) {

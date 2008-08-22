@@ -1,10 +1,10 @@
 package com.intellij.refactoring.removemiddleman;
 
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class DeleteMethod extends RefactorJUsageInfo {
+class DeleteMethod extends FixableUsageInfo {
     private final PsiMethod method;
 
     DeleteMethod(PsiMethod method) {

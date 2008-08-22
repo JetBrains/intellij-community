@@ -1,11 +1,11 @@
 package com.intellij.refactoring.introduceparameterobject.usageInfo;
 
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.MutationUtils;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-public class ReplaceParameterReferenceWithCall extends RefactorJUsageInfo {
+public class ReplaceParameterReferenceWithCall extends FixableUsageInfo {
   private final PsiReferenceExpression expression;
   private final String newParameterName;
   private final String parameterGetterName;

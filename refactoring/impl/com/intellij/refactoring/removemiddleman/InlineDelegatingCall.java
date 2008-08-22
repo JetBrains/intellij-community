@@ -1,11 +1,11 @@
 package com.intellij.refactoring.removemiddleman;
 
 import com.intellij.psi.*;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.MutationUtils;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class InlineDelegatingCall extends RefactorJUsageInfo {
+class InlineDelegatingCall extends FixableUsageInfo {
     private final PsiMethodCallExpression expression;
     private final String getterName;
     private final String delegatingName;

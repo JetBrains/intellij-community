@@ -2,12 +2,12 @@ package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypeElement;
-import com.intellij.refactoring.base.RefactorJUsageInfo;
 import com.intellij.refactoring.psi.MutationUtils;
+import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-class ChangeReturnType extends RefactorJUsageInfo {
+class ChangeReturnType extends FixableUsageInfo {
     @NotNull
     private final PsiMethod method;
     @NotNull

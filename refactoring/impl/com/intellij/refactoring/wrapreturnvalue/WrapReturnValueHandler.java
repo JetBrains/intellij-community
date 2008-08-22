@@ -7,22 +7,23 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactorJHelpID;
-import com.intellij.refactoring.base.BaseRefactoringHandler;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.refactoring.psi.PropertyUtils;
-import com.intellij.refactoring.ui.ClassUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-class WrapReturnValueHandler extends BaseRefactoringHandler{
+class WrapReturnValueHandler implements RefactoringActionHandler {
     private static final String REFACTORING_NAME = RefactorJBundle.message("wrap.return.value");
 
     public void invoke(Project project,
@@ -48,22 +49,22 @@ class WrapReturnValueHandler extends BaseRefactoringHandler{
             }
         }
         if(selectedMethod == null){
-            showErrorMessage(RefactorJBundle.message("cannot.perform.the.refactoring") +
-                    RefactorJBundle
-                            .message("the.caret.should.be.positioned.at.the.name.of.the.method.to.be.refactored"),
-                    project);
-            return;
+          CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
+                        RefactorJBundle
+                                .message("the.caret.should.be.positioned.at.the.name.of.the.method.to.be.refactored"), this.getHelpID(),
+                                                 project);
+          return;
         }
         if(selectedMethod.isConstructor()){
-            showErrorMessage(RefactorJBundle.message("cannot.perform.the.refactoring") +
-                    RefactorJBundle.message("constructor.returns.can.not.be.wrapped"), project);
-            return;
+          CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
+                        RefactorJBundle.message("constructor.returns.can.not.be.wrapped"), this.getHelpID(), project);
+          return;
         }
         final PsiType returnType = selectedMethod.getReturnType();
         if(PsiType.VOID.equals(returnType)){
-            showErrorMessage(RefactorJBundle.message("cannot.perform.the.refactoring") +
-                    RefactorJBundle.message("method.selected.returns.void"), project);
-            return;
+          CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
+                        RefactorJBundle.message("method.selected.returns.void"), this.getHelpID(), project);
+          return;
         }
         final Set<PsiMethod> siblingMethods = MethodInheritanceUtils.calculateSiblingMethods(selectedMethod);
         boolean hasLibrarySibling = false;
@@ -74,11 +75,11 @@ class WrapReturnValueHandler extends BaseRefactoringHandler{
             }
         }
         if(hasLibrarySibling){
-            showErrorMessage(RefactorJBundle.message("cannot.perform.the.refactoring") +
-                    RefactorJBundle.message(
-                            "the.selected.method.cannot.be.wrapped.because.it.is.defined.in.a.non.project.class"),
-                    project);
-            return;
+          CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
+                        RefactorJBundle.message(
+                                "the.selected.method.cannot.be.wrapped.because.it.is.defined.in.a.non.project.class"), this.getHelpID(),
+                                                 project);
+          return;
         }
         invoke(selectedMethod);
     }
@@ -103,15 +104,15 @@ class WrapReturnValueHandler extends BaseRefactoringHandler{
             return;
         }
         if(method.isConstructor()){
-            showErrorMessage(RefactorJBundle.message("cannot.perform.the.refactoring") +
-                    RefactorJBundle.message("constructor.returns.can.not.be.wrapped"), project);
-            return;
+          CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
+                        RefactorJBundle.message("constructor.returns.can.not.be.wrapped"), this.getHelpID(), project);
+          return;
         }
         final PsiType returnType = method.getReturnType();
         if(PsiType.VOID.equals(returnType)){
-            showErrorMessage(RefactorJBundle.message("cannot.perform.the.refactoring") +
-                    RefactorJBundle.message("method.selected.returns.void"), project);
-            return;
+          CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
+                        RefactorJBundle.message("method.selected.returns.void"), this.getHelpID(), project);
+          return;
         }
         final Set<PsiMethod> siblingMethods = MethodInheritanceUtils.calculateSiblingMethods(method);
         boolean hasLibrarySibling = false;
@@ -122,11 +123,11 @@ class WrapReturnValueHandler extends BaseRefactoringHandler{
             }
         }
         if(hasLibrarySibling){
-            showErrorMessage(RefactorJBundle.message("cannot.perform.the.refactoring") +
-                    RefactorJBundle.message(
-                            "the.selected.method.cannot.be.wrapped.because.it.is.defined.in.a.non.project.class"),
-                    project);
-            return;
+          CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
+                        RefactorJBundle.message(
+                                "the.selected.method.cannot.be.wrapped.because.it.is.defined.in.a.non.project.class"), this.getHelpID(),
+                                                 project);
+          return;
         }
         invoke(method);
     }
@@ -148,22 +149,21 @@ class WrapReturnValueHandler extends BaseRefactoringHandler{
         if(useExistingClass){
           final PsiClass existingClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(existingClassName, scope);
             if(existingClass == null){
-                showErrorMessage(RefactorJBundle.message("cannot.perform.the.refactoring") +
-                        RefactorJBundle.message("could.not.find.selected.wrapping.class"),
-                        project);
-                return;
+              CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
+                                RefactorJBundle.message("could.not.find.selected.wrapping.class"), this.getHelpID(), project);
+              return;
             }
             if(!classMayWrapType(existingClass, method.getReturnType())){
-                showErrorMessage(RefactorJBundle.message("cannot.perform.the.refactoring") +
-                        RefactorJBundle.message("there.already.exists.an.incompatible.class.with.the.chosen.name"),
-                        project);
-                return;
+              CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
+                                RefactorJBundle.message("there.already.exists.an.incompatible.class.with.the.chosen.name"), this.getHelpID(),
+                                                     project);
+              return;
             }
             final String className = existingClass.getName();
             final String qualifiedName = existingClass.getQualifiedName();
             final String packageName = qualifiedName.substring(0, qualifiedName.length() -(className.length()+1));
 
-            perform(project, new Runnable(){
+           /* todo perform(project, new Runnable(){
                 public void run(){
                     final WrapReturnValueProcessor processor =
                             new WrapReturnValueProcessor(
@@ -173,19 +173,18 @@ class WrapReturnValueHandler extends BaseRefactoringHandler{
                                     previewUsages, existingClass);
                     processor.run();
                 }
-            });
+            });*/
         } else{
             final String className = dialog.getClassName();
             final String packageName = dialog.getPackageName();
-            final String qualifiedName = ClassUtil.createQualifiedName(packageName, className);
+            final String qualifiedName = StringUtil.getQualifiedName(packageName, className);
           final PsiClass existingClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(qualifiedName, scope);
             if(existingClass != null){
-                showErrorMessage(RefactorJBundle.message("cannot.perform.the.refactoring") +
-                        RefactorJBundle.message("there.already.exists.a.class.with.the.selected.name"),
-                        project);
-                return;
+              CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
+                                RefactorJBundle.message("there.already.exists.a.class.with.the.selected.name"), this.getHelpID(), project);
+              return;
             }
-            perform(project, new Runnable(){
+            /*todo perform(project, new Runnable(){
                 public void run(){
                     final WrapReturnValueProcessor processor =
                             new WrapReturnValueProcessor(
@@ -195,7 +194,7 @@ class WrapReturnValueHandler extends BaseRefactoringHandler{
                                     previewUsages, existingClass);
                     processor.run();
                 }
-            });
+            });*/
         }
     }
 

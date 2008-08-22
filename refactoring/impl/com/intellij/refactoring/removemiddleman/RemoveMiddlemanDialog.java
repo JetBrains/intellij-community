@@ -4,14 +4,14 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiField;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactorJHelpID;
-import com.intellij.refactoring.base.BaseRefactoringDialog;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
-class RemoveMiddlemanDialog extends BaseRefactoringDialog {
+class RemoveMiddlemanDialog extends RefactoringDialog {
 
     private final JLabel fieldNameLabel = new JLabel();
 
@@ -78,7 +78,11 @@ class RemoveMiddlemanDialog extends BaseRefactoringDialog {
         helpManager.invokeHelp(RefactorJHelpID.RemoveMiddleman);
     }
 
-    protected boolean isValid() {
+  protected void doAction() {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  protected boolean areButtonsValid() {
         return true;
     }
 }
