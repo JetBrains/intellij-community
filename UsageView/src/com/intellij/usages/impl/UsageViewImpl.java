@@ -455,6 +455,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
     final List<Usage> allUsages = new ArrayList<Usage>(myUsageNodes.keySet());
     Collections.sort(allUsages, USAGE_COMPARATOR);
+    final Set<Usage> excludedUsages = getExcludedUsages();
     reset();
     myBuilder.setGroupingRules(getActiveGroupingRules(myProject));
     myBuilder.setFilteringRules(getActiveFilteringRules(myProject));
@@ -471,6 +472,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         }
       }
     });
+    excludeUsages(excludedUsages.toArray(new Usage[excludedUsages.size()]));
     if (myCentralPanel != null) {
       setupCentralPanel();
     }
