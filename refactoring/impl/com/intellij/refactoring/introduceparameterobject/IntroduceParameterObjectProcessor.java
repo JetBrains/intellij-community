@@ -106,10 +106,14 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       if (existingClass == null) {
         conflicts.add(RefactorJBundle.message("cannot.perform.the.refactoring") + "Could not find the selected class");
       }
+      final String incompatibilityMessage = "Selected class is not compatible with chosenn parameters";
       if (!myExistingClassCompatible) {
         conflicts
-          .add(RefactorJBundle.message("cannot.perform.the.refactoring") + "Selected class is not compatible with chosenn parameters");
+          .add(RefactorJBundle.message("cannot.perform.the.refactoring") + incompatibilityMessage);
 
+      }
+      if (!paramsNeedingSetters.isEmpty()) {
+        conflicts.add(RefactorJBundle.message("cannot.perform.the.refactoring") + incompatibilityMessage);
       }
     }
     else if (existingClass != null) {

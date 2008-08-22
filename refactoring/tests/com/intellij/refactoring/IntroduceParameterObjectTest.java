@@ -98,6 +98,18 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     doTestExistingClass("Integer", "java.lang");
   }
 
+  public void testIntegerIncremental() throws Exception {
+    try {
+      doTestExistingClass("Integer", "java.lang");
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+      return;
+    }
+    fail("Conflict was not found");
+  }
+
+
   public void testExistentBean() throws Exception {
     doTestExistingClass("Param", "");
   }
@@ -110,6 +122,6 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
       e.printStackTrace();
       return;
     }
-    fail("Conflic was not found");
+    fail("Conflict was not found");
   }
 }

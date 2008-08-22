@@ -1,9 +1,6 @@
 package com.intellij.refactoring.introduceparameterobject.usageInfo;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiPostfixExpression;
-import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
@@ -41,7 +38,14 @@ public class ReplaceParameterIncrementDecrement extends FixableUsageInfo {
     final String strippedOperator = operator.substring(0, operator.length() - 1);
     final String newExpression =
       newParameterName + '.' + parameterSetterName + '(' + newParameterName + '.' + parameterGetterName + "()" + strippedOperator + "1)";
-    MutationUtils.replaceExpression(newExpression, expression);
+    if (expression.getParent() instanceof PsiBinaryExpression) {
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+      final PsiStatement statement = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
+      statement.getParent().addBefore(factory.createStatementFromText(newExpression + ";", expression), statement);
+      expression.replace(factory.createExpressionFromText(newParameterName + "." + parameterGetterName + "()", expression));
+    } else {
+      MutationUtils.replaceExpression(newExpression, expression);
+    }
   }
 
 }
