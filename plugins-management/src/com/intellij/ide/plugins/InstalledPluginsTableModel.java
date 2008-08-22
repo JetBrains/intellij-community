@@ -37,11 +37,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   public InstalledPluginsTableModel(SortableProvider sortableProvider) {
     super.sortableProvider = sortableProvider;
-    super.columns = new ColumnInfo[]{
-        new EnabledPluginInfo(),
-        new BundledColumnInfo(),
-        new NameColumnInfo()
-    };
+    super.columns = new ColumnInfo[]{new EnabledPluginInfo(), new NameColumnInfo(), new BundledColumnInfo()};
     view = new ArrayList<IdeaPluginDescriptor>(Arrays.asList(PluginManager.getPlugins()));
 
     myEnabled.clear();
@@ -61,7 +57,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   public int getNameColumn() {
-    return 2;
+    return 1;
   }
 
   public void addData(ArrayList<IdeaPluginDescriptor> list) {
