@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 //TODO: rename/regroup?
 
@@ -34,9 +35,12 @@ public class SharedImplUtil {
     return SourceTreeToPsiMap.treeElementToPsi(transformed);
   }
 
+  @Nullable
   public static PsiElement getLastChild(ASTNode element) {
     final TreeElement lastChild = (TreeElement)element.getLastChildNode();
-    return lastChild == null ? null : lastChild.getTransformedLastOrSelf().getPsi();
+    if (lastChild == null) return null;
+    final ASTNode last = lastChild.getTransformedLastOrSelf(); // this may be null on a zero-length file
+    return last == null ? null : last.getPsi();
   }
 
   public static PsiElement getNextSibling(ASTNode thisElement) {
