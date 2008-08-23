@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="css-api" />
     <orderEntry type="module" module-name="CSS" />
     <orderEntry type="module" module-name="debugger-impl" />
+    <orderEntry type="module" module-name="codeInsight-tests" />
   </component>
 </module>
 
