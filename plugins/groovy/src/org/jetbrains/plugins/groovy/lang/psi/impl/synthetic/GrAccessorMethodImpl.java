@@ -237,6 +237,11 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
     return "AccessorMethod";
   }
 
+  @Override
+  public void delete() throws IncorrectOperationException {
+    //do nothing
+  }
+
   @Nullable
   public PsiDocComment getDocComment() {
     return null;
