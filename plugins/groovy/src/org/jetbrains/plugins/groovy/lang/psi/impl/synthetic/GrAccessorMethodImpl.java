@@ -88,6 +88,7 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
             if (type == null) {
               type = TypesUtil.getJavaLangObject(myProperty);
             }
+            //return LightParameter.EMPTY_ARRAY;
             return new LightParameter[]{new LightParameter(manager, myProperty.getName(), null, type, GrAccessorMethodImpl.this)};
           }
 
@@ -211,7 +212,7 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
   }
 
   public PsiElement copy() {
-    return null;
+    return new GrAccessorMethodImpl(myProperty, myIsSetter, myName);
   }
 
   @NotNull
@@ -227,8 +228,9 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
     return null;
   }
 
-  public void navigate(boolean requestFocus) {
-    myProperty.navigate(requestFocus);
+  @Override
+  public PsiElement getNavigationElement() {
+    return myProperty;
   }
 
   public String toString() {

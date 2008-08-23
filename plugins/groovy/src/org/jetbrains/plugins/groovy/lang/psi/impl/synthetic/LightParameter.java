@@ -50,6 +50,6 @@ public class LightParameter extends LightVariableBase implements PsiParameter {
   }
 
   public String getName() {
-    return myName;
+    return null;
   }
 }

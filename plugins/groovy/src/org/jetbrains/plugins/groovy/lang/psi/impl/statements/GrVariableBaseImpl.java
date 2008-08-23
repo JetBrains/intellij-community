@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -66,6 +67,27 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
     return null;
   }
 
+  @Override
+  public void delete() throws IncorrectOperationException {
+    PsiElement parent = getParent();
+    PsiElement prev = PsiUtil.getPrevNonSpace(this);
+    PsiElement next = PsiUtil.getNextNonSpace(this);
+    ASTNode parentNode = parent.getNode();
+    assert parentNode != null;
+    if (parentNode != null) {
+      parentNode.removeChild(getNode());
+    }
+    if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
+      parentNode.removeChild(prev.getNode());
+    } else if (next instanceof LeafPsiElement && next.getNode() != null && next.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
+      next.delete();
+    }
+    if (parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).getVariables().length == 0) {
+      parent.delete();
+    }
+  }
+
+
   //todo: see GrModifierListImpl.hasModifierProperty()
   public boolean hasModifierProperty(@NonNls @NotNull String property) {
     PsiModifierList modifierList = getModifierList();
@@ -89,7 +111,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
 
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
-    return ((GrVariableDeclaration) getParent()).getTypeElementGroovy();
+    return ((GrVariableDeclaration)getParent()).getTypeElementGroovy();
   }
 
   @Nullable
@@ -116,14 +138,15 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
       PsiType initializerType = initializer.getType();
       if (initializerType != null) {
         if (declaredType != null && initializerType instanceof PsiClassType) {
-          final PsiClass declaredClass = ((PsiClassType) declaredType).resolve();
+          final PsiClass declaredClass = ((PsiClassType)declaredType).resolve();
           if (declaredClass != null) {
-            final PsiClassType.ClassResolveResult initializerResult = ((PsiClassType) initializerType).resolveGenerics();
+            final PsiClassType.ClassResolveResult initializerResult = ((PsiClassType)initializerType).resolveGenerics();
             final PsiClass initializerClass = initializerResult.getElement();
             if (initializerClass != null &&
-                    !com.intellij.psi.util.PsiUtil.isRawSubstitutor(initializerClass, initializerResult.getSubstitutor())) {
+                !com.intellij.psi.util.PsiUtil.isRawSubstitutor(initializerClass, initializerResult.getSubstitutor())) {
               if (declaredClass == initializerClass) return initializerType;
-              final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(declaredClass, initializerClass, initializerResult.getSubstitutor());
+              final PsiSubstitutor superSubstitutor =
+                TypeConversionUtil.getClassSubstitutor(declaredClass, initializerClass, initializerResult.getSubstitutor());
               if (superSubstitutor != null) {
                 return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(declaredClass, superSubstitutor);
               }
@@ -152,7 +175,8 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
       GrTypeElement newTypeElement;
       try {
         newTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(type);
-      } catch (IncorrectOperationException e) {
+      }
+      catch (IncorrectOperationException e) {
         LOG.error(e);
         return;
       }
@@ -221,7 +245,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
   public GrModifierList getModifierList() {
     PsiElement parent = getParent();
     if (parent instanceof GrVariableDeclaration) {
-      return ((GrVariableDeclaration) parent).getModifierList();
+      return ((GrVariableDeclaration)parent).getModifierList();
     }
     return null;
   }
