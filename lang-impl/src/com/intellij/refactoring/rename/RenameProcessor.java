@@ -92,7 +92,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   @Nullable
   private String getHelpID() {
-    return RenamePsiElementProcessor.forElement(myPrimaryElement).getHelpID(myPrimaryElement); 
+    return RenamePsiElementProcessor.forElement(myPrimaryElement).getHelpID(myPrimaryElement);
   }
 
   public boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
@@ -167,9 +167,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     myNewName = newName;
     myAllRenames.put(myPrimaryElement, newName);
-    myCommandName = RefactoringBundle.message("renaming.0.1.to.2",
-                                              UsageViewUtil.getType(myPrimaryElement), UsageViewUtil.getDescriptiveName(myPrimaryElement),
-                                              newName);
+    myCommandName = RefactoringBundle
+      .message("renaming.0.1.to.2", UsageViewUtil.getType(myPrimaryElement), UsageViewUtil.getDescriptiveName(myPrimaryElement), newName);
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
@@ -190,13 +189,13 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       final List<UsageInfo> usagesList = Arrays.asList(usages);
       result.addAll(usagesList);
 
-      for(AutomaticRenamerFactory factory: myRenamerFactories) {
+      for (AutomaticRenamerFactory factory : myRenamerFactories) {
         if (factory.isApplicable(element)) {
           myRenamers.add(factory.createRenamer(element, newName, usagesList));
         }
       }
 
-      for(AutomaticRenamerFactory factory: Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+      for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
         if (factory.getOptionName() == null && factory.isApplicable(element)) {
           myRenamers.add(factory.createRenamer(element, newName, usagesList));
         }
@@ -225,7 +224,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   protected boolean isPreviewUsages(UsageInfo[] usages) {
     if (super.isPreviewUsages(usages)) return true;
     if (UsageViewUtil.hasNonCodeUsages(usages)) {
-      WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
+      WindowManager.getInstance().getStatusBar(myProject)
+        .setInfo(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
       return true;
     }
     return false;
@@ -269,7 +269,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    for(Runnable runnable: postRenameCallbacks) {
+    for (Runnable runnable : postRenameCallbacks) {
       runnable.run();
     }
 
@@ -302,9 +302,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         if (((RelatedUsageInfo)usage).getRelatedElement() == element) {
           extractedUsages.add(usageInfo);
         }
-      }
-      else {
-        if (element.equals(usageInfo.getReferencedElement())) {
+      } else {
+        //todo[yole] this line was not true for groovy implicit accessor methods, which should be added to extractedUsages
+        PsiElement referenced = usageInfo.getReferencedElement();
+        if (element.equals(referenced) || referenced != null && element == referenced.getNavigationElement()) {
           extractedUsages.add(usageInfo);
         }
       }
