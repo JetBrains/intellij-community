@@ -27,6 +27,9 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by IntelliJ IDEA.
  * User: yole
@@ -46,14 +49,16 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
 
   public PyExpression[] getTargets() {
     final ASTNode[] nodes = getNode().getChildren(PyElementTypes.EXPRESSIONS);
-    if (nodes.length > 0) {
-      final PyExpression target = (PyExpression) nodes [0].getPsi();
-      if (target instanceof PyTupleExpression) {
-        return ((PyTupleExpression) target).getElements();
+    PyExpression[] psi_nodes = new PyExpression[nodes.length];
+    for (int i = 0; i < nodes.length; i += 1) psi_nodes[i] = (PyExpression)nodes[i].getPsi();
+    List<PyExpression> candidates = PyUtil.flattenedParens(psi_nodes); // put all possible tuples to one level
+    List<PyExpression> targets = new ArrayList<PyExpression>();
+    for (PyExpression expr : candidates) { // only filter out targets
+      if (expr instanceof PyTargetExpression) {
+        targets.add(expr);
       }
-      return new PyExpression[] { target };
     }
-    return PyExpression.EMPTY_ARRAY;
+    return targets.toArray(new PyExpression[targets.size()]);
   }
 
   /**

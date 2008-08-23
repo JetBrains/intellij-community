@@ -7,6 +7,7 @@ package com.jetbrains.python;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ResolveTestCase;
 import com.jetbrains.python.psi.*;
 
@@ -116,6 +117,20 @@ public class PyResolveTest extends ResolveTestCase {
     assertTrue(targetElement instanceof PyTargetExpression);
     assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
+
+  public void testMultiTarget() throws Exception {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
+  }
+
+  public void testMultiTargetTuple() throws Exception {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertNotNull(PsiTreeUtil.getParentOfType(targetElement, PyAssignmentStatement.class)); // it's deep in a tuple
+  }
+
+
 
   @Override
   protected String getTestDataPath() {
