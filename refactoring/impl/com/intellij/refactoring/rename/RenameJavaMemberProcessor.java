@@ -131,33 +131,31 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
   protected void findCollisionsAgainstNewName(final PsiMember memberToRename, final String newName, final List<? super MemberHidesStaticImportUsageInfo> result) {
     final List<PsiReference> potentialConflicts = new ArrayList<PsiReference>();
     PsiMember prototype = (PsiMember)memberToRename.copy();
-
-    //This way doesn't suit for Groovy property accessors, which are virtual light elements
-      try {
-        ((PsiNamedElement) prototype).setName(newName);
-        if (prototype instanceof PsiEnumConstant) {
-          final PsiEnumConstantInitializer initializer = ((PsiEnumConstant)prototype).getInitializingClass();
-          if (initializer != null) {
-            // avoid assertion in PsiEnumConstantInitializerImpl.getClassReference() because
-            // an initializer existing 'in the air' validates the invariant (IDEADEV-28840)
-            initializer.delete();
-          }
+    try {
+      ((PsiNamedElement) prototype).setName(newName);
+      if (prototype instanceof PsiEnumConstant) {
+        final PsiEnumConstantInitializer initializer = ((PsiEnumConstant)prototype).getInitializingClass();
+        if (initializer != null) {
+          // avoid assertion in PsiEnumConstantInitializerImpl.getClassReference() because
+          // an initializer existing 'in the air' validates the invariant (IDEADEV-28840)
+          initializer.delete();
         }
-        prototype = (PsiMember) memberToRename.getContainingClass().add(prototype);
-
-        ReferencesSearch.search(prototype).forEach(new Processor<PsiReference>() {
-          public boolean process(final PsiReference psiReference) {
-            potentialConflicts.add(psiReference);
-            return true;
-          }
-        });
-
-        prototype.delete();
       }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return;
-      }
+      prototype = (PsiMember) memberToRename.getContainingClass().add(prototype);
+
+      ReferencesSearch.search(prototype).forEach(new Processor<PsiReference>() {
+        public boolean process(final PsiReference psiReference) {
+          potentialConflicts.add(psiReference);
+          return true;
+        }
+      });
+
+      prototype.delete();
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return;
+    }
 
     for (PsiReference potentialConflict : potentialConflicts) {
       if (potentialConflict instanceof PsiJavaReference) {
