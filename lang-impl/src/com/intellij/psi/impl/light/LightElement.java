@@ -109,7 +109,7 @@ public abstract class LightElement extends PsiElementBase {
   }
 
   public void delete() throws IncorrectOperationException{
-    throw new IncorrectOperationException();
+    //do nothing
   }
 
   public void checkDelete() throws IncorrectOperationException{

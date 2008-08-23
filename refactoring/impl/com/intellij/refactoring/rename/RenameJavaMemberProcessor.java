@@ -132,8 +132,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     final List<PsiReference> potentialConflicts = new ArrayList<PsiReference>();
     PsiMember prototype = (PsiMember)memberToRename.copy();
 
-    //This way doesn't suit for Groovy propertiy accessors, which are virtual light elements
-    if (prototype.isPhysical()) {
+    //This way doesn't suit for Groovy property accessors, which are virtual light elements
       try {
         ((PsiNamedElement) prototype).setName(newName);
         if (prototype instanceof PsiEnumConstant) {
@@ -159,7 +158,6 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
         LOG.error(e);
         return;
       }
-    }
 
     for (PsiReference potentialConflict : potentialConflicts) {
       if (potentialConflict instanceof PsiJavaReference) {
