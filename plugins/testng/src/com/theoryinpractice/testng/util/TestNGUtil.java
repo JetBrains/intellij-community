@@ -53,6 +53,9 @@ public class TestNGUtil implements TestFramework
   private static final String TEST_ANNOTATION_FQN = Test.class.getName();
   public static final String[] CONFIG_ANNOTATIONS_FQN = {
       Configuration.class.getName(),
+      Factory.class.getName(),
+      ObjectFactory.class.getName(),
+      DataProvider.class.getName(),
       BeforeClass.class.getName(),
       BeforeGroups.class.getName(),
       BeforeMethod.class.getName(),
