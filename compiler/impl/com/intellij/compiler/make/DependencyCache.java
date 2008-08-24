@@ -34,7 +34,6 @@ public class DependencyCache {
   private Cache myNewClassesCache;
 
   private static final String REMOTE_INTERFACE_NAME = Remote.class.getName();
-  private final TIntHashSet myClassesWithSuperlistChanged = new TIntHashSet();
   private TIntHashSet myToUpdate = new TIntHashSet(); // qName strings to be updated.
   private final TIntHashSet myTraverseRoots = new TIntHashSet(); // Dependencies are calculated from these clasess
   private final TIntHashSet myClassesWithSourceRemoved = new TIntHashSet();
@@ -612,6 +611,11 @@ public class DependencyCache {
   }
 
   public void dispose() {
+    myClassesWithSourceRemoved.clear();
+    myMarkedFiles.clear();
+    myMarkedInfos.clear();
+    myToUpdate.clear();
+    myTraverseRoots.clear();
     try {
       if (myNewClassesCache != null) {
         myNewClassesCache.wipe();
@@ -651,14 +655,6 @@ public class DependencyCache {
 
   public String resolve(int id) throws CacheCorruptedException {
     return getSymbolTable().getSymbol(id);
-  }
-
-  public void registerSuperListChange(int qName) {
-    myClassesWithSuperlistChanged.add(qName);
-  }
-
-  public int[] getClassesWithSuperlistChanged() {
-    return myClassesWithSuperlistChanged.toArray();
   }
 
   public boolean wasRemote(int qName) {

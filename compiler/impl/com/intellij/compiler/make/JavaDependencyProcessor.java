@@ -137,9 +137,6 @@ class JavaDependencyProcessor {
       LOG.debug("Checking dependencies for " + myDependencyCache.resolve(myQName));
     }
     final boolean superListChanged = mySuperClassChanged || mySuperClassAdded || mySuperInterfaceAdded || mySuperInterfaceRemoved || mySuperlistGenericSignatureChanged;
-    if (superListChanged) {
-      myDependencyCache.registerSuperListChange(myQName);
-    }
     final Cache oldCache = myDependencyCache.getCache();
     final Cache newCache = myDependencyCache.getNewClassesCache();
 
