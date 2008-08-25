@@ -11,5 +11,5 @@ public interface TypeDeclarationProvider {
   ExtensionPointName<TypeDeclarationProvider> EP_NAME = ExtensionPointName.create("com.intellij.typeDeclarationProvider");
 
   @Nullable
-  PsiElement getSymbolType(PsiElement symbol);
+  PsiElement[] getSymbolTypeDeclarations(PsiElement symbol);
 }

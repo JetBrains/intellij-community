@@ -83,17 +83,21 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
       offset);
 
     if (targetElement != null) {
-      final PsiElement symbolType = getSymbolType(targetElement);
-      return symbolType == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{symbolType};
+      final PsiElement[] symbolType = getSymbolTypeDeclarations(targetElement);
+      return symbolType == null ? PsiElement.EMPTY_ARRAY : symbolType;
     }
     final PsiReference psiReference = TargetElementUtilBase.findReference(editor, offset);
     if (psiReference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)psiReference).multiResolve(false);
       Set<PsiElement> types = new THashSet<PsiElement>();
 
-      for(ResolveResult r:results) {
-        final PsiElement element = getSymbolType(r.getElement());
-        if (element != null) types.add(element);
+      for(ResolveResult r: results) {
+        final PsiElement[] declarations = getSymbolTypeDeclarations(r.getElement());
+        if (declarations != null) {
+          for (PsiElement declaration : declarations) {
+            types.add(declaration);
+          }
+        }
       }
 
       if (!types.isEmpty()) return types.toArray(new PsiElement[types.size()]);
@@ -102,9 +106,10 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
     return null;
   }
 
-  private static PsiElement getSymbolType(final PsiElement targetElement) {
+  @Nullable
+  private static PsiElement[] getSymbolTypeDeclarations(final PsiElement targetElement) {
     for(TypeDeclarationProvider provider: Extensions.getExtensions(TypeDeclarationProvider.EP_NAME)) {
-      PsiElement result = provider.getSymbolType(targetElement);
+      PsiElement[] result = provider.getSymbolTypeDeclarations(targetElement);
       if (result != null) return result;
     }
 
