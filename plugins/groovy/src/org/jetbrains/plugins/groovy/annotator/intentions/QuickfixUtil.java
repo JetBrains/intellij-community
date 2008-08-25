@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
@@ -42,39 +43,38 @@ public class QuickfixUtil {
       PsiType type = qualifier.getType();
       if (!(type instanceof PsiClassType)) return null;
 
-      psiClass = ((PsiClassType) type).resolve();
+      psiClass = ((PsiClassType)type).resolve();
     } else {
       GroovyPsiElement context = PsiTreeUtil.getParentOfType(refExpr, GrTypeDefinition.class, GroovyFileBase.class);
-      if (context instanceof GrTypeDefinition) return (PsiClass) context;
-      else if (context instanceof GroovyFileBase) return ((GroovyFileBase) context).getScriptClass();
+      if (context instanceof GrTypeDefinition) {
+        return (PsiClass)context;
+      } else if (context instanceof GroovyFileBase) return ((GroovyFileBase)context).getScriptClass();
       return null;
     }
     return psiClass;
   }
 
-  public static boolean isStaticCall(GrReferenceExpression refExpr){
+  public static boolean isStaticCall(GrReferenceExpression refExpr) {
 
-      //todo: look more carefully
-      GrExpression qualifierExpression = refExpr.getQualifierExpression();
+    //todo: look more carefully
+    GrExpression qualifierExpression = refExpr.getQualifierExpression();
 
-      if (!(qualifierExpression instanceof GrReferenceExpression)) return false;
+    if (!(qualifierExpression instanceof GrReferenceExpression)) return false;
 
-      GrReferenceExpression referenceExpression = (GrReferenceExpression) qualifierExpression;
-      GroovyPsiElement resolvedElement = ResolveUtil.resolveProperty(referenceExpression, referenceExpression.getName());
+    GrReferenceExpression referenceExpression = (GrReferenceExpression)qualifierExpression;
+    GroovyPsiElement resolvedElement = ResolveUtil.resolveProperty(referenceExpression, referenceExpression.getName());
 
-      if (resolvedElement == null) return false;
-      if (resolvedElement instanceof PsiClass) return true;
+    if (resolvedElement == null) return false;
+    if (resolvedElement instanceof PsiClass) return true;
 
-      return false;
+    return false;
   }
 
 
   public static boolean ensureFileWritable(Project project, PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    final ReadonlyStatusHandler readonlyStatusHandler =
-        ReadonlyStatusHandler.getInstance(project);
-    final ReadonlyStatusHandler.OperationStatus operationStatus =
-        readonlyStatusHandler.ensureFilesWritable(virtualFile);
+    final ReadonlyStatusHandler readonlyStatusHandler = ReadonlyStatusHandler.getInstance(project);
+    final ReadonlyStatusHandler.OperationStatus operationStatus = readonlyStatusHandler.ensureFilesWritable(virtualFile);
     return !operationStatus.hasReadonlyFiles();
   }
 
@@ -92,7 +92,8 @@ public class QuickfixUtil {
     Set<String> uniqNames = new LinkedHashSet<String>();
     Set<String> nonUniqNames = new THashSet<String>();
     for (PsiType type : types) {
-      final SuggestedNameInfo nameInfo = JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, null, type);
+      final SuggestedNameInfo nameInfo =
+        JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, null, type);
 
       final String name = nameInfo.names[0];
       if (uniqNames.contains(name)) {
@@ -147,7 +148,8 @@ public class QuickfixUtil {
   public static String[] getArgumentsNames(List<MyPair> listOfPairs) {
     final ArrayList<String> result = new ArrayList<String>();
     for (MyPair listOfPair : listOfPairs) {
-      result.add(listOfPair.first);
+      String type = PsiTypesUtil.unboxIfPossible(listOfPair.second);
+      result.add(type);
     }
 
     return result.toArray(new String[result.size()]);
@@ -167,7 +169,9 @@ public class QuickfixUtil {
     if (containingFile != null) {
       file = containingFile.getVirtualFile();
       if (file == null) return null;
-    } else return null;
+    } else {
+      return null;
+    }
 
     return ProjectRootManager.getInstance(containingFile.getProject()).getFileIndex().getModuleForFile(file);
   }
@@ -182,7 +186,7 @@ public class QuickfixUtil {
     className = className == null ? containingClass.getContainingFile().getName() : className;
 
     if (isStaticCall(referenceExpression)) {
-        settings.setStatic(true);
+      settings.setStatic(true);
     }
 
     settings.setContainingClassName(className);
