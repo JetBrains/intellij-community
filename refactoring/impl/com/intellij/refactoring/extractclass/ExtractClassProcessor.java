@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -523,9 +524,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     extractedClassBuilder.setOriginalClassName(sourceClass.getQualifiedName());
     extractedClassBuilder.setRequiresBackPointer(requiresBackpointer);
     for (PsiField field : fields) {
-      final boolean getterRequired = fieldsRequiringGetters.contains(field);
-      final boolean setterRequired = fieldsRequiringSetters.contains(field);
-      extractedClassBuilder.addField(field, getterRequired, setterRequired);
+      extractedClassBuilder.addField(field, fieldsRequiringGetters.contains(field), fieldsRequiringSetters.contains(field));
     }
     for (PsiMethod method : methods) {
       extractedClassBuilder.addMethod(method);
@@ -759,21 +758,15 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
     public void visitPostfixExpression(PsiPostfixExpression expression) {
       super.visitPostfixExpression(expression);
-      final PsiExpression operand = expression.getOperand();
-      final PsiJavaToken sign = expression.getOperationSign();
-      final IElementType tokenType = sign.getTokenType();
-      if (!tokenType.equals(JavaTokenType.PLUSPLUS) && !tokenType.equals(JavaTokenType.MINUSMINUS)) {
-        return;
-      }
-      if (isBackpointerReference(operand)) {
-        fieldsNeedingSetter.add(getReferencedField(operand));
-      }
+      checkSetterNeeded(expression.getOperand(), expression.getOperationSign());
     }
 
     public void visitPrefixExpression(PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
-      final PsiExpression operand = expression.getOperand();
-      final PsiJavaToken sign = expression.getOperationSign();
+      checkSetterNeeded(expression.getOperand(), expression.getOperationSign());
+    }
+
+    private void checkSetterNeeded(final PsiExpression operand, final PsiJavaToken sign) {
       final IElementType tokenType = sign.getTokenType();
       if (!tokenType.equals(JavaTokenType.PLUSPLUS) && !tokenType.equals(JavaTokenType.MINUSMINUS)) {
         return;
@@ -796,33 +789,17 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
 
     private boolean isBackpointerReference(PsiExpression expression) {
-      if (expression == null) {
-        return false;
-      }
-      if (expression instanceof PsiParenthesizedExpression) {
-        final PsiExpression contents = ((PsiParenthesizedExpression)expression).getExpression();
-        return isBackpointerReference(contents);
-      }
-      if (!(expression instanceof PsiReferenceExpression)) {
-        return false;
-      }
-      final PsiReferenceExpression reference = (PsiReferenceExpression)expression;
-      final PsiElement qualifier = reference.getQualifier();
-      if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
-        return false;
-      }
-      final PsiElement referent = reference.resolve();
-      if (!(referent instanceof PsiField)) {
-        return false;
-      }
-      final PsiField referentField = (PsiField)referent;
-      if (fields.contains(referentField)) {
-        return false;
-      }
-      if (innerClasses.contains(referentField.getContainingClass())) {
-        return false;
-      }
-      return true;
+      return BackpointerUtil.isBackpointerReference(expression, new Condition<PsiField>() {
+        public boolean value(final PsiField field) {
+          if (fields.contains(field)) {
+            return false;
+          }
+          if (innerClasses.contains(field.getContainingClass())) {
+            return false;
+          }
+          return true;
+        }
+      });
     }
 
     private PsiField getReferencedField(PsiExpression expression) {

@@ -1,7 +1,6 @@
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiVariable;
 
 class FieldSpec{
     private final boolean setterRequired;
@@ -15,7 +14,7 @@ class FieldSpec{
         this.setterRequired = setterRequired;
     }
 
-    public PsiVariable getField() {
+    public PsiField getField() {
         return field;
     }
 
