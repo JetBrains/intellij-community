@@ -30,9 +30,16 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.patterns.ObjectPattern;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.refactoring.rename.RenameInputValidator;
+import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
 import com.intellij.util.Function;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.GrailsLoader;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyAddImportsPassFactory;
@@ -48,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.references.GroovyDocReferenceProvider;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceProvider;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -143,35 +151,21 @@ public class GroovyLoader implements ApplicationComponent {
   }
 
   private static void registerNameValidators() {
-// todo [DIANA]
-/*
-    RenameInputValidatorRegistry.getInstance().registerInputValidator(pattern, new RenameInputValidator(){
+    RenameInputValidator validator = new RenameInputValidator() {
       public boolean isInputValid(String newName, PsiElement element, ProcessingContext context) {
         return !GroovyRefactoringUtil.KEYWORDS.contains(newName);
       }
-    });
-*/
-/*
-    RenameInputValidatorRegistry.getInstance().registerInputValidator(new ElementFilter() {
-      public boolean isAcceptable(Object element, PsiElement context) {
-        return element instanceof PsiNamedElement;
-      }
-      public boolean isClassAcceptable(Class hintClass) {
-        return true;
-      }
-    }, new Condition<String>() {
-      public boolean value(String name) {
-        return !GroovyRefactoringUtil.KEYWORDS.contains(name);
-      }
-    });
-*/
+    };
+    ObjectPattern.Capture<PsiNamedElement> pattern = StandardPatterns.instanceOf(PsiNamedElement.class);
+    RenameInputValidatorRegistry.getInstance().registerInputValidator(pattern, validator);
   }
 
   private static void setupCompletion() {
     InsertHandlerRegistry handlerRegistry = InsertHandlerRegistry.getInstance();
     handlerRegistry.registerSpecificInsertHandler(new GroovyDocMethodHandler());
 
-    CompositeCompletionData compositeCompletionData = new CompositeCompletionData(new GroovyCompletionData(), new GroovyDocCompletionData());
+    CompositeCompletionData compositeCompletionData = new CompositeCompletionData(new GroovyCompletionData(), new GroovyDocCompletionData())
+      ;
     CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE, compositeCompletionData);
   }
 
