@@ -42,7 +42,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     Project project = null;
     if (projectDir.exists()) {
       try {
-        project = projectManager.loadProject(projectDir.getPath());
+        project = projectManager.loadProject(baseDir.getPath());
       }
       catch (Exception e) {
         // ignore
