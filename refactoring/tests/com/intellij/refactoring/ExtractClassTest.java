@@ -19,7 +19,7 @@ public class ExtractClassTest extends MultiFileTestCase{
     return "/refactoring/extractClass/";
   }
 
-  private void doTest() throws Exception {
+  private void doTestMethod() throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test");
@@ -37,6 +37,35 @@ public class ExtractClassTest extends MultiFileTestCase{
   }
 
   public void testStatic() throws Exception {
-    doTest();
+    doTestMethod();
+  }
+
+  public void testFieldReference() throws Exception {
+    doTestMethod();
+  }
+
+  public void testVarargs() throws Exception {
+    doTestMethod();
+  }
+
+  private void doTestInnerClass() throws Exception {
+    doTest(new PerformAction() {
+      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
+        PsiClass aClass = myJavaFacade.findClass("Test");
+
+        assertNotNull("Class Test not found", aClass);
+
+        final ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
+        classes.add(aClass.findInnerClassByName("Inner", false));
+        ExtractClassProcessor processor = new ExtractClassProcessor(aClass, new ArrayList<PsiField>(), new ArrayList<PsiMethod>(), classes, "", "Extracted");
+        processor.run();
+        LocalFileSystem.getInstance().refresh(false);
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+    });
+  }
+
+  public void testInner() throws Exception {
+    doTestInnerClass();
   }
 }
