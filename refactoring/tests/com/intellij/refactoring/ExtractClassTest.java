@@ -53,6 +53,10 @@ public class ExtractClassTest extends MultiFileTestCase{
   }
 
   public void testNoFieldDelegation() throws Exception {
+    doTestFieldAndMethod();
+  }
+
+  private void doTestFieldAndMethod() throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test");
@@ -66,6 +70,28 @@ public class ExtractClassTest extends MultiFileTestCase{
         fields.add(aClass.findFieldByName("myT", false));
 
         ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", "Extracted");
+        processor.run();
+        LocalFileSystem.getInstance().refresh(false);
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+    });
+  }
+
+  public void testHierarchy() throws Exception {
+    doTestFieldAndMethod();
+  }
+
+  public void testPublicFieldDelegation() throws Exception {
+    doTest(new PerformAction() {
+      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
+        PsiClass aClass = myJavaFacade.findClass("Test");
+
+        assertNotNull("Class Test not found", aClass);
+
+        final ArrayList<PsiField> fields = new ArrayList<PsiField>();
+        fields.add(aClass.findFieldByName("myT", false));
+
+        ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, new ArrayList<PsiMethod>(), new ArrayList<PsiClass>(), "", "Extracted");
         processor.run();
         LocalFileSystem.getInstance().refresh(false);
         FileDocumentManager.getInstance().saveAllDocuments();
