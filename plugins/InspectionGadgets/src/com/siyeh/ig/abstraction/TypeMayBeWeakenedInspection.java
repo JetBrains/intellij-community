@@ -39,19 +39,19 @@ import java.util.*;
 
 public class TypeMayBeWeakenedInspection extends BaseInspection {
 
-	@SuppressWarnings({"PublicField"})
-	public boolean useRighthandTypeAsWeakestTypeInAssignments = true;
+    @SuppressWarnings({"PublicField"})
+    public boolean useRighthandTypeAsWeakestTypeInAssignments = true;
 
     @SuppressWarnings({"PublicField"})
     public boolean useParameterizedTypeForCollectionMethods = true;
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "type.may.be.weakened.display.name");
     }
 
-    @NotNull
+    @Override @NotNull
     protected String buildErrorString(Object... infos) {
         final Iterable<PsiClass> weakerClasses = (Iterable<PsiClass>)infos[1];
         @NonNls final StringBuilder builder = new StringBuilder();
@@ -84,7 +84,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 "type.may.be.weakened.problem.descriptor", builder.toString());
     }
 
-    @Nullable
+    @Override @Nullable
     public JComponent createOptionsPanel() {
         final MultipleCheckboxOptionsPanel optionsPanel =
                 new MultipleCheckboxOptionsPanel(this);
@@ -97,7 +97,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         return optionsPanel;
     }
 
-    @NotNull
+    @Override @NotNull
     protected InspectionGadgetsFix[] buildFixes(Object... infos) {
         final Iterable<PsiClass> weakerClasses = (Iterable<PsiClass>)infos[1];
         final Collection<InspectionGadgetsFix> fixes = new ArrayList();
@@ -122,6 +122,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     "type.may.be.weakened.quickfix", fqClassName);
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -182,6 +183,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new TypeMayBeWeakenedVisitor();
     }
@@ -199,8 +201,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     return;
                 } else if (declarationScope instanceof PsiMethod) {
                     final PsiMethod method = (PsiMethod)declarationScope;
-	                final PsiClass containingClass = method.getContainingClass();
-	                if (containingClass.isInterface()) {
+                    final PsiClass containingClass = method.getContainingClass();
+                    if (containingClass.isInterface()) {
                         return;
                     }
                     final Query<MethodSignatureBackedByPsiMethod> superSearch =
@@ -224,7 +226,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     return;
                 }
             }
-	        if (useRighthandTypeAsWeakestTypeInAssignments) {
+            if (useRighthandTypeAsWeakestTypeInAssignments) {
                 if (variable instanceof PsiParameter) {
                     final PsiElement parent = variable.getParent();
                     if (parent instanceof PsiForeachStatement) {
@@ -238,18 +240,18 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                         }
                     }
                 } else {
-			        final PsiExpression initializer = variable.getInitializer();
-			        if (!(initializer instanceof PsiNewExpression) &&
-					        !(initializer instanceof PsiTypeCastExpression)) {
-				        return;
-			        }
-		        }
-	        }
+                    final PsiExpression initializer = variable.getInitializer();
+                    if (!(initializer instanceof PsiNewExpression) &&
+                            !(initializer instanceof PsiTypeCastExpression)) {
+                        return;
+                    }
+                }
+            }
             final Collection<PsiClass> weakestClasses =
                     WeakestTypeFinder.calculateWeakestClassesNecessary(variable,
-		                    useRighthandTypeAsWeakestTypeInAssignments,
+                            useRighthandTypeAsWeakestTypeInAssignments,
                             useParameterizedTypeForCollectionMethods);
-	        if (weakestClasses.isEmpty()) {
+            if (weakestClasses.isEmpty()) {
                 return;
             }
             registerVariableError(variable, variable, weakestClasses);
@@ -277,7 +279,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
             }
             final Collection<PsiClass> weakestClasses =
                     WeakestTypeFinder.calculateWeakestClassesNecessary(method,
-		                    useRighthandTypeAsWeakestTypeInAssignments,
+                            useRighthandTypeAsWeakestTypeInAssignments,
                             useParameterizedTypeForCollectionMethods);
             if (weakestClasses.isEmpty()) {
                 return;

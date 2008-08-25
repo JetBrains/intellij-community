@@ -31,6 +31,8 @@ import com.siyeh.HardcodedMethodConstants;
 import java.util.*;
 public class WeakestTypeFinder {
 
+    private WeakestTypeFinder() {
+    }
 
     @NotNull
     public static Collection<PsiClass> calculateWeakestClassesNecessary(
@@ -230,7 +232,7 @@ public class WeakestTypeFinder {
             return Collections.EMPTY_LIST;
         }
         weakestTypeClasses =
-                filterVisibleClasses(weakestTypeClasses, variableOrMethod);
+                filterAccessibleClasses(weakestTypeClasses, variableOrMethod);
         return Collections.unmodifiableCollection(weakestTypeClasses);
     }
 
@@ -346,6 +348,9 @@ public class WeakestTypeFinder {
                 }
                 if (throwsIncompatibleException(superMethod,
                         thrownTypes)) {
+                    continue;
+                }
+                if (!isAccessibleFrom(superMethod, methodCallExpression)) {
                     continue;
                 }
                 final PsiClass containingClass =
@@ -500,11 +505,11 @@ public class WeakestTypeFinder {
         return true;
     }
 
-    public static Set<PsiClass> filterVisibleClasses(
+    public static Set<PsiClass> filterAccessibleClasses(
             Set<PsiClass> weakestTypeClasses, PsiElement context) {
         final Set<PsiClass> result = new HashSet();
         for (PsiClass weakestTypeClass : weakestTypeClasses) {
-            if (isVisibleFrom(weakestTypeClass, context)) {
+            if (isAccessibleFrom(weakestTypeClass, context)) {
                 result.add(weakestTypeClass);
                 continue;
             }
@@ -525,7 +530,7 @@ public class WeakestTypeFinder {
                         context.getResolveScope());
         for (PsiClass aClass : search) {
             if (superClass.isInheritor(aClass, true)) {
-                if (isVisibleFrom(aClass, context)) {
+                if (isAccessibleFrom(aClass, context)) {
                     return aClass;
                 } else {
                     return getVisibleInheritor(aClass, context);
@@ -560,24 +565,48 @@ public class WeakestTypeFinder {
         }
     }
 
-    private static boolean isVisibleFrom(PsiClass aClass,
-                                         PsiElement referencingLocation){
-        final PsiClass referencingClass =
-                ClassUtils.getContainingClass(referencingLocation);
-        if (referencingClass == null){
-            return false;
-        }
-        if(referencingLocation.equals(aClass)){
-            return true;
-        }
+    private static boolean isAccessibleFrom(PsiClass aClass,
+                                            PsiElement context){
         if(aClass.hasModifierProperty(PsiModifier.PUBLIC)){
             return true;
         }
         if(aClass.hasModifierProperty(PsiModifier.PRIVATE)){
             return false;
         }
+        final PsiClass referencingClass =
+                ClassUtils.getContainingClass(context);
+        if (referencingClass == null){
+            return false;
+        }
+        if(context.equals(aClass)){
+            return true;
+        }
         return ClassUtils.inSamePackage(aClass, referencingClass);
     }
+
+    private static boolean isAccessibleFrom(PsiMethod method,
+                                            PsiElement context) {
+        if (method.hasModifierProperty(PsiModifier.PUBLIC)) {
+            return true;
+        }
+        if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
+            return false;
+        }
+        final PsiClass referencingClass =
+                ClassUtils.getContainingClass(context);
+        if (referencingClass == null) {
+            return false;
+        }
+        final PsiClass containingClass = method.getContainingClass();
+        if (method.hasModifierProperty(PsiModifier.PROTECTED)) {
+            if (referencingClass.isInheritor(containingClass, true)) {
+                return true;
+            }
+        }
+        return method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
+                ClassUtils.inSamePackage(referencingClass, containingClass);
+    }
+
 
     private static int findElementIndexInExpressionList(
             @NotNull PsiElement element,
