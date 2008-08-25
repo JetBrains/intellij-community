@@ -16,8 +16,10 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author nik
@@ -38,7 +40,7 @@ public class XFramesView extends XDebugViewBase {
     myThreadComboBox = new JComboBox();
     myThreadComboBox.setRenderer(new ThreadComboBoxRenderer());
     myThreadComboBox.addItemListener(new MyItemListener());
-    myMainPanel.add(myThreadComboBox);
+    myMainPanel.add(myThreadComboBox, BorderLayout.NORTH);
 
     myFramesList = new XDebuggerFramesList();
     myFramesList.addListSelectionListener(new MyListSelectionListener());
