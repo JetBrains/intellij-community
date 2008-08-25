@@ -15,6 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
@@ -41,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyValidationUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,6 +61,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   @NonNls private static final String METHOD_CAPTION_CAP = "Method";
   @NonNls private static final String REFACTORING_NAME = "Convert Parameter to Map Entry";
   @NonNls private static final String MAP_TYPE_TEXT = "Map";
+  @NonNls private static final String[] MY_POSSIBLE_NAMES = new String[]{"attrs", "args", "params", "map"};
 
   protected void processIntention(@NotNull final PsiElement element) throws IncorrectOperationException {
     final Project project = element.getProject();
@@ -74,7 +77,6 @@ public class ConvertParameterToMapEntryIntention extends Intention {
 
     // To add or not to add new parameter for map entries
     final GrParameter firstParam = getFirstParameter(owner);
-    final PsiReference ref = element.getReference();
 
     switch (analyzeForNamedArguments(owner, occurrences)) {
       case ERROR: {
@@ -97,18 +99,33 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       }
       case IS_NOT_MAP: {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          String[] possibleNames = new String[]{"attrs", "args", "params", "map"};
+          String[] possibleNames = generateValidNames(MY_POSSIBLE_NAMES, firstParam);
           final GroovyMapParameterDialog dialog = new GroovyMapParameterDialog(project, possibleNames);
           dialog.show();
           if (dialog.isOK()) {
-            performRefactoring(element, owner, occurrences, true, dialog.getEnteredName(), dialog.specifyTypeExplicitly());
+            String name = dialog.getEnteredName();
+            ArrayList<String> conflicts = new ArrayList<String>();
+            GroovyValidationUtil.validateNewParameterName(firstParam, conflicts, name);
+            if (reportConflicts(conflicts, project)) {
+              performRefactoring(element, owner, occurrences, true, name, dialog.specifyTypeExplicitly());
+            }
           }
         } else {
-          performRefactoring(element, owner, occurrences, true, "attrs", false);
+          //todo add statictic manager
+          performRefactoring(element, owner, occurrences, true,
+                             (new GroovyValidationUtil.ParameterNameSuggester("attrs", firstParam)).generateName(), false);
         }
         break;
       }
     }
+  }
+
+  private static String[] generateValidNames(final String[] names, final GrParameter param) {
+    return ContainerUtil.map2Array(names, String.class, new Function<String, String>() {
+      public String fun(final String s) {
+        return (new GroovyValidationUtil.ParameterNameSuggester(s, param)).generateName();
+      }
+    });
   }
 
   private static void performRefactoring(final PsiElement element,
@@ -181,7 +198,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
           for (GrCall call : calls) {
             reformatOwner(call.getArgumentList());
           }
-          reformatOwner(owner);
+          reformatOwner(owner.getParameterList());
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -368,5 +385,12 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   private static void reformatOwner(PsiElement owner) throws IncorrectOperationException {
     if (owner == null) return;
     CodeStyleManager.getInstance(owner.getProject()).reformat(owner);
+  }
+
+  private boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {
+    if (conflicts.size() == 0) return true;
+    ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
+    conflictsDialog.show();
+    return conflictsDialog.isOK();
   }
 }
