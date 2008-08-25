@@ -30,11 +30,9 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.patterns.ObjectPattern;
-import com.intellij.patterns.StandardPatterns;
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.refactoring.rename.RenameInputValidator;
 import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
@@ -53,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.completion.GroovyDocCompletio
 import org.jetbrains.plugins.groovy.lang.groovydoc.completion.handlers.GroovyDocMethodHandler;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.references.GroovyDocReferenceProvider;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -156,8 +155,7 @@ public class GroovyLoader implements ApplicationComponent {
         return !GroovyRefactoringUtil.KEYWORDS.contains(newName);
       }
     };
-    ObjectPattern.Capture<PsiNamedElement> pattern = StandardPatterns.instanceOf(PsiNamedElement.class);
-    RenameInputValidatorRegistry.getInstance().registerInputValidator(pattern, validator);
+    RenameInputValidatorRegistry.getInstance().registerInputValidator(psiElement(GrNamedElement.class), validator);
   }
 
   private static void setupCompletion() {
