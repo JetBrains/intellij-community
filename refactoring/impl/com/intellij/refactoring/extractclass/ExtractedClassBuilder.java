@@ -576,7 +576,7 @@ class ExtractedClassBuilder {
         }
     }
 
-    private class Mutator extends PsiElementVisitor {
+    private class Mutator extends JavaElementVisitor {
         @NonNls
         private final StringBuffer out;
 
