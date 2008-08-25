@@ -10,6 +10,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -41,6 +42,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
@@ -766,9 +768,24 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return ((PsiManagerEx) getManager()).getFileManager().getUseScope(this);
   }
 
-  // Default implementation just to make sure it compiles.
   public ItemPresentation getPresentation() {
-    return null;
+    return new ItemPresentation() {
+      public String getPresentableText() {
+        return getName();
+      }
+
+      public String getLocationString() {
+        return null;
+      }
+
+      public Icon getIcon(final boolean open) {
+        return PsiFileImpl.this.getIcon(open ? ICON_FLAG_OPEN : ICON_FLAG_CLOSED);
+      }
+
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
+    };
   }
 
   public void navigate(boolean requestFocus) {
