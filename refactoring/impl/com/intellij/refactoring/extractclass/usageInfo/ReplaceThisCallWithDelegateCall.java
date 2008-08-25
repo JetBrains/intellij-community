@@ -1,4 +1,4 @@
-package com.intellij.refactoring.extractclass;
+package com.intellij.refactoring.extractclass.usageInfo;
 
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -7,11 +7,11 @@ import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class ReplaceThisCallWithDelegateCall extends FixableUsageInfo {
+public class ReplaceThisCallWithDelegateCall extends FixableUsageInfo {
     private final String delegateFieldName;
     private final PsiMethodCallExpression call;
 
-     ReplaceThisCallWithDelegateCall(PsiMethodCallExpression call, String delegateFieldName) {
+     public ReplaceThisCallWithDelegateCall(PsiMethodCallExpression call, String delegateFieldName) {
         super(call);
         this.call = call;
         this.delegateFieldName = delegateFieldName;

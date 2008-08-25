@@ -4,13 +4,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.psi.MyUsageViewUtil;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 class ExtractClassUsageViewDescriptor implements UsageViewDescriptor {
     private PsiClass aClass;
 
-    ExtractClassUsageViewDescriptor(PsiClass aClass, UsageInfo[] usages) {
+    ExtractClassUsageViewDescriptor(PsiClass aClass) {
         super();
         this.aClass = aClass;
     }
@@ -24,6 +24,7 @@ class ExtractClassUsageViewDescriptor implements UsageViewDescriptor {
         return RefactorJBundle.message("extracting.from.class");
     }
 
+    @NotNull
     public PsiElement[] getElements() {
         return new PsiElement[]{aClass};
     }

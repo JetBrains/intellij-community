@@ -1,4 +1,4 @@
-package com.intellij.refactoring.extractclass;
+package com.intellij.refactoring.extractclass.usageInfo;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceExpression;
@@ -6,12 +6,12 @@ import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class ReplaceInstanceVariableAccess extends FixableUsageInfo {
+public class ReplaceInstanceVariableAccess extends FixableUsageInfo {
     private final PsiReferenceExpression expression;
     private final String getterName;
     private final String delegateName;
 
-    ReplaceInstanceVariableAccess(PsiReferenceExpression expression, String delegateName, String getterName) {
+    public ReplaceInstanceVariableAccess(PsiReferenceExpression expression, String delegateName, String getterName) {
         super(expression);
         this.getterName = getterName;
         this.delegateName = delegateName;

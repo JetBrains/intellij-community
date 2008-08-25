@@ -1,13 +1,13 @@
-package com.intellij.refactoring.extractclass;
+package com.intellij.refactoring.extractclass.usageInfo;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class RemoveInnerClass extends FixableUsageInfo {
+public class RemoveInnerClass extends FixableUsageInfo {
     private final PsiClass innerClass;
 
-    RemoveInnerClass(PsiClass innerClass) {
+    public RemoveInnerClass(PsiClass innerClass) {
         super(innerClass);
         this.innerClass = innerClass;
     }

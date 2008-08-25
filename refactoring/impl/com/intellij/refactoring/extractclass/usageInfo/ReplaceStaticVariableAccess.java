@@ -1,17 +1,17 @@
-package com.intellij.refactoring.extractclass;
+package com.intellij.refactoring.extractclass.usageInfo;
 
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class ReplaceStaticVariableAccess extends FixableUsageInfo {
+public class ReplaceStaticVariableAccess extends FixableUsageInfo {
     private final PsiReferenceExpression expression;
     private final String delegateClass;
     private final String getterName;
     private final boolean isPublic;
 
-    ReplaceStaticVariableAccess(PsiReferenceExpression expression,
+    public ReplaceStaticVariableAccess(PsiReferenceExpression expression,
                                 String delegateClass,
                                 String getterName,
                                 boolean isPublic) {

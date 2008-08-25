@@ -1,15 +1,15 @@
-package com.intellij.refactoring.extractclass;
+package com.intellij.refactoring.extractclass.usageInfo;
 
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-class MakeMethodDelegate extends FixableUsageInfo {
+public class MakeMethodDelegate extends FixableUsageInfo {
     private final PsiMethod method;
     private final String delegate;
 
-    MakeMethodDelegate(PsiMethod method, String delegate) {
+    public MakeMethodDelegate(PsiMethod method, String delegate) {
         super(method);
         this.method = method;
         this.delegate = delegate;

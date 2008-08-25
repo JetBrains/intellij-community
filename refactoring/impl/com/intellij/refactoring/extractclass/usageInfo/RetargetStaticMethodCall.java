@@ -1,4 +1,4 @@
-package com.intellij.refactoring.extractclass;
+package com.intellij.refactoring.extractclass.usageInfo;
 
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
@@ -8,11 +8,11 @@ import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class RetargetStaticMethodCall extends FixableUsageInfo {
+public class RetargetStaticMethodCall extends FixableUsageInfo {
     private final String delegateClassName;
     private final PsiMethodCallExpression call;
 
-     RetargetStaticMethodCall(PsiMethodCallExpression call, String delegateClassName) {
+     public RetargetStaticMethodCall(PsiMethodCallExpression call, String delegateClassName) {
         super(call);
         this.call = call;
         this.delegateClassName = delegateClassName;

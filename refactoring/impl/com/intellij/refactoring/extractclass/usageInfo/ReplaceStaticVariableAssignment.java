@@ -1,4 +1,4 @@
-package com.intellij.refactoring.extractclass;
+package com.intellij.refactoring.extractclass.usageInfo;
 
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiExpression;
@@ -9,14 +9,14 @@ import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class ReplaceStaticVariableAssignment extends FixableUsageInfo {
+public class ReplaceStaticVariableAssignment extends FixableUsageInfo {
     private final PsiReferenceExpression reference;
     private final String setterName;
     private final String getterName;
     private final String originalClassName;
     private final boolean isPublic;
 
-    ReplaceStaticVariableAssignment(PsiReferenceExpression reference,
+    public ReplaceStaticVariableAssignment(PsiReferenceExpression reference,
                                     String originalClassName,
                                     String setterName,
                                     String getterName,

@@ -170,6 +170,7 @@
       <action id="InvertBoolean" class="com.intellij.refactoring.actions.InvertBooleanAction"/>
       <action id="IntroduceParameterObject" class="com.intellij.refactoring.actions.IntroduceParameterObjectAction"/>
 
+
       <add-to-group group-id="RefactoringMenu" anchor="before" relative-to-action="IntroduceVariable"/>
     </group>
 
@@ -203,6 +204,10 @@
 
     <action id="ReplaceMethodWithMethodObject" class="com.intellij.refactoring.actions.ReplaceMethodWithMethodObjectAction">
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ExtractMethod"/>
+    </action>
+
+    <action id="ExtractClass" class="com.intellij.refactoring.actions.ExtractClassAction">
+      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ReplaceMethodWithMethodObject"/>
     </action>
     
     <group id="BuildMenu" popup="true">

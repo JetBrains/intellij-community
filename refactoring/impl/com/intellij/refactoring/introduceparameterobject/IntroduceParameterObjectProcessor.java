@@ -120,14 +120,15 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       conflicts.add(RefactorJBundle.message("cannot.perform.the.refactoring") +
                     RefactorJBundle.message("there.already.exists.a.class.with.the.chosen.name"));
     }
-    if (!conflicts.isEmpty()) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw new RuntimeException(StringUtil.join(conflicts, "\n"));
-      }
-      return showConflicts(conflicts);
-    }
+    return showConflicts(conflicts);
+  }
 
-    return super.preprocessUsages(refUsages);
+  @Override
+  protected boolean showConflicts(final List<String> conflicts) {
+    if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new RuntimeException(StringUtil.join(conflicts, "\n"));
+    }
+    return super.showConflicts(conflicts);
   }
 
   public void findUsages(@NotNull List<FixableUsageInfo> usages) {

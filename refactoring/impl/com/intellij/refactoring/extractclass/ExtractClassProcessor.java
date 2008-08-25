@@ -1,10 +1,12 @@
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -17,7 +19,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.psi.AssignmentUtil;
+import com.intellij.refactoring.extractclass.usageInfo.*;
 import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.refactoring.psi.SearchUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
@@ -36,7 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
+public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     private static final Logger logger =
             Logger.getInstance("com.siyeh.rpp.extractclass.ExtractClassProcessor");
 
@@ -55,13 +57,12 @@ class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     private final Set<PsiMethod> methodsRequiringDelegation = new HashSet<PsiMethod>();
     private final boolean requiresBackpointer;
 
-    ExtractClassProcessor(PsiClass sourceClass,
+    public ExtractClassProcessor(PsiClass sourceClass,
                           List<PsiField> fields,
                           List<PsiMethod> methods,
                           List<PsiClass> innerClasses,
                           String newPackageName,
-                          String newClassName,
-                          boolean previewUsages) {
+                          String newClassName) {
         super(sourceClass.getProject());
         this.sourceClass = sourceClass;
         this.newPackageName = newPackageName;
@@ -89,7 +90,29 @@ class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
         }
     }
 
-    private List<PsiClassInitializer> calculateInitializersToMove() {
+  @Override
+  protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
+    final List<String> conflicts = new ArrayList<String>();
+    final Project project = sourceClass.getProject();
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    final PsiClass existingClass =
+      JavaPsiFacade.getInstance(project).findClass(StringUtil.getQualifiedName(newPackageName, newClassName), scope);
+    if (existingClass != null) {
+      conflicts.add(RefactorJBundle.message("cannot.perform.the.refactoring") +
+                    RefactorJBundle.message("there.already.exists.a.class.with.the.chosen.name"));
+    }
+    return showConflicts(conflicts);
+  }
+
+  @Override
+  protected boolean showConflicts(final List<String> conflicts) {
+    if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new RuntimeException(StringUtil.join(conflicts, "\n"));
+    }
+    return super.showConflicts(conflicts);
+  }
+
+  private List<PsiClassInitializer> calculateInitializersToMove() {
         final List<PsiClassInitializer> out = new ArrayList<PsiClassInitializer>();
         final PsiClassInitializer[] initializers = sourceClass.getInitializers();
         for (PsiClassInitializer initializer : initializers) {
@@ -149,7 +172,7 @@ class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
 
     protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usageInfos) {
-        return new ExtractClassUsageViewDescriptor(sourceClass, usageInfos);
+        return new ExtractClassUsageViewDescriptor(sourceClass);
     }
 
     protected void performRefactoring(UsageInfo[] usageInfos) {
@@ -584,14 +607,8 @@ class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                 }
                 @NonNls final String setter = "set" + capitalizedName;
                 final boolean isPublic = field.hasModifierProperty(PsiModifier.PUBLIC);
-                if (AssignmentUtil.isPreIncrementedOrDecremented(exp)) {
-                    usages.add(new ReplaceStaticVariablePreIncrementDecrement(exp, qualifiedName, setter, getter,
-                            isPublic));
-                    if (!isPublic) {
-                        fieldsRequiringSetters.add(field);
-                    }
-                } else if (AssignmentUtil.isPostIncrementedOrDecremented(exp)) {
-                    usages.add(new ReplaceStaticVariablePostIncrementDecrement(exp, qualifiedName, setter, getter,
+                if (RefactoringUtil.isPlusPlusOrMinusMinus(exp)) {
+                    usages.add(new ReplaceStaticVariableIncrementDecrement(exp, qualifiedName, setter, getter,
                             isPublic));
                     if (!isPublic) {
                         fieldsRequiringSetters.add(field);
@@ -618,13 +635,9 @@ class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                     getter = "get" + capitalizedName;
                 }
                 @NonNls final String setter = "set" + capitalizedName;
-                if (AssignmentUtil.isPreIncrementedOrDecremented(exp)) {
+                if (RefactoringUtil.isPlusPlusOrMinusMinus(exp)) {
                     usages.add(
-                            new ReplaceInstanceVariablePreIncrementDecrement(exp, delegateFieldName, setter, getter));
-                    fieldsRequiringSetters.add(field);
-                } else if (AssignmentUtil.isPostIncrementedOrDecremented(exp)) {
-                    usages.add(
-                            new ReplaceInstanceVariablePostIncrementDecrement(exp, delegateFieldName, setter, getter));
+                            new ReplaceInstanceVariableIncrementDecrement(exp, delegateFieldName, setter, getter));
                     fieldsRequiringSetters.add(field);
                 } else if (RefactoringUtil.isAssignmentLHS(exp)) {
                     final PsiAssignmentExpression assignment =

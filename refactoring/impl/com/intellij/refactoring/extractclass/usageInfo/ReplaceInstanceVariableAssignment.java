@@ -1,17 +1,17 @@
-package com.intellij.refactoring.extractclass;
+package com.intellij.refactoring.extractclass.usageInfo;
 
 import com.intellij.psi.*;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class ReplaceInstanceVariableAssignment extends FixableUsageInfo {
+public class ReplaceInstanceVariableAssignment extends FixableUsageInfo {
     private final String setterName;
     private final PsiAssignmentExpression assignment;
     private final String getterName;
     private final String delegateName;
 
-    ReplaceInstanceVariableAssignment(PsiAssignmentExpression assignment,
+    public ReplaceInstanceVariableAssignment(PsiAssignmentExpression assignment,
                                       String delegateName,
                                       String setterName,
                                       String getterName) {

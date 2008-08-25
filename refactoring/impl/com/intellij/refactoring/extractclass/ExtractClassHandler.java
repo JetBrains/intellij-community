@@ -6,9 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactorJHelpID;
@@ -16,9 +14,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.sixrr.rpp.RefactorJ;
 
-import java.util.List;
-
-class ExtractClassHandler implements RefactoringActionHandler {
+public class ExtractClassHandler implements RefactoringActionHandler {
 
     protected String getRefactoringName(){
         return RefactorJBundle.message("extract.class");
@@ -107,30 +103,8 @@ class ExtractClassHandler implements RefactoringActionHandler {
         if(!dialog.isOK()){
             return;
         }
-        final PsiManager manager = containingClass.getManager();
-        final boolean previewUsages = dialog.isPreviewUsages();
-        final List<PsiField> fields = dialog.getFieldsToExtract();
-        final List<PsiMethod> methods = dialog.getMethodsToExtract();
-        final List<PsiClass> classes = dialog.getClassesToExtract();
-        final String newClassName = dialog.getClassName();
-        final String packageName = dialog.getPackageName();
-        final String qualifiedName = StringUtil.getQualifiedName(packageName, newClassName);
-        final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      final PsiClass existingClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(qualifiedName, scope);
-        if(existingClass != null){
-          CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
-                        RefactorJBundle.message("there.already.exists.a.class.with.the.chosen.name"), this.getHelpID(), project);
-          return;
-        }
-        final Runnable action = new Runnable(){
-            public void run(){
-                final ExtractClassProcessor processor =
-                        new ExtractClassProcessor(containingClass,
-                                fields, methods, classes, packageName, newClassName, previewUsages);
-                processor.run();
-            }
-        };
-        //todo perform(project, action);
+       
+
     }
 
     private static boolean classIsTrivial(PsiClass containingClass){
