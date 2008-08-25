@@ -134,7 +134,8 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
   }
 
   /**
-   * @deprecated {@see com.intellij.psi.PsiReferenceContributor
+   * @deprecated
+   * @see com.intellij.psi.PsiReferenceContributor
    */
   public void registerReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
     registerReferenceProvider(null, scope, provider);
