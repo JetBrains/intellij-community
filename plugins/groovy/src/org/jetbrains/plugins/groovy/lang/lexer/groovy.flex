@@ -273,9 +273,10 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                              yybegin(IN_SINGLE_GSTRING);  }
 }
 <IN_SINGLE_DOT>{
-  "."                                     {  yybegin(IN_SINGLE_IDENT);
+  "." {mIDENT}                            {  yypushback(yytext().length() - 1);
+                                             yybegin(IN_SINGLE_IDENT);
                                              return mDOT;  }
-  [^"."]                                  {  yypushback(yytext().length());
+  [^]                                     {  yypushback(yytext().length());
                                              yybegin(IN_SINGLE_GSTRING);  }
 }
 
@@ -359,9 +360,10 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                              yybegin(IN_TRIPLE_GSTRING);  }
 }
 <IN_TRIPLE_DOT>{
-  "."                                     {  yybegin(IN_TRIPLE_NLS);
+  "."{mIDENT}                             {  yypushback(yytext().length() - 1);
+                                             yybegin(IN_TRIPLE_NLS);
                                              return mDOT;  }
-  [^"."]                                  {  yypushback(yytext().length());
+  [^]                                     {  yypushback(yytext().length());
                                              yybegin(IN_TRIPLE_GSTRING);  }
 }
 <IN_TRIPLE_NLS>{
@@ -507,9 +509,10 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                              yybegin(IN_REGEX);  }
 }
 <IN_REGEX_DOT>{
-  "."                                     {  yybegin(IN_REGEX_IDENT);
+  "."{mIDENT}                             {  yypushback(yytext().length() - 1);
+                                             yybegin(IN_REGEX_IDENT);
                                              return mDOT;  }
-  [^"."]                                  {  yypushback(yytext().length());
+  [^]                                     {  yypushback(yytext().length());
                                              yybegin(IN_REGEX);  }
 }
 
