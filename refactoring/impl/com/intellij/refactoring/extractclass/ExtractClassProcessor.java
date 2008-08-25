@@ -23,7 +23,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.extractclass.usageInfo.*;
 import com.intellij.refactoring.psi.MethodInheritanceUtils;
-import com.intellij.refactoring.psi.SearchUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
@@ -167,7 +166,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   protected void performRefactoring(UsageInfo[] usageInfos) {
     buildClass();
-    if (isDelegationRequired()) {
+    if (!(fieldsRequiringGetters.isEmpty() && methodsRequiringDelegation.isEmpty())) {
       buildDelegate();
     }
     buildNecessaryGettersAndSetters();
@@ -327,20 +326,6 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     return "private";
   }
 
-  private boolean isDelegationRequired() {
-    for (PsiField field : fields) {
-      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-        return true;
-      }
-    }
-    for (PsiMethod method : methods) {
-      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public void findUsages(@NotNull List<FixableUsageInfo> usages) {
     for (PsiField field : fields) {
       findUsagesForField(field, usages);
@@ -367,7 +352,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final PsiManager psiManager = innerClass.getManager();
     final Project project = psiManager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final Iterable<PsiReference> calls = SearchUtils.findAllReferences(innerClass, scope);
+    final Iterable<PsiReference> calls = ReferencesSearch.search(innerClass, scope);
     final String innerName = innerClass.getQualifiedName();
     final String newInnerClassName = StringUtil.getQualifiedName(newPackageName, newClassName) + innerName.substring(sourceClass.getQualifiedName().length());
     boolean hasExternalReference = false;
@@ -390,7 +375,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final PsiManager psiManager = method.getManager();
     final Project project = psiManager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final Iterable<PsiReference> calls = SearchUtils.findAllReferences(method, scope);
+    final Iterable<PsiReference> calls = ReferencesSearch.search(method, scope);
     for (PsiReference reference : calls) {
       final PsiElement referenceElement = reference.getElement();
       final PsiElement parent = referenceElement.getParent();
@@ -420,7 +405,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final PsiManager psiManager = method.getManager();
     final Project project = psiManager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final Iterable<PsiReference> calls = SearchUtils.findAllReferences(method, scope);
+    final Iterable<PsiReference> calls = ReferencesSearch.search(method, scope);
     for (PsiReference reference : calls) {
       final PsiElement referenceElement = reference.getElement();
 
