@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -40,6 +39,7 @@ import com.intellij.refactoring.util.duplicates.VariableReturnValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -81,7 +81,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private int myFlowStart; // offset in control flow corresponding to the start of the code to be extracted
   private int myFlowEnd; // offset in control flow corresponding to position just after the end of the code to be extracted
 
-  protected PsiVariable[] myInputVariables; // input variables
+  protected List<PsiVariable> myInputVariables; // input variables
   protected PsiVariable[] myOutputVariables; // output variables
   protected PsiVariable myOutputVariable; // the only output variable
   private Collection<PsiStatement> myExitStatements;
@@ -112,7 +112,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                                 String helpId) {
     myProject = project;
     myEditor = editor;
-    if (elements.length != 1 || (elements.length == 1 && !(elements[0] instanceof PsiBlockStatement))) {
+    if (elements.length != 1 || elements.length == 1 && !(elements[0] instanceof PsiBlockStatement)) {
       myElements = elements;
       myEnclosingBlockStatement = null;
     }
@@ -201,7 +201,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myCodeFragmentMember = codeFragment.getParent();
 
     try {
-      myControlFlow = ControlFlowFactory.getInstance(myProject).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, false);
+      myControlFlow = ControlFlowFactory.getInstance(myProject).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, true);
     }
     catch (AnalysisCanceledException e) {
       throw new PrepareFailedException(RefactoringBundle.message("extract.method.control.flow.analysis.failed"), e.getErrorElement());
@@ -280,18 +280,18 @@ public class ExtractMethodProcessor implements MatchProvider {
       myOutputVariables = outputVariables.toArray(new PsiVariable[outputVariables.size()]);
     }
 
-    final PsiVariable[] inputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
+    final List<PsiVariable> inputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
     if (myGenerateConditionalExit) {
-      List<PsiVariable> inputVariableList = new ArrayList<PsiVariable>(Arrays.asList(inputVariables));
+      List<PsiVariable> inputVariableList = new ArrayList<PsiVariable>(inputVariables);
       removeParametersUsedInExitsOnly(codeFragment, myExitStatements, myControlFlow, myFlowStart, myFlowEnd, inputVariableList);
-      myInputVariables = inputVariableList.toArray(new PsiVariable[inputVariableList.size()]);
+      myInputVariables = inputVariableList;
     }
     else {
       myInputVariables = inputVariables;
     }
 
     //varargs variables go last, otherwise order is induced by original ordering
-    Arrays.sort(myInputVariables, new Comparator<PsiVariable>() {
+    Collections.sort(myInputVariables, new Comparator<PsiVariable>() {
       public int compare(final PsiVariable v1, final PsiVariable v2) {
         if (v1.getType() instanceof PsiEllipsisType) {
           return 1;
@@ -377,11 +377,11 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     if (myExpression != null) {
-      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), Arrays.asList(myInputVariables), new ArrayList<PsiVariable>());
+      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), myInputVariables, new ArrayList<PsiVariable>());
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
     }
     else {
-      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), Arrays.asList(myInputVariables), myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null, Arrays.asList(myOutputVariables));
+      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), myInputVariables, myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null, Arrays.asList(myOutputVariables));
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
     }
 
@@ -390,10 +390,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   protected boolean checkOutputVariablesCount() {
     int outputCount = (myHasExpressionOutput ? 1 : 0) + (myGenerateConditionalExit ? 1 : 0) + myOutputVariables.length;
-    if (outputCount > 1) {
-      return true;
-    }
-    return false;
+    return outputCount > 1;
   }
 
   private void checkCanBeChainedConstructor() {
@@ -546,11 +543,11 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public void testRun() throws IncorrectOperationException {
     myMethodName = myInitialMethodName;
-    myVariableDatum = new ParameterTablePanel.VariableData[myInputVariables.length];
-    for (int i = 0; i < myInputVariables.length; i++) {
-      myVariableDatum[i] = new ParameterTablePanel.VariableData(myInputVariables[i], myInputVariables[i].getType());
+    myVariableDatum = new ParameterTablePanel.VariableData[myInputVariables.size()];
+    for (int i = 0; i < myInputVariables.size(); i++) {
+      myVariableDatum[i] = new ParameterTablePanel.VariableData(myInputVariables.get(i), myInputVariables.get(i).getType());
       myVariableDatum[i].passAsParameter = true;
-      myVariableDatum[i].name = myInputVariables[i].getName();
+      myVariableDatum[i].name = myInputVariables.get(i).getName();
     }
 
     doRefactoring();
@@ -857,8 +854,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         datas.add(variableData);
       }
     }
-    for (int i = 0; i < datas.size(); i++) {
-      ParameterTablePanel.VariableData data = datas.get(i);
+    for (ParameterTablePanel.VariableData data : datas) {
       final List<PsiElement> parameterValue = match.getParameterValues(data.variable);
       for (PsiElement val : parameterValue) {
         methodCallExpression.getArgumentList().add(val);
@@ -1045,7 +1041,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private void declareNecessaryVariablesInsideBody(int start, int end, PsiCodeBlock body) throws IncorrectOperationException {
     List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(myControlFlow, start, end);
     for (PsiVariable variable : usedVariables) {
-      boolean toDeclare = !isDeclaredInside(variable) && !contains(myInputVariables, variable);
+      boolean toDeclare = !isDeclaredInside(variable) && !myInputVariables.contains(variable);
       if (toDeclare) {
         String name = variable.getName();
         PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name, variable.getType(), null);
@@ -1064,7 +1060,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name, variable.getType(), null);
         if (reassigned.contains(new ControlFlowUtil.VariableInfo(variable, null))) {
           final PsiElement[] psiElements = statement.getDeclaredElements();
-          assert psiElements != null && psiElements.length > 0;
+          assert psiElements.length > 0;
           PsiVariable var = (PsiVariable) psiElements [0];
           var.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
         }
@@ -1098,13 +1094,6 @@ public class ExtractMethodProcessor implements MatchProvider {
     return variable.getName();
   }
 
-  private static boolean contains(Object[] array, Object object) {
-    for (Object elem : array) {
-      if (Comparing.equal(elem, object)) return true;
-    }
-    return false;
-  }
-
   private void chooseTargetClass() {
     myNeedChangeContext = false;
     myTargetClass = myCodeFragmentMember instanceof PsiMember
@@ -1131,12 +1120,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
         if (success) {
           myTargetClass = newTargetClass;
-          PsiVariable[] newInputVariables = new PsiVariable[myInputVariables.length + array.size()];
-          System.arraycopy(myInputVariables, 0, newInputVariables, 0, myInputVariables.length);
-          for (int i = 0; i < array.size(); i++) {
-            newInputVariables[myInputVariables.length + i] = array.get(i);
-          }
-          myInputVariables = newInputVariables;
+          myInputVariables = new ArrayList<PsiVariable>(ContainerUtil.concat(myInputVariables, array));
           myNeedChangeContext = true;
         }
       }

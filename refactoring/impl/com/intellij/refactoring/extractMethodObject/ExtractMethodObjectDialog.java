@@ -65,7 +65,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   private ButtonGroup myVisibilityGroup;
 
 
-  public ExtractMethodObjectDialog(Project project, PsiClass targetClass, final PsiVariable[] inputVariables, PsiType returnType,
+  public ExtractMethodObjectDialog(Project project, PsiClass targetClass, final List<PsiVariable> inputVariables, PsiType returnType,
                                    PsiTypeParameterList typeParameterList, PsiType[] exceptions, boolean isStatic, boolean canBeStatic,
                                    final PsiElement[] elementsToExtract, final boolean multipleExitPoints) {
     super(project);
@@ -79,7 +79,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     myElementsToExtract = elementsToExtract;
     myMultipleExitPoints = multipleExitPoints;
 
-    final List<ParameterTablePanel.VariableData> variableData = new ArrayList<ParameterTablePanel.VariableData>(inputVariables.length);
+    final List<ParameterTablePanel.VariableData> variableData = new ArrayList<ParameterTablePanel.VariableData>(inputVariables.size());
     boolean canBeVarargs = false;
     for (PsiVariable var : inputVariables) {
       String name = var.getName();
@@ -91,7 +91,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
       }
       PsiType type = var.getType();
       if (type instanceof PsiEllipsisType) {
-        if (var == inputVariables[inputVariables.length - 1]) {
+        if (var == inputVariables.get(inputVariables.size() - 1)) {
           myWasStatic = true;
         }
         type = ((PsiEllipsisType)type).toArrayType();

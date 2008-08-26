@@ -13,12 +13,12 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
-import java.util.Iterator;
 import java.util.List;
 
 public class ExtractMethodTest extends LightCodeInsightTestCase {
-  private static final String BASE_PATH = "/refactoring/extractMethod/";
+  @NonNls private static final String BASE_PATH = "/refactoring/extractMethod/";
   private boolean myCatchOnNewLine = true;
 
   public void testExitPoints1() throws Exception {
@@ -309,6 +309,30 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     }
   }
 
+  public void testConstantConditionsAffectingControlFlow() throws Exception {
+    doTest();
+  }
+  public void testNotInitializedInsideFinally() throws Exception {
+    doTest();
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   private void doChainedConstructorTest(final boolean replaceAllDuplicates) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     boolean success = performExtractMethod(true, replaceAllDuplicates, getEditor(), getFile(), getProject(), true);
@@ -400,8 +424,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
 
     if (replaceAllDuplicates) {
       final List<Match> duplicates = processor.getDuplicates();
-      for (Iterator<Match> iterator = duplicates.iterator(); iterator.hasNext();) {
-        final Match expressionMatch = iterator.next();
+      for (final Match expressionMatch : duplicates) {
         processor.processMatch(expressionMatch);
       }
     }

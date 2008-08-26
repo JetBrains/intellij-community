@@ -137,7 +137,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     for (PsiVariable var : outputVariables) {
       final String name = var.getName();
       LOG.assertTrue(name != null);
-      if (ArrayUtil.find(myExtractProcessor.getInputVariables(), var) == -1) { //one field creation
+      if (!myExtractProcessor.getInputVariables().contains(var)) { //one field creation
         final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(getMethod().getProject());
         final String fieldName = styleManager.suggestVariableName(VariableKind.FIELD, name, null, var.getType()).names[0];
         var2FieldNames.put(name, fieldName);
@@ -271,23 +271,22 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
     if (list != null && list.getTypeArguments().length > 0) {
       return list.getText();
-    } else {
-      final PsiTypeParameter[] methodTypeParameters = getMethod().getTypeParameters();
-      if (methodTypeParameters.length > 0) {
-        List<String> typeSignature = new ArrayList<String>();
-        final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(getMethod().getProject()).getResolveHelper();
-        for (final PsiTypeParameter typeParameter : methodTypeParameters) {
-          final PsiType type = resolveHelper.inferTypeForMethodTypeParameter(typeParameter, getMethod().getParameterList().getParameters(),
-                                                                             methodCallExpression.getArgumentList().getExpressions(),
-                                                                             PsiSubstitutor.EMPTY, methodCallExpression, false);
-          if (type == null || type == PsiType.NULL) {
-            return "";
-          }
-          typeSignature.add(type.getPresentableText());
+    }
+    final PsiTypeParameter[] methodTypeParameters = getMethod().getTypeParameters();
+    if (methodTypeParameters.length > 0) {
+      List<String> typeSignature = new ArrayList<String>();
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(getMethod().getProject()).getResolveHelper();
+      for (final PsiTypeParameter typeParameter : methodTypeParameters) {
+        final PsiType type = resolveHelper.inferTypeForMethodTypeParameter(typeParameter, getMethod().getParameterList().getParameters(),
+                                                                           methodCallExpression.getArgumentList().getExpressions(),
+                                                                           PsiSubstitutor.EMPTY, methodCallExpression, false);
+        if (type == null || type == PsiType.NULL) {
+          return "";
         }
-        return "<" + StringUtil.join(typeSignature, ", ") + ">";
-
+        typeSignature.add(type.getPresentableText());
       }
+      return "<" + StringUtil.join(typeSignature, ", ") + ">";
+
     }
     return "";
   }
@@ -450,7 +449,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     @Override
     protected void apply(final AbstractExtractDialog dialog) {
       super.apply(dialog);
-      myCreateInnerClass = (((ExtractMethodObjectDialog)dialog).createInnerClass());
+      myCreateInnerClass = ((ExtractMethodObjectDialog)dialog).createInnerClass();
       myInnerClassName = myCreateInnerClass ? StringUtil.capitalize(dialog.getChosenMethodName()) : dialog.getChosenMethodName();
     }
 
@@ -463,10 +462,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     @Override
     protected boolean checkOutputVariablesCount() {
       myMultipleExitPoints = super.checkOutputVariablesCount();
-      if (myCreateInnerClass) {
-        return false;
-      }
-      return myMultipleExitPoints;
+      return !myCreateInnerClass && myMultipleExitPoints;
     }
 
     @Override
@@ -547,7 +543,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
             }
           }
           else {
-            if (ArrayUtil.find(myInputVariables, variable) != -1 && ArrayUtil.find(myOutputVariables, variable) != -1) {
+            if (myInputVariables.contains(variable) && ArrayUtil.find(myOutputVariables, variable) != -1) {
               st = myElementFactory.createStatementFromText(name + " = " + object + ".get" + StringUtil.capitalize(name) + "();", myInnerMethod);
             }
           }
@@ -561,7 +557,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    public PsiVariable[] getInputVariables() {
+    public List<PsiVariable> getInputVariables() {
       return myInputVariables;
     }
   }

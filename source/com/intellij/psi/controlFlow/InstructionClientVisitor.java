@@ -8,4 +8,7 @@ abstract class InstructionClientVisitor<T> extends ControlFlowInstructionVisitor
   }
 
   protected boolean[] processedInstructions;
+
+  public void procedureEntered(int startOffset, int endOffset) {
+  }
 }

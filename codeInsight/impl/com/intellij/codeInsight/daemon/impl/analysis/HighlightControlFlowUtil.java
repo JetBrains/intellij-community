@@ -70,10 +70,8 @@ public class HighlightControlFlowUtil {
                                                                       false);
   }
   private static ControlFlow getControlFlow(final PsiElement context) throws AnalysisCanceledException {
-    return ControlFlowFactory.getInstance(context.getProject())
-      .getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+    return ControlFlowFactory.getInstance(context.getProject()).getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
   }
-
 
   public static HighlightInfo checkUnreachableStatement(PsiCodeBlock codeBlock) {
     if (codeBlock == null) return null;

@@ -55,9 +55,8 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
   private boolean myDefaultVisibility = true;
   private boolean myChangingVisibility;
 
-
   public ExtractMethodDialog(Project project,
-                             PsiClass targetClass, final PsiVariable[] inputVariables, PsiType returnType,
+                             PsiClass targetClass, final List<PsiVariable> inputVariables, PsiType returnType,
                              PsiTypeParameterList typeParameterList, PsiType[] exceptions, boolean isStatic, boolean canBeStatic,
                              final boolean canBeChainedConstructor,
                              String initialMethodName,
@@ -74,7 +73,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     myCanBeStatic = canBeStatic;
     myElementsToExtract = elementsToExtract;
 
-    final List<ParameterTablePanel.VariableData> variableData = new ArrayList<ParameterTablePanel.VariableData>(inputVariables.length);
+    final List<ParameterTablePanel.VariableData> variableData = new ArrayList<ParameterTablePanel.VariableData>(inputVariables.size());
     boolean canBeVarargs = false;
     for (PsiVariable var : inputVariables) {
       String name = var.getName();
@@ -86,7 +85,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
       }
       PsiType type = var.getType();
       if (type instanceof PsiEllipsisType) {
-        if (var == inputVariables[inputVariables.length - 1]) {
+        if (var == inputVariables.get(inputVariables.size() - 1)) {
           myWasStatic = true;
         }
         type = ((PsiEllipsisType)type).toArrayType();
@@ -134,8 +133,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
 
   public boolean isMakeStatic() {
     if (myStaticFlag) return true;
-    if (!myCanBeStatic) return false;
-    return myCbMakeStatic.isSelected();
+    return myCanBeStatic && myCbMakeStatic.isSelected();
   }
 
   public boolean isChainedConstructor() {
@@ -169,7 +167,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
   protected void doOKAction() {
     Set<String> conflicts = new HashSet<String>();
     checkMethodConflicts(conflicts);
-    if (conflicts.size() > 0) {
+    if (!conflicts.isEmpty()) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) return;

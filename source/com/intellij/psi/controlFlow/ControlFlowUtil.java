@@ -132,6 +132,11 @@ public class ControlFlowUtil {
     InstructionClientVisitor<Boolean> visitor = new InstructionClientVisitor<Boolean>() {
       final boolean[] neededBelow = new boolean[flow.getSize()+1];
 
+      @Override
+      public void procedureEntered(int startOffset, int endOffset) {
+        for (int i = startOffset; i < endOffset; i++) neededBelow[i] = false;
+      }
+
       @Override public void visitReadVariableInstruction(ReadVariableInstruction instruction, int offset, int nextOffset) {
         if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
         boolean needed = neededBelow[nextOffset];
@@ -197,22 +202,15 @@ public class ControlFlowUtil {
     return array;
   }
 
-  public static PsiVariable[] getInputVariables(ControlFlow flow, int start, int end) {
+  public static List<PsiVariable> getInputVariables(ControlFlow flow, int start, int end) {
     List<PsiVariable> usedVariables = getUsedVariables(flow, start, end);
-    ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
+    ArrayList<PsiVariable> array = new ArrayList<PsiVariable>(usedVariables.size());
     for (PsiVariable variable : usedVariables) {
       if (needVariableValueAt(variable, flow, start)) {
         array.add(variable);
       }
     }
-    PsiVariable[] inputVariables = array.toArray(new PsiVariable[array.size()]);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("input variables:");
-      for (PsiVariable variable : inputVariables) {
-        LOG.debug("  " + variable.toString());
-      }
-    }
-    return inputVariables;
+    return array;
   }
 
   public static PsiVariable[] getOutputVariables(ControlFlow flow, int start, int end, int[] exitPoints) {
@@ -317,7 +315,7 @@ public class ControlFlowUtil {
       if (offset >= instructions.size()) break;
       Instruction instruction = instructions.get(offset);
       if (!(instruction instanceof GoToInstruction) || ((GoToInstruction)instruction).isReturn) break;
-      offset = ((GoToInstruction)instruction).offset;
+      offset = ((BranchingInstruction)instruction).offset;
     }
     return offset;
   }
@@ -951,9 +949,11 @@ public class ControlFlowUtil {
           int newOffset = instruction.offset;
           // 'procedure' pointed by call instruction should be processed regardless of whether it was already visited or not
           // clear procedure text and return instructions aftewards
-          for (int i = instruction.procBegin; i < instruction.procEnd || instructions.get(i) instanceof ReturnInstruction; i++) {
+          int i;
+          for (i = instruction.procBegin; i < instruction.procEnd || instructions.get(i) instanceof ReturnInstruction; i++) {
             clientVisitor.processedInstructions[i] = false;
           }
+          clientVisitor.procedureEntered(instruction.procBegin, i);
           oldOffsets.add(offset);
           newOffsets.add(newOffset);
 
@@ -1109,8 +1109,7 @@ public class ControlFlowUtil {
     }
 
     public boolean equals(Object o) {
-      if (this == o) return true;
-      return o instanceof VariableInfo && variable.equals(((VariableInfo)o).variable);
+      return this == o || o instanceof VariableInfo && variable.equals(((VariableInfo)o).variable);
     }
 
     public int hashCode() {
@@ -1373,3 +1372,4 @@ public class ControlFlowUtil {
     return startOffset != -1 && isInstructionReachable(flow, startOffset, startOffset);
   }
 }
+
