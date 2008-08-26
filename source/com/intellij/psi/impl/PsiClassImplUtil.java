@@ -321,10 +321,14 @@ public class PsiClassImplUtil {
     }
   }
 
-  public static boolean processDeclarationsInClass(PsiClass aClass, PsiScopeProcessor processor,
-                                                   ResolveState state, Set<PsiClass> visited, PsiElement last,
-                                                   PsiElement place, boolean isRaw) {
-    if (visited.contains(aClass)) return true;
+  public static boolean processDeclarationsInClass(PsiClass aClass,
+                                                   PsiScopeProcessor processor,
+                                                   ResolveState state,
+                                                   Set<PsiClass> visited,
+                                                   PsiElement last,
+                                                   PsiElement place,
+                                                   boolean isRaw) {
+    if (visited != null && visited.contains(aClass)) return true;
     PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     isRaw = isRaw || PsiUtil.isRawSubstitutor(aClass, substitutor);
     if (last instanceof PsiTypeParameterList || last instanceof PsiModifierList) return true; //TypeParameterList and ModifierList do not see our declarations
@@ -456,6 +460,7 @@ public class PsiClassImplUtil {
                                                             PsiElement last,
                                                             PsiElement place,
                                                             boolean isRaw) {
+    if (visited == null) visited = new THashSet<PsiClass>();
     if (!visited.add(aClass)) return true;
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
     final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
@@ -515,25 +520,17 @@ public class PsiClassImplUtil {
       }
     }
 
-    if (!(last instanceof PsiReferenceList)) {
-      if (!processSuperTypes(
-        aClass.getSuperTypes(),
-        processor, visited, last, place, aClass, state, isRaw)) {
-        return false;
-      }
-    }
-    return true;
+    return last instanceof PsiReferenceList || processSuperTypes(aClass, processor, visited, last, place, state, isRaw);
   }
 
-  private static boolean processSuperTypes(final PsiClassType[] superTypes,
+  private static boolean processSuperTypes(PsiClass aClass,
                                            PsiScopeProcessor processor,
                                            Set<PsiClass> visited,
                                            PsiElement last,
                                            PsiElement place,
-                                           PsiClass aClass,
                                            ResolveState state,
                                            boolean isRaw) {
-    for (final PsiClassType superType : superTypes) {
+    for (final PsiClassType superType : aClass.getSuperTypes()) {
       final PsiClassType.ClassResolveResult superTypeResolveResult = superType.resolveGenerics();
       PsiClass superClass = superTypeResolveResult.getElement();
       if (superClass == null) continue;
@@ -643,12 +640,12 @@ public class PsiClassImplUtil {
 
     PsiClassType[] extendsTypes = psiClass.getExtendsListTypes();
     PsiClassType[] implementsTypes = psiClass.getImplementsListTypes();
-    boolean noExtends = extendsTypes.length == 0;
-    int extendsListLength = extendsTypes.length + (noExtends ? 1 : 0);
+    boolean hasExtends = extendsTypes.length != 0;
+    int extendsListLength = extendsTypes.length + (hasExtends ? 0 : 1);
     PsiClassType[] result = new PsiClassType[extendsListLength + implementsTypes.length];
 
     System.arraycopy(extendsTypes, 0, result, 0, extendsTypes.length);
-    if (noExtends) {
+    if (!hasExtends) {
       if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) {
         return PsiClassType.EMPTY_ARRAY;
       }
@@ -657,6 +654,10 @@ public class PsiClassImplUtil {
       result[0] = objectType;
     }
     System.arraycopy(implementsTypes, 0, result, extendsListLength, implementsTypes.length);
+    for (int i = 0; i < result.length; i++) {
+      PsiClassType type = result[i];
+      result[i] = (PsiClassType)PsiUtil.captureToplevelWildcards(type, psiClass);
+    }
     return result;
   }
 
