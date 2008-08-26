@@ -24,7 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 import com.intellij.refactoring.introduceField.LocalToFieldHandler;
 import com.intellij.util.PathUtil;
-import junit.framework.TestCase;
+import org.junit.Before;
 
 import java.io.File;
 
@@ -35,7 +35,7 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
     final LibraryTable.ModifiableModel modifiableModel = model.getModuleLibraryTable().getModifiableModel();
     final Library library = modifiableModel.createLibrary("junit");
     final Library.ModifiableModel libModel = library.getModifiableModel();
-    libModel.addRoot(VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(TestCase.class))), OrderRootType.CLASSES);
+    libModel.addRoot(VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(Before.class))), OrderRootType.CLASSES);
     libModel.commit();
     model.commit();
     return module;
@@ -46,6 +46,14 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
   }
 
   public void testPublicBaseClassSetUp() throws Exception {
+    doTest();
+  }
+
+  public void testBeforeExist() throws Exception {
+    doTest();
+  }
+
+  public void testBeforeNotExist() throws Exception {
     doTest();
   }
 
