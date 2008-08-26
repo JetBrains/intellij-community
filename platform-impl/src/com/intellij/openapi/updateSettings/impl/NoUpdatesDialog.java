@@ -37,9 +37,10 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
     private JPanel myPanel;
     private JPanel myPluginsPanel;
     private JEditorPane myEditorPane;
+    private JPanel myWholePluginsPanel;
 
     public NoUpdatesPanel() {
-      initPluginsPanel(myPanel, myPluginsPanel, myEditorPane);
+      initPluginsPanel(myPanel, myPluginsPanel, myWholePluginsPanel, myEditorPane);
     }
   }
 }

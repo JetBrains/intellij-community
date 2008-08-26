@@ -16,37 +16,6 @@
           <text resource-bundle="messages/IdeBundle" key="updates.no.updates.message"/>
         </properties>
       </component>
-      <scrollpane id="e1105">
-        <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="1.0" weighty="1.0"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <grid id="3559e" binding="myPluginsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
-            <constraints/>
-            <properties/>
-            <border type="none"/>
-            <children/>
-          </grid>
-        </children>
-      </scrollpane>
-      <component id="6b492" class="javax.swing.JLabel">
-        <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="10" fill="0" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="1.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <text value="Plugins ready to update"/>
-        </properties>
-      </component>
-      <vspacer id="88098">
-        <constraints>
-          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="0.0" weighty="0.0"/>
-        </constraints>
-      </vspacer>
       <component id="bc72e" class="javax.swing.JEditorPane" binding="myEditorPane">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
@@ -56,9 +25,50 @@
         </constraints>
         <properties>
           <contentType value="text/html"/>
-          <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;    &#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
+          <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;&#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;    &lt;p style=&quot;margin-top: 0&quot;&gt;&#13;&#10;      &#13;&#10;    &lt;/p&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
         </properties>
       </component>
+      <grid id="71b5" binding="myWholePluginsPanel" layout-manager="GridBagLayout">
+        <constraints>
+          <grid row="1" column="0" row-span="2" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <scrollpane id="e1105">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="1.0"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <grid id="3559e" binding="myPluginsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints/>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
+            </children>
+          </scrollpane>
+          <component id="6b492" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="10" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <text value="Plugins ready to update"/>
+            </properties>
+          </component>
+          <vspacer id="88098">
+            <constraints>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="0.0" weighty="0.0"/>
+            </constraints>
+          </vspacer>
+        </children>
+      </grid>
     </children>
   </grid>
 </form>

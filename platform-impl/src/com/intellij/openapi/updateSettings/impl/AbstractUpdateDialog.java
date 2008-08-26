@@ -29,9 +29,9 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     setButtonsText();
   }
 
-  protected void initPluginsPanel(final JPanel panel, JPanel pluginsPanel, JEditorPane updateLinkPane) {
+  protected void initPluginsPanel(final JPanel panel, JPanel pluginsPanel, final JPanel wholePluginsPanel, JEditorPane updateLinkPane) {
     panel.setMinimumSize(new Dimension(-1, 200));
-    pluginsPanel.setVisible(myUploadedPlugins != null);
+    wholePluginsPanel.setVisible(myUploadedPlugins != null);
     if (myUploadedPlugins != null) {
       final DetectedPluginsPanel foundPluginsPanel = new DetectedPluginsPanel();
 

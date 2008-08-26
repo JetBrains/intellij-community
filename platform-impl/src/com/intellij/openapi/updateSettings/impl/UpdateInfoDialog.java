@@ -50,6 +50,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     private JLabel myNewBuildNumber;
     private JPanel myUpdatedPluginsPanel;
     private JEditorPane myEditorPane;
+    private JPanel myWholePluginsPanel;
 
     public UpdateInfoPanel() {
 
@@ -74,7 +75,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       myNewBuildNumber.setText(Integer.toString(myNewVersion.getLatestBuild()) + ")");
       myNewVersionNumber.setText(myNewVersion.getLatestVersion());
 
-      initPluginsPanel(myPanel, myUpdatedPluginsPanel, myEditorPane);
+      initPluginsPanel(myPanel, myUpdatedPluginsPanel, myWholePluginsPanel, myEditorPane);
     }
   }
 
