@@ -78,7 +78,7 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
 
     public int compareTo(VcsRevisionNumber vcsRevisionNumber) {
       if (vcsRevisionNumber instanceof VcsRevisionNumber.Long){
-        return (int)(myValue - ((Long)vcsRevisionNumber).myValue);
+        return java.lang.Long.signum(myValue - ((Long)vcsRevisionNumber).myValue);
       }
       return 0;
     }
