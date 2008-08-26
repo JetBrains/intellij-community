@@ -4,6 +4,8 @@
   <version>1.0</version>
   <category>VCS Integration</category>
 
+  <depends>com.intellij.modules.vcs</depends>
+
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <resource-bundle>org.jetbrains.idea.svn.SvnBundle</resource-bundle>
 
