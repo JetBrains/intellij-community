@@ -2,6 +2,8 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 
@@ -25,13 +27,18 @@ public class ShowPopupMenuAction extends AnAction {
 
     Point popupMenuPoint = relPoint.getPoint(focusOwner);
 
+    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    int coord = editor != null
+                ? Math.max(0, popupMenuPoint.y - 1) //To avoid cursor jump to the line below. http://www.jetbrains.net/jira/browse/IDEADEV-10644
+                : popupMenuPoint.y;
+
     focusOwner.dispatchEvent(
       new MouseEvent(
         focusOwner,
         MouseEvent.MOUSE_PRESSED,
         System.currentTimeMillis(), 0,
         popupMenuPoint.x,
-        Math.max(0, popupMenuPoint.y - 1), //To avoid cursor jump to the line below. http://www.jetbrains.net/jira/browse/IDEADEV-10644
+        coord,
         1,
         true
       )
