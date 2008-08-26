@@ -17,7 +17,6 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
 import java.util.Map;
 
 public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements PsiJavaCodeReferenceElement {
@@ -97,10 +96,8 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     final PsiElement resolve = resolveElement();
     if (resolve instanceof PsiClass) {
       final Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
-      final Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator((PsiClass)resolve);
       int index = 0;
-      while (it.hasNext()) {
-        PsiTypeParameter parameter = it.next();
+      for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiClass)resolve)) {
         if (index >= myTypeParameters.length) {
           substitutionMap.put(parameter, null);
         }
@@ -151,9 +148,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       element = element.getParent();
     }
     if (element == null) return null;
-    Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator((PsiTypeParameterListOwner)element);
-    while (it.hasNext()) {
-      PsiTypeParameter parameter = it.next();
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiTypeParameterListOwner)element)) {
       if (myQualifiedName.equals(parameter.getName())) return parameter;
     }
     return JavaPsiFacade.getInstance(getManager().getProject()).findClass(myQualifiedName, getResolveScope());

@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class PsiResolveHelperImpl implements PsiResolveHelper {
@@ -77,7 +76,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return ResolveClassUtil.resolveClass((PsiJavaCodeReferenceElement)ref.getPsi());
   }
 
-  public PsiVariable resolveReferencedVariable(String referenceText, PsiElement context) {
+  public PsiVariable resolveReferencedVariable(@NotNull String referenceText, PsiElement context) {
     final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
     TreeElement ref = Parsing.parseJavaCodeReferenceText(myManager, referenceText, holderElement.getCharTable());
     if (ref == null) return null;
@@ -530,9 +529,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
             if (wildcardParam.isExtends()) {
               PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(boundClass, argClass, argResult.getSubstitutor());
               if (superSubstitutor != null) {
-                final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(boundClass);
-                while (iterator.hasNext()) {
-                  final PsiTypeParameter typeParameter = iterator.next();
+                for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(boundClass)) {
                   PsiType substituted = superSubstitutor.substitute(typeParameter);
                   if (substituted != null) {
                     Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(
@@ -545,9 +542,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
             else {
               PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(argClass, boundClass, boundResult.getSubstitutor());
               if (superSubstitutor != null) {
-                final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(argClass);
-                while (iterator.hasNext()) {
-                  final PsiTypeParameter typeParameter = iterator.next();
+                for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(argClass)) {
                   PsiType substituted = argResult.getSubstitutor().substitute(typeParameter);
                   if (substituted != null) {
                     Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(
@@ -577,9 +572,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       if (argClass != paramClass) return null;
 
       Pair<PsiType,ConstraintType> wildcardCaptured = null;
-      final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(paramClass);
-      while(iterator.hasNext()) {
-        final PsiTypeParameter typeParameter = iterator.next();
+      for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(paramClass)) {
         PsiType paramType = paramResult.getSubstitutor().substitute(typeParameter);
         PsiType argType = argResult.getSubstitutor().substituteWithBoundsPromotion(typeParameter);
 

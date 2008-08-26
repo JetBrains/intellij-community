@@ -116,7 +116,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     ArrayList<String> conflicts = new ArrayList<String>();
-    final Set<PsiMember> methods = Collections.singleton(((PsiMember)myMethod));
+    final Set<PsiMember> methods = Collections.singleton((PsiMember)myMethod);
     if (!myTargetClass.isInterface()) {
       final String original = VisibilityUtil.getVisibilityModifier(myMethod.getModifierList());
       conflicts.addAll(
@@ -371,18 +371,16 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     return calculateReplacementMap(substitutor, myTargetClass, myMethod);
   }
 
-  private Map<PsiTypeParameter, PsiTypeParameter> calculateReplacementMap(final PsiSubstitutor substitutor,
+  private static Map<PsiTypeParameter, PsiTypeParameter> calculateReplacementMap(final PsiSubstitutor substitutor,
                                                                           final PsiClass targetClass,
                                                                           final PsiElement containingElement) {
     final HashMap<PsiTypeParameter, PsiTypeParameter> result = new HashMap<PsiTypeParameter, PsiTypeParameter>();
-    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(targetClass);
-    while (iterator.hasNext()) {
-      final PsiTypeParameter classTypeParameter = iterator.next();
+    for (PsiTypeParameter classTypeParameter : PsiUtil.typeParametersIterable(targetClass)) {
       final PsiType substitution = substitutor.substitute(classTypeParameter);
       if (!(substitution instanceof PsiClassType)) return null;
       final PsiClass aClass = ((PsiClassType)substitution).resolve();
       if (!(aClass instanceof PsiTypeParameter)) return null;
-      final PsiTypeParameter methodTypeParameter = ((PsiTypeParameter)aClass);
+      final PsiTypeParameter methodTypeParameter = (PsiTypeParameter)aClass;
       if (methodTypeParameter.getOwner() != containingElement) return null;
       if (result.keySet().contains(methodTypeParameter)) return null;
       result.put(methodTypeParameter, classTypeParameter);

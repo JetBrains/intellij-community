@@ -15,7 +15,6 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -125,9 +124,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
           resurrected.put((PsiTypeParameter)element, entry.getValue().getType());
         }
       }
-      Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator((PsiClass) classElement);
-      while (iterator.hasNext()) {
-        PsiTypeParameter typeParameter = iterator.next();
+      for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable((PsiClass)classElement)) {
         if (!resurrected.containsKey(typeParameter)) {
           resurrected.put(typeParameter, null);
         }
@@ -202,9 +199,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
       }
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
       final HashMap<SmartPsiElementPointer, SmartTypePointer> map = new HashMap<SmartPsiElementPointer, SmartTypePointer>();
-      final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aClass);
-      while (iterator.hasNext()) {
-        PsiTypeParameter typeParameter = iterator.next();
+      for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
         final PsiType substitutionResult = substitutor.substitute(typeParameter);
         if (substitutionResult != null) {
           final SmartPsiElementPointer pointer = myPsiPointerManager.createSmartPsiElementPointer(typeParameter);

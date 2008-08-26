@@ -642,11 +642,9 @@ public final class PsiUtil extends PsiUtilBase {
       final PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
       final PsiClass aClass = result.getElement();
       if (aClass != null) {
-        Iterator<PsiTypeParameter> iterator = typeParametersIterator(aClass);
         final PsiSubstitutor substitutor = result.getSubstitutor();
         Map<PsiTypeParameter, PsiType> substitutionMap = null;
-        while(iterator.hasNext()) {
-          final PsiTypeParameter typeParameter = iterator.next();
+        for (PsiTypeParameter typeParameter : typeParametersIterable(aClass)) {
           final PsiType substituted = substitutor.substitute(typeParameter);
           if (substituted instanceof PsiWildcardType) {
             if (substitutionMap == null) substitutionMap = new HashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
@@ -660,7 +658,8 @@ public final class PsiUtil extends PsiUtilBase {
           return factory.createType(aClass, newSubstitutor);
         }
       }
-    } else if (type instanceof PsiArrayType) {
+    }
+    else if (type instanceof PsiArrayType) {
       return captureToplevelWildcards(((PsiArrayType)type).getComponentType(), context).createArrayType();
     }
 
@@ -706,7 +705,7 @@ public final class PsiUtil extends PsiUtilBase {
 
     private PsiTypeParameter myNext;
 
-      private TypeParameterIterator(PsiTypeParameterListOwner owner) {
+    private TypeParameterIterator(PsiTypeParameterListOwner owner) {
       myCurrentOwner = owner;
       obtainCurrentParams(owner);
       myNextObtained = false;
@@ -758,6 +757,13 @@ public final class PsiUtil extends PsiUtilBase {
   public static Iterator<PsiTypeParameter> typeParametersIterator(@NotNull PsiTypeParameterListOwner owner) {
     return new TypeParameterIterator(owner);
   }
+  public static Iterable<PsiTypeParameter> typeParametersIterable(@NotNull final PsiTypeParameterListOwner owner) {
+    return new Iterable<PsiTypeParameter>() {
+      public Iterator<PsiTypeParameter> iterator() {
+        return typeParametersIterator(owner);
+      }
+    };
+  }
 
   public static boolean canBeOverriden(PsiMethod method) {
     PsiClass parentClass = method.getContainingClass();
@@ -801,9 +807,7 @@ public final class PsiUtil extends PsiUtilBase {
   }
 
   public static boolean isRawSubstitutor (@NotNull PsiTypeParameterListOwner owner, PsiSubstitutor substitutor) {
-    final Iterator<PsiTypeParameter> iterator = typeParametersIterator(owner);
-    while (iterator.hasNext()) {
-      PsiTypeParameter parameter = iterator.next();
+    for (PsiTypeParameter parameter : typeParametersIterable(owner)) {
       if (substitutor.substitute(parameter) == null) return true;
     }
     return false;

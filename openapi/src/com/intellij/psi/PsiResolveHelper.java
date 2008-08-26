@@ -72,7 +72,7 @@ public interface PsiResolveHelper {
    * @return the resolve result, or null if the resolve was not successful.
    */
   @Nullable
-  PsiClass resolveReferencedClass(String referenceText, PsiElement context);
+  PsiClass resolveReferencedClass(@NotNull String referenceText, PsiElement context);
 
   /**
    * Resolves a reference to a variable, given the text of the reference and the context
@@ -83,7 +83,7 @@ public interface PsiResolveHelper {
    * @return the resolve result, or null if the resolve was not successful.
    */
   @Nullable
-  PsiVariable resolveReferencedVariable(String referenceText, PsiElement context);
+  PsiVariable resolveReferencedVariable(@NotNull String referenceText, PsiElement context);
 
   boolean isAccessible(@NotNull PsiMember member, @Nullable PsiModifierList modifierList,
                        @NotNull PsiElement place, @Nullable PsiClass accessObjectClass, @Nullable PsiElement currentFileResolveScope);

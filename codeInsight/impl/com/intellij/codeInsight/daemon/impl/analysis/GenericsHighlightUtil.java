@@ -546,9 +546,7 @@ public class GenericsHighlightUtil {
         if (operandClassType.isRaw()) return true;
         if (castClass.isInheritor(operandClass, true)) {
           PsiSubstitutor castSubstitutor = castResult.getSubstitutor();
-          final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(castClass);
-          while(iterator.hasNext()) {
-            final PsiTypeParameter typeParameter = iterator.next();
+          for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(castClass)) {
             PsiSubstitutor modifiedSubstitutor = castSubstitutor.put(typeParameter, null);
             PsiClassType otherType =
               JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(castClass, modifiedSubstitutor);

@@ -314,11 +314,9 @@ public class TypeConversionUtil {
   }
 
   private static boolean areSameArgumentTypes(PsiClass aClass, PsiSubstitutor substitutor1, PsiSubstitutor substitutor2) {
-    Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aClass);
-    while(iterator.hasNext()) {
-      PsiTypeParameter typeParam = iterator.next();
-      PsiType typeArg1 = substitutor1.substitute(typeParam);
-      PsiType typeArg2 = substitutor2.substitute(typeParam);
+    for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
+      PsiType typeArg1 = substitutor1.substitute(typeParameter);
+      PsiType typeArg2 = substitutor2.substitute(typeParameter);
       if (typeArg1 == null || typeArg2 == null) return true;
       if (typeArg1 instanceof PsiWildcardType || typeArg2 instanceof PsiWildcardType) return true;
       if (typeArg1 instanceof PsiCapturedWildcardType || typeArg2 instanceof PsiCapturedWildcardType) return true;

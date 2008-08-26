@@ -240,13 +240,8 @@ public class CodeInsightUtil {
             }
 
             PsiSubstitutor inheritorSubstitutor = PsiSubstitutor.EMPTY;
-            final Iterator<PsiTypeParameter> inheritorParamIter = PsiUtil.typeParametersIterator(inheritor);
-            while (inheritorParamIter.hasNext()) {
-              PsiTypeParameter inheritorParameter = inheritorParamIter.next();
-
-              final Iterator<PsiTypeParameter> baseParamIter = PsiUtil.typeParametersIterator(baseClass);
-              while (baseParamIter.hasNext()) {
-                PsiTypeParameter baseParameter = baseParamIter.next();
+            for (PsiTypeParameter inheritorParameter : PsiUtil.typeParametersIterable(inheritor)) {
+              for (PsiTypeParameter baseParameter : PsiUtil.typeParametersIterable(baseClass)) {
                 final PsiType substituted = superSubstitutor.substitute(baseParameter);
                 PsiType arg = baseSubstitutor.substitute(baseParameter);
                 if (arg instanceof PsiWildcardType) arg = ((PsiWildcardType)arg).getBound();

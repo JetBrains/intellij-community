@@ -8,7 +8,6 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -150,9 +149,7 @@ public class CanonicalTypes {
         return factory.createTypeFromText(myClassQName, context);
       }
       Map<PsiTypeParameter, PsiType> substMap = new HashMap<PsiTypeParameter,PsiType>();
-      final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aClass);
-      while (iterator.hasNext()) {
-        PsiTypeParameter typeParameter = iterator.next();
+      for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
         final String name = typeParameter.getName();
         final Type type = mySubstitutor.get(name);
         if (type != null) {
@@ -211,9 +208,7 @@ public class CanonicalTypes {
       } else {
         Map<String,Type> substMap = new HashMap<String,Type>();
         final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-        final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aClass);
-        while (iterator.hasNext()) {
-          PsiTypeParameter typeParameter = iterator.next();
+        for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
           final PsiType substType = substitutor.substitute(typeParameter);
           final String name = typeParameter.getName();
           if (substType == null) {

@@ -52,7 +52,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1 || !(elements[0] instanceof PsiMethod)) return;
-    final PsiMethod method = ((PsiMethod)elements[0]);
+    final PsiMethod method = (PsiMethod)elements[0];
     String message = null;
     if (method.isConstructor()) {
       message = RefactoringBundle.message("move.method.is.not.supported.for.constructors");

@@ -16,8 +16,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
-
 public class ChangeNewOperatorTypeFix implements IntentionAction {
   private final PsiType myType;
   private final PsiNewExpression myExpression;
@@ -115,13 +113,8 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
     PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
     if (superSubstitutor == null) return null;
     PsiSubstitutor inheritorSubstitutor = PsiSubstitutor.EMPTY;
-    final Iterator<PsiTypeParameter> inheritorParamIter = PsiUtil.typeParametersIterator(inheritor);
-    while (inheritorParamIter.hasNext()) {
-      PsiTypeParameter inheritorParameter = inheritorParamIter.next();
-
-      final Iterator<PsiTypeParameter> baseParamIter = PsiUtil.typeParametersIterator(baseClass);
-      while (baseParamIter.hasNext()) {
-        PsiTypeParameter baseParameter = baseParamIter.next();
+    for (PsiTypeParameter inheritorParameter : PsiUtil.typeParametersIterable(inheritor)) {
+      for (PsiTypeParameter baseParameter : PsiUtil.typeParametersIterable(baseClass)) {
         final PsiType substituted = superSubstitutor.substitute(baseParameter);
         PsiType arg = baseSubstitutor.substitute(baseParameter);
         if (arg instanceof PsiWildcardType) arg = ((PsiWildcardType)arg).getBound();

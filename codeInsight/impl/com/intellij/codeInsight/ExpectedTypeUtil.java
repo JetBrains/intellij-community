@@ -140,14 +140,13 @@ public class ExpectedTypeUtil {
     }
   }
 
-  public static @Nullable PsiSubstitutor inferSubstitutor(final PsiMethod method, final PsiMethodCallExpression callExpr, final boolean forCompletion) {
+  @Nullable
+  public static PsiSubstitutor inferSubstitutor(final PsiMethod method, final PsiMethodCallExpression callExpr, final boolean forCompletion) {
     final PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiExpression[] args = callExpr.getArgumentList().getExpressions();
     PsiSubstitutor result = PsiSubstitutor.EMPTY;
-    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(method.getContainingClass());
-    while(iterator.hasNext()) {
-      final PsiTypeParameter typeParameter = iterator.next();
+    for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(method.getContainingClass())) {
       PsiType type = helper.inferTypeForMethodTypeParameter(typeParameter, parameters, args, PsiSubstitutor.EMPTY, callExpr.getParent(), forCompletion);
       if (type == PsiType.NULL) return null;
       result = result.put(typeParameter, type);

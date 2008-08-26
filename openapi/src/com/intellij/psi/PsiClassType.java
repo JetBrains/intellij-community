@@ -16,13 +16,11 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Iterator;
 
 /**
  * Represents a class type.
@@ -92,14 +90,14 @@ public abstract class PsiClassType extends PsiType {
    */
   public boolean hasParameters() {
     final ClassResolveResult resolveResult = resolveGenerics();
-    if (resolveResult.getElement() == null) return false;
-    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(resolveResult.getElement());
-    if (!iterator.hasNext()) return false;
-    while (iterator.hasNext()) {
-      PsiTypeParameter parameter = iterator.next();
+    PsiClass aClass = resolveResult.getElement();
+    if (aClass == null) return false;
+    boolean hasParams = false;
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aClass)) {
       if (resolveResult.getSubstitutor().substitute(parameter) == null) return false;
+      hasParams = true;
     }
-    return true;
+    return hasParams;
   }
 
   /**
@@ -110,11 +108,9 @@ public abstract class PsiClassType extends PsiType {
    */
   public boolean hasNonTrivialParameters() {
     final ClassResolveResult resolveResult = resolveGenerics();
-    if (resolveResult.getElement() == null) return false;
-    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(resolveResult.getElement());
-    if (!iterator.hasNext()) return false;
-    while (iterator.hasNext()) {
-      PsiTypeParameter parameter = iterator.next();
+    PsiClass aClass = resolveResult.getElement();
+    if (aClass == null) return false;
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aClass)) {
       PsiType type = resolveResult.getSubstitutor().substitute(parameter);
       if (type != null) {
         if (!(type instanceof PsiWildcardType) || ((PsiWildcardType)type).getBound() != null) {
@@ -151,8 +147,8 @@ public abstract class PsiClassType extends PsiType {
    * any value to them. If a class does not have any type parameters, it cannot generate any raw type.
    */
   public static boolean isRaw(ClassResolveResult resolveResult) {
-    if (resolveResult.getElement() == null) return false;
-    return PsiUtil.isRawSubstitutor(resolveResult.getElement(), resolveResult.getSubstitutor());
+    PsiClass psiClass = resolveResult.getElement();
+    return psiClass != null && PsiUtil.isRawSubstitutor(psiClass, resolveResult.getSubstitutor());
   }
 
   /**

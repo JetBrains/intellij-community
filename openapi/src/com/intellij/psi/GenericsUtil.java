@@ -99,10 +99,8 @@ public class GenericsUtil {
         PsiClass aSuper = supers[i];
         PsiSubstitutor subst1 = TypeConversionUtil.getSuperClassSubstitutor(aSuper, aClass, classResolveResult1.getSubstitutor());
         PsiSubstitutor subst2 = TypeConversionUtil.getSuperClassSubstitutor(aSuper, bClass, classResolveResult2.getSubstitutor());
-        Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aSuper);
         PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-        while (iterator.hasNext()) {
-          PsiTypeParameter parameter = iterator.next();
+        for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aSuper)) {
           PsiType mapping1 = subst1.substitute(parameter);
           PsiType mapping2 = subst2.substitute(parameter);
 
@@ -269,10 +267,8 @@ public class GenericsUtil {
           PsiClass aClass = resolveResult.getElement();
           if (aClass == null) return classType;
           boolean toExtend = false;
-          Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aClass);
           PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-          while (iterator.hasNext()) {
-            PsiTypeParameter typeParameter = iterator.next();
+          for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
             PsiType typeArgument = resolveResult.getSubstitutor().substitute(typeParameter);
             if (typeArgument instanceof PsiCapturedWildcardType) toExtend = true;
             if (typeArgument instanceof PsiWildcardType &&

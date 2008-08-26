@@ -80,7 +80,7 @@ public class PsiCapturedWildcardType extends PsiType {
   }
 
   public PsiType getLowerBound () {
-    return myExistential.isSuper() ? myExistential.getBound() : PsiType.NULL;
+    return myExistential.isSuper() ? myExistential.getBound() : NULL;
   }
 
   public PsiType getUpperBound () {

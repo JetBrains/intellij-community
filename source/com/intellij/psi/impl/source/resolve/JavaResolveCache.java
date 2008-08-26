@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 public class JavaResolveCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.JavaResolveCache");
@@ -28,7 +29,7 @@ public class JavaResolveCache {
     return ServiceManager.getService(project, JavaResolveCache.class);
   }
 
-  private final ConcurrentWeakHashMap<PsiExpression, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<PsiExpression, PsiType>();
+  private final ConcurrentMap<PsiExpression, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<PsiExpression, PsiType>();
   private static final Key<ResolveCache.MapPair<PsiVariable, Object>> VAR_TO_CONST_VALUE_MAP_KEY = Key.create("ResolveCache.VAR_TO_CONST_VALUE_MAP_KEY");
 
   private final Map<PsiVariable,Object> myVarToConstValueMap1;

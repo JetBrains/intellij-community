@@ -159,13 +159,11 @@ public class ExtractSuperClassUtil {
   }
 
   public static PsiTypeParameter findTypeParameterInDerived(final PsiClass aClass, final String name) {
-    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aClass);
-    while(iterator.hasNext()) {
-      final PsiTypeParameter typeParameter = iterator.next();
+    for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
       if (name.equals(typeParameter.getName())) return typeParameter;
     }
 
-    LOG.assertTrue(false, "Cannot find type parameter");
+    LOG.error("Cannot find type parameter");
     return null;
   }
 }

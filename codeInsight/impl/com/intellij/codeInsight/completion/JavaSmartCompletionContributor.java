@@ -282,9 +282,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
                      final PsiSubstitutor currentSubstitutor =
                          TypeConversionUtil.getClassSubstitutor(typeClass, referencedClass, PsiSubstitutor.EMPTY);
-                     final Iterator baseParamIter = PsiUtil.typeParametersIterator(typeClass);
-                     while (baseParamIter.hasNext()) {
-                       final PsiTypeParameter parameter = (PsiTypeParameter)baseParamIter.next();
+                     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(typeClass)) {
                        final PsiType argSubstitution = substitutor.substitute(parameter);
                        final PsiType paramSubstitution = currentSubstitutor.substitute(parameter);
                        final PsiType substitution = resolveHelper

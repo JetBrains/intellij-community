@@ -8,7 +8,6 @@ import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -56,11 +55,9 @@ public class Util {
       PsiSubstitutor subst = result.getSubstitutor();
       PsiManager manager = aclass.getManager();
 
-      final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aclass);
       PsiSubstitutor newbst = PsiSubstitutor.EMPTY;
       boolean anyBottom = false;
-      while(iterator.hasNext()) {
-        final PsiTypeParameter typeParameter = iterator.next();
+      for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aclass)) {
         PsiType p = subst.substitute(typeParameter);
 
         if (p != null) {
@@ -117,9 +114,8 @@ public class Util {
         return true;
       }
 
-      final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(element);
-      while(iterator.hasNext()) {
-        final PsiType actual = subst.substitute(iterator.next());
+      for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(element)) {
+        final PsiType actual = subst.substitute(parameter);
         if (isRaw(actual, settings, false)) return true;
       }
 
@@ -226,10 +222,8 @@ public class Util {
       return params == null || params.contains(theClass);
     }
     else if (theClass.hasTypeParameters()) {
-      final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(theClass);
-
-      while(iterator.hasNext()) {
-        PsiType bound = theSubst.substitute(iterator.next());
+      for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(theClass)) {
+        PsiType bound = theSubst.substitute(parameter);
 
         if (bound != null && bindsTypeParameters(bound, params)) {
           return true;

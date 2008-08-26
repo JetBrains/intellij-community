@@ -96,11 +96,9 @@ public class PsiTypeVariableFactory {
                                    if (owner != null) {
                                      boolean found = false;
 
-                                     for (final Iterator<PsiTypeParameter> p = PsiUtil.typeParametersIterator(owner);
-                                          p.hasNext() && !found;) {
-                                       final PsiTypeParameter parm = p.next();
-
-                                       found = manager.areElementsEquivalent(parm, aClass);
+                                     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(owner)) {
+                                       found = manager.areElementsEquivalent(typeParameter, aClass);
+                                       if (found) break;
                                      }
 
                                      if (!found) {
@@ -115,9 +113,7 @@ public class PsiTypeVariableFactory {
                                    return Boolean.FALSE;
                                  }
 
-                                 final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aClass);
-                                 while (iterator.hasNext()) {
-                                   final PsiTypeParameter parm = iterator.next();
+                                 for (PsiTypeParameter parm : PsiUtil.typeParametersIterable(aClass)) {
                                    final PsiType type = aSubst.substitute(parm);
 
                                    if (type != null){

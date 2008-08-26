@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NonNls;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Iterator;
 
 /**
  * @author db
@@ -114,9 +113,8 @@ public class Result {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
     final PsiClass clazz = resolveResult.getElement();
     if (clazz != null) {
-      final Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator(clazz);
-      while (it.hasNext()) {
-        final PsiType t = resolveResult.getSubstitutor().substitute(it.next());
+      for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(clazz)) {
+        final PsiType t = resolveResult.getSubstitutor().substitute(typeParameter);
         if (t == Bottom.BOTTOM) return true;
       }
     }

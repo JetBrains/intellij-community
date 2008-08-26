@@ -235,10 +235,8 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
       factoryMethod.getParameterList().replace(myConstructor.getParameterList());
       factoryMethod.getThrowsList().replace(myConstructor.getThrowsList());
 
-      Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(myConstructor);
       Collection<String> names = new HashSet<String>();
-      while(iterator.hasNext()) {
-        PsiTypeParameter typeParameter = iterator.next();
+      for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(myConstructor)) {
         if (!names.contains(typeParameter.getName())) { //Otherwise type parameter is hidden in the constructor
           names.add(typeParameter.getName());
           factoryMethod.getTypeParameterList().addAfter(typeParameter, null);

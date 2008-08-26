@@ -280,10 +280,8 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       if (aClass == null) return classType;
-      final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aClass);
       final HashMap<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
-      while (iterator.hasNext()) {
-        PsiTypeParameter parameter = iterator.next();
+      for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aClass)) {
         PsiType type = resolveResult.getSubstitutor().substitute(parameter);
         if (type != null) {
           type = type.accept(this);
