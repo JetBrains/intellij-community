@@ -10,8 +10,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -57,6 +57,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
     return false;
   }
 
+
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
@@ -75,9 +76,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
       }
     });
 
-    PsiImportStaticStatement importStaticStatement = JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createImportStaticStatement(((PsiMember)resolved).getContainingClass(),
-                                                                                                                       ((PsiNamedElement)resolved).getName());
-    ((PsiJavaFile)file).getImportList().add(importStaticStatement);
+    ((PsiReferenceExpressionImpl)refExpr).bindToElementViaStaticImport(((PsiMember)resolved).getContainingClass(), ((PsiNamedElement)resolved).getName(), ((PsiJavaFile)file).getImportList());
 
     file.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -113,6 +112,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
               }
             }
           }
+          expression.putUserData(TEMP_REFERENT_USER_DATA, null);
         }
 
         super.visitReferenceExpression(expression);
