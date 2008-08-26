@@ -4,6 +4,8 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -28,10 +30,8 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.ParameterTablePanel;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
+import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
@@ -1191,7 +1191,17 @@ public class ExtractMethodProcessor implements MatchProvider {
           buffer.append(".");
         }
       }
-      CommonRefactoringUtil.showErrorMessage(myRefactoringName, buffer.toString(), myHelpId, myProject);
+      buffer.append("\nWould you like to Extract Method Object?");
+
+      String message = buffer.toString();
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
+      RefactoringMessageDialog dialog = new RefactoringMessageDialog(myRefactoringName, message, myHelpId, "OptionPane.errorIcon", true,
+                                                                     myProject);
+      dialog.show();
+      if (dialog.isOK()) {
+        new ExtractMethodObjectHandler().invoke(myProject, myEditor, myTargetClass.getContainingFile(), DataManager.getInstance().getDataContext());
+      }
     }
   }
 
