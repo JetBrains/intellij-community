@@ -891,7 +891,7 @@ public class LibraryTableEditor implements Disposable {
       final Class<? extends Object> elementsClass = getElementsClass(selectedElements);
       myRemoveButton.setEnabled(
         elementsClass != null &&
-        !(elementsClass.isAssignableFrom(ClassesElement.class) || elementsClass.equals(SourcesElement.class) || elementsClass.isAssignableFrom(JavadocElement.class))
+        !(elementsClass.isAssignableFrom(ClassesElement.class) || elementsClass.equals(SourcesElement.class) || elementsClass.isAssignableFrom(JavadocElement.class) || elementsClass.isAssignableFrom(AnnotationElement.class))
         && (myLibraryTableProvider.isLibraryTableEditable() || !elementsClass.isAssignableFrom(LibraryElement.class))
       );
       myRenameLibraryButton.setEnabled(selectedElements.length == 1 && elementsClass != null && elementsClass.equals(LibraryElement.class));

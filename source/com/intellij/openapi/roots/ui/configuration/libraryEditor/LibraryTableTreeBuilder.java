@@ -6,11 +6,10 @@ import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
-
-import org.jetbrains.annotations.NotNull;
 
 class LibraryTableTreeBuilder extends AbstractTreeBuilder {
   public LibraryTableTreeBuilder(JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure) {
@@ -25,8 +24,8 @@ class LibraryTableTreeBuilder extends AbstractTreeBuilder {
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     final Object element = nodeDescriptor.getElement();
     final Object rootElement = getTreeStructure().getRootElement();
-    return rootElement.equals(element) || (element instanceof ClassesElement) || (element instanceof SourcesElement) ||
-           (element instanceof JavadocElement);
+    return rootElement.equals(element) || element instanceof ClassesElement || element instanceof SourcesElement ||
+           element instanceof JavadocElement || element instanceof AnnotationElement;
   }
 
   protected boolean isSmartExpand() {
