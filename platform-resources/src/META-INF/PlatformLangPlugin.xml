@@ -2,6 +2,11 @@
   <id>com.intellij</id>
   <name>IDEA CORE</name>
 
+  <module value="com.intellij.modules.platform"/>
+  <module value="com.intellij.modules.lang"/>
+  <module value="com.intellij.modules.vcs"/>
+  <module value="com.intellij.modules.xdebugger"/>
+
   <extensionPoints>
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
     <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>

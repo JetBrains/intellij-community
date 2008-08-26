@@ -62,6 +62,8 @@ public class PluginManager {
   @NonNls public static final String PLUGIN_XML = "plugin.xml";
   @NonNls public static final String META_INF = "META-INF";
   private static final Map<PluginId,Integer> ourId2Index = new THashMap<PluginId, Integer>();
+  @NonNls private static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
+  private static List<String> ourAvailableModules = new ArrayList<String>();
 
   public static class Facade extends PluginsFacade {
     public IdeaPluginDescriptor getPlugin(PluginId id) {
@@ -145,9 +147,14 @@ public class PluginManager {
 
     final List<IdeaPluginDescriptorImpl> result = new ArrayList<IdeaPluginDescriptorImpl>();
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
+      if (descriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID)) {
+        ourAvailableModules.addAll(descriptor.getModules());
+      }
+
       if (!shouldSkipPlugin(descriptor, pluginDescriptors)) {
         result.add(descriptor);
-      } else {
+      }
+      else {
         descriptor.setEnabled(false);
         initClassLoader(parentLoader, descriptor);
       }
@@ -284,6 +291,11 @@ public class PluginManager {
       if (!shouldLoadPlugins()) return true;
     }
 
+    final boolean checkModuleDependencies = !ourAvailableModules.isEmpty();
+    if (checkModuleDependencies && !hasModuleDependencies(descriptor)) {
+      return true;
+    }
+
     boolean shouldLoad;
     //noinspection HardCodedStringLiteral
     final String loadPluginCategory = System.getProperty("idea.load.plugins.category");
@@ -298,8 +310,10 @@ public class PluginManager {
           for (final IdeaPluginDescriptor pluginDescriptor : loaded) {
             map.put(pluginDescriptor.getPluginId(), pluginDescriptor);
           }
+          addModulesAsDependents(map);
           final IdeaPluginDescriptor descriptorFromProperty = map.get(PluginId.getId(pluginId));
-          shouldLoad = descriptorFromProperty != null && isDependent(descriptorFromProperty, descriptor.getPluginId(), map);
+          shouldLoad = descriptorFromProperty != null && isDependent(descriptorFromProperty, descriptor.getPluginId(), map,
+                                                                     checkModuleDependencies);
         }
       } else {
         shouldLoad = !getDisabledPlugins().contains(idString);
@@ -309,17 +323,43 @@ public class PluginManager {
       }
     }
 
-
     return !shouldLoad;
   }
 
-  private static boolean isDependent(final IdeaPluginDescriptor descriptor, final PluginId on, Map<PluginId, IdeaPluginDescriptor> map) {
+  private static <T extends IdeaPluginDescriptor> void addModulesAsDependents(final Map<PluginId, T> map) {
+    for (String module : ourAvailableModules) {
+      // fake plugin descriptors to satisfy dependencies
+      map.put(PluginId.getId(module), (T) new IdeaPluginDescriptorImpl(null));
+    }
+  }
+
+  private static boolean hasModuleDependencies(final IdeaPluginDescriptor descriptor) {
+    final PluginId[] dependentPluginIds = descriptor.getDependentPluginIds();
+    for (PluginId dependentPluginId : dependentPluginIds) {
+      if (isModuleDependency(dependentPluginId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isModuleDependency(final PluginId dependentPluginId) {
+    return dependentPluginId.getIdString().startsWith(MODULE_DEPENDENCY_PREFIX);
+  }
+
+  private static boolean isDependent(final IdeaPluginDescriptor descriptor,
+                                     final PluginId on,
+                                     Map<PluginId, IdeaPluginDescriptor> map,
+                                     final boolean checkModuleDependencies) {
     for (PluginId id: descriptor.getDependentPluginIds()) {
+      if (!checkModuleDependencies && isModuleDependency(id)) {
+        return false;
+      }
       if (id.equals(on)) {
         return true;
       }
       final IdeaPluginDescriptor depDescriptor = map.get(id);
-      if (depDescriptor != null && isDependent(depDescriptor, on, map)) {
+      if (depDescriptor != null && isDependent(depDescriptor, on, map, checkModuleDependencies)) {
         return true;
       }
     }
@@ -543,6 +583,7 @@ public class PluginManager {
         idToDescriptorMap.put(id, descriptor);
       }
     }
+    addModulesAsDependents(idToDescriptorMap);
     final List<String> disabledPluginIds = new ArrayList<String>();
     for (final Iterator<IdeaPluginDescriptorImpl> it = result.iterator(); it.hasNext();) {
       final IdeaPluginDescriptorImpl pluginDescriptor = it.next();
@@ -604,6 +645,9 @@ public class PluginManager {
     final Set<PluginId> optionalDependencies = new HashSet<PluginId>(Arrays.asList(pluginDescriptor.getOptionalDependentPluginIds()));
     for (final PluginId dependentPluginId : dependentPluginIds) {
       if (processed.contains(dependentPluginId)) continue;
+      if (ourAvailableModules.isEmpty() && isModuleDependency(dependentPluginId)) {  // TODO[yole] should this condition be a parameter?
+        continue;
+      }
       if (!optionalDependencies.contains(dependentPluginId)) {
         if (!check.value(dependentPluginId)) {
           return false;

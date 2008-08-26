@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
@@ -19,13 +20,14 @@ import java.util.Stack;
  */
 public class PluginDescriptorComparator implements Comparator<IdeaPluginDescriptor>{
   private final TObjectIntHashMap<PluginId> myIdToNumberMap = new TObjectIntHashMap<PluginId>();
-  private int myAvailableNumber = 0;
+  private int myAvailableNumber = 1;
 
   public PluginDescriptorComparator(IdeaPluginDescriptor[] descriptors) throws Exception{
     final Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap = new HashMap<PluginId, IdeaPluginDescriptor>();
     for (final IdeaPluginDescriptor descriptor : descriptors) {
       idToDescriptorMap.put(descriptor.getPluginId(), descriptor);
     }
+    myIdToNumberMap.put(PluginId.getId(PluginManager.CORE_PLUGIN_ID), 0);
     
     final Stack<PluginId> visited = new Stack<PluginId>();
     for (int idx = 0; idx < descriptors.length && myIdToNumberMap.size() != descriptors.length; idx++) {

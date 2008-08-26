@@ -45,8 +45,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String myCategory;
   private String url;
   private File myPath;
-  private PluginId[] myDependencies;
-  private PluginId[] myOptionalDependencies;
+  private PluginId[] myDependencies = PluginId.EMPTY_ARRAY;
+  private PluginId[] myOptionalDependencies = PluginId.EMPTY_ARRAY;
   private Map<PluginId, String> myOptionalConfigs;
   private Map<PluginId, IdeaPluginDescriptorImpl> myOptionalDescriptors;
   @Nullable private Element myActionsElement = null;
@@ -69,6 +69,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String myUntilBuild;
 
   private Boolean mySkipped;
+
+  private List<String> myModules = null;
 
   public IdeaPluginDescriptorImpl(File pluginPath) {
     myPath = pluginPath;
@@ -197,6 +199,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     myActionsElement = pluginBean.actions;
+
+    if (pluginBean.modules != null) {
+      myModules = pluginBean.modules;
+    }
   }
 
   private static String loadDescription(final String descriptionChildText, @Nullable final ResourceBundle bundle, final PluginId id) {
@@ -580,5 +586,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public boolean isBundled() {
     return getPath().getAbsolutePath().startsWith(PathManager.getPreinstalledPluginsPath());
+  }
+
+  public List<String> getModules() {
+    return myModules;
   }
 }
