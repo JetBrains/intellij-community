@@ -95,7 +95,6 @@ def _searchbases(cls, accum):
     for x in cls.__bases__:
       _searchbases(x, accum)
 
-
 def getMRO(a_class):
   # logic copied from inspect.py
   "Returns a tuple of MRO classes."
@@ -103,13 +102,13 @@ def getMRO(a_class):
     return a_class.__mro__
   elif hasattr(a_class, "__bases__"):
     bases = []
-    _searchbases(cls, bases)
+    _searchbases(a_class, bases)
     return tuple(bases)
   else:
     return tuple()
 
 
-def getBases(a_class): # FIXME: test for classes that don't fit this scheme
+def getBases(a_class): # TODO: test for classes that don't fit this scheme
   "Returns a sequence of class's bases."
   if hasattr(a_class, "__bases__"):
     return a_class.__bases__
@@ -151,6 +150,9 @@ NUM_TYPES = (int, float)
 SIMPLEST_TYPES = NUM_TYPES + STR_TYPES + (types.NoneType,)
 EASY_TYPES = NUM_TYPES + STR_TYPES + (types.NoneType, dict, tuple, list)
 
+FAKE_CLASSOBJ_NAME = "___Classobj"
+BUILTIN_MOD_NAME = "__builtin__" # to avoid typos
+
 def isSaneRValue(x):
   return isinstance(x, EASY_TYPES)
   
@@ -160,7 +162,13 @@ def sanitizeIdent(x):
     return "p_" + x
   else:
     return x
-  
+
+doing_builtins = False
+
+class FakeClassObj:
+  "A mock class representing the old style class base."
+  __module__ = None
+
 
 class ModuleRedeclarator(object):
   
@@ -213,6 +221,12 @@ class ModuleRedeclarator(object):
       "last_traceback", "last_type", "last_value",
     ),
     "*":   ("__builtins__",)
+  }
+
+  # Some values are special and are better represented by hand-crafted constructs.
+  # Dict is keyed by (module name, member name) and value is the replacement.
+  REPLACE_MODULE_VALUES = {
+    (BUILTIN_MOD_NAME, "None"): "object()"
   }
   
   def isSkippedInModule(self, p_module, p_value):
@@ -317,7 +331,7 @@ class ModuleRedeclarator(object):
         
         
 
-  def redoFunction(self, p_func, p_name, indent, p_class=None):
+  def redoFunction(self, p_func, p_name, indent, p_class=None, p_modname=None):
     """
     Restore function argument list as best we can.
     @param p_func function or method object
@@ -325,6 +339,22 @@ class ModuleRedeclarator(object):
     @param indent indentation level
     @param p_class the class that contains this function as a method 
     """
+
+    def seemsToHaveSelf(reqargs):
+      """"
+      @param requargs a list of reuired arguments of a method
+      @return true if param_name looks like a 'self' parameter
+      """
+      if not reqargs:
+        return False
+      # handle special cases of builtins, like object.__new__
+      if doing_builtins and reqargs == ["S", "*more"]:
+        return True
+      else:
+        return reqargs[0] == "self" 
+
+    # real work
+    classname = p_class and p_class.__name__ or None
     if inspect and inspect.isfunction(p_func):
       args, varg, kwarg, defaults = inspect.getargspec(p_func)
       spec = []
@@ -343,12 +373,21 @@ class ModuleRedeclarator(object):
       self.out("def " + p_name + "(" + ", ".join(spec) + "): # reliably restored by inspect", indent);
       self.outDocAttr(p_func, indent+1)
       self.out("pass", indent+1);
+    elif doing_builtins and classname in ('list', 'dict') and p_modname == '__builtin__' and p_name == '__init__':
+      if classname == 'list':
+        self.out("def " + p_name + "(self, *args): # known special case of list", indent)
+      else:
+        self.out("def " + p_name + "(self, *args, **kwargs): # known special case of dict", indent)
+      self.outDocAttr(p_func, indent+1)
+      self.out("pass", indent+1);
+    elif doing_builtins and not p_class and p_modname == '__builtin__' and p_name in ('min', 'max'):
+      self.out("def " + p_name + "(self, *args): # known special case of " + p_name, indent)
+      self.outDocAttr(p_func, indent+1)
+      self.out("pass", indent+1);
     else:
       # __doc__ is our best source of arglist
       sig_note = "real signature unknown"
       spec = []
-      if p_class is not None:
-        spec.append("self")
       is_init = (p_name == "__init__" and p_class is not None)
       funcdoc = None
       if is_init and hasattr(p_class, "__doc__"):
@@ -358,6 +397,7 @@ class ModuleRedeclarator(object):
           funcdoc = p_class.__doc__
       elif hasattr(p_func, "__doc__"):
         funcdoc = p_func.__doc__
+      sig_restored = False
       if isinstance(funcdoc, STR_TYPES):  
         m = DOC_FUNC_RE.search(funcdoc)
         if m:
@@ -365,6 +405,7 @@ class ModuleRedeclarator(object):
           if matches[0] == p_name or is_init: 
             # they seem to really mention what we need
             sig_note = "restored from __doc__"
+            sig_restored = True
             reqargs = []
             optargs = []
             optargvals = [] # values of optional args, "=x" or "", one per optarg
@@ -415,22 +456,29 @@ class ModuleRedeclarator(object):
                     else:
                       defval = 'None'
                     optargvals.append("="+defval)
+              # we may be missng 'self' because doc comment omits it
+              if p_class:
+                if not reqargs or not seemsToHaveSelf(reqargs):
+                  reqargs.insert(0, "self")
+                else:
+                  if sig_note:
+                      sig_note += "; "
+                  sig_note += "considered " + reqargs[0] + " to be 'self'"
             # reconstruct the spec
             spec = reqargs + [n + v for (n, v) in zip(optargs, optargvals)]
-      else:
-        funcdoc = None
-      # here we could have an empty spec because the doc comment states so
-      if p_class and not spec:
+        else:
+          funcdoc = None
+      if not sig_restored:
+        # use an allow-all declaration
+        if p_class:
           spec.append("self")
-          if sig_note:
-              sig_note += "; "
-          sig_note += "added 'self'"
+        spec.append("*args")
+        spec.append("**kwargs")
       self.out("def " + p_name + "(" + ", ".join(spec) + "): # " + sig_note, indent);
       self.outDocstring(funcdoc, indent+1)
       self.out("pass", indent+1);
-      
-      
-  def redoClass(self, p_class, p_name, indent):
+
+  def redoClass(self, p_class, p_name, indent, p_modname=None):
     """
     Restores a class definition.
     @param p_class the class object
@@ -450,8 +498,16 @@ class ModuleRedeclarator(object):
       others = {}
       for item_name in p_class.__dict__:
         if item_name in ("__dict__", "__doc__", "__module__"):
-          continue
-        item =  p_class.__dict__[item_name]
+          # must be declared in base types
+          if p_modname == BUILTIN_MOD_NAME and p_name in ("object", FAKE_CLASSOBJ_NAME):
+            if item_name == "__dict__":
+              item = {}
+            else:
+              item = ""
+          else:
+            continue # in all other cases. must be skipped
+        else:
+          item =  p_class.__dict__[item_name]
         if isCallable(item):
           methods[item_name] = item
         elif isProperty(item):
@@ -461,7 +517,7 @@ class ModuleRedeclarator(object):
         #  
       for item_name in sortedNoCase(methods.keys()):
         item =  methods[item_name]
-        self.redoFunction(item, item_name, indent+1, p_class)
+        self.redoFunction(item, item_name, indent+1, p_class, p_modname)
         self.out("", 0) # empty line after each item
       #  
       for item_name in sortedNoCase(properties.keys()):
@@ -523,7 +579,7 @@ class ModuleRedeclarator(object):
       if imported_name is not None:
         reexports[item_name] = imported_name
       else:
-        if isinstance(item, type): # some classes are callable, so check them before functions
+        if isinstance(item, type) or item is FakeClassObj: # some classes are callable, check them before functions
           classes[item_name] = item
         elif isCallable(item):
           funcs[item_name] = item
@@ -563,7 +619,10 @@ class ModuleRedeclarator(object):
         else:
           prefix = ""
         # output
-        if self.isSkippedInModule(p_name, item_name):
+        replacement = self.REPLACE_MODULE_VALUES.get((p_name, item_name), None)
+        if replacement is not None:
+          self.out(item_name + " = " + replacement + " # real value of type "+ str(type(item)) + " replaced", 0);
+        elif self.isSkippedInModule(p_name, item_name):
           self.out(item_name + " = None # real value of type "+ str(type(item)) + " skipped", 0)
         else:
           self.fmtValue(item, 0, prefix = item_name + " = " )
@@ -575,7 +634,7 @@ class ModuleRedeclarator(object):
       self.out("", 0)
       for item_name in sortedNoCase(funcs.keys()):
         item = funcs[item_name]
-        self.redoFunction(item, item_name, 0)
+        self.redoFunction(item, item_name, 0, p_modname=p_name)
         self._defined[item_name] = True
         self.out("", 0) # empty line after each item
     else:
@@ -597,7 +656,7 @@ class ModuleRedeclarator(object):
         cls_list.insert(ins_index, (cls_name, getMRO(cls)))     
       for item_name in [cls_item[0] for cls_item in cls_list]:
         item = classes[item_name]
-        self.redoClass(item, item_name, 0)
+        self.redoClass(item, item_name, 0, p_modname=p_name)
         self._defined[item_name] = True
         self.out("", 0) # empty line after each item
     else:
@@ -608,7 +667,10 @@ class ModuleRedeclarator(object):
       self.out("", 0)
       for item_name in sortedNoCase(vars_complex.keys()):
         item = vars_complex[item_name]
-        if self.isSkippedInModule(p_name, item_name):
+        replacement = self.REPLACE_MODULE_VALUES.get((p_name, item_name), None)
+        if replacement is not None:
+          self.out(item_name + " = " + replacement + " # real value of type "+ str(type(item)) + " replaced", 0);
+        elif self.isSkippedInModule(p_name, item_name):
           self.out(item_name + " = None # real value of type "+ str(type(item)) + " skipped", 0);
         else:
           self.fmtValue(item, 0, prefix = item_name + " = " , as_name = item_name);
@@ -653,6 +715,7 @@ if __name__ == "__main__":
   # determine names
   names = fnames
   if '-b' in opts:
+    doing_builtins = True
     names.extend(sys.builtin_module_names)
     if '__main__' in names:
       names.remove('__main__') # we don't want ourselves processed
@@ -687,6 +750,9 @@ if __name__ == "__main__":
         file_mtime = os.path.exists(fname) and os.path.getmtime(fname) or 0.0
         if mod_mtime <= file_mtime:
           continue # skip the file
+      if doing_builtins and name == BUILTIN_MOD_NAME:
+        action = "grafting"
+        setattr(mod, FAKE_CLASSOBJ_NAME, FakeClassObj)
       action = "opening " + fname
       outfile = fopen(fname, "w")
       action = "restoring"
@@ -696,4 +762,4 @@ if __name__ == "__main__":
       outfile.close()
     except:
       sys.stderr.write("Failed to process " + name + " while " + action + "\n")
-      #raise
+      raise
