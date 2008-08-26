@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class ClassUtils {
 
     /** @noinspection StaticCollection*/
     private static final Set<PsiType> primitiveNumericTypes =
-            new HashSet<PsiType>(6);
+            new HashSet<PsiType>(7);
 
     /** @noinspection StaticCollection*/
     private static final Set<PsiType> integralTypes = new HashSet<PsiType>(5);
@@ -74,7 +74,6 @@ public class ClassUtils {
     }
 
     private ClassUtils() {
-        super();
     }
 
     public static boolean isSubclass(@Nullable PsiClass aClass,
@@ -109,34 +108,26 @@ public class ClassUtils {
         return immutableTypes.contains(className);
     }
 
-    public static boolean inSamePackage(@Nullable PsiClass class1,
-                                        @Nullable PsiClass class2) {
-        if (class1 == null || class2==null) {
+    public static boolean inSamePackage(@Nullable PsiElement element1,
+                                        @Nullable PsiElement element2) {
+        if (element1 == null || element2==null) {
             return false;
         }
-        final String className1 = class1.getQualifiedName();
-        if (className1 == null) {
+        final PsiFile containingFile1 = element1.getContainingFile();
+        if (!(containingFile1 instanceof PsiClassOwner)) {
             return false;
         }
-        final String className2 = class2.getQualifiedName();
-        if (className2 == null) {
+        final PsiClassOwner containingJavaFile1 =
+                (PsiClassOwner)containingFile1;
+        final String packageName1 = containingJavaFile1.getPackageName();
+        final PsiFile containingFile2 = element2.getContainingFile();
+        if (!(containingFile2 instanceof PsiClassOwner)) {
             return false;
         }
-        final int packageLength1 = className1.lastIndexOf((int) '.');
-        final String classPackageName1;
-        if (packageLength1 == -1) {
-            classPackageName1 = "";
-        } else {
-            classPackageName1 = className1.substring(0, packageLength1);
-        }
-        final int packageLength2 = className2.lastIndexOf((int) '.');
-        final String classPackageName2;
-        if (packageLength2 == -1) {
-            classPackageName2 = "";
-        } else {
-            classPackageName2 = className2.substring(0, packageLength2);
-        }
-        return classPackageName1.equals(classPackageName2);
+        final PsiClassOwner containingJavaFile2 =
+                (PsiClassOwner)containingFile2;
+        final String packageName2 = containingJavaFile2.getPackageName();
+        return packageName1.equals(packageName2);
     }
 
     public static boolean isFieldVisible(PsiField field, PsiClass fromClass) {

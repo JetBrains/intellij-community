@@ -354,7 +354,7 @@ public class ExpectedTypeUtils{
                 PsiSubstitutor substitutor = resolveResult.getSubstitutor();
                 if(element instanceof PsiField){
                     final PsiField field = (PsiField) element;
-                    if (!isVisibleFrom(field, referenceExpression)) {
+                    if (!isAccessibleFrom(field, referenceExpression)) {
                         return;
                     }
                     final PsiClass aClass = field.getContainingClass();
@@ -404,7 +404,7 @@ public class ExpectedTypeUtils{
             PsiMethod topSuper = null;
             for(PsiMethod superMethod : allMethods){
                 final PsiClass superClass=superMethod.getContainingClass();
-                if(!isVisibleFrom(superMethod, element)){
+                if(!isAccessibleFrom(superMethod, element)){
                     continue;
                 }
                 if(superClass.equals(aClass)){
@@ -440,8 +440,11 @@ public class ExpectedTypeUtils{
             return topSuper;
         }
 
-        private static boolean isVisibleFrom(PsiMember member,
+        private static boolean isAccessibleFrom(PsiMember member,
                                              PsiElement referencingLocation){
+            if(member.hasModifierProperty(PsiModifier.PUBLIC)){
+                return true;
+            }
             final PsiClass containingClass = member.getContainingClass();
             if (containingClass == null) {
                 return false;
@@ -451,16 +454,14 @@ public class ExpectedTypeUtils{
             if (referencingClass == null){
                 return false;
             }
-            if(referencingLocation.equals(containingClass)){
-                return true;
-            }
-            if(member.hasModifierProperty(PsiModifier.PUBLIC)){
+            if(referencingClass.equals(containingClass)){
                 return true;
             }
             if(member.hasModifierProperty(PsiModifier.PRIVATE)){
                 return false;
             }
-            return ClassUtils.inSamePackage(containingClass, referencingClass);
+            return ClassUtils.inSamePackage(containingClass, 
+                    referencingLocation);
         }
 
         private static boolean isArithmeticOperation(

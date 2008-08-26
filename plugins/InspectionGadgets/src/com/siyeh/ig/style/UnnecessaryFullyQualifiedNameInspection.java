@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,12 +49,13 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
     @SuppressWarnings("PublicField")
     public boolean m_ignoreJavadoc = false;
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.fully.qualified.name.display.name");
     }
 
+    @Override
     public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
@@ -62,12 +63,13 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
                 this, "m_ignoreJavadoc");
     }
 
-    @NotNull
+    @Override @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "unnecessary.fully.qualified.name.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos){
         return new UnnecessaryFullyQualifiedNameFix();
     }
@@ -108,6 +110,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
             if (packageName.equals("java.lang") ||
                     packageName.equals(filePackageName)) {
                 if (ImportUtils.hasOnDemandImportConflict(qualifiedName,
+                        file)) {
+                    addImport(importList, aClass);
+                } else if (ImportUtils.hasDefaultImportConflict(qualifiedName,
                         file)) {
                     addImport(importList, aClass);
                 }
@@ -196,6 +201,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new UnnecessaryFullyQualifiedNameVisitor();
     }
@@ -258,12 +264,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
             if(!text.equals(fqName)){
                 return;
             }
-            final PsiJavaFile javaFile =
-                    PsiTreeUtil.getParentOfType(reference, PsiJavaFile.class);
-            if (javaFile == null) {
-                return;
-            }
-            if (!ImportUtils.nameCanBeImported(fqName, javaFile)) {
+            if (!ImportUtils.nameCanBeImported(fqName, reference)) {
                 return;
             }
             registerError(reference);

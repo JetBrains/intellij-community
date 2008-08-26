@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,42 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.openapi.project.Project;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class ImportUtils{
 
     private ImportUtils(){
-        super();
     }
 
     public static boolean nameCanBeImported(@NotNull String fqName,
-                                            @NotNull PsiJavaFile file){
+                                            @NotNull PsiElement context){
+        final PsiClass containingClass = ClassUtils.getContainingClass(context);
+        if (containingClass != null) {
+            final String shortName = ClassUtil.extractClassName(fqName);
+            final PsiClass[] innerClasses = containingClass.getAllInnerClasses();
+            for (PsiClass innerClass : innerClasses) {
+                if (innerClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+                    continue;
+                }
+                if (innerClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+                    if (!ClassUtils.inSamePackage(innerClass, containingClass)) {
+                        continue;
+                    }
+                }
+                final String className = innerClass.getName();
+                if (shortName.equals(className)) {
+                    return false;
+                }
+            }
+        }
+        final PsiJavaFile file =
+                PsiTreeUtil.getParentOfType(context, PsiJavaFile.class);
+        if (file == null) {
+            return false;
+        }
         if(hasExactImportConflict(fqName, file)){
             return false;
         }
@@ -100,8 +125,7 @@ public class ImportUtils{
         }
         final PsiImportStatement[] importStatements =
                 imports.getImportStatements();
-        final int lastDotIndex = fqName.lastIndexOf((int) '.');
-        final String shortName = fqName.substring(lastDotIndex + 1);
+        final String shortName = ClassUtil.extractClassName(fqName);
         final String packageName = ClassUtil.extractPackageName(fqName);
         for(final PsiImportStatement importStatement : importStatements){
             if (!importStatement.isOnDemand()) {
@@ -130,15 +154,12 @@ public class ImportUtils{
                 if (!strict) {
                     return true;
                 }
-                final String qualifiedClassname = aClass.getQualifiedName();
+                final String qualifiedClassName = aClass.getQualifiedName();
                 final ClassReferenceVisitor visitor =
-                        new ClassReferenceVisitor(qualifiedClassname);
+                        new ClassReferenceVisitor(qualifiedClassName);
                 file.accept(visitor);
                 return visitor.isReferenceFound();
             }
-        }
-        if (hasDefaultImportConflict(fqName, file)) {
-            return true;
         }
         return hasJavaLangImportConflict(fqName, file);
     }
@@ -147,18 +168,22 @@ public class ImportUtils{
                                                    PsiJavaFile file) {
         final String shortName = ClassUtil.extractClassName(fqName);
         final String packageName = ClassUtil.extractPackageName(fqName);
-        final PsiManager manager = file.getManager();
         final String filePackageName = file.getPackageName();
-        if(!filePackageName.equals(packageName)){
-          final PsiPackage filePackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(filePackageName);
-            if(filePackage != null){
-                final PsiClass[] classes = filePackage.getClasses();
-                for (PsiClass aClass : classes) {
-                    final String className = aClass.getName();
-                    if(shortName.equals(className)){
-                        return true;
-                    }
-                }
+        if (filePackageName.equals(packageName)) {
+            return false;
+        }
+        final Project project = file.getProject();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiPackage filePackage =
+                psiFacade.findPackage(filePackageName);
+        if (filePackage == null) {
+            return false;
+        }
+        final PsiClass[] classes = filePackage.getClasses();
+        for (PsiClass aClass : classes) {
+            final String className = aClass.getName();
+            if(shortName.equals(className)){
+                return true;
             }
         }
         return false;
@@ -166,20 +191,23 @@ public class ImportUtils{
 
     public static boolean hasJavaLangImportConflict(String fqName,
                                                     PsiJavaFile file) {
-        final PsiManager manager = file.getManager();
         final String shortName = ClassUtil.extractClassName(fqName);
         final String packageName = ClassUtil.extractPackageName(fqName);
-        if(!HardcodedMethodConstants.JAVA_LANG.equals(packageName)){
-          final PsiPackage javaLangPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(HardcodedMethodConstants.JAVA_LANG);
-            if(javaLangPackage == null){
-                return false;
-            }
-            final PsiClass[] classes = javaLangPackage.getClasses();
-            for(final PsiClass aClass : classes){
-                final String className = aClass.getName();
-                if(shortName.equals(className)){
-                    return true;
-                }
+        if (HardcodedMethodConstants.JAVA_LANG.equals(packageName)) {
+            return false;
+        }
+        final Project project = file.getProject();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiPackage javaLangPackage =
+                psiFacade.findPackage(HardcodedMethodConstants.JAVA_LANG);
+        if(javaLangPackage == null){
+            return false;
+        }
+        final PsiClass[] classes = javaLangPackage.getClasses();
+        for(final PsiClass aClass : classes){
+            final String className = aClass.getName();
+            if(shortName.equals(className)){
+                return true;
             }
         }
         return false;
