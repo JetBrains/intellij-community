@@ -656,7 +656,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               }
             }
             else {
-              if (!isMarkedForRecompilation(projectId, getFileId(file))) {
+              final int fileId = getFileId(file);
+              if (fileId > 0 /*file is valid*/ && !isMarkedForRecompilation(projectId, fileId)) {
                 final SourceFileInfo srcInfo = loadSourceInfo(file);
                 if (srcInfo != null) {
                   addSourceForRecompilation(projectId, file, srcInfo);
