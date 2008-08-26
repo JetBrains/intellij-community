@@ -192,7 +192,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
     look.paintBorder(g, this);
   }
 
-  private ActionButtonLook getButtonLook() {
+  protected ActionButtonLook getButtonLook() {
     return myLook;
   }
 

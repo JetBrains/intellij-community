@@ -32,6 +32,7 @@ public abstract class ActionPlaces {
   public static final String EDITOR_TAB_POPUP = "EditorTabPopup";
   public static final String COMMANDER_POPUP = "CommanderPopup";
   public static final String COMMANDER_TOOLBAR = "CommanderToolbar";
+  public static final String CONTEXT_TOOLBAR = "ContextToolbar"; 
 
   public static final String PROJECT_VIEW_POPUP = "ProjectViewPopup";
   public static final String PROJECT_VIEW_TOOLBAR = "ProjectViewToolbar";

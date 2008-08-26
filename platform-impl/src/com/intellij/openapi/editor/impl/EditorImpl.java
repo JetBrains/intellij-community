@@ -188,6 +188,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int myLastBackgroundWidth;
   private static final boolean ourIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
   private JPanel myHeaderPanel;
+  private JLayeredPane myLayeredPane;
 
   private MouseEvent myInitialMouseEvent;
   private boolean myIgnoreMouseEventsConsequitiveToInitial;
@@ -216,6 +217,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCommandProcessor = CommandProcessor.getInstance();
 
     myEditorDocumentAdapter = new EditorDocumentAdapter();
+    myMouseMotionListeners = new CopyOnWriteArrayList<EditorMouseMotionListener>();
 
     myMarkupModelListener = new MarkupModelListener() {
       public void rangeHighlighterChanged(MarkupModelEvent event) {
@@ -294,7 +296,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       });
     }
-    myMouseMotionListeners = new CopyOnWriteArrayList<EditorMouseMotionListener>();
   }
 
   public boolean isViewer() {
@@ -424,6 +425,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent = new EditorComponentImpl(this);
 //    myStatusBar = new EditorStatusBarImpl();
 
+    myLayeredPane = new JLayeredPane() {
+      @Override
+      public void doLayout() {
+        final Component[] components = getComponents();
+        final Rectangle r = getBounds();
+        for (Component c : components) {
+          if (c instanceof JScrollPane) {
+            c.setBounds(0, 0, r.width, r.height);
+          } else {
+            final Dimension d = c.getPreferredSize();
+            final MyScrollBar scrollBar = getVerticalScrollBar();
+            c.setBounds(r.width - d.width - scrollBar.getWidth() - 30, 20, d.width, d.height);
+          }
+        }
+      }
+    };
+
     myScrollPane = new JScrollPane2() {
       protected void processMouseWheelEvent(MouseWheelEvent e) {
         if (mySettings.isWheelFontChangeEnabled()) {
@@ -493,7 +511,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 /*  Default mode till 1.4.0
  *   myScrollPane.getViewport().setScrollMode(JViewport.BLIT_SCROLL_MODE);
  */
-    myPanel.add(myScrollPane);
+    myLayeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
+    myPanel.add(myLayeredPane);
+
+    final JComponent contextMenu = new ContextMenuImpl(myScrollPane, this);
+    myLayeredPane.add(contextMenu, JLayeredPane.POPUP_LAYER);
+
+    //myPanel.add(myScrollPane);
 
     myEditorComponent.addKeyListener(new KeyAdapter() {
       public void keyTyped(KeyEvent event) {

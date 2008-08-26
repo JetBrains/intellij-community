@@ -157,18 +157,22 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
-  private ActionButton createToolbarButton(final AnAction action) {
+  public ActionButton createToolbarButton(final AnAction action, final ActionButtonLook look, final String place, final Presentation presentation, final Dimension minimumSize) {
     if (action.displayTextInToolbar()) {
-      return new ActionButtonWithText(action, myPresentationFactory.getPresentation(action), myPlace, DEFAULT_MINIMUM_BUTTON_SIZE);
+      return new ActionButtonWithText(action, presentation, place, minimumSize);
     }
 
-    final ActionButton actionButton = new ActionButton(action, myPresentationFactory.getPresentation(action), myPlace, myMinimumButtonSize) {
+    final ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
       protected DataContext getDataContext() {
-        return ActionToolbarImpl.this.getDataContext();
+        return getToolbarDataContext();
       }
     };
-    actionButton.setLook(myButtonLook);
+    actionButton.setLook(look);
     return actionButton;
+  }
+
+  private ActionButton createToolbarButton(final AnAction action) {
+    return createToolbarButton(action, myButtonLook, myPlace, myPresentationFactory.getPresentation(action), myMinimumButtonSize);
   }
 
   public void doLayout() {
@@ -682,6 +686,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   public void setTargetComponent(final JComponent component) {
     myTargetComponent = component;
+  }
+
+  protected DataContext getToolbarDataContext() {
+    return getDataContext();
   }
 
   protected DataContext getDataContext() {
