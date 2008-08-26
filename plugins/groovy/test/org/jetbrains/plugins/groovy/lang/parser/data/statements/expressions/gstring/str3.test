@@ -5,7 +5,4 @@ Groovy script
     PsiElement(Gstring begin)('"My $')
     Reference expression
       PsiElement(identifier)('str')
-    PsiElement(.)('.')
-    PsiErrorElement:Property selector expected
-      <empty list>
-    PsiElement(Gstring end)(' ing"')
+    PsiElement(Gstring end)('. ing"')

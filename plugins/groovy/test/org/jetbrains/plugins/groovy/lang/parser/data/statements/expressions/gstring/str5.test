@@ -6,12 +6,5 @@ Groovy script
   Compound Gstring
     PsiElement(Gstring begin)('"""My\n$')
     Reference expression
-      Reference expression
-        Reference expression
-          PsiElement(identifier)('a')
-        PsiElement(.)('.')
-        PsiElement(new line)('\n')
-        PsiElement(identifier)('b')
-      PsiElement(.)('.')
-      PsiElement(identifier)('c')
-    PsiElement(Gstring end)(' string """')
+      PsiElement(identifier)('a')
+    PsiElement(Gstring end)('.\nb.c string """')

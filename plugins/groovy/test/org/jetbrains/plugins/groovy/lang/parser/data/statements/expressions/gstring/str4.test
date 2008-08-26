@@ -7,10 +7,7 @@ Groovy script
     PsiElement(Gstring begin)('"""My $')
     Reference expression
       PsiElement(identifier)('string')
-    PsiElement(.)('.')
-    PsiErrorElement:Property selector expected
-      <empty list>
-    PsiElement(Gstring end)(''do' sometihng\n"""')
+    PsiElement(Gstring end)('.'do' sometihng\n"""')
   PsiElement(new line)('\n')
   Additive expression
     Literal
