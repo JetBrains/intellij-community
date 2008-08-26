@@ -532,7 +532,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub> implements Ps
       }
     }
 
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, false);
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, new HashSet<PsiClass>(), lastParent, place, false);
   }
 
   public PsiElement setName(@NotNull String newName) throws IncorrectOperationException{

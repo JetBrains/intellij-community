@@ -485,7 +485,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub> implemen
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, false);
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, new HashSet<PsiClass>(), lastParent, place, false);
   }
 
   public PsiElement getScope() {
