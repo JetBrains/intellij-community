@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
@@ -107,7 +108,8 @@ public class FormReferenceProvider extends PsiReferenceProvider implements Proje
   }
 
   private static void processReferences(final PsiPlainTextFile file, final PsiReferenceProcessor processor) {
-    final PsiFile _f = PsiFileFactory.getInstance(file.getProject()).createFileFromText("a.xml", file.getText());
+    final Project project = file.getProject();
+    final PsiFile _f = PsiFileFactory.getInstance(project).createFileFromText("a.xml", file.getText());
 
     final XmlFile xmlFile = (XmlFile)_f;
     final XmlDocument document = xmlFile.getDocument();
@@ -130,7 +132,7 @@ public class FormReferenceProvider extends PsiReferenceProvider implements Proje
       // reference to class
       final String className = classToBind.getValue().replace('$','.');
       final XmlAttributeValue valueElement = classToBind.getValueElement();
-      final PsiReference[] referencesByString = new JavaClassReferenceProvider().getReferencesByString(className, file, valueElement.getTextRange().getStartOffset() + 1);
+      final PsiReference[] referencesByString = new JavaClassReferenceProvider(project).getReferencesByString(className, file, valueElement.getTextRange().getStartOffset() + 1);
       if(referencesByString.length < 1){
         // There are no references there
         return;
@@ -186,7 +188,7 @@ public class FormReferenceProvider extends PsiReferenceProvider implements Proje
     // component class
     {
       if (clsAttribute != null) {
-        final JavaClassReferenceProvider provider = new JavaClassReferenceProvider();
+        final JavaClassReferenceProvider provider = new JavaClassReferenceProvider(tag.getProject());
         final PsiReference[] referencesByString = provider.getReferencesByString(classNameStr, file, clsAttribute.getValueElement().getTextRange().getStartOffset() + 1);
         if(referencesByString.length < 1){
           // There are no references there

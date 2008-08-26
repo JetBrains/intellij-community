@@ -39,12 +39,14 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
       return o2.getThird().compareTo(o1.getThird());
     }
   };
+  private final Project myProject;
 
   public static ReferenceProvidersRegistry getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ReferenceProvidersRegistry.class);
   }
 
-  private ReferenceProvidersRegistry() {
+  public ReferenceProvidersRegistry(Project project) {
+    myProject = project;
   }
 
   /**
@@ -103,6 +105,10 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
       binding.registerProvider(provider, pattern, priority);
       if (myBindingsMap.putIfAbsent(scope, binding) == null) break;
     }
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   /**

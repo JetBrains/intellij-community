@@ -4,10 +4,11 @@
  */
 package com.intellij.psi;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.StandardPatterns;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -31,5 +32,10 @@ public interface PsiReferenceRegistrar {
    * @param priority @see DEFAULT_PRIORITY, HIGHER_PRIORITY, LOWER_PRIORITY
    */
   <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern, @NotNull PsiReferenceProvider provider, double priority);
-  
+
+  /**
+   * Return the project to register providers for.
+   * @return project
+   */
+  Project getProject();
 }

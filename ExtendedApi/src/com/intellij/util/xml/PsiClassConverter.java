@@ -38,7 +38,7 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
   public PsiReference[] createReferences(GenericDomValue<PsiClass> genericDomValue, PsiElement element, ConvertContext context) {
 
     ExtendClass extendClass = genericDomValue.getAnnotation(ExtendClass.class);
-    final JavaClassReferenceProvider provider = new JavaClassReferenceProvider(getScope(genericDomValue));
+    final JavaClassReferenceProvider provider = new JavaClassReferenceProvider(getScope(genericDomValue), context.getPsiManager().getProject());
     if (extendClass != null) {
       if (!StringUtil.isEmpty(extendClass.value())) {
         provider.setOption(JavaClassReferenceProvider.EXTEND_CLASS_NAMES, new String[] {extendClass.value()});

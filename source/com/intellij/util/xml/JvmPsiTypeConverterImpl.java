@@ -7,6 +7,7 @@ package com.intellij.util.xml;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,8 +20,17 @@ import java.util.List;
 public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements CustomReferenceConverter<PsiType> {
   
   private static final BidirectionalMap<PsiType, Character> ourPrimitiveTypes = new BidirectionalMap<PsiType, Character>();
-  private static final JavaClassReferenceProvider JVM_REFERENCE_PROVIDER = new JavaClassReferenceProvider();
-  private static final JavaClassReferenceProvider REFERENCE_PROVIDER = new JavaClassReferenceProvider();
+  private final JavaClassReferenceProvider JVM_REFERENCE_PROVIDER;
+  private final JavaClassReferenceProvider REFERENCE_PROVIDER;
+
+  public JvmPsiTypeConverterImpl(final Project project) {
+    JVM_REFERENCE_PROVIDER = new JavaClassReferenceProvider(project);
+    REFERENCE_PROVIDER = new JavaClassReferenceProvider(project);
+    REFERENCE_PROVIDER.setSoft(true);
+
+    JVM_REFERENCE_PROVIDER.setOption(JavaClassReferenceProvider.JVM_FORMAT, Boolean.TRUE);
+    JVM_REFERENCE_PROVIDER.setSoft(true);
+  }
 
   static {
     ourPrimitiveTypes.put(PsiType.BYTE, 'B');
@@ -31,11 +41,6 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
     ourPrimitiveTypes.put(PsiType.LONG, 'L');
     ourPrimitiveTypes.put(PsiType.SHORT, 'S');
     ourPrimitiveTypes.put(PsiType.BOOLEAN, 'Z');
-
-    REFERENCE_PROVIDER.setSoft(true);
-
-    JVM_REFERENCE_PROVIDER.setOption(JavaClassReferenceProvider.JVM_FORMAT, Boolean.TRUE);
-    JVM_REFERENCE_PROVIDER.setSoft(true);
   }
 
   public PsiType fromString(final String s, final ConvertContext context) {

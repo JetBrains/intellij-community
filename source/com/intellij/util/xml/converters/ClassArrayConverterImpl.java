@@ -7,6 +7,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -16,9 +17,11 @@ import java.util.List;
  * User: Sergey.Vasiliev
  */
 public class ClassArrayConverterImpl extends ClassArrayConverter {
-   protected final JavaClassReferenceProvider myReferenceProvider =new JavaClassReferenceProvider();
 
-  public ClassArrayConverterImpl() {
+   protected final JavaClassReferenceProvider myReferenceProvider;
+
+  public ClassArrayConverterImpl(final Project project) {
+    myReferenceProvider =new JavaClassReferenceProvider(project);
     myReferenceProvider.setSoft(true);
     myReferenceProvider.setAllowEmpty(true);
   }

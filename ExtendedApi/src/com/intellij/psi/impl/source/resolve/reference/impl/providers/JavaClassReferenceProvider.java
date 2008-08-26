@@ -1,21 +1,26 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.reference.SoftReference;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -41,14 +46,32 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   @Nullable private Map<CustomizationKey, Object> myOptions;
   private boolean myAllowEmpty;
   @Nullable private final GlobalSearchScope myScope;
+  private final CachedValue<List<PsiElement>> myDefaltPackages;
 
 
-  public JavaClassReferenceProvider(GlobalSearchScope scope) {
+  public JavaClassReferenceProvider(GlobalSearchScope scope, final Project project) {
     myScope = scope;
+    myDefaltPackages = PsiManager.getInstance(project).getCachedValuesManager().createCachedValue(new CachedValueProvider<List<PsiElement>>() {
+      public Result<List<PsiElement>> compute() {
+        final List<PsiElement> psiPackages = new ArrayList<PsiElement>();
+        final String defPackageName = DEFAULT_PACKAGE.getValue(myOptions);
+        if (StringUtil.isNotEmpty(defPackageName)) {
+          final PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage(defPackageName);
+          if (defaultPackage != null) {
+            psiPackages.addAll(getSubPackages(defaultPackage));
+          }
+        }
+        final PsiPackage rootPackage = JavaPsiFacade.getInstance(project).findPackage("");
+        if (rootPackage != null) {
+          psiPackages.addAll(getSubPackages(rootPackage));
+        }
+        return Result.createSingleDependency(psiPackages, PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    }, false);
   }
 
-  public JavaClassReferenceProvider() {
-    this(null);
+  public JavaClassReferenceProvider(final Project project) {
+    this(null, project);
   }
 
   public <T> void setOption(CustomizationKey<T> option, T value) {
@@ -91,55 +114,29 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     return new JavaClassReferenceSet(str, position, offsetInPosition, false, this).getAllReferences();
   }
 
-  private static final SoftReference<List<PsiElement>> NULL_REFERENCE = new SoftReference<List<PsiElement>>(null);
-  private SoftReference<List<PsiElement>> myDefaultPackageContent = NULL_REFERENCE;
-  private Runnable myPackagesEraser = null;
-
   public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
     final ElementClassHint hint = processor.getHint(ElementClassHint.class);
     if (position == null) return;
     if (hint == null || hint.shouldProcess(PsiPackage.class) || hint.shouldProcess(PsiClass.class)) {
-      final List<PsiElement> cachedPackages = getDefaultPackages(position);
+      final List<PsiElement> cachedPackages = getDefaultPackages();
       for (final PsiElement psiPackage : cachedPackages) {
         if (!processor.execute(psiPackage, ResolveState.initial())) return;
       }
     }
   }
 
-  protected List<PsiElement> getDefaultPackages(PsiElement position) {
-    List<PsiElement> cachedPackages = myDefaultPackageContent.get();
-    if (cachedPackages == null) {
-      final List<PsiElement> psiPackages = new ArrayList<PsiElement>();
-      final PsiManager manager = position.getManager();
-      final BaseScopeProcessor processor = new BaseScopeProcessor() {
-        public boolean execute(PsiElement element, ResolveState state) {
-          psiPackages.add(element);
-          return true;
-        }
-      };
-      final String defPackageName = DEFAULT_PACKAGE.getValue(myOptions);
-      if (StringUtil.isNotEmpty(defPackageName)) {
-        final PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(defPackageName);
-        if (defaultPackage != null) {
-          defaultPackage.processDeclarations(processor, ResolveState.initial(), position, position);
-        }
+  protected List<PsiElement> getDefaultPackages() {
+    return myDefaltPackages.getValue();
+  }
+
+  private static Collection<PsiPackage> getSubPackages(final PsiPackage defaultPackage) {
+    return ContainerUtil.mapNotNull(defaultPackage.getSubPackages(), new NullableFunction<PsiPackage, PsiPackage>() {
+      public PsiPackage fun(final PsiPackage psiPackage) {
+        final String packageName = psiPackage.getName();
+        return JavaPsiFacade.getInstance(psiPackage.getProject()).getNameHelper()
+            .isIdentifier(packageName, PsiUtil.getLanguageLevel(psiPackage)) ? psiPackage : null;
       }
-      final PsiPackage rootPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
-      if (rootPackage != null) {
-        rootPackage.processDeclarations(processor, ResolveState.initial(), position, position);
-      }
-      if (myPackagesEraser == null) {
-        myPackagesEraser = new Runnable() {
-          public void run() {
-            myDefaultPackageContent = NULL_REFERENCE;
-          }
-        };
-      }
-      cachedPackages = psiPackages;
-      ((PsiManagerEx)manager).registerWeakRunnableToRunOnChange(myPackagesEraser);
-      myDefaultPackageContent = new SoftReference<List<PsiElement>>(cachedPackages);
-    }
-    return cachedPackages;
+    });
   }
 
   public void setOptions(@Nullable Map<CustomizationKey, Object> options) {

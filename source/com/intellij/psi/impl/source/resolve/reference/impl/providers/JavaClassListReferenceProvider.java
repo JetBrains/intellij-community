@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,14 +22,15 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
 
   @NonNls private static final Pattern PATTERN = Pattern.compile("([A-Za-z]\\w*\\s*([\\.\\$]\\s*[A-Za-z]\\w*\\s*)+)");
 
-  public JavaClassListReferenceProvider() {
-    setOption(JavaClassReferenceProvider.ADVANCED_RESOLVE, Boolean.TRUE);    
+  public JavaClassListReferenceProvider(final Project project) {
+    super(project);
+    setOption(JavaClassReferenceProvider.ADVANCED_RESOLVE, Boolean.TRUE);
   }
 
   @NotNull
   public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition){
     final Set<String> knownTopLevelPackages = new HashSet<String>();
-    final List<PsiElement> defaultPackages = getDefaultPackages(position);
+    final List<PsiElement> defaultPackages = getDefaultPackages();
     for (final PsiElement pack : defaultPackages) {
       if (pack instanceof PsiPackage) {
         knownTopLevelPackages.add(((PsiPackage)pack).getName());

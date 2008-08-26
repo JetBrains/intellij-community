@@ -21,7 +21,7 @@ public class PropertyValueImpl extends LeafPsiElement {
     String text = getText();
     String[] words = text.split("\\s");
     if (words.length == 0) return PsiReference.EMPTY_ARRAY;
-    return new JavaClassListReferenceProvider(){
+    return new JavaClassListReferenceProvider(getProject()){
       public boolean isSoft() {
         return true;
       }

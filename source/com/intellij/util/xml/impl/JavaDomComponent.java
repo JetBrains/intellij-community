@@ -25,9 +25,9 @@ public class JavaDomComponent extends AbstractProjectComponent{
 
     final ConverterManager converterManager = domManager.getConverterManager();
     converterManager.addConverter(PsiClass.class, new PsiClassConverter());
-    converterManager.addConverter(PsiType.class, new CanonicalPsiTypeConverterImpl());
-    converterManager.registerConverterImplementation(JvmPsiTypeConverter.class, new JvmPsiTypeConverterImpl());
-    converterManager.registerConverterImplementation(CanonicalPsiTypeConverter.class, new CanonicalPsiTypeConverterImpl());
+    converterManager.addConverter(PsiType.class, new CanonicalPsiTypeConverterImpl(project));
+    converterManager.registerConverterImplementation(JvmPsiTypeConverter.class, new JvmPsiTypeConverterImpl(project));
+    converterManager.registerConverterImplementation(CanonicalPsiTypeConverter.class, new CanonicalPsiTypeConverterImpl(project));
 
     final ClassValueConverter classValueConverter = ClassValueConverter.getClassValueConverter(myProject);
     converterManager.registerConverterImplementation(ClassValueConverter.class, classValueConverter);

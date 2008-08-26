@@ -6,6 +6,7 @@ package com.intellij.util.xml;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
@@ -22,10 +23,14 @@ import org.jetbrains.annotations.NotNull;
 */
 public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter implements CustomReferenceConverter<PsiType> {
 
-  private static final JavaClassReferenceProvider REFERENCE_PROVIDER = new JavaClassReferenceProvider();
+  private final JavaClassReferenceProvider REFERENCE_PROVIDER;
   @NonNls private static final String[] PRIMITIVES = new String[]{"boolean", "byte",
     "char", "double", "float", "int", "long", "short"};
   @NonNls private static final String ARRAY_PREFIX = "[L";
+
+  public CanonicalPsiTypeConverterImpl(final Project project) {
+    REFERENCE_PROVIDER = new JavaClassReferenceProvider(project);
+  }
 
   public PsiType fromString(final String s, final ConvertContext context) {
     if (s == null) return null;

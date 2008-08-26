@@ -6,15 +6,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.converters.values.ClassValueConverter;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: Sergey.Vasiliev
  */
 public class ClassValueConverterImpl extends ClassValueConverter {
-  protected final JavaClassReferenceProvider myReferenceProvider =new JavaClassReferenceProvider();
+  
+  protected final JavaClassReferenceProvider myReferenceProvider;
 
-  public ClassValueConverterImpl() {
+  public ClassValueConverterImpl(final Project project) {
+    myReferenceProvider =new JavaClassReferenceProvider(project);
     myReferenceProvider.setSoft(true);
     myReferenceProvider.setAllowEmpty(true);
   }
