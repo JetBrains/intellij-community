@@ -8,14 +8,15 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
@@ -63,6 +64,8 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   @NonNls private static final String MAP_TYPE_TEXT = "Map";
   @NonNls private static final String[] MY_POSSIBLE_NAMES = new String[]{"attrs", "args", "params", "map"};
 
+  private static final Key<Boolean> hasFirstMapParameter = Key.create("maethod.has.first.map.parameter");
+
   protected void processIntention(@NotNull final PsiElement element) throws IncorrectOperationException {
     final Project project = element.getProject();
     // Method or closure to be refactored
@@ -99,19 +102,24 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       }
       case IS_NOT_MAP: {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          String[] possibleNames = generateValidNames(MY_POSSIBLE_NAMES, firstParam);
-          final GroovyMapParameterDialog dialog = new GroovyMapParameterDialog(project, possibleNames);
-          dialog.show();
-          if (dialog.isOK()) {
-            String name = dialog.getEnteredName();
-            ArrayList<String> conflicts = new ArrayList<String>();
-            GroovyValidationUtil.validateNewParameterName(firstParam, conflicts, name);
-            if (reportConflicts(conflicts, project)) {
-              performRefactoring(element, owner, occurrences, true, name, dialog.specifyTypeExplicitly());
+          Boolean data = owner.getUserData(hasFirstMapParameter);
+          if (data == null || !data.booleanValue()) {
+            String[] possibleNames = generateValidNames(MY_POSSIBLE_NAMES, firstParam);
+            final GroovyMapParameterDialog dialog = new GroovyMapParameterDialog(project, possibleNames);
+            dialog.show();
+            if (dialog.isOK()) {
+              String name = dialog.getEnteredName();
+              ArrayList<String> conflicts = new ArrayList<String>();
+              GroovyValidationUtil.validateNewParameterName(firstParam, conflicts, name);
+              if (reportConflicts(conflicts, project)) {
+                performRefactoring(element, owner, occurrences, true, name, dialog.specifyTypeExplicitly());
+              }
             }
+          } else {
+            performRefactoring(element, owner, occurrences, false, null, false);
           }
         } else {
-          //todo add statictic manager
+          //todo add statictics manager
           performRefactoring(element, owner, occurrences, true,
                              (new GroovyValidationUtil.ParameterNameSuggester("attrs", firstParam)).generateName(), false);
         }
@@ -144,12 +152,15 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     final Project project = element.getProject();
     final Runnable runnable = new Runnable() {
       public void run() {
+        boolean doCreate = createNewFirstParam;
         final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
         final GrParameterList list = owner.getParameterList();
         assert list != null;
         final int index = list.getParameterNumber(param);
         final int newIndex = createNewFirstParam ? index : index - 1;
-        assert newIndex >= 0;
+        if (!doCreate && index <= 0) { // bad undo
+          return;
+        }
 
         //Replace of occurrences of old parameter in closure/method
         final Collection<PsiReference> references = ReferencesSearch.search(param).findAll();
@@ -163,7 +174,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         }
 
         //Add new map parameter to closure/method if it's necessary
-        if (createNewFirstParam) {
+        if (doCreate) {
           try {
             final GrParameter newParam = factory.createParameter(mapName, specifyMapType ? MAP_TYPE_TEXT : "", null);
             list.addParameterToHead(newParam);
@@ -203,6 +214,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
+        owner.putUserData(hasFirstMapParameter, true);
       }
     };
 
