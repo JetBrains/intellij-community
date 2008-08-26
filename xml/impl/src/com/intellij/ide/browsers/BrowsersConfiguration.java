@@ -16,11 +16,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -208,18 +209,16 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
           command = new String[]{"open", "-a", path, url};
         }
         if (SystemInfo.isWindows9x) {
-          if (path.indexOf('\\') == -1) {
-
-          }
-          else {
+          if (path.indexOf(File.separatorChar) != -1) {
+            command = new String[]{path, url};
+          } else {
             command = new String[]{"command.com", "/c", "start", path, url};
           }
         }
         else if (SystemInfo.isWindows) {
-          if (path.indexOf('\\') == -1) {
-
-          }
-          else {
+          if (path.indexOf(File.separatorChar) != -1) {
+            command = new String[]{path, url};
+          } else {
             command = new String[]{"cmd.exe", "/c", "start", path, url};
           }
         }
