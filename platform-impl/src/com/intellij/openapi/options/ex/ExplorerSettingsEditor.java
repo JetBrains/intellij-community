@@ -700,7 +700,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        ((ShowSettingsUtilImpl)ShowSettingsUtil.getInstance()).showControlPanelOptions(myProject, myGroups, null);
+        ShowSettingsUtilImpl.showControlPanelOptions(myProject, myGroups, null);
       }
     }, ModalityState.NON_MODAL);
   }

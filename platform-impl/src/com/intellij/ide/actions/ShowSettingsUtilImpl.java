@@ -42,14 +42,14 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     return groups.toArray(new ConfigurableGroup[groups.size()]);
   }
 
-  public void showControlPanelOptions(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
+  public static void showControlPanelOptions(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     PropertiesComponent.getInstance().setValue(PREFER_CLASSIC_OPTIONS_EDITOR, Boolean.toString(false));
 
     ControlPanelSettingsEditor editor = new ControlPanelSettingsEditor(project, groups, preselectedConfigurable);
     editor.show();
   }
 
-  public void showExplorerOptions(Project project, ConfigurableGroup[] group) {
+  public static void showExplorerOptions(Project project, ConfigurableGroup[] group) {
     PropertiesComponent.getInstance().setValue(PREFER_CLASSIC_OPTIONS_EDITOR, Boolean.toString(true));
     ExplorerSettingsEditor editor = new ExplorerSettingsEditor(project, group);
     editor.show();

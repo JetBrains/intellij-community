@@ -276,7 +276,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
           public void run() {
             if (myGlassPanel == null) return;
             myGlassPanel.clear();
-            final @NonNls String searchPattern = mySearchField.getText();
+            @NonNls final String searchPattern = mySearchField.getText();
             if (searchPattern != null && searchPattern.length() > 0) {
               myOptionContainers = optionsRegistrar.getConfigurables(myGroups, e.getType(), myOptionContainers, searchPattern,
                                                                      myProject);
@@ -347,11 +347,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
 
       String displayName = myConfigurable.getDisplayName();
 
-      LabeledIcon labeledIcon = new LabeledIcon(icon, displayName,
-                                                myShortcut == null
-                                                ? null
-                                                : " (" + KeyEvent.getKeyText(myShortcut.getKeyCode()) + ")");
-      return labeledIcon;
+      return new LabeledIcon(icon, displayName, myShortcut == null ? null : " (" + KeyEvent.getKeyText(myShortcut.getKeyCode()) + ")");
     }
 
     public Dimension getPreferredSize() {
@@ -451,7 +447,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            ((ShowSettingsUtilImpl)ShowSettingsUtil.getInstance()).showExplorerOptions(myProject, myGroups);
+            ShowSettingsUtilImpl.showExplorerOptions(myProject, myGroups);
           }
         }, ModalityState.NON_MODAL);
     }
