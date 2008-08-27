@@ -141,6 +141,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             ActionToolbar actionToolbar = actionManager.createActionToolbar(
                     ThumbnailViewActions.ACTION_PLACE, actionGroup, true
             );
+            actionToolbar.setTargetComponent(this);
 
             JComponent toolbar = actionToolbar.getComponent();
 

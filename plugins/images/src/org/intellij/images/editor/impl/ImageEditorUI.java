@@ -112,6 +112,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
         ActionToolbar actionToolbar = actionManager.createActionToolbar(
                 ImageEditorActions.ACTION_PLACE, actionGroup, true
         );
+        actionToolbar.setTargetComponent(this);
 
         JComponent toolbarPanel = actionToolbar.getComponent();
         toolbarPanel.addMouseListener(new FocusRequester());
