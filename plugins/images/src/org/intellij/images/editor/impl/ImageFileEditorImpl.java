@@ -17,8 +17,6 @@ package org.intellij.images.editor.impl;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
@@ -27,7 +25,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.intellij.images.editor.ImageEditor;
-import org.intellij.images.editor.ImageEditorManager;
 import org.intellij.images.editor.ImageFileEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.options.*;
@@ -49,8 +46,7 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     private final ImageEditor imageEditor;
 
     ImageFileEditorImpl(Project project, VirtualFile file) {
-        ImageEditorManager imageEditorManager = getImageEditorManager();
-        imageEditor = imageEditorManager.createImageEditor(project, file);
+        imageEditor = ImageEditorManagerImpl.createImageEditor(project, file);
 
         // Append file listener
         VirtualFileManager.getInstance().addVirtualFileListener(imageEditor);
@@ -62,11 +58,6 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
         TransparencyChessboardOptions transparencyChessboardOptions = editorOptions.getTransparencyChessboardOptions();
         imageEditor.setGridVisible(gridOptions.isShowDefault());
         imageEditor.setTransparencyChessboardVisible(transparencyChessboardOptions.isShowDefault());
-    }
-
-    private static ImageEditorManager getImageEditorManager() {
-        Application application = ApplicationManager.getApplication();
-        return application.getComponent(ImageEditorManager.class);
     }
 
     @NotNull
@@ -136,8 +127,7 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
 
     public void dispose() {
         VirtualFileManager.getInstance().removeVirtualFileListener(imageEditor);
-        ImageEditorManager imageEditorManager = getImageEditorManager();
-        imageEditorManager.releaseImageEditor(imageEditor);
+        ImageEditorManagerImpl.releaseImageEditor(imageEditor);
     }
 
     public ImageEditor getImageEditor() {

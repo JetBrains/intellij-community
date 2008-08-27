@@ -15,48 +15,53 @@
  */
 package org.intellij.images.options.impl;
 
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.RoamingTypeDisabled;
+import com.intellij.openapi.util.WriteExternalException;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Options configurable manager.
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class OptionsManagerImpl extends OptionsManager implements NamedJDOMExternalizable, ApplicationComponent, RoamingTypeDisabled {
-    @NonNls private static final String CONFIGURATION_NAME = "images.support";
-    @NonNls private static final String NAME = "Images.OptionsManager";
-    private Options options = new OptionsImpl();
-
-    @NotNull
-    public String getComponentName() {
-        return NAME;
+@State(
+    name = "Images.OptionsManager",
+    storages = {
+        @Storage(
+            id = "other",
+            file = "$APP_CONFIG$/images.support.xml")
     }
+)
+final class OptionsManagerImpl extends OptionsManager implements PersistentStateComponent<Element>, RoamingTypeDisabled {
+  private OptionsImpl options = new OptionsImpl();
 
-    public void initComponent() {
-    }
+  public Options getOptions() {
+    return options;
+  }
 
-    public void disposeComponent() {
+  public Element getState() {
+    Element element = new Element("state");
+    try {
+      options.writeExternal(element);
     }
+    catch (WriteExternalException e) {
+      throw new RuntimeException(e);
+    }
+    return element;
+  }
 
-    public void readExternal(Element element) throws InvalidDataException {
-        ((JDOMExternalizable)options).readExternal(element);
+  public void loadState(final Element state) {
+    try {
+      options.readExternal(state);
     }
-
-    public void writeExternal(Element element) throws WriteExternalException {
-        ((JDOMExternalizable)options).writeExternal(element);
+    catch (InvalidDataException e) {
+      throw new RuntimeException(e);
     }
-
-    public Options getOptions() {
-        return options;
-    }
-
-    public String getExternalFileName() {
-        return CONFIGURATION_NAME;
-    }
+  }
 }

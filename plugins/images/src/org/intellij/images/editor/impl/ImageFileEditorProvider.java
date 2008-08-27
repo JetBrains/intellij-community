@@ -15,11 +15,10 @@
  */
 package org.intellij.images.editor.impl;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -30,25 +29,13 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageFileEditorProvider implements ApplicationComponent, FileEditorProvider {
-    @NonNls private static final String NAME = "ImageEditorProvider";
+final class ImageFileEditorProvider implements FileEditorProvider {
     @NonNls private static final String EDITOR_TYPE_ID = "images";
 
     private final ImageFileTypeManager typeManager;
 
     ImageFileEditorProvider(ImageFileTypeManager typeManager) {
         this.typeManager = typeManager;
-    }
-
-    @NotNull
-    public String getComponentName() {
-        return NAME;
-    }
-
-    public void initComponent() {
-    }
-
-    public void disposeComponent() {
     }
 
     public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {

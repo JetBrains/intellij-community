@@ -14,32 +14,20 @@
     <extensions defaultExtensionNs="com.intellij">
         <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
         <applicationConfigurable implementation="org.intellij.images.options.impl.OptionsConfigurabe"/>
+        <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
+        <selectInTarget implementation="org.intellij.images.thumbnail.impl.ThumbnailSelectInTarget"/>
+        <applicationService serviceInterface="org.intellij.images.options.OptionsManager"
+                            serviceImplementation="org.intellij.images.options.impl.OptionsManagerImpl"/>
+        <projectService serviceInterface="org.intellij.images.thumbnail.ThumbnailManager"
+                        serviceImplementation="org.intellij.images.thumbnail.impl.ThumbnailManagerImpl"/>
     </extensions>
 
     <application-components>
         <component>
-            <interface-class>org.intellij.images.options.OptionsManager</interface-class>
-            <implementation-class>org.intellij.images.options.impl.OptionsManagerImpl</implementation-class>
-        </component>
-        <component>
             <interface-class>org.intellij.images.fileTypes.ImageFileTypeManager</interface-class>
             <implementation-class>org.intellij.images.fileTypes.impl.ImageFileTypeManagerImpl</implementation-class>
         </component>
-        <component>
-            <interface-class>org.intellij.images.editor.ImageEditorManager</interface-class>
-            <implementation-class>org.intellij.images.editor.impl.ImageEditorManagerImpl</implementation-class>
-        </component>
-        <component>
-            <implementation-class>org.intellij.images.editor.impl.ImageFileEditorProvider</implementation-class>
-        </component>
     </application-components>
-    <project-components>
-        <component>
-            <interface-class>org.intellij.images.thumbnail.ThumbnailManager</interface-class>
-            <implementation-class>org.intellij.images.thumbnail.impl.ThumbnailManagerImpl</implementation-class>
-            <headless-implementation-class></headless-implementation-class>
-        </component>
-    </project-components>
 
     <actions>
         <action class="org.intellij.images.actions.EditExternalyAction"

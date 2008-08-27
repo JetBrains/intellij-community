@@ -15,8 +15,7 @@
  */
 package org.intellij.images.options;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 
 /**
  * Options manager.
@@ -32,7 +31,6 @@ public abstract class OptionsManager {
     public abstract Options getOptions();
 
     public static OptionsManager getInstance() {
-        Application application = ApplicationManager.getApplication();
-        return application.getComponent(OptionsManager.class);
+        return ServiceManager.getService(OptionsManager.class);
     }
 }

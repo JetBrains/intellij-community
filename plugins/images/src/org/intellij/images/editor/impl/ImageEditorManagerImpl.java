@@ -15,41 +15,40 @@
  */
 package org.intellij.images.editor.impl;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.editor.ImageEditor;
-import org.intellij.images.editor.ImageEditorManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Image viewer manager implementation.
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageEditorManagerImpl implements ImageEditorManager, ApplicationComponent {
-    @NonNls private static final String NAME = "ImageEditorManager";
+final class ImageEditorManagerImpl {
+  private ImageEditorManagerImpl() {
+  }
 
-    @NotNull
-    public String getComponentName() {
-        return NAME;
-    }
+  /**
+   * Create image viewer editor. Don't forget release editor by {@link #releaseImageEditor(ImageEditor)} method.
+   *
+   * @param project Project
+   * @param file    File
+   * @return Image editor for file
+   */
+  @NotNull
+  public static ImageEditor createImageEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    return new ImageEditorImpl(project, file);
+  }
 
-    public void initComponent() {
+  /**
+   * Release editor. Disposing caches and other resources allocated in creation.
+   *
+   * @param editor Editor to release.
+   */
+  public static void releaseImageEditor(@NotNull ImageEditor editor) {
+    if (!editor.isDisposed()) {
+      editor.dispose();
     }
-
-    public void disposeComponent() {
-    }
-
-    @NotNull
-    public ImageEditor createImageEditor(@NotNull Project project, @NotNull VirtualFile file) {
-        return new ImageEditorImpl(project, file);
-    }
-
-    public void releaseImageEditor(@NotNull ImageEditor editor) {
-        if (!editor.isDisposed()) {
-            editor.dispose();
-        }
-    }
+  }
 }
