@@ -15,9 +15,8 @@
 
 package org.jetbrains.plugins.groovy;
 
+import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.fileType.GspFileType;
 
@@ -25,7 +24,7 @@ import org.jetbrains.plugins.grails.fileType.GspFileType;
  * @author ilyas
  */
 public class GroovyFileTypeLoader extends FileTypeFactory{
-  public void createFileTypes(@NotNull PairConsumer<FileType, String> consumer) {
+  public void createFileTypes(@NotNull FileTypeConsumer consumer) {
     consumer.consume(GroovyFileType.GROOVY_FILE_TYPE, GroovyFileType.DEFAULT_EXTENSION);
     consumer.consume(GspFileType.GSP_FILE_TYPE, GspFileType.GSP_EXTENSION);
   }
