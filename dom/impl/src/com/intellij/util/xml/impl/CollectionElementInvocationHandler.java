@@ -5,6 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.events.ElementChangedEvent;
 import org.jetbrains.annotations.NotNull;
@@ -72,5 +73,11 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
         return null;
       }
     });
+  }
+
+  @Override
+  public int hashCode() {
+    final XmlElement element = getXmlElement();
+    return element == null ? super.hashCode() : element.hashCode();
   }
 }
