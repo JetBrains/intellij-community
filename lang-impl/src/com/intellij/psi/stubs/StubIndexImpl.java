@@ -88,7 +88,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        final MapIndexStorage<K, TIntArrayList> storage = new MapIndexStorage<K, TIntArrayList>(IndexInfrastructure.getStorageFile(indexKey), extension.getKeyDescriptor(), new StubIdExternalizer(), 16 * 1024);
+        final MapIndexStorage<K, TIntArrayList> storage = new MapIndexStorage<K, TIntArrayList>(IndexInfrastructure.getStorageFile(indexKey), extension.getKeyDescriptor(), new StubIdExternalizer(), 2 * 1024);
         final MemoryIndexStorage<K, TIntArrayList> memStorage = new MemoryIndexStorage<K, TIntArrayList>(storage);
         myIndices.put(indexKey, new MyIndex<K>(memStorage));
         break;

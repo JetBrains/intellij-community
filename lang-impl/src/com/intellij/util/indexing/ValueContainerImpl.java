@@ -25,7 +25,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     else {
       final TIntHashSet idSet;
       if (input instanceof Integer) {
-        idSet = new TIntHashSet(3, 0.98f);
+        idSet = new IdSet(3, 0.98f);
         idSet.add(((Integer)input).intValue());
         myInputIdMapping.put(value, idSet);
       }
@@ -48,6 +48,9 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     if (input instanceof TIntHashSet) {
       final TIntHashSet idSet = (TIntHashSet)input;
       final boolean reallyRemoved = idSet.remove(inputId);
+      if (reallyRemoved) {
+        idSet.compact();
+      }
       if (!idSet.isEmpty()) {
         return reallyRemoved;
       }
@@ -198,6 +201,19 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       }
     }
     return cloned;
+  }
+
+  private static class IdSet extends TIntHashSet {
+
+    private IdSet(final int initialCapacity, final float loadFactor) {
+      super(initialCapacity, loadFactor);
+    }
+
+    public void compact() {
+      if (((int)(capacity() * _loadFactor)/ Math.max(1, size())) >= 3) {
+        super.compact();
+      }
+    }
   }
 
 }
