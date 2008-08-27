@@ -70,16 +70,19 @@ public class SmartEnterAction extends EditorAction {
       }
 
       final Language language = PsiUtilBase.getLanguageInEditor(editor, project);
+      boolean processed = false;
       if (language != null) {
         final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(language);
         if (processors.size() > 0) {
           for (SmartEnterProcessor processor : processors) {
-            processor.process(project, editor, psiFile);
+            if (processor.process(project, editor, psiFile)) {
+              processed = true;
+              break;
+            }
           }
-        } else {
-          plainEnter(editor, dataContext);
         }
-      } else {
+      } 
+      if (!processed) {
         plainEnter(editor, dataContext);
       }
     }
@@ -93,14 +96,14 @@ public class SmartEnterAction extends EditorAction {
       int newLineOffset = CharArrayUtil.shiftBackward(chars, offset - 1, " \t");
       return newLineOffset < 0 || chars.charAt(newLineOffset) == '\n';
     }
+  }
 
-    private void plainEnter(Editor editor, DataContext dataContext) {
-      getEnterHandler().execute(editor, dataContext);
-    }
+  public static void plainEnter(Editor editor, DataContext dataContext) {
+    getEnterHandler().execute(editor, dataContext);
+  }
 
-    private EditorActionHandler getEnterHandler() {
-      return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
-    }
+  private static EditorActionHandler getEnterHandler() {
+    return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
   }
 }
 

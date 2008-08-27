@@ -75,7 +75,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
 
   public static class TooManyAttemptsException extends Exception {}
 
-  public void process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
+  public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
     final Document document = editor.getDocument();
     final String textForRollback = document.getText();
     try {
@@ -88,6 +88,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     } finally {
       editor.putUserData(SMART_ENTER_TIMESTAMP, null);
     }
+    return true;
   }
 
 

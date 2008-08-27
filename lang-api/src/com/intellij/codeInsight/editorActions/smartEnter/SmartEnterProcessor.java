@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use Options | File Templates.
  */
 public abstract class SmartEnterProcessor {
-  public abstract void process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile);
+  public abstract boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile);
 
   protected void reformat(PsiElement atCaret) throws IncorrectOperationException {
     final TextRange range = atCaret.getTextRange();

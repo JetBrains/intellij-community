@@ -21,14 +21,16 @@ import org.jetbrains.annotations.NotNull;
 public class XmlSmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.XmlSmartEnterProcessor");
 
-  public void process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
+  public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
     final PsiElement atCaret = getStatementAtCaret(editor, psiFile);
     XmlTag psiElement = PsiTreeUtil.getParentOfType(atCaret, XmlTag.class);
     if (psiElement != null) {
       try {
         final ASTNode emptyTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(psiElement.getNode());
         final ASTNode endTagEnd = XmlChildRole.START_TAG_END_FINDER.findChild(psiElement.getNode());
-        if (emptyTagEnd != null || endTagEnd != null) return;
+        if (emptyTagEnd != null || endTagEnd != null) {
+          return false;
+        }
 
         int insertionOffset = psiElement.getTextRange().getEndOffset();
         Document doc = editor.getDocument();
@@ -75,7 +77,6 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
         LOG.error(e);
       }
     }
-
-
+    return true;
   }
 }
