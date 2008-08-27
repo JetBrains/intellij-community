@@ -30,6 +30,25 @@
 
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
 
+    <action id="TogglePopupHints" class="com.intellij.ide.actions.TogglePopupHintsAction"/>
+    <action id="FindModal" class="com.intellij.openapi.editor.actions.FindAction" icon="/actions/menu-find.png"/>
+
+    <action id="CodeInspection.OnEditor" class="com.intellij.codeInspection.actions.CodeInspectionOnEditorAction"/>
+
+    <action id="ActivateNavBar" class="com.intellij.ide.navigationToolbar.ActivateNavigationBarAction" popup="true"/>
+
+    <group id="CodeInsightEditorActions">
+      <reference ref="LookupActions"/>
+      <action id="EmacsStyleIndent" class="com.intellij.codeInsight.editorActions.EmacsStyleIndentAction"/>
+      <action id="EditorCodeBlockStart" class="com.intellij.codeInsight.editorActions.CodeBlockStartAction"/>
+      <action id="EditorCodeBlockEnd" class="com.intellij.codeInsight.editorActions.CodeBlockEndAction"/>
+      <action id="EditorCodeBlockStartWithSelection" class="com.intellij.codeInsight.editorActions.CodeBlockStartWithSelectionAction"/>
+      <action id="EditorCodeBlockEndWithSelection" class="com.intellij.codeInsight.editorActions.CodeBlockEndWithSelectionAction"/>
+      <action id="EditorCompleteStatement" class="com.intellij.codeInsight.editorActions.smartEnter.SmartEnterAction"/>
+
+      <add-to-group group-id="EditorActions" anchor="last"/>
+    </group>
+
     <!-- File -->
 
     <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction">

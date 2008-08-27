@@ -9,6 +9,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -19,30 +20,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.java.IJavaElementType;
-import com.intellij.psi.tree.jsp.IJspElementType;
-import com.intellij.psi.tree.xml.IXmlLeafElementType;
 
 public class CodeBlockUtil {
-  private static final int JAVA_BLOCK_BRACE = 1,
-    XML_TAG_BRACE = 2,
-    JSP_TAG_BRACE = 3,
-    UNDEFINED_TAG_BRACE = -1;
+  private CodeBlockUtil() {
+  }
 
-  private static int getBraceType(HighlighterIterator iterator) {
+  private static Language getBraceType(HighlighterIterator iterator) {
     final IElementType type = iterator.getTokenType();
-    if (type instanceof IJavaElementType) {
-      return JAVA_BLOCK_BRACE;
-    }
-    else if (type instanceof IXmlLeafElementType) {
-      return XML_TAG_BRACE;
-    }
-    else if (type instanceof IJspElementType) {
-      return JSP_TAG_BRACE;
-    }
-    else {
-      return UNDEFINED_TAG_BRACE;
-    }
+    return type.getLanguage();
   }
 
   public static void moveCaretToCodeBlockEnd(Project project, Editor editor, boolean isWithSelection) {
@@ -56,14 +41,14 @@ public class CodeBlockUtil {
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
 
     int depth = 0;
-    int braceType;
+    Language braceType;
     boolean isBeforeLBrace = false;
     if (isLStructuralBrace(fileType, iterator, document.getCharsSequence())) {
       isBeforeLBrace = true;
       depth = -1;
       braceType = getBraceType(iterator);
     } else {
-      braceType = UNDEFINED_TAG_BRACE;
+      braceType = null;
     }
 
     while (true) {
@@ -71,21 +56,21 @@ public class CodeBlockUtil {
 
       if (isRStructuralBrace(fileType, iterator,document.getCharsSequence()) &&
           ( braceType == getBraceType(iterator) ||
-            braceType == UNDEFINED_TAG_BRACE
+            braceType == null
           )
           ) {
         if (depth == 0) break;
-        if (braceType == UNDEFINED_TAG_BRACE) {
+        if (braceType == null) {
           braceType = getBraceType(iterator);
         }
         depth--;
       }
       else if (isLStructuralBrace(fileType, iterator,document.getCharsSequence()) &&
                ( braceType == getBraceType(iterator) ||
-                 braceType == UNDEFINED_TAG_BRACE
+                 braceType == null
                )
               ) {
-        if (braceType == UNDEFINED_TAG_BRACE) {
+        if (braceType == null) {
           braceType = getBraceType(iterator);
         }
         depth++;
@@ -117,14 +102,14 @@ public class CodeBlockUtil {
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
 
     int depth = 0;
-    int braceType;
+    Language braceType;
     boolean isAfterRBrace = false;
     if (isRStructuralBrace(fileType, iterator,document.getCharsSequence())) {
       isAfterRBrace = true;
       depth = -1;
       braceType = getBraceType(iterator);
     } else {
-      braceType = UNDEFINED_TAG_BRACE;
+      braceType = null;
     }
 
     while (true) {
@@ -132,21 +117,21 @@ public class CodeBlockUtil {
 
       if (isLStructuralBrace(fileType, iterator, document.getCharsSequence()) &&
           ( braceType == getBraceType(iterator) ||
-            braceType == UNDEFINED_TAG_BRACE
+            braceType == null
           )
           ) {
         if (depth == 0) break;
-        if (braceType == UNDEFINED_TAG_BRACE) {
+        if (braceType == null) {
           braceType = getBraceType(iterator);
         }
         depth--;
       }
       else if (isRStructuralBrace(fileType, iterator,document.getCharsSequence()) &&
                ( braceType == getBraceType(iterator) ||
-                 braceType == UNDEFINED_TAG_BRACE
+                 braceType == null
                )
               ) {
-        if (braceType == UNDEFINED_TAG_BRACE) {
+        if (braceType == null) {
           braceType = getBraceType(iterator);
         }
         depth++;
