@@ -390,11 +390,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     EditorActionManager actionManager = EditorActionManager.getInstance();
     final DataContext dataContext = DataManager.getInstance().getDataContext();
     if (c == '\b') {
-      actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE).execute(getEditor(), dataContext);
+      performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
       return;
     }
     if (c == '\n') {
-      actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(getEditor(), dataContext);
+      performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
       return;
     }
     if (c == '\t') {
@@ -405,6 +405,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
 
     actionManager.getTypedAction().actionPerformed(getEditor(), c, dataContext);
+  }
+
+  public void performEditorAction(final String actionId) {
+    final DataContext dataContext = DataManager.getInstance().getDataContext();
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    actionManager.getActionHandler(actionId).execute(getEditor(), dataContext);
   }
 
   public JavaPsiFacade getJavaFacade() {

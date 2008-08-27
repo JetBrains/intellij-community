@@ -274,6 +274,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   void type(final char c);
 
+  void performEditorAction(String actionId);
+
   JavaPsiFacade getJavaFacade();
 
   int configureFromTempProjectFile(String filePath) throws IOException;
