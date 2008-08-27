@@ -77,7 +77,7 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
         return myWindowsPath;
       }
       else if (SystemInfo.isLinux) {
-        return null;
+        return myLinuxPath;
       }
       else if (SystemInfo.isMac) {
         return myMacPath;
