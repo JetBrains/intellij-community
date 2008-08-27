@@ -127,6 +127,9 @@
   <projectService serviceInterface="com.intellij.psi.PsiParserFacade"
                   serviceImplementation="com.intellij.psi.impl.PsiParserFacadeImpl"/>
 
+  <projectService serviceInterface="com.intellij.ide.actions.GotoFileConfiguration"
+                  serviceImplementation="com.intellij.ide.actions.GotoFileConfiguration"/>
+
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage"/>
 
