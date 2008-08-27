@@ -1,74 +1,57 @@
 package com.intellij.refactoring.removemiddleman;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactorJHelpID;
+import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
 
 import javax.swing.*;
+import java.awt.*;
 
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
 public class RemoveMiddlemanDialog extends RefactoringDialog {
 
-  private final JLabel fieldNameLabel = new JLabel();
+  private JTextField fieldNameLabel;
 
-  private final boolean deleteMethods;
+  private final MemberInfo[] delegateMethods;
 
-  private final JRadioButton removeMethodsRadioButton;
-  private final JRadioButton dontRemoveMethodsRadioButton;
   private final PsiField myField;
 
 
-  RemoveMiddlemanDialog(PsiField field, boolean deleteMethods) {
+  RemoveMiddlemanDialog(PsiField field, MemberInfo[] delegateMethods) {
     super(field.getProject(), true);
     myField = field;
-    setModal(true);
-    this.deleteMethods = deleteMethods;
-    removeMethodsRadioButton = new JRadioButton(RefactorJBundle.message("delete.all.delegating.methods.radio.button"), true);
-    dontRemoveMethodsRadioButton = new JRadioButton(RefactorJBundle.message("retain.all.delegating.methods.radio.button"));
+    this.delegateMethods = delegateMethods;
+    fieldNameLabel = new JTextField();
+    fieldNameLabel.setText(
+      PsiFormatUtil.formatVariable(myField, PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY));
     setTitle(RefactorJBundle.message("remove.middleman.title"));
-
     init();
-    final String fieldName = field.getName();
-    fieldNameLabel.setText(RefactorJBundle.message("field.label", fieldName));
   }
 
   protected String getDimensionServiceKey() {
     return "RefactorJ.RemoveMiddleman";
   }
 
-  public boolean removeMethods() {
-    return removeMethodsRadioButton.isSelected();
+
+  protected JComponent createCenterPanel() {
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0));
+    panel.add(new MemberSelectionPanel("Methods to inline", delegateMethods, "Delete"), BorderLayout.CENTER);
+    return panel;
   }
 
   protected JComponent createNorthPanel() {
-    return fieldNameLabel;
-  }
-
-  public JComponent getPreferredFocusedComponent() {
-    return removeMethodsRadioButton;
-  }
-
-  protected JComponent createCenterPanel() {
-    final JPanel optionsPanel = new JPanel();
-    optionsPanel.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 5));
-    optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
-
-    removeMethodsRadioButton.setMnemonic('A');
-    dontRemoveMethodsRadioButton.setMnemonic('t');
-
-    optionsPanel.add(removeMethodsRadioButton);
-    optionsPanel.add(dontRemoveMethodsRadioButton);
-    final ButtonGroup bg = new ButtonGroup();
-    bg.add(removeMethodsRadioButton);
-    bg.add(dontRemoveMethodsRadioButton);
-
-    removeMethodsRadioButton.setSelected(deleteMethods);
-    dontRemoveMethodsRadioButton.setSelected(!deleteMethods);
-
-    return optionsPanel;
+    fieldNameLabel.setEditable(false);
+    final JPanel sourceClassPanel = new JPanel(new BorderLayout());
+    sourceClassPanel.add(new JLabel("Delegating field"), BorderLayout.NORTH);
+    sourceClassPanel.add(fieldNameLabel, BorderLayout.CENTER);
+    return sourceClassPanel;
   }
 
   protected void doHelpAction() {
@@ -76,8 +59,7 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
   }
 
   protected void doAction() {
-    PropertiesComponent.getInstance(getProject()).setValue(RemoveMiddlemanHandler.REMOVE_METHODS, String.valueOf(removeMethods()));
-    invokeRefactoring(new RemoveMiddlemanProcessor(myField, removeMethods()));
+    invokeRefactoring(new RemoveMiddlemanProcessor(myField, delegateMethods));
   }
 
   protected boolean areButtonsValid() {

@@ -1,6 +1,5 @@
 package com.intellij.refactoring.removemiddleman;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -10,12 +9,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactorJHelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 public class RemoveMiddlemanHandler implements RefactoringActionHandler {
   private static final String REFACTORING_NAME = RefactorJBundle.message("remove.middleman");
@@ -54,13 +57,22 @@ public class RemoveMiddlemanHandler implements RefactoringActionHandler {
 
   private static void invoke(final PsiField field) {
     final Project project = field.getProject();
-    if (!DelegationUtils.fieldUsedAsDelegate(field)) {
+    final Set<PsiMethod> delegating = DelegationUtils.getDelegatingMethodsForField(field);
+    if (delegating.isEmpty()) {
       final String message =
         RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("field.selected.is.not.used.as.a.delegate");
       CommonRefactoringUtil.showErrorMessage(null, message, getHelpID(), project);
       return;
     }
 
-    new RemoveMiddlemanDialog(field, PropertiesComponent.getInstance(project).isTrueValue(REMOVE_METHODS)).show();
+    MemberInfo[] infos = new MemberInfo[delegating.size()];
+    int i = 0;
+    for (PsiMethod method : delegating) {
+      final MemberInfo memberInfo = new MemberInfo(method);
+      memberInfo.setChecked(true);
+      memberInfo.setToAbstract(true);
+      infos[i++] = memberInfo;
+    }
+    new RemoveMiddlemanDialog(field, infos).show();
   }
 }

@@ -1,5 +1,5 @@
-public class D {
-  public void foo(){}
+class D {
+  void foo(){}
 
   void bar(A a){
       a.getMyField().foo();

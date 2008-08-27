@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -26,6 +27,10 @@ public class VisibilityUtil  {
   };
 
   private VisibilityUtil() {
+  }
+
+  public static int compare(@Modifier String v1, @Modifier String v2) {
+    return ArrayUtil.find(visibilityModifiers, v2) - ArrayUtil.find(visibilityModifiers, v1);
   }
 
   @Modifier
@@ -53,6 +58,7 @@ public class VisibilityUtil  {
   }
 
 
+  @Modifier
   public static String getPossibleVisibility(final PsiMember psiMethod, final PsiElement place) {
     if (PsiUtil.isAccessible(psiMethod, place, null)) return getVisibilityStringToDisplay(psiMethod);
     if (JavaPsiFacade.getInstance(psiMethod.getProject()).arePackagesTheSame(psiMethod, place)) {

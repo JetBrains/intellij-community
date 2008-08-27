@@ -1,4 +1,4 @@
-public class Test {
+class Test {
   A myField;
 
     void bar(){
@@ -7,6 +7,6 @@ public class Test {
 
 }
 
-public class A {
-  public void foo(){}
+class A {
+  void foo(){}
 }

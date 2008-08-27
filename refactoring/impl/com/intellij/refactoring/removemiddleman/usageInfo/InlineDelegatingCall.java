@@ -1,47 +1,37 @@
-package com.intellij.refactoring.removemiddleman;
+package com.intellij.refactoring.removemiddleman.usageInfo;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-class InlineDelegatingCall extends FixableUsageInfo {
+public class InlineDelegatingCall extends FixableUsageInfo {
   private final PsiMethodCallExpression expression;
-  private final String getterName;
+  private final String myAccess;
   private final String delegatingName;
-  private final PsiField myField;
   private final int[] paramaterPermutation;
 
-  InlineDelegatingCall(PsiMethodCallExpression expression,
-                       int[] paramaterPermutation,
-                       String getterName,
-                       String delegatingName,
-                       final PsiField field) {
+  public InlineDelegatingCall(PsiMethodCallExpression expression,
+                              int[] paramaterPermutation,
+                              String access,
+                              String delegatingName) {
     super(expression);
     this.expression = expression;
     this.paramaterPermutation = paramaterPermutation;
-    this.getterName = getterName;
+    myAccess = access;
     this.delegatingName = delegatingName;
-    myField = field;
   }
 
   public void fixUsage() throws IncorrectOperationException {
-    final int length = expression.getTextLength() + getterName.length();
-    final StringBuffer replacementText = new StringBuffer(length);
+    final StringBuffer replacementText = new StringBuffer();
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final PsiElement qualifier = methodExpression.getQualifier();
     if (qualifier != null) {
       final String qualifierText = qualifier.getText();
       replacementText.append(qualifierText + '.');
     }
-    if (PsiTreeUtil.getParentOfType(expression, PsiClass.class) == myField.getContainingClass()) {
-      replacementText.append(myField.getName() + ".");
-    }
-    else {
-      replacementText.append(getterName + "().");
-    }
-    replacementText.append(delegatingName + '(');
+    replacementText.append(myAccess).append(".");
+    replacementText.append(delegatingName).append('(');
     final PsiExpressionList argumentList = expression.getArgumentList();
     assert argumentList != null;
     final PsiExpression[] args = argumentList.getExpressions();

@@ -1,4 +1,4 @@
-public class Test {
+class Test {
   A myField;
   void foo(){
     myField.foo();
