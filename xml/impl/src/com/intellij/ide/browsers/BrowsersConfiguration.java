@@ -1,9 +1,5 @@
 package com.intellij.ide.browsers;
 
-import com.intellij.ide.BrowserUtil;
-import com.intellij.lang.Language;
-import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -11,8 +7,8 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -188,9 +184,9 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
     mySettingsPanel = null;
   }
 
-  public static void launchBrowser(final BrowserFamily family, @NotNull final VirtualFile file) {
+  public static void launchBrowser(final BrowserFamily family, @NotNull final String url) {
     try {
-      getInstance()._launchBrowser(family, file);
+      getInstance()._launchBrowser(family, url);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -198,13 +194,12 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private void _launchBrowser(final BrowserFamily family, @NotNull final VirtualFile file) throws IOException {
+  private void _launchBrowser(final BrowserFamily family, @NotNull final String url) throws IOException {
     final Pair<String, Boolean> pair = myBrowserToPathMap.get(family);
     if (pair != null) {
       final String path = pair.first;
       if (path != null && path.length() > 0) {
         String[] command = null;
-        final String url = BrowserUtil.getURL(file.getUrl()).toString();
         if (SystemInfo.isMac) {
           command = new String[]{"open", "-a", path, url};
         }
@@ -256,33 +251,69 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
     AnAction action = actionManager.getAction(actionId);
     if (action == null) {
       action = new AnAction(family.getName(), XmlBundle.message("browser.description", family.getName()), getBrowserIcon(family)) {
+        @Nullable
+        private PsiFile getFile(@NotNull final DataContext context) {
+          final Editor editor = PlatformDataKeys.EDITOR.getData(context);
+          if (editor != null) {
+            final Project project = editor.getProject();
+            if (project != null) {
+              final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+              final PsiFile psiFile = manager.getPsiFile(editor.getDocument());
+              if (psiFile != null) {
+                return psiFile;
+              }
+            }
+          }
+
+          return null;
+        }
+
+        @Nullable
+        private WebBrowserUrlProvider getProvider(@NotNull PsiFile file) {
+          final WebBrowserUrlProvider[] providers = Extensions.getExtensions(WebBrowserUrlProvider.EXTENSION_POINT_NAME);
+          for (WebBrowserUrlProvider provider : providers) {
+            if (provider.isAvailableFor(file)) {
+              return provider;
+            }
+          }
+
+          return null;
+        }
+
         public void actionPerformed(final AnActionEvent e) {
-          final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-          if (file != null) {
-            launchBrowser(family, file);
+          final PsiFile psiFile = getFile(e.getDataContext());
+          LOG.assertTrue(psiFile != null);
+          final WebBrowserUrlProvider provider = getProvider(psiFile);
+          LOG.assertTrue(provider != null);
+
+          final Project project = psiFile.getProject();
+          PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+          try {
+            final VirtualFile virtualFile = psiFile.getVirtualFile();
+            LOG.assertTrue(virtualFile != null);
+
+            launchBrowser(family, provider.getUrl(virtualFile, project));
+          }
+          catch (WebBrowserUrlProvider.BrowserException e1) {
+            Messages.showErrorDialog(e1.getMessage(), XmlBundle.message("browser.error"));
+          }
+          catch (Exception e1) {
+            LOG.error(e1);
           }
         }
 
         @Override
         public void update(final AnActionEvent e) {
-          final Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
-          boolean visible = false;
-          if (editor != null) {
-            final Document document = editor.getDocument();
-            final Project project = editor.getProject();
-            if (project != null) {
-              final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-              final PsiFile psiFile = manager.getPsiFile(document);
-              if (psiFile != null) {
-                final Language language = psiFile.getLanguage();
-                if (language instanceof HTMLLanguage || language instanceof XHTMLLanguage) {
-                  visible = true;
-                }
-              }
+          boolean visible = myBrowserToPathMap.get(family).second.booleanValue();
+          if (visible) {
+            visible = false;
+            final PsiFile file = getFile(e.getDataContext());
+            if (file != null) {
+              final WebBrowserUrlProvider urlProvider = getProvider(file);
+              visible = urlProvider != null;
             }
           }
-
-          visible &= myBrowserToPathMap.get(family).second.booleanValue();
 
           final Presentation presentation = e.getPresentation();
           presentation.setVisible(visible);
