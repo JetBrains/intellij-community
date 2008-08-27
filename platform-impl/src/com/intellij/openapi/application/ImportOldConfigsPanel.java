@@ -18,7 +18,6 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -39,9 +38,19 @@ public class ImportOldConfigsPanel extends JDialog {
   private File myLastSelection = null;
   private JButton myOkButton;
 
-  public ImportOldConfigsPanel() {
-    super(UIUtil.hasJdk6Dialogs() ? (Frame) null : JOptionPane.getRootFrame(), true);
+  public ImportOldConfigsPanel(final Frame owner) {
+    super(owner, true);
 
+    init();
+  }
+
+  public ImportOldConfigsPanel() {
+    super((Dialog) null, true);
+
+    init();
+  }
+
+  private void init() {
     new MnemonicHelper().register(getContentPane());
 
     ButtonGroup group = new ButtonGroup();
@@ -114,14 +123,14 @@ public class ImportOldConfigsPanel extends JDialog {
       final String productWithVendor = ApplicationNamesInfo.getInstance().getFullProductName();
       String instHome = myPrevInstallation.getText();
       if ("".equals(instHome)) {
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+        JOptionPane.showMessageDialog(this,
                                       ApplicationBundle.message("error.please.select.previous.installation.home", productWithVendor),
                                       ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
         return;
       }
 
       if (PathManager.getHomePath().equals(instHome)) {
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+        JOptionPane.showMessageDialog(this,
                                       ApplicationBundle.message("error.selected.current.installation.home",
                                                                 productWithVendor, productWithVendor),
                                       ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
@@ -129,7 +138,7 @@ public class ImportOldConfigsPanel extends JDialog {
       }
 
       if (!ConfigImportHelper.isInstallationHome(instHome)) {
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+        JOptionPane.showMessageDialog(this,
                                       ApplicationBundle.message("error.does.not.appear.to.be.installation.home", instHome,
                                                                 productWithVendor),
                                       ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
@@ -137,7 +146,7 @@ public class ImportOldConfigsPanel extends JDialog {
       }
 
       if (!new File(instHome).canRead()) {
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+        JOptionPane.showMessageDialog(this,
                                       ApplicationBundle.message("error.no.read.permissions", instHome),
                                       ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
         return;

@@ -38,7 +38,14 @@ public class ConfigImportHelper {
 
   public static void importConfigsTo(String newConfigPath) {
     do {
-      ImportOldConfigsPanel dlg = new ImportOldConfigsPanel();
+      ImportOldConfigsPanel dlg;
+      if (UIUtil.hasJdk6Dialogs()) {
+        dlg = new ImportOldConfigsPanel();
+      }
+      else {
+        dlg = new ImportOldConfigsPanel(JOptionPane.getRootFrame());
+      }
+
       UIUtil.setToolkitModal(dlg);
       UIUtil.updateDialogIcon(dlg);
       dlg.setVisible(true);
