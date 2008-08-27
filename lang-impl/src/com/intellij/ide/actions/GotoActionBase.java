@@ -25,6 +25,7 @@ public abstract class GotoActionBase extends AnAction {
       gotoActionPerformed (e);
     }
     catch (Throwable t) {
+      LOG.error(t);
       myInAction = null;
     }
   }

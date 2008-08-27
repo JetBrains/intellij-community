@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -203,8 +204,19 @@ final class EditorTabbedContainer implements Disposable {
     TabInfo tab = myTabs.findInfo(file);
     if (tab != null) return;
 
-    tab = new TabInfo(comp).setText(file.getPresentableName()).setIcon(icon).setTooltipText(tooltip).setObject(file);
+    tab = new TabInfo(comp).setText(getTabTitle(file)).setIcon(icon).setTooltipText(tooltip).setObject(file);
     myTabs.addTab(tab, indexToInsert);
+  }
+
+  public String getTabTitle(final VirtualFile file) {
+    for(EditorTabTitleProvider provider: Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
+      final String result = provider.getEditorTabTitle(myProject, file);
+      if (result != null) {
+        return result;
+      }
+    }
+
+    return file.getPresentableName();
   }
 
   public Component getComponentAt(final int i) {
