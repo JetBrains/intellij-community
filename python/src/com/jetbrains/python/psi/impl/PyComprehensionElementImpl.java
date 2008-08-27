@@ -7,6 +7,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +26,7 @@ public class PyComprehensionElementImpl extends PyElementImpl implements NameDef
    * In "[x+1 for x in (1,2,3)]" result expression is "x+1".
    * @return result expression.
    */
+  @Nullable
   public PyExpression getResultExpression() {
     ASTNode[] exprs = getNode().getChildren(PyElementTypes.EXPRESSIONS);
     return exprs.length == 0 ? null : (PyExpression)exprs[0].getPsi();
@@ -81,6 +83,7 @@ public class PyComprehensionElementImpl extends PyElementImpl implements NameDef
     return list;
   }
 
+  @Nullable
   private static ASTNode getNextExpression(ASTNode after) {
     ASTNode node = after;
     do {

@@ -10,7 +10,6 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -62,23 +61,32 @@ public class PyBuiltinCache {
   /**
   @return 
   */
-  @NotNull
+  @Nullable
   protected PyClassType _getObjectType(@NonNls String name) {
     PyClassType val = myTypeCache.get(name);
     if (val == null) {
       PyClass cls = getClass(name);
-      val = new PyClassType(cls, false);
-      myTypeCache.put(name, val);
+      if (cls != null) { // null may happen during testing
+        val = new PyClassType(cls, false);
+        myTypeCache.put(name, val);
+      }
     }
     return val;
   }
   
+  @Nullable
   public PyClassType getObjectType() {
     return _getObjectType("object");
   }
   
+  @Nullable
   public PyClassType getListType() {
     return _getObjectType("list");
   }
   
+  @Nullable
+  public PyClassType getOldstyleClassobjType() {
+    return _getObjectType("___Classobj");
+  }
+
 }

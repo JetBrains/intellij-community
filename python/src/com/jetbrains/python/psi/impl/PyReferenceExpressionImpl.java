@@ -155,7 +155,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (ret == null) {
       // ...as a part of current module
       PyType otype = PyBuiltinCache.getInstance(this.getProject()).getObjectType(); // "object" as a closest kin to "module"
-      ret = otype.resolveMember(getName());
+      if (otype != null) ret = otype.resolveMember(getName());
     }
     if (ret == null) {
       // ...as a builtin symbol

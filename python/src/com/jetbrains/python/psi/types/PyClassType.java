@@ -6,6 +6,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyResolveUtil;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,7 @@ public class PyClassType implements PyType {
   /**
    * @return a PyClass which defined this type.
    */
-  @NotNull
+  @Nullable
   public PyClass getPyClass() {
     return myClass;
   }
@@ -57,14 +58,31 @@ public class PyClassType implements PyType {
     if (resolveResult != null) {
       return resolveResult;
     }
-    final PyExpression[] superClassExpressions = myClass.getSuperClassExpressions();
-    if (superClassExpressions != null) {
+    PyExpression[] superClassExpressions = myClass.getSuperClassExpressions();
+    if (superClassExpressions.length > 0) {
       for(PyExpression expr: superClassExpressions) {
         PyType superType = expr.getType();
         if (superType != null) {
           PsiElement superMember = superType.resolveMember(name);
           if (superMember != null) {
             return superMember;
+          }
+        }
+      }
+    }
+    else {
+      // no superclasses, try old-style
+      // TODO: in py3k, 'object' is the default base, not <classobj>
+      if (getClass() != null) {
+        PyClassType oldstyle = PyBuiltinCache.getInstance(myClass.getProject()).getOldstyleClassobjType();
+        if (oldstyle != null) {
+          final String myname = getClass().getName();
+          final PyClass oldstyleclass = oldstyle.getPyClass();
+          if (oldstyleclass != null) {
+            final String oldstylename = oldstyleclass.getName();
+            if ((myname != null) && (oldstylename != null) && ! myname.equals(oldstylename) && !myname.equals("object")) {
+              return oldstyle.resolveMember(name);
+            }
           }
         }
       }
