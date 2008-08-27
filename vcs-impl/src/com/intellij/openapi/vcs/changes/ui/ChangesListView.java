@@ -461,8 +461,9 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
       }
 
       final Rectangle tableCellRect = getPathBounds(new TreePath(dropNode.getPath()));
-
-      aEvent.setHighlighting(new RelativeRectangle(ChangesListView.this, tableCellRect), DnDEvent.DropTargetHighlightingType.RECTANGLE);
+      if (fitsInBounds(tableCellRect)) {
+        aEvent.setHighlighting(new RelativeRectangle(ChangesListView.this, tableCellRect), DnDEvent.DropTargetHighlightingType.RECTANGLE);
+      }
 
       aEvent.setDropPossible(true, null);
       dragBean.setTargetNode(dropNode);
@@ -486,6 +487,18 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
     public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
     }
+  }
+
+  private boolean fitsInBounds(final Rectangle rect) {
+    final Container container = getParent();
+    if (container instanceof JViewport) {
+      final Container scrollPane = container.getParent();
+      if (scrollPane instanceof JScrollPane) {
+        final Rectangle rectangle = SwingUtilities.convertRectangle(this, rect, scrollPane.getParent());
+        return scrollPane.getBounds().contains(rectangle);
+      }
+    }
+    return true;
   }
 
   private static class NodeToTextConvertor implements Convertor<TreePath, String> {
