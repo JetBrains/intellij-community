@@ -77,16 +77,12 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     myInheritedCompilerOutput = value != null && Boolean.parseBoolean(value);
     myExcludeOutput = element.getChild(EXCLUDE_OUTPUT_TAG) != null;
 
-    assert myCompilerOutputPointer == null;
     myCompilerOutputPointer = getOutputPathValue(element, OUTPUT_TAG, !myInheritedCompilerOutput);
 
-    assert myCompilerOutput == null;
     myCompilerOutput = getOutputPathValue(element, OUTPUT_TAG);
 
-    assert myCompilerOutputPathForTestsPointer == null;
     myCompilerOutputPathForTestsPointer = getOutputPathValue(element, TEST_OUTPUT_TAG, !myInheritedCompilerOutput);
 
-    assert myCompilerOutputForTests == null;
     myCompilerOutputForTests = getOutputPathValue(element, TEST_OUTPUT_TAG);
   }
 
@@ -269,8 +265,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   private static boolean vptrEqual(VirtualFilePointer p1, VirtualFilePointer p2) {
-    if (p1 == null && p2 == null) return true;
-    return p1 != null && p2 != null && Comparing.equal(p1.getUrl(), p2.getUrl());
+    return Comparing.equal(p1 == null ? null : p1.getUrl(), p2 == null ? null : p2.getUrl());
   }
 
   public void dispose() {
