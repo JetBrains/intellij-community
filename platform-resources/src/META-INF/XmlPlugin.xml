@@ -229,7 +229,7 @@
 
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.XmlMover" id="xml" order="before line"/>
 
-    <webBrowserUrlProvider implementation="com.intellij.ide.browsers.HtmlWebBrowserUrlProvider"/>
+    <webBrowserUrlProvider implementation="com.intellij.ide.browsers.HtmlWebBrowserUrlProvider" id="static" order="last"/>
   </extensions>
   
 </idea-plugin>

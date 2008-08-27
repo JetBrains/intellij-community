@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
@@ -290,10 +289,7 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
           PsiDocumentManager.getInstance(project).commitAllDocuments();
 
           try {
-            final VirtualFile virtualFile = psiFile.getVirtualFile();
-            LOG.assertTrue(virtualFile != null);
-
-            launchBrowser(family, provider.getUrl(virtualFile, project));
+            launchBrowser(family, provider.getUrl(psiFile, project, e.getInputEvent().isShiftDown()));
           }
           catch (WebBrowserUrlProvider.BrowserException e1) {
             Messages.showErrorDialog(e1.getMessage(), XmlBundle.message("browser.error"));

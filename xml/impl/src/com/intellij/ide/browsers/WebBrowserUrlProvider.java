@@ -1,8 +1,7 @@
 package com.intellij.ide.browsers;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +22,7 @@ public abstract class WebBrowserUrlProvider {
   }
 
   @NotNull
-  public abstract String getUrl(@NotNull final VirtualFile file, @NotNull final Project project) throws Exception;
+  public abstract String getUrl(@NotNull PsiFile file, @NotNull Project project, boolean shiftDown) throws Exception;
 
-  public abstract boolean isAvailableFor(@NotNull final PsiFile file);
+  public abstract boolean isAvailableFor(@NotNull PsiFile file);
 }
