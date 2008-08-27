@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,12 +38,13 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_ignoreAnnotatedVariables = false;
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "redundant.local.variable.display.name");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         final MultipleCheckboxOptionsPanel optionsPanel =
                 new MultipleCheckboxOptionsPanel(this);
@@ -56,26 +57,30 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
         return optionsPanel;
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
-    @NotNull
+    @Override @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unnecessary.local.variable.problem.descriptor");
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryLocalVariableVisitor();
-    }
-
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new InlineVariableFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
+    }
+
+    @Override
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryLocalVariableVisitor();
     }
 
     private class UnnecessaryLocalVariableVisitor
@@ -107,9 +112,6 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
 
         private boolean isCopyVariable(PsiVariable variable) {
             final PsiExpression initializer = variable.getInitializer();
-            if (initializer == null) {
-                return false;
-            }
             if (!(initializer instanceof PsiReferenceExpression)) {
                 return false;
             }
@@ -128,17 +130,15 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
             if (containingScope == null) {
                 return false;
             }
-            final VariableAssignedVisitor visitor =
-                    new VariableAssignedVisitor(variable);
-            containingScope.accept(visitor);
-            if (visitor.isAssigned()) {
+            if (!variable.hasModifierProperty(PsiModifier.FINAL) &&
+                    VariableAccessUtils.variableIsAssigned(variable,
+                            containingScope, false)) {
                 return false;
             }
             final PsiVariable initialization = (PsiVariable) referent;
-            final VariableAssignedVisitor visitor2 =
-                    new VariableAssignedVisitor(initialization);
-            containingScope.accept(visitor2);
-            if (visitor2.isAssigned()) {
+            if (!initialization.hasModifierProperty(PsiModifier.FINAL) &&
+                    VariableAccessUtils.variableIsAssigned(initialization,
+                            containingScope, false)) {
                 return false;
             }
             if (!initialization.hasModifierProperty(PsiModifier.FINAL)

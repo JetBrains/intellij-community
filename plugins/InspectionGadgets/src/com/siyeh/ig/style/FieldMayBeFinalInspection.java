@@ -85,15 +85,19 @@ public class FieldMayBeFinalInspection extends BaseInspection {
             final PsiClassInitializer[] classInitializers =
                     aClass.getInitializers();
             boolean assignedInInitializer = intializer != null;
+            boolean isInitialized = assignedInInitializer;
             for (PsiClassInitializer classInitializer : classInitializers) {
                 if (classInitializer.hasModifierProperty(PsiModifier.STATIC)) {
                     continue;
                 }
-                final PsiCodeBlock block = classInitializer.getBody();
-                if (InitializationUtils.blockAssignsVariableOrFails(block,
-                        field)) {
+                if (VariableAccessUtils.variableIsAssigned(field,
+                        classInitializer, false)) {
                     if (assignedInInitializer) {
                         return false;
+                    } else if (InitializationUtils.
+                            classInitializerAssignsVariableOrFails(
+                                    classInitializer,  field)){
+                        isInitialized = true;
                     }
                     assignedInInitializer = true;
                 }
@@ -101,20 +105,28 @@ public class FieldMayBeFinalInspection extends BaseInspection {
             final PsiMethod[] methods = aClass.getMethods();
             for (PsiMethod method : methods) {
                 if (method.isConstructor() && !assignedInInitializer) {
-                    if (!InitializationUtils.methodAssignsVariableOrFails(
-                            method, field)) {
+                    if (!VariableAccessUtils.variableIsAssigned(field, method,
+                            false)) {
                         return false;
+                    } else if (InitializationUtils.methodAssignsVariableOrFails(
+                            method, field)){
+                        isInitialized = true;
                     }
                     continue;
                 }
-                if (InitializationUtils.methodAssignsVariableOrFails(method,
-                        field)) {
+                if (VariableAccessUtils.variableIsAssigned(field, method,
+                        false)) {
                     return false;
                 }
             }
-            final PsiClass[] innerClasses = aClass.getInnerClasses();
-            for (PsiClass innerClass : innerClasses) {
-                if (VariableAccessUtils.variableIsAssigned(field, innerClass)) {
+            if (!isInitialized) {
+                return false;
+            }
+            final PsiElement[] children = aClass.getChildren();
+            final ClassVisitor visitor = new ClassVisitor(field);
+            for (PsiElement child : children) {
+                child.accept(visitor);
+                if (visitor.isVariableAssignedInClass()) {
                     return false;
                 }
             }
@@ -128,17 +140,19 @@ public class FieldMayBeFinalInspection extends BaseInspection {
                     aClass.getInitializers();
             boolean assignedInInitializer = initializer != null;
             for (PsiClassInitializer classInitializer : classInitializers) {
-                final PsiCodeBlock body = classInitializer.getBody();
                 if (classInitializer.hasModifierProperty(PsiModifier.STATIC)) {
-                    if (InitializationUtils.blockAssignsVariableOrFails(body,
-                            field)) {
+                    if (VariableAccessUtils.variableIsAssigned(field,
+                            classInitializer, false)) {
                         if (assignedInInitializer) {
                             return false;
+                        } else if (InitializationUtils.
+                                classInitializerAssignsVariableOrFails(
+                                        classInitializer, field)) {
+                            assignedInInitializer = true;
                         }
-                        assignedInInitializer = true;
                     }
-                } else if (InitializationUtils.blockAssignsVariableOrFails(body,
-                        field)) {
+                } else if (VariableAccessUtils.variableIsAssigned(field,
+                        classInitializer,  false)) {
                     return false;
                 }
             }
@@ -147,12 +161,45 @@ public class FieldMayBeFinalInspection extends BaseInspection {
             }
             final PsiMethod[] methods = aClass.getMethods();
             for (PsiMethod method : methods) {
-                if (InitializationUtils.methodAssignsVariableOrFails(method,
-                        field)) {
+                if (VariableAccessUtils.variableIsAssigned(field, method,
+                        false)) {
                     return false;
                 }
             }
             return true;
+        }
+
+        private static class ClassVisitor extends JavaRecursiveElementVisitor {
+
+            private final PsiVariable variable;
+            private boolean variableAssignedInClass = false;
+
+            ClassVisitor(PsiVariable variable) {
+                this.variable = variable;
+            }
+
+            @Override
+            public void visitClass(PsiClass aClass) {
+                if (variableAssignedInClass) {
+                    return;
+                }
+                super.visitClass(aClass);
+                if (VariableAccessUtils.variableIsAssigned(variable, aClass)) {
+                    variableAssignedInClass = true;
+                }
+            }
+
+            @Override
+            public void visitElement(PsiElement element) {
+                if (variableAssignedInClass) {
+                    return;
+                }
+                super.visitElement(element);
+            }
+
+            public boolean isVariableAssignedInClass() {
+                return variableAssignedInClass;
+            }
         }
     }
 }

@@ -39,6 +39,7 @@ public class FieldMayBeFinal {
 
             }
         };
+        s = "";
         this.number = number;
     }
 
@@ -48,5 +49,26 @@ public class FieldMayBeFinal {
         public void foo() {
             utterance = "boo!";
         }
+    }
+
+    private String unused;
+
+    private static class Boom {
+        private String notFinal;
+
+        private static String two;
+
+        static {
+            if (1 == 2) {
+                two = "other";
+            }
+        }
+
+        Boom(boolean b) {
+            if (b) {
+                notFinal = "";
+            }
+        }
+
     }
 }

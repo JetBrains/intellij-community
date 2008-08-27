@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,15 @@ import org.jetbrains.annotations.NotNull;
 
 public class VariableAssignedVisitor extends JavaRecursiveElementVisitor{
 
-    private boolean assigned = false;
     @NotNull private final PsiVariable variable;
+    private final boolean recurseIntoClasses;
+    private boolean assigned = false;
 
-    public VariableAssignedVisitor(@NotNull PsiVariable variable){
+    public VariableAssignedVisitor(@NotNull PsiVariable variable,
+                                   boolean recurseIntoClasses){
         super();
         this.variable = variable;
+        this.recurseIntoClasses = recurseIntoClasses;
     }
 
     @Override public void visitElement(@NotNull PsiElement element){
@@ -45,6 +48,17 @@ public class VariableAssignedVisitor extends JavaRecursiveElementVisitor{
         if(VariableAccessUtils.mayEvaluateToVariable(arg, variable)){
             assigned = true;
         }
+    }
+
+    @Override
+    public void visitClass(PsiClass aClass) {
+        if(!recurseIntoClasses){
+            return;
+        }
+        if(assigned){
+            return;
+        }
+        super.visitClass(aClass);
     }
 
     @Override public void visitPrefixExpression(

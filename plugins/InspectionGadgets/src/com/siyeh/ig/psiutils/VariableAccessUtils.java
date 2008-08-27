@@ -51,7 +51,16 @@ public class VariableAccessUtils{
     public static boolean variableIsAssigned(
             @NotNull PsiVariable variable, @NotNull PsiElement context) {
         final VariableAssignedVisitor visitor =
-                new VariableAssignedVisitor(variable);
+                new VariableAssignedVisitor(variable, true);
+        context.accept(visitor);
+        return visitor.isAssigned();
+    }
+
+    public static boolean variableIsAssigned(
+            @NotNull PsiVariable variable, @NotNull PsiElement context,
+            boolean recurseIntoClasses) {
+        final VariableAssignedVisitor visitor =
+                new VariableAssignedVisitor(variable, recurseIntoClasses);
         context.accept(visitor);
         return visitor.isAssigned();
     }
