@@ -6,8 +6,8 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.InsertHandler;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -41,6 +41,8 @@ public abstract class MutableLookupElement<T> extends LookupElement{
   public abstract MutableLookupElement<T> setCaseSensitive(boolean caseSensitive);
 
   public abstract MutableLookupElement<T> addLookupStrings(@NonNls String... additionalLookupStrings);
+
+  public abstract MutableLookupElement<T> setInsertHandler(InsertHandler<? extends LookupElement> insertHandler);
 
   public abstract InsertHandler<? extends MutableLookupElement> getInsertHandler();
 }
