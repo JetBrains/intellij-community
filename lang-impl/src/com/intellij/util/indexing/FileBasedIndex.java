@@ -267,6 +267,24 @@ public class FileBasedIndex implements ApplicationComponent {
     FileUtil.delete(getMarkerFile());
   }
 
+  public void flushCaches() {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        for (ID<?, ?> indexId : myIndices.keySet()) {
+          final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+          if (index instanceof MapReduceIndex) {
+            try {
+              ((MapReduceIndex)index).getStorage().flush();
+            }
+            catch (IOException e) {
+              LOG.info(e);
+            }
+          }
+        }
+      }
+    });
+  }
+
   @NotNull
   public <K> Collection<K> getAllKeys(final ID<K, ?> indexId) {
     Set<K> allKeys = new HashSet<K>();

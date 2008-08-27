@@ -27,7 +27,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private final Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private final Runnable myFlushRequest = new Runnable() {
     public void run() {
-      if (!HeavyProcessLatch.INSTANCE.isRunning()) {
+      if (canFlush()) {
         try {
           myStorage.flush();
         }
@@ -39,7 +39,18 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         myFlushAlarm.addRequest(myFlushRequest, 20000 /* 20 sec */);  // postpone flushing
       }
     }
+
+    private boolean canFlush() {
+      if (HeavyProcessLatch.INSTANCE.isRunning()) {
+        final Runtime runtime = Runtime.getRuntime();
+        final float used = runtime.totalMemory() - runtime.freeMemory();
+        final float memUsage = used / runtime.maxMemory();
+        return memUsage >= 0.95f;
+      }
+      return true;
+    }
   };
+
 
   public MapReduceIndex(DataIndexer<Key, Value, Input> indexer, final IndexStorage<Key, Value> storage) {
     myIndexer = indexer;

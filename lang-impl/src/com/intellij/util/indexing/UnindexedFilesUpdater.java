@@ -99,8 +99,10 @@ public class UnindexedFilesUpdater implements CacheUpdater {
 
   public void updatingDone() {
     //System.out.println("IdIndex contains " + myIndex.getAllKeys(IdIndex.NAME).size() + " unique keys");
+    myIndex.flushCaches();
   }
 
   public void canceled() {
+    myIndex.flushCaches();
   }
 }
