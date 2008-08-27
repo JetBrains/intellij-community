@@ -274,4 +274,9 @@
   <iconProvider implementation="com.intellij.psi.impl.file.DirectoryIconProvider" id="directory" order="last"/>
 
   <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.LineMover" id="line" order="last"/>
+
+  <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInStringLiteralHandler"/>
+  <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInLineCommentHandler"/>
+  <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler"/>
+  <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesHandler" id="EnterBetweenBracesHandler"/>
 </extensions>
