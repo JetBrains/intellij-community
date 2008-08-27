@@ -109,6 +109,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement()));
     JTree tree = new Tree(model);
     tree.setRootVisible(showRootNode);
+    tree.setShowsRootHandles(true);
 
     myAbstractTreeBuilder = new StructureTreeBuilder(project, tree,
                                                      (DefaultTreeModel)tree.getModel(),treeStructure,myTreeModelWrapper);
