@@ -509,14 +509,14 @@ public class CompileDriver {
       // need this to make sure the VFS is built
       final List<VirtualFile> outputsToRefresh = new ArrayList<VirtualFile>();
       for (VirtualFile output : context.getAllOutputDirectories()) {
-        walkChildren(output);
+        walkChildren(output, context);
         outputsToRefresh.add(output);
       }
       for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
         final Pair<VirtualFile, VirtualFile> generated = myGenerationCompilerModuleToOutputDirMap.get(pair);
-        walkChildren(generated.getFirst());
+        walkChildren(generated.getFirst(), context);
         outputsToRefresh.add(generated.getFirst());
-        walkChildren(generated.getSecond());
+        walkChildren(generated.getSecond(), context);
         outputsToRefresh.add(generated.getSecond());
       }
       RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh.toArray(new VirtualFile[outputsToRefresh.size()]));
@@ -619,11 +619,12 @@ public class CompileDriver {
     }
   }
 
-  private static void walkChildren(VirtualFile from) {
+  private static void walkChildren(VirtualFile from, final CompileContext context) {
     final VirtualFile[] files = from.getChildren();
     if (files != null && files.length > 0) {
+      context.getProgressIndicator().checkCanceled();
       for (VirtualFile file : files) {
-        walkChildren(file);
+        walkChildren(file, context);
       }
     }
   }
