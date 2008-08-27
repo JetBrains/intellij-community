@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="92c6d"/>
-          <text value="Project name:"/>
+          <text value="Project &amp;name:"/>
         </properties>
       </component>
       <component id="89536" class="javax.swing.JLabel">
@@ -22,8 +22,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <labelFor value="92c6d"/>
-          <text value="Location:"/>
+          <text value="&amp;Location:"/>
         </properties>
       </component>
       <vspacer id="bf7cf">
@@ -59,7 +58,7 @@
             </constraints>
             <properties>
               <labelFor value="5c20f"/>
-              <text value="Project type:"/>
+              <text value="Project &amp;type:"/>
             </properties>
           </component>
           <component id="5c20f" class="javax.swing.JComboBox" binding="myProjectTypeComboBox" default-binding="true">
