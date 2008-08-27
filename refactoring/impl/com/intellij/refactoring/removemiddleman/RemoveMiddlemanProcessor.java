@@ -2,10 +2,10 @@ package com.intellij.refactoring.removemiddleman;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.removemiddleman.usageInfo.ChangeClassVisibilityUsageInfo;
 import com.intellij.refactoring.removemiddleman.usageInfo.ChangeMethodVisibilityUsageInfo;
@@ -85,9 +85,12 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
     for (PsiReference reference : ReferencesSearch.search(method)) {
       final PsiElement referenceElement = reference.getElement();
       final PsiMethodCallExpression call = (PsiMethodCallExpression)referenceElement.getParent();
-      visibility = VisibilityUtil.getHighestVisibility(visibility, VisibilityUtil.getPossibleVisibility(delegatedMethod, referenceElement));
+      final @Modifier String v1 = VisibilityUtil.getPossibleVisibility(delegatedMethod, referenceElement);
+      if (!Comparing.strEqual(v1, VisibilityUtil.getVisibilityModifier(delegatedMethod.getModifierList()))) {
+        visibility = VisibilityUtil.getHighestVisibility(visibility, v1);
+      }
       final String access;
-      if (PsiTreeUtil.getParentOfType(call, PsiClass.class) == containingClass) {
+      if (call.getMethodExpression().getQualifierExpression() == null) {
         access = field.getName();
       } else {
         access = getterName + "()";
@@ -105,45 +108,36 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
 
   protected void performRefactoring(UsageInfo[] usageInfos) {
     final Set<PsiClass> classesForGetters = new HashSet<PsiClass>();
-    final Set<PsiMethod> methods = DelegationUtils.getDelegatingMethodsForField(field);
-    for (final PsiMethod method : methods) {
-      final PsiMethod[] deepestSuperMethods = method.findDeepestSuperMethods();
+    for (final MemberInfo memberInfo : myDelegateMethodInfos) {
+      if (!memberInfo.isChecked()) continue;
+      final PsiMethod[] deepestSuperMethods = ((PsiMethod)memberInfo.getMember()).findDeepestSuperMethods();
       for (PsiMethod superMethod : deepestSuperMethods) {
         classesForGetters.add(superMethod.getContainingClass());
       }
     }
     if (getter != null) {
       try {
-        containingClass.add(getter);
+        if (containingClass.findMethodBySignature(getter, false) == null) {
+          containingClass.add(getter);
+        }
+        final PsiType returnType = getter.getReturnType();
+        assert returnType != null;
+        final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(containingClass.getProject()).getElementFactory();
+        for (PsiClass superClass : classesForGetters) {
+          if (superClass.findMethodBySignature(getter, false) != null) {
+            continue;
+          }
+          if (superClass.isInterface()) {
+            superClass.add(elementFactory.createMethodFromText(returnType.getCanonicalText() + ' ' + getter.getName() + "();", null));
+          }
+          else {
+            superClass.add(
+              elementFactory.createMethodFromText("public abstract " + (returnType.getCanonicalText() + ' ' + getter.getName() + "();"), null));
+          }
+        }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
-      }
-      final PsiType returnType = getter.getReturnType();
-      assert returnType != null;
-      final String methodString = returnType.getCanonicalText() + ' ' + getter.getName() + "();";
-      final PsiManager manager = containingClass.getManager();
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-      for (PsiClass superClass : classesForGetters) {
-        if (superClass.findMethodBySignature(getter, false) != null) {
-          continue;
-        }
-        if (superClass.isInterface()) {
-          try {
-            superClass.add(elementFactory.createMethodFromText(methodString, null));
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        }
-        else {
-          try {
-            superClass.add(elementFactory.createMethodFromText("public abstract " + methodString, null));
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        }
       }
     }
 

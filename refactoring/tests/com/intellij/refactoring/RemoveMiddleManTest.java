@@ -64,4 +64,15 @@ public class RemoveMiddleManTest extends MultiFileTestCase{
     doTest();
   }
 
+  public void testInterface() throws Exception {
+    doTest();
+  }
+
+  public void testPresentGetter() throws Exception {
+    doTest();
+  }
+
+  public void testInterfaceDelegation() throws Exception {
+    doTest();
+  }
 }
