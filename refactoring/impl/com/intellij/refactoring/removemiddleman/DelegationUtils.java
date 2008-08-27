@@ -1,6 +1,7 @@
-package com.intellij.refactoring.psi;
+package com.intellij.refactoring.removemiddleman;
 
 import com.intellij.psi.*;
+import com.intellij.refactoring.psi.MethodInheritanceUtils;
 
 import java.util.HashSet;
 import java.util.Set;
