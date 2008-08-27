@@ -16,7 +16,6 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,6 +24,6 @@ import org.jetbrains.annotations.NotNull;
 public abstract class FileTypeFactory {
   public static final ExtensionPointName<FileTypeFactory> FILE_TYPE_FACTORY_EP = ExtensionPointName.create("com.intellij.fileTypeFactory");
 
-  public abstract void createFileTypes(final @NotNull PairConsumer<FileType, String> consumer);
+  public abstract void createFileTypes(final @NotNull FileTypeConsumer consumer);
 
 }

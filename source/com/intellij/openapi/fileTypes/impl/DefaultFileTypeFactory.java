@@ -5,10 +5,9 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.*;
 import com.intellij.lang.properties.PropertiesFileType;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
-import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DefaultFileTypeFactory extends FileTypeFactory {
 
-  public void createFileTypes(final @NotNull PairConsumer<FileType, String> consumer) {
+  public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
     consumer.consume(new JavaClassFileType(), "class");
 
     consumer.consume(new JavaFileType(), "java");

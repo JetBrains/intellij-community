@@ -10,13 +10,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExactFileNameMatcher implements FileNameMatcher {
   private final String myFileName;
+  private final boolean myIgnoreCase;
 
   public ExactFileNameMatcher(@NotNull @NonNls final String fileName) {
     myFileName = fileName;
+    myIgnoreCase = false;
+  }
+
+  public ExactFileNameMatcher(@NotNull @NonNls final String fileName, final boolean ignoreCase) {
+    myFileName = fileName;
+    myIgnoreCase = ignoreCase;
   }
 
   public boolean accept(@NonNls @NotNull final String fileName) {
-    return Comparing.equal(fileName, myFileName, SystemInfo.isFileSystemCaseSensitive);
+    return Comparing.equal(fileName, myFileName, SystemInfo.isFileSystemCaseSensitive && !myIgnoreCase);
   }
 
   @NonNls

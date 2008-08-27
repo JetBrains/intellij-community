@@ -14,7 +14,6 @@ import com.intellij.openapi.fileTypes.ex.*;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
@@ -65,16 +64,31 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NonNls private static final String ATTRIBUTE_EXTENSIONS = "extensions";
   @NonNls private static final String ATTRIBUTE_BINARY = "binary";
   @NonNls private static final String ATTRIBUTE_DEFAULT_EXTENSION = "default_extension";
+
+  private static class StandardFileType {
+    FileType fileType;
+    List<FileNameMatcher> matchers;
+
+    private StandardFileType(final FileType fileType, final List<FileNameMatcher> matchers) {
+      this.fileType = fileType;
+      this.matchers = matchers;
+    }
+  }
+
   private final MessageBus myMessageBus;
-  private static final Map<String,Pair<FileType,String>> ourStandardFileTypes = new THashMap<String, Pair<FileType, String>>();
+  private static final Map<String, StandardFileType> ourStandardFileTypes = new THashMap<String, StandardFileType>();
   @NonNls private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
   private final SchemesManager<FileType, AbstractFileType> mySchemesManager;
   private static final String FILE_SPEC = "$ROOT_CONFIG$/filetypes";
 
   static {
-    final PairConsumer<FileType, String> consumer = new PairConsumer<FileType, String>() {
+    final FileTypeConsumer consumer = new FileTypeConsumer() {
       public void consume(final FileType fileType, final String extensions) {
-        ourStandardFileTypes.put(fileType.getName(), Pair.create(fileType, extensions));
+        ourStandardFileTypes.put(fileType.getName(), new StandardFileType(fileType, parse(extensions)));
+      }
+
+      public void consume(final FileType fileType, final FileNameMatcher... matchers) {
+        ourStandardFileTypes.put(fileType.getName(), new StandardFileType(fileType, Arrays.asList(matchers)));
       }
     };
     for (final FileTypeFactory factory : Extensions.getExtensions(FileTypeFactory.FILE_TYPE_FACTORY_EP)) {
@@ -163,8 +177,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         
       }
     }, RoamingType.PER_USER);
-    for (final Pair<FileType, String> pair : ourStandardFileTypes.values()) {
-      registerFileTypeWithoutNotification(pair.first, parse(pair.second));
+    for (final StandardFileType pair : ourStandardFileTypes.values()) {
+      registerFileTypeWithoutNotification(pair.fileType, pair.matchers);
     }
     if (loadAllFileTypes()) {
       restoreStandardFileExtensions();
@@ -189,8 +203,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @NotNull
   public FileType getStdFileType(@NotNull @NonNls String name) {
-    Pair<FileType, String> pair = ourStandardFileTypes.get(name);
-    return pair != null ? pair.first : new PlainTextFileType();
+    StandardFileType stdFileType = ourStandardFileTypes.get(name);
+    return stdFileType != null ? stdFileType.fileType : new PlainTextFileType();
   }
 
   @NotNull
@@ -501,9 +515,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private void restoreStandardFileExtensions() {
     for (final String name : FILE_TYPES_WITH_PREDEFINED_EXTENSIONS) {
-      final Pair<FileType, String> pair = ourStandardFileTypes.get(name);
-      if (pair != null) {
-        FileType fileType = pair.first;
+      final StandardFileType stdFileType = ourStandardFileTypes.get(name);
+      if (stdFileType != null) {
+        FileType fileType = stdFileType.fileType;
         for (FileNameMatcher matcher : myPatternsTable.getAssociations(fileType)) {
           FileType defaultFileType = myInitialAssociations.findAssociatedFileType(matcher);
           if (defaultFileType != null && defaultFileType != fileType) {
