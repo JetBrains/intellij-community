@@ -169,7 +169,7 @@ public class InjectLanguageAction implements IntentionAction {
       final Language language = InjectedLanguage.findLanguageById(value);
       assert language != null;
       final FileType ft = language.getAssociatedFileType();
-      return ft != null ? ft.getDescription() : value;
+      return value + (ft != null ? " ("+ft.getDescription()+")" : "");
     }
   }
 }
