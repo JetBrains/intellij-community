@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NonNls;
@@ -74,7 +75,7 @@ public class PluginDownloader {
       //store old plugins file
       ideaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(myPluginId));
       LOG.assertTrue(ideaPluginDescriptor != null);
-      if (myPluginVersion != null && IdeaPluginDescriptorImpl.compareVersion(ideaPluginDescriptor.getVersion(), myPluginVersion) >= 0) {
+      if (myPluginVersion != null && StringUtil.compareVersionNumbers(ideaPluginDescriptor.getVersion(), myPluginVersion) >= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return false;
       }
@@ -119,7 +120,7 @@ public class PluginDownloader {
     }
     if (descriptor != null) {
       myPluginVersion = descriptor.getVersion();
-      if (ideaPluginDescriptor != null && IdeaPluginDescriptorImpl.compareVersion(ideaPluginDescriptor.getVersion(), descriptor.getVersion()) >= 0) {
+      if (ideaPluginDescriptor != null && StringUtil.compareVersionNumbers(ideaPluginDescriptor.getVersion(), descriptor.getVersion()) >= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return false; //was not updated
       }

@@ -11,6 +11,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -74,7 +75,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
       PluginId descrId = descr.getPluginId();
       if (UpdateVersions.containsKey(descrId)) {
         String currVersion = UpdateVersions.get(descrId);
-        int state = IdeaPluginDescriptorImpl.compareVersion(descr.getVersion(), currVersion);
+        int state = StringUtil.compareVersionNumbers(descr.getVersion(), currVersion);
         if (state > 0) {
           for (int i = 0; i < view.size(); i++) {
             IdeaPluginDescriptor obsolete = view.get(i);

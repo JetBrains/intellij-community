@@ -685,7 +685,7 @@ public class PluginManager {
         int oldIndex = result.indexOf(descriptor);
         if (oldIndex >= 0) {
           final IdeaPluginDescriptorImpl oldDescriptor = result.get(oldIndex);
-          if (IdeaPluginDescriptorImpl.compareVersion(oldDescriptor.getVersion(), descriptor.getVersion()) < 0) {
+          if (StringUtil.compareVersionNumbers(oldDescriptor.getVersion(), descriptor.getVersion()) < 0) {
             result.set(oldIndex, descriptor);
           }
         }
