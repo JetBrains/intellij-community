@@ -50,6 +50,12 @@ public interface FilePath {
 
   boolean isDirectory();
 
+  /**
+   * Check if the provided file is an ancestor of the current file.
+   * @param parent a possible parent
+   * @param strict if true, the method also returns true if files are equal
+   * @return true if {@code this} file is ancestor of the {@code parent}.
+   */
   boolean isUnder(FilePath parent, boolean strict);
 
   @Nullable

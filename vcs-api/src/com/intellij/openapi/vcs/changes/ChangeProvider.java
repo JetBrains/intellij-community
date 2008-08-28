@@ -20,9 +20,21 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.VcsException;
 
 /**
+ * The provider of change information (from the point of view of VCS).
+ *
  * @author max
  */
 public interface ChangeProvider {
+  /**
+   * Get changes from point of view of VCS. The vcs plugin should invoke
+   * methods on the {@code builder} object to report how changes in dirtyScope
+   * map to VCS.
+   *
+   * @param dirtyScope a changes on the virtual file system
+   * @param builder a builder of VCS changes
+   * @param progress a current progress object
+   * @throws VcsException if there there is a VCS specific problem
+   */
   void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress) throws VcsException;
 
   /**

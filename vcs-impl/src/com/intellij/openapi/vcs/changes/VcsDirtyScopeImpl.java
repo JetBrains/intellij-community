@@ -74,6 +74,13 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     return result;
   }
 
+  /**
+   * Add dirty directory recursively. If there are already dirty entries
+   * that are descendants or ancestors for the added directory, the contained
+   * entries are droped from scope.
+   *
+   * @param newcomer a new directory to add
+   */
   public void addDirtyDirRecursively(final FilePath newcomer) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -113,6 +120,14 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     });
   }
 
+  /**
+   * Add dirty file to the scope. Note that file is not added
+   * if its ancestor was added as dirty recursively or if its parent
+   * is in already in the dirty scope. Also immendiate non-directory
+   * children are removed from the set of dirty files.
+   *
+   * @param newcomer a file or directory added to the dirty scope.
+   */
   public void addDirtyFile(final FilePath newcomer) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {

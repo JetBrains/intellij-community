@@ -86,6 +86,16 @@ public class FileUtil {
     return relativePath.toString();
   }
 
+  /**
+   * Check if the {@code ancestor} is an ancestor of {@code file}.
+   *
+   * @param ancestor the file
+   * @param file     the file
+   * @param strict   if {@code false} then this method returns {@code true} if {@code ancestor}
+   *                 and {@code file} are equal
+   * @return {@code true} if {@code ancestor} is parent of {@code file}; {@code false} otherwise
+   * @throws IOException this exception is never thrown and left here for backward compatibilty 
+   */
   public static boolean isAncestor(File ancestor, File file, boolean strict) throws IOException {
     File parent = strict ? getParentFile(file) : file;
     while (true) {
@@ -99,6 +109,14 @@ public class FileUtil {
     }
   }
 
+  /**
+   * Get parent for the file. The method correctly
+   * processes "." and ".." in file names. The name
+   * remains relative if was relative before.
+   *
+   * @param file a file to analyze
+   * @return a parent or the null if the file has no parent.
+   */
   @Nullable
   public static File getParentFile(final File file) {
     int skipCount = 0;
