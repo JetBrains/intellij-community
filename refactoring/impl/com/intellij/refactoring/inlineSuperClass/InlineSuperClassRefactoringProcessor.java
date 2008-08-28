@@ -13,8 +13,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.inlineSuperClass.usageInfo.RemoveImportUsageInfo;
 import com.intellij.refactoring.inlineSuperClass.usageInfo.ReplaceExtendsListUsageInfo;
-import com.intellij.refactoring.inlineSuperClass.usageInfo.ReplaceImportUsageInfo;
 import com.intellij.refactoring.inlineSuperClass.usageInfo.ReplaceWithSubtypeUsageInfo;
 import com.intellij.refactoring.memberPushDown.PushDownConflicts;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
@@ -38,6 +38,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   private final PsiClass mySuperClass;
   private final PsiClass myTargetClass;
   private MemberInfo[] myMemberInfos;
+  private PsiClassType myTargetClassType;
 
   public InlineSuperClassRefactoringProcessor(Project project, PsiClass superClass, final PsiClass targetClass) {
     super(project);
@@ -53,6 +54,8 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       member.setChecked(true);
     }
     myMemberInfos = members.toArray(new MemberInfo[members.size()]);
+    myTargetClassType = JavaPsiFacade.getInstance(myTargetClass.getProject()).getElementFactory()
+      .createType(myTargetClass, TypeConversionUtil.getSuperClassSubstitutor(mySuperClass, myTargetClass, PsiSubstitutor.EMPTY));
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo[] usages) {
@@ -67,7 +70,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         if (element instanceof PsiJavaCodeReferenceElement) {
           final PsiImportStatement importStatement = PsiTreeUtil.getParentOfType(element, PsiImportStatement.class);
           if (importStatement != null) {
-            usages.add(new ReplaceImportUsageInfo(importStatement, myTargetClass));
+            usages.add(new RemoveImportUsageInfo(importStatement));
           }
           else {
             final PsiElement parent = element.getParent();
@@ -88,7 +91,6 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         return true;
       }
     });
-
   }
 
 
@@ -107,11 +109,9 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
             final PsiExpression qualifier = referenceExpression.getQualifierExpression();
             if (qualifier != null) {
               final PsiType qualifierType = qualifier.getType();
-              if (qualifierType instanceof PsiClassType) {
-                final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)qualifierType).resolveGenerics();
-                if (resolveResult.getElement().equals(mySuperClass) && !resolveResult.getSubstitutor().equals(TypeConversionUtil.getSuperClassSubstitutor(mySuperClass, myTargetClass, PsiSubstitutor.EMPTY))) {
-                  conflicts.add("Non consistent substitution detected");
-                }
+              LOG.assertTrue(qualifierType != null);
+              if (!TypeConversionUtil.isAssignable(qualifierType, myTargetClassType)) {
+                conflicts.add("Non consistent substitution found for " + element.getText());
               }
             }
           }

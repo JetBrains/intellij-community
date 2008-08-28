@@ -70,4 +70,8 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testConflictGenerics() throws Exception {
     doTest(true);
   }
+
+  public void testImports() throws Exception {
+    doTest();
+  }
 }
