@@ -702,9 +702,18 @@ public class InjectedLanguageUtil {
             myFileViewProvider.forceCachedPsi(psiFile);
           }
 
-          List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens =
-            obtainHighlightTokensFromLexer(myLanguage, outChars, escapers, shreds, virtualFile, documentWindow, myProject);
-          psiFile.putUserData(HIGHLIGHT_TOKENS, tokens);
+          try {
+            List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens =
+                obtainHighlightTokensFromLexer(myLanguage, outChars, escapers, shreds, virtualFile, documentWindow, myProject);
+            psiFile.putUserData(HIGHLIGHT_TOKENS, tokens);
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (RuntimeException e) {
+            throw new RuntimeException("Patch error, lang="+myLanguage+";\n "+myHostVirtualFile+"; places:"+injectionHosts+";\n ranges:"+relevantRangesInHostDocument, e);
+          }
+
           PsiDocumentManagerImpl.checkConsistency(psiFile, documentWindow);
 
           Place place = new Place(psiFile, new ArrayList<PsiLanguageInjectionHost.Shred>(shreds));
