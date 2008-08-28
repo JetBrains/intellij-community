@@ -370,14 +370,27 @@
       <add-to-group group-id="GenerateGroup" anchor="last"/>
     </action>
 
-    <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewGroovyClassAction"
-            text="Groovy Class" description="Create new Groovy class">
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="Grails"/>
-    </action>
     <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction"
             text="Groovy Script" description="Create new Groovy script">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Grails"/>
+    </action>
+    <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewGroovyClassAction"
+            text="Groovy Class" description="Create new Groovy class">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="Groovy.NewScript"/>
+    </action>
+    <action id="Groovy.NewInterface" class="org.jetbrains.plugins.groovy.actions.NewGroovyInterfaceAction"
+            text="Groovy Interface" description="Create new Groovy interface">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewClass"/>
     </action>
+    <action id="Groovy.NewEnum" class="org.jetbrains.plugins.groovy.actions.NewGroovyEnumAction"
+            text="Groovy Enum" description="Create new Groovy enumeration">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewInterface"/>
+    </action>
+    <action id="Groovy.NewAnnotation" class="org.jetbrains.plugins.groovy.actions.NewGroovyAnnotationAction"
+            text="Groovy @Interface" description="Create new Groovy annotation">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewEnum"/>
+    </action>
+
     <action id="RenameJavaFileToGroovyFileAction"
             class="org.jetbrains.plugins.groovy.refactoring.javaToGrovyRename.RenameJavaFileToGroovyFileAction"
             text="Rename To Groovy" description="Rename Java File to Groovy">

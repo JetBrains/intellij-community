@@ -125,7 +125,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     params.setMainClass(GROOVY_STARTER);
   }
 
-  private void configureGroovyStarter(JavaParameters params) {
+  private void configureGroovyStarter(JavaParameters params, final Module module) {
     // add GroovyStarter parameters
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(GROOVY_MAIN);
@@ -133,7 +133,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     params.getProgramParametersList().add("--classpath");
 
     // Clear module libraries from JDK's occurrences
-    StringBuffer buffer = RunnerUtil.getClearClassPathString(params, false);
+    StringBuffer buffer = RunnerUtil.getClearClassPathString(params, module);
 
     params.getProgramParametersList().add("\"" + workDir + File.pathSeparator + buffer.toString() + "\"");
     if (isDebugEnabled) {
@@ -174,7 +174,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
         JavaParameters params = new JavaParameters();
 
         configureJavaParams(params, module);
-        configureGroovyStarter(params);
+        configureGroovyStarter(params, module);
         configureScript(params);
 
         return params;
