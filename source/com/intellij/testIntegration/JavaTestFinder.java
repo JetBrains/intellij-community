@@ -14,6 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -31,6 +32,7 @@ public class JavaTestFinder implements TestFinder {
     while (true);
   }
 
+  @NotNull
   public Collection<PsiElement> findClassesForTest(PsiElement element) {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
@@ -97,6 +99,7 @@ public class JavaTestFinder implements TestFinder {
     return result;
   }
 
+  @NotNull
   public Collection<PsiElement> findTestsForClass(PsiElement element) {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
