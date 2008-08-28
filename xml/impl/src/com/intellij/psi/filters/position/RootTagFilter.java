@@ -1,9 +1,9 @@
 package com.intellij.psi.filters.position;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.filters.ElementFilter;
 
 /**
  * Created by IntelliJ IDEA.
