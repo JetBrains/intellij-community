@@ -775,6 +775,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       }
 
       public String getLocationString() {
+        final PsiDirectory psiDirectory = getParent();
+        if (psiDirectory != null) {
+          return psiDirectory.getVirtualFile().getPresentableUrl();
+        }
         return null;
       }
 
