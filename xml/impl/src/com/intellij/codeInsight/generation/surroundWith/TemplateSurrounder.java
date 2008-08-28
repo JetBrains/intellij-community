@@ -1,20 +1,21 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlToken;
@@ -41,7 +42,7 @@ public class TemplateSurrounder implements Surrounder {
   public boolean isApplicableForFileType(FileType fileType) {
     final TemplateContext templateContext = myTemplate.getTemplateContext();
 
-    if (fileType == StdFileTypes.XHTML || fileType == StdFileTypes.HTML || fileType == StdFileTypes.XML || fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX) {
+    if (fileType instanceof XmlLikeFileType || fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX) {
       for(TemplateContextType contextType: Extensions.getExtensions(TemplateContextType.EP_NAME)) {
         if (contextType.isInContext(fileType)) {
           if (contextType.isEnabled(templateContext)) return true;
