@@ -28,8 +28,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public abstract class InjectedLanguageManager implements ProjectComponent {
   public static final ExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = ExtensionPointName.create("com.intellij.multiHostInjector");
@@ -47,4 +50,14 @@ public abstract class InjectedLanguageManager implements ProjectComponent {
   public abstract boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector);
 
   public abstract String getUnescapedText(@NotNull PsiElement injectedNode);
+
+  @Nullable
+  public List<TextRange> intersectWithAllEditableFragments(@NotNull TextRange rangeToEdit) {
+    int offset = 0;
+    int startOffset = -1;
+    int endOffset = -1;
+    List<TextRange> result = new SmartList<TextRange>();
+    return result;
+  }
+
 }

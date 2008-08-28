@@ -174,8 +174,8 @@ public class InjectedLanguageUtil {
     private PsiLanguageInjectionHost[] myHosts;
     private Project myProject;
 
-    private MyFileViewProvider(@NotNull Project project, @NotNull VirtualFileWindow virtualFile, List<PsiLanguageInjectionHost> hosts) {
-      super(PsiManager.getInstance(project), (VirtualFile)virtualFile);
+    private MyFileViewProvider(@NotNull PsiManager psiManager, @NotNull VirtualFileWindow virtualFile, List<PsiLanguageInjectionHost> hosts) {
+      super(psiManager, (VirtualFile)virtualFile);
       myHosts = hosts.toArray(new PsiLanguageInjectionHost[hosts.size()]);
       myProject = myHosts[0].getProject();
     }
@@ -667,7 +667,7 @@ public class InjectedLanguageUtil {
           DocumentImpl decodedDocument = new DocumentImpl(outChars);
           FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
 
-          SingleRootFileViewProvider viewProvider = new MyFileViewProvider(myProject, virtualFile, injectionHosts);
+          SingleRootFileViewProvider viewProvider = new MyFileViewProvider(myPsiManager, virtualFile, injectionHosts);
           ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(myLanguage);
           assert parserDefinition != null;
           PsiFile psiFile = parserDefinition.createFile(viewProvider);
