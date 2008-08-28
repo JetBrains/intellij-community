@@ -8,7 +8,7 @@ import com.intellij.util.IncorrectOperationException;
 
 @SuppressWarnings({"AbstractClassExtendsConcreteClass"})
 public abstract class FixableUsageInfo extends UsageInfo {
-    protected FixableUsageInfo(PsiElement element) {
+    public FixableUsageInfo(PsiElement element) {
         super(element);
     }
 

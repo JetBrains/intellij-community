@@ -167,6 +167,7 @@
       <action id="MemberPushDown" class="com.intellij.refactoring.actions.PushDownAction"/>
       <action id="InheritanceToDelegation" class="com.intellij.refactoring.actions.InheritanceToDelegationAction"/>
       <action id="RemoveMiddleman" class="com.intellij.refactoring.actions.RemoveMiddlemanAction"/>
+      <action id="InlineSuperClass" internal="true" class="com.intellij.refactoring.actions.InlineSuperClassAction"/>
       <separator/>
       <action id="Inline" class="com.intellij.refactoring.actions.InlineAction"/>
       <action id="AnonymousToInner" class="com.intellij.refactoring.actions.AnonymousToInnerAction"/>

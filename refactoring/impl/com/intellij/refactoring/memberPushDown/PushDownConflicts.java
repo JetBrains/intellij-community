@@ -58,35 +58,7 @@ public class PushDownConflicts {
 
   public void checkTargetClassConflicts(PsiClass targetClass) {
     for (final PsiMember movedMember : myMovedMembers) {
-      if (movedMember instanceof PsiField) {
-        String name = movedMember.getName();
-        if (targetClass.findFieldByName(name, false) != null) {
-          String message = RefactoringBundle.message("0.already.contains.field.1", RefactoringUIUtil.getDescription(targetClass, false), CommonRefactoringUtil.htmlEmphasize(name));
-          myConflicts.add(ConflictsUtil.capitalize(message));
-        }
-      }
-      else if (movedMember instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)movedMember;
-        if (targetClass.findMethodBySignature(method, false) != null) {
-          String message = RefactoringBundle.message("0.is.already.overridden.in.1",
-                                                RefactoringUIUtil.getDescription(method, true), RefactoringUIUtil.getDescription(targetClass, false));
-          myConflicts.add(ConflictsUtil.capitalize(message));
-        }
-      }
-      else if (movedMember instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)movedMember;
-        final String name = aClass.getName();
-        final PsiClass[] allInnerClasses = targetClass.getAllInnerClasses();
-        for (PsiClass innerClass : allInnerClasses) {
-          if (innerClass.equals(movedMember)) continue;
-
-          if (name.equals(innerClass.getName())) {
-            String message = RefactoringBundle.message("0.already.contains.inner.class.named.1", RefactoringUIUtil.getDescription(targetClass, false),
-                                                  CommonRefactoringUtil.htmlEmphasize(name));
-            myConflicts.add(message);
-          }
-        }
-      }
+      checkMemberPlacementInTargetClassConflict(targetClass, movedMember);
 
       Members:
       for (PsiMember member : myMovedMembers) {
@@ -106,6 +78,38 @@ public class PushDownConflicts {
               }
             }
           }
+        }
+      }
+    }
+  }
+
+  public void checkMemberPlacementInTargetClassConflict(final PsiClass targetClass, final PsiMember movedMember) {
+    if (movedMember instanceof PsiField) {
+      String name = movedMember.getName();
+      if (targetClass.findFieldByName(name, false) != null) {
+        String message = RefactoringBundle.message("0.already.contains.field.1", RefactoringUIUtil.getDescription(targetClass, false), CommonRefactoringUtil.htmlEmphasize(name));
+        myConflicts.add(ConflictsUtil.capitalize(message));
+      }
+    }
+    else if (movedMember instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)movedMember;
+      if (targetClass.findMethodBySignature(method, false) != null) {
+        String message = RefactoringBundle.message("0.is.already.overridden.in.1",
+                                              RefactoringUIUtil.getDescription(method, true), RefactoringUIUtil.getDescription(targetClass, false));
+        myConflicts.add(ConflictsUtil.capitalize(message));
+      }
+    }
+    else if (movedMember instanceof PsiClass) {
+      PsiClass aClass = (PsiClass)movedMember;
+      final String name = aClass.getName();
+      final PsiClass[] allInnerClasses = targetClass.getAllInnerClasses();
+      for (PsiClass innerClass : allInnerClasses) {
+        if (innerClass.equals(movedMember)) continue;
+
+        if (name.equals(innerClass.getName())) {
+          String message = RefactoringBundle.message("0.already.contains.inner.class.named.1", RefactoringUIUtil.getDescription(targetClass, false),
+                                                CommonRefactoringUtil.htmlEmphasize(name));
+          myConflicts.add(message);
         }
       }
     }
