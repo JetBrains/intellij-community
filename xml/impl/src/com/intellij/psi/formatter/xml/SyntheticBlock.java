@@ -163,7 +163,8 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     final List<Block> subBlocks = getSubBlocks();
-    if (newChildIndex-1 < subBlocks.size()) {
+    final int prevBlockIndex = newChildIndex - 1;
+    if (prevBlockIndex >= 0 && prevBlockIndex < subBlocks.size()) {
       final Block prevBlock = subBlocks.get(newChildIndex - 1);
       if (isAttributeBlock(prevBlock)) {
         return new ChildAttributes(myChildIndent, prevBlock.getAlignment());
