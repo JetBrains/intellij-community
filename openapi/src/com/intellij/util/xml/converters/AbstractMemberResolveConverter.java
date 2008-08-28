@@ -63,7 +63,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
     for (PropertyMemberType type : getMemberTypes(context)) {
       switch (type) {
         case FIELD:
-          final PsiField field = psiClass.findFieldByName(propertyName, isLookDeep());
+          final PsiField field = psiClass.findFieldByName(s, isLookDeep());
           if (field != null) return field;
           break;
         case GETTER:
