@@ -240,11 +240,12 @@ public class InjectedLanguageUtil {
       int currentHostNum = -1;
       LeafElement prevElement;
       String prevElementTail;
-      int prevHostsCombinedLength = 0;
+      int prevHostsCombinedLength;
       TextRange shredHostRange;
       TextRange rangeInsideHost;
       String hostText;
       PsiLanguageInjectionHost.Shred shred;
+      int prefixLength;
       {
         incHostNum(0);
       }
@@ -257,10 +258,8 @@ public class InjectedLanguageUtil {
         String leafText = leaf.getText();
         catLeafs.append(leafText);
         TextRange range = leaf.getTextRange();
-        int prefixLength;
         int startOffsetInHost;
         while (true) {
-          prefixLength = shredHostRange.getStartOffset();
           if (prefixLength > range.getStartOffset() && prefixLength < range.getEndOffset()) {
             //LOG.error("Prefix must not contain text that will be glued with the element body after parsing. " +
             //          "However, parsed element of "+leaf.getClass()+" contains "+(prefixLength-range.getStartOffset()) + " characters from the prefix. " +
@@ -274,18 +273,15 @@ public class InjectedLanguageUtil {
 
           int start = range.getStartOffset() - prevHostsCombinedLength;
           if (start < prefixLength) return;
-          int end = range.getEndOffset() - prevHostsCombinedLength;
+          int end = range.getEndOffset();
           if (end > shred.range.getEndOffset() - shred.suffix.length() && end <= shred.range.getEndOffset()) return;
           startOffsetInHost = escapers.get(currentHostNum).getOffsetInHost(start - prefixLength, rangeInsideHost);
 
-          if (startOffsetInHost == -1 || startOffsetInHost == rangeInsideHost.getEndOffset()) {
-            // no way next leaf might stand more than one shred apart
-            incHostNum(range.getStartOffset());
-            start = range.getStartOffset() - prevHostsCombinedLength;
-            startOffsetInHost = escapers.get(currentHostNum).getOffsetInHost(start - prefixLength, rangeInsideHost);
-            assert startOffsetInHost != -1;
+          if (startOffsetInHost != -1 && startOffsetInHost != rangeInsideHost.getEndOffset()) {
+            break;
           }
-          else break;
+          // no way next leaf might stand more than one shred apart
+          incHostNum(range.getStartOffset());
         }
         String leafEncodedText = "";
         while (true) {
@@ -305,7 +301,6 @@ public class InjectedLanguageUtil {
           leafEncodedText += rest;
           incHostNum(shred.range.getEndOffset());
           startOffsetInHost = shred.getRangeInsideHost().getStartOffset();
-          prefixLength = shredHostRange.getStartOffset();
         }
 
         if (leaf.getElementType() == TokenType.WHITE_SPACE && prevElementTail != null) {
@@ -334,16 +329,19 @@ public class InjectedLanguageUtil {
         shredHostRange = new ProperTextRange(TextRange.from(shred.prefix.length(), shred.getRangeInsideHost().getLength()));
         rangeInsideHost = shred.getRangeInsideHost();
         hostText = shred.host.getText();
+        prefixLength = shredHostRange.getStartOffset();
       }
     });
 
     String nodeText = parsedNode.getText();
-    assert nodeText.equals(catLeafs.toString()) : "Malformed PSI structure: leaf texts do not added up to the whole file text." +
+    assert nodeText.equals(catLeafs.toString()) : "Malformed PSI structure: leaf texts do not add up to the whole file text." +
                                                   "\nFile text (from tree)  :'"+nodeText+"'" +
                                                   "\nFile text (from PSI)   :'"+parsedNode.getPsi().getText()+"'" +
                                                   "\nLeaf texts concatenated:'"+catLeafs+"';" +
-                                                  "\nFile root:"+parsedNode+
-                                                  "\nlanguage="+parsedNode.getPsi().getLanguage();
+                                                  "\nFile root: "+parsedNode+
+                                                  "\nLanguage: "+parsedNode.getPsi().getLanguage()+
+                                                  "\nHost file: "+shreds.get(0).host.getContainingFile().getVirtualFile()
+        ;
     for (LeafElement leaf : newTexts.keySet()) {
       String newText = newTexts.get(leaf);
       leaf.setText(newText);
@@ -451,27 +449,20 @@ public class InjectedLanguageUtil {
   }
 
   public static PsiElement findInjectedElementNoCommitWithOffset(@NotNull PsiFile file, final int offset) {
-    return findInjectedElementNoCommit2(file, offset, true);
-  }
-
-  public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile file, final int offset) {
-    return findInjectedElementNoCommit2(file, offset, false);
-  }
-
-  private static PsiElement findInjectedElementNoCommit2(final PsiFile file, final int offset, boolean accuratelyPlease) {
     if (isInjectedFragment(file)) return null;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
 
     PsiElement element = file.getViewProvider().findElementAt(offset, file.getLanguage());
-    PsiElement inj = element == null ? null : findInside(element, file, offset, documentManager);
+    return element == null ? null : findInside(element, file, offset, documentManager);
+  }
+
+  public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile file, final int offset) {
+    PsiElement inj = findInjectedElementNoCommitWithOffset(file, offset);
     if (inj != null) return inj;
-
-    if (offset != 0 && !accuratelyPlease) {
-      PsiElement element1 = file.findElementAt(offset - 1);
-      if (element1 != element && element1 != null) return findInside(element1, file, offset, documentManager);
+    if (offset != 0) {
+      inj = findInjectedElementNoCommitWithOffset(file, offset - 1);
     }
-
-    return null;
+    return inj;
   }
 
   private static PsiElement findInside(@NotNull PsiElement element, @NotNull PsiFile file, final int offset, @NotNull final PsiDocumentManager documentManager) {
@@ -631,12 +622,12 @@ public class InjectedLanguageUtil {
         suffixes.add(suffix);
         cleared = false;
         injectionHosts.add(host);
+        int startOffset = outChars.length();
         outChars.append(prefix);
         LiteralTextEscaper<? extends PsiLanguageInjectionHost> textEscaper = host.createLiteralTextEscaper();
         escapers.add(textEscaper);
         isOneLineEditor |= textEscaper.isOneLine();
         TextRange relevantRange = textEscaper.getRelevantTextRange().intersection(rangeInsideHost);
-        int startOffset = outChars.length();
         if (relevantRange == null) {
           relevantRange = TextRange.from(textEscaper.getRelevantTextRange().getStartOffset(), 0);
         }
