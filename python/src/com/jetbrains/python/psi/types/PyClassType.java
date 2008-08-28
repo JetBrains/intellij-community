@@ -76,12 +76,15 @@ public class PyClassType implements PyType {
       if (getClass() != null) {
         PyClassType oldstyle = PyBuiltinCache.getInstance(myClass.getProject()).getOldstyleClassobjType();
         if (oldstyle != null) {
-          final String myname = getClass().getName();
-          final PyClass oldstyleclass = oldstyle.getPyClass();
-          if (oldstyleclass != null) {
-            final String oldstylename = oldstyleclass.getName();
-            if ((myname != null) && (oldstylename != null) && ! myname.equals(oldstylename) && !myname.equals("object")) {
-              return oldstyle.resolveMember(name);
+          final PyClass myclass = getPyClass();
+          if (myclass != null) {
+            final String myname = myclass.getName();
+            final PyClass oldstyleclass = oldstyle.getPyClass();
+            if (oldstyleclass != null) {
+              final String oldstylename = oldstyleclass.getName();
+              if ((myname != null) && (oldstylename != null) && ! myname.equals(oldstylename) && !myname.equals("object")) {
+                return oldstyle.resolveMember(name);
+              }
             }
           }
         }
