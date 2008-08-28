@@ -45,5 +45,6 @@ public class UnnecessaryParenthesesInspection
     public void commutative() {
         final int a = 1 - (2 - 3); // no warn;
         final int b = (1 - 2) - 3; // warn;
+        System.out.println(1 << (1 << 2)); // no warn
     }
 }

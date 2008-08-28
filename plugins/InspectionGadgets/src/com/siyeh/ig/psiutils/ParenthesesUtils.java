@@ -89,7 +89,10 @@ public class ParenthesesUtils{
             @NotNull IElementType token) {
         return !(token.equals(JavaTokenType.MINUS) ||
                 token.equals(JavaTokenType.DIV) ||
-                token.equals(JavaTokenType.PERC));
+                token.equals(JavaTokenType.PERC) ||
+                token.equals(JavaTokenType.LTLT) ||
+                token.equals(JavaTokenType.GTGT) ||
+                token.equals(JavaTokenType.GTGTGT));
     }
 
     public static int getPrecedence(PsiExpression expression){
