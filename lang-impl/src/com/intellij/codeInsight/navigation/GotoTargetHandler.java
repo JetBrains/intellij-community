@@ -14,6 +14,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -30,6 +31,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     show(project, editor, file, sourceAndTarget.first, sourceAndTarget.second);
   }
 
+  @NonNls
   protected abstract String getFeatureUsedKey();
 
   protected abstract Pair<PsiElement, PsiElement[]> getSourceAndTargetElements(Editor editor, PsiFile file);
