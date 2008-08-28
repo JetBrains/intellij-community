@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.inlineSuperClass.usageInfo.RemoveImportUsageInfo;
 import com.intellij.refactoring.inlineSuperClass.usageInfo.ReplaceExtendsListUsageInfo;
@@ -38,7 +39,6 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   private final PsiClass mySuperClass;
   private final PsiClass myTargetClass;
   private MemberInfo[] myMemberInfos;
-  private PsiClassType myTargetClassType;
 
   public InlineSuperClassRefactoringProcessor(Project project, PsiClass superClass, final PsiClass targetClass) {
     super(project);
@@ -54,8 +54,6 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       member.setChecked(true);
     }
     myMemberInfos = members.toArray(new MemberInfo[members.size()]);
-    myTargetClassType = JavaPsiFacade.getInstance(myTargetClass.getProject()).getElementFactory()
-      .createType(myTargetClass, TypeConversionUtil.getSuperClassSubstitutor(mySuperClass, myTargetClass, PsiSubstitutor.EMPTY));
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo[] usages) {
@@ -64,6 +62,11 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
 
   protected void findUsages(@NotNull final List<FixableUsageInfo> usages) {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
+    final PsiElementFactory elementFactory = facade.getElementFactory();
+    final PsiResolveHelper resolveHelper = facade.getResolveHelper();
+    final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(mySuperClass, myTargetClass, PsiSubstitutor.EMPTY);
+    final PsiClassType targetClassType = elementFactory.createType(myTargetClass, superClassSubstitutor);
     ReferencesSearch.search(mySuperClass).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference reference) {
         final PsiElement element = reference.getElement();
@@ -75,7 +78,15 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
           else {
             final PsiElement parent = element.getParent();
             if (parent instanceof PsiTypeElement) {
-              usages.add(new ReplaceWithSubtypeUsageInfo((PsiTypeElement)parent, myTargetClass));//todo visibility
+              final PsiType superClassType = ((PsiTypeElement)parent).getType();
+              PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+              for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(myTargetClass)) {
+                subst = subst.put(typeParameter,
+                                  resolveHelper.getSubstitutionForTypeParameter(typeParameter, targetClassType, superClassType, false,
+                                                                                PsiUtil.getLanguageLevel(parent)));
+              }
+              usages.add(new ReplaceWithSubtypeUsageInfo(((PsiTypeElement)parent), elementFactory.createType(myTargetClass, subst)));
+              //todo visibility
             }
             else if (parent instanceof PsiReferenceList) {
               final PsiElement pparent = parent.getParent();
@@ -101,23 +112,14 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     for (MemberInfo info : myMemberInfos) {
       final PsiMember member = info.getMember();
       pushDownConflicts.checkMemberPlacementInTargetClassConflict(myTargetClass, member);
-      ReferencesSearch.search(member, member.getResolveScope(), false).forEach(new Processor<PsiReference>() {
-        public boolean process(final PsiReference reference) {
-          final PsiElement element = reference.getElement();
-          if (element instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
-            final PsiExpression qualifier = referenceExpression.getQualifierExpression();
-            if (qualifier != null) {
-              final PsiType qualifierType = qualifier.getType();
-              LOG.assertTrue(qualifierType != null);
-              if (!TypeConversionUtil.isAssignable(qualifierType, myTargetClassType)) {
-                conflicts.add("Non consistent substitution found for " + element.getText());
-              }
-            }
-          }
-          return true;
+     }
+    for (UsageInfo info : refUsages.get()) {
+      if (info instanceof ReplaceWithSubtypeUsageInfo) {
+        if (!TypeConversionUtil
+          .isAssignable(((ReplaceWithSubtypeUsageInfo)info).getOriginalType(), ((ReplaceWithSubtypeUsageInfo)info).getTargetClassType())) {
+          conflicts.add("No consistent substitution found for " + info.getElement().getText());
         }
-      });
+      }
     }
     conflicts.addAll(pushDownConflicts.getConflicts());
     return showConflicts(conflicts);

@@ -74,4 +74,8 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testImports() throws Exception {
     doTest();
   }
+
+  public void testGenerics() throws Exception {
+    doTest();
+  }
 }

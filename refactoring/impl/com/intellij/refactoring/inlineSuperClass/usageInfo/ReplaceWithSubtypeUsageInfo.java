@@ -5,26 +5,33 @@
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.*;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
 public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo{
   public static final Logger LOG = Logger.getInstance("#" + ReplaceWithSubtypeUsageInfo.class.getName());
   private final PsiTypeElement myTypeElement;
-  private final PsiClass myTargetClass;
+  private final PsiClassType myTargetClassType;
+  private PsiType myOriginalType;
 
-  public ReplaceWithSubtypeUsageInfo(PsiTypeElement typeElement, PsiClass targetClass) {
+  public ReplaceWithSubtypeUsageInfo(PsiTypeElement typeElement, PsiClassType classType) {
     super(typeElement);
     myTypeElement = typeElement;
-    myTargetClass = targetClass;
+    myTargetClassType = classType;
+    myOriginalType = myTypeElement.getType();
   }
 
   public void fixUsage() throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myTypeElement.getProject()).getElementFactory();
-    myTypeElement.replace(elementFactory.createTypeElement(elementFactory.createType(myTargetClass)));
+    myTypeElement.replace(elementFactory.createTypeElement(myTargetClassType));
+  }
+
+  public PsiClassType getTargetClassType() {
+    return myTargetClassType;
+  }
+
+  public PsiType getOriginalType() {
+    return myOriginalType;
   }
 }
