@@ -288,4 +288,6 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   @Nullable
   LookupElement[] getLookupElements();
+
+  VirtualFile findFileInTempDir(String filePath);
 }

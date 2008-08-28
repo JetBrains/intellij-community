@@ -433,7 +433,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     new WriteCommandAction.Simple(project) {
       protected void run() throws Throwable {
         configureByFiles(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, filePath)));
-        final VirtualFile file = findFile(to);
+        final VirtualFile file = findFileInTempDir(to);
         assert file.isDirectory() : to + " is not a directory";
         final PsiDirectory directory = myPsiManager.findDirectory(file);
         new MoveFilesOrDirectoriesProcessor(project, new PsiElement[] {myFile}, directory,
@@ -746,7 +746,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public int configureFromTempProjectFile(final String filePath) throws IOException {
-    return configureByFileInner(findFile(filePath));
+    return configureByFileInner(findFileInTempDir(filePath));
   }
 
   public void configureFromExistingVirtualFile(VirtualFile f) throws IOException {
@@ -803,7 +803,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  private VirtualFile findFile(final String filePath) {
+  public VirtualFile findFileInTempDir(final String filePath) {
     String fullPath = getTempDirPath() + "/" + filePath;
 
     final VirtualFile copy = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath.replace(File.separatorChar, '/'));
