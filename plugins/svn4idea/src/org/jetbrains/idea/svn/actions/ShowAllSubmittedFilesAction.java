@@ -84,7 +84,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
 
     if (changeList != null) {
       long revNumber = ((SvnRevisionNumber)svnRevision.getRevisionNumber()).getRevision().getNumber();
-      AbstractVcsHelper.getInstance(project).showChangesBrowser(changeList, getTitle(revNumber));
+      AbstractVcsHelper.getInstance(project).showChangesListBrowser(changeList, getTitle(revNumber));
     }
   }
 

@@ -30,6 +30,7 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent<Ch
   private JTextField myAuthorField;
   private JPanel myPanel;
   private JPanel myStandardPanel;
+  private JCheckBox myStopOnCopyCheckBox;
 
   public SvnVersionFilterComponent(final boolean showDateFilter) {
     super(showDateFilter);
@@ -47,18 +48,21 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent<Ch
     super.initValues(settings);
     myUseAuthorFilter.setSelected(settings.USE_USER_FILTER);
     myAuthorField.setText(settings.USER);
+    myStopOnCopyCheckBox.setSelected(settings.STOP_ON_COPY);
   }
 
   public void saveValues(ChangeBrowserSettings settings) {
     super.saveValues(settings);
     settings.USER = myAuthorField.getText();
     settings.USE_USER_FILTER = myUseAuthorFilter.isSelected();
+    settings.STOP_ON_COPY = myStopOnCopyCheckBox.isSelected();
   }
 
   protected void installCheckBoxListener(final ActionListener filterListener) {
     super.installCheckBoxListener(filterListener);
     myUseAuthorFilter.addActionListener(filterListener);
     myAuthorField.addActionListener(filterListener);
+    myStopOnCopyCheckBox.addActionListener(filterListener);
   }
 
   public JPanel getPanel() {

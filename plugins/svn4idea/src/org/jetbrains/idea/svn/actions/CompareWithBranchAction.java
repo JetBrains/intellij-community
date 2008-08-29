@@ -171,7 +171,7 @@ public class CompareWithBranchAction extends AnAction {
         }
       }, SvnBundle.message("progress.computing.difference"), true, myProject);
       if (!changes.isEmpty()) {
-        AbstractVcsHelper.getInstance(myProject).showChangesBrowser(null, changes, titleBuilder.toString());
+        AbstractVcsHelper.getInstance(myProject).showWhatDiffersBrowser(null, changes, titleBuilder.toString());
       }
     }
 

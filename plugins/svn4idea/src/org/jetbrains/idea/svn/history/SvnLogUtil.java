@@ -45,7 +45,7 @@ public class SvnLogUtil implements SvnLogLoader {
                              final List<CommittedChangeList> result,
                              final boolean includingYoungest, final boolean includeOldest) throws SVNException {
     SVNLogClient logger = myVcs.createLogClient();
-    logger.doLog(myRepositoryRoot, new String[]{myRelative}, SVNRevision.UNDEFINED, fromIncluding, toIncluding, false, true, maxCount,
+    logger.doLog(myRepositoryRoot, new String[]{myRelative}, SVNRevision.UNDEFINED, fromIncluding, toIncluding, true, true, maxCount,
                  new ISVNLogEntryHandler() {
                    public void handleLogEntry(SVNLogEntry logEntry) {
                      if (myProject.isDisposed()) throw new ProcessCanceledException();
