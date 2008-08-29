@@ -165,6 +165,10 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                          progress.setText2(SvnBundle.message("progress.text2.processing.revision", logEntry.getRevision()));
                          progress.checkCanceled();
                        }
+                       if (logEntry.getDate() == null) {
+                         // do not add lists without info - this situation is possible for lists where there are paths that user has no rights to observe 
+                         return;
+                       }
                        if (author == null || author.equalsIgnoreCase(logEntry.getAuthor())) {
                          result.add(new SvnChangeList(myVcs, svnLocation, logEntry, repositoryRoot));
                        }
