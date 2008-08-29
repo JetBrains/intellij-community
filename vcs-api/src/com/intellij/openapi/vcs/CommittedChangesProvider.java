@@ -41,7 +41,7 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
   ChangeListColumn[] getColumns();
 
   @Nullable
-  VcsCommittedViewAuxiliary createActionPanel(final DecoratorManager manager, final RepositoryLocation location);
+  VcsCommittedViewAuxiliary createActions(final DecoratorManager manager, final RepositoryLocation location);
 
   /**
    * since may be different for different VCSs

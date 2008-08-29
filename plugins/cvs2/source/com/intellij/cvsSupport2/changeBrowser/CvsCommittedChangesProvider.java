@@ -78,7 +78,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Nullable
-  public VcsCommittedViewAuxiliary createActionPanel(final DecoratorManager manager, final RepositoryLocation location) {
+  public VcsCommittedViewAuxiliary createActions(final DecoratorManager manager, final RepositoryLocation location) {
     return null;
   }
 

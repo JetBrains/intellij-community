@@ -2,22 +2,19 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.AnAction;
 
-import javax.swing.*;
 import java.util.List;
 
 public class VcsCommittedViewAuxiliary {
-  private final JPanel myPanel;
+  //private final JPanel myPanel;
+  private final List<AnAction> myToolbarActions;
   private final List<AnAction> myPopupActions;
   private final Runnable myCalledOnViewDispose;
 
-  public VcsCommittedViewAuxiliary(final JPanel panel, final List<AnAction> popupActions, final Runnable calledOnViewDispose) {
-    myPanel = panel;
+  public VcsCommittedViewAuxiliary(final List<AnAction> popupActions, final Runnable calledOnViewDispose,
+                                   final List<AnAction> toolbarActions) {
+    myToolbarActions = toolbarActions;
     myPopupActions = popupActions;
     myCalledOnViewDispose = calledOnViewDispose;
-  }
-
-  public JPanel getPanel() {
-    return myPanel;
   }
 
   public List<AnAction> getPopupActions() {
@@ -26,5 +23,9 @@ public class VcsCommittedViewAuxiliary {
 
   public Runnable getCalledOnViewDispose() {
     return myCalledOnViewDispose;
+  }
+
+  public List<AnAction> getToolbarActions() {
+    return myToolbarActions;
   }
 }

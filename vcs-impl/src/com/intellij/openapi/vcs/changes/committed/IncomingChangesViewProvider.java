@@ -39,7 +39,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     myBrowser = new CommittedChangesTreeBrowser(myProject, Collections.<CommittedChangeList>emptyList());
     myBrowser.setEmptyText(VcsBundle.message("incoming.changes.not.loaded.message"));
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("IncomingChangesToolbar");
-    final ActionToolbar toolbar = myBrowser.createGroupFilterToolbar(myProject, group, null);
+    final ActionToolbar toolbar = myBrowser.createGroupFilterToolbar(myProject, group, null, Collections.<AnAction>emptyList());
     myBrowser.addToolBar(toolbar.getComponent());
     myBrowser.setTableContextMenu(group, Collections.<AnAction>emptyList());
     myConnection = myBus.connect();

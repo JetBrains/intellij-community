@@ -11,11 +11,13 @@ import javax.swing.*;
 public class SelectFilteringAction extends LabeledComboBoxAction {
   private final Project myProject;
   private CommittedChangesTreeBrowser myBrowser;
+  private String myPreviousSelection;
 
   public SelectFilteringAction(final Project project, final CommittedChangesTreeBrowser browser) {
     super(VcsBundle.message("committed.changes.filter.title"));
     myProject = project;
     myBrowser = browser;
+    myPreviousSelection = null;
   }
 
   protected ComboBoxModel createModel() {
@@ -39,6 +41,12 @@ public class SelectFilteringAction extends LabeledComboBoxAction {
   }
 
   protected void selectionChanged(final Object selection) {
-    myBrowser.setFilteringStrategy((ChangeListFilteringStrategy)selection);
+    if (myPreviousSelection != null) {
+        myBrowser.removeFilteringStrategy(myPreviousSelection);
+    }
+    if (! ChangeListFilteringStrategy.NONE.equals(selection)) {
+      myBrowser.setFilteringStrategy(selection.toString(), (ChangeListFilteringStrategy) selection);
+    }
+    myPreviousSelection = selection.toString();
   }
 }

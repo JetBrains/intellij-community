@@ -86,21 +86,24 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
   }
 
   @Nullable
-  public VcsCommittedViewAuxiliary createActionPanel(final DecoratorManager manager, final RepositoryLocation location) {
+  public VcsCommittedViewAuxiliary createActions(final DecoratorManager manager, final RepositoryLocation location) {
     JTabbedPane tabbedPane = null;
     List<AnAction> actions = null;
+    List<AnAction> toolbarActions = null;
+
     final List<Runnable> calledOnDispose = new ArrayList<Runnable>();
     for (AbstractVcs baseVcs : myBaseVcss) {
       final CommittedChangesProvider provider = baseVcs.getCommittedChangesProvider();
       if (provider != null) {
-        VcsCommittedViewAuxiliary auxiliary = provider.createActionPanel(manager, location);
+        VcsCommittedViewAuxiliary auxiliary = provider.createActions(manager, location);
         if (auxiliary != null) {
           if (tabbedPane == null) {
             tabbedPane = new JTabbedPane();
             actions = new ArrayList<AnAction>();
+            toolbarActions = new ArrayList<AnAction>();
           }
-          tabbedPane.add(baseVcs.getDisplayName(), auxiliary.getPanel());
           actions.addAll(auxiliary.getPopupActions());
+          toolbarActions.addAll(auxiliary.getToolbarActions());
           calledOnDispose.add(auxiliary.getCalledOnViewDispose());
         }
       }
@@ -108,13 +111,13 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     if (tabbedPane != null) {
       final JPanel panel = new JPanel();
       panel.add(tabbedPane);
-      return new VcsCommittedViewAuxiliary(panel, actions, new Runnable() {
+      return new VcsCommittedViewAuxiliary(actions, new Runnable() {
         public void run() {
           for (Runnable runnable : calledOnDispose) {
             runnable.run();
           }
         }
-      });
+      }, toolbarActions);
     }
     return null;
   }

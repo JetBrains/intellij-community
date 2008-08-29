@@ -61,19 +61,19 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     myErrorLabel.setForeground(Color.red);
     add(myErrorLabel, BorderLayout.SOUTH);
 
+    final VcsCommittedViewAuxiliary auxiliary = provider.createActions(myBrowser, location);
+
     JPanel toolbarPanel = new JPanel(new BorderLayout());
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("CommittedChangesToolbar");
 
-    ActionToolbar toolBar = myBrowser.createGroupFilterToolbar(project, group, extraActions);
+    ActionToolbar toolBar = myBrowser.createGroupFilterToolbar(project, group, extraActions,
+                                                               auxiliary != null ? auxiliary.getToolbarActions() : Collections.<AnAction>emptyList());
     toolbarPanel.add(toolBar.getComponent(), BorderLayout.WEST);
 
     toolbarPanel.add(myFilterComponent, BorderLayout.EAST);
     myBrowser.addToolBar(toolbarPanel);
 
-    final VcsCommittedViewAuxiliary auxiliary = provider.createActionPanel(myBrowser, location);
-
     if (auxiliary != null) {
-      myBrowser.addAuxiliaryToolbar(auxiliary.getPanel());
       myShouldBeCalledOnDispose.add(auxiliary.getCalledOnViewDispose());
       myBrowser.setTableContextMenu(group, (auxiliary.getPopupActions() == null) ? Collections.<AnAction>emptyList() : auxiliary.getPopupActions());
     } else {

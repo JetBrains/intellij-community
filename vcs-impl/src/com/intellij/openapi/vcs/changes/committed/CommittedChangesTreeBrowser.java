@@ -16,8 +16,8 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
+import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -34,6 +34,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeCopyProvider;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.TreeWithEmptyText;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -67,7 +68,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private List<CommittedChangeList> myChangeLists;
   private List<CommittedChangeList> mySelectedChangeLists;
   private ChangeListGroupingStrategy myGroupingStrategy = ChangeListGroupingStrategy.DATE;
-  private ChangeListFilteringStrategy myFilteringStrategy = ChangeListFilteringStrategy.NONE;
+  private CompositeChangeListFilteringStrategy myFilteringStrategy = new CompositeChangeListFilteringStrategy();
   private final Splitter myFilterSplitter;
   private final JPanel myLeftPanel;
   private final JPanel myToolbarPanel;
@@ -77,17 +78,18 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private final TreeExpander myTreeExpander;
   private String myHelpId;
 
+  public static final Topic<Runnable> ITEMS_RELOADED = new Topic<Runnable>("ITEMS_RELOADED", Runnable.class);
+
   private List<CommittedChangeListDecorator> myDecorators;
 
   @NonNls public static final String ourHelpId = "reference.changesToolWindow.incoming";
-  private final JPanel myAuxiliaryPanel;
+
+  private final WiseSplitter myInnerSplitter;
 
   public CommittedChangesTreeBrowser(final Project project, final List<CommittedChangeList> changeLists) {
     super(new BorderLayout());
 
     myProject = project;
-    myVisibilityGetters = new ArrayList<Getter<Boolean>>();
-    myAuxiliaryPanel = new JPanel(new BorderLayout());
     myDecorators = new LinkedList<CommittedChangeListDecorator>();
     myChangeLists = changeLists;
     myChangesTree = new ChangesBrowserTree();
@@ -129,6 +131,13 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     splitter.setSecondComponent(myChangesView);
 
     add(splitter, BorderLayout.CENTER);
+
+    myInnerSplitter = new WiseSplitter(new Runnable() {
+      public void run() {
+        myFilterSplitter.doLayout();
+        updateModel();
+      }
+    }, myFilterSplitter);
 
     mySplitterProportionsData.externalizeFromDimensionService("CommittedChanges.SplitterProportions");
     mySplitterProportionsData.restoreSplitterProportions(this);
@@ -190,11 +199,6 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myToolbarPanel.add(toolBar, BorderLayout.NORTH);
   }
 
-  public void addAuxiliaryToolbar(JComponent bar) {
-    myAuxiliaryPanel.add(bar, BorderLayout.WEST);
-    myToolbarPanel.add(myAuxiliaryPanel, BorderLayout.SOUTH);
-  }
-
   public void dispose() {
     mySplitterProportionsData.saveSplitterProportions(this);
     mySplitterProportionsData.externalizeToDimensionService("CommittedChanges.SplitterProportions");
@@ -207,6 +211,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     if (!keepFilter) {
       myFilteringStrategy.setFilterBase(items);
     }
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(ITEMS_RELOADED).run();
     updateModel();
   }
 
@@ -285,23 +290,32 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     PopupHandler.installPopupHandler(myChangesTree, menuGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
 
-  public void setFilteringStrategy(final ChangeListFilteringStrategy filteringStrategy) {
-    if (myFilteringStrategy == filteringStrategy) return;
-    myFilteringStrategy.removeChangeListener(myFilterChangeListener);
-    myFilteringStrategy = filteringStrategy;
-    boolean wasEmpty = (myFilterSplitter.getFirstComponent() == null);
-    final JComponent filterUI = myFilteringStrategy.getFilterUI();
-    myFilterSplitter.setFirstComponent(filterUI);
-    myFilteringStrategy.setFilterBase(myChangeLists);
-    myFilteringStrategy.addChangeListener(myFilterChangeListener);
-    if (wasEmpty && filterUI != null) {
-      myFilterSplitter.setProportion(0.25f);
+  public void removeFilteringStrategy(final String key) {
+    final ChangeListFilteringStrategy strategy = myFilteringStrategy.removeStrategy(key);
+    if (strategy != null) {
+      strategy.removeChangeListener(myFilterChangeListener);
     }
-    myFilterSplitter.doLayout();
-    updateModel();
+    myInnerSplitter.remove(key);
   }
 
-  public ActionToolbar createGroupFilterToolbar(final Project project, final ActionGroup leadGroup, @Nullable final ActionGroup tailGroup) {
+  public boolean setFilteringStrategy(final String key, final ChangeListFilteringStrategy filteringStrategy) {
+    if (myInnerSplitter.canAdd()) {
+      filteringStrategy.setFilterBase(myChangeLists);
+      filteringStrategy.addChangeListener(myFilterChangeListener);
+
+      myFilteringStrategy.addStrategy(key, filteringStrategy);
+
+      final JComponent filterUI = filteringStrategy.getFilterUI();
+      if (filterUI != null) {
+        myInnerSplitter.add(key, filterUI);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  public ActionToolbar createGroupFilterToolbar(final Project project, final ActionGroup leadGroup, @Nullable final ActionGroup tailGroup,
+                                                final List<AnAction> extra) {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(leadGroup);
     toolbarGroup.addSeparator();
@@ -321,6 +335,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     toolbarGroup.add(new ContextHelpAction(myHelpId));
     if (tailGroup != null) {
       toolbarGroup.add(tailGroup);
+    }
+    for (AnAction anAction : extra) {
+      toolbarGroup.add(anAction);
     }
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
   }
@@ -379,22 +396,6 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         listener.onAfterEndReport();
       }
     }); 
-  }
-
-  private final Collection<Getter<Boolean>> myVisibilityGetters;
-
-  public void fireVisibilityCalculation() {
-    if (myAuxiliaryPanel != null) {
-      boolean visible = false;
-      for (Getter<Boolean> getter : myVisibilityGetters) {
-        visible |= Boolean.TRUE.equals(getter.get());
-      }
-      myAuxiliaryPanel.setVisible(visible);
-    }
-  }
-
-  public void registerCompositePart(final Getter<Boolean> visibilityGetter) {
-    myVisibilityGetters.add(visibilityGetter);
   }
 
   private static class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
@@ -515,6 +516,87 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       else if (key.equals(PlatformDataKeys.TREE_EXPANDER)) {
         sink.put(PlatformDataKeys.TREE_EXPANDER, myTreeExpander);
       }
+    }
+  }
+  
+  private static class WiseSplitter {
+    private final Runnable myRefresher;
+    private final Splitter myParentSplitter;
+    private final ThreeComponentsSplitter myInnerSplitter;
+    private final Map<String, Integer> myInnerSplitterContents;
+
+    private WiseSplitter(final Runnable refresher, final Splitter parentSplitter) {
+      myRefresher = refresher;
+      myParentSplitter = parentSplitter;
+
+      myInnerSplitter = new ThreeComponentsSplitter(false);
+      myInnerSplitter.setHonorComponentsMinimumSize(true);
+      myInnerSplitterContents = new HashMap<String, Integer>();
+    }
+
+    public boolean canAdd() {
+      return myInnerSplitterContents.size() <= 3;
+    }
+
+    public void add(final String key, final JComponent comp) {
+      final int idx = myInnerSplitterContents.size();
+      myInnerSplitterContents.put(key, idx);
+      if (idx == 0) {
+        myParentSplitter.setFirstComponent(myInnerSplitter);
+        if (myParentSplitter.getProportion() < 0.05f) {
+          myParentSplitter.setProportion(0.25f);
+        }
+        myInnerSplitter.setFirstComponent(comp);
+        myInnerSplitter.setFirstSize((int) (myParentSplitter.getSize().getWidth() * myParentSplitter.getProportion()));
+      } else if (idx == 1) {
+        final Dimension dimension = myInnerSplitter.getSize();
+        final double width = dimension.getWidth() / 2;
+        myInnerSplitter.setInnerComponent(comp);
+        myInnerSplitter.setFirstSize((int) width);
+      } else {
+        final Dimension dimension = myInnerSplitter.getSize();
+        final double width = dimension.getWidth() / 3;
+        myInnerSplitter.setLastComponent(comp);
+        myInnerSplitter.setFirstSize((int) width);
+        myInnerSplitter.setLastSize((int) width);
+      }
+
+      myRefresher.run();
+    }
+
+    public void remove(final String key) {
+      final Integer idx = myInnerSplitterContents.remove(key);
+      if (idx == null) {
+        return;
+      }
+      final Map<String, Integer> tmp = new HashMap<String, Integer>();
+      for (Map.Entry<String, Integer> entry : myInnerSplitterContents.entrySet()) {
+        if (entry.getValue() < idx) {
+          tmp.put(entry.getKey(), entry.getValue());
+        } else {
+          tmp.put(entry.getKey(), entry.getValue() - 1);
+        }
+      }
+      myInnerSplitterContents.clear();
+      myInnerSplitterContents.putAll(tmp);
+
+      if (idx == 0) {
+        final JComponent inner = myInnerSplitter.getInnerComponent();
+        myInnerSplitter.setInnerComponent(null);
+        myInnerSplitter.setFirstComponent(inner);
+        lastToInner();
+      } else if (idx == 1) {
+        lastToInner();
+      } else {
+        myInnerSplitter.setLastComponent(null);
+      }
+      myRefresher.run();
+    }
+
+    private void lastToInner() {
+      final JComponent last = myInnerSplitter.getLastComponent();
+      myInnerSplitter.setLastComponent(null);
+      myInnerSplitter.setInnerComponent(last);
     }
   }
 }
