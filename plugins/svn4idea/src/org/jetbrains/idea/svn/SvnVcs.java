@@ -745,15 +745,19 @@ public class SvnVcs extends AbstractVcs {
     }
   }
 
-  private class SvnConvertor implements MappingToRootConvertor {
-    public void fillRoots(final VcsDirectoryMapping mapping, final List<VirtualFile> result) {
-      final VirtualFile directory = SvnUtil.correctRoot(myProject, mapping.getDirectory());
-      result.addAll(getSvnFileUrlMapping().getWcRootsUnderVcsRoot(directory));
+  private class SvnConvertor implements RootsConvertor {
+    public List<VirtualFile> convertRoots(final List<VirtualFile> result) {
+      final List<VirtualFile> corrected = new ArrayList<VirtualFile>();
+      for (VirtualFile virtualFile : result) {
+        final VirtualFile directory = SvnUtil.correctRoot(myProject, virtualFile);
+        corrected.addAll(getSvnFileUrlMapping().getWcRootsUnderVcsRoot(directory));
+      }
+      return corrected;
     }
   }
 
   @Override
-  public MappingToRootConvertor getCustomConvertor() {
+  public RootsConvertor getCustomConvertor() {
     return myConvertor;
   }
 }
