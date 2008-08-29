@@ -27,11 +27,8 @@ import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.dialogs.WCPaths;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.jetbrains.idea.svn.mergeinfo.MergeInfoHolder;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.io.SVNCapability;
-import org.tmatesoft.svn.core.io.SVNRepository;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -286,22 +283,6 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     return wrapper;
   }
 
-  private static boolean checkRepositoryVersion(final SvnVcs vcs, final String url) {
-    SVNRepository repository = null;
-    try {
-      repository = vcs.createRepository(url);
-      return repository.hasCapability(SVNCapability.MERGE_INFO);
-    }
-    catch (SVNException e) {
-      return false;
-    }
-    finally {
-      if (repository != null) {
-        repository.closeSession();
-      }
-    }
-  }
-
   /**
    *
    * @param location filled in case when showing hostory for folder/file
@@ -354,7 +335,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
         (! url.startsWith(location.toPresentableString()))) {
       return null;
     }
-    if (! checkRepositoryVersion(vcs, url)) {
+    if (!SvnUtil.checkRepositoryVersion15(vcs, url)) {
       return null;
     }
 

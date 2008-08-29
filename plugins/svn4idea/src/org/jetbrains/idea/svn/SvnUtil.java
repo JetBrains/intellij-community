@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -32,8 +33,11 @@ import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
+import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -454,5 +458,43 @@ public class SvnUtil {
       return project.getBaseDir();
     }
     return file;
+  }
+
+  public static boolean isOneDotFiveAvailable(final Project project, final RepositoryLocation location) {
+    final SvnVcs vcs = SvnVcs.getInstance(project);
+    final List<WCInfo> infos = vcs.getAllWcInfos();
+
+    for (WCInfo info : infos) {
+      if (! WorkingCopyFormat.ONE_DOT_FIVE.equals(info.getFormat())) {
+        continue;
+      }
+
+      final String url = info.getUrl().toString();
+      if ((location != null) && (! location.toPresentableString().startsWith(url)) &&
+          (! url.startsWith(location.toPresentableString()))) {
+        continue;
+      }
+      if (! checkRepositoryVersion15(vcs, url)) {
+        continue;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  public static boolean checkRepositoryVersion15(final SvnVcs vcs, final String url) {
+    SVNRepository repository = null;
+    try {
+      repository = vcs.createRepository(url);
+      return repository.hasCapability(SVNCapability.MERGE_INFO);
+    }
+    catch (SVNException e) {
+      return false;
+    }
+    finally {
+      if (repository != null) {
+        repository.closeSession();
+      }
+    }
   }
 }

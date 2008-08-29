@@ -234,11 +234,16 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     private final DecoratorManager myManager;
     private final ChangeListFilteringStrategy myStrategy;
     private boolean myIsSelected;
+    private final Project myProject;
+    private final RepositoryLocation myLocation;
     private final static String ourKey = "MERGE_PANEL";
 
-    public ShowHideMergePanel(final DecoratorManager manager, final ChangeListFilteringStrategy strategy) {
+    public ShowHideMergePanel(final Project project, final DecoratorManager manager, final ChangeListFilteringStrategy strategy,
+                              final RepositoryLocation location) {
+      myProject = project;
       myManager = manager;
       myStrategy = strategy;
+      myLocation = location;
     }
 
     @Override
@@ -248,6 +253,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       presentation.setIcon(IconLoader.getIcon("/icons/ShowIntegratedFrom.png"));
       presentation.setText(SvnBundle.message("committed.changes.action.enable.merge.highlighting"));
       presentation.setDescription(SvnBundle.message("committed.changes.action.enable.merge.highlighting.description.text"));
+      presentation.setEnabled(SvnUtil.isOneDotFiveAvailable(myProject, myLocation));
     }
 
     public boolean isSelected(final AnActionEvent e) {
@@ -273,7 +279,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     popup.add(new IntegrateChangeListsAction());
     popup.add(new ConfigureBranchesAction());
 
-    final ShowHideMergePanel action = new ShowHideMergePanel(manager, rootsAndBranches.getStrategy());
+    final ShowHideMergePanel action = new ShowHideMergePanel(myProject, manager, rootsAndBranches.getStrategy(), location);
 
     return new VcsCommittedViewAuxiliary(Collections.<AnAction>singletonList(popup), new Runnable() {
       public void run() {
