@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -72,17 +73,22 @@ public class ShareProjectAction extends BasicAction {
 
     final String parent = shareDialog.getSelectedURL();
     if (shareDialog.isOK() && parent != null) {
+      final Ref<Boolean> actionStarted = new Ref<Boolean>(Boolean.TRUE);
       final SVNException[] error = new SVNException[1];
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
 
         public void run() {
           try {
+            final File path = new File(file.getPath());
+            if (! SvnCheckoutProvider.promptForWCopyFormat(path, project)) {
+              // action cancelled
+              actionStarted.set(Boolean.FALSE);
+              return;
+            }
             SVNURL url = SVNURL.parseURIEncoded(parent).appendPath(file.getName(), false);
             SVNCommitInfo info = activeVcs.createCommitClient().doMkDir(new SVNURL[] {url},
                                                                         SvnBundle.message("share.directory.commit.message", file.getName()));
             SVNRevision revision = SVNRevision.create(info.getNewRevision());
-            final File path = new File(file.getPath());
-            SvnCheckoutProvider.promptForWCopyFormat(path, project);
             activeVcs.createUpdateClient().doCheckout(url, path, SVNRevision.UNDEFINED, revision, true);
             SvnWorkingCopyFormatHolder.setPresetFormat(null);
             activeVcs.createWCClient().doAdd(new File(file.getPath()), true, false, false, true);
@@ -93,11 +99,14 @@ public class ShareProjectAction extends BasicAction {
           }
         }
       }, SvnBundle.message("share.directory.title"), false, project);
-      if (error[0] != null) {
-        throw new VcsException(error[0].getMessage());
-      }
-      Messages.showInfoMessage(project, SvnBundle.message("share.directory.info.message", file.getName()),
+
+      if (Boolean.TRUE.equals(actionStarted.get())) {
+        if (error[0] != null) {
+          throw new VcsException(error[0].getMessage());
+        }
+        Messages.showInfoMessage(project, SvnBundle.message("share.directory.info.message", file.getName()),
                                SvnBundle.message("share.directory.title"));
+      }
     }
 
   }

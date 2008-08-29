@@ -55,12 +55,17 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     final SVNException[] exception = new SVNException[1];
     @NonNls String fileURL = "file://" + target.getAbsolutePath().replace(File.separatorChar, '/');
     final VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(fileURL);
+    final Ref<Boolean> actionStarted = new Ref<Boolean>(Boolean.TRUE);
 
     final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
                      SvnBundle.message("message.title.check.out"), true, VcsConfiguration.getInstance(project).getCheckoutOption()) {
       public void run(@NotNull final ProgressIndicator indicator) {
         // allow to select working copy format
-        promptForWCopyFormat(target, project);
+        if (! promptForWCopyFormat(target, project)) {
+          // cancelled
+          actionStarted.set(Boolean.FALSE);
+          return;
+        }
 
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         final SVNUpdateClient client = SvnVcs.getInstance(project).createUpdateClient();
@@ -89,6 +94,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       }
 
       public void onSuccess() {
+        if (! Boolean.TRUE.equals(actionStarted.get())) {
+          return;
+        }
         if (exception[0] != null) {
           Messages.showErrorDialog(SvnBundle.message("message.text.cannot.checkout", exception[0].getMessage()), SvnBundle.message("message.title.check.out"));
         }
@@ -122,12 +130,14 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     ProgressManager.getInstance().run(checkoutBackgroundTask);
   }
 
-  public static void promptForWCopyFormat(final File target, final Project project) {
+  public static boolean promptForWCopyFormat(final File target, final Project project) {
     String formatMode = null;
-    while (formatMode == null) {
-      formatMode = SvnFormatSelector.showUpgradeDialog(target, project, true, SvnConfiguration.UPGRADE_AUTO_15);
+    final Ref<Boolean> wasOk = new Ref<Boolean>();
+    while ((formatMode == null) && (! Boolean.FALSE.equals(wasOk.get()))) {
+      formatMode = SvnFormatSelector.showUpgradeDialog(target, project, true, SvnConfiguration.UPGRADE_AUTO_15, wasOk);
       SvnWorkingCopyFormatHolder.setPresetFormat(WorkingCopyFormat.getInstance(formatMode));
     }
+    return Boolean.TRUE.equals(wasOk.get());
   }
 
   public static void doExport(final Project project, final File target, final String url, final boolean recursive,

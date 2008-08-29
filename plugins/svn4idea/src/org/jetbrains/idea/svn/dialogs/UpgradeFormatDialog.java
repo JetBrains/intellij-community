@@ -36,7 +36,7 @@ public class UpgradeFormatDialog extends DialogWrapper  {
   }
 
   protected Action[] createActions() {
-    return new Action[]{getOKAction()};
+    return new Action[]{getOKAction(), getCancelAction()};
   }
 
   @NonNls
