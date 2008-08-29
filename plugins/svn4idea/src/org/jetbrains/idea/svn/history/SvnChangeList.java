@@ -557,4 +557,13 @@ public class SvnChangeList implements CommittedChangeList {
   public Set<String> getDeletedPaths() {
     return myDeletedPaths;
   }
+
+  @Nullable
+  public String getWcPath() {
+    final RootMixedInfo rootInfo = getWcRootInfo();
+    if (rootInfo == null) {
+      return null;
+    }
+    return new File(rootInfo.getFile().getPath()).getAbsolutePath();
+  }
 }

@@ -2,6 +2,7 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
 
@@ -17,6 +18,7 @@ public class ShowSvnMapAction extends AnAction {
 
     presentation.setText(SvnBundle.message("action.show.svn.map.text"));
     presentation.setDescription(SvnBundle.message("action.show.svn.map.description"));
+    presentation.setIcon(IconLoader.getIcon("/icons/ShowWorkingCopies.png"));
   }
 
   public void actionPerformed(final AnActionEvent e) {

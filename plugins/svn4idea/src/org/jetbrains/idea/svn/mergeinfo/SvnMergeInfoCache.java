@@ -8,6 +8,7 @@ import com.intellij.util.containers.SoftHashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
+import org.jetbrains.idea.svn.dialogs.WCPaths;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
@@ -36,8 +37,8 @@ public class SvnMergeInfoCache {
     return ServiceManager.getService(project, SvnMergeInfoCache.class);
   }
 
-  public void clear(final WCInfoWithBranches info, final WCInfoWithBranches.Branch selectedBranch) {
-    final String currentUrl = info.getUrl().toString();
+  public void clear(final WCPaths info, final WCInfoWithBranches.Branch selectedBranch) {
+    final String currentUrl = info.getRootUrl();
     final String branchUrl = selectedBranch.getUrl();
 
     final MyCurrentUrlData rootMapping = myState.getCurrentUrlMapping().get(currentUrl);
@@ -50,8 +51,8 @@ public class SvnMergeInfoCache {
   }
 
   @Nullable
-  public Map<Long, MergeCheckResult> getCachedState(final WCInfoWithBranches info, final WCInfoWithBranches.Branch selectedBranch) {
-    final String currentUrl = info.getUrl().toString();
+  public Map<Long, MergeCheckResult> getCachedState(final WCPaths info, final WCInfoWithBranches.Branch selectedBranch) {
+    final String currentUrl = info.getRootUrl();
     final String branchUrl = selectedBranch.getUrl();
 
     MyCurrentUrlData rootMapping = myState.getCurrentUrlMapping().get(currentUrl);
@@ -65,14 +66,14 @@ public class SvnMergeInfoCache {
   }
 
   // only refresh might have changed; for branches/roots change, another method is used
-  public MergeCheckResult getState(final WCInfoWithBranches info, final SvnChangeList list, final WCInfoWithBranches.Branch selectedBranch) {
+  public MergeCheckResult getState(final WCPaths info, final SvnChangeList list, final WCInfoWithBranches.Branch selectedBranch) {
     return getState(info, list, selectedBranch, null);
   }
 
   // only refresh might have changed; for branches/roots change, another method is used
-  public MergeCheckResult getState(final WCInfoWithBranches info, final SvnChangeList list, final WCInfoWithBranches.Branch selectedBranch,
+  public MergeCheckResult getState(final WCPaths info, final SvnChangeList list, final WCInfoWithBranches.Branch selectedBranch,
                                    final String branchPath) {
-    final String currentUrl = info.getUrl().toString();
+    final String currentUrl = info.getRootUrl();
     final String branchUrl = selectedBranch.getUrl();
 
     MyCurrentUrlData rootMapping = myState.getCurrentUrlMapping().get(currentUrl);
@@ -84,7 +85,7 @@ public class SvnMergeInfoCache {
       branchInfo = rootMapping.getBranchInfo(branchUrl);
     }
     if (branchInfo == null) {
-      branchInfo = new BranchInfo(info.getRepositoryRoot(), branchUrl, currentUrl, myClient);
+      branchInfo = new BranchInfo(info.getRepoUrl(), branchUrl, currentUrl, myClient);
       rootMapping.addBranchInfo(branchUrl, branchInfo);
     }
 
@@ -131,6 +132,7 @@ public class SvnMergeInfoCache {
     
     // revision in trunk -> whether merged into branch
     private final Map<Long, MergeCheckResult> myAlreadyCalculatedMap;
+    private final Object myCalculatedLock = new Object();
 
     private final String myRepositoryRoot;
     private final String myBranchUrl;
@@ -152,40 +154,46 @@ public class SvnMergeInfoCache {
 
     public void clear() {
       myPathMergedMap.clear();
-      myAlreadyCalculatedMap.clear();
+      synchronized (myCalculatedLock) {
+        myAlreadyCalculatedMap.clear();
+      }
       myNonExistingPaths.clear();
     }
 
     public Map<Long, MergeCheckResult> getCached() {
-      return new HashMap<Long, MergeCheckResult>(myAlreadyCalculatedMap);
+      synchronized (myCalculatedLock) {
+        return new HashMap<Long, MergeCheckResult>(myAlreadyCalculatedMap);
+      }
     }
 
     public MergeCheckResult checkList(final SvnChangeList list, final String branchPath) {
-      final MergeCheckResult calculated = myAlreadyCalculatedMap.get(list.getNumber());
-      if (calculated != null) {
-        return calculated; 
+      synchronized (myCalculatedLock) {
+        final MergeCheckResult calculated = myAlreadyCalculatedMap.get(list.getNumber());
+        if (calculated != null) {
+          return calculated;
+        }
+
+        final Ref<Boolean> mergedRef = new Ref<Boolean>();
+        final Ref<Boolean> notExistsRef = new Ref<Boolean>();
+
+        checkPaths(list.getNumber(), list.getAddedPaths(), mergedRef, notExistsRef, branchPath);
+        checkPaths(list.getNumber(), list.getDeletedPaths(), mergedRef, notExistsRef, branchPath);
+        checkPaths(list.getNumber(), list.getChangedPaths(), mergedRef, notExistsRef, branchPath);
+
+        final MergeCheckResult result;
+        boolean mergedDetected = Boolean.TRUE.equals(mergedRef.get());
+        boolean notExistsDetected = Boolean.TRUE.equals(notExistsRef.get());
+        if (notExistsDetected && (! mergedDetected)) {
+          // +- (possibly ++ one case can be shown)
+          result = MergeCheckResult.NOT_EXISTS;
+        } else if (notExistsDetected) {
+          result = MergeCheckResult.NOT_EXISTS_PARTLY_MERGED;
+        } else {
+          result = MergeCheckResult.getInstance(mergedDetected);
+        }
+        myAlreadyCalculatedMap.put(list.getNumber(), result);
+        return result;
       }
-
-      final Ref<Boolean> mergedRef = new Ref<Boolean>();
-      final Ref<Boolean> notExistsRef = new Ref<Boolean>();
-
-      checkPaths(list.getNumber(), list.getAddedPaths(), mergedRef, notExistsRef, branchPath);
-      checkPaths(list.getNumber(), list.getDeletedPaths(), mergedRef, notExistsRef, branchPath);
-      checkPaths(list.getNumber(), list.getChangedPaths(), mergedRef, notExistsRef, branchPath);
-
-      final MergeCheckResult result;
-      boolean mergedDetected = Boolean.TRUE.equals(mergedRef.get());
-      boolean notExistsDetected = Boolean.TRUE.equals(notExistsRef.get());
-      if (notExistsDetected && (! mergedDetected)) {
-        // +- (possibly ++ one case can be shown)
-        result = MergeCheckResult.NOT_EXISTS;
-      } else if (notExistsDetected) {
-        result = MergeCheckResult.NOT_EXISTS_PARTLY_MERGED;
-      } else {
-        result = MergeCheckResult.getInstance(mergedDetected);
-      }
-      myAlreadyCalculatedMap.put(list.getNumber(), result);
-      return result;
     }
 
     private void checkPaths(final long number, final Collection<String> paths, final Ref<Boolean> mergedRef, final Ref<Boolean> notExistsRef,

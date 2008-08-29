@@ -17,24 +17,19 @@
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
-import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
-import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
+import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -43,7 +38,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ConfigureBranchesAction;
 import org.jetbrains.idea.svn.actions.IntegrateChangeListsAction;
 import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
-import org.jetbrains.idea.svn.mergeinfo.*;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -52,13 +46,10 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author yole
@@ -67,7 +58,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   private final Project myProject;
   private final SvnVcs myVcs;
   private final MessageBusConnection myConnection;
-  private List<SelectWcRootAction> myMergeInfoRefreshActions;
+  private List<RootsAndBranches> myMergeInfoRefreshActions;
 
   public final static int VERSION_WITH_COPY_PATHS_ADDED = 2;
 
@@ -194,31 +185,9 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     };
   }
 
-  private static class ChainConsumer implements Getter<Boolean>, Consumer<Boolean> {
-    private final JPanel myTargetPanel;
-    private Boolean myState;
-    private final DecoratorManager myManager;
-
-    private ChainConsumer(final JPanel targetPanel, final DecoratorManager manager) {
-      myTargetPanel = targetPanel;
-      myManager = manager;
-      myState = false;
-    }
-
-    public void consume(final Boolean aBoolean) {
-      myTargetPanel.setVisible(Boolean.TRUE.equals(aBoolean));
-      myState = aBoolean;
-      myManager.fireVisibilityCalculation();
-    }
-
-    public Boolean get() {
-      return myState;
-    }
-  }
-
-  private void refreshMergeInfo(final SelectWcRootAction action) {
+  private void refreshMergeInfo(final RootsAndBranches action) {
     if (myMergeInfoRefreshActions == null) {
-      myMergeInfoRefreshActions = new ArrayList<SelectWcRootAction>();
+      myMergeInfoRefreshActions = new ArrayList<RootsAndBranches>();
       myMergeInfoRefreshActions.add(action);
 
       myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, new VcsConfigurationChangeListener.Notification() {
@@ -226,117 +195,93 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
           callReloadMergeInfo();
         }
       });
-      myConnection.subscribe(SvnMapDialog.WC_CONVERTED, new Runnable() {
+      final Runnable reloadRunnable = new Runnable() {
         public void run() {
           callReloadMergeInfo();
         }
-      });
+      };
+      myConnection.subscribe(SvnMapDialog.WC_CONVERTED, reloadRunnable);
 
       ProjectLevelVcsManager.getInstance(myProject).addVcsListener(new VcsListener() {
         public void directoryMappingChanged() {
           callReloadMergeInfo();
         }
       });
+
+      myConnection.subscribe(CommittedChangesTreeBrowser.ITEMS_RELOADED, reloadRunnable); 
     } else {
       myMergeInfoRefreshActions.add(action);
     }
   }
 
   private void callReloadMergeInfo() {
-    for (SelectWcRootAction action : myMergeInfoRefreshActions) {
-      action.reload();
+    for (final RootsAndBranches action : myMergeInfoRefreshActions) {
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        action.reloadPanels();
+        action.refresh();
+      } else {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            action.reloadPanels();
+            action.refresh();
+          }
+        });
+      }
+    }
+  }
+
+  private static class ShowHideMergePanel extends ToggleAction {
+    private final DecoratorManager myManager;
+    private final ChangeListFilteringStrategy myStrategy;
+    private boolean myIsSelected;
+    private final static String ourKey = "MERGE_PANEL";
+
+    public ShowHideMergePanel(final DecoratorManager manager, final ChangeListFilteringStrategy strategy) {
+      myManager = manager;
+      myStrategy = strategy;
+    }
+
+    @Override
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      final Presentation presentation = e.getPresentation();
+      presentation.setIcon(IconLoader.getIcon("/icons/ShowIntegratedFrom.png"));
+      presentation.setText(SvnBundle.message("committed.changes.action.enable.merge.highlighting"));
+      presentation.setDescription(SvnBundle.message("committed.changes.action.enable.merge.highlighting.description.text"));
+    }
+
+    public boolean isSelected(final AnActionEvent e) {
+      return myIsSelected;
+    }
+
+    public void setSelected(final AnActionEvent e, final boolean state) {
+      myIsSelected = state;
+      if (state) {
+        myManager.setFilteringStrategy(ourKey, myStrategy);
+      } else {
+        myManager.removeFilteringStrategy(ourKey);
+      }
     }
   }
 
   @Nullable
-  public VcsCommittedViewAuxiliary createActionPanel(final DecoratorManager manager, @Nullable final RepositoryLocation location) {
-    final JPanel panel = new JPanel(new BorderLayout());
-    final SelectWCopyComboAction selectWcCombo = new SelectWCopyComboAction();
-
-    final DefaultActionGroup group = new DefaultActionGroup();
-    final SelectBranchAction highlightBranchesAction = new SelectBranchAction(manager, selectWcCombo);
-
-    final ChainConsumer visiblenessConsumer = new ChainConsumer(panel, manager);
-    manager.registerCompositePart(visiblenessConsumer);
-
-    final SelectWcRootAction selectRootAction = new SelectWcRootAction(myProject, highlightBranchesAction, visiblenessConsumer, location);
-    final MyUseBranchFilterCheckboxAction checkBoxAction = new MyUseBranchFilterCheckboxAction(highlightBranchesAction);
-    final SelectWCopyDialogAction selectWcopyDialog =
-        new SelectWCopyDialogAction(selectRootAction, highlightBranchesAction, checkBoxAction, myProject);
-    final MergeInfoHolder mergeInfoHolder =
-        new MergeInfoHolder(myProject, manager, selectRootAction, highlightBranchesAction, selectWcCombo, checkBoxAction);
-
-    group.add(checkBoxAction);
-    group.add(selectRootAction);
-    group.add(highlightBranchesAction);
-    group.add(selectWcCombo);
-    group.add(selectWcopyDialog);
-    group.add(new MyRefresh(mergeInfoHolder));
-
-    final ActionToolbar customToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    panel.add(customToolbar.getComponent(), BorderLayout.WEST);
-
-    selectRootAction.setSelected(0);
-    highlightBranchesAction.setSelected(0);
-    selectWcCombo.setSelected(0);
+  public VcsCommittedViewAuxiliary createActions(final DecoratorManager manager, @Nullable final RepositoryLocation location) {
+    final RootsAndBranches rootsAndBranches = new RootsAndBranches(myProject, manager, location);
+    refreshMergeInfo(rootsAndBranches);
 
     final DefaultActionGroup popup = new DefaultActionGroup(myVcs.getDisplayName(), true);
     popup.add(new IntegrateChangeListsAction());
     popup.add(new ConfigureBranchesAction());
 
-    refreshMergeInfo(selectRootAction);
+    final ShowHideMergePanel action = new ShowHideMergePanel(manager, rootsAndBranches.getStrategy());
 
-    return new VcsCommittedViewAuxiliary(panel, Collections.<AnAction>singletonList(popup), new Runnable() {
+    return new VcsCommittedViewAuxiliary(Collections.<AnAction>singletonList(popup), new Runnable() {
       public void run() {
-        myMergeInfoRefreshActions.remove(selectRootAction);
+        if (myMergeInfoRefreshActions != null) {
+          myMergeInfoRefreshActions.remove(rootsAndBranches);
+        }
       }
-    });
-  }
-
-  private static class MyRefresh extends AnAction {
-    private final MergeInfoHolder myMergeInfoHolder;
-
-    private MyRefresh(final MergeInfoHolder mergeInfoHolder) {
-      super(SvnBundle.message("committed.changes.action.merge.highlighting.refresh.text"),
-            SvnBundle.message("committed.changes.action.merge.highlighting.refresh.description"), IconLoader.findIcon("/actions/sync.png"));
-      myMergeInfoHolder = mergeInfoHolder;
-    }
-
-    @Override
-    public void update(final AnActionEvent e) {
-      e.getPresentation().setEnabled(myMergeInfoHolder.refreshEnabled());
-    }
-
-    public void actionPerformed(final AnActionEvent e) {
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(false);
-
-      myMergeInfoHolder.refresh();
-    }
-  }
-
-  private static class MyUseBranchFilterCheckboxAction extends CheckboxAction implements Getter<Boolean> {
-    private final SelectBranchAction myHighlightAction;
-    private boolean mySelected;
-
-    private MyUseBranchFilterCheckboxAction(final SelectBranchAction highlightAction) {
-      super(SvnBundle.message("committed.changes.action.enable.merge.highlighting"),
-            SvnBundle.message("committed.changes.action.enable.merge.highlighting.description.text"), null);   
-      myHighlightAction = highlightAction;
-    }
-
-    public boolean isSelected(final AnActionEvent e) {
-      return mySelected;
-    }
-
-    public Boolean get() {
-      return mySelected;
-    }
-
-    public void setSelected(final AnActionEvent e, final boolean state) {
-      mySelected = state;
-      myHighlightAction.enable(mySelected);
-    }
+    }, Collections.<AnAction>singletonList(action));
   }
 
   public int getUnlimitedCountValue() {

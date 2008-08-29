@@ -3,7 +3,7 @@ package org.jetbrains.idea.svn.dialogs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.tmatesoft.svn.core.SVNURL;
 
-public class WCInfo {
+public class WCInfo implements WCPaths {
   private final String myPath;
   private final SVNURL myUrl;
   private final WorkingCopyFormat myFormat;
@@ -24,6 +24,14 @@ public class WCInfo {
 
   public SVNURL getUrl() {
     return myUrl;
+  }
+
+  public String getRootUrl() {
+    return myUrl.toString();
+  }
+
+  public String getRepoUrl() {
+    return myRepositoryRoot;
   }
 
   public WorkingCopyFormat getFormat() {
