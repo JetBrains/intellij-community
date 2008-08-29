@@ -28,6 +28,6 @@ public class InlineSuperClassRefactoringDialog extends RefactoringDialog{
   }
 
   protected JComponent createCenterPanel() {
-    return null;
+    return new JLabel("Inline \'" + mySuperClass.getQualifiedName() + "\' to \'" + myTargetClass.getQualifiedName() + "\'");         
   }
 }
