@@ -43,9 +43,11 @@ public class MyTestInjector {
     mySeparatedJSInjector = registerForStringVarInitializer(project, js, "jsSeparated", " + ", " + 'separator'");
   }
 
-  private static ConcatenationAwareInjector registerForStringVarInitializer(Project project, final Language language,
-                                                                                               @NonNls final String varName,
-                                                                                               final String prefix, @NonNls final String suffix) {
+  private static ConcatenationAwareInjector registerForStringVarInitializer(@NotNull Project project,
+                                                                            @NotNull final Language language,
+                                                                            @NonNls final String varName,
+                                                                            @NonNls final String prefix,
+                                                                            @NonNls final String suffix) {
     ConcatenationAwareInjector injector = new ConcatenationAwareInjector() {
       public void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement... operands) {
         PsiVariable variable = PsiTreeUtil.getParentOfType(operands[0], PsiVariable.class);
@@ -217,5 +219,4 @@ public class MyTestInjector {
 
     placesToInject.addPlace(language, insideQuotes, null, null);
   }
-
 }

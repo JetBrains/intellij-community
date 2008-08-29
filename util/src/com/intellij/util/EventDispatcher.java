@@ -102,11 +102,11 @@ public class EventDispatcher <T extends EventListener>{
     }
   }
 
-  public synchronized void addListener(T listener) {
+  public void addListener(T listener) {
     myListeners.add(listener);
   }
 
-  public synchronized void addListener(final T listener, Disposable parentDisposable) {
+  public void addListener(final T listener, Disposable parentDisposable) {
     addListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
@@ -115,12 +115,12 @@ public class EventDispatcher <T extends EventListener>{
     });
   }
 
-  public synchronized void removeListener(T listener) {
+  public void removeListener(T listener) {
     myListeners.remove(listener);
   }
 
-  public synchronized boolean hasListeners() {
-    return myListeners.size() > 0;
+  public boolean hasListeners() {
+    return !myListeners.isEmpty();
   }
 
   public List<T> getListeners() {

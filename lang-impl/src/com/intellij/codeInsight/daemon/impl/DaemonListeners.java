@@ -8,10 +8,8 @@ import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.ApplicationAdapter;
-import com.intellij.openapi.application.ApplicationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
@@ -76,6 +74,7 @@ public class DaemonListeners {
   private final CaretListener myCaretListener;
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
+  private final ModalityStateListener myModalityStateListener;
 
   private boolean myEscPressed;
 
@@ -205,6 +204,14 @@ public class DaemonListeners {
     for (NamedScopesHolder holder : holders) {
       holder.addScopeListener(scopeListener);
     }
+
+    myModalityStateListener = new ModalityStateListener() {
+      public void beforeModalityStateChanged() {
+        // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
+        stopDaemon(LaterInvocator.isInModalContext());
+      }
+    };
+    LaterInvocator.addModalityStateListener(myModalityStateListener);
   }
 
   private boolean worthBothering(final Document document) {
@@ -231,6 +238,7 @@ public class DaemonListeners {
 
     ((EditorEventMulticasterEx)eventMulticaster).removeErrorStripeListener(myErrorStripeHandler);
     myEditorTracker.removeEditorTrackerListener(myEditorTrackerListener);
+    LaterInvocator.removeModalityStateListener(myModalityStateListener);
   }
 
   boolean canChangeFileSilently(PsiFileSystemItem file) {
