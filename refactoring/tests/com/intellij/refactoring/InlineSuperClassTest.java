@@ -39,8 +39,8 @@ public class InlineSuperClassTest extends MultiFileTestCase {
 
           new InlineSuperClassRefactoringProcessor(getProject(), superClass, aClass).run();
 
-          /*LocalFileSystem.getInstance().refresh(false);
-          FileDocumentManager.getInstance().saveAllDocuments();*/
+          //LocalFileSystem.getInstance().refresh(false);
+          //FileDocumentManager.getInstance().saveAllDocuments();
         }
       });
     }
@@ -76,6 +76,26 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   }
 
   public void testGenerics() throws Exception {
+    doTest();
+  }
+
+  public void testVisibility() throws Exception {
+    doTest();
+  }
+
+  public void testNewexpr() throws Exception {
+    doTest();
+  }
+
+  public void testConflictConstructors() throws Exception {
+    doTest(true);
+  }
+
+  public void testConflictMultipleConstructors() throws Exception {
+    doTest(true);
+  }
+
+  public void testMultipleConstructors() throws Exception {
     doTest();
   }
 }

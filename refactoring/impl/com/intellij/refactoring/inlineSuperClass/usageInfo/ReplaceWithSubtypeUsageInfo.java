@@ -6,10 +6,11 @@ package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo{
+public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
   public static final Logger LOG = Logger.getInstance("#" + ReplaceWithSubtypeUsageInfo.class.getName());
   private final PsiTypeElement myTypeElement;
   private final PsiClassType myTargetClassType;
@@ -23,15 +24,17 @@ public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo{
   }
 
   public void fixUsage() throws IncorrectOperationException {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myTypeElement.getProject()).getElementFactory();
-    myTypeElement.replace(elementFactory.createTypeElement(myTargetClassType));
+    if (myTypeElement.isValid()) {
+      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myTypeElement.getProject()).getElementFactory();
+      myTypeElement.replace(elementFactory.createTypeElement(myTargetClassType));
+    }
   }
 
-  public PsiClassType getTargetClassType() {
-    return myTargetClassType;
-  }
-
-  public PsiType getOriginalType() {
-    return myOriginalType;
+  @Override
+  public String getConflictMessage() {
+    if (!TypeConversionUtil.isAssignable(myOriginalType, myTargetClassType)) {
+      return "No consistent substitution found for " + getElement().getText();
+    }
+    return super.getConflictMessage();
   }
 }
