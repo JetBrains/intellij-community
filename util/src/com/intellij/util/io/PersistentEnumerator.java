@@ -470,11 +470,11 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   public synchronized void flush() throws IOException {
-    if (isDirty()) {
-      markDirty(false);
-      myStorage.force();
-    }
-  }
+     if (myStorage.isMapped() || isDirty()) {
+       markDirty(false);
+       myStorage.flush();
+     }
+   }
 
   public synchronized void force() {
     try {
