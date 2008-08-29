@@ -18,13 +18,16 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.inlineSuperClass.InlineSuperClassRefactoringHandler;
 import com.intellij.refactoring.lang.jsp.inlineInclude.InlineIncludeFileHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 public class JavaInlineHandler implements RefactoringActionHandler {
@@ -45,7 +48,12 @@ public class JavaInlineHandler implements RefactoringActionHandler {
       InlineLocalHandler.invoke(project, editor, (PsiLocalVariable)elements[0], null);
     }
     else if (elements [0] instanceof PsiClass) {
-      InlineToAnonymousClassHandler.invoke(project, editor, (PsiClass) elements[0]);
+      final Collection<PsiClass> inheritors = ClassInheritorsSearch.search((PsiClass)elements[0]).findAll();
+      if (inheritors.size() == 0) {
+        InlineToAnonymousClassHandler.invoke(project, editor, (PsiClass) elements[0]);
+      } else {
+        InlineSuperClassRefactoringHandler.invoke(project, editor, (PsiClass)elements[0], inheritors);
+      }
     }
     else {
       LOG.error("Unknown element type to inline:" + elements[0]);
@@ -82,7 +90,12 @@ public class JavaInlineHandler implements RefactoringActionHandler {
       InlineConstantFieldHandler.invoke(project, editor, (PsiField) element);
     }
     else if (element instanceof PsiClass) {
-      InlineToAnonymousClassHandler.invoke(project, editor, (PsiClass) element);
+      final Collection<PsiClass> inheritors = ClassInheritorsSearch.search((PsiClass)element).findAll();
+      if (inheritors.size() == 0) {
+        InlineToAnonymousClassHandler.invoke(project, editor, (PsiClass) element);
+      } else {
+        InlineSuperClassRefactoringHandler.invoke(project, editor, (PsiClass)element, inheritors);
+      }
     }
     else if (element instanceof PsiParameter && element.getParent() instanceof PsiParameterList) {
       InlineParameterHandler.invoke(project, editor, (PsiParameter) element);

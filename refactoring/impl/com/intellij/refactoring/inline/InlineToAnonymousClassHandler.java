@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -63,10 +62,6 @@ public class InlineToAnonymousClassHandler {
     }
     if (!psiClass.getManager().isInProject(psiClass)) {
       return "Library classes cannot be inlined";
-    }
-
-    if (ClassInheritorsSearch.search(psiClass).findFirst() != null) {
-      return RefactoringBundle.message("inline.to.anonymous.no.inheritors");
     }
 
     PsiClassType[] classTypes = psiClass.getExtendsListTypes();

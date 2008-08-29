@@ -4,38 +4,25 @@
  */
 package com.intellij.refactoring.inlineSuperClass;
 
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.RefactoringActionHandler;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 
-public class InlineSuperClassRefactoringHandler implements RefactoringActionHandler {
+import java.util.Collection;
+
+public class InlineSuperClassRefactoringHandler {
   public static final String REFACTORING_NAME = "Inline Super Class";
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
-    final ScrollingModel scrollingModel = editor.getScrollingModel();
-    scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE);
-    final PsiElement psiElement = file.findElementAt(editor.getCaretModel().getOffset());
 
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
-    if (psiClass == null) {
-      return;
-    }
-
-    final PsiClass superClass = psiClass.getSuperClass();
-    if (superClass == null) {
-      return;
-    }
-    new InlineSuperClassRefactoringDialog(psiClass.getProject(), superClass, psiClass).show();
+  private InlineSuperClassRefactoringHandler() {
   }
 
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
+  public static void invoke(final Project project, final Editor editor, final PsiClass superClass, Collection<PsiClass> inheritors) {
+    if (inheritors.size() > 1) {
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, "Classes which have multiple subclasses cannot be inlined", null, project);
+      return;
+    }
 
+    new InlineSuperClassRefactoringDialog(project, superClass, inheritors.iterator().next()).show();
   }
 }
