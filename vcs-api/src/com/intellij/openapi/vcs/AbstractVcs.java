@@ -301,12 +301,12 @@ public abstract class AbstractVcs {
   }
 
   @Nullable
-  public MappingToRootConvertor getCustomConvertor() {
+  public RootsConvertor getCustomConvertor() {
     return null;
   }
 
-  public interface MappingToRootConvertor {
-    void fillRoots(final VcsDirectoryMapping mapping, List<VirtualFile> result);
+  public interface RootsConvertor {
+    List<VirtualFile> convertRoots(List<VirtualFile> result);
   }
 }
 
