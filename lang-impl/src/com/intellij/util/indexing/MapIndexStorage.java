@@ -108,8 +108,10 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   }
   
   public void flush() {
-    myCache.clear();
-    myMap.force();
+    if (!myMap.isClosed()) {
+      myCache.clear();
+      myMap.force();
+    }
   }
 
   public void close() throws StorageException {
