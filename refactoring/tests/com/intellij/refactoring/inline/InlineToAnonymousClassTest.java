@@ -243,10 +243,6 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTestNoInline("Annotation types cannot be inlined");
   }
 
-  public void testNoInlineWithSubclasses() throws Exception {
-    doTestNoInline("Classes which have subclasses cannot be inlined");
-  }
-
   public void testNoInlineMultipleInterfaces() throws Exception {
     doTestNoInline("Classes which implement multiple interfaces cannot be inlined");
   }
