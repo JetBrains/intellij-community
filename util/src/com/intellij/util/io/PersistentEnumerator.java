@@ -451,7 +451,8 @@ public class PersistentEnumerator<Data> implements Forceable {
     if (!myClosed) {
       myClosed = true;
       try {
-        myKeyStream.flush();
+        myKeyStream.close();
+        myKeyReadStream.close();
         myRaf.close();
         flush();
       }
