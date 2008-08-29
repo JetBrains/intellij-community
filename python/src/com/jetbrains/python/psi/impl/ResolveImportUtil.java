@@ -12,6 +12,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -31,6 +33,14 @@ public class ResolveImportUtil {
   
   private ResolveImportUtil() {
   }
+
+  static ThreadLocal<Set> myBeingImported = new ThreadLocal<Set>() {
+    @Override protected Set initialValue() {
+      return new HashSet();
+    }
+  };
+
+
 
   /**
    * Resolves a reference in an import statement into whatever object it refers to.
@@ -73,70 +83,84 @@ public class ResolveImportUtil {
   @Nullable
   public static PsiElement resolvePythonImport2(final PyReferenceExpression importRef, final String referencedName) {
     final String the_name = referencedName != null? referencedName : importRef.getName();
+    Set being_imported = myBeingImported.get();
     PsiFile containing_file = importRef.getContainingFile();
     PsiElement last_resolved = null;
     List<PyReferenceExpression> ref_path = PyResolveUtil.unwindRefPath(importRef);
-    Iterator<PyReferenceExpression> it = ref_path.iterator();
-    if (ref_path.size() > 1) { // it was a qualified name
-      if (it.hasNext()) {
-        last_resolved = it.next().resolve(); // our topmost qualifier, not ourselves for certain
-      }
-      else return null; // topmost qualifier not found
-      while (it.hasNext()) {
-        last_resolved =  resolveChild(last_resolved, it.next().getName(), containing_file);
-        if (last_resolved == null) return null; // anything in the chain unresolved means that the whole chain fails
-      }
-      if (referencedName != null) {
-        return resolveChild(last_resolved, referencedName, containing_file);
-      }
-      else return last_resolved;
-    }
-
-    // non-qualified name
-    if (referencedName != null) {
-      return resolveChild(importRef.resolve(), referencedName, containing_file);
-      // the importRef.resolve() does not recurse infinitely because we're asked to resolve referencedName, not importRef itself  
-    }
-    // unqualified import can be found:
-    // in the same dir
-    final PsiFile pfile = importRef.getContainingFile();
-    if (pfile != null) {
-      PsiDirectory pdir = pfile.getContainingDirectory();
-      if (pdir != null) {
-        PsiElement elt = resolveChild(pdir, the_name, containing_file);
-        if (elt != null) return elt;
-      }
-
-    }
-
-    // .. or in SDK roots
-    final Module module = ModuleUtil.findModuleForPsiElement(importRef);
-    if (module != null) {
-      RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
-        @Nullable
-        public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
-          if (value != null) return value;
-          LookupRootVisitor visitor = new LookupRootVisitor(the_name, importRef.getManager());
-          visitRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), visitor);
-          return visitor.getResult();
-          /*return resolveInRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), the_name, importRef);*/
+    // join path to form the FQN: (a, b, c) -> a.b.c.
+    StringBuffer pathbuf = new StringBuffer();
+    for (PyReferenceExpression pathelt : ref_path) pathbuf.append(pathelt.getName()).append(".");
+    if (referencedName != null) pathbuf.append(referencedName);
+    final String import_fqname = pathbuf.toString();
+    if (being_imported.contains(import_fqname)) return null; // already trying this path, unable to recurse
+    try {
+      being_imported.add(import_fqname); // mark
+      // resolve qualifiers
+      Iterator<PyReferenceExpression> it = ref_path.iterator();
+      if (ref_path.size() > 1) { // it was a qualified name
+        if (it.hasNext()) {
+          last_resolved = it.next().resolve(); // our topmost qualifier, not ourselves for certain
         }
-      };
-      return ModuleRootManager.getInstance(module).processOrder(resolvePolicy, null);
-    }
-    else {
-      try {
-        for (OrderEntry entry: ProjectRootManager.getInstance(importRef.getProject()).getFileIndex().getOrderEntriesForFile(
-              importRef.getContainingFile().getVirtualFile()
-          )
-        ) {
-          PsiElement elt = resolveInRoots(entry.getFiles(OrderRootType.CLASSES), the_name, importRef);
+        else return null; // topmost qualifier not found
+        while (it.hasNext()) {
+          last_resolved =  resolveChild(last_resolved, it.next().getName(), containing_file);
+          if (last_resolved == null) return null; // anything in the chain unresolved means that the whole chain fails
+        }
+        if (referencedName != null) {
+          return resolveChild(last_resolved, referencedName, containing_file);
+        }
+        else return last_resolved;
+      }
+
+      // non-qualified name
+      if (referencedName != null) {
+        return resolveChild(importRef.resolve(), referencedName, containing_file);
+        // the importRef.resolve() does not recurse infinitely because we're asked to resolve referencedName, not importRef itself
+      }
+      // unqualified import can be found:
+      // in the same dir
+      final PsiFile pfile = importRef.getContainingFile();
+      if (pfile != null) {
+        PsiDirectory pdir = pfile.getContainingDirectory();
+        if (pdir != null) {
+          PsiElement elt = resolveChild(pdir, the_name, containing_file);
           if (elt != null) return elt;
         }
+
       }
-      catch (NullPointerException ex) {
-        return null; // any cut corners might result in an NPE; resolution fails, but not the IDE.
+
+      // .. or in SDK roots
+      final Module module = ModuleUtil.findModuleForPsiElement(importRef);
+      if (module != null) {
+        RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
+          @Nullable
+          public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
+            if (value != null) return value;
+            LookupRootVisitor visitor = new LookupRootVisitor(the_name, importRef.getManager());
+            visitRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), visitor);
+            return visitor.getResult();
+            /*return resolveInRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), the_name, importRef);*/
+          }
+        };
+        return ModuleRootManager.getInstance(module).processOrder(resolvePolicy, null);
       }
+      else {
+        try {
+          for (OrderEntry entry: ProjectRootManager.getInstance(importRef.getProject()).getFileIndex().getOrderEntriesForFile(
+                importRef.getContainingFile().getVirtualFile()
+            )
+          ) {
+            PsiElement elt = resolveInRoots(entry.getFiles(OrderRootType.CLASSES), the_name, importRef);
+            if (elt != null) return elt;
+          }
+        }
+        catch (NullPointerException ex) {
+          return null; // any cut corners might result in an NPE; resolution fails, but not the IDE.
+        }
+      }
+    }
+    finally {
+      being_imported.remove(import_fqname); // unmark
     }
     return null; // not resolved by any means
   }
@@ -284,12 +308,6 @@ public class ResolveImportUtil {
       boolean is_dir = (parent.getCopyableUserData(PyFile.KEY_IS_DIRECTORY) == Boolean.TRUE);
       PyFile pfparent = (PyFile)parent; 
       if (! is_dir) {
-        /*
-        if (INIT_PY.equals(pfparent.getName())) {
-          // try both file and dir, for we can't tell.
-          dir = pfparent.getContainingDirectory();
-        }
-        */
         // look for name in the file:
         processor = new PyResolveUtil.ResolveProcessor(referencedName);
         //ret = PyResolveUtil.treeWalkUp(processor, parent, null, importRef);
@@ -308,7 +326,7 @@ public class ResolveImportUtil {
       if (file != null) return file;
       final PsiDirectory subdir = dir.findSubdirectory(referencedName);
       if (subdir != null) return subdir;
-      else { // not a subdir, not a file; could be a name in parent/__init__.py
+      else { // XXX faulty: not a subdir, not a file; could be a name in parent/__init__.py
         final PsiFile initPy = dir.findFile(INIT_PY);
         if (initPy == containingFile) return ret; // don't dive into the file we're in
         if (initPy != null) {

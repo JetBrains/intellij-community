@@ -75,6 +75,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   }
 
   public void updateUI(final PyMarkedFunction p, final ParameterInfoUIContext context) {
+    if (p == null) return;
     final PyFunction py_function = p.getFunction();
     if (py_function == null) return; // resolution failed
     final PyParameterList parameterList = py_function.getParameterList();
