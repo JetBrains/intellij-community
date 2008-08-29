@@ -83,7 +83,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final Project myProject;
 
   private boolean myIsInitialized = false;
-  private boolean myIsDisposed = false;
+  private volatile boolean myIsDisposed = false;
+  private final Object myDisposeLock = new Object();
 
   private ContentManager myContentManager;
   private EditorAdapter myEditorAdapter;
@@ -324,28 +325,31 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     });
   }
 
+  // todo
   private void dispose() {
-    if (myIsDisposed) return;
-    for(AbstractVcs vcs: myActiveVcss) {
-      vcs.deactivate();
-    }
-    myActiveVcss.clear();
-    AbstractVcs[] allVcss = myVcss.toArray(new AbstractVcs[myVcss.size()]);
-    for (AbstractVcs allVcs : allVcss) {
-      unregisterVcs(allVcs);
-    }
-    try {
-      myContentManager = null;
+    synchronized (myDisposeLock) {
+      if (myIsDisposed) return;
 
-      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      if (toolWindowManager != null && toolWindowManager.getToolWindow(ToolWindowId.VCS) != null) {
-        toolWindowManager.unregisterToolWindow(ToolWindowId.VCS);
+      for(AbstractVcs vcs: myActiveVcss) {
+        vcs.deactivate();
+      }
+      myActiveVcss.clear();
+      AbstractVcs[] allVcss = myVcss.toArray(new AbstractVcs[myVcss.size()]);
+      for (AbstractVcs allVcs : allVcss) {
+        unregisterVcs(allVcs);
+      }
+      try {
+        myContentManager = null;
+
+        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+        if (toolWindowManager != null && toolWindowManager.getToolWindow(ToolWindowId.VCS) != null) {
+          toolWindowManager.unregisterToolWindow(ToolWindowId.VCS);
+        }
+      }
+      finally {
+        myIsDisposed = true;
       }
     }
-    finally {
-      myIsDisposed = true;
-    }
-
   }
 
   public void unregisterVcs(AbstractVcs vcs) {
@@ -487,16 +491,21 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo) {
-    if (myIsDisposed) return null;
-    ContentManager contentManager = getContentManager();
-    final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
-    Content content = ContentFactory.SERVICE.getInstance().createContent(updateInfoTree, VcsBundle.message(
-      "toolwindow.title.update.action.info", displayActionName), true);
-    Disposer.register(content, updateInfoTree);
-    ContentsUtil.addOrReplaceContent(contentManager, content, true);
-    ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS).activate(null);
-    updateInfoTree.expandRootChildren();
-    return updateInfoTree;
+    synchronized (myDisposeLock) {
+      if (myIsDisposed) return null;
+      ContentManager contentManager = getContentManager();
+      if (contentManager == null) {
+        return null;  // content manager is made null during dispose; flag is set later
+      }
+      final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
+      Content content = ContentFactory.SERVICE.getInstance().createContent(updateInfoTree, VcsBundle.message(
+        "toolwindow.title.update.action.info", displayActionName), true);
+      Disposer.register(content, updateInfoTree);
+      ContentsUtil.addOrReplaceContent(contentManager, content, true);
+      ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS).activate(null);
+      updateInfoTree.expandRootChildren();
+      return updateInfoTree;
+    }
   }
 
   public void cleanupMappings() {
