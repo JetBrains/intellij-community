@@ -209,6 +209,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
           if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
           errorTreeView.addMessage(getErrorCategory(exception), messages, exception.getVirtualFile(), -1, -1, null);
         }
+
+        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
       }
     });
   }
@@ -319,14 +321,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   }
 
-  public void showChangesBrowser(List<CommittedChangeList> changelists) {
-    showChangesBrowser(changelists, null);
-  }
-
-  public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
-    showChangesBrowser(new CommittedChangesTableModel(changelists), title, false, null);
-  }
-
   private void showChangesBrowser(CommittedChangesTableModel changelists,
                                   String title,
                                   boolean showSearchAgain,
@@ -341,7 +335,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     dlg.show();
   }
 
-  public void showChangesBrowser(CommittedChangeList changelist, @Nls String title) {
+  public void showChangesListBrowser(CommittedChangeList changelist, @Nls String title) {
     final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changelist);
     if (title != null) {
       dlg.setTitle(title);
@@ -349,7 +343,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     dlg.show();
   }
 
-  public void showChangesBrowser(final Component parent, final Collection<Change> changes, @Nls final String title) {
+  public void showWhatDiffersBrowser(final Component parent, final Collection<Change> changes, @Nls final String title) {
     final ChangeListViewerDialog dlg;
     if (parent != null) {
       dlg = new ChangeListViewerDialog(parent, myProject, changes, false);

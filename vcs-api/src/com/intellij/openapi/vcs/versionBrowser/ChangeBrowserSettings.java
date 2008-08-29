@@ -47,6 +47,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
 
   public boolean USE_USER_FILTER = false;
   public String USER = "";
+  public boolean STOP_ON_COPY = false;
 
   public static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.LONG,
                                                                                                             SimpleDateFormat.LONG));

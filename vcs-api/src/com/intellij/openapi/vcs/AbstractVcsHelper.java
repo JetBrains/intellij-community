@@ -60,18 +60,14 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showDifferences(final VcsFileRevision cvsVersionOn, final VcsFileRevision cvsVersionOn1, final File file);
 
-  public abstract void showChangesBrowser(List<CommittedChangeList> changelists);
-
-  public abstract void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title);
-
-  public abstract void showChangesBrowser(CommittedChangeList changelist, @Nls String title);
+  public abstract void showChangesListBrowser(CommittedChangeList changelist, @Nls String title);
 
   public abstract void showChangesBrowser(CommittedChangesProvider provider,
                                           final RepositoryLocation location,
                                           @Nls String title,
                                           @Nullable final Component parent);
 
-  public abstract void showChangesBrowser(@Nullable Component parent, Collection<Change> changes, @Nls String title);
+  public abstract void showWhatDiffersBrowser(@Nullable Component parent, Collection<Change> changes, @Nls String title);
 
   @Nullable
   public abstract <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider,
