@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.css.CssFile;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
@@ -54,8 +55,14 @@ public class ImageOrColorPreviewProjectComponent extends AbstractProjectComponen
     }
 
     private static boolean isSuitable(final Project project, final VirtualFile file) {
-      final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      return psiFile != null && (psiFile instanceof XmlFile || psiFile instanceof CssFile || psiFile instanceof PsiJavaFile);
+      final FileViewProvider provider = PsiManager.getInstance(project).findViewProvider(file);
+      if (provider == null) return false;
+      
+      for (final PsiFile psiFile : provider.getAllFiles()) {
+        if (psiFile instanceof XmlFile || psiFile instanceof CssFile || psiFile instanceof PsiJavaFile) return true;
+      }
+
+      return false;
     }
 
     public void fileClosed(final FileEditorManager source, final VirtualFile file) {
