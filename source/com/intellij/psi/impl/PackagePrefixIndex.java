@@ -46,19 +46,20 @@ public class PackagePrefixIndex {
       return getAllPackagePrefixes(scope, map);
     }
 
-    synchronized (LOCK) {
-      if (myMap == null) {
-        map = new MultiMap<String, Module>();
-        for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
-          for (final ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
-            for (final SourceFolder folder : entry.getSourceFolders()) {
-              final String prefix = folder.getPackagePrefix();
-              if (StringUtil.isNotEmpty(prefix)) {
-                map.putValue(prefix, module);
-              }
-            }
+    map = new MultiMap<String, Module>();
+    for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
+      for (final ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
+        for (final SourceFolder folder : entry.getSourceFolders()) {
+          final String prefix = folder.getPackagePrefix();
+          if (StringUtil.isNotEmpty(prefix)) {
+            map.putValue(prefix, module);
           }
         }
+      }
+    }
+
+    synchronized (LOCK) {
+      if (myMap == null) {
         myMap = map;
       }
       return getAllPackagePrefixes(scope, myMap);
