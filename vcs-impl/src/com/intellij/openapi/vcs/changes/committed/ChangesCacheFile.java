@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -109,7 +110,7 @@ public class ChangesCacheFile {
       // the list and index are sorted in direct chronological order
       Collections.sort(changes, new Comparator<CommittedChangeList>() {
         public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
-          return o1.getCommitDate().compareTo(o2.getCommitDate());
+          return Comparing.compare(o1.getCommitDate(), o2.getCommitDate());
         }
       });
       for(CommittedChangeList list: changes) {
@@ -671,6 +672,9 @@ public class ChangesCacheFile {
     private Map<Long, CommittedChangeList> myPreviousChangeListsCache = new HashMap<Long, CommittedChangeList>();
 
     public boolean invoke() throws VcsException, IOException {
+      if (myProject.isDisposed()) {
+        return false;
+      }
       final DiffProvider diffProvider = myVcs.getDiffProvider();
       if (diffProvider == null) return false;
       final Collection<FilePath> incomingFiles = myChangesProvider.getIncomingFiles(myLocation);
