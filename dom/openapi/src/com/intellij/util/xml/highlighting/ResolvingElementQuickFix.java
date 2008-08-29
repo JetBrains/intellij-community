@@ -162,8 +162,12 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
 
   @Nullable
   public static ResolvingElementQuickFix createFix(final String newName, final Class<? extends DomElement> clazz, final DomElement scope) {
-
     final List<DomElement> parents = ModelMergerUtil.getImplementations(scope);
+    return createFix(newName, clazz, parents);
+  }
+
+  @Nullable
+  public static ResolvingElementQuickFix createFix(final String newName, final Class<? extends DomElement> clazz, final List<DomElement> parents) {
     final DomCollectionChildDescription childDescription = getChildDescription(parents, clazz);
     if (newName.length() > 0 && childDescription != null) {
       return new ResolvingElementQuickFix(clazz, newName, parents, childDescription);
