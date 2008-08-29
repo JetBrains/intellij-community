@@ -5,24 +5,22 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Stack;
+import java.util.*;
+import java.util.List;
 
 @SuppressWarnings({"SSBasedInspection"})
 public class LaterInvocator {
@@ -41,7 +39,7 @@ public class LaterInvocator {
     final Condition<Object> expired;
     final ActionCallback callback;
 
-    public RunnableInfo(Runnable runnable, ModalityState modalityState, @NotNull Condition expired, @NotNull ActionCallback callback) {
+    public RunnableInfo(Runnable runnable, ModalityState modalityState, @NotNull Condition<Object> expired, @NotNull ActionCallback callback) {
       this.runnable = runnable;
       this.modalityState = modalityState;
       this.expired = expired;
@@ -90,12 +88,12 @@ public class LaterInvocator {
       }
     }
 
-    ArrayList result = new ArrayList();
-    for (int i = 0; i < ourModalEntities.size(); i++) {
-      Object entity = ourModalEntities.get(i);
-      if (entity instanceof Window){
+    ArrayList<Object> result = new ArrayList<Object>();
+    for (Object entity : ourModalEntities) {
+      if (entity instanceof Window) {
         result.add(entity);
-      } else if (entity instanceof ProgressIndicator) {
+      }
+      else if (entity instanceof ProgressIndicator) {
         if (((ProgressIndicator)entity).isModal()) {
           result.add(entity);
         }
@@ -117,7 +115,7 @@ public class LaterInvocator {
     return invokeLater(runnable, modalityState, Conditions.FALSE);
   }
 
-  public static ActionCallback invokeLater(Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
+  public static ActionCallback invokeLater(Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<Object> expired) {
     final ActionCallback callback = new ActionCallback();
     synchronized (LOCK) {
       ourQueue.add(new RunnableInfo(runnable, modalityState, expired, callback));
@@ -152,20 +150,20 @@ public class LaterInvocator {
     semaphore.waitFor();                                          
   }
 
-  public static void enterModal(Object modalEnity) {
+  public static void enterModal(Object modalEntity) {
     if (!IS_TEST_MODE) {
       LOG.assertTrue(isDispatchThread(), "enterModal() should be invoked in event-dispatch thread");
     }
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("enterModal:" + modalEnity);
+      LOG.debug("enterModal:" + modalEntity);
     }
 
     if (!IS_TEST_MODE) {
       ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged();
     }
 
-    ourModalEntities.add(modalEnity);
+    ourModalEntities.add(modalEntity);
   }
 
   public static void leaveModal(Object modalEntity) {
@@ -224,14 +222,13 @@ public class LaterInvocator {
     //TODO!
     //LOG.assertTrue(IdeEventQueue.getInstance().isInInputEvent() || isInMyRunnable());
 
-    return ourModalEntities.toArray(ArrayUtil.EMPTY_OBJECT_ARRAY);
+    return ourModalEntities.toArray(new Object[ourModalEntities.size()]);
   }
 
   public static boolean isInModalContext() {
     if (!IS_TEST_MODE) {
       LOG.assertTrue(isDispatchThread());
     }
-
     return !ourModalEntities.isEmpty();
   }
 
@@ -246,7 +243,7 @@ public class LaterInvocator {
   @Nullable
   private static RunnableInfo pollNext() {
     synchronized (LOCK) {
-      if (ourForcedFlushQueue.size() > 0) {
+      if (!ourForcedFlushQueue.isEmpty()) {
         final RunnableInfo toRun = ourForcedFlushQueue.get(0);
         ourForcedFlushQueue.remove(0);
         if (!toRun.expired.value(null)) {
@@ -257,9 +254,8 @@ public class LaterInvocator {
       }
 
 
-      ModalityStateEx currentModality = (ModalityStateEx)(ourModalEntities.size() > 0
-                                        ? new ModalityStateEx(ourModalEntities.toArray(ArrayUtil.EMPTY_OBJECT_ARRAY))
-                                        : ApplicationManager.getApplication().getNoneModalityState());
+      ModalityStateEx currentModality = (ModalityStateEx)(ourModalEntities.isEmpty() ? ApplicationManager.getApplication()
+          .getNoneModalityState() : new ModalityStateEx(ourModalEntities.toArray(new Object[ourModalEntities.size()])));
 
       while(ourQueueSkipCount < ourQueue.size()){
         RunnableInfo info = ourQueue.get(ourQueueSkipCount);
@@ -327,8 +323,8 @@ public class LaterInvocator {
     }
   }
 
-  //tests only
-  public static java.util.List<Object> dumpQueue() {
+  @TestOnly
+  public static List<Object> dumpQueue() {
     synchronized (LOCK) {
       if (!ourQueue.isEmpty()) {
         ArrayList<Object> r = new ArrayList<Object>();
