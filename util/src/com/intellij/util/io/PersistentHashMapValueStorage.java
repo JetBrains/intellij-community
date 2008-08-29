@@ -75,7 +75,7 @@ public class PersistentHashMapValueStorage {
     return tailChunkAddress;
   }
 
-  private void checkPreconditions(final byte[] result, final int chunkSize, final int off) throws IOException {
+  private static void checkPreconditions(final byte[] result, final int chunkSize, final int off) throws IOException {
     if (chunkSize < 0) {
       throw new IOException("Value storage corrupted: negative chunk size");
     }

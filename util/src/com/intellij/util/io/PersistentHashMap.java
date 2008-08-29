@@ -27,8 +27,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   public static final String DATA_FILE_EXTENSION = ".values";
   private File myFile;
   private int myGarbageSize;
-  private DataDescriptor<Key> myKeyDescriptor;
-  private DataOutputStream myKeysOutStream;
+  private static final int VALUE_REF_OFFSET = RECORD_SIZE;
+  private final byte[] myRecordBuffer = new byte[RECORD_SIZE + 8 + 4];
 
   private static class AppendStream extends DataOutputStream {
     private AppendStream() {
@@ -89,8 +89,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
   
   public PersistentHashMap(final File file, PersistentEnumerator.DataDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
-    super(checkDataFile(file), new DescriptorWrapper<Key>(keyDescriptor), initialSize);
-    myKeyDescriptor = keyDescriptor;
+    super(checkDataFile(file), keyDescriptor, initialSize);
     myFile = file;
     myValueExternalizer = valueExternalizer;
     myValueStorage = PersistentHashMapValueStorage.create(getDataFile(myFile).getPath());
@@ -99,8 +98,6 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     if (makesSenceToCompact()) {
       compact();
     }
-
-    ensureKeystreamExists();
   }
   
   private boolean makesSenceToCompact() {
@@ -162,44 +159,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   public synchronized boolean processKeys(Processor<Key> processor) throws IOException {
     myAppendCache.clear();
-    flushKeysStream();
-
-    DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new FileInputStream(keystreamFile())));
-    try {
-      try {
-        while (true) {
-          Key key = myKeyDescriptor.read(keysStream);
-          if (!processor.process(key)) return false;
-        }
-      }
-      catch (EOFException e) {
-        // Done
-      }
-      return true;
-    }
-    finally {
-      keysStream.close();
-    }
-
-  }
-
-  private void ensureKeystreamExists() throws IOException {
-    if (!keystreamFile().exists()) {
-      buildKeystream();
-    }
-  }
-
-  private void buildKeystream() throws IOException {
-    keyStream();
-    
-    processAllDataObject(new Processor<Key>() {
-      public boolean process(final Key key) {
-        onNewValueAdded(key);
-        return true;
-      }
-    }, null);
-
-    flushKeysStream();
+    return iterateData(processor);
   }
 
   public synchronized Collection<Key> getAllKeysWithExistingMapping() throws IOException {
@@ -266,25 +226,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   public synchronized void force() {
     myAppendCache.clear();
     myValueStorage.force();
-    flushKeysStream();
 
     super.force();
   }
 
-  private void flushKeysStream() {
-    if (myKeysOutStream != null) {
-      try {
-        myKeysOutStream.close();
-        myKeysOutStream = null;
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-  }
-
   public synchronized void close() throws IOException {
-    flushKeysStream();
     myAppendCache.clear();
     try {
       super.close();
@@ -326,67 +272,31 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   private HeaderRecord readValueId(final int keyId) throws IOException {
     HeaderRecord result = new HeaderRecord();
-    result.address = myStorage.getLong(keyId + DATA_OFFSET);
-    result.size = myStorage.getInt(keyId + DATA_OFFSET + 8);
+    result.address = myStorage.getLong(keyId + VALUE_REF_OFFSET);
+    result.size = myStorage.getInt(keyId + VALUE_REF_OFFSET + 8);
     return result;
   }
 
   private void updateValueId(final int keyId, HeaderRecord value) throws IOException {
-    myStorage.putLong(keyId + DATA_OFFSET, value.address);
-    myStorage.putInt(keyId + DATA_OFFSET + 8, value.size);
+    myStorage.putLong(keyId + VALUE_REF_OFFSET, value.address);
+    myStorage.putInt(keyId + VALUE_REF_OFFSET + 8, value.size);
   }
 
-  private static final class DescriptorWrapper<T> implements PersistentEnumerator.DataDescriptor<T>{
-    private final PersistentEnumerator.DataDescriptor<T> myKeyDescriptor;
+  @Override
+  protected byte[] getRecordBuffer() {
+    return myRecordBuffer;
+  }
 
-    public DescriptorWrapper(PersistentEnumerator.DataDescriptor<T> keyDescriptor) {
-      myKeyDescriptor = keyDescriptor;
-    }
-
-    public int getHashCode(final T value) {
-      return myKeyDescriptor.getHashCode(value);
-    }
-
-    public boolean isEqual(final T val1, final T val2) {
-      return myKeyDescriptor.isEqual(val1, val2);
-    }
-
-    public void save(final DataOutput out, final T value) throws IOException {
-      out.writeLong(NULL_ADDR);
-      out.writeInt(NULL_SIZE);
-
-      myKeyDescriptor.save(out, value);
-    }
-
-    public T read(final DataInput in) throws IOException {
-      in.skipBytes(8 + 4);
-      return myKeyDescriptor.read(in);
+  @Override
+  protected void setupRecord(final int hashCode, final int dataOffset, final byte[] buf) {
+    super.setupRecord(hashCode, dataOffset, buf);
+    for (int i = VALUE_REF_OFFSET; i < myRecordBuffer.length; i++) {
+      buf[i] = 0;
     }
   }
 
   private static class HeaderRecord {
     long address;
     int size;
-  }
-
-  @Override
-  protected void onNewValueAdded(final Key key) {
-    try {
-      myKeyDescriptor.save(keyStream(), key);
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-  }
-
-  private DataOutputStream keyStream() throws FileNotFoundException {
-    if (myKeysOutStream == null) {
-      myKeysOutStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(keystreamFile(), true)));
-    }
-    return myKeysOutStream;
-  }
-
-  private File keystreamFile() {
-    return new File(myFile.getPath() + ".keystream");
   }
 }

@@ -22,10 +22,7 @@ import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.containers.ShareableKey;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -40,10 +37,10 @@ public class PersistentEnumerator<Data> implements Forceable {
   private static final int META_DATA_OFFSET = 4;
   private static final int FIRST_VECTOR_OFFSET = 8;
   private static final int DIRTY_MAGIC = 0xbabe0589;
-  private static final int VERSION = 3;
+  private static final int VERSION = 4;
   private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac + VERSION;
 
-  private static final int BITS_PER_LEVEL = 5;
+  private static final int BITS_PER_LEVEL = 4;
   private static final int SLOTS_PER_VECTOR = 1 << BITS_PER_LEVEL;
   private static final int LEVEL_MASK = SLOTS_PER_VECTOR - 1;
   private static final byte[] EMPTY_VECTOR = new byte[SLOTS_PER_VECTOR * 4];
@@ -53,16 +50,31 @@ public class PersistentEnumerator<Data> implements Forceable {
   private static final int FIRST_LEVEL_MASK = SLOTS_PER_FIRST_VECTOR - 1;
   private static final byte[] FIRST_VECTOR = new byte[SLOTS_PER_FIRST_VECTOR * 4];
 
+
   protected final MappedFile myStorage;
-  private final MappedFileDataOutput myOut;
-  private final MappedFileDataInput myIn;
 
   private boolean myClosed = false;
   private boolean myDirty = false;
   private final DataDescriptor<Data> myDataDescriptor;
-  private final byte[] myBuffer = new byte[8];
+  private final byte[] myBuffer = new byte[RECORD_SIZE];
 
   private static final CacheKey ourFlyweight = new CacheKey(null, null);
+  private final File myFile;
+  private static final int COLLISION_OFFSET = 0;
+  private static final int KEY_HASHCODE_OFFSET = COLLISION_OFFSET + 4;
+  private static final int KEY_REF_OFFSET = KEY_HASHCODE_OFFSET + 4;
+  protected static final int RECORD_SIZE = KEY_REF_OFFSET + 4;
+
+  private final MyAppenderStream myKeyStream;
+  private final MyDataIS myKeyReadStream;
+  private final RandomAccessFile myRaf;
+
+  private static class MyAppenderStream extends DataOutputStream {
+    public MyAppenderStream(final File out) throws FileNotFoundException {
+      super(new BufferedOutputStream(new FileOutputStream(out, true)));
+      written = (int) out.length();
+    }
+  }
 
   private static class CacheKey implements ShareableKey {
     public PersistentEnumerator owner;
@@ -114,10 +126,16 @@ public class PersistentEnumerator<Data> implements Forceable {
   
   public PersistentEnumerator(File file, DataDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     myDataDescriptor = dataDescriptor;
-    myStorage = new MappedFile(file, initialSize);
-    myOut = new MappedFileDataOutput(myStorage);
-    myIn = new MappedFileDataInput(myStorage);
-    
+    myFile = file;
+    if (!file.exists()) {
+      if (!file.createNewFile()) {
+        throw new IOException("Cannot create empty file: " + file);
+      }
+    }
+
+    myStorage = new MappedFile(myFile, initialSize);
+    myKeyStream = new MyAppenderStream(keystreamFile());
+
     if (myStorage.length() == 0) {
       markDirty(true);
       putMetaData(0);
@@ -136,6 +154,9 @@ public class PersistentEnumerator<Data> implements Forceable {
         throw new CorruptedException(file);
       }
     }
+
+    myRaf = new RandomAccessFile(keystreamFile(), "r");
+    myKeyReadStream = new MyDataIS(myRaf);
   }
   
   protected synchronized int tryEnumerate(Data value) throws IOException {
@@ -316,8 +337,7 @@ public class PersistentEnumerator<Data> implements Forceable {
 
   private int allocVector(final byte[] empty) throws IOException {
     final int pos = (int)myStorage.length();
-    myStorage.seek(pos);
-    myStorage.put(empty, 0, empty.length);
+    myStorage.put(pos, empty, 0, empty.length);
     return pos;
   }
 
@@ -329,25 +349,12 @@ public class PersistentEnumerator<Data> implements Forceable {
     try {
       markDirty(true);
 
+      byte[] buf = prepareEntryRecordBuf(hashCode, myKeyStream.size());
+      myDataDescriptor.save(myKeyStream, value);
+
       final MappedFile storage = myStorage;
       final int pos = (int)storage.length();
-      storage.seek(pos);
-
-      //storage.writeInt(0);
-      //storage.writeInt(hashCode);
-      final byte[] buf = myBuffer;
-      buf[0] = buf[1] = buf[2] = buf[3] = 0;
-      buf[7] = (byte)(hashCode & 0xFF);
-      hashCode >>>= 8;
-      buf[6] = (byte)(hashCode & 0xFF);
-      hashCode >>>= 8;
-      buf[5] = (byte)(hashCode & 0xFF);
-      hashCode >>>= 8;
-      buf[4] = (byte)(hashCode & 0xFF);
-      myStorage.put(buf, 0, buf.length);
-
-      myDataDescriptor.save(myOut, value);
-      onNewValueAdded(value);
+      storage.put(pos, buf, 0, buf.length);
 
       return pos;
     }
@@ -356,23 +363,96 @@ public class PersistentEnumerator<Data> implements Forceable {
     }
   }
 
-  protected void onNewValueAdded(final Data data) {
+  private byte[] prepareEntryRecordBuf(int hashCode, int dataOffset) {
+    final byte[] buf = getRecordBuffer();
+    setupRecord(hashCode, dataOffset, buf);
+    return buf;
+  }
+
+  protected byte[] getRecordBuffer() {
+    return myBuffer;
+  }
+
+  protected void setupRecord(int hashCode, final int dataOffset, final byte[] buf) {
+    Bits.putInt(buf, COLLISION_OFFSET, 0);
+    Bits.putInt(buf, KEY_HASHCODE_OFFSET, hashCode);
+    Bits.putInt(buf, KEY_REF_OFFSET, dataOffset);
+  }
+
+  public boolean iterateData(final Processor<Data> processor) throws IOException {
+    flushKeysStream();
+
+    DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new FileInputStream(keystreamFile())));
+    try {
+      try {
+        while (true) {
+          Data key = myDataDescriptor.read(keysStream);
+          if (!processor.process(key)) return false;
+        }
+      }
+      catch (EOFException e) {
+        // Done
+      }
+      return true;
+    }
+    finally {
+      keysStream.close();
+    }
+  }
+
+  private File keystreamFile() {
+    return new File(myFile.getPath() + ".keystream");
+  }
+
+  private void flushKeysStream() {
+    try {
+      myKeyStream.flush();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private int hashCodeOf(int idx) throws IOException {
-    return myStorage.getInt(idx + 4);
+    return myStorage.getInt(idx + KEY_HASHCODE_OFFSET);
   }
 
   public synchronized Data valueOf(int idx) throws IOException {
+    myKeyStream.flush();
     final MappedFile storage = myStorage;
-    storage.seek(idx + DATA_OFFSET);
-    return myDataDescriptor.read(myIn);
+    int addr = storage.getInt(idx + KEY_REF_OFFSET);
+    myKeyReadStream.setup(addr, myKeyStream.size());
+    return myDataDescriptor.read(myKeyReadStream);
+  }
+
+  private static class MyDataIS extends DataInputStream {
+    private MyDataIS(RandomAccessFile raf) {
+      super(new MyBufferedIS(new RandomAccessFileInputStream(raf, 0, 0)));
+    }
+
+    public void setup(long pos, long limit) {
+      ((MyBufferedIS)in).setup(pos, limit);
+    }
+  }
+
+  private static class MyBufferedIS extends BufferedInputStream {
+    public MyBufferedIS(final InputStream in) {
+      super(in, 512);
+    }
+
+    public void setup(long pos, long limit) {
+      this.pos = 0;
+      count = 0;
+      ((RandomAccessFileInputStream)in).setup(pos, limit);
+    }
   }
 
   public synchronized void close() throws IOException {
     if (!myClosed) {
       myClosed = true;
       try {
+        myKeyStream.flush();
+        myRaf.close();
         flush();
       }
       finally {
@@ -390,14 +470,15 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   public synchronized void flush() throws IOException {
-    if (myStorage.isMapped() || isDirty()) {
+    if (isDirty()) {
       markDirty(false);
-      myStorage.flush();
+      myStorage.force();
     }
   }
 
   public synchronized void force() {
     try {
+      flushKeysStream();
       flush();
     }
     catch (IOException e) {
@@ -422,145 +503,5 @@ public class PersistentEnumerator<Data> implements Forceable {
   protected void markClean() throws IOException {
     myStorage.putInt(0, CORRECTLY_CLOSED_MAGIC);
     myDirty = false;
-  }
-
-  private static final class MappedFileDataInput implements DataInput {
-    private final MappedFile myFile;
-
-    private MappedFileDataInput(MappedFile file) {
-      myFile = file;
-    }
-
-    public void readFully(final byte[] b) throws IOException {
-      myFile.get(b, 0, b.length);
-    }
-
-    public void readFully(final byte[] b, final int off, final int len) throws IOException {
-      myFile.get(b, off, len);
-    }
-
-    public int skipBytes(final int n) throws IOException {
-      myFile.seek(myFile.getFilePointer() + n);
-      return n;
-    }
-
-    public boolean readBoolean() throws IOException {
-      final byte b = myFile.readByte();
-      return b != 0;
-    }
-
-    public int readUnsignedByte() throws IOException {
-      return ((int)myFile.readByte()) & 0xFF;
-    }
-
-    public short readShort() throws IOException {
-      return myFile.readShort();
-    }
-
-    public float readFloat() throws IOException {
-      return Float.intBitsToFloat(myFile.readInt());
-    }
-
-    public double readDouble() throws IOException {
-      return Double.longBitsToDouble(myFile.readLong());
-    }
-
-    public String readLine() throws IOException {
-      throw new UnsupportedOperationException();
-    }
-
-    public int readInt() throws IOException {
-      return myFile.readInt();
-    }
-
-    public long readLong() throws IOException {
-      return myFile.readLong();
-    }
-
-    public String readUTF() throws IOException {
-      return myFile.readUTF();
-    }
-
-    public int readUnsignedShort() throws IOException {
-      return myFile.readUnsignedShort();
-    }
-
-    public char readChar() throws IOException {
-      return myFile.readChar();
-    }
-
-    public byte readByte() throws IOException {
-      return myFile.readByte();
-    }
-  }
-  
-  private static final class MappedFileDataOutput implements DataOutput {
-    private final MappedFile myFile;
-
-    public MappedFileDataOutput(MappedFile file) {
-      myFile = file;
-    }
-
-    public void writeShort(final int value) throws IOException {
-      myFile.writeShort(value);
-    }
-
-    public void write(final int b) throws IOException {
-      myFile.writeByte((byte)(b & 0xFF));
-    }
-
-    public void write(final byte[] b) throws IOException {
-      myFile.put(b, 0, b.length);
-    }
-
-    public void write(final byte[] b, final int off, final int len) throws IOException {
-      myFile.put(b, off, len);
-    }
-
-    public void writeBoolean(final boolean v) throws IOException {
-      myFile.writeByte(v? (byte)1 : 0);
-    }
-
-    public void writeByte(final int v) throws IOException {
-      write(v);
-    }
-
-    public void writeChar(final int v) throws IOException {
-      myFile.writeShort((short)(v & 0xFFFF));
-    }
-
-    public void writeFloat(final float v) throws IOException {
-      myFile.writeInt(Float.floatToIntBits(v));
-    }
-
-    public void writeDouble(final double v) throws IOException {
-      myFile.writeLong(Double.doubleToLongBits(v));
-    }
-
-    public void writeBytes(final String s) throws IOException {
-      for (int idx = 0; idx < s.length(); idx++) {
-        final char ch = s.charAt(idx);
-        myFile.writeByte((byte)(ch & 0xFF));
-      }
-    }
-
-    public void writeChars(final String s) throws IOException {
-      for (int idx = 0; idx < s.length(); idx++) {
-        final char ch = s.charAt(idx);
-        myFile.writeChar(ch);
-      }
-    }
-
-    public void writeInt(final int value) throws IOException {
-      myFile.writeInt(value);
-    }
-
-    public void writeLong(final long value) throws IOException {
-      myFile.writeLong(value);
-    }
-
-    public void writeUTF(final String value) throws IOException {
-      myFile.writeUTF(value);
-    }
   }
 }
