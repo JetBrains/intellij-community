@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -54,11 +55,11 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
     if (scope instanceof GlobalSearchScope) {
       candidates = GroovyCacheUtil.getAnnotatedMemberCandidates(annClass, ((GlobalSearchScope)scope));
     } else {
-      PsiElement[] elements = ((LocalSearchScope) scope).getScope();
+      PsiElement[] elements = ((LocalSearchScope)scope).getScope();
       final List<GrMember> collector = new ArrayList<GrMember>();
       for (PsiElement element : elements) {
         if (element instanceof GroovyPsiElement) {
-          ((GroovyPsiElement) element).accept(new GroovyRecursiveElementVisitor() {
+          ((GroovyPsiElement)element).accept(new GroovyRecursiveElementVisitor() {
             public void visitMethod(GrMethod method) {
               collector.add(method);
             }
@@ -79,6 +80,8 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
         for (GrAnnotation annotation : annotations) {
           GrCodeReferenceElement ref = annotation.getClassReference();
           if (ref != null && ref.isReferenceTo(annClass)) {
+            PsiClass clazz = candidate.getContainingClass();
+            if (clazz != null && PsiUtil.getTopLevelClass(clazz) == null) continue;
             if (!consumer.process(candidate)) return false;
           }
         }

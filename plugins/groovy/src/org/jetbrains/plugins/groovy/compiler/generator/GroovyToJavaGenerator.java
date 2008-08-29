@@ -140,6 +140,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         set.addAll(Arrays.asList(context.getProjectCompileScope().getFiles(GroovyFileType.GROOVY_FILE_TYPE, true)));
       }
     });
+    
     return set.toArray(new VirtualFile[set.size()]);
   }
 
