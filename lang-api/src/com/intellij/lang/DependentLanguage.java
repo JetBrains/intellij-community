@@ -5,9 +5,11 @@
 package com.intellij.lang;
 
 /**
- * A language that isn't meant to be a file's toplevel language, probably, its main purpose is to be injected
- * (see {@link com.intellij.psi.PsiLanguageInjectionHost}, {@link com.intellij.psi.LanguageInjector})
+ * A language that isn't meant to be a file's toplevel language, and it can't be injected. Probably,
+ * it's a language of some chameleon (see {@link com.intellij.psi.tree.ChameleonTrasformer})
  *
+ * @see com.intellij.psi.templateLanguages.TemplateLanguage
+ * @see InjectableLanguage
  * @author peter
  */
 public interface DependentLanguage {
