@@ -139,7 +139,8 @@ public class QuickfixUtil {
 
     if (listOfPairs == null) return new String[0];
     for (MyPair listOfPair : listOfPairs) {
-      result.add(listOfPair.second);
+        String type = PsiTypesUtil.unboxIfPossible(listOfPair.second);
+      result.add(type);
     }
 
     return result.toArray(new String[result.size()]);
@@ -148,8 +149,8 @@ public class QuickfixUtil {
   public static String[] getArgumentsNames(List<MyPair> listOfPairs) {
     final ArrayList<String> result = new ArrayList<String>();
     for (MyPair listOfPair : listOfPairs) {
-      String type = PsiTypesUtil.unboxIfPossible(listOfPair.second);
-      result.add(type);
+      String name = listOfPair.first;
+      result.add(name);
     }
 
     return result.toArray(new String[result.size()]);
