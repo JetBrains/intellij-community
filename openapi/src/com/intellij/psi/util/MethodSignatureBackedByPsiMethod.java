@@ -54,10 +54,6 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     return super.equals(o);
   }
 
-  public int hashCode() {
-    return super.hashCode();
-  }
-
   @NotNull
   public PsiMethod getMethod() {
     return myMethod;
