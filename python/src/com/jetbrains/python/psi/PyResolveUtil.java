@@ -132,16 +132,17 @@ public class PyResolveUtil {
       // maybe we're under a cap
       while (true) {
         PsiElement local_cap = getConcealingParent(seeker);
+        if (local_cap == null) break; // seeker is in global context
+        if (local_cap == cap) break; // seeker is in the same context as elt
+        if ((cap != null) && PsiTreeUtil.isAncestor(local_cap, cap, true)) break; // seeker is in a context above elt's
         if (
-            (local_cap != null) && (local_cap != cap) && // elt and seeker are under different caps and...
+            (local_cap != elt) && // elt isn't the cap of seeker itself
             ((cap == null) || !PsiTreeUtil.isAncestor(local_cap, cap, true)) // elt's cap is not under local cap 
         ) { // only look at local cap and above
           if (local_cap instanceof NameDefiner) seeker = local_cap;
           else seeker = getPrevNodeOf(local_cap, NameDefiner.class);
         }
-        if (local_cap == null) break; // seeker is in global context
-        if (local_cap == cap) break; // seeker is in the same context as elt
-        if ((cap != null) && PsiTreeUtil.isAncestor(local_cap, cap, true)) break; // seeker is in a context above elt's
+        else break; // seeker is contextually under elt already
       }
       // maybe we're capped by a class
       if (refersFromMethodToClass(cap, seeker)) continue;

@@ -76,6 +76,11 @@ public class PyResolveTest extends ResolveTestCase {
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
+  public void testLookAheadCapped() throws Exception {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyTargetExpression);
+  }
+
   public void testTryExceptElse() throws Exception {
     PsiElement targetElement = resolve();
     assertTrue(targetElement instanceof PyTargetExpression);
