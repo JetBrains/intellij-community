@@ -207,7 +207,10 @@ public class FileReferenceSet {
       final Function<PsiFile, Collection<PsiFileSystemItem>> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);
 
       if (value != null) {
-        return value.fun(file);
+        final Collection<PsiFileSystemItem> items = value.fun(file);
+        if (items != null) {
+          return items;
+        }
       }
     }
     if (isAbsolutePathReference()) {
