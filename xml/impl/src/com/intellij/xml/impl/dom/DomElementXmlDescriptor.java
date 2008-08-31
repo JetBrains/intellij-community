@@ -4,7 +4,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
@@ -31,17 +30,19 @@ import java.util.List;
 public class DomElementXmlDescriptor implements XmlElementDescriptor {
   private final DomChildrenDescription myChildrenDescription;
   private final DomManager myManager;
+  @NotNull private final DomElement mySomeElement;
 
   public DomElementXmlDescriptor(@NotNull final DomElement domElement) {
     myChildrenDescription = new MyRootDomChildrenDescription(domElement);
 
     myManager = domElement.getManager();
-
+    mySomeElement = domElement;
   }
 
-  public DomElementXmlDescriptor(@NotNull final DomChildrenDescription childrenDescription, @NotNull DomManager manager) {
+  public DomElementXmlDescriptor(@NotNull final DomChildrenDescription childrenDescription, @NotNull DomElement someElement) {
     myChildrenDescription = childrenDescription;
-    myManager = manager;
+    myManager = someElement.getManager();
+    mySomeElement = someElement;
   }
 
   public String getQualifiedName() {
@@ -59,11 +60,11 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
     List<XmlElementDescriptor> xmlElementDescriptors = new ArrayList<XmlElementDescriptor>();
 
     for (DomCollectionChildDescription childrenDescription : domElement.getGenericInfo().getCollectionChildrenDescriptions()) {
-      xmlElementDescriptors.add(new DomElementXmlDescriptor(childrenDescription, myManager));
+      xmlElementDescriptors.add(new DomElementXmlDescriptor(childrenDescription, domElement));
     }
 
     for (DomFixedChildDescription childrenDescription : domElement.getGenericInfo().getFixedChildrenDescriptions()) {
-      xmlElementDescriptors.add(new DomElementXmlDescriptor(childrenDescription, myManager));
+      xmlElementDescriptors.add(new DomElementXmlDescriptor(childrenDescription, domElement));
     }
 
     CustomDomChildrenDescription customDescription = domElement.getGenericInfo().getCustomNameChildrenDescription();
@@ -82,7 +83,7 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
       if (domElement != null) {
         AbstractDomChildrenDescription description = myManager.findChildrenDescription(childTag, domElement);
         if (description instanceof DomChildrenDescription) {
-          return new DomElementXmlDescriptor((DomChildrenDescription)description, myManager);
+          return new DomElementXmlDescriptor((DomChildrenDescription)description, domElement);
         }
       }
 
@@ -96,7 +97,7 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
     if (description instanceof CustomDomChildrenDescription) return new AnyXmlElementDescriptor(this, getNSDescriptor());
     if (!(description instanceof DomChildrenDescription)) return null;
 
-    return new DomElementXmlDescriptor((DomChildrenDescription)description, myManager);
+    return new DomElementXmlDescriptor((DomChildrenDescription)description, parent);
   }
 
   public XmlAttributeDescriptor[] getAttributesDescriptors(final @Nullable XmlTag context) {
@@ -187,17 +188,8 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
     if (declaration != null) return declaration.getXmlElement();
 
     return new FakePsiElement() {
-      @Override
-      public PsiManager getManager() {
-        return PsiManager.getInstance(myManager.getProject());
-      }
-
-      public PsiFile getContainingFile() {
-        return null;
-      }
-
       public PsiElement getParent() {
-        return null;
+        return mySomeElement.getRoot().getFile();
       }
     };
   }
