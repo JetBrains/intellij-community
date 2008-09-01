@@ -289,7 +289,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       if (severity == HighlightSeverity.ERROR) {
         type = new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());
       }
-      if (severity == HighlightSeverity.WARNING) {
+      else if (severity == HighlightSeverity.WARNING) {
         type = new HighlightInfoType.HighlightInfoTypeImpl(severity, CodeInsightColors.INFO_ATTRIBUTES);
       }
       else {
