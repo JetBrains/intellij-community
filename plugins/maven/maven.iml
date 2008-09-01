@@ -150,6 +150,7 @@
     <orderEntry type="module" module-name="GwtStudio" />
     <orderEntry type="module" module-name="dom-impl" />
     <orderEntry type="module" module-name="idea-tests" />
+    <orderEntry type="module" module-name="JavaScriptLanguage" />
   </component>
   <component name="copyright">
     <Base>

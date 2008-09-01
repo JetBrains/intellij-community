@@ -14,8 +14,9 @@
     <extensionPoint name="facetImporter" interface="org.jetbrains.idea.maven.facets.FacetImporter"/>
   </extensionPoints>
 
-  <depends optional="true" config-file="gwt-support.xml">com.intellij.gwt</depends>
   <depends optional="true" config-file="jee-support.xml">com.intellij.javaee</depends>
+  <depends optional="true" config-file="gwt-support.xml">com.intellij.gwt</depends>
+  <depends optional="true" config-file="flex-support.xml">com.intellij.flex</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectImportProvider implementation="org.jetbrains.idea.maven.project.open.MavenProjectImportProvider"/>
