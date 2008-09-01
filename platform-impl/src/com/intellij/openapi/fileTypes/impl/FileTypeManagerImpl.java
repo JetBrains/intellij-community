@@ -51,6 +51,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final FileTypeAssocTable myInitialAssociations = new FileTypeAssocTable();
   private final Map<FileNameMatcher, String> myUnresolvedMappings = new THashMap<FileNameMatcher, String>();
   private final Map<FileNameMatcher, String> myUnresolvedRemovedMappings = new THashMap<FileNameMatcher, String>();
+  private static final List<Throwable> ourInitErrors = new ArrayList<Throwable>();
 
   @NonNls private static final String ELEMENT_FILETYPE = "filetype";
   @NonNls private static final String ELEMENT_FILETYPES = "filetypes";
@@ -92,7 +93,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
     };
     for (final FileTypeFactory factory : Extensions.getExtensions(FileTypeFactory.FILE_TYPE_FACTORY_EP)) {
-      factory.createFileTypes(consumer);
+      try {
+        factory.createFileTypes(consumer);
+      }
+      catch (Throwable ex) {
+        LOG.error(ex);
+      }
     }
   }
 
