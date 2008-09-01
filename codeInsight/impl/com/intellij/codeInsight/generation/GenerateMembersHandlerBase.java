@@ -76,8 +76,9 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     int col = editor.getCaretModel().getLogicalPosition().column;
     int line = editor.getCaretModel().getLogicalPosition().line;
     int lineStartOffset = editor.getDocument().getLineStartOffset(line);
-    String textBeforeCaret = editor.getDocument().getCharsSequence().subSequence(lineStartOffset, offset).toString().trim();
-    if (textBeforeCaret.length() > 0) {
+    CharSequence docText = editor.getDocument().getCharsSequence();
+    String textBeforeCaret = docText.subSequence(lineStartOffset, offset).toString().trim();
+    if (textBeforeCaret.length() > 0 && Character.isWhitespace(docText.charAt(offset))) {
       EnterAction.insertNewLineAtCaret(editor);
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       offset = editor.getCaretModel().getOffset();
