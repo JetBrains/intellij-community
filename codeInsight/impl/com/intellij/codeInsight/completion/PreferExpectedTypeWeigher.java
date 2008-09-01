@@ -65,8 +65,12 @@ public class PreferExpectedTypeWeigher extends CompletionWeigher {
 
     for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
       final PsiType defaultType = expectedInfo.getDefaultType();
-      if (defaultType != expectedInfo.getType() && defaultType.isAssignableFrom(itemType)) {
+      final PsiType expectedType = expectedInfo.getType();
+      if (defaultType != expectedType && defaultType.isAssignableFrom(itemType)) {
         return MyResult.ofDefaultType;
+      }
+      if (location.getCompletionType() == CompletionType.BASIC && expectedType.isAssignableFrom(itemType)) {
+        return MyResult.expected;
       }
     }
 

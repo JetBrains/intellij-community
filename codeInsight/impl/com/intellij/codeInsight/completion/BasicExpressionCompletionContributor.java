@@ -112,17 +112,16 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
           result.addElement(LookupItemUtil.objectToLookupItem(o));
         }
 
-        MembersGetter.addMembers(parameters.getPosition(), expectedType, result);
-        if (!parameters.getDefaultType().equals(expectedType)) {
-          MembersGetter.addMembers(parameters.getPosition(), parameters.getDefaultType(), result);
-        }
-
-
         addKeyword(result, position, PsiKeyword.TRUE);
         addKeyword(result, position, PsiKeyword.FALSE);
 
         final PsiElement parent = position.getParent();
         if (parent != null && !(parent.getParent() instanceof PsiSwitchLabelStatement)) {
+          MembersGetter.addMembers(parameters.getPosition(), expectedType, result);
+          if (!parameters.getDefaultType().equals(expectedType)) {
+            MembersGetter.addMembers(parameters.getPosition(), parameters.getDefaultType(), result);
+          }
+
           for (final PsiExpression expression : ThisGetter.getThisExpressionVariants(position)) {
             result.addElement(LookupItemUtil.objectToLookupItem(expression));
           }
