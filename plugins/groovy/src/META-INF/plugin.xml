@@ -434,10 +434,15 @@
     </group>
 
     <action id="Grails.WAR" class="org.jetbrains.plugins.grails.actions.GrailsWarAction"
-            text="Grails Make Web Archive" description="Generate Web Archive">
+            text="Make Grails Web Archive" description="Generate Web Archive">
+      <add-to-group group-id="BuildMenu" anchor="last"/>
+    </action>
+    <action id="Grails.RunScript" class="org.jetbrains.plugins.grails.actions.target.GrailsRunTarget"
+            text="Run Grails Target" description="Run arbitrary Grails target">
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
   </actions>
+
 
 
   <application-components>
