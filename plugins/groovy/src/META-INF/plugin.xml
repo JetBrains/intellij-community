@@ -439,7 +439,7 @@
     </action>
     <action id="Grails.RunTarget" class="org.jetbrains.plugins.grails.actions.target.GrailsRunTarget"
             text="Run Grails Target" description="Run arbitrary Grails target">
-      <add-to-group group-id="BuildMenu" anchor="last"/>
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt G"/>
     </action>
   </actions>
