@@ -62,6 +62,7 @@ public class LineStatusTracker {
 
   private boolean myIsReleased = false;
   private boolean myIsInitialized = false;
+  private boolean myBulkUpdate;
 
   public LineStatusTracker(Document document, Document upToDateDocument, Project project) {
     myDocument = document;
@@ -271,6 +272,20 @@ public class LineStatusTracker {
     return myUpToDateDocument;
   }
 
+  public void startBulkUpdate() {
+    myBulkUpdate = true;
+    for (Range oldRange : myRanges) {
+      removeHighlighter(oldRange.getHighlighter());
+      oldRange.setHighlighter(null);
+    }
+    myRanges.clear();
+  }
+
+  public void finishBulkUpdate() {
+    myBulkUpdate = false;
+    reinstallRanges();
+  }
+
   private class MyDocumentListener extends DocumentAdapter {
     private int myFirstChangedLine;
     private int myUpToDateFirstLine;
@@ -279,6 +294,7 @@ public class LineStatusTracker {
     private int myLinesBeforeChange;
 
     public void beforeDocumentChange(DocumentEvent e) {
+      if (myBulkUpdate) return;
       myFirstChangedLine = myDocument.getLineNumber(e.getOffset());
       myLastChangedLine = myDocument.getLineNumber(e.getOffset() + e.getOldLength());
       if (StringUtil.endsWithChar(e.getOldFragment(), '\n')) myLastChangedLine++;
@@ -324,6 +340,8 @@ public class LineStatusTracker {
     }
 
     public void documentChanged(DocumentEvent e) {
+      if (myBulkUpdate) return;
+
       int line = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
       int linesAfterChange = line - myDocument.getLineNumber(e.getOffset());
       int linesShift = linesAfterChange - myLinesBeforeChange;

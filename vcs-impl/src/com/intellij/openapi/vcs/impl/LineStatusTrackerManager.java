@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -67,6 +68,18 @@ public class LineStatusTrackerManager implements ProjectComponent {
   public LineStatusTrackerManager(final Project project, final ProjectLevelVcsManagerImpl vcsManager) {
     myProject = project;
     myVcsManager = vcsManager;
+
+    project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
+      public void updateStarted(final Document doc) {
+        final LineStatusTracker tracker = getLineStatusTracker(doc);
+        if (tracker != null) tracker.startBulkUpdate();
+      }
+
+      public void updateFinished(final Document doc) {
+        final LineStatusTracker tracker = getLineStatusTracker(doc);
+        if (tracker != null) tracker.finishBulkUpdate();
+      }
+    });
   }
 
   public void projectOpened() {
