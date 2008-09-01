@@ -15,25 +15,25 @@
  */
 package org.intellij.plugins.xpathView.support;
 
-import org.intellij.plugins.xpathView.util.Namespace;
-
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-
+import org.intellij.lang.xpath.context.ContextType;
+import org.intellij.plugins.xpathView.util.Namespace;
 import org.jaxen.JaxenException;
 import org.jaxen.XPath;
-import org.intellij.lang.xpath.context.ContextType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
 public abstract class XPathSupport {
     public static final ContextType TYPE = ContextType.lookupOrCreate("INTERACTIVE");
 
-    public abstract XPath createXPath(XmlFile file, String expression) throws JaxenException;
+    public abstract XPath createXPath(@NotNull XmlFile file, String expression) throws JaxenException;
 
-    public abstract XPath createXPath(XmlFile psiFile, String expression, Collection<Namespace> namespaces) throws JaxenException;
+    public abstract XPath createXPath(@Nullable XmlFile psiFile, String expression, @NotNull Collection<Namespace> namespaces) throws JaxenException;
 
     public abstract String getPath(XmlElement element, XmlTag context);
 

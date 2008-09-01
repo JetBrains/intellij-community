@@ -29,6 +29,10 @@ import com.intellij.psi.xml.XmlTag;
 
 import org.intellij.lang.xpath.context.functions.Function;
 import org.intellij.lang.xpath.context.functions.XPathFunctionProvider;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import org.jaxen.JaxenException;
 import org.jaxen.SimpleNamespaceContext;
 import org.jaxen.UnresolvableException;
@@ -43,7 +47,7 @@ import java.util.Map;
 class XPathSupportImpl extends XPathSupport {
     private static final Logger LOG = Logger.getInstance("org.intellij.plugins.xpathView.support.jaxen.XPathSupportImpl");
 
-    public XPath createXPath(XmlFile file, String expression) throws JaxenException {
+    public XPath createXPath(@NotNull XmlFile file, String expression) throws JaxenException {
         final PsiXPath xpath = new PsiXPath(file, expression);
         xpath.setFunctionContext(new MyXPathFunctionContext());
         xpath.setNamespaceContext(new MySimpleNamespaceContext(NamespaceCollector.findNamespaces(file)));
@@ -51,7 +55,7 @@ class XPathSupportImpl extends XPathSupport {
         return xpath;
     }
 
-    public XPath createXPath(XmlFile psiFile, String expression, Collection<Namespace> namespaces) throws JaxenException {
+    public XPath createXPath(@Nullable XmlFile psiFile, String expression, @NotNull Collection<Namespace> namespaces) throws JaxenException {
         final PsiXPath xpath = new PsiXPath(psiFile, expression);
         xpath.setFunctionContext(new MyXPathFunctionContext());
         xpath.setNamespaceContext(new MySimpleNamespaceContext(NamespaceCollector.convert(namespaces)));
