@@ -738,9 +738,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       e.getPresentation().setVisible(showImportAction());
       e.getPresentation().setText(SvnBundle.message("repository.browser.import.action"));
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
+      final boolean running = ProjectLevelVcsManager.getInstance(myProject).isBackgroundVcsOperationRunning();
       if (node != null) {
         SVNDirEntry entry = node.getSVNDirEntry();
-        e.getPresentation().setEnabled(entry == null || entry.getKind() == SVNNodeKind.DIR);
+        e.getPresentation().setEnabled((entry == null || entry.getKind() == SVNNodeKind.DIR) && (! running));
       } else {
         e.getPresentation().setEnabled(false);
       }

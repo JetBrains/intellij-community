@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,6 +31,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
+import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -175,33 +178,53 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   public static void doImport(final Project project, final File target, final SVNURL url, final boolean recursive,
                               final boolean includeIgnored, final String message) {
-    try {
-      final SVNException[] exception = new SVNException[1];
-      final SVNCommitClient client = SvnVcs.getInstance(project).createCommitClient();
+    final Ref<String> errorMessage = new Ref<String>();
+    final SVNCommitClient client = SvnVcs.getInstance(project).createCommitClient();
+    final String targetPath = FileUtil.toSystemIndependentName(target.getAbsolutePath());
 
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-          client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), true, progressIndicator));
-          try {
-            progressIndicator.setText(SvnBundle.message("progress.text.import", target.getAbsolutePath()));
-            client.doImport(target, url, message, !includeIgnored, recursive);
+    ExclusiveBackgroundVcsAction.run(project, new Runnable() {
+      public void run() {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          public void run() {
+            ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+            client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), true, progressIndicator));
+            try {
+              progressIndicator.setText(SvnBundle.message("progress.text.import", target.getAbsolutePath()));
+
+              final SvnExcludingIgnoredOperation operation = new SvnExcludingIgnoredOperation(project,
+                new SvnExcludingIgnoredOperation.Operation() {
+                  public void doOperation(final VirtualFile file) throws SVNException {
+                    final String current = FileUtil.toSystemIndependentName(file.getPath());
+                    final String subpath = current.substring(targetPath.length());
+                    final SVNURL subUrl = url.appendPath(subpath, false);
+
+                    final File ioFile = new File(file.getPath());
+
+                    client.doImport(ioFile, subUrl, message, null, !includeIgnored, false, SVNDepth.EMPTY);
+                  }
+                }, recursive);
+
+              final VirtualFile targetVf = SvnUtil.getVirtualFile(targetPath);
+              if (targetVf == null) {
+                errorMessage.set("Can not find file: " + targetPath);
+              } else {
+                operation.execute(targetVf);
+              }
+            }
+            catch (SVNException e) {
+              errorMessage.set(e.getMessage());
+            }
+            finally {
+              client.setIgnoreExternals(false);
+              client.setEventHandler(null);
+            }
           }
-          catch (SVNException e) {
-            exception[0] = e;
-          }
-          finally {
-            client.setIgnoreExternals(false);
-            client.setEventHandler(null);
-          }
-        }
-      }, SvnBundle.message("message.title.import"), true, project);
-      if (exception[0] != null) {
-        throw exception[0];
+        }, SvnBundle.message("message.title.import"), true, project);
       }
-    }
-    catch (SVNException e1) {
-      Messages.showErrorDialog(SvnBundle.message("message.text.cannot.import", e1.getMessage()), SvnBundle.message("message.title.import"));
+    });
+    
+    if (! errorMessage.isNull()) {
+      Messages.showErrorDialog(SvnBundle.message("message.text.cannot.import", errorMessage.get()), SvnBundle.message("message.title.import"));
     }
   }
 

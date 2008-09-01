@@ -197,7 +197,7 @@ public abstract class BasicAction extends AnAction {
         }
       });
 
-      VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+      doVcsRefresh(project, file);
     }
     else {
       perform(project, activeVcs, file, context);
@@ -206,8 +206,12 @@ public abstract class BasicAction extends AnAction {
           file.refresh(false, true);
         }
       });
-      VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+      doVcsRefresh(project, file);
     }
+  }
+
+  protected void doVcsRefresh(final Project project, final VirtualFile file) {
+    VcsDirtyScopeManager.getInstance(project).fileDirty(file);
   }
 
   private void batchExecute(Project project,
@@ -225,7 +229,7 @@ public abstract class BasicAction extends AnAction {
     });
 
     for (int i = 0; file != null && i < file.length; i++) {
-      VcsDirtyScopeManager.getInstance(project).fileDirty(file[i]);
+      doVcsRefresh(project, file[i]);
     }
   }
 
