@@ -426,12 +426,11 @@ public class OverrideImplementUtil {
 
     if (candidates.isEmpty()) return;
 
-    boolean isJdk15Enabled = PsiUtil.isLanguageLevel5OrHigher(aClass);
     final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(ContainerUtil.map2Array(candidates, PsiMethodMember.class, new Function<CandidateInfo, PsiMethodMember>() {
       public PsiMethodMember fun(final CandidateInfo s) {
         return new PsiMethodMember(s);
       }
-    }), false, true, project, !toImplement && isJdk15Enabled);
+    }), false, true, project, !toImplement && PsiUtil.isLanguageLevel5OrHigher(aClass));
     chooser.setTitle(toImplement
                      ? CodeInsightBundle.message("methods.to.implement.chooser.title")
                      : CodeInsightBundle.message("methods.to.override.chooser.title"));

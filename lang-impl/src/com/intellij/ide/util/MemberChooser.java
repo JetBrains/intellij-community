@@ -45,7 +45,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private JCheckBox myCopyJavadocCheckbox;
   private JCheckBox myInsertOverrideAnnotationCheckbox;
 
-  private ArrayList<MemberNode<T>> mySelectedNodes = new ArrayList<MemberNode<T>>();
+  private final ArrayList<MemberNode> mySelectedNodes = new ArrayList<MemberNode>();
 
   private boolean mySorted = false;
   private boolean myShowClasses = true;
@@ -56,9 +56,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private final JComponent myHeaderPanel;
 
   private T[] myElements;
-  private HashMap<MemberNode,ParentNode> myNodeToParentMap = new HashMap<MemberNode, ParentNode>();
-  private HashMap<ClassMember, MemberNode> myElementToNodeMap = new HashMap<ClassMember, MemberNode>();
-  private ArrayList<ContainerNode> myContainerNodes = new ArrayList<ContainerNode>();
+  private final HashMap<MemberNode,ParentNode> myNodeToParentMap = new HashMap<MemberNode, ParentNode>();
+  private final HashMap<ClassMember, MemberNode> myElementToNodeMap = new HashMap<ClassMember, MemberNode>();
+  private final ArrayList<ContainerNode> myContainerNodes = new ArrayList<ContainerNode>();
   private LinkedHashSet<T> mySelectedElements;
 
   @NonNls private static final String PROP_SORTED = "MemberChooser.sorted";
@@ -363,9 +363,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     Pair<ElementNode,List<ElementNode>> pair = storeSelection();
 
-    Enumeration<ParentNode<T>> children = getRootNodeChildren();
+    Enumeration<ParentNode> children = getRootNodeChildren();
     while (children.hasMoreElements()) {
-      ParentNode<T> classNode = children.nextElement();
+      ParentNode classNode = children.nextElement();
       sortNode(classNode, sorted);
       myTreeModel.nodeStructureChanged(classNode);
     }
@@ -373,9 +373,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     restoreSelection(pair);
   }
 
-  private void sortNode(ParentNode<T> node, boolean sorted) {
-    ArrayList<MemberNode<T>> arrayList = new ArrayList<MemberNode<T>>();
-    Enumeration<MemberNode<T>> children = node.children();
+  private static void sortNode(ParentNode node, boolean sorted) {
+    ArrayList<MemberNode> arrayList = new ArrayList<MemberNode>();
+    Enumeration<MemberNode> children = node.children();
     while (children.hasMoreElements()) {
       arrayList.add(children.nextElement());
     }
@@ -400,18 +400,18 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     DefaultMutableTreeNode root = getRootNode();
     if (!myShowClasses || myContainerNodes.isEmpty()) {
       List<ParentNode> otherObjects = new ArrayList<ParentNode>();
-      Enumeration<ParentNode<T>> children = getRootNodeChildren();
-      ParentNode<T> newRoot = new ParentNode<T>(null, new MemberChooserObjectBase(getAllContainersNodeName()), new Ref<Integer>(0));
+      Enumeration<ParentNode> children = getRootNodeChildren();
+      ParentNode newRoot = new ParentNode(null, new MemberChooserObjectBase(getAllContainersNodeName()), new Ref<Integer>(0));
       while (children.hasMoreElements()) {
         final ParentNode nextElement = children.nextElement();
         if (nextElement instanceof ContainerNode) {
-          final ContainerNode<T> containerNode = (ContainerNode<T>)nextElement;
-          Enumeration<MemberNode<T>> memberNodes = containerNode.children();
-          List<MemberNode<T>> memberNodesList = new ArrayList<MemberNode<T>>();
+          final ContainerNode containerNode = (ContainerNode)nextElement;
+          Enumeration<MemberNode> memberNodes = containerNode.children();
+          List<MemberNode> memberNodesList = new ArrayList<MemberNode>();
           while (memberNodes.hasMoreElements()) {
             memberNodesList.add(memberNodes.nextElement());
           }
-          for (MemberNode<T> memberNode : memberNodesList) {
+          for (MemberNode memberNode : memberNodesList) {
             newRoot.add(memberNode);
           }
         } else {
@@ -423,10 +423,10 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       if (newRoot.children().hasMoreElements()) root.add(newRoot);
     }
     else {
-      Enumeration<ParentNode<T>> children = getRootNodeChildren();
+      Enumeration<ParentNode> children = getRootNodeChildren();
       if (children.hasMoreElements()) {
-        ParentNode<T> allClassesNode = children.nextElement();
-        Enumeration<MemberNode<T>> memberNodes = allClassesNode.children();
+        ParentNode allClassesNode = children.nextElement();
+        Enumeration<MemberNode> memberNodes = allClassesNode.children();
         ArrayList<MemberNode> arrayList = new ArrayList<MemberNode>();
         while (memberNodes.hasMoreElements()) {
           arrayList.add(memberNodes.nextElement());
@@ -448,7 +448,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     return IdeBundle.message("node.memberchooser.all.classes");
   }
 
-  private Enumeration<ParentNode<T>> getRootNodeChildren() {
+  private Enumeration<ParentNode> getRootNodeChildren() {
     return getRootNode().children();
   }
 
@@ -521,7 +521,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       for (int i = 0; i < paths.length; i++) {
         Object node = paths[i].getLastPathComponent();
         if (node instanceof MemberNode) {
-          final MemberNode<T> memberNode = (MemberNode<T>)node;
+          final MemberNode memberNode = (MemberNode)node;
           if (e.isAddedPath(i)) {
             if (!mySelectedNodes.contains(memberNode)) {
               mySelectedNodes.add(memberNode);
@@ -533,14 +533,14 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
         }
       }
       mySelectedElements = new LinkedHashSet<T>();
-      for (MemberNode<T> selectedNode : mySelectedNodes) {
-        mySelectedElements.add(selectedNode.getDelegate());
+      for (MemberNode selectedNode : mySelectedNodes) {
+        mySelectedElements.add((T)selectedNode.getDelegate());
       }
     }
   }
 
   private abstract static class ElementNode extends DefaultMutableTreeNode {
-    private int myOrder;
+    private final int myOrder;
     private final MemberChooserObject myDelegate;
 
     public ElementNode(@Nullable DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
@@ -561,28 +561,19 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private static class MemberNode<T extends ClassMember> extends ElementNode {
-
+  private static class MemberNode extends ElementNode {
     public MemberNode(ParentNode parent, ClassMember delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }
-
-    public T getDelegate() {
-      return (T)super.getDelegate();
-    }
   }
 
-  private static class ParentNode<T extends ClassMember> extends ElementNode {
+  private static class ParentNode extends ElementNode {
     public ParentNode(@Nullable DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }
-
-    public Enumeration<MemberNode<T>> children() {
-      return super.children();
-    }
   }
 
-  private static class ContainerNode<T extends ClassMember> extends ParentNode<T> {
+  private static class ContainerNode extends ParentNode {
     public ContainerNode(DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }

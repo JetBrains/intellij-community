@@ -49,14 +49,14 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   private MyProjectManagerListener myProjectManagerListener;
   private boolean myDummy;
 
-  private ArrayList<String> myConversionProblemsStorage = new ArrayList<String>();
+  private final ArrayList<String> myConversionProblemsStorage = new ArrayList<String>();
 
   @NonNls private static final String PROJECT_LAYER = "project-components";
 
   public boolean myOptimiseTestLoadSpeed;
   @NonNls private static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
   @NonNls private static final String DUMMY_PROJECT_NAME = "Dummy (Mock) Project";
-  private boolean myDefault;
+  private final boolean myDefault;
   private static final String DEPRECATED_MESSAGE = "Deprecated method usage: {0}.\n" +
            "This method will cease to exist in IDEA 7.0 final release.\n" +
            "Please contact plugin developers for plugin update.";
@@ -66,7 +66,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       return isDisposed();
     }
   };
-  private String myName;
+  private volatile String myName;
 
   protected ProjectImpl(ProjectManagerImpl manager, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed) {
     super(ApplicationManager.getApplication());
@@ -205,14 +205,16 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   @NotNull
   public String getName() {
-    if (myName == null) {
+    String name = myName;
+    if (name == null) {
       synchronized (this) {
-        if (myName == null) {
-          myName = ProjectDetailsComponent.getInstance(this).getProjectName();
+        name = myName;
+        if (name == null) {
+          myName = name = ProjectDetailsComponent.getInstance(this).getProjectName();
         }
       }
     }
-    return myName;
+    return name;
   }
 
   @Nullable

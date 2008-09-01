@@ -94,8 +94,8 @@ import java.util.Map;
   private static TestCase ourTestCase = null;
   public static Thread ourTestThread;
 
-  private Map<String, LocalInspectionTool> myAvailableTools = new HashMap<String, LocalInspectionTool>();
-  private Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new HashMap<String, LocalInspectionToolWrapper>();
+  private final Map<String, LocalInspectionTool> myAvailableTools = new HashMap<String, LocalInspectionTool>();
+  private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new HashMap<String, LocalInspectionToolWrapper>();
 
   /**
    * @return Project to be used in tests for example for project components retrieval.
