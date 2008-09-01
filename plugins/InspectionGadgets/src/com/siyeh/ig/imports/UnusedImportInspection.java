@@ -27,25 +27,28 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnusedImportInspection extends BaseInspection {
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("unused.import.display.name");
     }
 
-    @NotNull
+    @Override @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unused.import.problem.descriptor");
     }
 
+    @Override
     public boolean runForWholeFile() {
         return true;
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new DeleteImportFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnusedImportVisitor();
     }
