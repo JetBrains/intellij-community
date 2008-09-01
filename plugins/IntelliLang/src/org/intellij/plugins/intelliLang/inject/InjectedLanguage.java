@@ -15,9 +15,11 @@
  */
 package org.intellij.plugins.intelliLang.inject;
 
+import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.StdLanguages;
+import com.intellij.psi.templateLanguages.TemplateLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,17 +99,29 @@ public final class InjectedLanguage {
     do {
       registeredLanguages = new ArrayList<Language>(Language.getRegisteredLanguages());
       for (Language language : registeredLanguages) {
-        if (language == StdLanguages.TEXT || language.getID().startsWith("$")) {
-          continue;
-        }
-
-        if (language != Language.ANY && LanguageParserDefinitions.INSTANCE.forLanguage(language) != null) {
+        if (isInjectableLanguage(language)) {
           ourLanguageCache.put(language.getID(), language);
         }
       }
     } while (Language.getRegisteredLanguages().size() != registeredLanguages.size());
 
     ourLanguageCount = registeredLanguages.size();
+  }
+
+  private static boolean isInjectableLanguage(Language language) {
+    if (language == Language.ANY || language == StdLanguages.TEXT) {
+      return false;
+    }
+    if (language.getID().startsWith("$")) {
+      return false;
+    }
+    if (language instanceof TemplateLanguage || language instanceof DependentLanguage) {
+      return false;
+    }
+    if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) {
+      return false;
+    }
+    return true;
   }
 
   public boolean equals(Object o) {
