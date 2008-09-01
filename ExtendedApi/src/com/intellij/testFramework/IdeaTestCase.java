@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -143,6 +144,7 @@ import java.util.HashSet;
     return myModule;
   }
 
+  private static final Key<String> TESTCASE_NAME = Key.create("TESTCASE_NAME");
   protected void setUpProject() throws Exception {
     myProjectManager = ProjectManagerEx.getInstanceEx();
     LOG.assertTrue(myProjectManager != null, "Cannot instaitiate ProjectManager component");
@@ -152,6 +154,7 @@ import java.util.HashSet;
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
     myProject = myProjectManager.newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
+    myProject.putUserData(TESTCASE_NAME, getTestName(false));
 
     setUpModule();
 
@@ -337,7 +340,7 @@ import java.util.HashSet;
   private void delete(File file) {
     boolean b = FileUtil.delete(file);
     if (!b && file.exists() && !myAssertionsInTestDetected) {
-      assertTrue("Can't delete " + file.getAbsolutePath() + " in " + getFullName(), false);
+      fail("Can't delete " + file.getAbsolutePath() + " in " + getFullName());
     }
   }
 
