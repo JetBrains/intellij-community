@@ -16,28 +16,29 @@
 
 package org.intellij.plugins.intelliLang.inject.config;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlFile;
-import com.thoughtworks.xstream.core.util.CompositeClassLoader;
-import net.sf.cglib.proxy.Enhancer;
-import net.sf.cglib.proxy.MethodInterceptor;
-import net.sf.cglib.proxy.MethodProxy;
+import com.intellij.psi.impl.source.IdentityCharTable;
+import com.intellij.psi.impl.source.xml.XmlTokenImpl;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementType;
+import org.intellij.lang.xpath.context.ContextProvider;
+import org.intellij.lang.xpath.context.ContextType;
+import org.intellij.lang.xpath.context.NamespaceContext;
+import org.intellij.lang.xpath.context.VariableContext;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.plugins.xpathView.support.XPathSupport;
+import org.intellij.plugins.xpathView.util.Namespace;
 import org.jaxen.JaxenException;
 import org.jaxen.XPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.Collection;
+import javax.xml.namespace.QName;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * Proxy class that allows to avoid a hard compile time dependency on the XPathView plugin.
@@ -47,15 +48,6 @@ public abstract class XPathSupportProxy {
 
   public static final Object UNSUPPORTED = "UNSUPPORTED";
   public static final Object INVALID = "INVALID";
-
-  // helper interfaces... must be public
-  public interface _XPathSupport {
-    XPath createXPath(XmlFile file, String expression, Collection namespaces) throws JaxenException;
-  }
-
-  public interface _ContextProvider {
-    void attachTo(PsiFile file);
-  }
 
   @NotNull
   public abstract XPath createXPath(String expression) throws JaxenException;
@@ -70,108 +62,69 @@ public abstract class XPathSupportProxy {
     if (isInitialized) {
       return ourInstance;
     }
-    isInitialized = true;
-
-    final PluginId id = PluginId.getId("XPathView");
-    final IdeaPluginDescriptor plugin = ApplicationManager.getApplication().getPlugin(id);
-
-    final BaseComponent c = ApplicationManager.getApplication().getComponent("XPathView.XPathSupport");
-    if (plugin == null || c == null) {
-      LOG.info("XPathView components not found");
-      return null;
-    }
-
     try {
-      return ourInstance = new MyXPathSupportProxy(plugin, c);
-    }
-    catch (Throwable e) {
-      LOG.error("Error creating XPath context provider", e);
-      return null;
+      return ourInstance = ServiceManager.getService(XPathSupportProxy.class);
+    } finally {
+      if (ourInstance == null) {
+        LOG.info("XPath Support is not available");
+      }
+      isInitialized = true;
     }
   }
 
-  private static class MyXPathSupportProxy extends XPathSupportProxy {
-    private final _ContextProvider myProvider;
-    private final _XPathSupport mySupport;
-
-    public MyXPathSupportProxy(IdeaPluginDescriptor plugin, final BaseComponent component) throws Throwable {
-      final ClassLoader pluginLoader = plugin.getPluginClassLoader();
-      final Class provClass = pluginLoader.loadClass("org.intellij.lang.xpath.context.ContextProvider");
-      final Class ctxTypeClass = pluginLoader.loadClass("org.intellij.lang.xpath.context.ContextType");
-      final Class xpathTypeClass = pluginLoader.loadClass("org.intellij.lang.xpath.psi.XPathType");
-
-      final Field ctxField = ctxTypeClass.getField("INTERACTIVE");
-      final Object ctxType = ctxField.get(null);
-
-      final Field booleanField = xpathTypeClass.getField("BOOLEAN");
-      final Object booleanType = booleanField.get(null);
-
-      final Enhancer e = new Enhancer();
-      e.setSuperclass(provClass);
-      e.setInterfaces(new Class[]{_ContextProvider.class});
-
-      final CompositeClassLoader loader = new CompositeClassLoader();
-      loader.add(getClass().getClassLoader());
-      loader.add(pluginLoader);
-      e.setClassLoader(loader);
-
-      e.setCallback(new MethodInterceptor() {
-        @SuppressWarnings({"ConstantConditions", "StringEquality"})
-        public Object intercept(Object object, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
-          final String name = method.getName();
-          if (name == "getContextType") {
-            return ctxType;
-          }
-          else if (name == "getExpectedType") {
-            return booleanType;
-          }
-          else if (Modifier.isAbstract(method.getModifiers())) {
-            return null;
-          }
-          else {
-            return methodProxy.invokeSuper(object, args);
-          }
+  public static class Impl extends XPathSupportProxy {
+    private static class Provider extends ContextProvider {
+      private final XmlTokenImpl myDummyContext = new XmlTokenImpl(XmlElementType.XML_CONTENT_EMPTY, "", 0, 0, new IdentityCharTable()) {
+        @Override
+        public boolean isValid() {
+          return true;
         }
-      });
-      myProvider = (_ContextProvider)e.create();
+      };
 
-      final Enhancer e2 = new Enhancer();
-      e2.setClassLoader(loader);
-      e2.setSuperclass(component.getClass().getSuperclass()); // XPathSupportImpl -> XPathSupport
-      e2.setInterfaces(new Class[]{_XPathSupport.class});
+      @NotNull
+      public ContextType getContextType() {
+        return XPathSupport.TYPE;
+      }
 
-      e2.setCallback(new MethodInterceptor() {
-        public Object intercept(Object object, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
-          try {
-            return method.invoke(component, objects);
-          }
-          catch (InvocationTargetException e1) {
-            throw e1.getTargetException();
-          }
-        }
-      });
-      mySupport = (_XPathSupport)e2.create();
+      @NotNull
+      @Override
+      public XPathType getExpectedType(XPathExpression expr) {
+        return XPathType.BOOLEAN;
+      }
 
-      // validate the API
-      mySupport.createXPath(null, "a", Collections.emptyList());
+      public XmlElement getContextElement() {
+        // needed because the static method ContextProvider.isValid() checks this to determine if the provider
+        // is still valid - refactor this into an instance method ContextProvider.isValid()?
+        return myDummyContext;
+      }
+
+      public NamespaceContext getNamespaceContext() {
+        return null;
+      }
+
+      public VariableContext getVariableContext() {
+        return null;
+      }
+
+      public Set<QName> getAttributes(boolean forValidation) {
+        return null;
+      }
+
+      public Set<QName> getElements(boolean forValidation) {
+        return null;
+      }
+    }
+
+    private final ContextProvider myProvider = new Provider();
+    private final XPathSupport mySupport = XPathSupport.getInstance();
+
+    @NotNull
+    public XPath createXPath(String expression) throws JaxenException {
+      return mySupport.createXPath(null, expression, Collections.<Namespace>emptyList());
     }
 
     public void attachContext(@NotNull PsiFile file) {
-      try {
-        myProvider.attachTo(file);
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-        synchronized (getClass()) {
-          ourInstance = null;
-        }
-      }
-    }
-
-    @NotNull
-    public XPath createXPath(final String expression) throws JaxenException {
-      // the XmlFile is usually used to determine namespace context which can be quite expensive though.
-      return mySupport.createXPath(null, expression, Collections.emptyList());
+      myProvider.attachTo(file);
     }
   }
 }
