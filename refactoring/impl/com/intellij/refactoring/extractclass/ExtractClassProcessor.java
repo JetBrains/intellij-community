@@ -70,7 +70,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     initializersToMove = calculateInitializersToMove();
     this.newClassName = newClassName;
     delegateFieldName = calculateDelegateFieldName();
-    requiresBackpointer = backpointerRequired();
+    requiresBackpointer = new BackpointerUsageVisitor(fields, innerClasses, methods, sourceClass).backpointerRequired();
     if (requiresBackpointer) {
       typeParams.addAll(Arrays.asList(sourceClass.getTypeParameters()));
     }
@@ -121,7 +121,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   }
 
   private boolean initialierShouldBeMoved(PsiClassInitializer initializer) {
-    final BackpointerUsageVisitor visitor = new BackpointerUsageVisitor();
+    final BackpointerUsageVisitor visitor = new BackpointerUsageVisitor(fields, innerClasses, methods, sourceClass);
     initializer.accept(visitor);
     return !visitor.isBackpointerRequired();
   }
@@ -198,7 +198,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
           method.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
         }
 
-        final PsiMethod[] superMethods = method.findSuperMethods();
+        final PsiMethod[] superMethods = method.findSuperMethods(); //todo
         for (PsiMethod superMethod : superMethods) {
           final PsiClass containingSuperClass = superMethod.getContainingClass();
           if (!containingSuperClass.isInterface() && !superMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
@@ -436,29 +436,6 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     return false;
   }
 
-  private boolean backpointerRequired() {
-    final BackpointerUsageVisitor visitor = new BackpointerUsageVisitor();
-    for (PsiMethod method : methods) {
-      method.accept(visitor);
-      if (visitor.isBackpointerRequired()) {
-        return true;
-      }
-    }
-    for (PsiField field : fields) {
-      field.accept(visitor);
-      if (visitor.isBackpointerRequired()) {
-        return true;
-      }
-    }
-    for (PsiClass innerClass : innerClasses) {
-      innerClass.accept(visitor);
-      if (visitor.isBackpointerRequired()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private void findUsagesForField(PsiField field, List<FixableUsageInfo> usages) {
     final PsiManager psiManager = field.getManager();
     final Project project = psiManager.getProject();
@@ -661,70 +638,6 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       }
     }
     return true;
-  }
-
-  private class BackpointerUsageVisitor extends JavaRecursiveElementVisitor {
-    private boolean backpointerRequired = false;
-
-    public void visitElement(PsiElement element) {
-      if (backpointerRequired) {
-        return;
-      }
-      super.visitElement(element);
-    }
-
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-      if (backpointerRequired) {
-        return;
-      }
-      super.visitReferenceExpression(expression);
-      final PsiExpression qualifier = expression.getQualifierExpression();
-
-      final PsiElement referent = expression.resolve();
-      if (!(referent instanceof PsiField)) {
-        return;
-      }
-      final PsiField field = (PsiField)referent;
-      if (fields.contains(field) || innerClasses.contains(field.getContainingClass())) {
-        return;
-      }
-      if (field.hasModifierProperty(PsiModifier.STATIC)) {
-        return;
-      }
-      if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
-        backpointerRequired = true;
-      }
-    }
-
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      if (backpointerRequired) {
-        return;
-      }
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (methods.contains(method) || innerClasses.contains(containingClass)) {
-        return;
-      }
-      if (method.hasModifierProperty(PsiModifier.STATIC)) {
-        return;
-      }
-      if (!containingClass.equals(sourceClass)) {
-        return;
-      }
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
-        backpointerRequired = true;
-      }
-    }
-
-    public boolean isBackpointerRequired() {
-      return backpointerRequired;
-    }
   }
 
   private class NecessaryAccessorsVisitor extends JavaRecursiveElementVisitor {

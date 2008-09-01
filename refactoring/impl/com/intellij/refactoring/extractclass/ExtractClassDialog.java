@@ -5,6 +5,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.psi.*;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactorJHelpID;
@@ -17,6 +18,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoChange;
 import com.intellij.refactoring.util.classMembers.MemberInfoChangeListener;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,9 +29,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
 class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeListener {
+  private Map<MemberInfo, PsiMember> myMember2CauseMap = new HashMap<MemberInfo, PsiMember>();
   private final PsiClass sourceClass;
   private final MemberInfo[] memberInfo;
   private final JTextField classNameField;
@@ -134,39 +138,51 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   }
 
   public List<PsiField> getFieldsToExtract() {
+    return getFieldsToExtract(true);
+  }
+
+  public List<PsiField> getFieldsToExtract(final boolean checked) {
     final List<PsiField> out = new ArrayList<PsiField>();
     for (MemberInfo info : memberInfo) {
-      if (info.isChecked()) {
-        final PsiMember member = info.getMember();
-        if (member instanceof PsiField) {
-          out.add((PsiField)member);
-        }
+      if (checked && !info.isChecked()) continue;
+      if (!checked && info.isChecked()) continue;
+      final PsiMember member = info.getMember();
+      if (member instanceof PsiField) {
+        out.add((PsiField)member);
       }
     }
     return out;
   }
 
   public List<PsiMethod> getMethodsToExtract() {
+    return getMethodsToExtract(true);
+  }
+
+  public List<PsiMethod> getMethodsToExtract(final boolean checked) {
     final List<PsiMethod> out = new ArrayList<PsiMethod>();
     for (MemberInfo info : memberInfo) {
-      if (info.isChecked()) {
-        final PsiMember member = info.getMember();
-        if (member instanceof PsiMethod) {
-          out.add((PsiMethod)member);
-        }
+      if (checked && !info.isChecked()) continue;
+      if (!checked && info.isChecked()) continue;
+      final PsiMember member = info.getMember();
+      if (member instanceof PsiMethod) {
+        out.add((PsiMethod)member);
       }
     }
     return out;
   }
 
   public List<PsiClass> getClassesToExtract() {
+    return getClassesToExtract(true);
+  }
+
+  public List<PsiClass> getClassesToExtract(final boolean checked) {
     final List<PsiClass> out = new ArrayList<PsiClass>();
     for (MemberInfo info : memberInfo) {
-      if (info.isChecked()) {
-        final PsiMember member = info.getMember();
-        if (member instanceof PsiClass) {
-          out.add((PsiClass)member);
-        }
+      if (checked && !info.isChecked()) continue;
+      if (!checked && info.isChecked()) continue;
+      final PsiMember member = info.getMember();
+      if (member instanceof PsiClass) {
+        out.add((PsiClass)member);
       }
     }
     return out;
@@ -231,6 +247,49 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
       public Boolean isFixedAbstract(MemberInfo member) {
         return Boolean.TRUE;
       }
+
+      @Override
+      public int checkForProblems(@NotNull final MemberInfo member) {
+        final PsiMember cause = getCause(member);
+        if (member.isChecked() && cause != null) return ERROR;
+        if (!member.isChecked() && cause != null) return WARNING;
+        return OK;
+      }
+
+      @Override
+      public String getTooltipText(final MemberInfo member) {
+        final PsiMember cause = getCause(member);
+        if (cause != null) {
+          final String presentation = SymbolPresentationUtil.getSymbolPresentableText(cause);
+          if (member.isChecked()) {
+            return "Depends on " + presentation + " from " + sourceClass.getName();
+          } else {
+            final String className = getClassName();
+            return "Depends on " + presentation + " from new class" + (className.length() > 0 ? ": " + className : "");
+          }
+        }
+        return null;
+      }
+
+      private PsiMember getCause(final MemberInfo member) {
+        PsiMember cause = myMember2CauseMap.get(member);
+
+        if (cause != null) return cause;
+
+        final BackpointerUsageVisitor visitor;
+        if (member.isChecked()) {
+          visitor = new BackpointerUsageVisitor(getFieldsToExtract(), getClassesToExtract(), getMethodsToExtract(), sourceClass);
+        }
+        else {
+          visitor =
+            new BackpointerUsageVisitor(getFieldsToExtract(false), getClassesToExtract(false), getMethodsToExtract(false), sourceClass, false);
+        }
+
+        member.getMember().accept(visitor);
+        cause = visitor.getCause();
+        myMember2CauseMap.put(member, cause);
+        return cause;
+      }
     });
     panel.add(memberSelectionPanel, BorderLayout.CENTER);
     table.addMemberInfoChangeListener(this);
@@ -248,5 +307,6 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
 
   public void memberInfoChanged(MemberInfoChange memberInfoChange) {
     validateButtons();
+    myMember2CauseMap.clear();
   }
 }
