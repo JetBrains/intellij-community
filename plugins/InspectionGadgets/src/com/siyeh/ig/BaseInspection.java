@@ -17,9 +17,11 @@ package com.siyeh.ig;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.ui.DocumentAdapter;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
@@ -28,7 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JFormattedTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
 import java.lang.reflect.Field;
@@ -43,6 +45,9 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
 
     private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.BaseInspection");
 
+    private InspectionRunListener listener = null;
+    @NonNls private static final String INSPECTION_GADGETS_COMPONENT_NAME =
+            "InspectionGadgets";
     @NonNls private static final String INSPECTION = "Inspection";
     @NonNls private static final Map<String, String> packageGroupDisplayNameMap = new HashMap<String, String>();
     static {
@@ -87,6 +92,7 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
     }
 
     private String m_shortName = null;
+    private long timeStamp = -1;
 
     @NotNull
     public final String getShortName() {
@@ -227,6 +233,42 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
         for (int i = 1; i < strings.length; i++) {
             out.append(',');
             out.append(strings[i].get(index));
+        }
+    }
+
+    private void initializeTelemetryIfNecessary() {
+        if (InspectionGadgetsPlugin.TELEMETRY_ENABLED && listener == null) {
+            final Application application = ApplicationManager.getApplication();
+            final InspectionGadgetsPlugin plugin = (InspectionGadgetsPlugin)
+                    application.getComponent(INSPECTION_GADGETS_COMPONENT_NAME);
+            listener = plugin.getTelemetry();
+        }
+    }
+
+    @Override
+    public void inspectionStarted(LocalInspectionToolSession session) {
+        super.inspectionStarted(session);
+        if (timeStamp > 0) {
+            System.out.println("start reported without corresponding finish");
+        }
+        if (InspectionGadgetsPlugin.TELEMETRY_ENABLED) {
+            initializeTelemetryIfNecessary();
+            timeStamp = System.currentTimeMillis();
+        }
+    }
+
+    @Override
+    public void inspectionFinished(LocalInspectionToolSession session) {
+        super.inspectionFinished(session);
+        if (timeStamp < 0) {
+            System.out.println("finish reported without corresponding start");
+            return;
+        }
+        if (InspectionGadgetsPlugin.TELEMETRY_ENABLED) {
+            final long end = System.currentTimeMillis();
+            final String displayName = getDisplayName();
+            listener.reportRun(displayName, end - timeStamp);
+            timeStamp = -1;
         }
     }
 }
