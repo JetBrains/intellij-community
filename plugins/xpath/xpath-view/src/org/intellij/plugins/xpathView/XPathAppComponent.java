@@ -18,7 +18,7 @@ package org.intellij.plugins.xpathView;
 import org.intellij.plugins.xpathView.ui.ConfigUI;
 import org.intellij.plugins.xpathView.util.HighlighterUtil;
 
-import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -295,8 +295,8 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
                 public static final int HIDE_IF_OUT_OF_EDITOR = 0x40;
                 public static final int UPDATE_BY_SCROLLING = 0x80;
         */
-        final int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_SCROLLING;
-        HintManager.getInstance().showEditorHint(h, editor, point, flags, 0, false);
+        final int flags = HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_SCROLLING;
+        HintManagerImpl.getInstanceImpl().showEditorHint(h, editor, point, flags, 0, false);
     }
 
     public static String getShortcutText(final String actionId) {

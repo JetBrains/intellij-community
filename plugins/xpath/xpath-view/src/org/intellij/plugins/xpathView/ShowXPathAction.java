@@ -18,7 +18,7 @@ package org.intellij.plugins.xpathView;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.util.HighlighterUtil;
 
-import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
@@ -120,6 +120,6 @@ public class ShowXPathAction extends XPathAction {
 
         final Point point = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());
         SwingUtilities.convertPointToScreen(point, editor.getContentComponent());
-        HintManager.getInstance().showEditorHint(hint, editor, point, HintManager.HIDE_BY_ANY_KEY, 0, false);
+        HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, HintManagerImpl.HIDE_BY_ANY_KEY, 0, false);
     }
 }
