@@ -118,6 +118,9 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     Scheme toDelete = findSchemeToDelete(schemeName);
 
     mySchemes.remove(toDelete);
+    if (myCurrentScheme == toDelete) {
+      myCurrentScheme = null;
+    }
 
     onSchemeDeleted(toDelete);
   }
