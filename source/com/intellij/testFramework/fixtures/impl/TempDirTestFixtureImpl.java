@@ -22,7 +22,7 @@ import java.util.ArrayList;
 /**
  * @author Dmitry Avdeev
  */
-public class TempDirTextFixtureImpl extends BaseFixture implements TempDirTestFixture {
+public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
 
   private final ArrayList<File> myFilesToDelete = new ArrayList<File>();
   private File myTempDir;

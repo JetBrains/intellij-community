@@ -116,7 +116,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private final Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
   private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
 
-  private final TempDirTestFixture myTempDirFixture = new TempDirTextFixtureImpl();
+  private final TempDirTestFixture myTempDirFixture = new TempDirTestFixtureImpl();
   private final IdeaProjectTestFixture myProjectFixture;
   private final Set<VirtualFile> myAddedClasses = new THashSet<VirtualFile>();
   @NonNls private static final String XXX = "XXX";

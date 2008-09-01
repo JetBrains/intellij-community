@@ -53,7 +53,7 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
   }
 
   public TempDirTestFixture createTempDirTestFixture() {
-    return new TempDirTextFixtureImpl();
+    return new TempDirTestFixtureImpl();
   }
 
   public static class MyJavaModuleFixtureBuilderImpl extends JavaModuleFixtureBuilderImpl {
