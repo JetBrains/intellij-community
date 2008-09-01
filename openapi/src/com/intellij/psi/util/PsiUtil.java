@@ -35,7 +35,9 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.Function;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -440,14 +442,18 @@ public final class PsiUtil extends PsiUtilBase {
     return getApplicabilityLevel(method, substitutorForMethod, argList) != ApplicabilityLevel.NOT_APPLICABLE;
   }
   public static boolean isApplicable(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpression[] argList) {
-    return getApplicabilityLevel(method, substitutorForMethod, argList,getLanguageLevel(method)) != ApplicabilityLevel.NOT_APPLICABLE;
+    return getApplicabilityLevel(method, substitutorForMethod, ContainerUtil.map2Array(argList, PsiType.class, new Function<PsiExpression, PsiType>() {
+        public PsiType fun(final PsiExpression expression) {
+          return expression.getType();
+        }
+      }),getLanguageLevel(method)) != ApplicabilityLevel.NOT_APPLICABLE;
   }
 
   public static int getApplicabilityLevel(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpressionList argList) {
-    return getApplicabilityLevel(method, substitutorForMethod, argList.getExpressions(), getLanguageLevel(argList));
+    return getApplicabilityLevel(method, substitutorForMethod, argList.getExpressionTypes(), getLanguageLevel(argList));
   }
 
-  public static int getApplicabilityLevel(final PsiMethod method, final PsiSubstitutor substitutorForMethod, final PsiExpression[] args,
+  public static int getApplicabilityLevel(final PsiMethod method, final PsiSubstitutor substitutorForMethod, final PsiType[] args,
                                            final LanguageLevel languageLevel) {
     final PsiParameter[] parms = method.getParameterList().getParameters();
     if (args.length < parms.length - 1) return ApplicabilityLevel.NOT_APPLICABLE;
@@ -456,7 +462,7 @@ public final class PsiUtil extends PsiUtilBase {
     if (args.length == parms.length) {
       if (parms.length == 0) return ApplicabilityLevel.FIXED_ARITY;
       PsiType parmType = getParameterType(parms[parms.length - 1], languageLevel, substitutorForMethod);
-      PsiType argType = args[args.length - 1].getType();
+      PsiType argType = args[args.length - 1];
       if (argType == null) return ApplicabilityLevel.NOT_APPLICABLE;
       if (TypeConversionUtil.isAssignable(parmType, argType)) return ApplicabilityLevel.FIXED_ARITY;
     }
@@ -470,7 +476,7 @@ public final class PsiUtil extends PsiUtilBase {
       lastParmType = ((PsiArrayType)lastParmType).getComponentType();
 
       for (int i = parms.length - 1; i < args.length; i++) {
-        PsiType argType = args[i].getType();
+        PsiType argType = args[i];
         if (argType == null || !TypeConversionUtil.isAssignable(lastParmType, argType)) {
           return ApplicabilityLevel.NOT_APPLICABLE;
         }
@@ -481,12 +487,11 @@ public final class PsiUtil extends PsiUtilBase {
     return ApplicabilityLevel.NOT_APPLICABLE;
   }
 
-  private static boolean areFirstArgumentsApplicable(final PsiExpression[] args, final PsiParameter[] parms, final LanguageLevel languageLevel,
+  private static boolean areFirstArgumentsApplicable(final PsiType[] args, final PsiParameter[] parms, final LanguageLevel languageLevel,
                                                 final PsiSubstitutor substitutorForMethod) {
 
     for (int i = 0; i < parms.length - 1; i++) {
-      final PsiExpression arg = args[i];
-      final PsiType type = arg.getType();
+      final PsiType type = args[i];
       if (type == null) return false;
       final PsiParameter parameter = parms[i];
       final PsiType substitutedParmType = getParameterType(parameter, languageLevel, substitutorForMethod);

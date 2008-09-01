@@ -6,6 +6,8 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.Function;
 import gnu.trove.THashSet;
 
 import java.util.HashMap;
@@ -21,10 +23,21 @@ import java.util.Map;
  * To change this template use Options | File Templates.
  */
 public class JavaMethodsConflictResolver implements PsiConflictResolver{
-  private final PsiExpressionList myArgumentsList;
+  private final PsiElement myArgumentsList;
+  private final PsiType[] myActualParameterTypes;
 
   public JavaMethodsConflictResolver(PsiExpressionList list){
     myArgumentsList = list;
+    myActualParameterTypes = ContainerUtil.map2Array(list.getExpressions(), PsiType.class, new Function<PsiExpression, PsiType>() {
+      public PsiType fun(final PsiExpression expression) {
+        return expression.getType();
+      }
+    });
+  }
+
+  public JavaMethodsConflictResolver(final PsiElement argumentsList, final PsiType[] actualParameterTypes) {
+    myArgumentsList = argumentsList;
+    myActualParameterTypes = actualParameterTypes;
   }
 
   public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
@@ -37,7 +50,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     if (conflicts.size() == 1) return conflicts.get(0);
 
-    checkParametersNumber(conflicts, myArgumentsList.getExpressions().length);
+    checkParametersNumber(conflicts, myActualParameterTypes.length);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     final int applicabilityLevel = checkApplicability(conflicts);
@@ -240,8 +253,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     final PsiParameter[] params1 = method1.getParameterList().getParameters();
     final PsiParameter[] params2 = method2.getParameterList().getParameters();
 
-    PsiExpression[] args = myArgumentsList.getExpressions();
-
     final PsiTypeParameter[] typeParameters1 = method1.getTypeParameters();
     final PsiTypeParameter[] typeParameters2 = method2.getTypeParameters();
     final PsiSubstitutor classSubstitutor1 = info1.getSubstitutor(); //substitutions for method type parameters will be ignored
@@ -289,7 +300,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     for (int i = 0; i < types1.length; i++) {
       PsiType type1 = classSubstitutor1.substitute(methodSubstitutor1.substitute(types1[i]));
       PsiType type2 = classSubstitutor2.substitute(methodSubstitutor2.substitute(types2[i]));
-      PsiType argType = i < args.length ? args[i].getType() : null;
+      PsiType argType = i < myActualParameterTypes.length ? myActualParameterTypes[i] : null;
 
       boxingHappened[0] += isBoxingHappened(argType, type1) ? 1 : 0;
       boxingHappened[1] += isBoxingHappened(argType, type2) ? 1 : 0;

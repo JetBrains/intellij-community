@@ -13,7 +13,7 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor implement
   private boolean myStopAcceptingCandidates = false;
 
   public MethodResolverProcessor(PsiMethodCallExpression place){
-    super(place, new PsiConflictResolver[]{new JavaMethodsConflictResolver(place.getArgumentList())}, new SmartList<CandidateInfo>());
+    this(place, new PsiConflictResolver[]{new JavaMethodsConflictResolver(place.getArgumentList())});
     setArgumentList(place.getArgumentList());
     obtainTypeArguments(place);
   }
@@ -23,6 +23,10 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor implement
     setIsConstructor(true);
     setAccessClass(classConstr);
     setArgumentList(argumentList);
+  }
+
+  public MethodResolverProcessor(final PsiElement place, final PsiConflictResolver[] resolvers) {
+    super(place, resolvers, new SmartList<CandidateInfo>());
   }
 
   public boolean shouldProcess(Class elementClass) {

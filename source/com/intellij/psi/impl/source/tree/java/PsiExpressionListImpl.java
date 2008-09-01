@@ -2,15 +2,14 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.util.CharTable;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiExpressionListImpl extends CompositePsiElement implements PsiExpressionList, Constants {
@@ -23,6 +22,15 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   @NotNull
   public PsiExpression[] getExpressions() {
     return getChildrenAsPsiElements(EXPRESSION_BIT_SET, PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
+  }
+
+  @NotNull
+  public PsiType[] getExpressionTypes() {
+    return ContainerUtil.map2Array(getExpressions(), PsiType.class, new Function<PsiExpression, PsiType>() {
+      public PsiType fun(final PsiExpression expression) {
+        return expression.getType();
+      }
+    });
   }
 
   public ASTNode findChildByRole(int role) {

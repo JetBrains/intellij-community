@@ -78,7 +78,12 @@ public abstract class LookupElement extends UserDataHolderBase {
     return AutoCompletionPolicy.SETTINGS_DEPENDENT;
   }
 
-  @NotNull 
+  @Override
+  public String toString() {
+    return getLookupString();
+  }
+
+  @NotNull
   protected abstract LookupElementRenderer<? extends LookupElement> getRenderer();
 
   public void renderElement(LookupElementPresentation presentation) {

@@ -18,7 +18,7 @@ import com.intellij.util.SmartList;
 public class MethodCandidatesProcessor extends MethodsProcessor{
   protected boolean myHasAccessibleStaticCorrectCandidate = false;
 
-  protected MethodCandidatesProcessor(PsiElement place, PsiConflictResolver[] resolvers, SmartList<CandidateInfo> container){
+  public MethodCandidatesProcessor(PsiElement place, PsiConflictResolver[] resolvers, SmartList<CandidateInfo> container){
     super(resolvers, container, place);
   }
 
@@ -28,19 +28,29 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
 
   public void add(PsiElement element, PsiSubstitutor substitutor) {
     if (element instanceof PsiMethod){
-      final PsiMethod currentMethod = (PsiMethod)element;
-      boolean staticProblem = isInStaticScope() && !currentMethod.hasModifierProperty(PsiModifier.STATIC);
-      boolean isAccessible = JavaResolveUtil.isAccessible(currentMethod, currentMethod.getContainingClass(), currentMethod.getModifierList(),
-                                                      myPlace, myAccessClass, myCurrentFileContext);
-      myHasAccessibleStaticCorrectCandidate |= isAccessible && !staticProblem;
-
-      if (isAccepted(currentMethod)){
-        add(new MethodCandidateInfo(currentMethod, substitutor, !isAccessible, staticProblem, getArgumentList(), myCurrentFileContext, getTypeArguments()));
-      }
+      final PsiMethod method = (PsiMethod)element;
+      addMethod(method, substitutor, isInStaticScope() && !method.hasModifierProperty(PsiModifier.STATIC));
     }
   }
 
-  private boolean isAccepted(final PsiMethod candidate) {
+  public void addMethod(final PsiMethod method, final PsiSubstitutor substitutor, final boolean staticProblem) {
+    boolean isAccessible = JavaResolveUtil.isAccessible(method, method.getContainingClass(), method.getModifierList(),
+                                                        myPlace, myAccessClass, myCurrentFileContext);
+    myHasAccessibleStaticCorrectCandidate |= isAccessible && !staticProblem;
+
+    if (isAccepted(method)) {
+      add(createCandidateInfo(method, substitutor, staticProblem, isAccessible));
+    }
+  }
+
+  protected MethodCandidateInfo createCandidateInfo(final PsiMethod method, final PsiSubstitutor substitutor,
+                                                    final boolean staticProblem,
+                                                    final boolean accessible) {
+    return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, getArgumentList(), myCurrentFileContext,
+                                getArgumentList().getExpressionTypes(), getTypeArguments());
+  }
+
+  protected boolean isAccepted(final PsiMethod candidate) {
     if (!isConstructor()) {
       return !candidate.isConstructor() && getName(ResolveState.initial()).equals(candidate.getName());
     } else {

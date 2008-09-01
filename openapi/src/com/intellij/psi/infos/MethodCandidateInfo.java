@@ -17,13 +17,15 @@ package com.intellij.psi.infos;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ik, dsl
  */
 public class MethodCandidateInfo extends CandidateInfo{
   private int myApplicabilityLevel = 0;
-  private final PsiExpressionList myArgumentList;
+  private final PsiElement myArgumentList;
+  private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
   private PsiSubstitutor myCalcedSubstitutor = null;
 
@@ -36,6 +38,21 @@ public class MethodCandidateInfo extends CandidateInfo{
                              PsiType[] typeArguments) {
     super(candidate, substitutor, accessProblem, staticsProblem, currFileContext);
     myArgumentList = argumentList;
+    myArgumentTypes = argumentList == null ? null : argumentList.getExpressionTypes();
+    myTypeArguments = typeArguments;
+  }
+
+  public MethodCandidateInfo(PsiElement candidate,
+                             PsiSubstitutor substitutor,
+                             boolean accessProblem,
+                             boolean staticsProblem,
+                             PsiElement argumentList,
+                             PsiElement currFileContext,
+                             @Nullable PsiType[] argumentTypes,
+                             PsiType[] typeArguments) {
+    super(candidate, substitutor, accessProblem, staticsProblem, currFileContext);
+    myArgumentList = argumentList;
+    myArgumentTypes = argumentTypes;
     myTypeArguments = typeArguments;
   }
 
@@ -43,6 +60,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     super(element, substitutor, false, false);
     myApplicabilityLevel = ApplicabilityLevel.FIXED_ARITY;
     myArgumentList = null;
+    myArgumentTypes = null;
     myTypeArguments = null;
   }
 
@@ -51,7 +69,9 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   private int getApplicabilityLevelInner() {
-    int level = PsiUtil.getApplicabilityLevel(getElement(), getSubstitutor(), myArgumentList);
+    if (myArgumentTypes == null) return ApplicabilityLevel.NOT_APPLICABLE;
+
+    int level = PsiUtil.getApplicabilityLevel(getElement(), getSubstitutor(), myArgumentTypes, PsiUtil.getLanguageLevel(myArgumentList));
     if (level > ApplicabilityLevel.NOT_APPLICABLE) {
       if (!isTypeArgumentsApplicable()) level = ApplicabilityLevel.NOT_APPLICABLE;
     }
@@ -102,7 +122,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   public PsiSubstitutor inferTypeArguments(final boolean forCompletion) {
-    return inferTypeArguments(forCompletion, myArgumentList == null ? PsiExpression.EMPTY_ARRAY : myArgumentList.getExpressions());
+    return inferTypeArguments(forCompletion, !(myArgumentList instanceof PsiExpressionList) ? PsiExpression.EMPTY_ARRAY : ((PsiExpressionList)myArgumentList).getExpressions());
   }
 
   public PsiSubstitutor inferTypeArguments(final boolean forCompletion, final PsiExpression[] arguments) {
