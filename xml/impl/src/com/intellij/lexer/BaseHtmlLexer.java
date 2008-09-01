@@ -116,7 +116,9 @@ abstract class BaseHtmlLexer extends LexerBase {
   class XmlAttributeValueHandler implements TokenHandler {
     public void handleElement(Lexer lexer) {
       if (seenContentType) {
-        assert seenScript && !seenAttribute;
+        if(!seenScript || seenAttribute) {
+          return; // something invalid
+        }
 
         @NonNls String name = TreeUtil.getTokenText(lexer);
         if (caseInsensitive) name = name.toLowerCase();
