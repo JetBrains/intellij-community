@@ -20,6 +20,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
+import java.util.ArrayList;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
 /**
  * @author ven
  */
@@ -47,4 +51,35 @@ public class GroovyNamesUtil {
   }
 
 
+  public static ArrayList<String> camelizeString(String str) {
+    String tempString = str;
+    tempString = deleteNonLetterFromString(tempString);
+    ArrayList<String> camelizedTokens = new ArrayList<String>();
+    if (!isIdentifier(tempString)) {
+      return camelizedTokens;
+    }
+    String result = fromLowerLetter(tempString);
+    while (!result.equals("")) {
+      result = fromLowerLetter(result);
+      String temp = "";
+      while (!(result.length() == 0) && !result.substring(0, 1).toUpperCase().equals(result.substring(0, 1))) {
+        temp += result.substring(0, 1);
+        result = result.substring(1);
+      }
+      camelizedTokens.add(temp);
+    }
+    return camelizedTokens;
+  }
+
+  static String deleteNonLetterFromString(String tempString) {
+    Pattern pattern = Pattern.compile("[^a-zA-Z]");
+    Matcher matcher = pattern.matcher(tempString);
+    return matcher.replaceAll("");
+  }
+
+  static String fromLowerLetter(String str) {
+    if (str.length() == 0) return "";
+    if (str.length() == 1) return str.toLowerCase();
+    return str.substring(0, 1).toLowerCase() + str.substring(1);
+  }
 }

@@ -30,8 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author ilyas
@@ -103,7 +101,7 @@ public class GroovyNameSuggestionUtil {
       possibleNames.add(validator.validateName("cl", true));
     }
     if (typeName.toUpperCase().equals(typeName)) {
-      possibleNames.add(validator.validateName(deleteNonLetterFromString(typeName.toLowerCase()), true));
+      possibleNames.add(validator.validateName(GroovyNamesUtil.deleteNonLetterFromString(typeName.toLowerCase()), true));
     } else if (!typeName.equals(typeName.toLowerCase())) {
       generateCamelNames(possibleNames, validator, typeName);
       possibleNames.remove(typeName);
@@ -118,12 +116,12 @@ public class GroovyNameSuggestionUtil {
     if (deepType instanceof PsiClassType) {
       PsiClass clazz = ((PsiClassType) deepType).resolve();
       if (clazz == null) return;
-      candidateName = fromLowerLetter(clazz.getName());
+      candidateName = GroovyNamesUtil.fromLowerLetter(clazz.getName());
     }
-    candidateName = StringUtil.pluralize(fromLowerLetter(candidateName));
+    candidateName = StringUtil.pluralize(GroovyNamesUtil.fromLowerLetter(candidateName));
     generateCamelNames(possibleNames, validator, candidateName);
 
-    ArrayList<String> camelizedName = camelizeString(candidateName);
+    ArrayList<String> camelizedName = GroovyNamesUtil.camelizeString(candidateName);
     candidateName = camelizedName.get(camelizedName.size() - 1);
     candidateName = "arrayOf" + fromUpperLetter(candidateName);
     possibleNames.add(validator.validateName(candidateName, true));
@@ -146,10 +144,10 @@ public class GroovyNameSuggestionUtil {
     }
 
     assert componentName != null;
-    String candidateName = StringUtil.pluralize(fromLowerLetter(componentName));
+    String candidateName = StringUtil.pluralize(GroovyNamesUtil.fromLowerLetter(componentName));
     generateCamelNames(possibleNames, validator, candidateName);
 
-    ArrayList<String> camelizedName = camelizeString(candidateName);
+    ArrayList<String> camelizedName = GroovyNamesUtil.camelizeString(candidateName);
     candidateName = camelizedName.get(camelizedName.size() - 1);
     candidateName = collectionName.toLowerCase() + "Of" + fromUpperLetter(candidateName);
     possibleNames.add(validator.validateName(candidateName, true));
@@ -167,7 +165,7 @@ public class GroovyNameSuggestionUtil {
   }
 
   private static void generateCamelNames(ArrayList<String> possibleNames, NameValidator validator, String typeName) {
-    ArrayList<String> camelTokens = camelizeString(typeName);
+    ArrayList<String> camelTokens = GroovyNamesUtil.camelizeString(typeName);
     Collections.reverse(camelTokens);
     if (camelTokens.size() > 0) {
       String possibleName = "";
@@ -187,38 +185,6 @@ public class GroovyNameSuggestionUtil {
 
   private static String generateNameForBuiltInType(String unboxed) {
     return unboxed.toLowerCase().substring(0, 1);
-  }
-
-  private static ArrayList<String> camelizeString(String str) {
-    String tempString = str;
-    tempString = deleteNonLetterFromString(tempString);
-    ArrayList<String> camelizedTokens = new ArrayList<String>();
-    if (!GroovyNamesUtil.isIdentifier(tempString)) {
-      return camelizedTokens;
-    }
-    String result = fromLowerLetter(tempString);
-    while (!result.equals("")) {
-      result = fromLowerLetter(result);
-      String temp = "";
-      while (!(result.length() == 0) && !result.substring(0, 1).toUpperCase().equals(result.substring(0, 1))) {
-        temp += result.substring(0, 1);
-        result = result.substring(1);
-      }
-      camelizedTokens.add(temp);
-    }
-    return camelizedTokens;
-  }
-
-  private static String deleteNonLetterFromString(String tempString) {
-    Pattern pattern = Pattern.compile("[^a-zA-Z]");
-    Matcher matcher = pattern.matcher(tempString);
-    return matcher.replaceAll("");
-  }
-
-  private static String fromLowerLetter(String str) {
-    if (str.length() == 0) return "";
-    if (str.length() == 1) return str.toLowerCase();
-    return str.substring(0, 1).toLowerCase() + str.substring(1);
   }
 
   private static String fromUpperLetter(String str) {
