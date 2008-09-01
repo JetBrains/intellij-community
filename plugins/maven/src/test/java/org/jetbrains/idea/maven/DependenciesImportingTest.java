@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryTestFixture;
@@ -909,6 +910,36 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertProjectLibraries("Maven: junit:junit:4.0", "My Library");
     // todo should keep deps' order
     assertModuleLibDeps("project", "My Library", "Maven: junit:junit:4.0");
+  }
+
+  public void testRemoveOldTypeLibraryDependencies() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
+    LibraryTable.ModifiableModel tableModel = rootModel.getModuleLibraryTable().getModifiableModel();
+    Library lib = tableModel.createLibrary("junit:junit:4.0");
+    tableModel.commit();
+    //rootModel.addLibraryEntry(lib);
+    rootModel.commit();
+
+    assertModuleLibDeps("project", "junit:junit:4.0");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version>4.0</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+    importProject();
+
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }
 
   public void testDoNotResetUserModuleDependencies() throws Exception {

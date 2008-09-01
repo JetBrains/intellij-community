@@ -201,6 +201,17 @@ public class RootModelAdapter {
     }
 
     myRootModel.addLibraryEntry(library).setExported(isExportable);
+
+    removeOldLibraryDependency(id);
+  }
+
+  private void removeOldLibraryDependency(MavenId id) {
+    Library lib = findLibrary(id, false);
+    if (lib == null) return;
+    LibraryOrderEntry entry = myRootModel.findLibraryOrderEntry(lib);
+    if (entry == null) return;
+
+    myRootModel.removeOrderEntry(entry);
   }
 
   private LibraryTable getLibraryTable() {
@@ -217,10 +228,15 @@ public class RootModelAdapter {
   }
 
   public Library findLibrary(final MavenId id) {
+    return findLibrary(id, true);
+  }
+
+  private Library findLibrary(final MavenId id, final boolean newType) {
     return myRootModel.processOrder(new RootPolicy<Library>() {
       @Override
       public Library visitLibraryOrderEntry(LibraryOrderEntry e, Library result) {
-        return e.getLibraryName().equals(makeLibraryName(id)) ? e.getLibrary() : result;
+        String name = newType ? makeLibraryName(id) : id.toString();
+        return e.getLibraryName().equals(name) ? e.getLibrary() : result;
       }
     }, null);
   }
