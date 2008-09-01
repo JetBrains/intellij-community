@@ -51,7 +51,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final FileTypeAssocTable myInitialAssociations = new FileTypeAssocTable();
   private final Map<FileNameMatcher, String> myUnresolvedMappings = new THashMap<FileNameMatcher, String>();
   private final Map<FileNameMatcher, String> myUnresolvedRemovedMappings = new THashMap<FileNameMatcher, String>();
-  private static final List<Throwable> ourInitErrors = new ArrayList<Throwable>();
 
   @NonNls private static final String ELEMENT_FILETYPE = "filetype";
   @NonNls private static final String ELEMENT_FILETYPES = "filetypes";
