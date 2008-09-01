@@ -4,7 +4,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -12,7 +11,6 @@ import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.core.util.Strings;
 import org.jetbrains.idea.maven.facets.FacetImporter;
 
@@ -47,15 +45,17 @@ public class MavenModuleConfigurator {
     myIgnorePatternCache = Pattern.compile(Strings.translateMasks(settings.getIgnoredDependencies()));
   }
 
-  public ModifiableRootModel config(boolean isNewlyCreatedModule) {
+  public ModifiableRootModel getRootModel() {
+    return myRootModelAdapter.getRootModel();
+  }
+
+  public void config(boolean isNewlyCreatedModule) {
     myRootModelAdapter = new RootModelAdapter(myModule);
     myRootModelAdapter.init(myMavenProject, isNewlyCreatedModule);
 
     configFolders();
     configDependencies();
     configLanguageLevel();
-
-    return myRootModelAdapter.getRootModel();
   }
 
   public void preConfigFacets() {
@@ -64,11 +64,11 @@ public class MavenModuleConfigurator {
     }
   }
 
-  public void configFacets(ModuleRootModel rootModel) {
+  public void configFacets() {
     for (FacetImporter importer : getSuitableFacetImporters()) {
       importer.process(myModuleModel,
                        myModule,
-                       rootModel,
+                       myRootModelAdapter,
                        myMavenTree,
                        myMavenProject,
                        myMavenProjectToModuleName);
@@ -98,12 +98,12 @@ public class MavenModuleConfigurator {
       boolean isExportable = myMavenProject.isExportableDependency(artifact);
       MavenProjectModel p = myMavenTree.findProject(artifact);
       if (p != null) {
-        myRootModelAdapter.createModuleDependency(myMavenProjectToModuleName.get(p),
+        myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(p),
                                                   isExportable);
       }
       else {
         String artifactPath = artifact.getFile().getPath();
-        myRootModelAdapter.createModuleLibrary(ProjectUtil.getLibraryName(id),
+        myRootModelAdapter.addLibraryDependency(id,
                                                getUrl(artifactPath, null),
                                                getUrl(artifactPath, MavenConstants.SOURCES_CLASSIFIER),
                                                getUrl(artifactPath, MavenConstants.JAVADOC_CLASSIFIER),

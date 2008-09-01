@@ -139,24 +139,26 @@ public class MavenProjectConfigurator {
       }
     }
 
-    LinkedHashMap<Module, ModifiableRootModel> rootModels = new LinkedHashMap<Module, ModifiableRootModel>();
+    LinkedHashMap<Module, MavenModuleConfigurator> configurators = new LinkedHashMap<Module, MavenModuleConfigurator>();
     for (MavenProjectModel each : projects) {
       Module module = myMavenProjectToModule.get(each);
       MavenModuleConfigurator c = createModuleConfigurator(module, each);
-      rootModels.put(module, c.config(projectsWithNewlyCreatedModules.contains(each)));
+      configurators.put(module, c);
+
+      c.config(projectsWithNewlyCreatedModules.contains(each));
     }
 
     for (MavenProjectModel each : projects) {
-      Module module = myMavenProjectToModule.get(each);
-      createModuleConfigurator(module, each).preConfigFacets();
+      configurators.get(myMavenProjectToModule.get(each)).preConfigFacets();
     }
 
     for (MavenProjectModel each : projects) {
-      Module module = myMavenProjectToModule.get(each);
-      createModuleConfigurator(module, each).configFacets(rootModels.get(module));
+      configurators.get(myMavenProjectToModule.get(each)).configFacets();
     }
 
-    myRootModelsToCommit.addAll(rootModels.values());
+    for (MavenModuleConfigurator each : configurators.values()) {
+      myRootModelsToCommit.add(each.getRootModel());
+    }
 
     ArrayList<Module> modules = new ArrayList<Module>(myMavenProjectToModule.values());
     MavenProjectsManager.getInstance(myProject).setMavenizedModules(modules);

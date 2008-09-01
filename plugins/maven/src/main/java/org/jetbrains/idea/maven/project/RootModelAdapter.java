@@ -3,22 +3,23 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.Path;
 import org.jetbrains.idea.maven.core.util.Url;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class RootModelAdapter {
+  private static final String MAVEN_LIB_PREFIX = "Maven: ";
   private final ModifiableRootModel myRootModel;
-  private LibraryTable.ModifiableModel myLibraryTable;
 
   public RootModelAdapter(Module module) {
     myRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
@@ -43,19 +44,20 @@ public class RootModelAdapter {
   private void initOrderEntries() {
     for (OrderEntry e : myRootModel.getOrderEntries()) {
       if (e instanceof ModuleSourceOrderEntry || e instanceof JdkOrderEntry) continue;
+      if (e instanceof LibraryOrderEntry) {
+        String name = ((LibraryOrderEntry)e).getLibraryName();
+        if (name == null || !name.startsWith(MAVEN_LIB_PREFIX)) continue;
+      }
+      if (e instanceof ModuleOrderEntry) {
+        Module m = ((ModuleOrderEntry)e).getModule();
+        if (!MavenProjectsManager.getInstance(myRootModel.getProject()).isMavenizedModule(m)) continue;
+      }
       myRootModel.removeOrderEntry(e);
     }
   }
 
   public ModifiableRootModel getRootModel() {
     return myRootModel;
-  }
-
-  private LibraryTable.ModifiableModel getLibraryModel() {
-    if (myLibraryTable == null) {
-      myLibraryTable = myRootModel.getModuleLibraryTable().getModifiableModel();
-    }
-    return myLibraryTable;
   }
 
   public void addSourceFolder(String path, boolean testSource) {
@@ -77,7 +79,8 @@ public class RootModelAdapter {
         if (isAncestor(eachFolder.getUrl(), url)) {
           if (eachFolder.isSynthetic()) {
             getCompilerExtension().setExcludeOutput(false);
-          } else {
+          }
+          else {
             eachEntry.removeExcludeFolder(eachFolder);
           }
         }
@@ -126,7 +129,8 @@ public class RootModelAdapter {
         if (isAncestor(url.getUrl(), eachFolder.getUrl())) {
           if (eachFolder.isSynthetic()) {
             getCompilerExtension().setExcludeOutput(false);
-          } else {
+          }
+          else {
             eachEntry.removeExcludeFolder(eachFolder);
           }
         }
@@ -160,7 +164,7 @@ public class RootModelAdapter {
     }
   }
 
-  public void createModuleDependency(String moduleName, boolean isExportable) {
+  public void addModuleDependency(String moduleName, boolean isExportable) {
     Module m = findModuleByName(moduleName);
 
     ModuleOrderEntry e;
@@ -176,26 +180,31 @@ public class RootModelAdapter {
 
   @Nullable
   private Module findModuleByName(String moduleName) {
-    ModuleManager manager = ModuleManager.getInstance(myRootModel.getModule().getProject());
-    return manager.findModuleByName(moduleName);
+    return ModuleManager.getInstance(myRootModel.getProject()).findModuleByName(moduleName);
   }
 
-  public void createModuleLibrary(String libraryName,
-                                  @Nullable String urlClasses,
-                                  @Nullable String urlSources,
-                                  @Nullable String urlJavadoc,
-                                  boolean isExportable) {
-    Library library = getLibraryModel().createLibrary(libraryName);
-    Library.ModifiableModel libraryModel = library.getModifiableModel();
+  public void addLibraryDependency(MavenId id,
+                                   @Nullable String urlClasses,
+                                   @Nullable String urlSources,
+                                   @Nullable String urlJavadoc,
+                                   boolean isExportable) {
+    Library library = getLibraryTable().getLibraryByName(makeLibraryName(id));
+    if (library == null) {
+      library = getLibraryTable().createLibrary(makeLibraryName(id));
+      Library.ModifiableModel libraryModel = library.getModifiableModel();
 
-    setUrl(libraryModel, urlClasses, OrderRootType.CLASSES);
-    setUrl(libraryModel, urlSources, OrderRootType.SOURCES);
-    setUrl(libraryModel, urlJavadoc, JavadocOrderRootType.getInstance());
+      setUrl(libraryModel, urlClasses, OrderRootType.CLASSES);
+      setUrl(libraryModel, urlSources, OrderRootType.SOURCES);
+      setUrl(libraryModel, urlJavadoc, JavadocOrderRootType.getInstance());
 
-    LibraryOrderEntry e = findLibraryEntry(myRootModel, library);
-    e.setExported(isExportable);
+      libraryModel.commit();
+    }
 
-    libraryModel.commit();
+    myRootModel.addLibraryEntry(library).setExported(isExportable);
+  }
+
+  private LibraryTable getLibraryTable() {
+    return ProjectLibraryTable.getInstance(myRootModel.getProject());
   }
 
   private void setUrl(Library.ModifiableModel libraryModel, @Nullable String newUrl, OrderRootType type) {
@@ -207,41 +216,22 @@ public class RootModelAdapter {
     }
   }
 
-  private LibraryOrderEntry findLibraryEntry(ModuleRootModel m, final Library library) {
-    return m.processOrder(new RootPolicy<LibraryOrderEntry>() {
+  public Library findLibrary(final MavenId id) {
+    return myRootModel.processOrder(new RootPolicy<Library>() {
       @Override
-      public LibraryOrderEntry visitLibraryOrderEntry(LibraryOrderEntry e, LibraryOrderEntry result) {
-        return library.equals(e.getLibrary()) ? e : null;
+      public Library visitLibraryOrderEntry(LibraryOrderEntry e, Library result) {
+        return e.getLibraryName().equals(makeLibraryName(id)) ? e.getLibrary() : result;
       }
     }, null);
   }
 
-  Map<String, String> getModuleLibraries() {
-    Map<String, String> libraries = new HashMap<String, String>();
-    for (Library library : getLibraryModel().getLibraries()) {
-      if (library.getTable() == null) {
-        final String[] urls = library.getUrls(OrderRootType.CLASSES);
-        if (urls.length == 1) {
-          libraries.put(library.getName(), urls[0]);
-        }
-      }
-    }
-    return libraries;
+  private String makeLibraryName(MavenId id) {
+    return MAVEN_LIB_PREFIX + id.toString();
   }
 
-  void updateModuleLibrary(String libraryName, String urlSources, String urlJavadoc) {
-    final Library library = getLibraryModel().getLibraryByName(libraryName);
-    if (library != null) {
-      final Library.ModifiableModel libraryModel = library.getModifiableModel();
-      setUrl(libraryModel, urlSources, OrderRootType.SOURCES);
-      setUrl(libraryModel, urlJavadoc, JavadocOrderRootType.getInstance());
-      libraryModel.commit();
-    }
-  }
-
-  public void setLanguageLevel(final LanguageLevel languageLevel) {
+  public void setLanguageLevel(LanguageLevel level) {
     try {
-      myRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(languageLevel);
+      myRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level);
     }
     catch (IllegalArgumentException e) {
       //bad value was stored

@@ -1,11 +1,20 @@
 package org.jetbrains.idea.maven;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryTestFixture;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 
-import java.util.List;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DependenciesImportingTest extends MavenImportingTestCase {
   public void testLibraryDependency() throws Exception {
@@ -22,7 +31,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "</dependencies>");
 
     assertModules("project");
-    assertModuleLibDep("project", "junit:junit:4.0",
+    assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
@@ -44,7 +53,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "</dependencies>");
 
     assertModules("project");
-    assertModuleLibDep("project", "junit:junit:4.0",
+    assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
@@ -87,7 +96,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "</dependencies>");
 
     assertModules("project");
-    assertModuleLibDeps("project", "B:B:2", "A:A:1");
+    assertModuleLibDeps("project", "Maven: B:B:2", "Maven: A:A:1");
   }
 
   public void testIntermoduleDependencies() throws Exception {
@@ -263,7 +272,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "</dependencies>");
 
     assertModules("project");
-    assertExportedModuleDeps("project", "group:lib1:1");
+    assertExportedModuleDeps("project", "Maven: group:lib1:1");
   }
 
   public void testOptionalModuleDependencyIsNotExportable() throws Exception {
@@ -348,7 +357,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "  </dependency>" +
                   "</dependencies>");
 
-    assertExportedModuleDeps("project", "test:compile:1", "test:runtime:1");
+    assertExportedModuleDeps("project", "Maven: test:compile:1", "Maven: test:runtime:1");
   }
 
   public void testTransitiveDependencies() throws Exception {
@@ -390,8 +399,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     resolveProject();
     assertModules("project", "m1", "m2");
 
-    assertModuleLibDeps("m2", "group:id:1");
-    assertModuleLibDeps("m1", "group:id:1");
+    assertModuleLibDeps("m2", "Maven: group:id:1");
+    assertModuleLibDeps("m1", "Maven: group:id:1");
   }
 
   public void testTransitiveLibraryDependencyVersionResolution() throws Exception {
@@ -419,7 +428,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     resolveProject();
 
     assertModules("project");
-    assertModuleLibDep("project", "xml-apis:xml-apis:1.0.b2");
+    assertModuleLibDep("project", "Maven: xml-apis:xml-apis:1.0.b2");
   }
 
   public void testExclusionOfTransitiveDependencies() throws Exception {
@@ -464,7 +473,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "</dependencies>");
     importProject();
 
-    assertModuleLibDeps("m2", "group:id:1");
+    assertModuleLibDeps("m2", "Maven: group:id:1");
 
     assertModuleModuleDeps("m1", "m2");
     assertModuleLibDeps("m1");
@@ -489,7 +498,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertModules("project");
     assertModuleLibDep("project",
-                       "direct-system-dependency:direct-system-dependency:1.0",
+                       "Maven: direct-system-dependency:direct-system-dependency:1.0",
                        "jar://" + javaHome + "/lib/tools.jar!/");
   }
 
@@ -512,7 +521,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertModules("project");
     assertModuleLibDep("project",
-                       "direct-system-dependency:direct-system-dependency:1.0",
+                       "Maven: direct-system-dependency:direct-system-dependency:1.0",
                        "jar://" + envDir + "/lib/tools.jar!/");
   }
 
@@ -531,7 +540,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "</dependencies>");
 
     assertModules("project");
-    assertModuleLibDeps("project", "group:artifact:1:tests");
+    assertModuleLibDeps("project", "Maven: group:artifact:1:tests");
   }
 
   public void testDependencyWithClassifier() throws Exception {
@@ -548,7 +557,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "  </dependency>" +
                   "</dependencies>");
     assertModules("project");
-    assertModuleLibDeps("project", "group:artifact:1:bar");
+    assertModuleLibDeps("project", "Maven: group:artifact:1:bar");
   }
 
   public void testDependencyWithVersionRangeOnModule() throws Exception {
@@ -618,8 +627,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     importProject();
 
-    assertModuleLibDep("project", "group:lib:1");
-    assertModuleLibDep("m", "group:lib:2");
+    assertModuleLibDep("project", "Maven: group:lib:1");
+    assertModuleLibDep("m", "Maven: group:lib:2");
   }
 
   public void testPropertyInTheModuleDependency() throws Exception {
@@ -657,7 +666,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     importProject();
 
     assertModules("project", "m");
-    assertModuleLibDeps("m", "group:id:1.2.3");
+    assertModuleLibDeps("m", "Maven: group:id:1.2.3");
   }
 
   public void testManagedModuleDependency() throws Exception {
@@ -697,7 +706,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                          "</dependencies>");
 
     importProject();
-    assertModuleLibDeps("m", "group:id:1");
+    assertModuleLibDeps("m", "Maven: group:id:1");
   }
 
   public void testPropertyInTheManagedModuleDependencyVersion() throws Exception {
@@ -743,7 +752,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     importProject();
 
     assertModules("project", "m");
-    assertModuleLibDeps("m", "group:id:1");
+    assertModuleLibDeps("m", "Maven: group:id:1");
   }
 
   public void testPomTypeDependency() throws Exception {
@@ -850,5 +859,166 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     resolveProject();
 
     assertTrue(file.exists());
+  }
+
+  public void testDoNotCreateSameLibraryTwice() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    importProject();
+
+    assertProjectLibraries("Maven: junit:junit:4.0");
+    assertModuleLibDep("project", "Maven: junit:junit:4.0");
+  }
+
+  public void testDoNotResetUserLibraryDependencies() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertProjectLibraries("Maven: junit:junit:4.0");
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
+
+    Library lib = ProjectLibraryTable.getInstance(myProject).createLibrary("My Library");
+    ModifiableRootModel model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
+    model.addLibraryEntry(lib);
+    model.commit();
+
+    assertProjectLibraries("Maven: junit:junit:4.0", "My Library");
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0", "My Library");
+
+    importProject();
+
+    assertProjectLibraries("Maven: junit:junit:4.0", "My Library");
+    // todo should keep deps' order
+    assertModuleLibDeps("project", "My Library", "Maven: junit:junit:4.0");
+  }
+
+  public void testDoNotResetUserModuleDependencies() throws Exception {
+    VirtualFile m1 = createModulePom("m1",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m1</artifactId>" +
+                                     "<version>1</version>" +
+
+                                     "<dependencies>" +
+                                     "  <dependency>" +
+                                     "    <groupId>test</groupId>" +
+                                     "    <artifactId>m2</artifactId>" +
+                                     "    <version>1</version>" +
+                                     "  </dependency>" +
+                                     "</dependencies>");
+    VirtualFile m2 = createModulePom("m2",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m2</artifactId>" +
+                                     "<version>1</version>");
+    importSeveralProjects(m1, m2);
+    assertModuleModuleDeps("m1", "m2");
+
+    Module module = createModule("my-module");
+
+    ModifiableRootModel model = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
+    model.addModuleOrderEntry(module);
+    model.commit();
+
+    assertModuleModuleDeps("m1", "m2", "my-module");
+
+    importSeveralProjects(m1, m2);
+
+    assertModuleModuleDeps("m1", "my-module", "m2");
+  }
+
+  public void testRemoveUnnecessaryMavenizedModuleDepsOnRepomport() throws Exception {
+    VirtualFile m1 = createModulePom("m1",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m1</artifactId>" +
+                                     "<version>1</version>" +
+
+                                     "<dependencies>" +
+                                     "  <dependency>" +
+                                     "    <groupId>test</groupId>" +
+                                     "    <artifactId>m2</artifactId>" +
+                                     "    <version>1</version>" +
+                                     "  </dependency>" +
+                                     "</dependencies>");
+    VirtualFile m2 = createModulePom("m2",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m2</artifactId>" +
+                                     "<version>1</version>");
+    importSeveralProjects(m1, m2);
+    assertModuleModuleDeps("m1", "m2");
+
+    updateModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>");
+
+    importSeveralProjects(m1, m2);
+    assertModuleModuleDeps("m1");
+  }
+
+  public void testDoNotResetCustomJavadocsAndSources() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertProjectLibraries("Maven: junit:junit:4.0");
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
+
+    Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName("Maven: junit:junit:4.0");
+    Library.ModifiableModel model = lib.getModifiableModel();
+    for (String each : model.getUrls(OrderRootType.SOURCES)) {
+      model.removeRoot(each, OrderRootType.SOURCES);
+    }
+    for (String each : model.getUrls(JavadocOrderRootType.getInstance())) {
+      model.removeRoot(each, JavadocOrderRootType.getInstance());
+    }
+    model.addRoot("file://foo.sources", OrderRootType.SOURCES);
+    model.addRoot("file://foo.javadoc", JavadocOrderRootType.getInstance());
+    model.commit();
+
+    assertModuleLibDep("project", "Maven: junit:junit:4.0",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
+                       "file://foo.sources",
+                       "file://foo.javadoc");
+
+    importProject();
+
+    assertModuleLibDep("project", "Maven: junit:junit:4.0",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
+                       "file://foo.sources",
+                       "file://foo.javadoc");
+  }
+
+  private void assertProjectLibraries(String... expectedNames) {
+    List<String> actualNames = new ArrayList<String>();
+    for (Library each : ProjectLibraryTable.getInstance(myProject).getLibraries()) {
+      actualNames.add(each.getName());
+    }
+    assertUnorderedElementsAreEqual(actualNames, expectedNames);
   }
 }

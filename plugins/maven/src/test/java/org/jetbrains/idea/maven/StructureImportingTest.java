@@ -338,7 +338,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
 
     importProject();
     assertModules("m");
-    assertModuleLibDeps("m", "junit:junit:4.0");
+    assertModuleLibDeps("m", "Maven: junit:junit:4.0");
   }
 
   public void testParentInRemoteRepository() throws Exception {
@@ -665,12 +665,12 @@ public class StructureImportingTest extends MavenImportingTestCase {
     importProjectWithProfiles("one");
     assertModules("project");
 
-    assertModuleLibDep("project", "junit:junit:4.0");
+    assertModuleLibDep("project", "Maven: junit:junit:4.0");
 
     importProjectWithProfiles("two");
     assertModules("project");
 
-    assertModuleLibDep("project", "junit:junit:3.8.1");
+    assertModuleLibDep("project", "Maven: junit:junit:3.8.1");
   }
 
   public void testProjectWithDefaultProfileInProfilesXmlFile() throws Exception {
@@ -699,7 +699,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     importProject();
     assertModules("project");
 
-    assertModuleLibDep("project", "junit:junit:4.0");
+    assertModuleLibDep("project", "Maven: junit:junit:4.0");
   }
 
   public void testRefreshFSAfterImport() throws Exception {

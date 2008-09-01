@@ -84,12 +84,12 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
                   "    <version>1-SNAPSHOT</version>" +
                   "  </dependency>" +
                   "</dependencies>");
-    assertModuleLibDeps("project", "test:foo:1-SNAPSHOT");
+    assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT");
 
     removeFromLocalRepository("test");
     
     importProject();
-    assertModuleLibDeps("project", "test:foo:1-SNAPSHOT");
+    assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT");
   }
 
   private void deployArtifact(String groupId, String artifactId, String version) throws IOException {
