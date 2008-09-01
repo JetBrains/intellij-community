@@ -734,7 +734,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  public LookupElement[] getSortedItems() {
+  public synchronized LookupElement[] getSortedItems() {
     final LookupElement[] result = new LookupElement[myList.getModel().getSize()];
     ((DefaultListModel)myList.getModel()).copyInto(result);
     return result;

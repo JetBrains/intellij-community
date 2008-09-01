@@ -14,8 +14,8 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -89,7 +89,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
       indicator.closeAndFinish();
     }
-    HintManager.getInstance().hideAllHints();
 
     if (time != 0) {
       if (myCompletionType == CompletionType.CLASS_NAME) {
@@ -102,6 +101,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final CompletionInitializationContext initializationContext = new WriteCommandAction<CompletionInitializationContext>(project) {
       protected void run(Result<CompletionInitializationContext> result) throws Throwable {
+        CommandProcessor.getInstance().setCurrentCommandGroupId(null);
+
         final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
 
         EditorUtil.fillVirtualSpaceUntil(editor, editor.getCaretModel().getLogicalPosition().column, editor.getCaretModel().getLogicalPosition().line);
@@ -277,7 +278,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     new WriteCommandAction(context.project) {
       protected void run(Result result) throws Throwable {
-        CommandProcessor.getInstance().setCurrentCommandGroupId(null);
         String uniqueText = _uniqueText;
 
         if (item.getObject() instanceof DeferredUserLookupValue && item instanceof LookupItem) {

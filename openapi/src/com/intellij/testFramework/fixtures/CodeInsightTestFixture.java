@@ -18,6 +18,7 @@ package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.editor.Document;
@@ -263,6 +264,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   @Nullable LookupElement[] completeBasic();
 
+  @Nullable LookupElement[] complete(CompletionType type);
+
   void checkResult(final String text) throws IOException;
 
   Document getDocument(PsiFile file);
@@ -290,4 +293,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   LookupElement[] getLookupElements();
 
   VirtualFile findFileInTempDir(String filePath);
+
+  @Nullable
+  List<String> getLookupElementStrings();
 }

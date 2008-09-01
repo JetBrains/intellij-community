@@ -47,6 +47,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
       updateLookup();
     }
   };
+  private LightweightHint myHint;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, String adText, CodeCompletionHandlerBase handler, final CompletionContext contextCopy, final CompletionContext contextOriginal) {
     myEditor = editor;
@@ -65,10 +66,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
         if (item == null) return;
 
         contextOriginal.setStartOffset(myEditor.getCaretModel().getOffset() - item.getLookupString().length());
-        myHandler.selectLookupItem(item, CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS ||
-                                         (item instanceof LookupItem &&
-                                          ((LookupItem)item).getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null),
-                                   event.getCompletionChar(), contextOriginal, new LookupData(myLookup.getItems()));
+        CodeCompletionHandlerBase.selectLookupItem(item, CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS ||
+                                                         (item instanceof LookupItem &&
+                                                          ((LookupItem)item).getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null),
+                                                   event.getCompletionChar(), contextOriginal, new LookupData(myLookup.getItems()));
       }
 
       public void lookupCanceled(final LookupEvent event) {
@@ -108,9 +109,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
 
   public void liveAfterDeath(LightweightHint hint) {
     registerItself();
+    myHint = hint;
     hint.addHintListener(new HintListener() {
       public void hintHidden(final EventObject event) {
-        cleanup();
+        if (myHint != null) {
+          cleanup();
+        }
       }
     });
   }
@@ -169,6 +173,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
   }
 
   public void closeAndFinish() {
+    if (myHint != null) {
+      myHint.hide();
+    }
     LookupManager.getInstance(myEditor.getProject()).hideActiveLookup();
   }
 
@@ -184,6 +191,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
   private void cleanup() {
     assert ourCurrentCompletion == this;
     ourCurrentCompletion = null;
+    myHint = null;
   }
 
   public void stop() {
@@ -225,7 +233,4 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
     return myInitialized;
   }
 
-  public boolean isActive(CodeCompletionHandlerBase handler) {
-    return getHandler().getClass().equals(handler.getClass()) && !isCanceled();
-  }
 }

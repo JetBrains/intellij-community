@@ -7,11 +7,7 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInsight.completion.CodeCompletionHandler;
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionProgressIndicator;
-import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -20,7 +16,6 @@ import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -43,12 +38,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -82,6 +75,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.ExpectedHighlightingData;
@@ -116,6 +110,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private PsiFile myFile;
   private Editor myEditor;
   private String myTestDataPath;
+  private boolean myEmptyLookup;
 
   private LocalInspectionTool[] myInspections;
   private final Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
@@ -330,17 +325,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void testCompletion(final String[] filesBefore, final String fileAfter) throws Throwable {
-    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
-
-      protected void run() throws Throwable {
-        configureByFilesInner(filesBefore);
-        final LookupElement[] items = completeBasic();
-        if (items != null) {
-          System.out.println("items = " + Arrays.toString(items));
-        }
-        checkResultByFile(fileAfter, myFile, false);
-      }
-    }.execute().throwException();
+    configureByFiles(filesBefore);
+    final LookupElement[] items = complete(CompletionType.BASIC);
+    if (items != null) {
+      System.out.println("items = " + Arrays.toString(items));
+    }
+    checkResultByFile(fileAfter);
   }
 
   public void testCompletion(String fileBefore, String fileAfter, final String... additionalFiles) throws Throwable {
@@ -353,21 +343,22 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public List<String> getCompletionVariants(final String fileBefore) throws Throwable {
-    final List<String> result = new ArrayList<String>();
-    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
+    configureByFiles(fileBefore);
+    final LookupElement[] items = complete(CompletionType.BASIC);
+    Assert.assertNotNull("No lookup was shown, probably there was only one lookup element that was inserted automatically", items);
+    return getLookupElementStrings();
+  }
 
-      protected void run() throws Throwable {
-        configureByFilesInner(fileBefore);
-        LookupElement[] lookupItems = completeBasic();
-        Assert.assertNotNull("No lookup was shown, probably there was only one lookup element that was inserted automatically", lookupItems);
-        result.addAll(ContainerUtil.map(lookupItems, new Function<LookupElement, String>() {
-          public String fun(final LookupElement lookupItem) {
-            return lookupItem.getLookupString();
-          }
-        }));
+  @Nullable
+  public List<String> getLookupElementStrings() {
+    final LookupElement[] elements = getLookupElements();
+    if (elements == null) return null;
+
+    return ContainerUtil.map(elements, new Function<LookupElement, String>() {
+      public String fun(final LookupElement lookupItem) {
+        return lookupItem.getLookupString();
       }
-    }.execute().throwException();
-    return result;
+    });
   }
 
   public void testRename(final String fileBefore, final String fileAfter, final String newName, final String... additionalFiles) throws Throwable {
@@ -522,20 +513,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myPsiManager;
   }
 
-  @Nullable
-  protected Editor getCompletionEditor() {
-    return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
-  }
-
-
-  @Nullable
-  public LookupElement[] completeBasic() {
-    final Ref<Boolean> empty = Ref.create(false);
+  public LookupElement[] complete(final CompletionType type) {
+    myEmptyLookup = false;
     new WriteCommandAction(getProject()) {
-      protected void run(final Result result) throws Throwable {
-        new CodeCompletionAction() {
-          public CodeInsightActionHandler getHandler() {
-            return new CodeCompletionHandler() {
+      protected void run(Result result) throws Throwable {
+        final CodeInsightActionHandler handler;
+        switch (type) {
+          case BASIC:
+            handler = new CodeCompletionHandler() {
               protected PsiFile createFileCopy(final PsiFile file) {
                 final PsiFile copy = super.createFileCopy(file);
                 if (myFileContext != null) {
@@ -549,25 +534,63 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                 return copy;
               }
 
-              protected void handleEmptyLookup(final CompletionContext context, final CompletionParameters parameters,
+              protected void handleEmptyLookup(final CompletionContext context,
+                                               final CompletionParameters parameters,
                                                final CompletionProgressIndicator indicator) {
-                empty.set(true);
+                myEmptyLookup = true;
                 super.handleEmptyLookup(context, parameters, indicator);
               }
             };
-          }
-        }.actionPerformedImpl(getProject(), InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile));
+            break;
+          case SMART:
+            handler = new SmartCodeCompletionHandler() {
 
+              protected void handleEmptyLookup(final CompletionContext context,
+                                               final CompletionParameters parameters,
+                                               final CompletionProgressIndicator indicator) {
+                myEmptyLookup = true;
+                super.handleEmptyLookup(context, parameters, indicator);
+              }
+            };
+            break;
+          case CLASS_NAME:
+          default:
+            handler = new ClassNameCompletionHandler() {
+
+              protected void handleEmptyLookup(final CompletionContext context,
+                                               final CompletionParameters parameters,
+                                               final CompletionProgressIndicator indicator) {
+                myEmptyLookup = true;
+                super.handleEmptyLookup(context, parameters, indicator);
+              }
+            };
+        }
+        Editor editor = getCompletionEditor();
+        handler.invoke(getProject(), editor, PsiUtilBase.getPsiFileInEditor(editor, getProject()));
       }
-    }.execute().getResultObject();
-    if (empty.get().booleanValue()) return LookupItem.EMPTY_ARRAY;
-
+    }.execute();
     return getLookupElements();
   }
 
+  @Nullable
+  protected Editor getCompletionEditor() {
+    return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
+  }
+
+  @Nullable
+  public LookupElement[] completeBasic() {
+    return complete(CompletionType.BASIC);
+  }
+
+  @Nullable 
   public LookupElement[] getLookupElements() {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-    return lookup == null ? null : lookup.getSortedItems();
+    if (lookup == null) {
+      return myEmptyLookup ? LookupElement.EMPTY_ARRAY : null;
+    }
+    else {
+      return lookup.getSortedItems();
+    }
   }
 
   public void checkResult(final String text) throws IOException {
@@ -992,6 +1015,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private void checkResultByFile(@NonNls String expectedFile,
                                  @NotNull PsiFile originalFile,
                                  boolean stripTrailingSpaces) throws IOException {
+    final LogicalPosition position = myEditor.getCaretModel().getLogicalPosition();
+    EditorUtil.fillVirtualSpaceUntil(myEditor, position.column, position.line);
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     checkResult(expectedFile, stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromFile(getTestDataPath() + "/" + expectedFile, getProject()), originalFile.getText());
   }
