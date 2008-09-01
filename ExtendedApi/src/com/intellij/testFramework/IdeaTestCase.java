@@ -154,7 +154,7 @@ import java.util.HashSet;
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
     myProject = myProjectManager.newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
-    myProject.putUserData(TESTCASE_NAME, getName());
+    myProject.putUserData(TESTCASE_NAME, getClass().getName() + "." + getName());
 
     setUpModule();
 
