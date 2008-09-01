@@ -36,7 +36,7 @@ public class ExtractClassHandler implements RefactoringActionHandler {
       //todo
       return;
     }
-    final PsiClass containingClass = selectedMember.getContainingClass();
+    final PsiClass containingClass = selectedMember instanceof PsiClass ? (PsiClass)selectedMember : selectedMember.getContainingClass();
 
     if (containingClass == null) {
       CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
