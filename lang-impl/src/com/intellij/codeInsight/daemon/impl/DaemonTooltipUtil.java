@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +19,7 @@ public class DaemonTooltipUtil {
   }
 
   public static void cancelTooltips() {
-    HintManager.getInstance().getTooltipController().cancelTooltip(DAEMON_INFO_GROUP);
+    HintManagerImpl.getInstanceImpl().getTooltipController().cancelTooltip(DAEMON_INFO_GROUP);
   }
 
   public static void showInfoTooltip(@NotNull final HighlightInfo info, final Editor editor, final int defaultOffset, final int currentWidth) {
@@ -42,6 +42,6 @@ public class DaemonTooltipUtil {
       bestPoint,
       editor.getComponent().getRootPane().getLayeredPane()
     );
-    HintManager.getInstance().getTooltipController().showTooltip(editor, p, info.toolTip, currentWidth, false, DAEMON_INFO_GROUP);
+    HintManagerImpl.getInstanceImpl().getTooltipController().showTooltip(editor, p, info.toolTip, currentWidth, false, DAEMON_INFO_GROUP);
   }
 }

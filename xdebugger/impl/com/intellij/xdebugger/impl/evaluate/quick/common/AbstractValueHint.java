@@ -15,8 +15,8 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.Tree;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -222,14 +222,13 @@ public abstract class AbstractValueHint {
 
   protected boolean showHint(final JComponent component) {
     myCurrentHint = new LightweightHint(component);
-    HintManager hintManager = HintManager.getInstance();
 
     //Editor may be disposed before later invokator process this action
     if(getEditor().getComponent().getRootPane() == null) return false;
 
-    Point p = HintManager.getHintPosition(myCurrentHint, getEditor(), getEditor().xyToLogicalPosition(myPoint), HintManager.UNDER);
-    hintManager.showEditorHint(myCurrentHint, getEditor(), p,
-                               HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, HINT_TIMEOUT, false);
+    Point p = HintManagerImpl.getHintPosition(myCurrentHint, getEditor(), getEditor().xyToLogicalPosition(myPoint), HintManagerImpl.UNDER);
+    HintManagerImpl.getInstanceImpl().showEditorHint(myCurrentHint, getEditor(), p,
+                               HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_SCROLLING, HINT_TIMEOUT, false);
     return true;
   }
 

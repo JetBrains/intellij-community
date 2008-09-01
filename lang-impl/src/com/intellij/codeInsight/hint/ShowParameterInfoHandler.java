@@ -83,13 +83,13 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
 
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
-    final HintManager hintManager = HintManager.getInstance();
+    final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     final Point p = ShowParameterInfoContext.chooseBestHintPosition(project, editor, -1, -1, hint);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (!editor.getComponent().isShowing()) return;
         hintManager.showEditorHint(hint, editor, p,
-                                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManager.UPDATE_BY_SCROLLING,
+                                   HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManagerImpl.UPDATE_BY_SCROLLING,
                                    0, false);
       }
     });

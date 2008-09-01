@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -37,7 +36,7 @@ import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 
-public class HintManager implements ApplicationComponent {
+public class HintManagerImpl extends HintManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.HintManager");
 
   public static final short ABOVE = 1;
@@ -87,11 +86,11 @@ public class HintManager implements ApplicationComponent {
     }
   }
 
-  public static HintManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(HintManager.class);
+  public static HintManagerImpl getInstanceImpl() {
+    return (HintManagerImpl)ApplicationManager.getApplication().getComponent(HintManager.class);
   }
 
-  public HintManager(ActionManagerEx actionManagerEx, ProjectManager projectManager, EditorActionManager editorActionManager) {
+  public HintManagerImpl(ActionManagerEx actionManagerEx, ProjectManager projectManager, EditorActionManager editorActionManager) {
     myEditorManagerListener = new MyEditorManagerListener();
 
     myAnActionListener = new MyAnActionListener();
@@ -530,11 +529,7 @@ public class HintManager implements ApplicationComponent {
 
   public void showErrorHint(@NotNull Editor editor, String text) {
     JLabel label = HintUtil.createErrorLabel(text);
-    LightweightHint hint = new LightweightHint(label) {
-      public void hide() {
-        super.hide();
-      }
-    };
+    LightweightHint hint = new LightweightHint(label);
     Point p = getHintPosition(hint, editor, ABOVE);
     showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false);
   }
@@ -738,7 +733,7 @@ public class HintManager implements ApplicationComponent {
 
     public void execute(Editor editor, DataContext dataContext) {
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      if (project == null || !getInstance().hideHints(HIDE_BY_ESCAPE | HIDE_BY_ANY_KEY, true, false)) {
+      if (project == null || !getInstanceImpl().hideHints(HIDE_BY_ESCAPE | HIDE_BY_ANY_KEY, true, false)) {
         myOriginalHandler.execute(editor, dataContext);
       }
     }
@@ -748,7 +743,7 @@ public class HintManager implements ApplicationComponent {
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
       if (project != null) {
-        HintManager hintManager = getInstance();
+        HintManagerImpl hintManager = getInstanceImpl();
         for (int i = hintManager.myHintsStack.size() - 1; i >= 0; i--) {
           final HintInfo info = hintManager.myHintsStack.get(i);
           if (!info.hint.isVisible()) {
@@ -766,7 +761,7 @@ public class HintManager implements ApplicationComponent {
     }
   }
 
-  private boolean hideHints(int mask, boolean onlyOne, boolean editorChanged) {
+  protected boolean hideHints(int mask, boolean onlyOne, boolean editorChanged) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     try {
       boolean done = false;

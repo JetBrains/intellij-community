@@ -228,8 +228,8 @@ public class ParameterInfoController {
       return;
     }
 
-    HintManager hintManager = HintManager.getInstance();
-    short constraint = lookup.isPositionedAboveCaret() ? HintManager.UNDER : HintManager.ABOVE;
+    HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
+    short constraint = lookup.isPositionedAboveCaret() ? HintManagerImpl.UNDER : HintManagerImpl.ABOVE;
     Point p = hintManager.getHintPosition(myHint, myEditor, constraint);
     Dimension hintSize = myHint.getComponent().getPreferredSize();
     JLayeredPane layeredPane = myEditor.getComponent().getRootPane().getLayeredPane();
@@ -265,7 +265,7 @@ public class ParameterInfoController {
     if (elementForUpdating != null) {
       myHandler.updateParameterInfo(elementForUpdating, context);
       if (myHint.isVisible()) {
-        HintManager.adjustEditorHintPosition(myHint, myEditor, myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating,offset));
+        HintManagerImpl.adjustEditorHintPosition(myHint, myEditor, myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating,offset));
       }
     }
     else context.removeHint();

@@ -4,8 +4,8 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeEventQueue;
@@ -451,8 +451,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     Point p = calculatePosition();
-    HintManager hintManager = HintManager.getInstance();
-    hintManager.showEditorHint(this, myEditor, p, HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false);
+    HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
+    hintManager.showEditorHint(this, myEditor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false);
   }
 
   private int calcLookupStart() {
@@ -730,7 +730,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public void adaptSize() {
     if (isVisible()) {
-      HintManager.getInstance().adjustEditorHintPosition(this, myEditor, getComponent().getLocation());
+      HintManagerImpl.getInstanceImpl().adjustEditorHintPosition(this, myEditor, getComponent().getLocation());
     }
   }
 

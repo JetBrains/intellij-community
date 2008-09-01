@@ -1,7 +1,7 @@
 package com.intellij.find.findUsages;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.find.FindBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.navigation.NavigationItem;
@@ -573,11 +573,10 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   private static void showEditorHint(String message, final Editor editor) {
-    HintManager hintManager = HintManager.getInstance();
     JComponent component = HintUtil.createInformationLabel(message);
     final LightweightHint hint = new LightweightHint(component);
-    hintManager.showEditorHint(hint, editor, HintManager.UNDER,
-                               HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false);
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManagerImpl.UNDER,
+                               HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_SCROLLING, 0, false);
   }
 
   public static String getHelpID(PsiElement element) {

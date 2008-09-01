@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.completion.ClassNameCompletionHandler;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 /**
  *
  */
-public class ClassNameCompletionAction extends BaseCodeInsightAction implements HintManager.ActionToIgnore{
+public class ClassNameCompletionAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore{
   public ClassNameCompletionAction() {
     setEnabledInModalContext(true);
   }

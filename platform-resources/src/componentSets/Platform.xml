@@ -7,7 +7,7 @@
 
     <component>
       <interface-class>com.intellij.codeInsight.hint.HintManager</interface-class>
-      <implementation-class>com.intellij.codeInsight.hint.HintManager</implementation-class>
+      <implementation-class>com.intellij.codeInsight.hint.HintManagerImpl</implementation-class>
     </component>
 
     <component>

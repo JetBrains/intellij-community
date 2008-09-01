@@ -51,7 +51,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
     //pane
     final JEditorPane pane = initPane(myText);
     pane.setCaretPosition(0);
-    final HintManager hintManager = HintManager.getInstance();
+    final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     final JComponent contentComponent = editor.getContentComponent();
     // This listeners makes hint transparent for mouse events. It means that hint is closed
     // by MousePressed and this MousePressed goes into the underlying editor component.
@@ -175,8 +175,8 @@ public class LineTooltipRenderer implements TooltipRenderer {
       }
     });
     hintManager.showEditorHint(hint, editor, p,
-                               HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT |
-                               HintManager.HIDE_BY_SCROLLING, 0, false);
+                               HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_OTHER_HINT |
+                               HintManagerImpl.HIDE_BY_SCROLLING, 0, false);
     return hint;
   }
 

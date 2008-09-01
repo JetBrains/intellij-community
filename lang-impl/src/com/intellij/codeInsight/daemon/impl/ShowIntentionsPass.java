@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -114,7 +114,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
           }
           codeAnalyzer.setLastIntentionHint(null);
         }
-        if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
+        if (!HintManagerImpl.getInstanceImpl().hasShownHintsThatWillHideByOtherHint()) {
           hintComponent = IntentionHintComponent.showIntentionHint(myProject, myFile, myEditor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, false);
           codeAnalyzer.setLastIntentionHint(hintComponent);
         }

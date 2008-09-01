@@ -558,7 +558,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void cancelMyToolTips(final MouseEvent e) {
-      final TooltipController tooltipController = HintManager.getInstance().getTooltipController();
+      final TooltipController tooltipController = HintManagerImpl.getInstanceImpl().getTooltipController();
       if (!tooltipController.shouldSurvive(e)) {
         tooltipController.cancelTooltip(ERROR_STRIPE_TOOLTIP_GROUP);
       }
@@ -587,7 +587,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private void showTooltip(MouseEvent e, final TooltipRenderer tooltipObject) {
-    final TooltipController tooltipController = HintManager.getInstance().getTooltipController();
+    final TooltipController tooltipController = HintManagerImpl.getInstanceImpl().getTooltipController();
     tooltipController.showTooltipByMouseMove(myEditor, e, tooltipObject,
                                              myEditor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT,
                                              ERROR_STRIPE_TOOLTIP_GROUP);

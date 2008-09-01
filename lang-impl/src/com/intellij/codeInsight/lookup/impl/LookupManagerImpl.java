@@ -5,7 +5,7 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.EditorHintListener;
-import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
@@ -41,7 +41,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
       public void hintShown(final Project project, final LightweightHint hint, final int flags) {
         if (project == myProject) {
           Lookup lookup = getActiveLookup();
-          if (lookup != null && (flags & HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE) != 0) {
+          if (lookup != null && (flags & HintManagerImpl.HIDE_BY_LOOKUP_ITEM_CHANGE) != 0) {
             lookup.addLookupListener(
               new LookupAdapter() {
                 public void currentItemChanged(LookupEvent event) {

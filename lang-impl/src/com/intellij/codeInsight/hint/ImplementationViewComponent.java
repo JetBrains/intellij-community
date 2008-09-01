@@ -356,7 +356,7 @@ public class ImplementationViewComponent extends JPanel {
     updateControls();
   }
 
-  private class BackAction extends AnAction implements HintManager.ActionToIgnore {
+  private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     public BackAction() {
       super(CodeInsightBundle.message("quick.definition.back"), null, IconLoader.getIcon("/actions/back.png"));
     }
@@ -372,7 +372,7 @@ public class ImplementationViewComponent extends JPanel {
     }
   }
 
-  private class ForwardAction extends AnAction implements HintManager.ActionToIgnore {
+  private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     public ForwardAction() {
       super(CodeInsightBundle.message("quick.definition.forward"), null, IconLoader.getIcon("/actions/forward.png"));
     }
@@ -400,7 +400,7 @@ public class ImplementationViewComponent extends JPanel {
     }
   }
 
-  private class ShowSourceAction extends EditSourceActionBase implements HintManager.ActionToIgnore {
+  private class ShowSourceAction extends EditSourceActionBase implements HintManagerImpl.ActionToIgnore {
     public ShowSourceAction() {
       super(false, IconLoader.getIcon("/actions/showSource.png"), CodeInsightBundle.message("quick.definition.show.source"));
     }

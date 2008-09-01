@@ -4,13 +4,14 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -398,8 +399,7 @@ public class CtrlMouseHandler implements ProjectComponent {
       internalComponent.removeKeyListener(myEditorKeyListener);
       myHighlighterView.getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
       FileEditorManager.getInstance(myProject).removeFileEditorManagerListener(myFileEditorManagerListener);
-      HintManager hintManager = HintManager.getInstance();
-      hintManager.hideAllHints();
+      HintManager.getInstance().hideAllHints();
       myHighlighter = null;
       myHighlighterView = null;
       myStoredCursor = null;
@@ -456,16 +456,16 @@ public class CtrlMouseHandler implements ProjectComponent {
         Font FONT = UIUtil.getLabelFont();
         label.setFont(FONT);
         final LightweightHint hint = new LightweightHint(label);
-        final HintManager hintManager = HintManager.getInstance();
+        final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
         label.addMouseMotionListener(new MouseMotionAdapter() {
           public void mouseMoved(MouseEvent e) {
             hintManager.hideAllHints();
           }
         });
-        Point p = HintManager.getHintPosition(hint, myEditor, myPosition, HintManager.ABOVE);
+        Point p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, HintManagerImpl.ABOVE);
         hintManager.showEditorHint(hint, myEditor, p,
-                                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE |
-                                   HintManager.HIDE_BY_SCROLLING,
+                                   HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE |
+                                   HintManagerImpl.HIDE_BY_SCROLLING,
                                    0, false);
       }
     }

@@ -111,12 +111,12 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
 
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
-    final HintManager hintManager = HintManager.getInstance();
+    final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     final Point p = provider.getBestPointPosition(hint, element, elementStart);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        hintManager.showEditorHint(hint, editor, p, HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false);
+        hintManager.showEditorHint(hint, editor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false);
         new ParameterInfoController(project,
                                     editor,
                                     elementStart,
@@ -143,7 +143,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
    * @return Point in layered pane coordinate system
    */
   static Point chooseBestHintPosition(Project project, Editor editor, int line, int col, LightweightHint hint) {
-    HintManager hintManager = HintManager.getInstance();
+    HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     Dimension hintSize = hint.getComponent().getPreferredSize();
     JComponent editorComponent = editor.getComponent();
     JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
@@ -152,13 +152,13 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     Point p2;
     boolean isLookupShown = LookupManager.getInstance(project).getActiveLookup() != null;
     if (isLookupShown) {
-      p1 = hintManager.getHintPosition(hint, editor, HintManager.UNDER);
-      p2 = hintManager.getHintPosition(hint, editor, HintManager.ABOVE);
+      p1 = hintManager.getHintPosition(hint, editor, HintManagerImpl.UNDER);
+      p2 = hintManager.getHintPosition(hint, editor, HintManagerImpl.ABOVE);
     }
     else {
       LogicalPosition pos = new LogicalPosition(line, col);
-      p1 = hintManager.getHintPosition(hint, editor, pos, HintManager.UNDER);
-      p2 = hintManager.getHintPosition(hint, editor, pos, HintManager.ABOVE);
+      p1 = hintManager.getHintPosition(hint, editor, pos, HintManagerImpl.UNDER);
+      p2 = hintManager.getHintPosition(hint, editor, pos, HintManagerImpl.ABOVE);
     }
 
     p1.x = Math.min(p1.x, layeredPane.getWidth() - hintSize.width);
@@ -205,7 +205,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
         p = chooseBestHintPosition(myEditor.getProject(), myEditor, pos.line, pos.column, hint);
       }
       else {
-        p = HintManager.getInstance().getHintPosition(hint, myEditor, pos, HintManager.ABOVE);
+        p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManagerImpl.ABOVE);
         Dimension hintSize = hint.getComponent().getPreferredSize();
         JComponent editorComponent = myEditor.getComponent();
         JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();

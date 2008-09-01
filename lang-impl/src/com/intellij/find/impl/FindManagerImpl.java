@@ -3,8 +3,8 @@ package com.intellij.find.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.find.*;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -490,10 +490,9 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
           message = FindBundle.message("find.search.again.from.bottom.action.message", message);
         }
       }
-      HintManager hintManager = HintManager.getInstance();
       JComponent component = HintUtil.createInformationLabel(message);
       final LightweightHint hint = new LightweightHint(component);
-      hintManager.showEditorHint(hint, editor, HintManager.UNDER, HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false);
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManagerImpl.UNDER, HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_SCROLLING, 0, false);
       return true;
     } else if (!secondPass) {
       offset = isForward ? 0 : editor.getDocument().getTextLength();

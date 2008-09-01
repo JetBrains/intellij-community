@@ -4,10 +4,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.codeInsight.hint.QuestionAction;
-import com.intellij.codeInsight.hint.ScrollAwareHint;
+import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
@@ -439,7 +436,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
     myComponentHint.setShouldDelay(delay);
 
-    HintManager.getInstance().showQuestionHint(myEditor, position,
+    HintManagerImpl.getInstanceImpl().showQuestionHint(myEditor, position,
                                  offset,
                                  offset,
                                  myComponentHint,

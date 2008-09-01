@@ -1,10 +1,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
-import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.hint.*;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
@@ -3643,7 +3640,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myGutterComponent.mouseExited(e);
       }
 
-      HintManager.getInstance().getTooltipController().cancelTooltip(FOLDING_TOOLTIP_GROUP);
+      HintManagerImpl.getInstanceImpl().getTooltipController().cancelTooltip(FOLDING_TOOLTIP_GROUP);
     }
   }
 
@@ -3672,7 +3669,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       if (event.getArea() == EditorMouseEventArea.EDITING_AREA) {
         FoldRegion fold = myFoldingModel.getFoldingPlaceholderAt(e.getPoint());
-        TooltipController controller = HintManager.getInstance().getTooltipController();
+        TooltipController controller = HintManagerImpl.getInstanceImpl().getTooltipController();
         if (fold != null) {
           DocumentFragment range = new DocumentFragment(myDocument, fold.getStartOffset(), fold.getEndOffset());
           final Point p =

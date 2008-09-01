@@ -4,7 +4,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.SmartCodeCompletionHandler;
-import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -13,7 +13,7 @@ import com.intellij.psi.PsiFile;
 /**
  * @author peter
  */
-public class SmartCodeCompletionAction extends BaseCodeInsightAction implements HintManager.ActionToIgnore{
+public class SmartCodeCompletionAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore{
 
   public SmartCodeCompletionAction() {
     setEnabledInModalContext(true);

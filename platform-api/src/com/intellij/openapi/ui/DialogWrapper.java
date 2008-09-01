@@ -95,7 +95,6 @@ public abstract class DialogWrapper {
   private Action myNoAction = null;
 
   protected final Disposable myDisposable = new Disposable() {
-
     public String toString() {
       return DialogWrapper.this.toString();
     }
@@ -124,10 +123,7 @@ public abstract class DialogWrapper {
   }
 
   protected DialogWrapper(boolean canBeParent) {
-    synchronized (ourLock) {
-      myPeer = DialogWrapperPeerFactory.getInstance().createPeer(this, canBeParent);
-      createDefaultActions();
-    }
+    this((Project)null, canBeParent);
   }
 
   protected DialogWrapper(boolean canBeParent, boolean toolkitModalIfPossible) {
@@ -977,7 +973,7 @@ public abstract class DialogWrapper {
   }
 
   private static class ErrorText extends JPanel {
-    private JLabel myLabel = new JLabel();
+    private final JLabel myLabel = new JLabel();
     private Dimension myPrefSize;
 
     public ErrorText() {

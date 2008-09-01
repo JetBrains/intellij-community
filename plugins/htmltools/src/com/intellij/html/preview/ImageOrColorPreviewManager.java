@@ -1,6 +1,6 @@
 package com.intellij.html.preview;
 
-import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -106,9 +106,9 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
       hideCurrentHintIfAny();
       setCurrentHint(hint, element);
 
-      HintManager.getInstance().showEditorHint(hint, editor, HintManager.getHintPosition(hint, editor, getLogicalPosition(element),
-                                                                                         HintManager.RIGHT_UNDER), HintManager
-        .HIDE_BY_ANY_KEY | HintManager.HIDE_BY_OTHER_HINT | HintManager.HIDE_BY_SCROLLING | HintManager.HIDE_BY_TEXT_CHANGE | HintManager
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManagerImpl.getHintPosition(hint, editor, getLogicalPosition(element),
+                                                                                         HintManagerImpl.RIGHT_UNDER), HintManagerImpl
+        .HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_OTHER_HINT | HintManagerImpl.HIDE_BY_SCROLLING | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl
         .HIDE_IF_OUT_OF_EDITOR, 0, false);
     }
   }

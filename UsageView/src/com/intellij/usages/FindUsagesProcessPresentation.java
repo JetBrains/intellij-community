@@ -17,19 +17,14 @@ package com.intellij.usages;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Factory;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jetbrains.annotations.NonNls;
-
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 21, 2004
- * Time: 9:15:39 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class FindUsagesProcessPresentation {
   @NonNls
@@ -40,9 +35,9 @@ public class FindUsagesProcessPresentation {
   private boolean myShowNotFoundMessage;
   private Factory<ProgressIndicator> myProgressIndicatorFactory;
 
-  public void addNotFoundAction(Action _action) {
+  public void addNotFoundAction(Action action) {
     if (myNotFoundActions == null) myNotFoundActions = new ArrayList<Action>();
-    myNotFoundActions.add(_action);
+    myNotFoundActions.add(action);
   }
 
   public List<Action> getNotFoundActions() {

@@ -8,9 +8,9 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.IdeEventQueue;
@@ -933,13 +933,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public void mouseDragged(MouseEvent e) {
-    HintManager.getInstance().getTooltipController().cancelTooltips();
+    HintManagerImpl.getInstanceImpl().getTooltipController().cancelTooltips();
   }
 
   public void mouseMoved(final MouseEvent e) {
     String tooltip = null;
     GutterIconRenderer renderer = getGutterRenderer(e);
-    TooltipController controller = HintManager.getInstance().getTooltipController();
+    TooltipController controller = HintManagerImpl.getInstanceImpl().getTooltipController();
     if (renderer != null) {
       tooltip = renderer.getTooltipText();
       if (renderer.isNavigateAction()) {
@@ -1158,7 +1158,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public void mouseExited(MouseEvent e) {
-    HintManager.getInstance().getTooltipController().cancelTooltip(GUTTER_TOOLTIP_GROUP);
+    HintManagerImpl.getInstanceImpl().getTooltipController().cancelTooltip(GUTTER_TOOLTIP_GROUP);
   }
 
   @Nullable

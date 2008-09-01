@@ -2,8 +2,8 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -63,7 +63,7 @@ public class DocumentationManager implements ProjectComponent {
     public void beforeActionPerformed(AnAction action, DataContext dataContext) {
       final JBPopup hint = getDocInfoHint();
       if (hint != null) {
-        if (action instanceof HintManager.ActionToIgnore) return;
+        if (action instanceof HintManagerImpl.ActionToIgnore) return;
         if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
         if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
         if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN)) return;

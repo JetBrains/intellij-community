@@ -15,7 +15,10 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.find.SearchInBackgroundOption;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
@@ -300,7 +303,13 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                            myPresentation.getScopeText());
 
             if (notFoundActions == null || notFoundActions.isEmpty()) {
-              Messages.showMessageDialog(myProject, message, UsageViewBundle.message("dialog.title.information"), Messages.getInformationIcon());
+              Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+              if (editor == null) {
+                Messages.showMessageDialog(myProject, message, UsageViewBundle.message("dialog.title.information"), Messages.getInformationIcon());
+              }
+              else {
+                HintManager.getInstance().showErrorHint(editor, message);
+              }
             }
             else {
               List<String> titles = new ArrayList<String>(notFoundActions.size() + 1);
@@ -320,7 +329,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
               }
             }
           }
-        }, ModalityState.NON_MODAL);
+        }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
       else if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
         SwingUtilities.invokeLater(new Runnable() {

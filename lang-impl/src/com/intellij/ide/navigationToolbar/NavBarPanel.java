@@ -16,7 +16,7 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ProjectTopics;
-import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeView;
@@ -841,7 +841,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       final Container container = focusedWindow != null ? focusedWindow : editor.getContentComponent();
       final Point p = AbstractPopup.getCenterOf(container, this);
       p.y = container.getHeight() / 4;
-      HintManager.getInstance().showEditorHint(myHint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true);
+      HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManagerImpl.HIDE_BY_ESCAPE, 0, true);
     }
     select();
   }

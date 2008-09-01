@@ -2,8 +2,8 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.ElementLocationUtil;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.openapi.Disposable;
@@ -320,7 +320,7 @@ public class DocumentationComponent extends JPanel implements Disposable{
         setControlPanelVisible(true);//(!myBackStack.isEmpty() || !myForwardStack.isEmpty());
     }
 
-    private class BackAction extends AnAction implements HintManager.ActionToIgnore {
+    private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
         public BackAction() {
             super(CodeInsightBundle.message("javadoc.action.back"), null, IconLoader.getIcon("/actions/back.png"));
         }
@@ -335,7 +335,7 @@ public class DocumentationComponent extends JPanel implements Disposable{
         }
     }
 
-    private class ForwardAction extends AnAction implements HintManager.ActionToIgnore {
+    private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
         public ForwardAction() {
             super(CodeInsightBundle.message("javadoc.action.forward"), null, IconLoader.getIcon("/actions/forward.png"));
         }
@@ -350,7 +350,7 @@ public class DocumentationComponent extends JPanel implements Disposable{
         }
     }
 
-    private class ExternalDocAction extends AnAction implements HintManager.ActionToIgnore {
+    private class ExternalDocAction extends AnAction implements HintManagerImpl.ActionToIgnore {
         public ExternalDocAction() {
             super(CodeInsightBundle.message("javadoc.action.view.external"), null, IconLoader.getIcon("/actions/browser-externalJavaDoc.png"));
             registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), null);
