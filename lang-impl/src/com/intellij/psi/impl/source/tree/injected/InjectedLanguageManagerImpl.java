@@ -250,6 +250,54 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     return injectedNode.getText();
   }
 
+  /**
+   *  intersection may spread over several injected fragments
+   *  @param rangeToEdit range in encoded(raw) PSI
+   *  @return list of ranges in encoded (raw) PSI
+   */
+  @NotNull
+  public List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
+    List<PsiLanguageInjectionHost.Shred> shreds = InjectedLanguageUtil.getShreds(injectedPsi);
+    if (shreds == null) return Collections.emptyList();
+    Object result = null; // optimization: TextRange or ArrayList
+    int count = 0;
+    int offset = 0;
+    for (PsiLanguageInjectionHost.Shred shred : shreds) {
+      TextRange encodedRange = TextRange.from(offset + shred.prefix.length(), shred.getRangeInsideHost().getLength());
+      TextRange intersection = encodedRange.intersection(rangeToEdit);
+      if (intersection != null) {
+        count++;
+        if (count == 1) {
+          result = intersection;
+        }
+        else if (count == 2) {
+          TextRange range = (TextRange)result;
+          if (range.isEmpty()) {
+            result = intersection;
+            count = 1;
+          }
+          else if (intersection.isEmpty()) {
+            count = 1;
+          }
+          else {
+            List<TextRange> list = new ArrayList<TextRange>();
+            list.add(range);
+            list.add(intersection);
+            result = list;
+          }
+        }
+        else if (intersection.isEmpty()) {
+          count--;
+        }
+        else {
+          ((List<TextRange>)result).add(intersection);
+        }
+      }
+      offset += shred.prefix.length() + shred.getRangeInsideHost().getLength() + shred.suffix.length();
+    }
+    return count == 0 ? Collections.<TextRange>emptyList() : count == 1 ? Collections.singletonList((TextRange)result) : (List<TextRange>)result;
+  }
+
   public static interface InjProcessor {
     boolean process(PsiElement element, MultiHostInjector injector);
   }

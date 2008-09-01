@@ -404,8 +404,11 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   @NotNull
   public TextRange injectedToHost(@NotNull TextRange injected) {
-    final int start = injectedToHost(injected.getStartOffset(), false);
-    final int end = injectedToHost(injected.getEndOffset(), true);
+    int start = injectedToHost(injected.getStartOffset(), false);
+    int end = injectedToHost(injected.getEndOffset(), true);
+    if (end < start) {
+      end = injectedToHost(injected.getEndOffset(), false);
+    }
     return new ProperTextRange(start, end);
   }
 
@@ -431,6 +434,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return false;
   }
 
+  @Deprecated
   @Nullable
   public TextRange intersectWithEditable(@NotNull TextRange rangeToEdit) {
     int offset = 0;

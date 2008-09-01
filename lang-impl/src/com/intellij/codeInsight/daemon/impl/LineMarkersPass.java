@@ -90,6 +90,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
                                                    final LineMarkersProcessor processor,
                                                    PsiFile file) {
     final List<LineMarkerInfo> injectedMarkers = new ArrayList<LineMarkerInfo>();
+
     for (PsiElement element : elements) {
       InjectedLanguageUtil.enumerate(element, file, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull final PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
@@ -98,24 +99,24 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
           processor.addLineMarkers(injElements, providers, injectedMarkers);
           Document document = PsiDocumentManager.getInstance(injectedPsi.getProject()).getCachedDocument(injectedPsi);
           if (!(document instanceof DocumentWindow)) return;
-          DocumentWindow injectedDocument = (DocumentWindow)document;
           for (final LineMarkerInfo injectedMarker : injectedMarkers) {
             GutterIconRenderer gutterRenderer = injectedMarker.createGutterRenderer();
             TextRange injectedRange = new TextRange(injectedMarker.startOffset, injectedMarker.endOffset);
-
-            TextRange editable = injectedDocument.intersectWithEditable(injectedRange);
-            if (editable == null) continue;
-            TextRange hostRange = manager.injectedToHost(injectedPsi, editable);
-            Icon icon = gutterRenderer == null ? null : gutterRenderer.getIcon();
-            LineMarkerInfo converted =
-                new LineMarkerInfo(injectedMarker.getElement(), hostRange.getStartOffset(), icon, injectedMarker.updatePass, new Function<PsiElement, String>() {
-                  public String fun(PsiElement element) {
-                    return injectedMarker.getLineMarkerTooltip();
-                  }
-                }, injectedMarker.getNavigationHandler());
-            converted.textAttributes = injectedMarker.textAttributes;
-            converted.endOffset = hostRange.getEndOffset();
-            result.add(converted);
+            List<TextRange> editables = manager.intersectWithAllEditableFragments(injectedPsi, injectedRange);
+            for (TextRange editable : editables) {
+              TextRange hostRange = manager.injectedToHost(injectedPsi, editable);
+              Icon icon = gutterRenderer == null ? null : gutterRenderer.getIcon();
+              LineMarkerInfo converted =
+                  new LineMarkerInfo<PsiElement>(injectedMarker.getElement(), hostRange.getStartOffset(), icon, injectedMarker.updatePass,
+                                     new Function<PsiElement, String>() {
+                                       public String fun(PsiElement element) {
+                                         return injectedMarker.getLineMarkerTooltip();
+                                       }
+                                     }, injectedMarker.getNavigationHandler());
+              converted.textAttributes = injectedMarker.textAttributes;
+              converted.endOffset = hostRange.getEndOffset();
+              result.add(converted);
+            }
           }
           injectedMarkers.clear();
         }

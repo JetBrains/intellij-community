@@ -15,6 +15,11 @@ public interface DocumentWindow extends Document {
   @NotNull TextRange injectedToHost(@NotNull TextRange injectedOffset);
   int hostToInjected(int hostOffset);
 
+  /**
+   * Use com.intellij.lang.injection.InjectedLanguageManager#intersectWithAllEditableFragments(com.intellij.psi.PsiFile, com.intellij.openapi.util.TextRange)
+   * since editable fragments may well spread over several injection hosts
+   */
+  @Deprecated
   @Nullable
   TextRange intersectWithEditable(@NotNull TextRange range);
 

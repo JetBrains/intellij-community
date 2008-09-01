@@ -27,8 +27,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,13 +51,6 @@ public abstract class InjectedLanguageManager implements ProjectComponent {
 
   public abstract String getUnescapedText(@NotNull PsiElement injectedNode);
 
-  @Nullable
-  public List<TextRange> intersectWithAllEditableFragments(@NotNull TextRange rangeToEdit) {
-    int offset = 0;
-    int startOffset = -1;
-    int endOffset = -1;
-    List<TextRange> result = new SmartList<TextRange>();
-    return result;
-  }
-
+  @NotNull
+  public abstract List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit);
 }

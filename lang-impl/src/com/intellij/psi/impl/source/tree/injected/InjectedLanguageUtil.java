@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lexer.Lexer;
@@ -20,11 +21,11 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ParameterizedCachedValueImpl;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
@@ -83,48 +84,61 @@ public class InjectedLanguageUtil {
     return file.getUserData(HIGHLIGHT_TOKENS);
   }
 
+  // returns lexer elemet types with corresponsing ranges in encoded (injection host based) PSI 
   private static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> obtainHighlightTokensFromLexer(Language language,
                                                                                                                  StringBuilder outChars,
                                                                                                                  List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers,
                                                                                                                  List<PsiLanguageInjectionHost.Shred> shreds,
                                                                                                                  VirtualFileWindow virtualFile,
-                                                                                                                 DocumentWindowImpl documentWindow,
                                                                                                                  Project project) {
     List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = new ArrayList<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>(10);
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, (VirtualFile)virtualFile);
     Lexer lexer = syntaxHighlighter.getHighlightingLexer();
     lexer.start(outChars, 0, outChars.length(), 0);
-    int hostNum = 0;
-    int prevHostsCombinedLength = 0;
-    nextToken:
+    int hostNum = -1;
+    int prevHostEndOffset = 0;
+    PsiLanguageInjectionHost host = null;
+    LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = null;
+    int prefixLength = 0;
+    int suffixLength = 0;
+    TextRange rangeInsideHost = null;
+    int shredEndOffset = -1;
     for (IElementType tokenType = lexer.getTokenType(); tokenType != null; lexer.advance(), tokenType = lexer.getTokenType()) {
       TextRange range = new ProperTextRange(lexer.getTokenStart(), lexer.getTokenEnd());
-      while (!range.isEmpty()) {
-        if (range.getStartOffset() >= shreds.get(hostNum).range.getEndOffset()) {
+      while (range != null && !range.isEmpty()) {
+        if (range.getStartOffset() >= shredEndOffset) {
           hostNum++;
-          prevHostsCombinedLength = range.getStartOffset();
+          shredEndOffset = shreds.get(hostNum).range.getEndOffset();
+          prevHostEndOffset = range.getStartOffset();
+          host = shreds.get(hostNum).host;
+          escaper = escapers.get(hostNum);
+          rangeInsideHost = shreds.get(hostNum).getRangeInsideHost();
+          prefixLength = shreds.get(hostNum).prefix.length();
+          suffixLength = shreds.get(hostNum).suffix.length();
         }
-        TextRange editable = documentWindow.intersectWithEditable(range);
-        if (editable == null || editable.getLength() == 0) continue nextToken;
-        editable = editable.intersection(shreds.get(hostNum).range);
-        if (editable == null || editable.getLength() == 0) continue nextToken;
-        range = new ProperTextRange(editable.getEndOffset(), range.getEndOffset());
-        PsiLanguageInjectionHost host = shreds.get(hostNum).host;
-        LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = escapers.get(hostNum);
-        TextRange rangeInsideHost = shreds.get(hostNum).getRangeInsideHost();
-        int prefixLength = shreds.get(hostNum).prefix.length();
-        int start = escaper.getOffsetInHost(editable.getStartOffset() - prevHostsCombinedLength - prefixLength, rangeInsideHost);
-        int end = escaper.getOffsetInHost(editable.getEndOffset() - prevHostsCombinedLength - prefixLength, rangeInsideHost);
-        if (end == -1) {
-          end = rangeInsideHost.getEndOffset();
-          tokens.add(Trinity.<IElementType, PsiLanguageInjectionHost, TextRange>create(tokenType, host, new ProperTextRange(start, end)));
-          prevHostsCombinedLength = shreds.get(hostNum).range.getEndOffset();
-          range = new ProperTextRange(shreds.get(hostNum).range.getEndOffset(), range.getEndOffset());
+        //in prefix/suffix or spills over to next fragment
+        if (range.getStartOffset() < prevHostEndOffset + prefixLength) {
+          range = new TextRange(prevHostEndOffset + prefixLength, range.getEndOffset());
         }
-        else {
-          TextRange rangeInHost = new ProperTextRange(start, end);
-          tokens.add(Trinity.create(tokenType, host, rangeInHost));
+        TextRange spilled = null;
+        if (range.getEndOffset() >= shredEndOffset - suffixLength) {
+          spilled = new TextRange(shredEndOffset, range.getEndOffset());
+          range = new TextRange(range.getStartOffset(), shredEndOffset);
         }
+        if (!range.isEmpty()) {
+          int start = escaper.getOffsetInHost(range.getStartOffset() - prevHostEndOffset - prefixLength, rangeInsideHost);
+          int end = escaper.getOffsetInHost(range.getEndOffset() - prevHostEndOffset - prefixLength, rangeInsideHost);
+          if (end == -1) {
+            end = rangeInsideHost.getEndOffset();
+            tokens.add(Trinity.<IElementType, PsiLanguageInjectionHost, TextRange>create(tokenType, host, new ProperTextRange(start, end)));
+            prevHostEndOffset = shredEndOffset;
+          }
+          else {
+            TextRange rangeInHost = new ProperTextRange(start, end);
+            tokens.add(Trinity.create(tokenType, host, rangeInHost));
+          }
+        }
+        range = spilled;
       }
     }
     return tokens;
@@ -132,6 +146,12 @@ public class InjectedLanguageUtil {
 
   private static boolean isInjectedFragment(final PsiFile file) {
     return file.getViewProvider() instanceof MyFileViewProvider;
+  }
+  public static List<PsiLanguageInjectionHost.Shred> getShreds(PsiFile injectedFile) {
+    FileViewProvider viewProvider = injectedFile.getViewProvider();
+    if (!(viewProvider instanceof MyFileViewProvider)) return null;
+    MyFileViewProvider myFileViewProvider = (MyFileViewProvider)viewProvider;
+    return myFileViewProvider.myShreds;
   }
 
   private static class Place {
@@ -171,30 +191,32 @@ public class InjectedLanguageUtil {
   }
 
   private static class MyFileViewProvider extends SingleRootFileViewProvider {
-    private PsiLanguageInjectionHost[] myHosts;
+    private List<PsiLanguageInjectionHost.Shred> myShreds;
     private Project myProject;
 
-    private MyFileViewProvider(@NotNull PsiManager psiManager, @NotNull VirtualFileWindow virtualFile, List<PsiLanguageInjectionHost> hosts) {
+    private MyFileViewProvider(@NotNull PsiManager psiManager, @NotNull VirtualFileWindow virtualFile, List<PsiLanguageInjectionHost.Shred> shreds) {
       super(psiManager, (VirtualFile)virtualFile);
-      myHosts = hosts.toArray(new PsiLanguageInjectionHost[hosts.size()]);
-      myProject = myHosts[0].getProject();
+      myShreds = new ArrayList<PsiLanguageInjectionHost.Shred>(shreds);
+      myProject = myShreds.get(0).host.getProject();
     }
 
     public void rootChanged(PsiFile psiFile) {
       super.rootChanged(psiFile);
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
       DocumentWindowImpl documentWindow = (DocumentWindowImpl)documentManager.getDocument(psiFile);
-
+      assert documentWindow.getHostRanges().length == myShreds.size();
       String[] changes = documentWindow.calculateMinEditSequence(psiFile.getText());
-      RangeMarker[] hostRanges = documentWindow.getHostRanges();
-      assert changes.length == myHosts.length;
-      for (int i = 0; i < myHosts.length; i++) {
+      //RangeMarker[] hostRanges = documentWindow.getHostRanges();
+      assert changes.length == myShreds.size();
+      for (int i = 0; i < changes.length; i++) {
         String change = changes[i];
         if (change != null) {
-          PsiLanguageInjectionHost host = myHosts[i];
-          RangeMarker hostRange = hostRanges[i];
-          TextRange hostTextRange = host.getTextRange();
-          TextRange rangeInsideHost = hostTextRange.intersection(toTextRange(hostRange)).shiftRight(-hostTextRange.getStartOffset());
+          PsiLanguageInjectionHost.Shred shred = myShreds.get(i);
+          PsiLanguageInjectionHost host = shred.host;
+          //RangeMarker hostRange = hostRanges[i];
+          //TextRange hostTextRange = host.getTextRange();
+          TextRange rangeInsideHost = shred.getRangeInsideHost();
+          //TextRange rangeInsideHost = hostTextRange.intersection(toTextRange(hostRange)).shiftRight(-hostTextRange.getStartOffset());
           String newHostText = StringUtil.replaceSubstring(host.getText(), rangeInsideHost, change);
           host.fixText(newHostText);
         }
@@ -218,12 +240,8 @@ public class InjectedLanguageUtil {
 
     private void replace(PsiFile injectedPsi, List<PsiLanguageInjectionHost.Shred> shreds) {
       setVirtualFile(injectedPsi.getVirtualFile());
-      myHosts = new PsiLanguageInjectionHost[shreds.size()];
-      for (int i = 0; i < shreds.size(); i++) {
-        PsiLanguageInjectionHost.Shred shred = shreds.get(i);
-        myHosts[i] = shred.host;
-      }
-      myProject = myHosts[0].getProject();
+      myShreds = new ArrayList<PsiLanguageInjectionHost.Shred>(shreds);
+      myProject = shreds.get(0).host.getProject();
     }
 
     private boolean isValid() {
@@ -636,7 +654,7 @@ public class InjectedLanguageUtil {
           if (!result) {
             // if there are invalid chars, adjust the range
             int offsetInHost = textEscaper.getOffsetInHost(outChars.length() - startOffset, rangeInsideHost);
-            relevantRange = relevantRange.intersection(new TextRange(0, offsetInHost));
+            relevantRange = relevantRange.intersection(new ProperTextRange(0, offsetInHost));
           }
         }
         outChars.append(suffix);
@@ -658,7 +676,8 @@ public class InjectedLanguageUtil {
           PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
           assert ArrayUtil.indexOf(documentManager.getUncommittedDocuments(), myHostDocument) == -1;
           assert myHostPsiFile.getText().equals(myHostDocument.getText());
-
+          assert relevantRangesInHostDocument.size() == shreds.size();
+          
           DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, prefixes, suffixes, relevantRangesInHostDocument);
           VirtualFileWindowImpl virtualFile = (VirtualFileWindowImpl)myInjectedManager.createVirtualFile(myLanguage, myHostVirtualFile, documentWindow, outChars);
           myLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(myLanguage, virtualFile, myProject);
@@ -667,7 +686,7 @@ public class InjectedLanguageUtil {
           DocumentImpl decodedDocument = new DocumentImpl(outChars);
           FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
 
-          SingleRootFileViewProvider viewProvider = new MyFileViewProvider(myPsiManager, virtualFile, injectionHosts);
+          SingleRootFileViewProvider viewProvider = new MyFileViewProvider(myPsiManager, virtualFile, shreds);
           ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(myLanguage);
           assert parserDefinition != null;
           PsiFile psiFile = parserDefinition.createFile(viewProvider);
@@ -704,7 +723,7 @@ public class InjectedLanguageUtil {
 
           try {
             List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens =
-                obtainHighlightTokensFromLexer(myLanguage, outChars, escapers, shreds, virtualFile, documentWindow, myProject);
+                obtainHighlightTokensFromLexer(myLanguage, outChars, escapers, shreds, virtualFile, myProject);
             psiFile.putUserData(HIGHLIGHT_TOKENS, tokens);
           }
           catch (ProcessCanceledException e) {
@@ -829,10 +848,11 @@ public class InjectedLanguageUtil {
           }
           oldFileElement.setCharTable(newFileElement.getCharTable());
           FileDocumentManagerImpl.registerDocument(documentWindow, oldFile.getVirtualFile());
-          oldFile.subtreeChanged();
 
           MyFileViewProvider viewProvider = (MyFileViewProvider)oldViewProvider;
           viewProvider.replace(injectedPsi, shreds);
+
+          oldFile.subtreeChanged();
         }
         return oldFile;
       }
@@ -896,13 +916,16 @@ public class InjectedLanguageUtil {
   }
   public static boolean isInInjectedLanguagePrefixSuffix(final PsiElement element) {
     PsiFile injectedFile = element.getContainingFile();
-    if (injectedFile == null) return false;
-    Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(injectedFile);
-    if (!(document instanceof DocumentWindowImpl)) return false;
-    DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
+    if (injectedFile == null || !isInjectedFragment(injectedFile)) return false;
     TextRange elementRange = element.getTextRange();
-    TextRange editable = documentWindow.intersectWithEditable(elementRange);
-    return !elementRange.equals(editable); //) throw new IncorrectOperationException("Can't change "+ UsageViewUtil.createNodeText(element, true));
+    List<TextRange> editables = InjectedLanguageManager.getInstance(injectedFile.getProject())
+        .intersectWithAllEditableFragments(injectedFile, elementRange);
+    int combinedEdiablesLength = 0;
+    for (TextRange editable : editables) {
+      combinedEdiablesLength += editable.getLength();
+    }
+
+    return combinedEdiablesLength != elementRange.getLength();
   }
 
   public static boolean isSelectionIsAboutToOverflowInjectedFragment(EditorWindow injectedEditor) {

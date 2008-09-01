@@ -12,6 +12,7 @@ import com.intellij.concurrency.JobUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -121,6 +122,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                  InspectionManagerEx iManager) {
     Set<TextRange> emptyActionRegistered = new THashSet<TextRange>();
     InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
+    InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myInjectedPsiInspectionResults.size(); i++) {
@@ -139,24 +141,24 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         HighlightInfoType level = highlightTypeFromDescriptor(descriptor, severity);
         HighlightInfo info = createHighlightInfo(descriptor, tool, level,emptyActionRegistered);
         if (info == null) continue;
-        TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
-        if (editable == null) continue;
-        TextRange hostRange = documentRange.injectedToHost(editable);
-
-        QuickFix[] fixes = descriptor.getFixes();
-        LocalQuickFix[] localFixes = null;
-        if (fixes != null) {
-          localFixes = new LocalQuickFix[fixes.length];
-          for (int k = 0; k < fixes.length; k++) {
-            QuickFix fix = fixes[k];
-            localFixes[k] = (LocalQuickFix)fix;
+        List<TextRange> editables = ilManager.intersectWithAllEditableFragments((PsiFile)injectedPsi, new TextRange(info.startOffset, info.endOffset));
+        for (TextRange editable : editables) {
+          TextRange hostRange = documentRange.injectedToHost(editable);
+          QuickFix[] fixes = descriptor.getFixes();
+          LocalQuickFix[] localFixes = null;
+          if (fixes != null) {
+            localFixes = new LocalQuickFix[fixes.length];
+            for (int k = 0; k < fixes.length; k++) {
+              QuickFix fix = fixes[k];
+              localFixes[k] = (LocalQuickFix)fix;
+            }
           }
+          ProblemDescriptor patchedDescriptor = iManager.createProblemDescriptor(myFile, hostRange, descriptor.getDescriptionTemplate(),
+                                                                                 descriptor.getHighlightType(),
+                                                                                 localFixes);
+          LocalInspectionToolWrapper toolWrapper = tool2Wrapper.get(tool);
+          toolWrapper.addProblemDescriptors(Collections.singletonList(patchedDescriptor), true);
         }
-        ProblemDescriptor patchedDescriptor = iManager.createProblemDescriptor(myFile, hostRange, descriptor.getDescriptionTemplate(),
-                                                                               descriptor.getHighlightType(),
-                                                                               localFixes);
-        LocalInspectionToolWrapper toolWrapper = tool2Wrapper.get(tool);
-        toolWrapper.addProblemDescriptors(Collections.singletonList(patchedDescriptor), true);
       }
     }
   }
@@ -323,9 +325,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     Set<TextRange> emptyActionRegistered = new THashSet<TextRange>();
     InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < myInjectedPsiInspectionResults.size(); i++) {
-      InjectedPsiInspectionResult result = myInjectedPsiInspectionResults.get(i);
+    InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
+    for (InjectedPsiInspectionResult result : myInjectedPsiInspectionResults) {
       LocalInspectionTool tool = result.tool;
       HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
 
@@ -338,19 +339,22 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         PsiElement psiElement = descriptor.getPsiElement();
         if (InspectionManagerEx.inspectionResultSuppressed(psiElement, tool)) continue;
         HighlightInfoType level = highlightTypeFromDescriptor(descriptor, severity);
-        HighlightInfo info = createHighlightInfo(descriptor, tool, level,emptyActionRegistered);
+        HighlightInfo info = createHighlightInfo(descriptor, tool, level, emptyActionRegistered);
         if (info == null) continue;
 
         // todo we got to separate our "internal" prefixes/suffixes from user-defined ones
         // todo in the latter case the erors should be highlighted, otherwise not
-        TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
-        if (editable == null) continue;
-        TextRange hostRange = documentRange.injectedToHost(editable);
-
-        HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, psiElement, hostRange.getStartOffset(), hostRange.getEndOffset(), info.description, info.toolTip);
-        if (patched != null) {
-          registerQuickFixes(tool, descriptor, patched,emptyActionRegistered);
-          infos.add(patched);
+        List<TextRange> editables =
+            ilManager.intersectWithAllEditableFragments((PsiFile)injectedPsi, new TextRange(info.startOffset, info.endOffset));
+        for (TextRange editable : editables) {
+          TextRange hostRange = documentRange.injectedToHost(editable);
+          HighlightInfo patched = HighlightInfo
+              .createHighlightInfo(info.type, psiElement, hostRange.getStartOffset(), hostRange.getEndOffset(), info.description,
+                                   info.toolTip);
+          if (patched != null) {
+            registerQuickFixes(tool, descriptor, patched, emptyActionRegistered);
+            infos.add(patched);
+          }
         }
       }
     }
