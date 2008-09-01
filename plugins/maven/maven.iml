@@ -151,6 +151,7 @@
     <orderEntry type="module" module-name="dom-impl" />
     <orderEntry type="module" module-name="idea-tests" />
     <orderEntry type="module" module-name="JavaScriptLanguage" />
+    <orderEntry type="module" module-name="FlexSupport" />
   </component>
   <component name="copyright">
     <Base>
