@@ -49,7 +49,7 @@ class StaticImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
     private void followReferenceToImport(
             PsiJavaCodeReferenceElement reference) {
         if (reference.getQualifier() != null) {
-            //it's already fully qualified, so the import statement wasn't
+            //it's already qualified, so the import statement wasn't
             // responsible
             return;
         }
@@ -67,11 +67,6 @@ class StaticImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
             return;
         }
         for (PsiImportStaticStatement importStatement : importStatements) {
-            final String importReferenceName =
-                    importStatement.getReferenceName();
-            if (importReferenceName == null) {
-                continue;
-            }
             if (importStatement.isOnDemand()) {
                 final PsiClass targetClass =
                         importStatement.resolveTargetClass();
@@ -80,9 +75,16 @@ class StaticImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
                     removeAll(importStatement);
                     break;
                 }
-            } else if (importReferenceName.equals(referenceName)) {
-                removeAll(importStatement);
-                break;
+            } else {
+                final String importReferenceName =
+                        importStatement.getReferenceName();
+                if (importReferenceName == null) {
+                    continue;
+                }
+                if (importReferenceName.equals(referenceName)) {
+                    removeAll(importStatement);
+                    break;
+                }
             }
         }
     }
