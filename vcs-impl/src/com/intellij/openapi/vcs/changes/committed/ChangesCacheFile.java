@@ -813,9 +813,19 @@ public class ChangesCacheFile {
           final CommittedChangeList changeList = getChangeListAtOffset(e.offset);
           for(Change c: changeList.getChanges()) {
             final ContentRevision beforeRevision = c.getBeforeRevision();
-            if (beforeRevision != null && beforeRevision.getFile().equals(file) && c.getAfterRevision() == null) {
-              LOG.info("Found subsequent deletion for file " + file);
-              return true;
+            if ((beforeRevision != null) && (c.getAfterRevision() == null)) {
+              if (file.getIOFile().getAbsolutePath().equals(beforeRevision.getFile().getIOFile().getAbsolutePath()) ||
+                  file.isUnder(beforeRevision.getFile(), false)) {
+                LOG.info("Found subsequent deletion for file " + file);
+                return true;
+              }
+            } else if ((beforeRevision != null) && (c.getAfterRevision() != null) &&
+                       (beforeRevision.getFile().getIOFile().getAbsolutePath().equals(
+                         c.getAfterRevision().getFile().getIOFile().getAbsolutePath()))) {
+              if (file.isUnder(beforeRevision.getFile(), true) && c.isIsReplaced()) {
+                LOG.info("For " + file + "some of parents is replaced: " + beforeRevision.getFile());
+                return true;
+              }
             }
           }
           indexOffset += INDEX_ENTRY_SIZE;

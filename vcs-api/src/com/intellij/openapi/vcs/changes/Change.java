@@ -45,7 +45,7 @@ public class Change {
   protected boolean myRenamed;
   protected boolean myMoved;
   protected boolean myRenameOrMoveCached = false;
-
+  private boolean myIsReplaced;
 
   public Change(final ContentRevision beforeRevision, final ContentRevision afterRevision) {
     this(beforeRevision, afterRevision, convertStatus(beforeRevision, afterRevision));
@@ -177,5 +177,13 @@ public class Change {
 
   public String getMovedText(final Project project) {
     return VcsBundle.message("change.file.moved.from.text", getMoveRelativePath(project));
+  }
+
+  public boolean isIsReplaced() {
+    return myIsReplaced;
+  }
+
+  public void setIsReplaced(final boolean isReplaced) {
+    myIsReplaced = isReplaced;
   }
 }
