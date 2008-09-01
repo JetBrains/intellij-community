@@ -24,4 +24,5 @@ package com.jetbrains.python.psi;
  * To change this template use File | Settings | File Templates.
  */
 public interface PyStarArgument extends PyExpression {
+  boolean isKeyword();
 }

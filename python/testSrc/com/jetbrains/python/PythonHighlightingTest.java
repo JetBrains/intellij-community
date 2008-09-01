@@ -15,6 +15,10 @@ public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testCallArgsStars() throws Exception {
+    doTest();
+  }
+
   public void testImportInTry() throws Exception {
     doTest();
   }
