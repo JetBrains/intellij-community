@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -351,7 +351,8 @@ public class ControlFlowUtils{
         while(true){
             final PsiTryStatement tryStatement =
                     PsiTreeUtil.getParentOfType(currentElement,
-                                                PsiTryStatement.class);
+                            PsiTryStatement.class,
+                            true, PsiClass.class);
             if(tryStatement == null){
                 return false;
             }

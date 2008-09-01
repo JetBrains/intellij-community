@@ -32,30 +32,31 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
     /** @noinspection PublicField*/
     public boolean ignoreGetMessage = false;
 
-    @NotNull
+    @Override @NotNull
     public String getID() {
         return "ThrowInsideCatchBlockWhichIgnoresCaughtException";
     }
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "exception.from.catch.which.doesnt.wrap.display.name");
     }
 
-    @NotNull
+    @Override @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "exception.from.catch.which.doesnt.wrap.problem.descriptor");
     }
 
-    @Nullable
+    @Override @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
                 "exception.from.catch.which.doesntwrap.ignore.option"), this,
                 "ignoreGetMessage");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ExceptionFromCatchWhichDoesntWrapVisitor();
     }
