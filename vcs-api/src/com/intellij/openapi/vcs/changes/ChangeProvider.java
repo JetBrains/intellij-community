@@ -26,9 +26,13 @@ import com.intellij.openapi.vcs.VcsException;
  */
 public interface ChangeProvider {
   /**
-   * Get changes from point of view of VCS. The vcs plugin should invoke
+   * <p>Get changes from point of view of VCS. The vcs plugin should invoke
    * methods on the {@code builder} object to report how changes in dirtyScope
-   * map to VCS.
+   * map to VCS.</p>
+   *
+   * <p>The implementations of this method should not report changes outside 
+   * of the dirty scope, but if these changes are reported, they will be
+   * ingored by the caller.</p>
    *
    * @param dirtyScope a changes on the virtual file system
    * @param builder a builder of VCS changes
