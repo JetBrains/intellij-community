@@ -184,7 +184,7 @@ public class Messages {
     return showDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
   }
 
-  public static void showErrorDialog(Project project, String message, @Nls String title) {
+  public static void showErrorDialog(Project project, @Nls String message, @Nls String title) {
     showDialog(project, message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
   }
 
@@ -271,8 +271,8 @@ public class Messages {
 
   @Nullable
   public static String showInputDialog(Project project,
-                                       String message,
-                                       String title,
+                                       @Nls String message,
+                                       @Nls String title,
                                        Icon icon,
                                        String initialValue,
                                        @Nullable InputValidator validator) {
