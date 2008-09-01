@@ -12,7 +12,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.testFramework.fixtures.impl.TempDirTextFixtureImpl;
+import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Test;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
@@ -42,7 +42,7 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
   }
 
   public String transformForRelPathTest(final String relTestPath, String[] data) throws Exception {
-    final TempDirTestFixture tempDirFixture = new TempDirTextFixtureImpl();
+    final TempDirTestFixture tempDirFixture = new TempDirTestFixtureImpl();
     tempDirFixture.setUp();
 
     final StringBuffer buffer = new StringBuffer();
