@@ -1,7 +1,7 @@
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -295,6 +295,6 @@ public class UIUtil {
     }
 
     Point p = SwingUtilities.convertPoint(editor.getContentComponent(), bestPoint, editor.getComponent().getRootPane().getLayeredPane());
-    HintManager.getInstance().getTooltipController().showTooltip(editor, p, text, false, group);
+    HintManagerImpl.getInstanceImpl().getTooltipController().showTooltip(editor, p, text, false, group);
   }
 }
