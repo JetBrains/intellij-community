@@ -166,7 +166,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
           public void run() {
             final MergeInfoHolder holder = getHolder(root.getPath());
             if (holder != null) {
-              holder.refresh();
+              holder.refresh(false);
             }
           }
         }, onlyOneRoot, root);
@@ -394,7 +394,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     final Map<String, CommittedChangeListsListener> refreshers = new HashMap<String, CommittedChangeListsListener>();
 
     for (Map.Entry<String, MergeInfoHolder> entry : myHolders.entrySet()) {
-      final CommittedChangeListsListener refresher = entry.getValue().createRefresher();
+      final CommittedChangeListsListener refresher = entry.getValue().createRefresher(false);
       if (refresher != null) {
         refreshers.put(entry.getKey(), refresher);
       }
@@ -440,7 +440,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     @Override
     public void update(final AnActionEvent e) {
       for (MergeInfoHolder holder : myHolders.values()) {
-        if (holder.refreshEnabled()) {
+        if (holder.refreshEnabled(false)) {
           e.getPresentation().setEnabled(true);
           return;
         }
