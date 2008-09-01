@@ -62,6 +62,8 @@ public class SvnChangeList implements CommittedChangeList {
   private Set<String> myChangedPaths = new HashSet<String>();
   private Set<String> myAddedPaths = new HashSet<String>();
   private Set<String> myDeletedPaths = new HashSet<String>();
+  private Set<String> myReplacedPaths = new HashSet<String>();
+
   private ChangesListCreationHelper myListsHolder;
 
   private SVNURL myBranchUrl;
@@ -103,15 +105,19 @@ public class SvnChangeList implements CommittedChangeList {
         myDeletedPaths.add(path);
       }
       else {
+        if (entry.getType() == 'R') {
+          myReplacedPaths.add(path);
+        }
         myChangedPaths.add(path);
       }
     }
   }
 
-  public SvnChangeList(SvnVcs vcs, @NotNull SvnRepositoryLocation location, DataInput stream, final boolean supportsCopyFromInfo) throws IOException {
+  public SvnChangeList(SvnVcs vcs, @NotNull SvnRepositoryLocation location, DataInput stream, final boolean supportsCopyFromInfo,
+                       final boolean supportsReplaced) throws IOException {
     myVcs = vcs;
     myLocation = location;
-    readFromStream(stream, supportsCopyFromInfo);
+    readFromStream(stream, supportsCopyFromInfo, supportsReplaced);
     myCommonPathSearcher = new CommonPathSearcher();
     for (String path : myAddedPaths) {
       myCommonPathSearcher.next(path);
@@ -167,6 +173,8 @@ public class SvnChangeList implements CommittedChangeList {
     }
     for(String path: myChangedPaths) {
       boolean moveAndChange = false;
+      final boolean replaced = myReplacedPaths.contains(path);
+
       for (String addedPath : myAddedPaths) {
         final String copyFromPath = myCopiedAddedPaths.get(addedPath);
         if ((copyFromPath != null) && (SVNPathUtil.isAncestor(addedPath, path))) {
@@ -174,12 +182,16 @@ public class SvnChangeList implements CommittedChangeList {
           final Change renamedChange =
               new Change(myListsHolder.createRevisionLazily(copyFromPath, true), myListsHolder.createRevisionLazily(path, false));
           renamedChange.getMoveRelativePath(myVcs.getProject());
+          renamedChange.setIsReplaced(replaced);
           myListsHolder.add(renamedChange);
           break;
         }
       }
       if (! moveAndChange) {
-        myListsHolder.add(new ExternallyRenamedChange(myListsHolder.createRevisionLazily(path, true), myListsHolder.createRevisionLazily(path, false)));
+        final ExternallyRenamedChange renamedChange =
+          new ExternallyRenamedChange(myListsHolder.createRevisionLazily(path, true), myListsHolder.createRevisionLazily(path, false));
+        renamedChange.setIsReplaced(replaced);
+        myListsHolder.add(renamedChange);
       }
     }
   }
@@ -282,6 +294,7 @@ public class SvnChangeList implements CommittedChangeList {
         final boolean status = SVNNodeKind.DIR.equals(myRepository.checkPath(revision.getPath(), getRevision(idxData.second.booleanValue())));
         final Change replacingChange = new Change(createRevision((SvnRepositoryContentRevision) sourceChange.getBeforeRevision(), status),
                                                   createRevision((SvnRepositoryContentRevision) sourceChange.getAfterRevision(), status));
+        replacingChange.setIsReplaced(sourceChange.isIsReplaced());
         myDetailedList.set(idxData.first.intValue(), replacingChange);
       }
 
@@ -423,6 +436,7 @@ public class SvnChangeList implements CommittedChangeList {
     writeFiles(stream, myAddedPaths);
     writeFiles(stream, myDeletedPaths);
     writeMap(stream, myCopiedAddedPaths);
+    writeFiles(stream, myReplacedPaths);
   }
 
   private static void writeFiles(final DataOutput stream, final Set<String> paths) throws IOException {
@@ -432,7 +446,7 @@ public class SvnChangeList implements CommittedChangeList {
     }
   }
 
-  private void readFromStream(final DataInput stream, final boolean supportsCopyFromInfo) throws IOException {
+  private void readFromStream(final DataInput stream, final boolean supportsCopyFromInfo, final boolean supportsReplaced) throws IOException {
     myRepositoryRoot = stream.readUTF();
     myRevision = stream.readLong();
     myAuthor = stream.readUTF();
@@ -444,6 +458,10 @@ public class SvnChangeList implements CommittedChangeList {
 
     if (supportsCopyFromInfo) {
       readMap(stream, myCopiedAddedPaths);
+    }
+
+    if (supportsReplaced) {
+      readFiles(stream, myReplacedPaths);
     }
   }
 

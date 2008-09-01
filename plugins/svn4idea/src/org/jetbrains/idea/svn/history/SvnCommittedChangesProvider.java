@@ -61,6 +61,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   private List<RootsAndBranches> myMergeInfoRefreshActions;
 
   public final static int VERSION_WITH_COPY_PATHS_ADDED = 2;
+  public final static int VERSION_WITH_REPLACED_PATHS = 3;
 
   public SvnCommittedChangesProvider(final Project project) {
     myProject = project;
@@ -300,7 +301,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   public int getFormatVersion() {
-    return VERSION_WITH_COPY_PATHS_ADDED;
+    return VERSION_WITH_REPLACED_PATHS;
   }
 
   public void writeChangeList(final DataOutput dataStream, final SvnChangeList list) throws IOException {
@@ -308,8 +309,9 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   public SvnChangeList readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException {
+    final int version = getFormatVersion();
     return new SvnChangeList(myVcs, (SvnRepositoryLocation) location, stream,
-                             VERSION_WITH_COPY_PATHS_ADDED >= getFormatVersion());
+                             VERSION_WITH_COPY_PATHS_ADDED <= version, VERSION_WITH_REPLACED_PATHS <= version);  
   }
 
   public boolean isMaxCountSupported() {
