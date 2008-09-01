@@ -3,21 +3,12 @@
   <property file="IntelliLang.properties"/>
 
   <fail unless="jdk.home.idea_8.0">
-    Please set the property 'jdk.home.idea_7.0' to point to your IntelliJ IDEA 6.0 installation directory.
+    Please set the property 'jdk.home.idea_8.0' to point to your IntelliJ IDEA 8.0 installation directory.
   </fail>
 
   <import file="IntelliLang.xml" />
 
-  <target name="jars" depends="all, jar.IntelliLang, jar.annotations" />
-
-  <target name="jar.annotations" depends="compile.module.annotations">
-    <mkdir dir="build" />
-    <jar file="build/annotations.jar">
-      <fileset dir="${annotations.output.dir}">
-        <include name="**/*.*" />
-      </fileset>
-    </jar>
-  </target>
+  <target name="jars" depends="all, jar.IntelliLang" />
 
   <target name="jar.IntelliLang" depends="compile.module.intellilang">
     <mkdir dir="build" />

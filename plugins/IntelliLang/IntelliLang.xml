@@ -57,6 +57,7 @@
   <path id="jdk.classpath.idea_8.0">
     <fileset dir="${jdk.home.idea_8.0}">
       <include name="lib/*.jar" />
+      <include name="plugins/xpath/lib/*.jar" />
     </fileset>
   </path>
 
@@ -70,74 +71,6 @@
   <!-- Application Server Libraries -->
 
   <!-- Modules -->
-
-
-  <!-- Module annotations -->
-
-  <dirname property="module.annotations.basedir" file="${ant.file}"/>
-
-
-  <property name="module.jdk.home.annotations" value="${project.jdk.home}"/>
-  <property name="module.jdk.classpath.annotations" value="${project.jdk.classpath}"/>
-
-  <property name="compiler.args.annotations" value="${compiler.args}"/>
-
-  <property name="annotations.output.dir" value="${module.annotations.basedir}/annotations/classes"/>
-  <property name="annotations.testoutput.dir" value="${module.annotations.basedir}/annotations/classes"/>
-
-  <path id="annotations.module.bootclasspath">
-    <!-- Paths to be included in compilation bootclasspath -->
-  </path>
-
-  <path id="annotations.module.classpath">
-    <path refid="${module.jdk.classpath.annotations}"/>
-  </path>
-
-
-  <patternset id="excluded.from.module.annotations">
-    <patternset refid="ignored.files"/>
-  </patternset>
-
-  <patternset id="excluded.from.compilation.annotations">
-    <patternset refid="compiler.excluded"/>
-    <patternset refid="excluded.from.module.annotations"/>
-  </patternset>
-
-  <path id="annotations.module.sourcepath">
-    <dirset dir="${module.annotations.basedir}/annotations">
-      <include name="src"/>
-    </dirset>
-  </path>
-
-
-  <target name="compile.module.annotations" depends="compile.module.annotations.production,compile.module.annotations.tests" description="Compile module annotations"/>
-
-  <target name="compile.module.annotations.production" description="Compile module annotations; production classes">
-    <mkdir dir="${annotations.output.dir}"/>
-    <javac2 destdir="${annotations.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" target="1.5">
-      <compilerarg line="${compiler.args.annotations}"/>
-      <bootclasspath refid="annotations.module.bootclasspath"/>
-      <classpath refid="annotations.module.classpath"/>
-      <src refid="annotations.module.sourcepath"/>
-      <patternset refid="excluded.from.compilation.annotations"/>
-    </javac2>
-
-    <copy todir="${annotations.output.dir}">
-      <fileset dir="${module.annotations.basedir}/annotations/src">
-        <patternset refid="compiler.resources"/>
-        <type type="file"/>
-        <patternset refid="excluded.from.compilation.annotations"/>
-      </fileset>
-    </copy>
-  </target>
-
-  <target name="compile.module.annotations.tests" depends="compile.module.annotations.production" description="compile module annotations; test classes" unless="skip.tests"/>
-
-  <target name="clean.module.annotations" description="cleanup module">
-    <delete dir="${annotations.output.dir}"/>
-    <delete dir="${annotations.testoutput.dir}"/>
-  </target>
-
 
   <!-- Module regexp-lang-java -->
 
@@ -248,7 +181,6 @@
 
   <path id="intellilang.module.classpath">
     <path refid="${module.jdk.classpath.intellilang}"/>
-    <pathelement location="${annotations.output.dir}"/>
     <pathelement location="${regexp-lang-java.output.dir}"/>
     <pathelement location="${regexp-lang-java.testoutput.dir}"/>
   </path>
@@ -272,7 +204,7 @@
 
   <target name="compile.module.intellilang" depends="compile.module.intellilang.production,compile.module.intellilang.tests" description="Compile module IntelliLang"/>
 
-  <target name="compile.module.intellilang.production" depends="compile.module.annotations,compile.module.regexp-lang-java" description="Compile module IntelliLang; production classes">
+  <target name="compile.module.intellilang.production" depends="compile.module.regexp-lang-java" description="Compile module IntelliLang; production classes">
     <mkdir dir="${intellilang.output.dir}"/>
     <javac2 destdir="${intellilang.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" target="1.5">
       <compilerarg line="${compiler.args.intellilang}"/>
@@ -302,7 +234,7 @@
     <!-- Perform any build initialization in this target -->
   </target>
 
-  <target name="clean" depends="clean.module.annotations, clean.module.regexp-lang-java, clean.module.intellilang" description="cleanup all"/>
+  <target name="clean" depends="clean.module.regexp-lang-java, clean.module.intellilang" description="cleanup all"/>
 
-  <target name="all" depends="init, clean, compile.module.annotations, compile.module.regexp-lang-java, compile.module.intellilang" description="build all"/>
+  <target name="all" depends="init, clean, compile.module.regexp-lang-java, compile.module.intellilang" description="build all"/>
 </project>
