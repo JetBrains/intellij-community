@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -33,8 +32,8 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.ui.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
@@ -49,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.*;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
@@ -106,7 +106,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   public ToolWindow getToolWindow() {
     if (myToolWindow == null) {
       myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(DYNAMIC_TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT);
-      myToolWindow.setIcon(IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png"));
+      myToolWindow.setIcon(GroovyIcons.DYNAMIC_PROPERTY_TOOL_WINDOW_ICON);
       myToolWindow.setTitle(GroovyBundle.message("dynamic.window"));
       myToolWindow.setToHideOnEmptyContent(true);
 

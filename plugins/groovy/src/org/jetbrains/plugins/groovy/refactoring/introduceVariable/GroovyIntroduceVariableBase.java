@@ -253,7 +253,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
             if (editor != null) {
               // todo implement it...
 //              final PsiElement[] replacedOccurrences = replaced.toArray(new PsiElement[replaced.size()]);
-//              highlightReplacedOccurrences(project, editor, replacedOccurrences);
+//              highlightReplacedOccurrences(myProject, editor, replacedOccurrences);
             }
           } else {
             if (!alreadyDefined) {

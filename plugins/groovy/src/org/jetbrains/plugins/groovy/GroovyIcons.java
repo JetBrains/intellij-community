@@ -24,21 +24,23 @@ import javax.swing.*;
  */
 public interface GroovyIcons {
 
-  public static final Icon FILE_TYPE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_fileType.png");
-  public static final Icon SMALLEST = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_16x16.png");
-  public static final Icon BIG_ICON = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_32x32.png");
-  public static final Icon CLASS = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/class.png");
-  public static final Icon ABSTRACT_CLASS = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/abstractClass.png");
-  public static final Icon INTERFACE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/interface.png");
-  public static final Icon ANNOTATION_TYPE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/annotationType.png");
-  public static final Icon ENUM = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/enum.png");
-  public static final Icon PROPERTY = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/property.png");
-  public static final Icon METHOD = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/method.png");
-  public static final Icon DYNAMIC = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png");
-  public static final Icon DEF = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/def.png");
-  public static final Icon FIELD = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/field.png");
+  Icon FILE_TYPE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_fileType.png");
+  Icon SMALLEST = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_16x16.png");
+  Icon BIG_ICON = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_32x32.png");
+  Icon CLASS = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/class.png");
+  Icon ABSTRACT_CLASS = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/abstractClass.png");
+  Icon INTERFACE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/interface.png");
+  Icon ANNOTATION_TYPE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/annotationType.png");
+  Icon ENUM = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/enum.png");
+  Icon PROPERTY = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/property.png");
+  Icon METHOD = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/method.png");
+  Icon DYNAMIC = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png");
+  Icon DEF = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/def.png");
+  Icon FIELD = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/field.png");
 
-  public static final Icon NO_GROOVY_SDK = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/no_groovy_sdk.png");
-  public static final Icon GROOVY_SDK = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_sdk.png");
+  Icon NO_GROOVY_SDK = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/no_groovy_sdk.png");
+  Icon GROOVY_SDK = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_sdk.png");
+
+  Icon DYNAMIC_PROPERTY_TOOL_WINDOW_ICON = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png");
 
 }

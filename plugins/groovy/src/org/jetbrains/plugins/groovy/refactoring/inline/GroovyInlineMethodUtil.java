@@ -79,7 +79,7 @@ public abstract class GroovyInlineMethodUtil {
 
     if (element.getContainingFile() instanceof GroovyFile) {
       if (!(isStaticMethod(method) || areInSameClass(element, method))) { // todo implement for other cases
-//        showErrorMessage("Other class support will be implemented soon", project);
+//        showErrorMessage("Other class support will be implemented soon", myProject);
 //        return null;
       }
     }

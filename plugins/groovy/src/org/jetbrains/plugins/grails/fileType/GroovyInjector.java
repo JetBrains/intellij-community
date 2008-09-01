@@ -47,11 +47,11 @@ public class GroovyInjector implements ProjectComponent {
   }
 
   public void projectOpened() {
-    // called when project is opened
+    // called when myProject is opened
   }
 
   public void projectClosed() {
-    // called when project is being closed
+    // called when myProject is being closed
   }
 
   public static final String EVAL_NAME = "evaluate";

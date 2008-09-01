@@ -29,8 +29,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
-import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
@@ -64,7 +62,7 @@ public class DynamicManagerImpl extends DynamicManager {
     StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
       public void run() {
         if (myRootElement.getContainingClasses().size() > 0) {
-          DynamicToolWindowWrapper.getInstance(project).getToolWindow(); //initialize window
+          DynamicToolWindowWrapper.getInstance(project).getToolWindow(); //initialize myToolWindow
         }
       }
     });
@@ -85,7 +83,7 @@ public class DynamicManagerImpl extends DynamicManager {
     final DPropertyElement propertyElement = (DPropertyElement) createDynamicElement(settings);
     final DClassElement classElement = getOrCreateClassElement(myProject, settings.getContainingClassName());
 
-    ToolWindow window = DynamicToolWindowWrapper.getInstance(myProject).getToolWindow(); //important to fetch window before adding
+    ToolWindow window = DynamicToolWindowWrapper.getInstance(myProject).getToolWindow(); //important to fetch myToolWindow before adding
     classElement.addProperty(propertyElement);
     addItemInTree(classElement, propertyElement, window);
   }
@@ -191,7 +189,7 @@ public class DynamicManagerImpl extends DynamicManager {
     final DMethodElement methodElement = (DMethodElement) createDynamicElement(settings);
     final DClassElement classElement = getOrCreateClassElement(myProject, settings.getContainingClassName());
 
-    ToolWindow window = DynamicToolWindowWrapper.getInstance(myProject).getToolWindow(); //important to fetch window before adding
+    ToolWindow window = DynamicToolWindowWrapper.getInstance(myProject).getToolWindow(); //important to fetch myToolWindow before adding
     classElement.addMethod(methodElement);
     addItemInTree(classElement, methodElement, window);
   }

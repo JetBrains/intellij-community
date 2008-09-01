@@ -111,7 +111,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       FileEditorManager manager = FileEditorManager.getInstance(project);
       Editor editor = manager.getSelectedTextEditor();
 
-      //GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{pointer.getElement()});
+      //GroovyRefactoringUtil.highlightOccurrences(myProject, editor, new PsiElement[]{pointer.getElement()});
       TextRange range = new TextRange(marker.getStartOffset(), marker.getEndOffset());
       GroovyRefactoringUtil.highlightOccurrencesByRanges(project, editor, new TextRange[]{range});
 

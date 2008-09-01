@@ -81,7 +81,7 @@ public class GrGenerateEqualsHelper {
     myFactory = GroovyPsiElementFactory.getInstance(project);
 
     mySuperHasHashCode = superMethodExists(getHashCodeSignature());
-//    myCodeStyleManager = CodeStyleManager.getInstance(project);
+//    myCodeStyleManager = CodeStyleManager.getInstance(myProject);
   }
 
   private static String getUniqueLocalVarName(String base, PsiField[] fields) {
