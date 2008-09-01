@@ -102,10 +102,10 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   public List<Library> setupLibraries(final Module module) {
-    ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     List<Library> addedLibraries = new ArrayList<Library>();
     if (myLibraryCompositionSettings == null) return addedLibraries;
 
+    ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     myLibraryCompositionSettings.addLibraries(model, addedLibraries, myContext.getLibrariesContainer());
     if (model.isChanged()) {
       model.commit();
