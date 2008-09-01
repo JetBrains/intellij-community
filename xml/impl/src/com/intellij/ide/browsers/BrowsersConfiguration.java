@@ -184,16 +184,11 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
   }
 
   public static void launchBrowser(final BrowserFamily family, @NotNull final String url) {
-    try {
-      getInstance()._launchBrowser(family, url);
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    getInstance()._launchBrowser(family, url);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private void _launchBrowser(final BrowserFamily family, @NotNull final String url) throws IOException {
+  private void _launchBrowser(final BrowserFamily family, @NotNull final String url) {
     final Pair<String, Boolean> pair = myBrowserToPathMap.get(family);
     if (pair != null) {
       final String path = pair.first;
@@ -221,7 +216,12 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
         }
 
         if (command != null) {
-          Runtime.getRuntime().exec(command);
+          try {
+            Runtime.getRuntime().exec(command);
+          }
+          catch (IOException e) {
+            Messages.showErrorDialog(e.getMessage(), XmlBundle.message("browser.error"));
+          }
         }
         else {
           LOG.assertTrue(false);
