@@ -208,10 +208,6 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
 
     private ReferenceType myType;
 
-    TypeOrElementOrAttributeReference(PsiElement element) {
-      this(element,new TextRange(1,element.getTextLength()-1));
-    }
-
     TypeOrElementOrAttributeReference(PsiElement element, TextRange range) {
       myElement = element;
       myRange   = range;
@@ -641,7 +637,8 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
   }
 
   public static PsiReference createTypeOrElementOrAttributeReference(final PsiElement element) {
-    return new TypeOrElementOrAttributeReference(element);
+    final int length = element.getTextLength();
+    return new TypeOrElementOrAttributeReference(element, length >= 2 ? new TextRange(1, length - 1) : new TextRange(0,0));
   }
 
 }
