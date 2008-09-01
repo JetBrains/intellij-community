@@ -92,7 +92,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             "src/inspectionDescriptions/";
     private final InspectionGadgetsTelemetry telemetry =
             new InspectionGadgetsTelemetry();
-    private static final boolean TELEMETRY_ENABLED = false;
+    public static final boolean TELEMETRY_ENABLED = false;
     @NonNls private static final String INSPECTION = "Inspection";
     @NonNls private static final String BUILD_FIXES_ONLY_ON_THE_FLY = "(r)";
 
