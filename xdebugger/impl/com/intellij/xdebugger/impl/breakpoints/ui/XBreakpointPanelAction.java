@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.Collection;
 
 /**
@@ -23,6 +24,6 @@ public abstract class XBreakpointPanelAction<B extends XBreakpoint<?>> {
 
   public abstract boolean isEnabled(@NotNull Collection<? extends B> breakpoints);
 
-  public abstract void perform(@NotNull Collection<? extends B> breakpoints);
+  public abstract void perform(@NotNull Collection<? extends B> breakpoints, final JComponent parentComponent);
 
 }

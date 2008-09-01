@@ -59,12 +59,15 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
       }
     });
 
+    List<XBreakpointPanelAction<B>> actions = new ArrayList<XBreakpointPanelAction<B>>();
+    if (type.isAddBreakpointButtonVisible()) {
+      actions.add(new AddBreakpointAction<B>(this));
+    }
+    actions.add(new GoToBreakpointAction<B>(this, XDebuggerBundle.message("xbreakpoints.dialog.button.goto"), true));
+    actions.add(new GoToBreakpointAction<B>(this, XDebuggerBundle.message("xbreakpoints.dialog.button.view.source"), false));
+    actions.add(new RemoveBreakpointAction<B>(this));
     //noinspection unchecked
-    myActions = new XBreakpointPanelAction[] {
-      new GoToBreakpointAction<B>(this, XDebuggerBundle.message("xbreakpoints.dialog.button.goto"), true),
-      new GoToBreakpointAction<B>(this, XDebuggerBundle.message("xbreakpoints.dialog.button.view.source"), false),
-      new RemoveBreakpointAction<B>(this)
-    };
+    myActions = actions.toArray(new XBreakpointPanelAction[actions.size()]);
 
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
     initButtons();
@@ -159,11 +162,11 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
   }
 
   private JButton createButton(final XBreakpointPanelAction<B> action) {
-    JButton button = new JButton(action.getName());
+    final JButton button = new JButton(action.getName());
     button.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         List<B> list = myTree.getSelectedBreakpoints();
-        action.perform(list);
+        action.perform(list, button);
       }
     });
     return button;
@@ -215,6 +218,10 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
     return myMainPanel;
   }
 
+  public XBreakpointType<B, ?> getType() {
+    return myType;
+  }
+
   public boolean canSelectBreakpoint(final XBreakpoint breakpoint) {
     return breakpoint.getType().equals(myType);
   }
@@ -237,4 +244,7 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
     }
   }
 
+  public Project getProject() {
+    return myProject;
+  }
 }

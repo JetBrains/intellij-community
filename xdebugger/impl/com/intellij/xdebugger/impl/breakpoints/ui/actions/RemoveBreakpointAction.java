@@ -9,6 +9,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.Result;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.Collection;
 
 /**
@@ -23,7 +24,7 @@ public class RemoveBreakpointAction<B extends XBreakpoint<?>> extends XBreakpoin
     return !breakpoints.isEmpty();
   }
 
-  public void perform(@NotNull final Collection<? extends B> breakpoints) {
+  public void perform(@NotNull final Collection<? extends B> breakpoints, final JComponent parentComponent) {
     final XBreakpointManager breakpointManager = myBreakpointsPanel.getBreakpointManager();
     new WriteAction() {
       protected void run(final Result result) {

@@ -17,6 +17,7 @@
 package com.intellij.xdebugger.breakpoints;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -106,4 +107,23 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return XDebuggerUtil.getInstance().getDefaultBreakpointComparator(this);
   }
 
+  /**
+   * Return <code>true</code> from this method in order to allow adding breakpoints from the "Breakpoints" dialog. Also override
+   * {@link XBreakpointType#addBreakpoint(com.intellij.openapi.project.Project,javax.swing.JComponent)} method.
+   * @return <code>true</code> if "Add" button should be visible in "Breakpoints" dialog
+   */
+  public boolean isAddBreakpointButtonVisible() {
+    return false;
+  }
+
+  /**
+   * This method is called then "Add" button is pressed in the "Breakpoints" dialog 
+   * @param project
+   * @param parentComponent
+   * @return the created breakpoint or <code>null</code> if breakpoint wasn't created
+   */
+  @Nullable
+  public B addBreakpoint(final Project project, JComponent parentComponent) {
+    return null;
+  }
 }
