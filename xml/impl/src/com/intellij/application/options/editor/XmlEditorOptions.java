@@ -23,6 +23,7 @@ import java.io.File;
 public class XmlEditorOptions implements PersistentStateComponent<XmlEditorOptions>, ExportableComponent {
 
   private boolean myBreadcrumbsEnabled = true;
+  private boolean myShowCssColorPreviewInGutter = true;
 
   public static XmlEditorOptions getInstance() {
     return ServiceManager.getService(XmlEditorOptions.class);
@@ -34,6 +35,14 @@ public class XmlEditorOptions implements PersistentStateComponent<XmlEditorOptio
 
   public boolean isBreadcrumbsEnabled() {
     return myBreadcrumbsEnabled;
+  }
+
+  public boolean isShowCssColorPreviewInGutter() {
+    return myShowCssColorPreviewInGutter;
+  }
+
+  public void setShowCssColorPreviewInGutter(final boolean showCssColorPreviewInGutter) {
+    myShowCssColorPreviewInGutter = showCssColorPreviewInGutter;
   }
 
   @NotNull

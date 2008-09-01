@@ -50,7 +50,7 @@
 
 
     <breadcrumbsInfoProvider implementation="com.intellij.xml.breadcrumbs.XmlLanguageBreadcrumbsInfoProvider"/>
-    <editorOptionsProvider implementation="com.intellij.application.options.editor.XmlEditorOptionsProvider"/>
+    <editorOptionsProvider implementation="com.intellij.application.options.editor.WebEditorOptionsProvider"/>
 
     <fileBasedIndex implementation="com.intellij.util.xml.DomFileIndex"/>
     <fileBasedIndex implementation="com.intellij.xml.index.XmlTagNamesIndex"/>
