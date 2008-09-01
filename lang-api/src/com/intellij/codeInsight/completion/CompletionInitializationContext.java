@@ -21,6 +21,7 @@ public class CompletionInitializationContext {
   public static final OffsetKey IDENTIFIER_END_OFFSET = OffsetKey.create("identifierEnd");
 
   public static @NonNls final String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz ";
+  public static @NonNls final String DUMMY_IDENTIFIER_TRIMMED = "IntellijIdeaRulezzz";
   private final Editor myEditor;
   private final PsiFile myFile;
   private final CompletionType myCompletionType;
