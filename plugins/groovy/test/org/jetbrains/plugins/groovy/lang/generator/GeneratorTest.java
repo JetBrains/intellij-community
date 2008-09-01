@@ -1,19 +1,18 @@
 package org.jetbrains.plugins.groovy.lang.generator;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.GeneratingCompiler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.fixtures.impl.TempDirTextFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Test;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
@@ -32,50 +31,10 @@ import java.io.IOException;
  */
 public class GeneratorTest extends SimpleGroovyFileSetTestCase {
   protected static final String DATA_PATH = PathUtil.getDataPath(GeneratorTest.class);
-  protected static final File GENERATING_OUTPUT_DIR = new File(PathUtil.getOutputPath(GeneratorTest.class) + File.separator + "generating");
-
-  private final Object LOCK = new Object();
-  private int mySemaphore = 0;
   private VirtualFile myOutputDirVirtualFile;
-
-  static {
-    try {
-      boolean isCreated = GENERATING_OUTPUT_DIR.mkdirs();
-
-      if (!isCreated) {
-        throw new IOException(
-            "Directory for generated java stubs wasn't create, directory has already existed:" + GENERATING_OUTPUT_DIR.getAbsolutePath());
-      }
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
 
   public GeneratorTest() {
     super(System.getProperty("path") != null ? System.getProperty("path") : DATA_PATH);
-  }
-
-  public void up() {
-    synchronized (LOCK) {
-      mySemaphore++;
-      LOCK.notifyAll();
-    }
-  }
-
-  public void down() {
-    synchronized (LOCK) {
-      mySemaphore--;
-      LOCK.notifyAll();
-    }
-  }
-
-  public void waitFor() throws Exception {
-    synchronized (LOCK) {
-      if (mySemaphore > 0) {
-        LOCK.wait();
-      }
-    }
   }
 
   public String transform(String testName, String[] data) throws Exception {
@@ -83,49 +42,43 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
   }
 
   public String transformForRelPathTest(final String relTestPath, String[] data) throws Exception {
-    final GroovyToJavaGeneratorTester groovyToJavaGeneratorTester = new GroovyToJavaGeneratorTester(relTestPath, data[0], myProject);
-    final GeneratingCompiler.GenerationItem[][] generatedItems = new GeneratingCompiler.GenerationItem[1][1];
+    final TempDirTestFixture tempDirFixture = new TempDirTextFixtureImpl();
+    tempDirFixture.setUp();
 
     final StringBuffer buffer = new StringBuffer();
-    final Runnable generateThread = new Runnable() {
-      public void run() {
-        GeneratingCompiler.GenerationItem[] generationItems = groovyToJavaGeneratorTester.getGenerationItems(null);
+    try {
+      final GroovyToJavaGeneratorTester groovyToJavaGeneratorTester = new GroovyToJavaGeneratorTester(relTestPath, data[0], myProject);
+      final GeneratingCompiler.GenerationItem[][] generatedItems = new GeneratingCompiler.GenerationItem[1][1];
 
-        try {
-          myOutputDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(GENERATING_OUTPUT_DIR.getCanonicalPath().replace(File.separatorChar, '/')));
+      GeneratingCompiler.GenerationItem[] generationItems = groovyToJavaGeneratorTester.getGenerationItems(null);
 
-          generatedItems[0] = groovyToJavaGeneratorTester.generate(null, generationItems, myOutputDirVirtualFile);
+      myOutputDirVirtualFile = tempDirFixture.getFile("");
 
-          for (GeneratingCompiler.GenerationItem generatedItem : generatedItems[0]) {
-            final String path = GENERATING_OUTPUT_DIR + File.separator + generatedItem.getPath();
+      generatedItems[0] = groovyToJavaGeneratorTester.generate(null, generationItems, myOutputDirVirtualFile);
 
-            BufferedReader reader = new BufferedReader(new FileReader(path));
-            int ch = reader.read();
+      for (GeneratingCompiler.GenerationItem generatedItem : generatedItems[0]) {
+        final String path = tempDirFixture.getTempDirPath() + File.separator + generatedItem.getPath();
 
-            while (ch != -1) {
-              buffer.append((char) ch);
-              ch = reader.read();
-            }
+        BufferedReader reader = new BufferedReader(new FileReader(path));
+        int ch = reader.read();
 
-            buffer.append("\n");
-            buffer.append("---");
-            buffer.append("\n");
-          }
-        } catch (IOException e) {
-          e.printStackTrace();
-        } finally {
-          System.out.println("----------" + relTestPath + "----------");
-          System.out.println(buffer);
-          down();
+        while (ch != -1) {
+          buffer.append((char) ch);
+          ch = reader.read();
         }
+        reader.close();
+
+        buffer.append("\n");
+        buffer.append("---");
+        buffer.append("\n");
       }
-    };
-
-    up();
-    ApplicationManager.getApplication().executeOnPooledThread(generateThread);
-
-    waitFor();
-    Thread.sleep(5);
+    } catch (IOException e) {
+      e.printStackTrace();
+    } finally {
+      System.out.println("----------" + relTestPath + "----------");
+      System.out.println(buffer);
+      tempDirFixture.tearDown();
+    }
 
     return buffer.toString();
   }
@@ -174,24 +127,4 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
     return new GeneratorTest();
   }
 
-  static {
-    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-      public void run() {
-
-        final VirtualFile genOtputDir = LocalFileSystem.getInstance().findFileByIoFile(GENERATING_OUTPUT_DIR);
-        assert genOtputDir != null;
-
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              genOtputDir.delete(null);
-            }
-            catch (IOException e) {
-              e.printStackTrace();
-            }
-          }
-        });
-      }
-    }));
-  }
 }
