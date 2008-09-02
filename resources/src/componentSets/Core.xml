@@ -32,6 +32,10 @@
       <interface-class>com.intellij.ide.RecentProjectsManagerBase</interface-class>
       <implementation-class>com.intellij.ide.RecentProjectsManager</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>
+      <skipForDummyProject/>
+    </component>
   </application-components>
 
 
