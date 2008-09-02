@@ -1,3 +1,12 @@
+== version 1.2.0-beta5
+
++ SASL authentication support improved
++ Java SSH Trilead library updated to build 213
++ JNA library updated to version 3.0.4
++ Fixed: SSH connectivity problems with non-OpenSSH servers
++ Javadoc updated
++ Other bugfixes
+
 == version 1.2.0-beta4
 
 + Bugfixes

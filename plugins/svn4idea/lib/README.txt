@@ -12,6 +12,7 @@ to build the library are available for download from our Web site at http://svnk
 The TMate open source license permits you to use SVNKit at no charge under the condition 
 that if you use the software in an application you redistribute, the complete source code for 
 your application must be available and freely redistributable under reasonable conditions. 
+
 If you do not want to release the source code for your application, you may purchase a license 
 from TMate Software. For pricing information, or if you have further questions on licensing, 
 please contact us at support@svnkit.com.
@@ -25,15 +26,19 @@ SVNKit allows to work with Subversion repositories and Subversion working copies
 direct repository access as well as support for all high level Subversion operation that are 
 available with the command line Subversion client. 
 
-This version of SVNKit supports all Subversion 1.2 features and supports older Subversion repositories.
+This version of SVNKit supports all Subversion 1.5.0 features and supports older Subversion repositories.
 
 4. RESOURCES
 
 SVNKit Web Site: http://svnkit.com/
-SVNKit Documentation: http://svnkit.com/kb/index.html
+SVNKit Documentation: http://svnkit.com/documentation.html
+SVNKit Wiki: https://wiki.svnkit.com/
+SVNKit JavaDoc: http://svnkit.com/javadoc/
 
-SVNKit Mailing List: http://svnkit.com/kb/mailinglist.html
+SVNKit Mailing List: http://svnkit.com/support.html
 SVNKit Issues Tracker: http://svnkit.com/tracker/
+
+SVNKit Continuous Build Server: https://teamcity.svnkit.com/
 
 5. CONTACTS
 
