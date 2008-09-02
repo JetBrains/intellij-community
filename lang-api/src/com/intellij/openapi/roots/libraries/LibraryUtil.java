@@ -48,7 +48,7 @@ public class LibraryUtil {
   }
 
   @Nullable
-  public static Library findLibraryByClass(final String fqn, Project project) {
+  public static Library findLibraryByClass(final String fqn, @Nullable Project project) {
     if (project != null) {
       final LibraryTable projectTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
       Library library = findInTable(projectTable, fqn);
@@ -63,7 +63,7 @@ public class LibraryUtil {
 
   private static boolean findInFile(VirtualFile file, final StringTokenizer tokenizer) {
     if (!tokenizer.hasMoreTokens()) return true;
-    @NonNls StringBuffer name = new StringBuffer(tokenizer.nextToken());
+    @NonNls StringBuilder name = new StringBuilder(tokenizer.nextToken());
     if (!tokenizer.hasMoreTokens()) {
       name.append(".class");
     }
