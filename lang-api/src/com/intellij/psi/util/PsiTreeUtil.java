@@ -45,7 +45,7 @@ public class PsiTreeUtil {
    */
   public static boolean isAncestor(@Nullable PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
     if (ancestor == null) return false;
-    boolean stopAtFileLevel = !(element instanceof PsiFile || element instanceof PsiDirectory);
+    boolean stopAtFileLevel = !(ancestor instanceof PsiFile || ancestor instanceof PsiDirectory);
     PsiElement parent = strict ? element.getParent() : element;
     while (true) {
       if (parent == null) return false;
@@ -63,7 +63,7 @@ public class PsiTreeUtil {
    */
   public static boolean isContextAncestor(@Nullable PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
     if (ancestor == null) return false;
-    boolean stopAtFileLevel = !(element instanceof PsiFile || element instanceof PsiDirectory);
+    boolean stopAtFileLevel = !(ancestor instanceof PsiFile || ancestor instanceof PsiDirectory);
     PsiElement parent = strict ? element.getContext() : element;
     while (true) {
       if (parent == null) return false;
