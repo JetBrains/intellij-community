@@ -420,8 +420,6 @@ public class MavenEventsManager extends DummyProjectComponent implements Persist
   }
 
   private class MyProjectStateListener implements MavenProjectsManager.Listener {
-    private volatile boolean isUpdateScheduled = false;
-
     public void activate() {
       scheduleKeymapUpdate();
     }
@@ -439,11 +437,7 @@ public class MavenEventsManager extends DummyProjectComponent implements Persist
     }
 
     public void setIgnored(MavenProjectModel project, boolean on) {
-      if (on) {
-        projectRemoved(project);
-      } else {
-        projectAdded(project);
-      }
+      scheduleKeymapUpdate();
     }
 
     public void profilesChanged(List<String> profiles) {
@@ -461,6 +455,7 @@ public class MavenEventsManager extends DummyProjectComponent implements Persist
         updateTask.run();
       }
       else {
+        myKeymapUpdaterAlarm.cancelAllRequests();
         myKeymapUpdaterAlarm.addRequest(updateTask, 10);
       }
     }
