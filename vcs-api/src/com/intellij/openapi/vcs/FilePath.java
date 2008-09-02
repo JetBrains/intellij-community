@@ -28,11 +28,26 @@ import java.nio.charset.Charset;
  * Represents a path to a (possibly non-existing) file on disk or in a VCS repository.
  */
 public interface FilePath {
+  /**
+   * @return a virtual file that corresponds to this path, or null if the virtual file is no more valid.
+   */
   VirtualFile getVirtualFile();
+
+  /**
+   * @return the virtual file that corresponds to the parent file path, or null if the virtual file is no more valid.
+   */
   VirtualFile getVirtualFileParent();
 
-  @NotNull File getIOFile();
+  /**
+   * @return the {@link java.io.File} that corresponds to the path. The path might be non-existent or not local.
+   * @see #isNonLocal() 
+   */
+  @NotNull
+  File getIOFile();
 
+  /**
+   * @return the file name (without directory component)
+   */
   String getName();
 
   String getPresentableUrl();
@@ -42,24 +57,37 @@ public interface FilePath {
 
   Charset getCharset();
 
+  /**
+   * @return the type of the file
+   */
   FileType getFileType();
 
   void refresh();
 
   String getPath();
 
+  /**
+   * @return true if the path represents the directory
+   */
   boolean isDirectory();
 
   /**
    * Check if the provided file is an ancestor of the current file.
+   *
    * @param parent a possible parent
    * @param strict if true, the method also returns true if files are equal
    * @return true if {@code this} file is ancestor of the {@code parent}.
    */
   boolean isUnder(FilePath parent, boolean strict);
 
+  /**
+   * @return the parent path or null if there are no parent
+   */
   @Nullable
   FilePath getParentPath();
 
+  /**
+   * @return true if the path does not represents a file in the local file system
+   */
   boolean isNonLocal();
 }
