@@ -345,7 +345,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   public PsiClass createClass(String text) throws IOException {
     final String qname =
-      ((PsiJavaFile)PsiFileFactory.getInstance(getPsiManager().getProject()).createFileFromText("a.java", text)).getClasses()[0].getQualifiedName();
+      ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", text)).getClasses()[0].getQualifiedName();
     final VirtualFile[] files = ModuleRootManager.getInstance(myModule).getSourceRoots();
     File dir;
     if (files.length > 0) {
