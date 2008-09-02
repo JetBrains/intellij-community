@@ -126,6 +126,7 @@ import java.util.HashSet;
     myFilesToDelete = new HashSet<File>();
 
     setUpProject();
+    markProjectCreationPoint();
   }
 
   public Project getProject() {
@@ -154,7 +155,6 @@ import java.util.HashSet;
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
     myProject = myProjectManager.newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
-    myProject.putUserData(TESTCASE_NAME, getClass().getName() + "." + getName());
 
     setUpModule();
 
@@ -163,6 +163,10 @@ import java.util.HashSet;
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
 
     runStartupActivities();
+  }
+
+  public void markProjectCreationPoint() {
+    myProject.putUserData(TESTCASE_NAME, getClass().getName() + "." + getName());
   }
 
   protected void runStartupActivities() {
@@ -259,8 +263,7 @@ import java.util.HashSet;
       doPostponedFormatting(myProject);
 
       try {
-        Disposer.dispose(myProject);
-        ProjectManagerEx.getInstanceEx().setCurrentTestProject(null);
+        disposeProject();
 
         UndoManager.getGlobalInstance().dropHistory();
 
@@ -310,6 +313,16 @@ import java.util.HashSet;
     }
 
 
+  }
+
+  private void disposeProject() {
+    if (myProject != null) {
+      Disposer.dispose(myProject);
+      ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+      if (projectManager != null) {
+        projectManager.setCurrentTestProject(null);
+      }
+    }
   }
 
   protected void resetAllFields() {
@@ -415,7 +428,13 @@ import java.util.HashSet;
         ourTestThread = Thread.currentThread();
         ourTestTime = getTimeRequired();
         try {
-          setUp();
+          try {
+            setUp();
+          }
+          catch (Throwable e) {
+            disposeProject();
+            throw e;
+          }
           try {
             myAssertionsInTestDetected = true;
             runTest();
@@ -424,7 +443,10 @@ import java.util.HashSet;
           finally {
             try {
               tearDown();
-            } catch(Throwable th) { th.printStackTrace(); }
+            }
+            catch (Throwable th) {
+              th.printStackTrace();
+            }
           }
         }
         catch (Throwable throwable) {
@@ -459,7 +481,7 @@ import java.util.HashSet;
     }
   }
 
-  protected void runBareRunnable(Runnable runnable) throws Throwable, InvocationTargetException {
+  protected void runBareRunnable(Runnable runnable) throws Throwable {
     SwingUtilities.invokeAndWait(runnable);
   }
 
