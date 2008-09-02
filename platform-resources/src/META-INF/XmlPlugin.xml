@@ -107,7 +107,7 @@
     <lang.documentationProvider language="XHTML" implementationClass="com.intellij.xml.util.documentation.XHtmlDocumentationProvider"/>
 
     <lang.surroundDescriptor language="XML" implementationClass="com.intellij.lang.xml.XmlSurroundDescriptor"/>
-    <lang.surroundDescriptor language="HTML" implementationClass="com.intellij.lang.xml.XmlSurroundDescriptor"/>
+    <lang.surroundDescriptor language="HTML" implementationClass="com.intellij.lang.xml.XmlSurroundDescriptor" id="html-xml"/>
     <lang.surroundDescriptor language="XHTML" implementationClass="com.intellij.lang.xml.XmlSurroundDescriptor"/>
 
     <lang.unwrapDescriptor language="XML" implementationClass="com.intellij.lang.xml.XmlUnwrapDescriptor"/>
