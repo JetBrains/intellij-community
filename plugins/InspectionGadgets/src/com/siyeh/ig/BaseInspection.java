@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JFormattedTextField;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
 import java.lang.reflect.Field;
@@ -245,30 +245,30 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
         }
     }
 
-    @Override
-    public void inspectionStarted(LocalInspectionToolSession session) {
-        super.inspectionStarted(session);
-        if (timeStamp > 0) {
-            System.out.println("start reported without corresponding finish");
-        }
-        if (InspectionGadgetsPlugin.TELEMETRY_ENABLED) {
-            initializeTelemetryIfNecessary();
-            timeStamp = System.currentTimeMillis();
-        }
+  @Override
+  public void inspectionStarted(LocalInspectionToolSession session) {
+    super.inspectionStarted(session);
+    if (InspectionGadgetsPlugin.TELEMETRY_ENABLED) {
+      if (timeStamp > 0) {
+        System.out.println("start reported without corresponding finish");
+      }
+      initializeTelemetryIfNecessary();
+      timeStamp = System.currentTimeMillis();
     }
+  }
 
-    @Override
-    public void inspectionFinished(LocalInspectionToolSession session) {
-        super.inspectionFinished(session);
-        if (timeStamp < 0) {
-            System.out.println("finish reported without corresponding start");
-            return;
-        }
-        if (InspectionGadgetsPlugin.TELEMETRY_ENABLED) {
-            final long end = System.currentTimeMillis();
-            final String displayName = getDisplayName();
-            listener.reportRun(displayName, end - timeStamp);
-            timeStamp = -1;
-        }
+  @Override
+  public void inspectionFinished(LocalInspectionToolSession session) {
+    super.inspectionFinished(session);
+    if (InspectionGadgetsPlugin.TELEMETRY_ENABLED) {
+      if (timeStamp < 0) {
+        System.out.println("finish reported without corresponding start");
+        return;
+      }
+      final long end = System.currentTimeMillis();
+      final String displayName = getDisplayName();
+      listener.reportRun(displayName, end - timeStamp);
+      timeStamp = -1;
     }
+  }
 }
