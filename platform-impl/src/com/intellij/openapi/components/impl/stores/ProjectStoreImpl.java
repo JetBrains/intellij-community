@@ -289,7 +289,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       if (myProject.isDefault()) return null;
       final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE);
       assert storage != null;
-      return storage.getFilePath().replaceAll("/", File.separator);
+      return storage.getFilePath().replace('/', File.separatorChar);
     }
   }
 
