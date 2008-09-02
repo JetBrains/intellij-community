@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
+import java.io.File;
 import java.util.*;
 
 public class SvnMergeInfoCache {
@@ -46,6 +47,19 @@ public class SvnMergeInfoCache {
       final BranchInfo branchInfo = rootMapping.getBranchInfo(branchUrl);
       if (branchInfo != null) {
         branchInfo.clear();
+      }
+    }
+  }
+
+  public void removeList(final WCPaths info, final WCInfoWithBranches.Branch selectedBranch, final long listNumber) {
+    final String currentUrl = info.getRootUrl();
+    final String branchUrl = selectedBranch.getUrl();
+
+    final MyCurrentUrlData rootMapping = myState.getCurrentUrlMapping().get(currentUrl);
+    if (rootMapping != null) {
+      final BranchInfo branchInfo = rootMapping.getBranchInfo(branchUrl);
+      if (branchInfo != null) {
+        branchInfo.halfClear(listNumber);
       }
     }
   }
@@ -160,6 +174,14 @@ public class SvnMergeInfoCache {
       myNonExistingPaths.clear();
     }
 
+    public void halfClear(final long listNumber) {
+      myPathMergedMap.clear();
+      synchronized (myCalculatedLock) {
+        myAlreadyCalculatedMap.remove(listNumber);
+      }
+      myNonExistingPaths.clear();
+    }
+
     public Map<Long, MergeCheckResult> getCached() {
       synchronized (myCalculatedLock) {
         return new HashMap<Long, MergeCheckResult>(myAlreadyCalculatedMap);
@@ -204,17 +226,96 @@ public class SvnMergeInfoCache {
           notExistsRef.set(Boolean.TRUE); /// ?
           return;
         }
-        // todo use relative
         final String relativeToTrunkPath = absoluteInTrunkPath.substring(myTrunkUrl.length());
         //final String absolutePath = SVNPathUtil.append(myBranchUrl, relativeToTrunkPath);
 
-        final MergeCheckResult pathResult = checkOnePath(number, myBranchUrl, relativeToTrunkPath, branchPath);
+        final MergeCheckResult pathResult = checkOnePathLocally(number, branchPath, relativeToTrunkPath);
         if (MergeCheckResult.MERGED.equals(pathResult)) {
           mergedRef.set(Boolean.TRUE);
         } else if (MergeCheckResult.NOT_EXISTS.equals(pathResult)) {
           notExistsRef.set(Boolean.TRUE);
         }
       }
+    }
+
+    private MergeCheckResult checkOnePathLocally(final long number, final String head, final String tail) {
+      if ((myNonExistingPaths.contains(head)) || (head.length() == 0)) {
+        return MergeCheckResult.NOT_EXISTS;
+      }
+      final Set<Long> mergeInfo = myPathMergedMap.get(head);
+      if (mergeInfo != null) {
+        if (mergeInfo.contains(number)) {
+          return MergeCheckResult.getInstance(mergeInfo.contains(number));
+        }
+        return goDownLocally(number, head, tail);
+      }
+
+      LOG.debug("checking " + head + " tail: " + tail);
+
+      // go and get manually
+      try {
+        final SVNPropertyData mergeinfoProperty =
+            myClient.doGetProperty(new File(head), SVNProperty.MERGE_INFO, SVNRevision.WORKING, SVNRevision.WORKING);
+        boolean propertyFound = false;
+        if (mergeinfoProperty != null) {
+          final SVNPropertyValue value = mergeinfoProperty.getValue();
+          if (value != null) {
+            final Map<String, SVNMergeRangeList> map = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(value.getString()), null);
+            for (String key : map.keySet()) {
+              if ((key != null) && (key.startsWith(myRelativeTrunk))) {
+                propertyFound = true;
+                final Set<Long> revisions = new HashSet<Long>();
+                final SVNMergeRangeList rangesList = map.get(key);
+                boolean result = false;
+                for (SVNMergeRange range : rangesList.getRanges()) {
+                  // SVN does not include start revision in range
+                  final long startRevision = range.getStartRevision() + 1;
+                  final long endRevision = range.getEndRevision();
+                  if ((number >= startRevision) && (number <= endRevision)) {
+                    result = true;
+                  }
+                  for (long i = startRevision; i <= endRevision; i++) {
+                    revisions.add(i);
+                  }
+                }
+                myPathMergedMap.put(head, revisions);
+                if (result) {
+                  return MergeCheckResult.getInstance(result);
+                }
+              }
+            }
+          }
+        }
+        if (! propertyFound) {
+          myPathMergedMap.put(head, Collections.<Long>emptySet());
+        }
+      }
+      catch (SVNException e) {
+        LOG.info(e);
+        if (SVNErrorCode.ENTRY_NOT_FOUND.equals(e.getErrorMessage().getErrorCode())) {
+          myNonExistingPaths.add(head);
+          return MergeCheckResult.NOT_EXISTS;
+        }
+        return MergeCheckResult.NOT_MERGED;
+      }
+
+      return goDownLocally(number, head, tail);
+    }
+
+    private MergeCheckResult goDownLocally(final long number, final String head, final String tail) {
+      final String fixedTail = (tail.startsWith("/")) ? tail.substring(1) : tail;
+      final String newTail = SVNPathUtil.removeHead(fixedTail);
+      if (newTail.length() == 0) {
+        return MergeCheckResult.NOT_MERGED;
+      }
+      final String headOfTail = SVNPathUtil.head(fixedTail);
+      if (headOfTail.length() == 0) {
+        return MergeCheckResult.NOT_MERGED;
+      }
+      final String newHead = SVNPathUtil.append(head, headOfTail);
+
+      LOG.debug("goDown: newHead: " + newHead + " oldHead: " + head);
+      return checkOnePathLocally(number, newHead, newTail);
     }
 
     private MergeCheckResult checkOnePath(final long number, final String head, final String tail, final String branchPath) {

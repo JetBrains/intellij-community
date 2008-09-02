@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.mergeinfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListsListener;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
@@ -14,6 +15,7 @@ import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.dialogs.WCPaths;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.HashMap;
@@ -98,10 +100,12 @@ public class MergeInfoHolder {
   private class MyRefresher implements CommittedChangeListsListener {
     private final WCPaths myRefreshedRoot;
     private final WCInfoWithBranches.Branch myRefreshedBranch;
+    private final String myBranchPath;
 
     private MyRefresher() {
       myRefreshedRoot = myRootGetter.get();
       myRefreshedBranch = myBranchGetter.get();
+      myBranchPath = myWcPathGetter.get();
     }
 
     public void onBeforeStartReport() {
@@ -117,7 +121,8 @@ public class MergeInfoHolder {
         } */
 
         // prepare state. must be in non awt thread
-        final SvnMergeInfoCache.MergeCheckResult state = myMergeInfoCache.getState(myRefreshedRoot, (SvnChangeList)list, myRefreshedBranch);
+        final SvnMergeInfoCache.MergeCheckResult state = myMergeInfoCache.getState(myRefreshedRoot, (SvnChangeList)list, myRefreshedBranch,
+                                                                                   myBranchPath);
         // todo make batches - by 10
         final long number = list.getNumber();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -144,25 +149,20 @@ public class MergeInfoHolder {
   }
 
   public static enum ListMergeStatus {
-    MERGED(ourIntegratedText, ourIntegratedAttributes),
-    NOT_MERGED(ourNotIntegratedText, ourNotIntegratedAttributes),
-    ALIEN(null, null),
-    REFRESHING(SvnBundle.message("committed.changes.merge.status.refreshing.text"), ourRefreshAttributes);
+    MERGED(IconLoader.getIcon("/icons/Integrated.png")),
+    NOT_MERGED(IconLoader.getIcon("/icons/Notintegrated.png")),
+    //ALIEN(IconLoader.getIcon("/icons/OnDefault.png")),
+    ALIEN(null),
+    REFRESHING(IconLoader.getIcon("/icons/IntegrationStatusUnknown.png"));
 
-    private final String myString;
-    private final SimpleTextAttributes myAttributes;
+    private final Icon myIcon;
 
-    private ListMergeStatus(final String string, final SimpleTextAttributes attributes) {
-      myString = string;
-      myAttributes = attributes;
+    private ListMergeStatus(final Icon icon) {
+      myIcon = icon;
     }
 
-    public String getString() {
-      return myString;
-    }
-
-    public SimpleTextAttributes getAttributes() {
-      return myAttributes;
+    public Icon getIcon() {
+      return myIcon;
     }
   }
 
@@ -171,23 +171,6 @@ public class MergeInfoHolder {
   }
 
   class MyDecorator implements ListChecker {
-    /*private void fromCached(final SvnMergeInfoCache.MergeCheckResult result,
-                            final List<Pair<String,SimpleTextAttributes>> decoration, final boolean refreshing) {
-      if (result != null) {
-        if (SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result)) {
-          decoration.add(new Pair<String, SimpleTextAttributes>(ourIntegratedText, ourIntegratedAttributes));
-          return;
-        } else {
-          decoration.add(new Pair<String, SimpleTextAttributes>(ourNotIntegratedText, ourNotIntegratedAttributes));
-          return;
-        }
-      }
-      if (refreshing) {
-        decoration.add(new Pair<String, SimpleTextAttributes>(
-            SvnBundle.message("committed.changes.merge.status.refreshing.text"), ourRefreshAttributes));
-      }
-    }*/
-
     private ListMergeStatus convert(SvnMergeInfoCache.MergeCheckResult result, final boolean refreshing) {
       if (result != null) {
         if (SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result)) {

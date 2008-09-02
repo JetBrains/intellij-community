@@ -36,7 +36,6 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ConfigureBranchesAction;
-import org.jetbrains.idea.svn.actions.IntegrateChangeListsAction;
 import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
@@ -282,7 +281,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     refreshMergeInfo(rootsAndBranches);
 
     final DefaultActionGroup popup = new DefaultActionGroup(myVcs.getDisplayName(), true);
-    popup.add(new IntegrateChangeListsAction());
+    popup.add(rootsAndBranches.getIntegrateAction());
     popup.add(new ConfigureBranchesAction());
 
     final ShowHideMergePanel action = new ShowHideMergePanel(myProject, manager, rootsAndBranches.getStrategy(), location);

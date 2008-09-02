@@ -5,17 +5,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.integrate.SelectedCommittedStuffChecker;
 import org.jetbrains.idea.svn.integrate.SvnIntegrateChangesActionPerformer;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public abstract class AbstractIntegrateChangesAction extends AnAction {
-  private final SelectedCommittedStuffChecker myChecker;
+  protected final SelectedCommittedStuffChecker myChecker;
   private final boolean myCheckUseCase;
 
   protected AbstractIntegrateChangesAction(final SelectedCommittedStuffChecker checker, final boolean checkUseCase) {
     myChecker = checker;
     myCheckUseCase = checkUseCase;
+  }
+
+  public List<CommittedChangeList> getSelectedLists() {
+    return myChecker.getSelectedLists();
   }
 
   public void update(final AnActionEvent e) {
@@ -44,6 +52,13 @@ public abstract class AbstractIntegrateChangesAction extends AnAction {
     }
   }
 
+  @Nullable
+  protected abstract String getSelectedBranchUrl();
+  @Nullable
+  protected abstract String getSelectedBranchLocalPath();
+  @Nullable
+  protected abstract String getDialogTitle();
+
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -56,8 +71,15 @@ public abstract class AbstractIntegrateChangesAction extends AnAction {
       return;
     }
 
-    SelectBranchPopup.showForBranchRoot(project, myChecker.getRoot(),
-                                     new SvnIntegrateChangesActionPerformer(project, myChecker.getSameBranch(), myChecker.createFactory()),
-                                     SvnBundle.message("action.Subversion.integrate.changes.select.branch.text"));
+    final SvnIntegrateChangesActionPerformer changesActionPerformer =
+      new SvnIntegrateChangesActionPerformer(project, myChecker.getSameBranch(), myChecker.createFactory());
+
+    final String selectedBranchUrl = getSelectedBranchUrl();
+    if (selectedBranchUrl == null) {
+      SelectBranchPopup.showForBranchRoot(project, myChecker.getRoot(), changesActionPerformer,
+                                       SvnBundle.message("action.Subversion.integrate.changes.select.branch.text"));
+    } else {
+      changesActionPerformer.onBranchSelected(selectedBranchUrl, getSelectedBranchLocalPath(), getDialogTitle());
+    }
   }
 }

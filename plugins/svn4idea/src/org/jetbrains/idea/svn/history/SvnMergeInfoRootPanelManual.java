@@ -73,11 +73,13 @@ public class SvnMergeInfoRootPanelManual {
       public void actionPerformed(final ActionEvent e) {
         if (mySelectedBranch != null) {
           final Pair<WorkingCopyInfo,SVNURL> info =
-            IntegratedSelectedOptionsDialog.selectWorkingCopy(myProject, myInfo.getUrl(), mySelectedBranch.getUrl(), false);
+            IntegratedSelectedOptionsDialog.selectWorkingCopy(myProject, myInfo.getUrl(), mySelectedBranch.getUrl(), false, null,
+                                                              null);
           if (info != null) {
             final String local = info.getFirst().getLocalPath();
             myBranchToLocal.put(mySelectedBranch.getUrl(), local);
             myLocalArea.setText(local);
+            myLocalArea.setForeground(UIUtil.getInactiveTextColor());
           }
           myListener.run();
         }
@@ -94,9 +96,9 @@ public class SvnMergeInfoRootPanelManual {
               final String branch = SVNPathUtil.tail(url);
               myBranchField.setText(branch);
               calculateBranchPathByBranch(url);
+              myListener.run();
             }
           }, SvnBundle.message("select.branch.popup.general.title"));
-          myListener.run();
         }
       }
     });
@@ -182,6 +184,7 @@ public class SvnMergeInfoRootPanelManual {
     if (cached != null) {
       myLocalArea.setText(cached);
       myLocalArea.setForeground(UIUtil.getInactiveTextColor());
+      refreshSelectedBranch(url);
       return;
     }
     final Set<String> paths = url == null ? null : SvnBranchMapperManager.getInstance().get(url);
@@ -195,6 +198,10 @@ public class SvnMergeInfoRootPanelManual {
       myLocalArea.setText(list.get(0));
       myBranchToLocal.put(url, list.get(0));
     }
+    refreshSelectedBranch(url);
+  }
+
+  private void refreshSelectedBranch(final String url) {
     if ((mySelectedBranch != null) && (mySelectedBranch.getUrl().equals(url))) {
       return;
     }

@@ -4,16 +4,19 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -22,7 +25,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class Merger {
-  private final List<CommittedChangeList> myChangeLists;
+  protected final List<CommittedChangeList> myChangeLists;
   protected final File myTarget;
   protected final SVNDiffClient myDiffClient;
   protected int myCount;
@@ -31,8 +34,11 @@ public class Merger {
   protected final SVNURL myCurrentBranchUrl;
   private StringBuilder myCommitMessage;
   protected final SvnConfiguration mySvnConfig;
+  private final Consumer<List<CommittedChangeList>> myAfterProcessing;
 
-  public Merger(final SvnVcs vcs, final List<CommittedChangeList> changeLists, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl) {
+  public Merger(final SvnVcs vcs, final List<CommittedChangeList> changeLists, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl,
+                final Consumer<List<CommittedChangeList>> afterProcessing) {
+    myAfterProcessing = afterProcessing;
     mySvnConfig = SvnConfiguration.getInstance(vcs.getProject());
     myCurrentBranchUrl = currentBranchUrl;
     myDiffClient = vcs.createDiffClient();
@@ -86,9 +92,17 @@ public class Merger {
     }
   }
 
+  protected SVNRevisionRange createRange() {
+    return new SVNRevisionRange(SVNRevision.create(myLatestProcessed.getNumber() - 1), SVNRevision.create(myLatestProcessed.getNumber()));
+  }
+
+  protected boolean isRecordOnly() {
+    return false;
+  }
+
   protected void doMerge() throws SVNException {
-    myDiffClient.doMerge(myCurrentBranchUrl, SVNRevision.UNDEFINED, SVNRevision.create(myLatestProcessed.getNumber() - 1),
-      SVNRevision.create(myLatestProcessed.getNumber()), myTarget, true, true, false, mySvnConfig.MERGE_DRY_RUN);
+    myDiffClient.doMerge(myCurrentBranchUrl, SVNRevision.UNDEFINED, Collections.singletonList(createRange()),
+      myTarget, SVNDepth.INFINITY, true, false, mySvnConfig.MERGE_DRY_RUN, isRecordOnly());
   }
 
   @NonNls
@@ -130,5 +144,11 @@ public class Merger {
   @Nullable
   public File getMergeInfoHolder() {
     return myTarget;
+  }
+
+  protected void afterProcessing() {
+    if (myAfterProcessing != null) {
+      myAfterProcessing.consume(new ArrayList<CommittedChangeList>(myChangeLists.subList(0, myCount))); 
+    }
   }
 }

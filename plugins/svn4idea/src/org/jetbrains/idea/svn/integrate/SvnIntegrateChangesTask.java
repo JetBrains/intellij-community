@@ -13,15 +13,15 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnChangeProvider;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.update.RefreshVFsSynchronously;
 import org.jetbrains.idea.svn.update.SvnStatusWorker;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -41,6 +41,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private final UpdateEventHandler myHandler;
   private final Merger myMerger;
   private final ResolveWorker myResolveWorker;
+  private FilePathImpl myMergeTarget;
 
   public SvnIntegrateChangesTask(final SvnVcs vcs, final WorkingCopyInfo info, final MergerFactory mergerFactory,
                                  final SVNURL currentBranchUrl) {
@@ -151,13 +152,15 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     accomulate();
 
     if ((! myMerger.hasNext()) || (! myExceptions.isEmpty()) || myAccomulatedFiles.containErrors()) {
-      if (myAccomulatedFiles.isEmpty() && myExceptions.isEmpty()) {
+      initMergeTarget();
+      if (myAccomulatedFiles.isEmpty() && myExceptions.isEmpty() && (myMergeTarget == null)) {
         Messages.showMessageDialog(SvnBundle.message("action.Subversion.integrate.changes.message.files.up.to.date.text"),
                                    SvnBundle.message("action.Subversion.integrate.changes.messages.title"),
                                    Messages.getInformationIcon());
       } else {
         finishActions();
       }
+      myMerger.afterProcessing();
     } else {
       stepToNextChangeList();
     }
@@ -165,7 +168,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
   private void finishActions() {
     if ((! SvnConfiguration.getInstance(myProject).MERGE_DRY_RUN) && (myExceptions.isEmpty()) && (! myAccomulatedFiles.containErrors()) &&
-        (! myAccomulatedFiles.isEmpty())) {
+        ((! myAccomulatedFiles.isEmpty()) || (myMergeTarget != null))) {
       if (myInfo.isUnderProjectRoot()) {
         showLocalCommit();
       } else {
@@ -215,6 +218,20 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     });
   }
 
+  /**
+   * folder that is going to keep merge info record should also be changed
+   */
+  @Nullable
+  private void initMergeTarget() {
+    final File mergeInfoHolder = myMerger.getMergeInfoHolder();
+    if (mergeInfoHolder != null) {
+      final SVNStatus svnStatus = SvnUtil.getStatus(myVcs, mergeInfoHolder);
+      if ((svnStatus != null) && (SVNStatusType.STATUS_MODIFIED.equals(svnStatus.getPropertiesStatus()))) {
+        myMergeTarget = FilePathImpl.create(mergeInfoHolder);
+      }
+    }
+  }
+
   private void showLocalCommit() {
     final Collection<FilePath> files = new ArrayList<FilePath>();
     UpdateFilesHelper.iterateFileGroupFiles(myAccomulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
@@ -223,9 +240,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
         files.add(file);
       }
     });
-    final File mergeInfoHolder = myMerger.getMergeInfoHolder();
-    if (mergeInfoHolder != null) {
-      files.add(FilePathImpl.create(mergeInfoHolder));
+    if (myMergeTarget != null) {
+      files.add(myMergeTarget);
     }
 
     // for changes to be detected, we need switch to background change list manager update thread and back to dispatch thread
@@ -247,9 +263,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
         dirtyScope.addDirtyFile(file);
       }
     });
-    final File mergeInfoHolder = myMerger.getMergeInfoHolder();
-    if (mergeInfoHolder != null) {
-      dirtyScope.addDirtyFile(FilePathImpl.create(mergeInfoHolder));
+    if (myMergeTarget != null) {
+      dirtyScope.addDirtyFile(myMergeTarget);
     }
 
     final SvnChangeProvider provider = new SvnChangeProvider(myVcs);

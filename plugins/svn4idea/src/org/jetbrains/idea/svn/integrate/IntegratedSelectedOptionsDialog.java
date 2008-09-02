@@ -145,6 +145,18 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     });
   }
 
+  public void setSelectedWcPath(final String path) {
+    final ListModel model = myWorkingCopiesList.getModel();
+    final int size = model.getSize();
+    for (int i = 0; i < size; i++) {
+      final WorkingCopyInfo info = (WorkingCopyInfo) model.getElementAt(i);
+      if (info.getLocalPath().equals(path)) {
+        myWorkingCopiesList.setSelectedValue(info, true);
+        return;
+      }
+    }
+  }
+
   public void selectWcopyRootOnly() {
     myMustSelectBeforeOk = false;
     setTitle(SvnBundle.message("dialog.Subversion.select.working.copy.title"));
@@ -233,10 +245,17 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
   @Nullable
   public static Pair<WorkingCopyInfo, SVNURL> selectWorkingCopy(final Project project, final SVNURL currentBranch, final String targetBranch,
-                                                                final boolean showIntegrationParameters) {
+                                                                final boolean showIntegrationParameters,
+                                                                final String selectedLocalBranchPath, final String dialogTitle) {
     final IntegratedSelectedOptionsDialog dialog = new IntegratedSelectedOptionsDialog(project, currentBranch, targetBranch);
     if (! showIntegrationParameters) {
       dialog.selectWcopyRootOnly();
+    }
+    if (selectedLocalBranchPath != null) {
+      dialog.setSelectedWcPath(selectedLocalBranchPath);
+    }
+    if (dialogTitle != null) {
+      dialog.setTitle(dialogTitle);
     }
     dialog.show();
 

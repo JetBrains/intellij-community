@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -18,8 +19,10 @@ public class SelectedChangeListsChecker implements SelectedCommittedStuffChecker
   private boolean isValid;
   private SVNURL mySameBranch;
   private VirtualFile myVcsRoot;
+  private final Consumer<List<CommittedChangeList>> myAfterProcessing;
 
-  public SelectedChangeListsChecker() {
+  public SelectedChangeListsChecker(final Consumer<List<CommittedChangeList>> afterProcessing) {
+    myAfterProcessing = afterProcessing;
     myChangeListsList = new ArrayList<CommittedChangeList>();
   }
 
@@ -37,8 +40,12 @@ public class SelectedChangeListsChecker implements SelectedCommittedStuffChecker
     return isValid;
   }
 
+  public List<CommittedChangeList> getSelectedLists() {
+    return myChangeListsList;
+  }
+
   public MergerFactory createFactory() {
-    return new ChangeListsMergerFactory(myChangeListsList);
+    return new ChangeListsMergerFactory(myChangeListsList, myAfterProcessing);
   }
 
   private void checkSame() {

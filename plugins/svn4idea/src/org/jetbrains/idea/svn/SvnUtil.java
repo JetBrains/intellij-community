@@ -497,4 +497,14 @@ public class SvnUtil {
       }
     }
   }
+
+  public static SVNStatus getStatus(final SvnVcs vcs, final File file) {
+    final SVNStatusClient statusClient = vcs.createStatusClient();
+    try {
+      return statusClient.doStatus(file, false);
+    }
+    catch (SVNException e) {
+      return null;
+    }
+  }
 }

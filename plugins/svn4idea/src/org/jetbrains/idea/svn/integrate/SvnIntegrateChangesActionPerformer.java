@@ -25,13 +25,18 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
   }
 
   public void branchSelected(final Project project, final SvnBranchConfiguration configuration, final String url, final long revision) {
+    onBranchSelected(url, null, null);
+  }
+
+  public void onBranchSelected(final String url, final String selectedLocalBranchPath, final String dialogTitle) {
     if (myCurrentBranch.toString().equals(url)) {
       Messages.showErrorDialog(SvnBundle.message("action.Subversion.integrate.changes.error.source.and.target.same.text"),
                                SvnBundle.message("action.Subversion.integrate.changes.messages.title"));
       return;
     }
 
-    final Pair<WorkingCopyInfo,SVNURL> pair = IntegratedSelectedOptionsDialog.selectWorkingCopy(project, myCurrentBranch, url, true);
+    final Pair<WorkingCopyInfo,SVNURL> pair = IntegratedSelectedOptionsDialog.selectWorkingCopy(myVcs.getProject(), myCurrentBranch, url, true,
+                                                                                                selectedLocalBranchPath, dialogTitle);
     if (pair == null) {
       return;
     }

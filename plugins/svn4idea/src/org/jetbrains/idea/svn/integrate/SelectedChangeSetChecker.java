@@ -2,6 +2,7 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.changes.Change;
 import org.jetbrains.idea.svn.actions.ChangeSetMergerFactory;
 
@@ -12,6 +13,7 @@ public class SelectedChangeSetChecker extends SelectedChangeListsChecker {
   private final List<Change> mySelectedChanges;
 
   public SelectedChangeSetChecker() {
+    super(null);
     mySelectedChanges = new ArrayList<Change>();
   }
 
@@ -41,5 +43,9 @@ public class SelectedChangeSetChecker extends SelectedChangeListsChecker {
 
   public MergerFactory createFactory() {
     return new ChangeSetMergerFactory(myChangeListsList.get(0), mySelectedChanges);
+  }
+
+  public List<CommittedChangeList> getSelectedLists() {
+    return null;
   }
 }

@@ -32,17 +32,6 @@
       <add-to-group group-id="VcsGroups" anchor="last"/>      
     </group>
 
-    <!-- <action id="IntegrateChangeListsAction" class="org.jetbrains.idea.svn.actions.IntegrateChangeListsAction" popup="true">
-      <add-to-group group-id="CommittedChangesToolbar" anchor="last"/>
-    </action>
-
-    <action id="TestMergeInfo" class="org.jetbrains.idea.svn.actions.TestMergeInfoAction" popup="true">
-      <add-to-group group-id="CommittedChangesToolbar" anchor="last"/>
-    </action>
-
-    <action id="ConfigureBranches" class="org.jetbrains.idea.svn.actions.ConfigureBranchesAction" popup="true">
-      <add-to-group group-id="CommittedChangesToolbar" anchor="last"/>
-    </action> -->
 
     <action id="IntegrateChangeSetAction" class="org.jetbrains.idea.svn.actions.IntegrateChangeSetAction" popup="true" icon="/icons/IntegrateToBranch.png">
       <add-to-group group-id="RepositoryChangesBrowserToolbar" anchor="last"/>
