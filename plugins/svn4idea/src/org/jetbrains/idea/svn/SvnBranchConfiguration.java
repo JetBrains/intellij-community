@@ -363,7 +363,10 @@ public class SvnBranchConfiguration {
           final SVNURL currentUrl = dirEntry.getURL();
           if (! branchesUrl.equals(currentUrl)) {
             final String url = currentUrl.toString();
-            result.add(new SvnBranchItem(url, dirEntry.getDate(), dirEntry.getRevision()));
+            // if have permissions
+            if (dirEntry.getDate() != null) {
+              result.add(new SvnBranchItem(url, dirEntry.getDate(), dirEntry.getRevision()));
+            }
           }
         }
       });
