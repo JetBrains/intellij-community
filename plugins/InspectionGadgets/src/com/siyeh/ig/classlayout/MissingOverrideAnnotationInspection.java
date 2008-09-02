@@ -67,7 +67,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
     private static class MissingOverrideAnnotationFix
             extends InspectionGadgetsFix {
 
-        @Override @NotNull
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "missing.override.annotation.add.quickfix");
