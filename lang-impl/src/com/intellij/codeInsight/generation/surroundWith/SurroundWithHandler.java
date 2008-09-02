@@ -3,8 +3,8 @@ package com.intellij.codeInsight.generation.surroundWith;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.lang.LanguageSurrounders;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageSurrounders;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SurroundWithHandler implements CodeInsightActionHandler{
@@ -60,9 +61,9 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
 
     final Language baseLanguage = file.getViewProvider().getBaseLanguage();
     final Language l = element1.getParent().getLanguage();
-    List<SurroundDescriptor> surroundDescriptors;
+    List<SurroundDescriptor> surroundDescriptors = new ArrayList<SurroundDescriptor>();
 
-    surroundDescriptors = LanguageSurrounders.INSTANCE.allForLanguage(l);
+    surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(l));
     if (l != baseLanguage) surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(baseLanguage));
 
     if (surroundDescriptors.isEmpty()) return;
