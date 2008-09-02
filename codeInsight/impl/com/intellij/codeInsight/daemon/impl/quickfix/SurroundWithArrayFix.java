@@ -37,11 +37,12 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
-    return myMethodCall != null && myMethodCall.isValid() && getExpression(element) != null;
+    return getExpression(element) != null;
  }
 
   @Nullable
-  private PsiExpression getExpression(PsiElement element) {
+  protected PsiExpression getExpression(PsiElement element) {
+    if (myMethodCall == null || !myMethodCall.isValid()) return null;
     final PsiElement method = myMethodCall.resolveMethod();
     if (method != null) {
       final PsiMethod psiMethod = (PsiMethod)method;
@@ -85,7 +86,7 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     final PsiExpression expression = getExpression(file.findElementAt(editor.getCaretModel().getOffset()));
     assert expression != null;
-    final PsiExpression toReplace = elementFactory.createExpressionFromText(getArrayCreation(expression), myMethodCall);
+    final PsiExpression toReplace = elementFactory.createExpressionFromText(getArrayCreation(expression), file);
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(expression.replace(toReplace));
   }
 

@@ -518,7 +518,7 @@ public class HighlightUtil {
     else {
       PsiType returnType = method != null ? method.getReturnType() : null/*JSP page returns void*/;
       boolean isMethodVoid = returnType == null || PsiType.VOID == returnType;
-      PsiExpression returnValue = statement.getReturnValue();
+      final PsiExpression returnValue = statement.getReturnValue();
       if (returnValue != null) {
         PsiType valueType = returnValue.getType();
         if (isMethodVoid) {
@@ -534,6 +534,16 @@ public class HighlightUtil {
           if (errorResult != null && valueType != null) {
             IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, false);
             QuickFixAction.registerQuickFixAction(errorResult, fix);
+            if (returnType instanceof PsiArrayType &&
+                TypeConversionUtil.isAssignable(((PsiArrayType)returnType).getComponentType(), valueType) &&
+                returnValue != null) {
+              QuickFixAction.registerQuickFixAction(errorResult, new SurroundWithArrayFix(null){
+                @Override
+                protected PsiExpression getExpression(final PsiElement element) {
+                  return returnValue != null && returnValue.isValid() ? returnValue : null;
+                }
+              });
+            }
           }
         }
         navigationShift = returnValue.getStartOffsetInParent();
