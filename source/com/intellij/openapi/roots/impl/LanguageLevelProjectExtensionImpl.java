@@ -25,14 +25,14 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_5;
   private LanguageLevel myOriginalLanguageLevel = myLanguageLevel;
 
-  private Project myProject;
-  private Runnable myReloadProjectRequest;
+  private final Project myProject;
+  private volatile Runnable myReloadProjectRequest;
 
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
   }
 
-  public void readExternal(final Element element) throws InvalidDataException {
+  private void readExternal(final Element element) {
     if (myProject.isDefault()) {
       return; // TODO[max]: hack to enforce default project always has LangLevel == 1.5. This is necessary until StubUpdatingIndex
       // is able to determine correct language level for stub parsing.
@@ -52,7 +52,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     myOriginalLanguageLevel = myLanguageLevel;
   }
 
-  public void writeExternal(final Element element) throws WriteExternalException {
+  private void writeExternal(final Element element) {
     final boolean is14 = LanguageLevel.JDK_1_4.equals(myLanguageLevel);
     final boolean is15 = LanguageLevel.JDK_1_5.equals(myLanguageLevel);
     element.setAttribute(ASSERT_KEYWORD_ATTR, Boolean.toString(is14 || is15));

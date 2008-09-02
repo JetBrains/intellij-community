@@ -65,8 +65,8 @@ public final class PsiUtil extends PsiUtilBase {
 
   public static boolean isAccessibleFromPackage(@NotNull PsiModifierListOwner element, @NotNull PsiPackage aPackage) {
     if (element.hasModifierProperty(PsiModifier.PUBLIC)) return true;
-    if (element.hasModifierProperty(PsiModifier.PRIVATE)) return false;
-    return JavaPsiFacade.getInstance(element.getProject()).isInPackage(element, aPackage);
+    return !element.hasModifierProperty(PsiModifier.PRIVATE) &&
+           JavaPsiFacade.getInstance(element.getProject()).isInPackage(element, aPackage);
   }
 
   public static boolean isAccessedForWriting(PsiExpression expr) {
@@ -772,13 +772,13 @@ public final class PsiUtil extends PsiUtilBase {
 
   public static boolean canBeOverriden(PsiMethod method) {
     PsiClass parentClass = method.getContainingClass();
-    if (parentClass == null) return false;
-    if (method.isConstructor()) return false;
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    if (method.hasModifierProperty(PsiModifier.FINAL)) return false;
-    if (method.hasModifierProperty(PsiModifier.PRIVATE)) return false;
-    if (parentClass instanceof PsiAnonymousClass) return false;
-    return !parentClass.hasModifierProperty(PsiModifier.FINAL);
+    return parentClass != null &&
+           !method.isConstructor() &&
+           !method.hasModifierProperty(PsiModifier.STATIC) &&
+           !method.hasModifierProperty(PsiModifier.FINAL) &&
+           !method.hasModifierProperty(PsiModifier.PRIVATE) &&
+           !(parentClass instanceof PsiAnonymousClass) &&
+           !parentClass.hasModifierProperty(PsiModifier.FINAL);
   }
 
   public static PsiElement[] mapElements(ResolveResult[] candidates) {
@@ -845,7 +845,7 @@ public final class PsiUtil extends PsiUtilBase {
     if (!(file instanceof PsiJavaFile)) {
       final PsiElement context = file.getContext();
       if (context != null) return getLanguageLevel(context);
-      return LanguageLevelProjectExtension.getInstance(element.getProject()).getLanguageLevel();
+      return LanguageLevelProjectExtension.getInstance(file.getProject()).getLanguageLevel();
     }
     return ((PsiJavaFile)file).getLanguageLevel();
   }

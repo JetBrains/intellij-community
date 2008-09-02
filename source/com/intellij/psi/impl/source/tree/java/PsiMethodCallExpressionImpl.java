@@ -113,7 +113,8 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       PsiManager manager = call.getManager();
 
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
-      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
+      boolean is15OrHigher = languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
+      if (is15OrHigher) {
         //JLS3 15.8.2
         if (GET_CLASS_METHOD.equals(method.getName()) && "java.lang.Object".equals(method.getContainingClass().getQualifiedName())) {
           PsiExpression qualifier = methodExpression.getQualifierExpression();
@@ -145,7 +146,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       if (ret instanceof PsiClassType) {
         ret = ((PsiClassType)ret).setLanguageLevel(languageLevel);
       }
-      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
+      if (is15OrHigher) {
         final PsiSubstitutor substitutor = result.getSubstitutor();
         if (PsiUtil.isRawSubstitutor(method, substitutor)) return TypeConversionUtil.erasure(ret);
         PsiType substitutedReturnType = substitutor.substitute(ret);
