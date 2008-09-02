@@ -56,7 +56,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   }
 
   public int hashCode() {
-    return (mySubstitutionMap != null ? mySubstitutionMap.hashCode() : 0);
+    return mySubstitutionMap != null ? mySubstitutionMap.hashCode() : 0;
   }
 
   private PsiType rawTypeForTypeParameter(final PsiTypeParameter typeParameter) {
@@ -270,7 +270,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         }
 
         public PsiType visitType(PsiType type) {
-          LOG.assertTrue(false);
+          LOG.error(type.getInternalCanonicalText());
           return null;
         }
       });
