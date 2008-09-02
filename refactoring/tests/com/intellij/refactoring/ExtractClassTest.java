@@ -57,6 +57,10 @@ public class ExtractClassTest extends MultiFileTestCase{
   }
 
   private void doTestFieldAndMethod() throws Exception {
+    doTestFieldAndMethod("bar");
+  }
+
+  private void doTestFieldAndMethod(final String methodName) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test");
@@ -64,7 +68,7 @@ public class ExtractClassTest extends MultiFileTestCase{
         assertNotNull("Class Test not found", aClass);
 
         final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>();
-        methods.add(aClass.findMethodsByName("bar", false)[0]);
+        methods.add(aClass.findMethodsByName(methodName, false)[0]);
 
         final ArrayList<PsiField> fields = new ArrayList<PsiField>();
         fields.add(aClass.findFieldByName("myT", false));
@@ -75,6 +79,10 @@ public class ExtractClassTest extends MultiFileTestCase{
         FileDocumentManager.getInstance().saveAllDocuments();
       }
     });
+  }
+
+  public void testGetters() throws Exception {
+    doTestFieldAndMethod("getMyT");
   }
 
   public void testHierarchy() throws Exception {
