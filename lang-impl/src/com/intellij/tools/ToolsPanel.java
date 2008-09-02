@@ -2,7 +2,11 @@ package com.intellij.tools;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +68,10 @@ class ToolsPanel extends JPanel {
                                             final boolean hasFocus) {
             Object object = ((CheckedTreeNode)value).getUserObject();
             if (object instanceof ToolsGroup) {
-              getTextRenderer().append(((ToolsGroup)object).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+              final String groupName = ((ToolsGroup)object).getName();
+              if (groupName != null) {
+                getTextRenderer().append(groupName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+              }
             }
             else if (object instanceof Tool) {
               getTextRenderer().append(((Tool)object).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
@@ -365,7 +372,7 @@ class ToolsPanel extends JPanel {
     for (int i = 0; i < getTreeRoot().getChildCount(); i++) {
       CheckedTreeNode node = (CheckedTreeNode)getTreeRoot().getChildAt(i);
       ToolsGroup g = (ToolsGroup)node.getUserObject();
-      if (group.equals(g.getName())) return node;
+      if (Comparing.equal(group,g.getName())) return node;
     }
 
     return null;
