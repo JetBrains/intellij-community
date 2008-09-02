@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,30 +35,31 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean useJdk6Rules = false;
 
-    @NotNull
+    @Override @NotNull
     public String getID() {
         return "override";
     }
 
-    @NotNull
+    @Override @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "missing.override.annotation.display.name");
     }
 
-    @Nullable
+    @Override @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
                 "missing.override.annotation.jdk6.option"), this,
                 "useJdk6Rules");
     }
 
-    @NotNull
+    @Override @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "missing.override.annotation.problem.descriptor");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new MissingOverrideAnnotationFix();
     }
@@ -66,12 +67,13 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
     private static class MissingOverrideAnnotationFix
             extends InspectionGadgetsFix {
 
-        @NotNull
+        @Override @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "missing.override.annotation.add.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement identifier = descriptor.getPsiElement();
@@ -81,8 +83,8 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
             }
             final PsiModifierListOwner modifierListOwner =
                     (PsiModifierListOwner)parent;
-            final PsiManager psiManager = modifierListOwner.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory factory = psiFacade.getElementFactory();
             final PsiAnnotation annotation =
                     factory.createAnnotationFromText("@java.lang.Override",
                             modifierListOwner);
@@ -95,6 +97,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new MissingOverrideAnnotationVisitor();
     }
@@ -102,7 +105,8 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
     private class MissingOverrideAnnotationVisitor
             extends BaseInspectionVisitor{
 
-        @Override public void visitMethod(@NotNull PsiMethod method){
+        @Override
+        public void visitMethod(@NotNull PsiMethod method){
             if (method.getNameIdentifier() == null) {
                 return;
             }
@@ -145,7 +149,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
             if (superMethods.length <= 0) {
                 return false;
             }
-            // is override except is this is an interface method
+            // is override except if this is an interface method
             // overriding a protected method in java.lang.Object
             // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6501053
             final PsiClass methodClass = method.getContainingClass();
