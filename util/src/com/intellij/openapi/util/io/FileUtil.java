@@ -632,6 +632,10 @@ public class FileUtil {
     }
   }
 
+  public static String convertAntToRegexp(String antPattern) {
+    return convertAntToRegexp(antPattern, true);
+  }
+
   /**
    * @param antPattern ant-style path pattern
    * @return java regexp pattern.
@@ -640,12 +644,13 @@ public class FileUtil {
    * Paths containing windows-style backslashes must be converted before matching against the resulting regexp
    * @see com.intellij.openapi.util.io.FileUtil#toSystemIndependentName
    */
-  public static String convertAntToRegexp(String antPattern) {
+  public static String convertAntToRegexp(String antPattern, boolean ignoreStartingSlash) {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       int asteriskCount = 0;
       boolean recursive = true;
-      for (int idx = antPattern.startsWith("/") || antPattern.startsWith("\\") ? 1 : 0; idx < antPattern.length(); idx++) {
+      final int start = ignoreStartingSlash && (antPattern.startsWith("/") || antPattern.startsWith("\\")) ? 1 : 0;
+      for (int idx = start; idx < antPattern.length(); idx++) {
         final char ch = antPattern.charAt(idx);
         
         if (ch == '*') {
