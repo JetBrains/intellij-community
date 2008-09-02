@@ -18,7 +18,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -431,12 +430,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         }
 
         for (CommittedChangeListDecorator decorator : myDecorators) {
-          final List<Pair<String,SimpleTextAttributes>> pairs = decorator.decorate(changeList);
-
-          if (pairs != null) {
-            for (Pair<String, SimpleTextAttributes> pair : pairs) {
-              append(pair.first + ' ', pair.second);
-            }
+          final Icon icon = decorator.decorate(changeList);
+          if (icon != null) {
+            setIcon(icon);
           }
         }
 
