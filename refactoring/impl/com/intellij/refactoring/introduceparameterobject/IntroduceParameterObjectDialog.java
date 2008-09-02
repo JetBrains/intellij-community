@@ -8,8 +8,8 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.RefactorJHelpID;
 import com.intellij.refactoring.psi.PackageNameUtil;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.ParameterTablePanel;
@@ -337,7 +337,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
 
   protected void doHelpAction() {
     final HelpManager helpManager = HelpManager.getInstance();
-    helpManager.invokeHelp(RefactorJHelpID.IntroduceParameterObject);
+    helpManager.invokeHelp(HelpID.IntroduceParameterObject);
   }
 
   public boolean useExistingClass() {

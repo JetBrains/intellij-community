@@ -1,4 +1,4 @@
-package com.intellij.refactoring.wrapreturnvalue;
+package com.intellij.refactoring.wrapreturnvalue.usageInfo;
 
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReturnStatement;
@@ -7,11 +7,11 @@ import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-class WrapReturnValue extends FixableUsageInfo {
+public class WrapReturnValue extends FixableUsageInfo {
     private final PsiReturnStatement statement;
     private final String type;
 
-    WrapReturnValue(PsiReturnStatement statement, String type) {
+    public WrapReturnValue(PsiReturnStatement statement, String type) {
         super(statement);
         this.type = type;
         this.statement = statement;

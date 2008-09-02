@@ -37,7 +37,7 @@ class ReturnValueBeanBuilder {
     public String buildBeanClass() throws IOException {
         @NonNls final StringBuffer out = new StringBuffer(1024);
        
-        out.append("package " + packageName + ';');
+        if (packageName.length() > 0) out.append("package " + packageName + ';');
         out.append('\n');
         out.append("public class " + className);
         if (!typeParams.isEmpty()) {

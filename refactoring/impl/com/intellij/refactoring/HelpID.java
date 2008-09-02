@@ -4,6 +4,7 @@ package com.intellij.refactoring;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
+import org.jetbrains.annotations.NonNls;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class HelpID {
@@ -66,6 +67,10 @@ public class HelpID {
   public static final String INVERT_BOOLEAN             = "refactoring.invertBoolean";
   public static final String EXTRACT_METHOD_OBJECT = "refactoring.extractMethodObject";
   public static final String REPLACE_CONSTRUCTOR_WITH_BUILDER = "refactoring.replaceConstructorWithBuilder";
+  @NonNls public static final String ExtractClass = "refactorj.extractClass";
+  @NonNls public static final String IntroduceParameterObject = "refactorj.introduceParameterObject";
+  @NonNls public static final String RemoveMiddleman = "refactorj.removeMiddleman";
+  @NonNls public static final String WrapReturnValue = "refactorj.wrapReturnValue";
 
   public static String getMoveHelpID(PsiElement element) {
     if (element instanceof PsiPackage){

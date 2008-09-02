@@ -1,236 +1,276 @@
 package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.refactoring.psi.PropertyUtils;
-import com.intellij.refactoring.psi.SearchUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
+import com.intellij.refactoring.wrapreturnvalue.usageInfo.ChangeReturnType;
+import com.intellij.refactoring.wrapreturnvalue.usageInfo.ReturnWrappedValue;
+import com.intellij.refactoring.wrapreturnvalue.usageInfo.UnwrapCall;
+import com.intellij.refactoring.wrapreturnvalue.usageInfo.WrapReturnValue;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor {
-    @NonNls
-    private static final Map<String, String> specialNames = new HashMap<String, String>();
+public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor {
 
-    static
-    {
-       specialNames.put("java.lang.Integer", "intValue");
-       specialNames.put("java.lang.Double", "doubleValue");
-       specialNames.put("java.lang.Character", "charValue");
-       specialNames.put("java.lang.Float", "floatValue");
-       specialNames.put("java.lang.Long", "longValue");
-       specialNames.put("java.lang.Boolean", "booleanValue");
-       specialNames.put("java.lang.Byte", "byteValue");
-       specialNames.put("java.lang.Short", "shortValue");
+  private static final Logger LOG = Logger.getInstance("com.siyeh.rpp.wrapreturnvalue.WrapReturnValueProcessor");
+
+  private final PsiMethod method;
+  private final String className;
+  private final String packageName;
+  private final PsiField myDelegateField;
+  private final String myQualifiedName;
+  private final boolean myUseExistingClass;
+  private final List<PsiTypeParameter> typeParams;
+  @NonNls
+  private final String unwrapMethodName;
+
+  public WrapReturnValueProcessor(String className,
+                                  String packageName,
+                                  PsiMethod method,
+                                  boolean useExistingClass,
+                                  PsiField delegateField) {
+    super(method.getProject());
+    this.method = method;
+    this.className = className;
+    this.packageName = packageName;
+    myDelegateField = delegateField;
+    myQualifiedName = StringUtil.getQualifiedName(packageName, className);
+    this.myUseExistingClass = useExistingClass;
+
+    final Set<PsiTypeParameter> typeParamSet = new HashSet<PsiTypeParameter>();
+    final TypeParametersVisitor visitor = new TypeParametersVisitor(typeParamSet);
+    final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
+    assert returnTypeElement != null;
+    returnTypeElement.accept(visitor);
+    typeParams = new ArrayList<PsiTypeParameter>(typeParamSet);
+    if (useExistingClass) {
+      unwrapMethodName = calculateUnwrapMethodName();
     }
-    private static final Logger logger =
-            Logger.getInstance("com.siyeh.rpp.wrapreturnvalue.WrapReturnValueProcessor");
-
-    private final PsiMethod method;
-    private final String className;
-    private final String packageName;
-    private final PsiClass existingClass;
-    private final List<PsiTypeParameter> typeParams;
-    @NonNls
-    private final String unwrapMethodName;
-
-    WrapReturnValueProcessor(String className,
-                             String packageName,
-                             PsiMethod method,
-                             boolean previewUsages, PsiClass existingClass){
-        super(method.getProject());
-        this.method = method;
-        this.className = className;
-        this.packageName = packageName;
-        this.existingClass = existingClass;
-
-        final Set<PsiTypeParameter> typeParamSet = new HashSet<PsiTypeParameter>();
-        final TypeParametersVisitor visitor = new TypeParametersVisitor(typeParamSet);
-        final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
-        assert returnTypeElement != null;
-        returnTypeElement.accept(visitor);
-        typeParams = new ArrayList<PsiTypeParameter>(typeParamSet);
-        if(existingClass != null){
-            unwrapMethodName = calculateUnwrapMethodName();
-        } else{
-            unwrapMethodName = "getValue";
-        }
+    else {
+      unwrapMethodName = "getValue";
     }
+  }
 
-    private String calculateUnwrapMethodName(){
-        final String existingClassName = existingClass.getQualifiedName();
-        if(specialNames.containsKey(existingClassName))
-        {
-            return specialNames.get(existingClassName);
+  private String calculateUnwrapMethodName() {
+    final PsiClass existingClass = JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName);
+    if (existingClass != null) {
+      if (TypeConversionUtil.isPrimitiveWrapper(myQualifiedName)) {
+        final PsiPrimitiveType unboxedType =
+          PsiPrimitiveType.getUnboxedType(JavaPsiFacade.getInstance(myProject).getElementFactory().createType(existingClass));
+        assert unboxedType != null;
+        return unboxedType.getCanonicalText() + "Value()";
+      }
+
+      final PsiMethod getter = PropertyUtils.findGetterForField(myDelegateField);
+      return getter != null ? getter.getName() : "";
+    }
+    return "";
+  }
+
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usageInfos) {
+    return new WrapReturnValueUsageViewDescriptor(method, usageInfos);
+  }
+
+  public void findUsages(@NotNull List<FixableUsageInfo> usages) {
+    findUsagesForMethod(method, usages);
+    for (PsiMethod overridingMethod : OverridingMethodsSearch.search(method)) {
+      findUsagesForMethod(overridingMethod, usages);
+    }
+  }
+
+  private void findUsagesForMethod(PsiMethod psiMethod, List<FixableUsageInfo> usages) {
+    for (PsiReference reference : ReferencesSearch.search(psiMethod, psiMethod.getUseScope())) {
+      final PsiElement referenceElement = reference.getElement();
+      final PsiElement parent = referenceElement.getParent();
+      if (parent instanceof PsiCallExpression) {
+        usages.add(new UnwrapCall((PsiCallExpression)parent, unwrapMethodName));
+      }
+    }
+    final String returnType = calculateReturnTypeString();
+    usages.add(new ChangeReturnType(psiMethod, returnType));
+    psiMethod.accept(new ReturnSearchVisitor(usages, returnType));
+  }
+
+  private String calculateReturnTypeString() {
+    final String qualifiedName = StringUtil.getQualifiedName(packageName, className);
+    final StringBuilder returnTypeBuffer = new StringBuilder(qualifiedName);
+    if (!typeParams.isEmpty()) {
+      returnTypeBuffer.append('<');
+      returnTypeBuffer.append(StringUtil.join(typeParams, new Function<PsiTypeParameter, String>() {
+        public String fun(final PsiTypeParameter typeParameter) {
+          final String paramName = typeParameter.getName();
+          LOG.assertTrue(paramName != null);
+          return paramName;
         }
+      }, ","));
+      returnTypeBuffer.append('>');
+    }
+    return returnTypeBuffer.toString();
+  }
 
-        PsiField instanceField = null;
-        final PsiField[] fields = existingClass.getFields();
-        for(PsiField field : fields){
-            if(!field.hasModifierProperty(PsiModifier.STATIC)){
-                instanceField = field;
-                break;
+  @Override
+  protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
+    List<String> conflicts = new ArrayList<String>();
+    final PsiClass existingClass = JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName);
+    if (myUseExistingClass) {
+      if (existingClass == null) {
+        conflicts.add(RefactorJBundle.message("could.not.find.selected.wrapping.class"));
+      }
+      else {
+        boolean foundConstructor = false;
+        final PsiMethod[] constructors = existingClass.getConstructors();
+        for (PsiMethod constructor : constructors) {
+          final PsiParameter[] parameters = constructor.getParameterList().getParameters();
+          if (parameters.length == 1) {
+            final PsiParameter parameter = parameters[0];
+            final PsiType parameterType = parameter.getType();
+            if (TypeConversionUtil.isAssignable(method.getReturnType(), parameterType)) {
+              foundConstructor = true;
+              break;
             }
+          }
         }
-        final PsiMethod getter = PropertyUtils.findGetterForField(instanceField);
-        return getter.getName();
-    }
-
-    protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usageInfos){
-        return new WrapReturnValueUsageViewDescriptor(method, usageInfos);
-    }
-
-    public void findUsages(@NotNull List<FixableUsageInfo> usages){
-        final Set<PsiMethod> siblingMethods = MethodInheritanceUtils.calculateSiblingMethods(method);
-        for(PsiMethod siblingMethod : siblingMethods){
-            findUsagesForMethod(siblingMethod, usages);
+        if (!foundConstructor) {
+          conflicts.add("Existing class does not have appropriate constructor");
         }
+      }
+      if (unwrapMethodName.length() == 0) {
+        conflicts.add("Existing class does not have getter for selected field");
+      }
+    }
+    else {
+      if (existingClass != null) {
+        conflicts.add(RefactorJBundle.message("there.already.exists.a.class.with.the.selected.name"));
+      }
+    }
+    return showConflicts(conflicts);
+  }
+
+  @Override
+  protected boolean showConflicts(final List<String> conflicts) {
+    if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new RuntimeException(StringUtil.join(conflicts, "\n"));
+    }
+    return super.showConflicts(conflicts);
+  }
+
+
+  protected void performRefactoring(UsageInfo[] usageInfos) {
+    if (!myUseExistingClass) {
+      buildClass();
+    }
+    super.performRefactoring(usageInfos);
+  }
+
+  private void buildClass() {
+    final PsiManager manager = method.getManager();
+    final Project project = method.getProject();
+    final ReturnValueBeanBuilder beanClassBuilder = new ReturnValueBeanBuilder();
+    final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
+    final CodeStyleSettings settings = settingsManager.getCurrentSettings();
+    beanClassBuilder.setCodeStyleSettings(settings);
+    beanClassBuilder.setTypeArguments(typeParams);
+    beanClassBuilder.setClassName(className);
+    beanClassBuilder.setPackageName(packageName);
+    final PsiType returnType = method.getReturnType();
+    beanClassBuilder.setValueType(returnType);
+
+    final String classString;
+    try {
+      classString = beanClassBuilder.buildBeanClass();
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return;
     }
 
-    private void findUsagesForMethod(PsiMethod siblingMethod, List<FixableUsageInfo> usages){
-        final SearchScope scope = siblingMethod.getUseScope();
-        final Iterable<PsiReference> calls = SearchUtils.findAllReferences(siblingMethod, scope);
-        for(PsiReference reference : calls){
-            final PsiElement referenceElement = reference.getElement();
-            final PsiElement parent = referenceElement.getParent();
-            if(parent instanceof PsiCallExpression){
-                usages.add(new UnwrapCall((PsiCallExpression) parent, unwrapMethodName));
+    try {
+      final PsiFile containingFile = method.getContainingFile();
+
+      final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
+      final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
+      final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, containingDirectory, true);
+
+      if (directory != null) {
+        final PsiFile newFile = PsiFileFactory.getInstance(project).createFileFromText(className + ".java", classString);
+
+        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+        final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newFile);
+        final PsiElement reformattedFile = codeStyleManager.reformat(shortenedFile);
+        directory.add(reformattedFile);
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+  }
+
+  protected String getCommandName() {
+    final PsiClass containingClass = method.getContainingClass();
+    return RefactorJBundle.message("wrapped.return.command.name", className, containingClass.getName(), '.', method.getName());
+  }
+
+
+  private class ReturnSearchVisitor extends JavaRecursiveElementVisitor {
+    private final List<FixableUsageInfo> usages;
+    private final String type;
+
+    ReturnSearchVisitor(List<FixableUsageInfo> usages, String type) {
+      super();
+      this.usages = usages;
+      this.type = type;
+    }
+
+    public void visitReturnStatement(PsiReturnStatement statement) {
+      super.visitReturnStatement(statement);
+      final PsiExpression returnValue = statement.getReturnValue();
+      if (myUseExistingClass && returnValue instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)returnValue;
+        if (callExpression.getArgumentList().getExpressions().length == 0) {
+          final PsiReferenceExpression callMethodExpression = callExpression.getMethodExpression();
+          final String methodName = callMethodExpression.getReferenceName();
+          if (Comparing.strEqual(unwrapMethodName, methodName)) {
+            final PsiExpression qualifier = callMethodExpression.getQualifierExpression();
+            if (qualifier != null) {
+              final PsiType qualifierType = qualifier.getType();
+              if (qualifierType != null && qualifierType.getCanonicalText().equals(myQualifiedName)) {
+                usages.add(new ReturnWrappedValue(statement));
+                return;
+              }
             }
+          }
         }
-        final String returnType = calculateReturnTypeString();
-        usages.add(new ChangeReturnType(siblingMethod, returnType));
-        final ReturnSearchVisitor visitor = new ReturnSearchVisitor(usages, returnType);
-        siblingMethod.accept(visitor);
+      }
+      usages.add(new WrapReturnValue(statement, type));
     }
-
-    private String calculateReturnTypeString(){
-        final String qualifiedName = StringUtil.getQualifiedName(packageName, className);
-        final StringBuilder returnTypeBuffer = new StringBuilder(qualifiedName);
-        if(!typeParams.isEmpty()){
-            returnTypeBuffer.append('<');
-            boolean first = true;
-            for(PsiTypeParameter typeParameter : typeParams){
-                if(!first){
-                    returnTypeBuffer.append(',');
-                }
-                first = false;
-                final String typeParamName = typeParameter.getName();
-                returnTypeBuffer.append(typeParamName);
-            }
-            returnTypeBuffer.append('>');
-        }
-        return returnTypeBuffer.toString();
-    }
-
-    protected void performRefactoring(UsageInfo[] usageInfos){
-        if(existingClass == null){
-            buildClass();
-        }
-        super.performRefactoring(usageInfos);
-    }
-
-    private void buildClass(){
-
-        final PsiManager manager = method.getManager();
-        final Project project = method.getProject();
-        final ReturnValueBeanBuilder beanClassBuilder = new ReturnValueBeanBuilder();
-        final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
-        final CodeStyleSettings settings = settingsManager.getCurrentSettings();
-        beanClassBuilder.setCodeStyleSettings(settings);
-        beanClassBuilder.setTypeArguments(typeParams);
-        beanClassBuilder.setClassName(className);
-        beanClassBuilder.setPackageName(packageName);
-        final PsiType returnType = method.getReturnType();
-        beanClassBuilder.setValueType(returnType);
-
-        final String classString;
-        try{
-            classString = beanClassBuilder.buildBeanClass();
-        } catch(IOException e){
-            logger.error(e);
-            return;
-        }
-
-        try{
-          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-            final PsiFile containingFile = method.getContainingFile();
-
-            final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
-            final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
-            final PsiDirectory directory =
-                    PackageUtil.findOrCreateDirectoryForPackage(module, packageName, containingDirectory, true);
-
-            if(directory != null){
-                final PsiFile newFile = PsiFileFactory.getInstance(project).createFileFromText(className + ".java", classString);
-
-                final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
-                final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newFile);
-                final PsiElement reformattedFile = codeStyleManager.reformat(shortenedFile);
-                directory.add(reformattedFile);
-            }
-        } catch(IncorrectOperationException e){
-            logger.error(e);
-        }
-    }
-
-    protected String getCommandName(){
-        final PsiClass containingClass = method.getContainingClass();
-        return RefactorJBundle
-                .message("wrapped.return.command.name", className, containingClass.getName(), '.', method.getName());
-    }
-
-    @SuppressWarnings({"AssignmentToCollectionOrArrayFieldFromParameter"})
-    private class ReturnSearchVisitor extends JavaRecursiveElementVisitor{
-        private final List<FixableUsageInfo> usages;
-        private final String type;
-
-        ReturnSearchVisitor(List<FixableUsageInfo> usages, String type){
-            super();
-            this.usages = usages;
-            this.type = type;
-        }
-
-        public void visitReturnStatement(PsiReturnStatement statement){
-            super.visitReturnStatement(statement);
-            final PsiExpression returnValue = statement.getReturnValue();
-            if(existingClass != null && returnValue instanceof PsiMethodCallExpression){
-                final PsiMethodCallExpression callExpression = (PsiMethodCallExpression) returnValue;
-                if(callExpression.getArgumentList().getExpressions().length == 0){
-                    final PsiReferenceExpression callMethodExpression = callExpression.getMethodExpression();
-                    final String methodName = callMethodExpression.getReferenceName();
-                    if(unwrapMethodName.equals(methodName)){
-                        final PsiExpression qualifier = callMethodExpression.getQualifierExpression();
-                        if(qualifier != null){
-                            final PsiType qualifierType = qualifier.getType();
-                            if(qualifierType!=null && qualifierType.getCanonicalText().equals(existingClass.getQualifiedName())){
-                                usages.add(new ReturnWrappedValue(statement));
-                                return;
-                            }
-                        }
-                    }
-                }
-            }
-            usages.add(new WrapReturnValue(statement, type));
-        }
-    }
+  }
 }

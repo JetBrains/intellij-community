@@ -7,8 +7,8 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.RefactorJHelpID;
 import com.intellij.refactoring.psi.PackageNameUtil;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.MemberSelectionTable;
@@ -302,7 +302,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
 
   protected void doHelpAction() {
     final HelpManager helpManager = HelpManager.getInstance();
-    helpManager.invokeHelp(RefactorJHelpID.ExtractClass);
+    helpManager.invokeHelp(HelpID.ExtractClass);
   }
 
   public void memberInfoChanged(MemberInfoChange memberInfoChange) {

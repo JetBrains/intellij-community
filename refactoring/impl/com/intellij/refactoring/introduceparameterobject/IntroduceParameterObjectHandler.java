@@ -10,8 +10,8 @@ import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.RefactorJHelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -43,7 +43,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     if (selectedMethod == null) {
       final String message = RefactorJBundle.message("cannot.perform.the.refactoring") +
                              RefactorJBundle.message("the.caret.should.be.positioned.at.the.name.of.the.method.to.be.refactored");
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, RefactorJHelpID.IntroduceParameterObject, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.IntroduceParameterObject, project);
       return;
     }
     invoke(project, selectedMethod);
@@ -69,14 +69,14 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     if (parameters.length == 0) {
       final String message =
         RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("method.selected.has.no.parameters");
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, RefactorJHelpID.IntroduceParameterObject, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.IntroduceParameterObject, project);
       return;
     }
     if (newMethod instanceof PsiCompiledElement) {
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, RefactorJBundle.message("cannot.perform.the.refactoring") +
                                                                RefactorJBundle.message(
                                                                  "the.selected.method.cannot.be.wrapped.because.it.is.defined.in.a.non.project.class"),
-                                             RefactorJHelpID.IntroduceParameterObject, project);
+                                             HelpID.IntroduceParameterObject, project);
       return;
     }
     new IntroduceParameterObjectDialog(newMethod).show();

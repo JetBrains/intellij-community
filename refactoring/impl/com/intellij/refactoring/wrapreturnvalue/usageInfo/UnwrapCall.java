@@ -1,4 +1,4 @@
-package com.intellij.refactoring.wrapreturnvalue;
+package com.intellij.refactoring.wrapreturnvalue.usageInfo;
 
 import com.intellij.psi.PsiCallExpression;
 import com.intellij.refactoring.psi.MutationUtils;
@@ -7,13 +7,13 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-class UnwrapCall extends FixableUsageInfo {
+public class UnwrapCall extends FixableUsageInfo {
     @NotNull
     private final PsiCallExpression call;
     @NotNull
     private final String unwrapMethod;
 
-    UnwrapCall(@NotNull PsiCallExpression call, @NotNull String unwrapMethod) {
+    public UnwrapCall(@NotNull PsiCallExpression call, @NotNull String unwrapMethod) {
         super(call);
         this.call =call;
         this.unwrapMethod = unwrapMethod;

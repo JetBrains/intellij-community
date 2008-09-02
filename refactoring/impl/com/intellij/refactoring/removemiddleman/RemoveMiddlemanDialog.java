@@ -4,8 +4,8 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.RefactorJHelpID;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -55,7 +55,7 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(RefactorJHelpID.RemoveMiddleman);
+    HelpManager.getInstance().invokeHelp(HelpID.RemoveMiddleman);
   }
 
   protected void doAction() {
