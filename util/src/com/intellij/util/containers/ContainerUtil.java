@@ -96,6 +96,20 @@ public class ContainerUtil {
     return hashMap;
   }
 
+  public static <K,V> HashMap<K, Set<V>> classify(Iterator<V> iterator, Convertor<V, K> keyConvertor) {
+    HashMap<K, Set<V>> hashMap = new HashMap<K, Set<V>>();
+    while (iterator.hasNext()) {
+      V value = iterator.next();
+      final K key = keyConvertor.convert(value);
+      Set<V> set = hashMap.get(key);
+      if (set == null) {
+        hashMap.put(key, set = new HashSet<V>());
+      }
+      set.add(value);
+    }
+    return hashMap;
+  }
+
   public static <K, V> HashMap<K, V> assignValues(Iterator<K> iterator, Convertor<K, V> valueConvertor) {
     HashMap<K, V> hashMap = new HashMap<K, V>();
     while (iterator.hasNext()) {
