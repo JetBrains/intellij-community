@@ -24,18 +24,10 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public class MissingOverrideAnnotationInspection extends BaseInspection {
-
-    /** @noinspection PublicField*/
-    public boolean useJdk6Rules = false;
-
-    @Override @NotNull
+    @NotNull
     public String getID() {
         return "override";
     }
@@ -46,14 +38,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
                 "missing.override.annotation.display.name");
     }
 
-    @Override @Nullable
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "missing.override.annotation.jdk6.option"), this,
-                "useJdk6Rules");
-    }
-
-    @Override @NotNull
+    @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "missing.override.annotation.problem.descriptor");
@@ -102,7 +87,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
         return new MissingOverrideAnnotationVisitor();
     }
 
-    private class MissingOverrideAnnotationVisitor
+    private static class MissingOverrideAnnotationVisitor
             extends BaseInspectionVisitor{
 
         @Override
@@ -120,7 +105,8 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
             if(!PsiUtil.isLanguageLevel5OrHigher(method)){
                 return;
             }
-            if(useJdk6Rules){
+          boolean useJdk6Rules = PsiUtil.isLanguageLevel6OrHigher(method);
+          if(useJdk6Rules){
                 if(!isJdk6Override(method)){
                     return;
                 }
@@ -133,7 +119,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
             registerMethodError(method);
         }
 
-        private boolean hasOverrideAnnotation(
+        private static boolean hasOverrideAnnotation(
                 PsiModifierListOwner element){
             final PsiModifierList modifierList = element.getModifierList();
             if(modifierList == null){
@@ -144,7 +130,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
             return annotation != null;
         }
 
-        private boolean isJdk6Override(PsiMethod method){
+        private static boolean isJdk6Override(PsiMethod method){
             final PsiMethod[] superMethods = method.findSuperMethods();
             if (superMethods.length <= 0) {
                 return false;
@@ -164,7 +150,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
             return false;
         }
 
-        private boolean isJdk5Override(PsiMethod method){
+        private static boolean isJdk5Override(PsiMethod method){
             final PsiMethod[] superMethods = method.findSuperMethods();
             final PsiClass methodClass = method.getContainingClass();
             for (PsiMethod superMethod : superMethods) {
