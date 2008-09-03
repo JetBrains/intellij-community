@@ -108,7 +108,7 @@ public abstract class LibrariesUtil {
 
       //place library before jdk
       assert order[order.length - 1] == addedEntry;
-      int insertionPoint = - -1;
+      int insertionPoint = -1;
       for (int i = 0; i < order.length - 1; i++) {
         if (order[i] instanceof JdkOrderEntry) {
           insertionPoint = i;
