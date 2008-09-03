@@ -110,7 +110,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
                         dialog.getFieldVisibility(),
                         localVariable,
                         dialog.getSelectedType(), dialog.isDeleteVariable(),
-                        dialog.getDestinationClass(), dialog.isAnnotateAsNonNls());
+                        dialog.getDestinationClass(), dialog.isAnnotateAsNonNls(), dialog.introduceEnumConstant());
   }
 
 

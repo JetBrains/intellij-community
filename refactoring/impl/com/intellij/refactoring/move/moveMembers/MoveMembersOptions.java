@@ -11,4 +11,6 @@ public interface MoveMembersOptions {
   String getTargetClassName();
 
   String getMemberVisibility();
+
+  boolean makeEnumConstant();
 }

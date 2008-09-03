@@ -1,8 +1,7 @@
 package com.intellij.refactoring.move.moveMembers;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifier;
 
 import java.util.Collection;
 
@@ -25,6 +24,10 @@ public class MockMoveMembersOptions implements MoveMembersOptions {
 
   public String getMemberVisibility() {
     return myMemberVisibility;
+  }
+
+  public boolean makeEnumConstant() {
+    return true;
   }
 
   public void setMemberVisibility(String visibility) {

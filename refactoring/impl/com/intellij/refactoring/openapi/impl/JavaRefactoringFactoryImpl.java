@@ -58,7 +58,14 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
   public MoveMembersRefactoring createMoveMembers(final PsiMember[] elements,
                                                   final String targetClassQualifiedName,
                                                   final String newVisibility) {
-    return new MoveMembersRefactoringImpl(myProject, elements, targetClassQualifiedName, newVisibility);
+    return createMoveMembers(elements, targetClassQualifiedName, newVisibility, false);
+  }
+
+  public MoveMembersRefactoring createMoveMembers(final PsiMember[] elements,
+                                                  final String targetClassQualifiedName,
+                                                  final String newVisibility,
+                                                  final boolean makeEnumConstants) {
+    return new MoveMembersRefactoringImpl(myProject, elements, targetClassQualifiedName, newVisibility, makeEnumConstants);
   }
 
   public MakeStaticRefactoring<PsiMethod> createMakeMethodStatic(PsiMethod method,

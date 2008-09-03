@@ -34,6 +34,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.util.IncorrectOperationException;
@@ -179,19 +180,21 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           if (!CommonRefactoringUtil.checkReadOnlyStatus(project, destClass.getContainingFile())) return;
 
           ChangeContextUtil.encodeContextInfo(initializer, true);
-          PsiField field = createField(fieldName, type, initializer, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null);
-          field.getModifierList().setModifierProperty(settings.getFieldVisibility(), true);
-          if (settings.isDeclareFinal()) {
-            field.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
-          }
-          if (settings.isDeclareStatic()) {
-            field.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
-          }
-          if (settings.isAnnotateAsNonNls()) {
-            PsiAnnotation annotation = JavaPsiFacade.getInstance(myParentClass.getProject()).getElementFactory()
-              .createAnnotationFromText("@" + AnnotationUtil.NON_NLS, myParentClass);
-            field.getModifierList().addAfter(annotation, null);
-            JavaCodeStyleManager.getInstance(myParentClass.getProject()).shortenClassReferences(field.getModifierList());
+          PsiField field = settings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(destClass, fieldName, initializer) : createField(fieldName, type, initializer, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null);
+          if (!settings.isIntroduceEnumConstant()) {
+            field.getModifierList().setModifierProperty(settings.getFieldVisibility(), true);
+            if (settings.isDeclareFinal()) {
+              field.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+            }
+            if (settings.isDeclareStatic()) {
+              field.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+            }
+            if (settings.isAnnotateAsNonNls()) {
+              PsiAnnotation annotation = JavaPsiFacade.getInstance(myParentClass.getProject()).getElementFactory()
+                .createAnnotationFromText("@" + AnnotationUtil.NON_NLS, myParentClass);
+              field.getModifierList().addAfter(annotation, null);
+              JavaCodeStyleManager.getInstance(myParentClass.getProject()).shortenClassReferences(field.getModifierList());
+            }
           }
           PsiElement finalAnchorElement = null;
           if (destClass == myParentClass) {
@@ -510,6 +513,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     private final boolean myDeleteLocalVariable;
     private final PsiClass myTargetClass;
     private final boolean myAnnotateAsNonNls;
+    private final boolean myIntroduceEnumConstant;
 
     public PsiLocalVariable getLocalVariable() {
       return myLocalVariable;
@@ -556,10 +560,17 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return myAnnotateAsNonNls;
     }
 
+    public boolean isIntroduceEnumConstant() {
+      return myIntroduceEnumConstant;
+    }
+
     public Settings(String fieldName, boolean replaceAll,
                     boolean declareStatic, boolean declareFinal,
                     InitializationPlace initializerPlace, @Modifier String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
-                    boolean deleteLocalVariable, PsiClass targetClass, final boolean annotateAsNonNls) {
+                    boolean deleteLocalVariable,
+                    PsiClass targetClass,
+                    final boolean annotateAsNonNls,
+                    final boolean introduceEnumConstant) {
 
       myFieldName = fieldName;
       myReplaceAll = replaceAll;
@@ -572,6 +583,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       myForcedType = forcedType;
       myTargetClass = targetClass;
       myAnnotateAsNonNls = annotateAsNonNls;
+      myIntroduceEnumConstant = introduceEnumConstant;
     }
 
 

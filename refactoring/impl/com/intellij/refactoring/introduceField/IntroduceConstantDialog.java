@@ -23,10 +23,11 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
@@ -79,6 +80,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   private JLabel myNameSuggestionLabel;
   private JLabel myTargetClassNameLabel;
   private JCheckBox myCbNonNls;
+  private JCheckBox myIntroduceEnumConstantCb = new JCheckBox(RefactoringBundle.message("introduce.constant.enum.cb"), true);
 
   public IntroduceConstantDialog(Project project,
                                  PsiClass parentClass,
@@ -116,7 +118,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     } else {
       myRbPrivate.setSelected(true);
     }
-
+    myIntroduceEnumConstantCb.setEnabled(EnumConstantsUtil.isSuitableForEnumConstant(getSelectedType(), myTargetClass));
     updateVisibilityPanel();
   }
 
@@ -130,6 +132,10 @@ class IntroduceConstantDialog extends DialogWrapper {
 
   public PsiClass getDestinationClass () {
     return myDestinationClass;
+  }
+
+  public boolean introduceEnumConstant() {
+    return myIntroduceEnumConstantCb.isEnabled() && myIntroduceEnumConstantCb.isSelected();
   }
 
   @Modifier
@@ -214,6 +220,15 @@ class IntroduceConstantDialog extends DialogWrapper {
         }
       });
     }
+    myIntroduceEnumConstantCb.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        enableEnumDependant(introduceEnumConstant());
+      }
+    });
+    enableEnumDependant(introduceEnumConstant());
+    final JPanel enumPanel = new JPanel(new BorderLayout());
+    enumPanel.add(myIntroduceEnumConstantCb, BorderLayout.EAST);
+    myTargetClassNamePanel.add(enumPanel, BorderLayout.SOUTH);
 
     final String propertyName;
     if (myLocalVariable != null) {
@@ -301,6 +316,20 @@ class IntroduceConstantDialog extends DialogWrapper {
     final String targetClassName = getTargetClassName();
     myTargetClass = JavaPsiFacade.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
     updateVisibilityPanel();
+    myIntroduceEnumConstantCb.setEnabled(EnumConstantsUtil.isSuitableForEnumConstant(getSelectedType(), myTargetClass));
+  }
+
+  private void enableEnumDependant(boolean enable) {
+    if (enable) {
+      myRbPrivate.setEnabled(false);
+      myRbProtected.setEnabled(false);
+      myRbpackageLocal.setEnabled(false);
+      myRbPublic.setEnabled(true);
+      myRbPublic.setSelected(true);
+    } else {
+      updateVisibilityPanel();
+    }
+    myCbNonNls.setEnabled(!enable);
   }
 
   protected JComponent createCenterPanel() {

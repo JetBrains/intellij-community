@@ -42,6 +42,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private final MoveCallback myMoveCallback;
   private String myNewVisibility; // "null" means "as is"
   private String myCommandName = MoveMembersImpl.REFACTORING_NAME;
+  private boolean myMakeEnumConstant;
 
   public MoveMembersProcessor(Project project, MoveCallback moveCallback, MoveMembersOptions options) {
     super(project);
@@ -68,6 +69,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     myTargetClass =
       JavaPsiFacade.getInstance(manager.getProject()).findClass(dialog.getTargetClassName(), GlobalSearchScope.projectScope(myProject));
     myNewVisibility = dialog.getMemberVisibility();
+    myMakeEnumConstant = dialog.makeEnumConstant();
   }
 
   private void setCommandName(final PsiMember[] members) {
@@ -188,15 +190,19 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
         PsiElement anchor = getAnchor(member);
 
-        final PsiMember memberCopy = (PsiMember)member.copy();
-
-        if (member.getContainingClass().isInterface() && !myTargetClass.isInterface()) {
-          //might need to make modifiers explicit, see IDEADEV-11416
-          final PsiModifierList list = memberCopy.getModifierList();
-          assert list != null;
-          list.setModifierProperty(PsiModifier.STATIC, member.hasModifierProperty(PsiModifier.STATIC));
-          list.setModifierProperty(PsiModifier.FINAL, member.hasModifierProperty(PsiModifier.FINAL));
-          RefactoringUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
+        final PsiMember memberCopy;
+        if (myMakeEnumConstant && member instanceof PsiVariable && EnumConstantsUtil.isSuitableForEnumConstant(((PsiVariable)member).getType(), myTargetClass)) {
+          memberCopy = EnumConstantsUtil.createEnumConstant(myTargetClass, member.getName(), ((PsiVariable)member).getInitializer());
+        } else {
+          memberCopy = (PsiMember)member.copy();
+          if (member.getContainingClass().isInterface() && !myTargetClass.isInterface()) {
+            //might need to make modifiers explicit, see IDEADEV-11416
+            final PsiModifierList list = memberCopy.getModifierList();
+            assert list != null;
+            list.setModifierProperty(PsiModifier.STATIC, member.hasModifierProperty(PsiModifier.STATIC));
+            list.setModifierProperty(PsiModifier.FINAL, member.hasModifierProperty(PsiModifier.FINAL));
+            RefactoringUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
+          }
         }
 
         ArrayList<PsiReference> refsToBeRebind = new ArrayList<PsiReference>();

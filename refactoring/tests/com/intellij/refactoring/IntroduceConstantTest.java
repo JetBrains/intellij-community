@@ -14,14 +14,22 @@ public class IntroduceConstantTest extends CodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/refactoring/introduceConstant/";
 
   public void testInNonNls() throws Exception {
+    doTest(false);
+  }
+
+  private void doTest(boolean makeEnumConstant) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
-    convertLocal();
+    convertLocal(makeEnumConstant);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  private void convertLocal() {
+  public void testEnumConstant() throws Exception {
+    doTest(true);    
+  }
+
+  private void convertLocal(final boolean makeEnumConstant) {
     PsiLocalVariable local = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
-    new MockLocalToFieldHandler(getProject(), true).convertLocalToField(local, getEditor());
+    new MockLocalToFieldHandler(getProject(), true, makeEnumConstant).convertLocalToField(local, getEditor());
   }
 
   protected Sdk getTestProjectJdk() {

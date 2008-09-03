@@ -14,8 +14,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.ui.MemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
@@ -52,6 +52,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
   private final MoveCallback myMoveCallback;
 
   VisibilityPanel myVisibilityPanel;
+  private final JCheckBox myIntroduceEnumConstants = new JCheckBox(RefactoringBundle.message("move.enum.constant.cb"), true);
 
   public MoveMembersDialog(Project project,
                            PsiClass sourceClass,
@@ -79,6 +80,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
       }
       memberList.add(info);
     }
+    boolean hasConstantFields = false;
     for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) {
         MemberInfo info = new MemberInfo(field);
@@ -86,8 +88,10 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
           info.setChecked(true);
         }
         memberList.add(info);
+        hasConstantFields = true;
       }
     }
+    if (!hasConstantFields) myIntroduceEnumConstants.setVisible(false);
     for (PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         MemberInfo info = new MemberInfo(method);
@@ -106,6 +110,10 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
 
   public String getMemberVisibility() {
     return myVisibilityPanel.getVisibility();
+  }
+
+  public boolean makeEnumConstant() {
+    return myIntroduceEnumConstants.isVisible() && myIntroduceEnumConstants.isEnabled() && myIntroduceEnumConstants.isSelected();
   }
 
   protected String getDimensionServiceKey() {
@@ -142,6 +150,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     label.setLabelFor(myTfTargetClassName);
     _panel.add(label, BorderLayout.NORTH);
     _panel.add(myTfTargetClassName, BorderLayout.CENTER);
+    _panel.add(myIntroduceEnumConstants, BorderLayout.SOUTH);
     box.add(_panel);
 
     myTfTargetClassName.getChildComponent().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
@@ -212,6 +221,10 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     invokeRefactoring(new MoveMembersProcessor(getProject(), myMoveCallback, new MoveMembersOptions() {
       public String getMemberVisibility() {
         return MoveMembersDialog.this.getMemberVisibility();
+      }
+
+      public boolean makeEnumConstant() {
+        return MoveMembersDialog.this.makeEnumConstant();
       }
 
       public PsiMember[] getSelectedMembers() {
@@ -392,6 +405,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
       myTargetClass =
         JavaPsiFacade.getInstance(manager.getProject()).findClass(getTargetClassName(), GlobalSearchScope.projectScope(myProject));
       myTable.fireExternalDataChange();
+      myIntroduceEnumConstants.setEnabled(myTargetClass.isEnum());
     }
   }
 }

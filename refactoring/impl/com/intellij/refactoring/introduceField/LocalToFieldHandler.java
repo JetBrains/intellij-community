@@ -21,6 +21,7 @@ import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandl
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -49,6 +50,7 @@ public class LocalToFieldHandler {
     );
 
     final boolean annotateAsNonNls;
+    final boolean introduceEnumConstant;
     if (myIsConstant) {
       IntroduceConstantDialog dialog = new IntroduceConstantDialog(myProject, aClass,
                                                                    local.getInitializer(), local, true, occurences, aClass, typeSelectorManager
@@ -60,6 +62,7 @@ public class LocalToFieldHandler {
       initializerPlace = IN_FIELD_DECLARATION;
       fieldVisibility = dialog.getFieldVisibility();
       annotateAsNonNls = dialog.isAnnotateAsNonNls();
+      introduceEnumConstant = dialog.introduceEnumConstant();
     }
     else {
       PsiMethod method = PsiTreeUtil.getParentOfType(local, PsiMethod.class);
@@ -77,9 +80,11 @@ public class LocalToFieldHandler {
       declareFinal = dialog.isDeclareFinal();
       fieldVisibility = dialog.getFieldVisibility();
       annotateAsNonNls = false;
+      introduceEnumConstant = false;
     }
 
-    return new BaseExpressionToFieldHandler.Settings(fieldName, true, isStatic, declareFinal, initializerPlace, fieldVisibility, local, null, true, aClass, annotateAsNonNls);
+    return new BaseExpressionToFieldHandler.Settings(fieldName, true, isStatic, declareFinal, initializerPlace, fieldVisibility, local, null, true, aClass, annotateAsNonNls,
+                                                     introduceEnumConstant);
   }
 
   public boolean convertLocalToField(final PsiLocalVariable local, final Editor editor) {
@@ -112,7 +117,7 @@ public class LocalToFieldHandler {
       RefactoringUtil.highlightAllOccurences(myProject, occurences, editor);
     }
 
-    BaseExpressionToFieldHandler.Settings settings = showRefactoringDialog(aClass, local, occurences, isStatic);
+    final BaseExpressionToFieldHandler.Settings settings = showRefactoringDialog(aClass, local, occurences, isStatic);
     if (settings == null) return false;
     //LocalToFieldDialog dialog = new LocalToFieldDialog(project, aClass, local, isStatic);
     final String variableName = local.getName();
@@ -143,20 +148,21 @@ public class LocalToFieldHandler {
           }
 
           final PsiMethod enclosingConstructor = BaseExpressionToFieldHandler.getEnclosingConstructor(aaClass, local);
-          PsiField field = createField(local, fieldName,
-                                       initializerPlace == IN_FIELD_DECLARATION
-          );
-          if (isStatic) {
-            field.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+          PsiField field = settings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(aaClass, local, fieldName)
+                                                              : createField(local, fieldName, initializerPlace == IN_FIELD_DECLARATION);
+          if (!settings.isIntroduceEnumConstant()) {
+            if (isStatic) {
+              field.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+            }
+            if (declareFinal) {
+              field.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+            }
+            if (annotateAsNonNls) {
+              PsiAnnotation annotation = JavaPsiFacade.getInstance(local.getProject()).getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NON_NLS, field);
+              field.getModifierList().addAfter(annotation, null);
+            }
+            field.getModifierList().setModifierProperty(fieldVisibility, true);
           }
-          if (declareFinal) {
-            field.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
-          }
-          if (annotateAsNonNls) {
-            PsiAnnotation annotation = JavaPsiFacade.getInstance(local.getProject()).getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NON_NLS, field);
-            field.getModifierList().addAfter(annotation, null);
-          }
-          field.getModifierList().setModifierProperty(fieldVisibility, true);
 
           field = (PsiField)aaClass.add(field);
           JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(field);

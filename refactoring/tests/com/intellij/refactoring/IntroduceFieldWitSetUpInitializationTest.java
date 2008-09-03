@@ -68,7 +68,8 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
                                                                             final boolean isStatic) {
         return new BaseExpressionToFieldHandler.Settings("i", true, false, false,
                                                          BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD,
-                                                         PsiModifier.PRIVATE, local, local.getType(), true, null, false);
+                                                         PsiModifier.PRIVATE, local, local.getType(), true, null, false,
+                                                         false);
       }
     }.convertLocalToField(local, myEditor);
     checkResultByFile("/refactoring/introduceField/after" + getTestName(false)+ ".java");

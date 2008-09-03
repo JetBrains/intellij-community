@@ -1,11 +1,11 @@
 package com.intellij.refactoring;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.psi.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dsl
@@ -36,6 +36,11 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
   public abstract MoveMembersRefactoring createMoveMembers(PsiMember[] elements,
                                                            String targetClassQualifiedName,
                                                            String newVisibility);
+
+  public abstract MoveMembersRefactoring createMoveMembers(PsiMember[] elements,
+                                                           String targetClassQualifiedName,
+                                                           String newVisibility,
+                                                           boolean makeEnumConstants);
 
   public abstract MakeStaticRefactoring<PsiMethod> createMakeMethodStatic(PsiMethod method,
                                                                           boolean replaceUsages,

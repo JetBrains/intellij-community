@@ -66,6 +66,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("pack1.ClassWithStaticMethod", "pack2.OtherClass", 1);
   }
 
+  public void testEnumConstant() throws Exception {
+    doTest("B", "A", 0);
+  }
+
   protected String getTestRoot() {
     return "/refactoring/moveMembers/";
   }
