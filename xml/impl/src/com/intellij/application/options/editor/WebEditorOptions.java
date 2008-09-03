@@ -20,13 +20,14 @@ import java.io.File;
       file = "$APP_CONFIG$/editor.xml"
     )}
 )
-public class XmlEditorOptions implements PersistentStateComponent<XmlEditorOptions>, ExportableComponent {
+public class WebEditorOptions implements PersistentStateComponent<WebEditorOptions>, ExportableComponent {
 
   private boolean myBreadcrumbsEnabled = true;
   private boolean myShowCssColorPreviewInGutter = true;
+  private boolean myAutomaticallyInsertClosingTag = true;
 
-  public static XmlEditorOptions getInstance() {
-    return ServiceManager.getService(XmlEditorOptions.class);
+  public static WebEditorOptions getInstance() {
+    return ServiceManager.getService(WebEditorOptions.class);
   }
 
   public void setBreadcrumbsEnabled(boolean b) {
@@ -43,6 +44,14 @@ public class XmlEditorOptions implements PersistentStateComponent<XmlEditorOptio
 
   public void setShowCssColorPreviewInGutter(final boolean showCssColorPreviewInGutter) {
     myShowCssColorPreviewInGutter = showCssColorPreviewInGutter;
+  }
+
+  public boolean isAutomaticallyInsertClosingTag() {
+    return myAutomaticallyInsertClosingTag;
+  }
+
+  public void setAutomaticallyInsertClosingTag(final boolean automaticallyInsertClosingTag) {
+    myAutomaticallyInsertClosingTag = automaticallyInsertClosingTag;
   }
 
   @NotNull
@@ -65,11 +74,11 @@ public class XmlEditorOptions implements PersistentStateComponent<XmlEditorOptio
     }
   }
 
-  public XmlEditorOptions getState() {
+  public WebEditorOptions getState() {
     return this;
   }
 
-  public void loadState(final XmlEditorOptions state) {
+  public void loadState(final WebEditorOptions state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }

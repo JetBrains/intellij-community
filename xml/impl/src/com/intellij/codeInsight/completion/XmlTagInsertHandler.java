@@ -31,6 +31,7 @@ import com.intellij.xml.XmlElementDescriptorWithCDataContent;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.application.options.editor.WebEditorOptions;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -201,9 +202,11 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
       if (toInsertCDataEnd) template.addTextSegment("\n]]>");
 
       if ((!(tag instanceof HtmlTag) || !HtmlUtil.isSingleHtmlTag(tag.getName())) && tag.getAttributes().length == 0) {
-        template.addTextSegment("</");
-        template.addTextSegment(descriptor.getName(tag));
-        template.addTextSegment(">");
+        if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag()) {
+          template.addTextSegment("</");
+          template.addTextSegment(descriptor.getName(tag));
+          template.addTextSegment(">");
+        }
       }
     }
     else if (completionChar == '/') {

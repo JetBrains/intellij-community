@@ -12,6 +12,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
   private JCheckBox myShowBreadcrumbsCheckBox;
   private JPanel myWholePanel;
   private JCheckBox myShowCSSColorPreviewCheckBox;
+  private JCheckBox myAutomaticallyInsertClosingTagCheckBox;
 
   public String getDisplayName() {
     return XmlBundle.message("web.editor.configuration.title");
@@ -30,20 +31,23 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
   }
 
   public boolean isModified() {
-    final XmlEditorOptions xmlEditorOptions = XmlEditorOptions.getInstance();
-    return xmlEditorOptions.isBreadcrumbsEnabled() != myShowBreadcrumbsCheckBox.isSelected() || xmlEditorOptions.isShowCssColorPreviewInGutter() != myShowCSSColorPreviewCheckBox.isSelected();
+    final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
+    return xmlEditorOptions.isBreadcrumbsEnabled() != myShowBreadcrumbsCheckBox.isSelected() || xmlEditorOptions.isShowCssColorPreviewInGutter() != myShowCSSColorPreviewCheckBox.isSelected()
+        || xmlEditorOptions.isAutomaticallyInsertClosingTag() != myAutomaticallyInsertClosingTagCheckBox.isSelected();
   }
 
   public void apply() throws ConfigurationException {
-    final XmlEditorOptions xmlEditorOptions = XmlEditorOptions.getInstance();
+    final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
     xmlEditorOptions.setBreadcrumbsEnabled(myShowBreadcrumbsCheckBox.isSelected());
     xmlEditorOptions.setShowCssColorPreviewInGutter(myShowCSSColorPreviewCheckBox.isSelected());
+    xmlEditorOptions.setAutomaticallyInsertClosingTag(myAutomaticallyInsertClosingTagCheckBox.isSelected());
   }
 
   public void reset() {
-    final XmlEditorOptions xmlEditorOptions = XmlEditorOptions.getInstance();
+    final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
     myShowBreadcrumbsCheckBox.setSelected(xmlEditorOptions.isBreadcrumbsEnabled());
     myShowCSSColorPreviewCheckBox.setSelected(xmlEditorOptions.isShowCssColorPreviewInGutter());
+    myAutomaticallyInsertClosingTagCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertClosingTag());
   }
 
   public void disposeUIResources() {

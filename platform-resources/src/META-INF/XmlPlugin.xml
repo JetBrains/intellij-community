@@ -66,8 +66,8 @@
     <applicationService serviceInterface="com.intellij.util.xml.ElementPresentationManager"
                         serviceImplementation="com.intellij.util.xml.ElementPresentationManagerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.application.options.editor.XmlEditorOptions"
-                        serviceImplementation="com.intellij.application.options.editor.XmlEditorOptions"/>
+    <applicationService serviceInterface="com.intellij.application.options.editor.WebEditorOptions"
+                        serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
     <exportable serviceInterface="com.intellij.application.options.editor.XmlEditorOptions"/>
 
     <projectService serviceInterface="com.intellij.util.xml.ui.CommittableUtil"

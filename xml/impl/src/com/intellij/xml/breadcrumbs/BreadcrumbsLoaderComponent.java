@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
-import com.intellij.application.options.editor.XmlEditorOptions;
+import com.intellij.application.options.editor.WebEditorOptions;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +41,7 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
   }
 
   private static boolean isEnabled() {
-    return XmlEditorOptions.getInstance().isBreadcrumbsEnabled();
+    return WebEditorOptions.getInstance().isBreadcrumbsEnabled();
   }
 
   private static class MyFileEditorManagerListener implements FileEditorManagerListener {
