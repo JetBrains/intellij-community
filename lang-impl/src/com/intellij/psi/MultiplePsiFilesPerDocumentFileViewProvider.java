@@ -59,11 +59,9 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
       }
       file = createFile(target);
       if (file == null) return null;
-      /*
-        if (myOriginal != null) {
-          ((PsiFileImpl)file).myOriginalFile = myOriginal.getPsi(target);
-        }
-        */
+      if (myOriginal != null) {
+        ((PsiFileImpl)file).setOriginalFile(myOriginal.getPsi(target));
+      }
       file = myRoots.cacheOrGet(target, file);
     }
     return file;
@@ -96,10 +94,6 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
     final MultiplePsiFilesPerDocumentFileViewProvider copy = cloneInner(fileCopy);
     copy.myOriginal = myOriginal == null ? this : myOriginal;
     return copy;
-  }
-
-  protected MultiplePsiFilesPerDocumentFileViewProvider getOriginal() {
-    return myOriginal;
   }
 
   protected abstract MultiplePsiFilesPerDocumentFileViewProvider cloneInner(VirtualFile fileCopy);
