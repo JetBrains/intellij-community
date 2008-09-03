@@ -57,7 +57,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
     addUpdateRequest();
     domManager.addDomEventListener(new DomChangeAdapter() {
       protected void elementChanged(DomElement element) {
-        updatePanel();
+        addUpdateRequest();
       }
     }, this);
   }
