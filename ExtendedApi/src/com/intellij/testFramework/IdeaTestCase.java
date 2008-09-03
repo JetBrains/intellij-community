@@ -126,7 +126,7 @@ import java.util.HashSet;
     myFilesToDelete = new HashSet<File>();
 
     setUpProject();
-    markProjectCreationPoint();
+    markProjectCreationPlace();
   }
 
   public Project getProject() {
@@ -145,7 +145,7 @@ import java.util.HashSet;
     return myModule;
   }
 
-  private static final Key<String> TESTCASE_NAME = Key.create("TESTCASE_NAME");
+  private static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
   protected void setUpProject() throws Exception {
     myProjectManager = ProjectManagerEx.getInstanceEx();
     LOG.assertTrue(myProjectManager != null, "Cannot instaitiate ProjectManager component");
@@ -165,8 +165,11 @@ import java.util.HashSet;
     runStartupActivities();
   }
 
-  public void markProjectCreationPoint() {
-    myProject.putUserData(TESTCASE_NAME, getClass().getName() + "." + getName());
+  private void markProjectCreationPlace() {
+    markProjectCreationPlace(myProject, getClass().getName() + "." + getName());
+  }
+  public static void markProjectCreationPlace(Project project, String place) {
+    project.putUserData(CREATION_PLACE, place);
   }
 
   protected void runStartupActivities() {

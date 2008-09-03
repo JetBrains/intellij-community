@@ -40,6 +40,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -54,7 +56,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   @NonNls private static final String PROJECT_FILE_SUFFIX = ".ipr";
 
   private Project myProject;
-  private Set<File> myFilesToDelete = new HashSet<File>();
+  private final Set<File> myFilesToDelete = new HashSet<File>();
   private IdeaTestApplication myApplication;
   private final List<ModuleFixtureBuilder> myModuleFixtureBuilders = new ArrayList<ModuleFixtureBuilder>();
 
@@ -77,6 +79,10 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
     myProject = projectManager.newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
+
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
+    IdeaTestCase.markProjectCreationPlace(myProject, buffer.toString());
 
     for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
       moduleFixtureBuilder.getFixture().setUp();

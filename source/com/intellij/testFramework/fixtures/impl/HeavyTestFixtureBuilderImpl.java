@@ -25,7 +25,7 @@ import java.util.Map;
 class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestFixture> {
   private final FactoryMap<Class<? extends ModuleFixtureBuilder>, ModuleFixtureBuilder> myModuleFixtureBuilderFactory;
 
-  private HeavyIdeaTestFixtureImpl myFixture;
+  private final HeavyIdeaTestFixtureImpl myFixture;
 
   public HeavyTestFixtureBuilderImpl(HeavyIdeaTestFixtureImpl fixture, final Map<Class<? extends ModuleFixtureBuilder>, Class<? extends ModuleFixtureBuilder>> providers) {
     myFixture = fixture;

@@ -168,7 +168,7 @@ import java.util.Map;
 
 
   private static void initProject(final Sdk projectJDK) throws Exception {
-    final File projectFile = File.createTempFile("temp", ".ipr");
+    final File projectFile = File.createTempFile("lighttemp", ".ipr");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
       public void run() {
