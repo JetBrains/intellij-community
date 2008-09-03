@@ -65,6 +65,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private Runnable myPostUpdateRunnable = null;
 
   public static DataKey<ShelvedChangeList[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
+  public static DataKey<ShelvedChangeList[]> SHELVED_RECYCLED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedRecycledChangeListData");
   public static DataKey<List<ShelvedChange>> SHELVED_CHANGE_KEY = DataKey.create("ShelveChangesManager.ShelvedChange");
   public static DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
   private static final Object ROOT_NODE_VALUE = new Object();
@@ -140,8 +141,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   private void updateChangesContent() {
     myUpdatePending = false;
-    final List<ShelvedChangeList> changes = myShelveChangesManager.getShelvedChangeLists();
-    if (changes.size() == 0) {
+    final List<ShelvedChangeList> changeLists = new ArrayList<ShelvedChangeList>(myShelveChangesManager.getShelvedChangeLists());
+    changeLists.addAll(myShelveChangesManager.getRecycledShelvedChangeLists());
+    if (changeLists.size() == 0) {
       if (myContent != null) {
         myContentManager.removeContent(myContent);
         myContentManager.selectContent("Local");
@@ -167,7 +169,10 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private TreeModel buildChangesModel() {
     myRoot = new DefaultMutableTreeNode(ROOT_NODE_VALUE);   // not null for TreeState matching to work
     DefaultTreeModel model = new DefaultTreeModel(myRoot);
-    final List<ShelvedChangeList> changeLists = myShelveChangesManager.getShelvedChangeLists();
+    final List<ShelvedChangeList> changeLists = new ArrayList<ShelvedChangeList>(myShelveChangesManager.getShelvedChangeLists());
+    if (myShelveChangesManager.isShowRecycled()) {
+      changeLists.addAll(myShelveChangesManager.getRecycledShelvedChangeLists());
+    }
     myMoveRenameInfo.clear();
 
     for(ShelvedChangeList changeList: changeLists) {
@@ -221,21 +226,17 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private class ShelfTree extends Tree implements TypeSafeDataProvider {
     public void calcData(DataKey key, DataSink sink) {
       if (key == SHELVED_CHANGELIST_KEY) {
-        final TreePath[] selections = getSelectionPaths();
-        final Set<ShelvedChangeList> changeLists = new HashSet<ShelvedChangeList>();
-        if (selections != null) {
-          for(TreePath path: selections) {
-            if (path.getPathCount() >= 2) {
-              DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getPathComponent(1);
-              if (node.getUserObject() instanceof ShelvedChangeList) {
-                changeLists.add((ShelvedChangeList) node.getUserObject());
-              }
-            }
-          }
-        }
+        final Set<ShelvedChangeList> changeLists = getSelectedLists(false);
 
         if (changeLists.size() > 0) {
           sink.put(SHELVED_CHANGELIST_KEY, changeLists.toArray(new ShelvedChangeList[changeLists.size()]));
+        }
+      }
+      else if (key == SHELVED_RECYCLED_CHANGELIST_KEY) {
+        final Set<ShelvedChangeList> changeLists = getSelectedLists(true);
+
+        if (changeLists.size() > 0) {
+          sink.put(SHELVED_RECYCLED_CHANGELIST_KEY, changeLists.toArray(new ShelvedChangeList[changeLists.size()]));
         }
       }
       else if (key == SHELVED_CHANGE_KEY) {
@@ -271,6 +272,26 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
       }
     }
+
+    private Set<ShelvedChangeList> getSelectedLists(final boolean recycled) {
+      final TreePath[] selections = getSelectionPaths();
+      final Set<ShelvedChangeList> changeLists = new HashSet<ShelvedChangeList>();
+      if (selections != null) {
+        for(TreePath path: selections) {
+          if (path.getPathCount() >= 2) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getPathComponent(1);
+            if (node.getUserObject() instanceof ShelvedChangeList) {
+              final ShelvedChangeList list = (ShelvedChangeList)node.getUserObject();
+              if (((! recycled) && (! list.isRecycled())) ||
+                (recycled && list.isRecycled())) {
+                changeLists.add(list);
+              }
+            }
+          }
+        }
+      }
+      return changeLists;
+    }
   }
 
   private static class ShelfTreeCellRenderer extends ColoredTreeCellRenderer {
@@ -287,7 +308,11 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       Object nodeValue = node.getUserObject();
       if (nodeValue instanceof ShelvedChangeList) {
         ShelvedChangeList changeListData = (ShelvedChangeList) nodeValue;
-        myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION);
+        if (changeListData.isRecycled()) {
+          myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
+        } else {
+          myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION);
+        }
         final String date = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT).format(changeListData.DATE);
         append(" (" + date + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         setIcon(StdFileTypes.PATCH.getIcon());
@@ -333,11 +358,11 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private class ShelvedChangeDeleteProvider implements DeleteProvider {
     public void deleteElement(DataContext dataContext) {
       //noinspection unchecked
-      ShelvedChangeList[] shelvedChangeLists = (ShelvedChangeList[]) dataContext.getData(SHELVED_CHANGELIST_KEY.getName());
-      if (shelvedChangeLists == null || shelvedChangeLists.length == 0) return;
-      String message = (shelvedChangeLists.length == 1)
-        ? VcsBundle.message("shelve.changes.delete.confirm", shelvedChangeLists[0].DESCRIPTION)
-        : VcsBundle.message("shelve.changes.delete.multiple.confirm", shelvedChangeLists.length);
+      final List<ShelvedChangeList> shelvedChangeLists = getLists(dataContext);
+      if (shelvedChangeLists.isEmpty()) return;
+      String message = (shelvedChangeLists.size() == 1)
+        ? VcsBundle.message("shelve.changes.delete.confirm", shelvedChangeLists.get(0).DESCRIPTION)
+        : VcsBundle.message("shelve.changes.delete.multiple.confirm", shelvedChangeLists.size());
       int rc = Messages.showOkCancelDialog(myProject, message, VcsBundle.message("shelvedChanges.delete.title"), Messages.getWarningIcon());
       if (rc != 0) return;
       for(ShelvedChangeList changeList: shelvedChangeLists) {
@@ -345,10 +370,25 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
     }
 
+    private List<ShelvedChangeList> getLists(final DataContext dataContext) {
+      final ShelvedChangeList[] shelved = (ShelvedChangeList[])dataContext.getData(SHELVED_CHANGELIST_KEY.getName());
+      final ShelvedChangeList[] recycled = (ShelvedChangeList[])dataContext.getData(SHELVED_RECYCLED_CHANGELIST_KEY.getName());
+
+      final List<ShelvedChangeList> shelvedChangeLists = (shelved == null && recycled == null) ?
+                                                         Collections.<ShelvedChangeList>emptyList() : new ArrayList<ShelvedChangeList>();
+      if (shelved != null) {
+        shelvedChangeLists.addAll(Arrays.asList(shelved));
+      }
+      if (recycled != null) {
+        shelvedChangeLists.addAll(Arrays.asList(recycled));
+      }
+      return shelvedChangeLists;
+    }
+
     public boolean canDeleteElement(DataContext dataContext) {
       //noinspection unchecked
-      ShelvedChangeList[] shelvedChangeLists = (ShelvedChangeList[]) dataContext.getData(SHELVED_CHANGELIST_KEY.getName());
-      return shelvedChangeLists != null && shelvedChangeLists.length > 0;
+      return ! getLists(dataContext).isEmpty();
     }
   }
+
 }

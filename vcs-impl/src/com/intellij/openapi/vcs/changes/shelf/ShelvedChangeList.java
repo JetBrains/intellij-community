@@ -36,6 +36,7 @@ public class ShelvedChangeList implements JDOMExternalizable {
   public Date DATE;
   private List<ShelvedChange> myChanges;
   private List<ShelvedBinaryFile> myBinaryFiles;
+  private boolean myRecycled;
 
   public ShelvedChangeList() {
   }
@@ -45,6 +46,14 @@ public class ShelvedChangeList implements JDOMExternalizable {
     DESCRIPTION = description;
     DATE = new Date();
     myBinaryFiles = binaryFiles;
+  }
+
+  public boolean isRecycled() {
+    return myRecycled;
+  }
+
+  public void setRecycled(final boolean recycled) {
+    myRecycled = recycled;
   }
 
   public void readExternal(Element element) throws InvalidDataException {

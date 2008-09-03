@@ -17,8 +17,9 @@ public class RenameShelvedChangeListAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final ShelvedChangeList[] changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
-    assert changes != null;
-    final ShelvedChangeList changeList = changes [0];
+    final ShelvedChangeList[] recycledChanges = e.getData(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY);
+    assert (changes != null) || (recycledChanges != null);
+    final ShelvedChangeList changeList = (changes != null && changes.length == 1) ? changes [0] : recycledChanges[0];
     String newName = Messages.showInputDialog(project, VcsBundle.message("shelve.changes.rename.prompt"),
                                               VcsBundle.message("shelve.changes.rename.title"),
                                               Messages.getQuestionIcon(), changeList.DESCRIPTION,
@@ -49,6 +50,8 @@ public class RenameShelvedChangeListAction extends AnAction {
   public void update(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final ShelvedChangeList[] changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
-    e.getPresentation().setEnabled(project != null && changes != null && changes.length == 1);
+    final ShelvedChangeList[] recycledChanges = e.getData(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY);
+    e.getPresentation().setEnabled((project != null) && ((changes != null && changes.length == 1) ||
+      ((recycledChanges != null) && (recycledChanges.length == 1))));
   }
 }

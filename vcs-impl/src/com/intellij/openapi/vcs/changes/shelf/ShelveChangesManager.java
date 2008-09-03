@@ -52,10 +52,14 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   private final Project myProject;
   private final MessageBus myBus;
   private final List<ShelvedChangeList> myShelvedChangeLists = new ArrayList<ShelvedChangeList>();
+  private final List<ShelvedChangeList> myRecycledShelvedChangeLists = new ArrayList<ShelvedChangeList>();
   @NonNls private static final String ELEMENT_CHANGELIST = "changelist";
+  @NonNls private static final String ELEMENT_RECYCLED_CHANGELIST = "recycled_changelist";
+  @NonNls private static final String ATTRIBUTE_SHOW_RECYCLED = "show_recycled";
   @NonNls private String myShelfPath;
 
   public static final Topic<ChangeListener> SHELF_TOPIC = new Topic<ChangeListener>("shelf updates", ChangeListener.class);
+  private boolean myShowRecycled;
 
   public ShelveChangesManager(final Project project, final MessageBus bus) {
     myProject = project;
@@ -84,18 +88,39 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   public void readExternal(Element element) throws InvalidDataException {
     //noinspection unchecked
     final List<Element> children = (List<Element>)element.getChildren(ELEMENT_CHANGELIST);
+    final String showRecycled = element.getAttributeValue(ATTRIBUTE_SHOW_RECYCLED);
+    if (showRecycled != null) {
+      myShowRecycled = Boolean.parseBoolean(showRecycled);
+    } else {
+      myShowRecycled = true;
+    }
+    readList(children, myShelvedChangeLists);
+    final List<Element> childrenRecycled = (List<Element>)element.getChildren(ELEMENT_RECYCLED_CHANGELIST);
+    readList(childrenRecycled, myRecycledShelvedChangeLists);
+    for (ShelvedChangeList list : myRecycledShelvedChangeLists) {
+      list.setRecycled(true);
+    }
+  }
+
+  private void readList(final List<Element> children, final List<ShelvedChangeList> sink) throws InvalidDataException {
     for(Element child: children) {
       ShelvedChangeList data = new ShelvedChangeList();
       data.readExternal(child);
       if (new File(data.PATH).exists()) {
-        myShelvedChangeLists.add(data);
+        sink.add(data);
       }
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
+    element.setAttribute(ATTRIBUTE_SHOW_RECYCLED, Boolean.toString(myShowRecycled));
     for(ShelvedChangeList data: myShelvedChangeLists) {
       Element child = new Element(ELEMENT_CHANGELIST);
+      data.writeExternal(child);
+      element.addContent(child);
+    }
+    for(ShelvedChangeList data: myRecycledShelvedChangeLists) {
+      Element child = new Element(ELEMENT_RECYCLED_CHANGELIST);
       data.writeExternal(child);
       element.addContent(child);
     }
@@ -232,10 +257,10 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     remainingPatches.addAll(patchApplier.getRemainingPatches());
 
     if ((remainingPatches.size() == 0) && remainingBinaries.isEmpty()) {
-      deleteChangeList(changeList);
+      recycleChangeList(changeList);
     }
     else {
-      saveRemainingPatches(changeList, remainingPatches);
+      saveRemainingPatches(changeList, remainingPatches, remainingBinaries);
     }
   }
 
@@ -324,9 +349,6 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     if (!ex.isNull()) {
       throw ex.get();
     }
-    if (shelvedFile != null) {
-      FileUtil.delete(shelvedFile);
-    }
     return result.get();
   }
 
@@ -339,10 +361,10 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return false;
   }
 
-  private void saveRemainingPatches(final ShelvedChangeList changeList, final List<FilePatch> remainingPatches) {
+  private void writePatchesToFile(final String path, final List<FilePatch> remainingPatches) {
     OutputStreamWriter writer;
     try {
-      writer = new OutputStreamWriter(new FileOutputStream(changeList.PATH));
+      writer = new OutputStreamWriter(new FileOutputStream(path));
       try {
         UnifiedDiffWriter.write(remainingPatches, writer, "\n");
       }
@@ -353,11 +375,113 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  private void saveRemainingPatches(final ShelvedChangeList changeList, final List<FilePatch> remainingPatches,
+                                    final List<ShelvedBinaryFile> remainingBinaries) {
+    final File newPath = getPatchPath(changeList.DESCRIPTION);
+    try {
+      FileUtil.copy(new File(changeList.PATH), newPath);
+    }
+    catch (IOException e) {
+      // do not delete if cannot recycle
+      return;
+    }
+    final ShelvedChangeList listCopy = new ShelvedChangeList(newPath.getAbsolutePath(), changeList.DESCRIPTION,
+                                                             new ArrayList<ShelvedBinaryFile>(changeList.getBinaryFiles()));
+    listCopy.DATE = (changeList.DATE == null) ? null : new Date(changeList.DATE.getTime());
+
+    writePatchesToFile(changeList.PATH, remainingPatches);
+
+    changeList.getBinaryFiles().retainAll(remainingBinaries);
     changeList.clearLoadedChanges();
+    recycleChangeList(listCopy, changeList);
+    notifyStateChanged();
+  }
+
+  public void restoreList(final ShelvedChangeList changeList) {
+    myShelvedChangeLists.add(changeList);
+    myRecycledShelvedChangeLists.remove(changeList);
+    changeList.setRecycled(false);
+    notifyStateChanged();
+  }
+
+  public List<ShelvedChangeList> getRecycledShelvedChangeLists() {
+    return myRecycledShelvedChangeLists;
+  }
+
+  public void clearRecycled() {
+    for (ShelvedChangeList list : myRecycledShelvedChangeLists) {
+      deleteListImpl(list);
+    }
+    myRecycledShelvedChangeLists.clear();
+    notifyStateChanged();
+  }
+
+  private void recycleChangeList(final ShelvedChangeList listCopy, final ShelvedChangeList newList) {
+    if (newList != null) {
+      for (Iterator<ShelvedBinaryFile> shelvedChangeListIterator = listCopy.getBinaryFiles().iterator();
+           shelvedChangeListIterator.hasNext();) {
+        final ShelvedBinaryFile binaryFile = shelvedChangeListIterator.next();
+        for (ShelvedBinaryFile newBinary : newList.getBinaryFiles()) {
+          if (Comparing.equal(newBinary.BEFORE_PATH, binaryFile.BEFORE_PATH)
+              && Comparing.equal(newBinary.AFTER_PATH, binaryFile.AFTER_PATH)) {
+            shelvedChangeListIterator.remove();
+          }
+        }
+      }
+      for (Iterator<ShelvedChange> iterator = listCopy.getChanges().iterator(); iterator.hasNext();) {
+        final ShelvedChange change = iterator.next();
+        for (ShelvedChange newChange : newList.getChanges()) {
+          if (Comparing.equal(change.getBeforePath(), newChange.getBeforePath()) &&
+              Comparing.equal(change.getAfterPath(), newChange.getAfterPath())) {
+            iterator.remove();
+          }
+        }
+      }
+
+      // needed only if partial unshelve
+      try {
+        final List<FilePatch> patches = new ArrayList<FilePatch>();
+        for (ShelvedChange change : listCopy.getChanges()) {
+          patches.add(change.loadFilePatch());
+        }
+        writePatchesToFile(listCopy.PATH, patches);
+      }
+      catch (IOException e) {
+        LOG.info(e);
+        // left file as is
+      }
+      catch (PatchSyntaxException e) {
+        LOG.info(e);
+        // left file as is
+      }
+    }
+
+    if ((! listCopy.getBinaryFiles().isEmpty()) || (! listCopy.getChanges().isEmpty())) {
+      listCopy.setRecycled(true);
+      myRecycledShelvedChangeLists.add(listCopy);
+      notifyStateChanged();
+    }
+  }
+
+  private void recycleChangeList(final ShelvedChangeList changeList) {
+    recycleChangeList(changeList, null);
+    myShelvedChangeLists.remove(changeList);
     notifyStateChanged();
   }
 
   public void deleteChangeList(final ShelvedChangeList changeList) {
+    deleteListImpl(changeList);
+    if (! changeList.isRecycled()) {
+      myShelvedChangeLists.remove(changeList);
+    } else {
+      myRecycledShelvedChangeLists.remove(changeList);
+    }
+    notifyStateChanged();
+  }
+
+  private void deleteListImpl(final ShelvedChangeList changeList) {
     FileUtil.delete(new File(changeList.PATH));
     for(ShelvedBinaryFile binaryFile: changeList.getBinaryFiles()) {
       final String path = binaryFile.SHELVED_PATH;
@@ -365,8 +489,6 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
         FileUtil.delete(new File(path));
       }
     }
-    myShelvedChangeLists.remove(changeList);
-    notifyStateChanged();
   }
 
   public void renameChangeList(final ShelvedChangeList changeList, final String newName) {
@@ -416,5 +538,14 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     public ShelvedBinaryFile getShelvedBinaryFile() {
       return myShelvedBinaryFile;
     }
+  }
+
+  public boolean isShowRecycled() {
+    return myShowRecycled;
+  }
+
+  public void setShowRecycled(final boolean showRecycled) {
+    myShowRecycled = showRecycled;
+    notifyStateChanged();
   }
 }
