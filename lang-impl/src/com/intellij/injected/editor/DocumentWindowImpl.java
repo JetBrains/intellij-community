@@ -1,7 +1,10 @@
 package com.intellij.injected.editor;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
@@ -376,7 +379,18 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public int injectedToHost(int offset) {
-    return injectedToHost(offset, true);
+    int offsetInLeftFragment = injectedToHost(offset, true);
+    int offsetInRightFragment = injectedToHost(offset, false);
+    if (offsetInLeftFragment == offsetInRightFragment) return offsetInLeftFragment;
+
+    // heuristics: return offset closest to caret
+    Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+    if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
+    if (editor != null) {
+      int caret = editor.getCaretModel().getOffset();
+      return Math.abs(caret - offsetInLeftFragment) < Math.abs(caret - offsetInRightFragment) ? offsetInLeftFragment : offsetInRightFragment;
+    }
+    return offsetInLeftFragment;
   }
 
   private int injectedToHost(int offset, boolean preferLeftFragment) {
