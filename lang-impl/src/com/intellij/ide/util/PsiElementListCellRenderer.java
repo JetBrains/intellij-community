@@ -82,6 +82,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
         if (nameAttributes == null)  nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
 
+        assert name != null: "Null name for PSI element " + element;
         append(name, nameAttributes);
         setIcon(PsiElementListCellRenderer.this.getIcon(element));
 
