@@ -314,32 +314,38 @@ public class PythonSdkType extends SdkType {
       out.write(text);
       out.close();
 
-      final SdkUtil.ProcessCallInfo run_result = SdkUtil.getProcessOutput(sdkPath, new String[] {bin_path, find_bin_file.getPath()});
-      
-      if (run_result.exitValue() == 0) {
-        for (String line : run_result.getStdout()) {
-          // line = "mod_name path"
-          int cutpos = line.indexOf(' ');
-          String modname = line.substring(0, cutpos);
-          String mod_fname = modname.replace(".", File.separator); // "a.b.c" -> "a/b/c", no ext 
-          String fname = line.substring(cutpos+1);
-          //String ext = fname.substring(fname.lastIndexOf('.')); // no way ext is absent 
-          // check if it's fresh
-          File f_orig = new File(fname);
-          File f_skel = new File(stubsRoot + File.separator + mod_fname + ".py");
-          if (f_orig.lastModified() >= f_skel.lastModified()) {
-            // skeleton stale, rebuild
-            LOG.info("Skeleton for " + modname);
-            final SdkUtil.ProcessCallInfo gen_result = SdkUtil.getProcessOutput(sdkPath, 
-              new String[] {bin_path, gen3_file.getPath(), "-d", stubsRoot, modname}
-            );
-            if (gen_result.exitValue() != 0) {
-              for (String err_line : gen_result.getStderr()) {
-                LOG.error(err_line);
+      try {
+        final SdkUtil.ProcessCallInfo run_result = SdkUtil.getProcessOutput(sdkPath, new String[] {bin_path, find_bin_file.getPath()});
+
+        if (run_result.exitValue() == 0) {
+          for (String line : run_result.getStdout()) {
+            // line = "mod_name path"
+            int cutpos = line.indexOf(' ');
+            String modname = line.substring(0, cutpos);
+            String mod_fname = modname.replace(".", File.separator); // "a.b.c" -> "a/b/c", no ext
+            String fname = line.substring(cutpos+1);
+            //String ext = fname.substring(fname.lastIndexOf('.')); // no way ext is absent
+            // check if it's fresh
+            File f_orig = new File(fname);
+            File f_skel = new File(stubsRoot + File.separator + mod_fname + ".py");
+            if (f_orig.lastModified() >= f_skel.lastModified()) {
+              // skeleton stale, rebuild
+              LOG.info("Skeleton for " + modname);
+              final SdkUtil.ProcessCallInfo gen_result = SdkUtil.getProcessOutput(sdkPath,
+                new String[] {bin_path, gen3_file.getPath(), "-d", stubsRoot, modname}
+              );
+              if (gen_result.exitValue() != 0) {
+                for (String err_line : gen_result.getStderr()) {
+                  LOG.error(err_line);
+                }
               }
             }
           }
         }
+      }
+      finally {
+        FileUtil.delete(find_bin_file);
+        FileUtil.delete(gen3_file);
       }
     }
     catch (IOException e) {
