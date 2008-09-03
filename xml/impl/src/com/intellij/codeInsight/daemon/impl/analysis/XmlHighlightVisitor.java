@@ -537,10 +537,21 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         if(hasBadResolve(reference)) {
           String description = getErrorDescription(reference);
 
+          final int startOffset = reference.getElement().getTextRange().getStartOffset();
+          final TextRange referenceRange = reference.getRangeInElement();
+
+          // logging for IDEADEV-29655
+          if (referenceRange.getStartOffset() > referenceRange.getEndOffset()) {
+            final PsiElement element = reference.getElement();
+            final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+            LOG.error("Reference range start offset > end offset for element:  " + element.getText() + ", within tag: " + (tag != null ? tag.getText() : "NULL") +
+            ", start offset: " + referenceRange.getStartOffset() + ", end offset: " + referenceRange.getEndOffset());
+          }
+
           HighlightInfo info = HighlightInfo.createHighlightInfo(
             getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class)),
-            reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getStartOffset(),
-            reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset(),
+            startOffset + referenceRange.getStartOffset(),
+            startOffset + referenceRange.getEndOffset(),
             description
           );
           addToResults(info);
