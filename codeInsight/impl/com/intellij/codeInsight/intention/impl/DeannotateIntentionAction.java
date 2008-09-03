@@ -25,20 +25,30 @@ import org.jetbrains.annotations.Nullable;
 
 public class DeannotateIntentionAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#" + DeannotateIntentionAction.class.getName());
+  private String myAnnotationName = null;
 
   @NotNull
   public String getText() {
-    return CodeInsightBundle.message("deannotate.intention.action.text");
+    return CodeInsightBundle.message("deannotate.intention.action.text") + (myAnnotationName != null ? " " + myAnnotationName : "");
   }
 
   @NotNull
   public String getFamilyName() {
-    return getText();
+    return CodeInsightBundle.message("deannotate.intention.action.text");
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiModifierListOwner listOwner = getContainer(editor, file);
-    return listOwner != null && ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(listOwner) != null;
+    if (listOwner != null) {
+      final PsiAnnotation[] annotations = ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(listOwner);
+      if (annotations != null) {
+        if (annotations.length == 1) {
+          myAnnotationName = annotations[0].getQualifiedName();
+        }
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
