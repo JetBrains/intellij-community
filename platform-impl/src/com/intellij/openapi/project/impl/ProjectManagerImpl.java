@@ -156,6 +156,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return null;
   }
 
+  @NonNls
   private static String message(Throwable e) {
     String message = e.getMessage();
     if (message != null) return message;
@@ -172,16 +173,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private ProjectImpl createAndInitProject(String projectName, String filePath, boolean isDefault, boolean isDummy, boolean isOptimiseTestLoadSpeed,
-                                    @Nullable Project template, @Nullable Pair<Class, Object>[] additionalPicoContainerComponents) throws IOException {
+                                    @Nullable Project template, @Nullable Pair<Class, Object> additionalPicoContainerComponents) throws IOException {
     if (isDummy) {
       throw new UnsupportedOperationException("Dummy project is deprecated and shall not be used anymore.");
     }
     final ProjectImpl project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed);
 
     if (additionalPicoContainerComponents != null) {
-      for (Pair<Class, Object> additionalPicoContainerComponent : additionalPicoContainerComponents) {
-        project.getPicoContainer().registerComponentInstance(additionalPicoContainerComponent.first, additionalPicoContainerComponent.second);
-      }
+        project.getPicoContainer().registerComponentInstance(additionalPicoContainerComponents.first, additionalPicoContainerComponents.second);
     }
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
@@ -226,7 +225,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Nullable
-  private Project loadProject(String filePath, Pair<Class, Object>[] additionalPicoContainerComponents) throws IOException, StateStorage.StateStorageException {
+  private Project loadProject(String filePath, Pair<Class, Object> additionalPicoContainerComponents) throws IOException, StateStorage.StateStorageException {
     filePath = canonicalize(filePath);
     ProjectImpl project = null;
     try {
@@ -352,14 +351,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
               indicator.setText(ProjectBundle.message("loading.components.for", filePath));
               indicator.setIndeterminate(true);
             }
-
-            if (convertorComponent != null) {
-              //noinspection unchecked
-              project[0] = loadProject(filePath, new Pair[]{convertorComponent});
-            }
-            else {
-              project[0] = loadProject(filePath, null);
-            }
+            project[0] = loadProject(filePath, convertorComponent);
           }
           catch (IOException e) {
             io[0] = e;
