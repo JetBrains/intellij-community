@@ -97,6 +97,21 @@ public class NameSuggestionsField extends JPanel {
     }
   }
 
+  public void selectNameWithoutExtension() {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        Editor editor = getEditor();
+        if (editor == null) return;
+        final int pos = editor.getDocument().getText().indexOf('.');
+        if (pos > 0) {
+          editor.getSelectionModel().setSelection(0, pos);
+          editor.getCaretModel().moveToOffset(pos);
+        }
+      }
+    });
+
+  }
+
   public void setSuggestions(final String[] suggestions) {
     if(myComboBoxModel == null) return;
     JComboBox comboBox = (JComboBox) myComponent;

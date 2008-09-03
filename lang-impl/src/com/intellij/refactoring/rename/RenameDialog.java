@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
@@ -95,6 +96,9 @@ public class RenameDialog extends RefactoringDialog {
   private void createNewNameComponent() {
     String[] suggestedNames = getSuggestedNames();
     myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, FileTypes.PLAIN_TEXT, myEditor);
+    if (myPsiElement instanceof PsiFile && myEditor == null) {
+      myNameSuggestionsField.selectNameWithoutExtension();
+    }
     myNameChangedListener = new NameSuggestionsField.DataChanged() {
       public void dataChanged() {
         validateButtons();
