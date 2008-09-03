@@ -126,12 +126,17 @@ public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
     return myModifierList;
   }
 
-  public boolean hasModifierProperty(String name) {
+  public boolean hasModifierProperty(@NotNull String name) {
     return myModifierList.hasModifierProperty(name);
   }
 
   public boolean canNavigate() {
     return myMethod.canNavigate();
+  }
+
+  @Override
+  public boolean isConstructor() {
+    return false;
   }
 
   public PsiElement getNavigationElement() {
