@@ -38,7 +38,12 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     }
     else if (element instanceof PsiMember) {
       final PsiMember member = (PsiMember)element;
-      return member.getContainingClass().getQualifiedName() + "#" + member.getName();
+      PsiClass containingClass = member.getContainingClass();
+      if (containingClass instanceof PsiAnonymousClass) containingClass = ((PsiAnonymousClass)containingClass).getBaseClassType().resolve();
+      if (containingClass == null) return null;
+      String classFqn = containingClass.getQualifiedName();
+      if (classFqn == null) return member.getName();  // refer to member of anonymous class by simple name
+      return classFqn + "#" + member.getName();
     }
     return null;
   }
@@ -96,8 +101,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
       }
       toInsert += ")";
     }
-    else if (targetElement == null ||
-             PsiTreeUtil.getNonStrictParentOfType(elementAtCaret, PsiLiteralExpression.class, PsiComment.class) != null ||
+    else if (PsiTreeUtil.getNonStrictParentOfType(elementAtCaret, PsiLiteralExpression.class, PsiComment.class) != null ||
              PsiTreeUtil.getNonStrictParentOfType(elementAtCaret, PsiJavaFile.class) == null) {
       toInsert = fqn;
     }
@@ -136,14 +140,14 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
       if (referenceExpression == null) {
         toInsert = fqn;
       }
-      else if (referenceExpression.advancedResolve(true).getElement() != targetElement) {
+      else if (!isReferencedTo(referenceExpression, targetElement)) {
         try {
           referenceExpression.bindToElement(targetElement);
         }
         catch (IncorrectOperationException e) {
           // failed to bind
         }
-        if (referenceExpression.advancedResolve(true).getElement() != targetElement) {
+        if (!isReferencedTo(referenceExpression, targetElement)) {
           toInsert = fqn;
         }
       }
@@ -177,6 +181,14 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
       caretOffset --;
     }
     editor.getCaretModel().moveToOffset(caretOffset);
+  }
+
+  private static boolean isReferencedTo(PsiReferenceExpression referenceExpression, PsiMember targetElement) {
+    PsiElement resolved = referenceExpression.advancedResolve(true).getElement();
+    if (!(resolved instanceof PsiMember)) return false;
+    PsiClass aClass = ((PsiMember)resolved).getContainingClass();
+    if (aClass instanceof PsiAnonymousClass) aClass = ((PsiAnonymousClass)aClass).getBaseClassType().resolve();
+    return aClass == targetElement.getContainingClass();
   }
 
   @Nullable
