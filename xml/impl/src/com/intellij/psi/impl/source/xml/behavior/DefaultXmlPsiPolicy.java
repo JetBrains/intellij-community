@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.xml.behavior;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.source.DummyHolderFactory;
@@ -15,6 +16,8 @@ import com.intellij.psi.xml.XmlText;
 import com.intellij.util.CharTable;
 
 public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.behavior.DefaultXmlPsiPolicy");
+
   public ASTNode encodeXmlTextContents(String displayText, XmlText text, CharTable table) {
     final PsiFile containingFile = text.getContainingFile();
     final FileElement dummyParent = DummyHolderFactory.createHolder(text.getManager(), null, table).getTreeElement();
@@ -25,7 +28,7 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
       assert rootTag != null;
       final XmlTagChild[] tagChildren = rootTag.getValue().getChildren();
       final XmlTagChild child = tagChildren.length > 0 ? tagChildren[0]:null;
-      assert child != null;
+      LOG.assertTrue(child != null, "Child is null for tag: " + rootTag.getText());
 
       final TreeElement element = (TreeElement)child.getNode();
       TreeUtil.removeRange((TreeElement)tagChildren[tagChildren.length - 1].getNode().getTreeNext(), null);
