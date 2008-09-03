@@ -19,7 +19,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
+  @Deprecated
   @NonNls private static final String ASSERT_KEYWORD_ATTR = "assert-keyword";
+  @Deprecated
   @NonNls private static final String JDK_15_ATTR = "jdk-15";
 
   private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_5;
@@ -38,23 +40,38 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       // is able to determine correct language level for stub parsing.
     }
 
-    final boolean assertKeyword = Boolean.valueOf(element.getAttributeValue(ASSERT_KEYWORD_ATTR)).booleanValue();
-    final boolean jdk15 = Boolean.valueOf(element.getAttributeValue(JDK_15_ATTR)).booleanValue();
-    if (jdk15) {
-      myLanguageLevel = LanguageLevel.JDK_1_5;
-    }
-    else if (assertKeyword) {
-      myLanguageLevel = LanguageLevel.JDK_1_4;
+    String level = element.getAttributeValue("languageLevel");
+    if (level == null) {
+      myLanguageLevel = migrateFromIdea7(element);
     }
     else {
-      myLanguageLevel = LanguageLevel.JDK_1_3;
+      myLanguageLevel = LanguageLevel.valueOf(level);
     }
     myOriginalLanguageLevel = myLanguageLevel;
   }
 
+  private static LanguageLevel migrateFromIdea7(Element element) {
+    final boolean assertKeyword = Boolean.valueOf(element.getAttributeValue(ASSERT_KEYWORD_ATTR)).booleanValue();
+    final boolean jdk15 = Boolean.valueOf(element.getAttributeValue(JDK_15_ATTR)).booleanValue();
+    if (jdk15) {
+      return LanguageLevel.JDK_1_5;
+    }
+    else if (assertKeyword) {
+      return LanguageLevel.JDK_1_4;
+    }
+    else {
+      return LanguageLevel.JDK_1_3;
+    }
+  }
+
   private void writeExternal(final Element element) {
+    element.setAttribute("languageLevel", myLanguageLevel.name());
+    writeAttributesForIdea7(element);
+  }
+
+  private void writeAttributesForIdea7(Element element) {
     final boolean is14 = LanguageLevel.JDK_1_4.equals(myLanguageLevel);
-    final boolean is15 = LanguageLevel.JDK_1_5.equals(myLanguageLevel);
+    final boolean is15 = myLanguageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
     element.setAttribute(ASSERT_KEYWORD_ATTR, Boolean.toString(is14 || is15));
     element.setAttribute(JDK_15_ATTR, Boolean.toString(is15));
   }

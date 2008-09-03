@@ -430,7 +430,7 @@ public class OverrideImplementUtil {
       public PsiMethodMember fun(final CandidateInfo s) {
         return new PsiMethodMember(s);
       }
-    }), false, true, project, !toImplement && PsiUtil.isLanguageLevel5OrHigher(aClass));
+    }), false, true, project, PsiUtil.isLanguageLevel5OrHigher(aClass) && (PsiUtil.isLanguageLevel6OrHigher(aClass) || !toImplement));
     chooser.setTitle(toImplement
                      ? CodeInsightBundle.message("methods.to.implement.chooser.title")
                      : CodeInsightBundle.message("methods.to.override.chooser.title"));

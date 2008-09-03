@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NonNls;
 public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelModuleExtension> {
   @NonNls private static final String LANGUAGE_LEVEL_ELEMENT_NAME = "LANGUAGE_LEVEL";
   private Module myModule;
-  private boolean myWritable;
+  private final boolean myWritable;
   private static final Logger LOG = Logger.getInstance("#" + LanguageLevelModuleExtension.class.getName());
 
   public static LanguageLevelModuleExtension getInstance(final Module module) {
@@ -23,10 +23,12 @@ public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelM
   }
 
   private LanguageLevel myLanguageLevel;
-  private LanguageLevelModuleExtension mySource;
+  private final LanguageLevelModuleExtension mySource;
 
   public LanguageLevelModuleExtension(Module module) {
     myModule = module;
+    mySource = null;
+    myWritable = false;
   }
 
   public LanguageLevelModuleExtension(final LanguageLevelModuleExtension source, boolean writable) {
@@ -42,8 +44,8 @@ public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelM
       if (myLanguageLevel != languageLevel) {
         final LanguageLevelProjectExtension languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(myModule.getProject());
         final LanguageLevel projectLanguageLevel = languageLevelProjectExtension.getLanguageLevel();
-        if (!(languageLevel == null && myLanguageLevel == projectLanguageLevel || 
-             (myLanguageLevel == null && languageLevel == projectLanguageLevel))) {
+        if (!(languageLevel == null && myLanguageLevel == projectLanguageLevel ||
+              myLanguageLevel == null && languageLevel == projectLanguageLevel)) {
           languageLevelProjectExtension.reloadProjectOnLanguageLevelChange(languageLevel, true);
         }
       }
@@ -78,7 +80,7 @@ public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelM
   }
 
   public void commit() {
-    if (mySource != null) {
+    if (mySource != null && mySource.myLanguageLevel != myLanguageLevel) {
       mySource.myLanguageLevel = myLanguageLevel;
     }
   }

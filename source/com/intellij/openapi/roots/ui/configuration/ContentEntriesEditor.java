@@ -25,11 +25,7 @@ public class ContentEntriesEditor extends CommonContentEntriesEditor {
   }
 
   public boolean isModified() {
-    if (super.isModified()) {
-      return true;
-    }
-    if (myLanguageLevelConfigurable != null && myLanguageLevelConfigurable.isModified()) return true;
-    return false;
+    return super.isModified() || myLanguageLevelConfigurable != null && myLanguageLevelConfigurable.isModified();
   }
 
   protected void addAdditionalSettingsToPanel(final JPanel mainPanel) {

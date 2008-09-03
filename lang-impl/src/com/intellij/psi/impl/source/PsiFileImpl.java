@@ -844,8 +844,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
-  @Nullable
-  private StubElement bindFakeStubsToTree(StubTree stubTree) {
+  private void bindFakeStubsToTree(StubTree stubTree) {
     final PsiFileImpl file = this;
 
     final Iterator<StubElement<?>> stubs = stubTree.getPlainList().iterator();
@@ -853,7 +852,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final FileElement fileRoot = file.getTreeElement();
     assert fileRoot != null;
 
-    return bindStubs(fileRoot, stubs);
+    bindStubs(fileRoot, stubs);
   }
 
   @Nullable

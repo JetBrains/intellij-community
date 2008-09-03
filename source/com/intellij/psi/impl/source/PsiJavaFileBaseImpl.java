@@ -28,7 +28,7 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -50,7 +50,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private final ConcurrentMap<PsiJavaFile,ConcurrentMap<String, SoftReference<JavaResolveResult[]>>> myGuessCache;
 
   @NonNls private static final String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
-  private volatile LanguageLevel myLanguageLevel;
+  private final ParameterizedCachedValueProvider<LanguageLevel,PsiJavaFile> myLanguageLevelProvider = new ParameterizedCachedValueProvider<LanguageLevel, PsiJavaFile>() {
+    public CachedValueProvider.Result<LanguageLevel> compute(PsiJavaFile param) {
+      LanguageLevel level = getLanguageLevelInner();
+      return CachedValueProvider.Result.create(level, ProjectRootManager.getInstance(getProject()));
+    }
+  };
 
   protected PsiJavaFileBaseImpl(IElementType elementType, IElementType contentElementType, FileViewProvider viewProvider) {
     super(elementType, contentElementType, viewProvider);
@@ -412,12 +417,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return JavaCodeStyleManager.getInstance(getProject()).addImport(this, aClass);
   }
 
+  private static final Key<ParameterizedCachedValue<LanguageLevel, PsiJavaFile>> LANGUAGE_LEVEL = Key.create("LANGUAGE_LEVEL");
   @NotNull
   public LanguageLevel getLanguageLevel() {
-    if (myLanguageLevel == null) {
-      myLanguageLevel = getLanguageLevelInner();
-    }
-    return myLanguageLevel;
+    return getManager().getCachedValuesManager().getParameterizedCachedValue(this, LANGUAGE_LEVEL, myLanguageLevelProvider, false, this);
   }
 
   private LanguageLevel getLanguageLevelInner() {

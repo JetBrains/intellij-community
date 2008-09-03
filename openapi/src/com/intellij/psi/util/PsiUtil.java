@@ -834,6 +834,9 @@ public final class PsiUtil extends PsiUtilBase {
   public static boolean isLanguageLevel5OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).compareTo(LanguageLevel.JDK_1_5) >= 0;
   }
+  public static boolean isLanguageLevel6OrHigher(@NotNull PsiElement element) {
+    return getLanguageLevel(element).compareTo(LanguageLevel.JDK_1_6) >= 0;
+  }
   @NotNull
   public static LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) return JavaDirectoryService.getInstance().getLanguageLevel((PsiDirectory)element);

@@ -16,12 +16,22 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+import java.util.EnumMap;
+
 /**
  * @author cdr
  */
 public class IncreaseLanguageLevelFix implements IntentionAction {
   private final LanguageLevel myLevel;
+  private static final Map<LanguageLevel, String[]> acceptableJDKVersions = new EnumMap<LanguageLevel, String[]>(LanguageLevel.class);
 
+  static {
+    acceptableJDKVersions.put(LanguageLevel.JDK_1_3, new String[]{"1.3"});
+    acceptableJDKVersions.put(LanguageLevel.JDK_1_4, new String[]{"1.4"});
+    acceptableJDKVersions.put(LanguageLevel.JDK_1_5, new String[]{"1.5", "5.0"});
+    acceptableJDKVersions.put(LanguageLevel.JDK_1_6, new String[]{"1.6", "6.0"});
+  }
   public IncreaseLanguageLevelFix(LanguageLevel targetLevel) {
     myLevel = targetLevel;
   }
@@ -40,7 +50,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     final JavaSdk sdk = JavaSdk.getInstance();
     final String versionString = jdk.getVersionString();
     if (versionString == null) return false;
-    String[] acceptableVersionNumbers = myLevel == LanguageLevel.JDK_1_3 ? new String[]{"1.3"} : myLevel == LanguageLevel.JDK_1_4 ? new String[]{"1.4"} : new String[]{"1.5", "5.0"};
+    String[] acceptableVersionNumbers = acceptableJDKVersions.get(myLevel);
     for (String number : acceptableVersionNumbers) {
       if (sdk.compareTo(versionString, number) >= 0) return true;
     }

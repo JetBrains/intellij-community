@@ -237,7 +237,7 @@ public class JavaSdkImpl extends JavaSdk {
   public void disposeComponent() {
   }
 
-  public int compareTo(String versionString, String versionNumber) {
+  public int compareTo(@NotNull String versionString, @NotNull String versionNumber) {
     return getVersionNumber(versionString).compareTo(versionNumber);
   }
 

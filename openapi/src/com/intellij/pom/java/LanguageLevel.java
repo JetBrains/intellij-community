@@ -23,9 +23,10 @@ import com.intellij.psi.PsiBundle;
 public enum LanguageLevel {
   JDK_1_3 ("1.3 ", false, false),
   JDK_1_4 (PsiBundle.message("jdk.1.4.language.level.description"), true, false), // assert keyword
-  JDK_1_5 (PsiBundle.message("jdk.1.5.language.level.description"), true, true); // enums etc.
+  JDK_1_5 (PsiBundle.message("jdk.1.5.language.level.description"), true, true), // enums etc.
+  JDK_1_6 (PsiBundle.message("jdk.1.6.language.level.description"), true, true); // changed rules for @Override
 
-  public static final LanguageLevel HIGHEST = JDK_1_5;
+  public static final LanguageLevel HIGHEST = JDK_1_6;
   private final boolean myHasAssertKeyword;
   private final boolean myHasEnumKeywordAndAutoboxing;
   private final String myPresentableText;

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -139,7 +140,7 @@ public class ModuleChunk extends Chunk<Module> {
   public String getCompilationClasspath() {
     final Set<Module> modules = getNodes();
 
-    final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>((TObjectHashingStrategy<VirtualFile>)TObjectHashingStrategy.CANONICAL);
+    final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     for (final Module module : modules) {
       final OrderEntry[] orderEntries = CompilerPathsEx.getOrderEntries(module);
       boolean skip = true;
@@ -164,8 +165,8 @@ public class ModuleChunk extends Chunk<Module> {
 
   public String getCompilationBootClasspath() {
     final Set<Module> modules = getNodes();
-    final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>((TObjectHashingStrategy<VirtualFile>)TObjectHashingStrategy.CANONICAL);
-    final OrderedSet<VirtualFile> jdkFiles = new OrderedSet<VirtualFile>((TObjectHashingStrategy<VirtualFile>)TObjectHashingStrategy.CANONICAL);
+    final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
+    final OrderedSet<VirtualFile> jdkFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     for (final Module module : modules) {
       final OrderEntry[] orderEntries = CompilerPathsEx.getOrderEntries(module);
       for (OrderEntry orderEntry : orderEntries) {
@@ -242,8 +243,6 @@ public class ModuleChunk extends Chunk<Module> {
 
   //the check for equal language levels is done elsewhere
   public LanguageLevel getLanguageLevel() {
-    final Module module = getModules()[0];
-    final LanguageLevel level = LanguageLevelModuleExtension.getInstance(module).getLanguageLevel();
-    return level == null? LanguageLevelProjectExtension.getInstance(module.getProject()).getLanguageLevel() : level;
+    return LanguageLevelUtil.getEffectiveLanguageLevel(getModules()[0]);
   }
 }

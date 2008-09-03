@@ -10,11 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ven
- * Date: Mar 13, 2006
- * Time: 4:16:57 PM
- * To change this template use File | Settings | File Templates.
+ * @author ven
  */
 public class LanguageLevelCombo extends ComboBox {
   public static final String USE_PROJECT_LANGUAGE_LEVEL = ProjectBundle.message("project.language.level.combo.item");
@@ -23,6 +19,7 @@ public class LanguageLevelCombo extends ComboBox {
     addItem(LanguageLevel.JDK_1_3);
     addItem(LanguageLevel.JDK_1_4);
     addItem(LanguageLevel.JDK_1_5);
+    addItem(LanguageLevel.JDK_1_6);
     setRenderer(new MyDefaultListCellRenderer());
   }
 
@@ -40,9 +37,10 @@ public class LanguageLevelCombo extends ComboBox {
   private static class MyDefaultListCellRenderer extends DefaultListCellRenderer {
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      if (value instanceof LanguageLevel){
+      if (value instanceof LanguageLevel) {
         setText(((LanguageLevel)value).getPresentableText());
-      } else if (value instanceof String){
+      }
+      else if (value instanceof String) {
         setText((String)value);
       }
       return this;

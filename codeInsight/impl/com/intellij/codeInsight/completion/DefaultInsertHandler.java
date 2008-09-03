@@ -1,7 +1,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.completion.simple.*;
+import com.intellij.codeInsight.completion.simple.PsiMethodInsertHandler;
+import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
@@ -521,9 +522,9 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       }
     }
 
-    boolean isJdk15Enabled = PsiUtil.isLanguageLevel5OrHigher(aClass);
+    boolean canInsertOverride = PsiUtil.isLanguageLevel5OrHigher(aClass) && (PsiUtil.isLanguageLevel6OrHigher(aClass) || !aClass.isInterface());
     final PsiMethodMember[] array = methods.toArray(new PsiMethodMember[methods.size()]);
-    final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(array, false, true, project, isJdk15Enabled);
+    final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(array, false, true, project, canInsertOverride);
     chooser.setTitle(CompletionBundle.message("completion.smarttype.select.methods.to.override"));
     chooser.setCopyJavadocVisible(true);
 

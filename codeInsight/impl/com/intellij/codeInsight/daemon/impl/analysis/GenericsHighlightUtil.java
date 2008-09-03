@@ -900,11 +900,22 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkOverrideAnnotation(PsiMethod method) {
     PsiModifierList list = method.getModifierList();
     final PsiAnnotation overrideAnnotation = list.findAnnotation("java.lang.Override");
-    if (overrideAnnotation != null) {
-      if (SuperMethodsSearch.search(method, null, true, false).findFirst() == null) {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation,
-                                                 JavaErrorMessages.message("override.annotation.violated"));
-      }
+    if (overrideAnnotation == null) {
+      return null;
+    }
+    MethodSignatureBackedByPsiMethod superMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
+    if (superMethod == null) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation,
+                                               JavaErrorMessages.message("method.doesnot.override.super"));
+    }
+    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(method);
+    PsiClass superClass = superMethod.getMethod().getContainingClass();
+    if (languageLevel.equals(LanguageLevel.JDK_1_5) &&
+        superClass != null &&
+        superClass.isInterface()) {
+      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation, JavaErrorMessages.message("override.not.allowed.in.interfaces"));
+      QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_6));
+      return info;
     }
     return null;
   }

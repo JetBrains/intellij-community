@@ -49,13 +49,12 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType, Applicatio
       @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File f) {
         if (f.isDirectory()) return false;
-        if (Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "javac")) return true;
-        if (Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "javah")) return true;
-        return false;
+        return Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "javac") ||
+               Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "javah");
       }
     };
     File[] children = file.listFiles(fileFilter);
-    return (children != null && children.length >= 2);
+    return children != null && children.length >= 2;
   }
 
   public static boolean checkForJre(String file){
@@ -64,13 +63,11 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType, Applicatio
     FileFilter fileFilter = new FileFilter() {
       @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File f) {
-        if (f.isDirectory()) return false;
-        if (Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "java")) return true;
-        return false;
+        return !f.isDirectory() && Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "java");
       }
     };
     File[] children = ioFile.listFiles(fileFilter);
-    return (children != null && children.length >= 1);
+    return children != null && children.length >= 1;
   }
 
 

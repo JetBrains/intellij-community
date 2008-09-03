@@ -21,8 +21,8 @@ import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 
 public abstract class FieldCache<T, Owner,AccessorParameter,Parameter> {
-  private JBLock r;
-  private JBLock w;
+  private final JBLock r;
+  private final JBLock w;
 
   protected FieldCache() {
     JBReentrantReadWriteLock ourLock = LockFactory.createReadWriteLock();

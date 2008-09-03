@@ -45,7 +45,7 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
   private Map<Module, MultiValuesMap<LogicalRootType, LogicalRoot>> myRoots = null;
   private final MultiValuesMap<LogicalRootType,NotNullFunction> myProviders = new MultiValuesMap<LogicalRootType, NotNullFunction>();
   private final MultiValuesMap<FileType,LogicalRootType> myFileTypes2RootTypes = new MultiValuesMap<FileType, LogicalRootType>();
-  private ModuleManager myModuleManager;
+  private final ModuleManager myModuleManager;
   private final Project myProject;
 
   public LogicalRootsManagerImpl(final MessageBus bus, final ModuleManager moduleManager, final Project project) {
