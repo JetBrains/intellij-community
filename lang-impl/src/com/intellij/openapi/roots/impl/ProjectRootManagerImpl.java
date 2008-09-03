@@ -46,8 +46,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -117,24 +115,23 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
     }
 
-    public void fireChange() {
-      fireRootsChanged(myFileTypes);
+    boolean fireChange() {
+      return fireRootsChanged(myFileTypes);
     }
 
     public void beforeRootsChanged() {
-      if (myBatchLevel == 0 || !myChanged) {
-        try {
-          fireBeforeRootsChanged(myFileTypes);
-        }
-        finally {
-          myChanged =  true;
-        }
+      if (myBatchLevel == 0 || !myChanged || myIsRootsChangedOnDemandStartedButNotDemanded) {
+        if (fireBeforeRootsChanged(myFileTypes)) {
+            myChanged = true;
+          }
       }
     }
 
     public void rootsChanged() {
-      if (myBatchLevel == 0) {
-        fireChange();
+      if (myBatchLevel == 0 || true || myIsRootsChangedOnDemandStartedButNotDemanded) {
+        if (fireChange()){
+          myChanged = false;
+        }
       }
     }
   }
@@ -146,30 +143,33 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return (ProjectRootManagerImpl)getInstance(project);
   }
 
-  private void fireBeforeRootsChanged(final boolean filetypes) {
+  private boolean fireBeforeRootsChanged(final boolean filetypes) {
+    boolean res = false;
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (myRootsChangeCounter == 0) {
       if (myIsRootsChangedOnDemandStartedButNotDemanded) {
         myIsRootsChangedOnDemandStartedButNotDemanded = false;
         myRootsChangeCounter++; // blocks all firing until finishRootsChangedOnDemand
-        putRootsChangedStachTrace();
+        //putRootsChangedStachTrace();
       }
       myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, filetypes));
+      res = true;
     }
 
     myRootsChangeCounter++;
-    putRootsChangedStachTrace();
+    //putRootsChangedStachTrace();
+    return res;
   }
 
-  private final Stack<String> myRootsChangedEvents = new Stack<String>();
+  //private final Stack<String> myRootsChangedEvents = new Stack<String>();
 
-  private void putRootsChangedStachTrace() {
+  /*private void putRootsChangedStachTrace() {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     PrintStream stream = new PrintStream(out);
     new RuntimeException().printStackTrace(stream);
     stream.close();
     myRootsChangedEvents.push(new String(out.toByteArray()));
-  }
+  }  */
 
   public ProjectRootManagerImpl(Project project, FileTypeManager fileTypeManager, DirectoryIndex directoryIndex, StartupManager startupManager) {
     myProject = (ProjectEx)project;
@@ -419,7 +419,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   private void doRootsChangedOnDemand(Runnable r) {
     LOG.assertTrue(!myIsRootsChangedOnDemandStartedButNotDemanded, "Nested on-demand rootsChanged not supported");
-    LOG.assertTrue(myRootsChangeCounter == 0, "On-demand rootsChanged not allowed inside rootsChanged");
+    LOG.assertTrue(myRootsChangeCounter == 0, "On-demand rootsChanged not allowed inside rootsChanged, rootsChanged level == " + myRootsChangeCounter) ;
     myIsRootsChangedOnDemandStartedButNotDemanded = true;
     try {
       r.run();
@@ -430,16 +430,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
       else {
         if (myRootsChangeCounter != 1) {
-          String message = "myRootsChangedCounter = " + myRootsChangeCounter;
-          if (myRootsChangeCounter > 1) {
-            for (String rootsChangedEvent : myRootsChangedEvents) {
-              message += "\n" + rootsChangedEvent + "\n";                            
-            }
-            LOG.assertTrue(false, message);
-          }
-          else {
-            LOG.assertTrue(false, "myRootsChangedCounter = " + myRootsChangeCounter);
-          }
+          LOG.assertTrue(false, "myRootsChangedCounter = " + myRootsChangeCounter);
         }
         myIsRootsChangedOnDemandStartedButNotDemanded = false;
         rootsChanged(false);
@@ -476,13 +467,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     getBatchSession(filetypes).rootsChanged();
   }
 
-  private void fireRootsChanged(final boolean filetypes) {
-    if (myProject.isDisposed()) return;
+  private boolean fireRootsChanged(final boolean filetypes) {
+    if (myProject.isDisposed()) return false;
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myRootsChangeCounter--;
-    popRootsChangedStachTrace();
-    if (myRootsChangeCounter > 0) return;
+//    popRootsChangedStachTrace();
+    if (myRootsChangeCounter > 0) return false;
 
     clearScopesCaches();
 
@@ -493,11 +484,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     doSynchronize();
 
     addRootsToWatch();
+
+    return true;
   }
 
-  private void popRootsChangedStachTrace() {
-    myRootsChangedEvents.pop();
-  }
 
   public Project getProject() {
     return myProject;

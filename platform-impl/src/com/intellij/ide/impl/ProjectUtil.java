@@ -102,7 +102,7 @@ public class ProjectUtil {
   @Nullable
   public static void saveInNewFormat(@NotNull final String path, final Runnable postRunnable) throws Exception {
 
-    File iprFile = new File(path);
+    final File iprFile = new File(path);
 
     File ideaDir = new File(iprFile.getParentFile(), DIRECTORY_BASED_PROJECT_DIR);
     File iwsFile = new File(iprFile.getParentFile(), getProjectName(iprFile) + ".iws");
@@ -133,7 +133,7 @@ public class ProjectUtil {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
           public void run() {
             try {
-              final Project project = projectManager.loadProject(path);
+              final Project project = projectManager.loadProject(iprFile.getParentFile().getPath()) ;
 
               ExtensionPoint[] points = Extensions.getRootArea().getExtensionPoints();
               for (ExtensionPoint point : points) {
