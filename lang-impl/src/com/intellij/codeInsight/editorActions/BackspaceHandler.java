@@ -5,6 +5,7 @@ import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -14,6 +15,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 public class BackspaceHandler extends EditorWriteActionHandler {
   private final EditorActionHandler myOriginalHandler;
@@ -109,5 +112,32 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     }
 
     return true;
+  }
+
+  public static LogicalPosition getBackspaceUnindentPosition(final PsiFile file, final Editor editor) {
+    if (editor.getSelectionModel().hasSelection() || editor.getSelectionModel().hasBlockSelection()) return null;
+
+    LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
+    if (caretPos.line == 1 || caretPos.column == 0) {
+      return null;
+    }
+    int lineStartOffset = editor.getDocument().getLineStartOffset(caretPos.line);
+    int lineEndOffset = editor.getDocument().getLineEndOffset(caretPos.line);
+
+    CharSequence charSeq = editor.getDocument().getCharsSequence();
+    // smart backspace is activated only if all characters in the caret line
+    // are whitespace characters
+    for(int pos=lineStartOffset; pos<lineEndOffset; pos++) {
+      if (charSeq.charAt(pos) != '\t' && charSeq.charAt(pos) != ' ' &&
+            charSeq.charAt(pos) != '\n') {
+        return null;
+      }
+    }
+
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
+    int column = caretPos.column - settings.getIndentSize(file.getFileType());
+    if (column < 0) column = 0;
+
+    return new LogicalPosition(caretPos.line, column);
   }
 }
