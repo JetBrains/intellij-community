@@ -37,7 +37,7 @@ public final class EditorsSplitters extends JPanel {
   private VirtualFile myCurrentFile;
   private final FileEditorManagerImpl myManager;
   private Element mySplittersElement;  // temporarily used during initialization
-  int myInsideChange;
+  private int myInsideChange = 0;
   private final MyFocusWatcher myFocusWatcher;
   private EditorWithProviderComposite myCurrentSelectedEditor;
   private final Alarm myIconUpdaterAlarm = new Alarm();
@@ -46,7 +46,6 @@ public final class EditorsSplitters extends JPanel {
     super(new BorderLayout());
     setOpaque(true);
     setBackground(Color.GRAY);
-    myInsideChange = 0;
     myManager = manager;
     myFocusWatcher = new MyFocusWatcher();
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
@@ -192,7 +191,6 @@ public final class EditorsSplitters extends JPanel {
     if (leaf != null) {
       final EditorWindow window = new EditorWindow(this);
       try {
-        window.myInsideTabChange++;
         //noinspection unchecked
         final List<Element> children = leaf.getChildren("file");
         VirtualFile currentFile = null;
@@ -218,9 +216,6 @@ public final class EditorsSplitters extends JPanel {
       }
       catch (InvalidDataException e) {
         // OK
-      }
-      finally {
-        window.myInsideTabChange--;
       }
       return window.myPanel;
     }
@@ -343,6 +338,10 @@ public final class EditorsSplitters extends JPanel {
     for (int i = 0; i != windows.length; ++ i) {
       windows [i].updateFileName(file);
     }
+  }
+
+  public boolean isInsideChange() {
+    return myInsideChange > 0;
   }
 
   private final class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {
@@ -537,6 +536,16 @@ public final class EditorsSplitters extends JPanel {
       if (changed) {
         setCurrentWindow(newWindow, false);
       }
+    }
+  }
+
+  public void runChange(Runnable change) {
+    myInsideChange++;
+    try {
+      change.run();
+    }
+    finally {
+      myInsideChange--;
     }
   }
 }
