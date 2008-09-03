@@ -98,6 +98,10 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
     return copy;
   }
 
+  protected MultiplePsiFilesPerDocumentFileViewProvider getOriginal() {
+    return myOriginal;
+  }
+
   protected abstract MultiplePsiFilesPerDocumentFileViewProvider cloneInner(VirtualFile fileCopy);
 
   @Nullable
