@@ -16,7 +16,7 @@ public class PropertiesValueHighlightingLexer extends LayeredLexer {
           return getTokenStart() < getTokenEnd() ? PropertiesTokenTypes.VALUE_CHARACTERS : null;
         }
       });
-      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, PropertiesTokenTypes.VALUE_CHARACTERS, true, null),
+      registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, PropertiesTokenTypes.VALUE_CHARACTERS, true, "#!=:"),
                                 new IElementType[]{PropertiesTokenTypes.VALUE_CHARACTERS}, IElementType.EMPTY_ARRAY);
   }
 }

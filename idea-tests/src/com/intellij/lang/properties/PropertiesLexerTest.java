@@ -186,5 +186,19 @@ public class PropertiesLexerTest extends LightIdeaTestCase {
       "VALID_STRING_ESCAPE_TOKEN", "\\ ",
     });
   }
+  public void testSpecialCharsInValue() throws Exception {
+    doTestHL("xxx=\\ x\\ y\\!\\=\\#\\:", new String[]{
+      "Properties:KEY_CHARACTERS", "xxx",
+      "Properties:KEY_VALUE_SEPARATOR", "=",
+      "VALID_STRING_ESCAPE_TOKEN", "\\ ",
+      "Properties:VALUE_CHARACTERS", "x",
+      "INVALID_CHARACTER_ESCAPE_TOKEN", "\\ ",
+      "Properties:VALUE_CHARACTERS", "y",
+      "VALID_STRING_ESCAPE_TOKEN", "\\!",
+      "VALID_STRING_ESCAPE_TOKEN", "\\=",
+      "VALID_STRING_ESCAPE_TOKEN", "\\#",
+      "VALID_STRING_ESCAPE_TOKEN", "\\:",
+    });
+  }
 
 }

@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.ex.LineIterator;
  */
 public class LineIteratorImpl implements LineIterator {
   private int myLineIndex = 0;
-  private LineSet myLineSet;
+  private final LineSet myLineSet;
 
   LineIteratorImpl(LineSet lineSet) {
     myLineSet = lineSet;

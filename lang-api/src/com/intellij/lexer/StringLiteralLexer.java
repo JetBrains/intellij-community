@@ -27,10 +27,8 @@ import com.intellij.util.text.CharArrayUtil;
 public class StringLiteralLexer extends LexerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.StringLiteralLexer");
 
-  private static final short BEFORE_FIRST_QUOTE = 0;
   private static final short AFTER_FIRST_QUOTE = 1;
   private static final short AFTER_LAST_QUOTE = 2;
-  private static final short LAST_STATE = AFTER_LAST_QUOTE;
 
   public static final char NO_QUOTE_CHAR = (char)-1;
 

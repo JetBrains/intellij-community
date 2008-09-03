@@ -20,8 +20,8 @@ import java.util.Map;
  * @author max
  */
 public class PropertiesHighlighter extends SyntaxHighlighterBase {
-  private static Map<IElementType, TextAttributesKey> keys1;
-  private static Map<IElementType, TextAttributesKey> keys2;
+  private static final Map<IElementType, TextAttributesKey> keys1;
+  private static final Map<IElementType, TextAttributesKey> keys2;
 
   @NotNull
   public Lexer getHighlightingLexer() {
