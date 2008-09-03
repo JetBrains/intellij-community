@@ -996,6 +996,14 @@ public class StringUtil {
     return false;
   }
 
+  public static boolean containsAnyChar(@NotNull final String value, @NotNull final String chars) {
+    for (int i = 0; i < chars.length(); i ++) {
+      if (value.indexOf(chars.charAt(i)) != -1) return true;
+    }
+
+    return false;
+  }
+
   public static String firstLetterToUpperCase(final String displayString) {
     if (displayString == null || displayString.length() == 0) return displayString;
     char firstChar = displayString.charAt(0);

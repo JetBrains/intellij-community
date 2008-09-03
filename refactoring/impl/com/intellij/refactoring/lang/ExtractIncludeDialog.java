@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -101,7 +102,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
   private void validateOKButton() {
     final String fileName = myNameField.getText().trim();
     setOKActionEnabled(myTargetDirectoryField.getText().trim().length() > 0 &&
-                       fileName.length() > 0 && fileName.indexOf(File.separatorChar) < 0);
+                       fileName.length() > 0 && fileName.indexOf(File.separatorChar) < 0 && !StringUtil.containsAnyChar(fileName, "*?><\":;|"));
   }
 
   private static boolean isFileExist(@NotNull final String directory, @NotNull final String fileName) {
