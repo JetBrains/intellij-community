@@ -161,7 +161,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
 
       public boolean equals(final Object o1, final Object o2) {
         return o1 instanceof Property && o2 instanceof Property &&
-               Comparing.equal(((Property)o1).getKey(), ((Property)o2).getKey());
+               Comparing.equal(((Property)o1).getKey(), ((Property)o2).getKey(), true);
       }
     });
     List<PropertiesFile> propertiesFileList = getPropertiesFiles();
