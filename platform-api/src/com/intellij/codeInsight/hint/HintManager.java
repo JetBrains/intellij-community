@@ -41,4 +41,6 @@ public abstract class HintManager implements ApplicationComponent {
     int timeout);
 
   public abstract void hideAllHints();
+
+  public abstract boolean hasShownHintsThatWillHideByOtherHint();
 }
