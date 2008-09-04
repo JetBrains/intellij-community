@@ -215,7 +215,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   public final boolean isDisposed() {
-    return getUi() == null || getUi().isDisposed();
+    return getUi() == null || getUi().isReleased();
   }
 
   /**

@@ -63,7 +63,6 @@ class AbstractTreeUi {
   private WorkerThread myWorker = null;
   private ProgressIndicator myProgress;
   private static final int WAIT_CURSOR_DELAY = 100;
-  private boolean myDisposed = false;// used for searching only
   private AbstractTreeNode<Object> TREE_NODE_WRAPPER;
   private boolean myRootNodeWasInitialized = false;
   private final Map<Object, List<NodeAction>> myNodeActions = new HashMap<Object, List<NodeAction>>();
@@ -120,13 +119,13 @@ class AbstractTreeUi {
 
     final UiNotifyConnector uiNotify = new UiNotifyConnector(tree, new Activatable() {
       public void showNotify() {
-        if (!isDisposed()) {
+        if (!isReleased()) {
           AbstractTreeUi.this.showNotify();
         }
       }
 
       public void hideNotify() {
-        if (!isDisposed()) {
+        if (!isReleased()) {
           AbstractTreeUi.this.hideNotify();
         }
       }
@@ -212,8 +211,8 @@ class AbstractTreeUi {
   }
 
   public void release() {
-    if (myDisposed) return;
-    myDisposed = true;
+    if (isReleased()) return;
+
     myTree.removeTreeExpansionListener(myExpansionListener);
     myTree.removeTreeSelectionListener(mySelectionListener);
     disposeNode(getRootNode());
@@ -231,10 +230,12 @@ class AbstractTreeUi {
     myTree = null;
     setUpdater(null);
     myWorker = null;
+
+    myBuilder = null;
   }
 
-  public boolean isDisposed() {
-    return myDisposed;
+  public boolean isReleased() {
+    return myBuilder == null;
   }
 
 
@@ -785,7 +786,7 @@ class AbstractTreeUi {
 
     Runnable updateRunnable = new Runnable() {
       public void run() {
-        if (isDisposed()) return;
+        if (isReleased()) return;
 
         getBuilder().updateNodeDescriptor(descriptor);
         Object element = descriptor.getElement();
@@ -797,7 +798,7 @@ class AbstractTreeUi {
 
     Runnable postRunnable = new Runnable() {
       public void run() {
-        if (isDisposed()) return;
+        if (isReleased()) return;
 
         updateNodeChildren(node);
 
@@ -1097,7 +1098,7 @@ class AbstractTreeUi {
         final boolean[] hasNoChildren = new boolean[1];
         Runnable runnable = new Runnable() {
           public void run() {
-            if (isDisposed()) return;
+            if (isReleased()) return;
 
             getBuilder().updateNodeDescriptor(descriptor);
             Object element = getBuilder().getTreeStructureElement(descriptor);
@@ -1110,7 +1111,7 @@ class AbstractTreeUi {
 
         Runnable postRunnable = new Runnable() {
           public void run() {
-            if (isDisposed()) return;
+            if (isReleased()) return;
 
             if (hasNoChildren[0]) {
               getBuilder().updateNodeDescriptor(descriptor);
@@ -1146,12 +1147,12 @@ class AbstractTreeUi {
   protected void addTaskToWorker(final Runnable runnable, boolean first, final Runnable postRunnable) {
     Runnable runnable1 = new Runnable() {
       public void run() {
-        if (isDisposed()) return;
+        if (isReleased()) return;
 
         try {
           Runnable runnable2 = new Runnable() {
             public void run() {
-              if (isDisposed()) return;
+              if (isReleased()) return;
 
               ApplicationManager.getApplication().runReadAction(runnable);
               if (postRunnable != null) {
@@ -1713,7 +1714,7 @@ class AbstractTreeUi {
   }
 
   private void cleanUpNow() {
-    if (myDisposed) return;
+    if (isReleased()) return;
 
     final UpdaterTreeState state = new UpdaterTreeState(this);
 
