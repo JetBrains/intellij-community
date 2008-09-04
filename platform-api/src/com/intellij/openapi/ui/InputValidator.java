@@ -15,16 +15,30 @@
  */
 package com.intellij.openapi.ui;
 
+/**
+ * The validator for input dialogs.
+ *
+ * @see Messages#showInputDialog(String, String, javax.swing.Icon, String, InputValidator)
+ * @see Messages#showInputDialog(java.awt.Component, String, String, javax.swing.Icon, String, InputValidator)
+ * @see Messages#showInputDialog(com.intellij.openapi.project.Project, String, String, javax.swing.Icon, String, InputValidator)
+ * @see Messages#showEditableChooseDialog(String, String, javax.swing.Icon, String[], String, InputValidator)
+ */
 public interface InputValidator {
   /**
    * Checks whether the <code>inputString</code> is valid. It is invoked each time
    * input changes.
+   *
+   * @param inputString the input to check
+   * @return true if input string is valid
    */
   boolean checkInput(String inputString);
 
   /**
    * This method is invoked just before message dialog is closed with OK code.
    * If <code>false</code> is returned then then the message dialog will not be closed.
+   *
+   * @param inputString the input to check
+   * @return true if the dialog could be closed, false otherwhise.
    */
   boolean canClose(String inputString);
 }
