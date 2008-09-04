@@ -155,7 +155,7 @@ public class PsiSuperMethodImplUtil {
           mergeSupers(newSuper, existing);
           map.put(superSignature, newSuper);
         }
-        else if (/*isReturnTypeIsMoreSpecificThan(existing, hierarchicalMethodSignature) && */isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
+        else if (isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
           mergeSupers(existing, hierarchicalMethodSignature);
         }
         // just drop an invalid method declaration there - to highlight accordingly
