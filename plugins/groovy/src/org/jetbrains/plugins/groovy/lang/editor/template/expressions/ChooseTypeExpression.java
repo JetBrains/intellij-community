@@ -14,6 +14,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.editor.template.expressions;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.Expression;
@@ -34,7 +35,7 @@ import java.util.Set;
 /**
  * @author ven
  */
-public class ChooseTypeExpression implements Expression {
+public class ChooseTypeExpression extends Expression {
   protected SmartTypePointer myTypePointer;
   private LookupItem[] myItems;
   private PsiManager myManager;
@@ -100,7 +101,7 @@ public class ChooseTypeExpression implements Expression {
     return calculateResult(context);
   }
 
-  public LookupItem[] calculateLookupItems(ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(ExpressionContext context) {
     return myItems;
   }
 }
