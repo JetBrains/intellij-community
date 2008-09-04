@@ -37,5 +37,4 @@ public class GrVariableImpl extends GrVariableBaseImpl implements GrVariable {
   public String toString() {
     return "Variable";
   }
-
 }

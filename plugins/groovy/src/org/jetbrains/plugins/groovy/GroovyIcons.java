@@ -37,10 +37,11 @@ public interface GroovyIcons {
   Icon DYNAMIC = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png");
   Icon DEF = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/def.png");
   Icon FIELD = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/field.png");
+  Icon VARIABLE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/field.png");
 
   Icon NO_GROOVY_SDK = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/no_groovy_sdk.png");
+
   Icon GROOVY_SDK = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_sdk.png");
 
   Icon DYNAMIC_PROPERTY_TOOL_WINDOW_ICON = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png");
-
 }

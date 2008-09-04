@@ -22,4 +22,8 @@ public interface AbstractSDK {
 
   String getLibraryName();
 
+  boolean isProjectLib();
+
+  String getPresentation();
+
 }

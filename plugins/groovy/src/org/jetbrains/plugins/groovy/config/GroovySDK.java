@@ -15,6 +15,8 @@
 
 package org.jetbrains.plugins.groovy.config;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.util.AbstractSDK;
@@ -27,14 +29,23 @@ import javax.swing.*;
 public class GroovySDK implements AbstractSDK {
 
   protected Library myLibrary;
+  private final boolean myProjectLib;
   protected String mySdkVersion;
+  private Module myModule;
 
-  public GroovySDK(Library library) {
+  public GroovySDK(final Library library, final Module module, final boolean isProjectLib) {
+    myModule = module;
     myLibrary = library;
+    myProjectLib = isProjectLib;
     mySdkVersion = GroovyConfigUtils.getGroovyLibVersion(library);
   }
 
-  public GroovySDK() {
+  public Module getModule() {
+    return myModule;
+  }
+
+  public Project getProject() {
+    return myModule.getProject();
   }
 
   public Library getLibrary() {
@@ -45,11 +56,19 @@ public class GroovySDK implements AbstractSDK {
     return mySdkVersion;
   }
 
-  public String getLibraryName(){
+  public String getLibraryName() {
     return myLibrary.getName();
   }
 
-  public Icon getIcon(){
+  public boolean isProjectLib() {
+    return myProjectLib;
+  }
+
+  public String getPresentation() {
+    return " (Groovy version \"" + getSdkVersion() + "\")" + (isProjectLib() ? " [" + getModule().getProject().getName() + "]" : "");
+  }
+
+  public Icon getIcon() {
     return GroovyIcons.GROOVY_SDK;
   }
 }

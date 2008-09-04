@@ -18,6 +18,7 @@ import com.intellij.facet.impl.ui.FacetTypeFrameworkSupportProvider;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.config.ui.CreateLibraryDialog;
 import org.jetbrains.plugins.groovy.config.ui.GroovyFacetEditor;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
@@ -45,8 +47,8 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
   }
 
   @NotNull
-  public GroovyVersionConfigurable createConfigurable() {
-    return new GroovyVersionConfigurable(getVersions(), getDefaultVersion());
+  public GroovyVersionConfigurable createConfigurable(final Project project) {
+    return new GroovyVersionConfigurable(project, getDefaultVersion());
   }
 
   @Nullable
@@ -57,11 +59,12 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
 
   @NotNull
   public String[] getVersions() {
-    String[] versions = ContainerUtil.map2Array(GroovyConfigUtils.getGroovyLibraries(), String.class, new Function<Library, String>() {
-      public String fun(Library library) {
-        return library.getName();
-      }
-    });
+    String[] versions =
+      ContainerUtil.map2Array(GroovyConfigUtils.getGlobalGroovyLibraries(), String.class, new Function<Library, String>() {
+        public String fun(Library library) {
+          return library.getName();
+        }
+      });
     Arrays.sort(versions, new Comparator<String>() {
       public int compare(String o1, String o2) {
         return -o1.compareToIgnoreCase(o2);
@@ -96,7 +99,8 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
 
     @NotNull
     public LibraryInfo[] getLibraries() {
-      return GroovyFacetSupportProvider.this.getLibraries(myFacetEditor.getSelectedVersion());
+      final Library lib = myFacetEditor.getSelectedLibrary();
+      return GroovyFacetSupportProvider.this.getLibraries(lib != null ? lib.getName() : null);
     }
 
     @Nullable
@@ -111,38 +115,43 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
     @NonNls
     @NotNull
     public String getLibraryName() {
-      return GroovyFacetSupportProvider.this.getLibraryName(myFacetEditor.getSelectedVersion());
+      final Library lib = myFacetEditor.getSelectedLibrary();
+      return GroovyFacetSupportProvider.this.getLibraryName(lib != null ? lib.getName() : null);
     }
 
     public void addSupport(final Module module, final ModifiableRootModel rootModel, @Nullable Library library) {
-      String version = myFacetEditor.getSelectedVersion();
-      if (version != null && !myFacetEditor.addNewSdk()) {
-        library = LibrariesUtil.getLibraryByName(version);
-        if (library != null) {
-          LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(library));
-        }
+      Library selectedLibrary = myFacetEditor.getSelectedLibrary();
+      String selectedName = null;
+      if (selectedLibrary != null && !myFacetEditor.addNewSdk()) {
+        selectedName = selectedLibrary.getName();
+        LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(selectedLibrary));
       } else if (myFacetEditor.getNewSdkPath() != null) {
-        String path = myFacetEditor.getNewSdkPath();
+        final String path = myFacetEditor.getNewSdkPath();
         ValidationResult result = GroovyConfigUtils.isGroovySdkHome(path);
         if (path != null && ValidationResult.OK == result) {
-          String name = GroovyConfigUtils.generateNewGroovyLibName(GroovyConfigUtils.getGroovyVersion(path));
-          version = name;
-          library = GroovyConfigUtils.createGroovyLibrary(path, name, module.getProject(), false);
-          LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(library));
+          final Project project = module.getProject();
+          selectedName = GroovyConfigUtils.generateNewGroovyLibName(GroovyConfigUtils.getGroovyVersion(path), project);
+          final CreateLibraryDialog dialog = new CreateLibraryDialog(project, selectedName);
+          dialog.show();
+          if (dialog.isOK()) {
+            final Library lib = GroovyConfigUtils.createGroovyLibrary(path, selectedName, project, false, dialog.isInProject());
+            LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(lib));
+          }
         } else {
-          Messages.showErrorDialog(GroovyBundle.message("invalid.groovy.sdk.path.message"), GroovyBundle.message("invalid.groovy.sdk.path.text"));
-          version = null;
+          Messages
+            .showErrorDialog(GroovyBundle.message("invalid.groovy.sdk.path.message"), GroovyBundle.message("invalid.groovy.sdk.path.text"));
+          selectedLibrary = null;
         }
       }
-      if (version != null) {
-        GroovyConfigUtils.saveGroovyDefaultLibName(version);
+      if (selectedLibrary != null) {
+        GroovyConfigUtils.saveGroovyDefaultLibName(selectedName);
       }
-      GroovyFacetSupportProvider.this.addSupport(module, rootModel, version, library);
+      GroovyFacetSupportProvider.this.addSupport(module, rootModel, selectedName, selectedLibrary);
     }
 
-    public GroovyVersionConfigurable(String[] versions, String defaultVersion) {
-      super(versions, defaultVersion);
-      myFacetEditor = new GroovyFacetEditor(getVersions(), getDefaultVersion());
+    public GroovyVersionConfigurable(Project project, String defaultVersion) {
+      super(getVersions(), defaultVersion);
+      myFacetEditor = new GroovyFacetEditor(project, getDefaultVersion());
     }
   }
 }

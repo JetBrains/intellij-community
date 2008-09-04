@@ -64,7 +64,7 @@ public abstract class LibrariesUtil {
     return libraries.toArray(new Library[libraries.size()]);
   }
 
-  public static Library[] getLibraries(Condition<Library> condition) {
+  public static Library[] getGlobalLibraries(Condition<Library> condition) {
     LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable();
     List<Library> libs = ContainerUtil.findAll(table.getLibraries(), condition);
     return libs.toArray(new Library[libs.size()]);
@@ -136,8 +136,8 @@ public abstract class LibrariesUtil {
       }
   }
 
-  public static String generateNewLibraryName(String version, String prefix) {
-    List<Object> libNames = ContainerUtil.map(GroovyConfigUtils.getGroovyLibraries(), new Function<Library, Object>() {
+  public static String generateNewLibraryName(String version, String prefix, final Project project) {
+    List<Object> libNames = ContainerUtil.map(GroovyConfigUtils.getAllGroovyLibraries(project), new Function<Library, Object>() {
       public Object fun(Library library) {
         return library.getName();
       }

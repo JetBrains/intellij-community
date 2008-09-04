@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
@@ -58,6 +59,7 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   private GroovySDKComboBox myComboBox;
   private JButton myNewButton;
+  private Module myModule;
   private JPanel myPanel;
   private FacetEditorContext myEditorContext;
   private FacetValidatorsManager myValidatorsManager;
@@ -67,8 +69,9 @@ public class GroovyFacetTab extends FacetEditorTab {
   private String oldGroovyLibName = "";
   private String newGroovyLibName = "";
 
-
   public GroovyFacetTab(FacetEditorContext editorContext, FacetValidatorsManager validatorsManager) {
+    myModule = editorContext.getModule();
+    setUpComboBox();
     myNewButton.setMnemonic(KeyEvent.VK_N);
     myEditorContext = editorContext;
     myValidatorsManager = validatorsManager;
@@ -76,6 +79,18 @@ public class GroovyFacetTab extends FacetEditorTab {
     reset();
     myLibraryListener = new MyLibraryTableListener();
     LibraryTablesRegistrar.getInstance().getLibraryTable().addListener(myLibraryListener);
+    ProjectLibraryTable.getInstance(myModule.getProject()).addListener(myLibraryListener);
+  }
+
+  private void setUpComboBox() {
+    myComboBox.setModule(myModule);
+    myComboBox.setModel(new GroovySDKComboBox.GroovySDKComboBoxModel(myModule));
+    myComboBox.insertItemAt(new GroovySDKComboBox.NoGroovySDKComboBoxItem(), 0);
+    final Object o = myComboBox.getSelectedItem();
+    if (o instanceof GroovySDKComboBox.DefaultGroovySDKComboBoxItem) {
+      GroovySDKComboBox.DefaultGroovySDKComboBoxItem item = (GroovySDKComboBox.DefaultGroovySDKComboBoxItem)o;
+      oldGroovyLibName = newGroovyLibName = item.getName();
+    }
   }
 
 
@@ -89,7 +104,9 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   public boolean isModified() {
-    if (!oldGroovyLibName.equals(newGroovyLibName)) return true;
+    if (!oldGroovyLibName.equals(newGroovyLibName)) {
+      return true;
+    }
     for (GroovySDKComboBox.DefaultGroovySDKComboBoxItem item : myComboBox.getAllItems()) {
       if (item instanceof GroovySDKComboBox.GroovySDKPointerItem) return true;
     }
@@ -102,7 +119,8 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   private void fireRootsChangedEvent() {
-    final GroovySDKComboBox.DefaultGroovySDKComboBoxItem selectedItem = (GroovySDKComboBox.DefaultGroovySDKComboBoxItem) myComboBox.getSelectedItem();
+    final GroovySDKComboBox.DefaultGroovySDKComboBoxItem selectedItem =
+      (GroovySDKComboBox.DefaultGroovySDKComboBoxItem)myComboBox.getSelectedItem();
     final Module module = myEditorContext.getModule();
     if (module != null) {
       final Project project = module.getProject();
@@ -110,12 +128,13 @@ public class GroovyFacetTab extends FacetEditorTab {
         public void run() {
           GroovySDK sdk = null;
           if (selectedItem instanceof GroovySDKComboBox.GroovySDKPointerItem) {
-            GroovySDKComboBox.GroovySDKPointerItem pointerItem = (GroovySDKComboBox.GroovySDKPointerItem) selectedItem;
+            GroovySDKComboBox.GroovySDKPointerItem pointerItem = (GroovySDKComboBox.GroovySDKPointerItem)selectedItem;
+            final GroovySDKPointer pointer = pointerItem.getPointer();
             String name = pointerItem.getName();
             String path = pointerItem.getPath();
-            Library library = GroovyConfigUtils.createGroovyLibrary(path, name, project, true);
+            Library library = GroovyConfigUtils.createGroovyLibrary(path, name, project, true, pointer.isProjectLib());
             if (library != null) {
-              sdk = new GroovySDK(library);
+              sdk = new GroovySDK(library, myModule, pointer.isProjectLib());
             }
           } else {
             sdk = selectedItem.getGroovySDK();
@@ -126,10 +145,11 @@ public class GroovyFacetTab extends FacetEditorTab {
           for (int i = 0; i < myComboBox.getItemCount(); i++) {
             Object item = myComboBox.getItemAt(i);
             if (item != selectedItem && item instanceof GroovySDKComboBox.GroovySDKPointerItem) {
-              GroovySDKComboBox.GroovySDKPointerItem pointerItem = (GroovySDKComboBox.GroovySDKPointerItem) item;
+              GroovySDKComboBox.GroovySDKPointerItem pointerItem = (GroovySDKComboBox.GroovySDKPointerItem)item;
+              final GroovySDKPointer pointer = pointerItem.getPointer();
               String name = pointerItem.getName();
               String path = pointerItem.getPath();
-              GroovyConfigUtils.createGroovyLibrary(path, name, project, true);
+              GroovyConfigUtils.createGroovyLibrary(path, name, project, true, pointer.isProjectLib());
             }
           }
         }
@@ -145,14 +165,12 @@ public class GroovyFacetTab extends FacetEditorTab {
     Module module = myEditorContext.getModule();
     if (module != null && FacetManager.getInstance(module).getFacetByType(GroovyFacet.ID) != null) {
       Library[] libraries = GroovyConfigUtils.getGroovyLibrariesByModule(myEditorContext.getModule());
-      if (libraries.length != 1) {
+      if (libraries.length == 0) {
         myComboBox.setSelectedIndex(0);
         oldGroovyLibName = newGroovyLibName;
       } else {
         Library library = libraries[0];
-        if (library != null &&
-            library.getName() != null &&
-            LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraryByName(library.getName()) != null) {
+        if (library != null && library.getName() != null) {
           myComboBox.selectLibrary(library);
           oldGroovyLibName = newGroovyLibName;
         }
@@ -172,7 +190,7 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   private void createUIComponents() {
-    setUpComboBox();
+    initComboBox();
   }
 
   private void setUpComponents() {
@@ -191,20 +209,25 @@ public class GroovyFacetTab extends FacetEditorTab {
           if (files.length > 0) {
             String path = files[0].getPath();
             if (ValidationResult.OK == GroovyConfigUtils.isGroovySdkHome(path)) {
-              Collection<String> versions = GroovyConfigUtils.getGroovyVersions();
+              Collection<String> versions = GroovyConfigUtils.getGroovyVersions(myModule);
               String version = GroovyConfigUtils.getGroovyVersion(path);
               boolean addVersion = !versions.contains(version) ||
-                  Messages.showOkCancelDialog(GroovyBundle.message("duplicate.groovy.lib.version.add", version),
-                      GroovyBundle.message("duplicate.groovy.lib.version"),
-                      GroovyIcons.BIG_ICON) == 0;
+                                   Messages.showOkCancelDialog(GroovyBundle.message("duplicate.groovy.lib.version.add", version),
+                                                               GroovyBundle.message("duplicate.groovy.lib.version"),
+                                                               GroovyIcons.BIG_ICON) == 0;
 
               if (addVersion && !GroovyConfigUtils.UNDEFINED_VERSION.equals(version)) {
                 String name = myComboBox.generatePointerName(version);
-                myComboBox.addSdk(new GroovySDKPointer(name, path, version));
-                newGroovyLibName = name;
+                final CreateLibraryDialog dialog = new CreateLibraryDialog(project, name);
+                dialog.show();
+                if (dialog.isOK()) {
+                  myComboBox.addSdk(new GroovySDKPointer(name, path, version, dialog.isInProject()));
+                  newGroovyLibName = name;
+                }
               }
             } else {
-              Messages.showErrorDialog(GroovyBundle.message("invalid.groovy.sdk.path.message"), GroovyBundle.message("invalid.groovy.sdk.path.text"));
+              Messages.showErrorDialog(GroovyBundle.message("invalid.groovy.sdk.path.message"),
+                                       GroovyBundle.message("invalid.groovy.sdk.path.text"));
             }
           }
         }
@@ -212,24 +235,22 @@ public class GroovyFacetTab extends FacetEditorTab {
     }
   }
 
-  private void setUpComboBox() {
-    myComboBox = new GroovySDKComboBox();
-    myComboBox.insertItemAt(new GroovySDKComboBox.NoGroovySDKComboBoxItem(), 0);
+  private void initComboBox() {
+    myComboBox = new GroovySDKComboBox(null);
     myComboBox.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         final Object o = e.getItem();
         if (o instanceof GroovySDKComboBox.GroovySDKComboBoxItem) {
-          final GroovySDK sdk = ((GroovySDKComboBox.GroovySDKComboBoxItem) o).getGroovySDK();
+          final GroovySDK sdk = ((GroovySDKComboBox.GroovySDKComboBoxItem)o).getGroovySDK();
           newGroovyLibName = sdk.getLibraryName();
         } else if (o instanceof GroovySDKComboBox.GroovySDKPointerItem) {
-          final GroovySDKPointer pointer = ((GroovySDKComboBox.GroovySDKPointerItem) o).getPointer();
+          final GroovySDKPointer pointer = ((GroovySDKComboBox.GroovySDKPointerItem)o).getPointer();
           newGroovyLibName = pointer.getLibraryName();
         } else {
           newGroovyLibName = "";
         }
       }
     });
-    myComboBox.setSelectedIndex(0);
   }
 
   private void updateComboBox() {
@@ -252,7 +273,6 @@ public class GroovyFacetTab extends FacetEditorTab {
     }
 
     public void beforeLibraryRemoved(Library library) {
-
     }
 
   }

@@ -12,6 +12,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.GroovyIcons;
+
+import javax.swing.*;
 
 /**
  * @author ilyas
@@ -248,6 +252,11 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
       return ((GrVariableDeclaration)parent).getModifierList();
     }
     return null;
+  }
+
+  @Nullable
+  public Icon getIcon(int flags) {
+    return GroovyIcons.VARIABLE;
   }
 
 

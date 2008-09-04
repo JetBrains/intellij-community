@@ -30,22 +30,32 @@ public class GroovySDKPointer implements AbstractSDK {
   private final String myGroovyLibraryName;
   private final String myPathToLibrary;
   private final String myVersion;
+  private final boolean myProjectLib;
 
-  public GroovySDKPointer(@NotNull String name, @NotNull String path, String version) {
+  public GroovySDKPointer(@NotNull String name, @NotNull String path, String version, final boolean isProjectLib) {
     myGroovyLibraryName = name;
     myPathToLibrary = path;
     myVersion = version;
+    myProjectLib = isProjectLib;
   }
 
   public String getLibraryName() {
     return myGroovyLibraryName;
   }
 
+  public boolean isProjectLib() {
+    return myProjectLib;
+  }
+
+  public String getPresentation() {
+    return " (Groovy version \"" + getVersion() + "\")";
+  }
+
   public String getPath() {
     return myPathToLibrary;
   }
 
-  public Icon getIcon(){
+  public Icon getIcon() {
     return GroovyIcons.GROOVY_SDK;
   }
 
