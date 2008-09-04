@@ -81,10 +81,9 @@ public interface FileAnnotation {
   VcsRevisionNumber getLineRevisionNumber(int lineNumber);
 
   /**
-   * Get all revisions that added at least one line of the text
-   * that still presents in the current version of the file.
+   * Get all revisions that are mentioned in the annotations
    *
-   * @return the list of revisions which affected current version of the file. Or null
+   * @return the list of revisions that are mentioned in annotations. Or null
    *   if before/after popups cannot be suported by the VCS system.
    */
   @Nullable
