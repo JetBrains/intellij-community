@@ -17,6 +17,7 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -88,7 +89,9 @@ public class AbstractTreeUpdater implements Disposable {
         try {
           performUpdate();
         }
-        catch(RuntimeException e) {
+        catch(ProcessCanceledException e) {
+          throw e;
+        } catch(RuntimeException e) {
           LOG.error(myTreeBuilder.getClass().getName(), e);
         }
       }
