@@ -34,6 +34,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -135,7 +136,8 @@ public class TemplateState implements Disposable {
     }
   }
 
-  public TextResult getVariableValue(String variableName) {
+  @Nullable
+  public TextResult getVariableValue(@NotNull String variableName) {
     if (variableName.equals(TemplateImpl.SELECTION)) {
       return new TextResult((String)getProperties().get(ExpressionContext.SELECTION));
     }
@@ -157,12 +159,14 @@ public class TemplateState implements Disposable {
     return new TextResult(text.subSequence(start, end).toString());
   }
 
+  @Nullable
   public TextRange getCurrentVariableRange() {
     int number = getCurrentSegmentNumber();
     if (number == -1) return null;
     return new TextRange(mySegments.getSegmentStart(number), mySegments.getSegmentEnd(number));
   }
 
+  @Nullable
   public TextRange getVariableRange(String variableName) {
     int segment = myTemplate.getVariableSegmentNumber(variableName);
     if (segment < 0) return null;
