@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +21,6 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementDescriptorWithCDataContent;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.application.options.editor.WebEditorOptions;
 import org.jetbrains.annotations.NonNls;
 
 public class XmlGtTypedHandler extends TypedHandlerDelegate {
@@ -105,6 +105,9 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       }
 
       while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
+      if (element instanceof XmlDocument) {   // hack for closing tags in RHTML
+        element = element.getLastChild();
+      }
       if (element == null) return Result.CONTINUE;
       if (!(element instanceof XmlTag)) {
         if (element instanceof XmlTokenImpl &&
