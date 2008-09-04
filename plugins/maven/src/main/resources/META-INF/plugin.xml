@@ -60,7 +60,7 @@
       <option name="workspace" value="true"/>
     </component>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.state.MavenProjectsManager</implementation-class>
+      <implementation-class>org.jetbrains.idea.maven.project.MavenProjectsManager</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.navigator.MavenProjectNavigator</implementation-class>
@@ -155,16 +155,16 @@
 
     <group id="Maven.State">
       <!--<action id="Maven.AddDependency"-->
-              <!--class="org.jetbrains.idea.maven.state.action.AddDependencyAction" text="Add Dependency"-->
+              <!--class="org.jetbrains.idea.maven.project.action.AddDependencyAction" text="Add Dependency"-->
               <!--description="Add Dependency"-->
               <!--icon="/modules/library.png">-->
       <!--</action>-->
       <action id="Maven.Ignore"
-              class="org.jetbrains.idea.maven.state.action.IgnoreProjectAction" text="_Ignore"
+              class="org.jetbrains.idea.maven.project.action.IgnoreProjectAction" text="_Ignore"
               description="Toggle ignore flag for Maven project">
       </action>
       <action id="Maven.ToggleProfile"
-              class="org.jetbrains.idea.maven.state.action.ToggleProfileAction" text="Toggle profile"
+              class="org.jetbrains.idea.maven.project.action.ToggleProfileAction" text="Toggle profile"
               description="Activate/deactivate profile">
       </action>
     </group>

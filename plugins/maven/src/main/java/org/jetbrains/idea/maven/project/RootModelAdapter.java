@@ -8,11 +8,11 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
+import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.Path;
 import org.jetbrains.idea.maven.core.util.Url;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,6 +58,10 @@ public class RootModelAdapter {
 
   public ModifiableRootModel getRootModel() {
     return myRootModel;
+  }
+
+  public Module getModule() {
+    return myRootModel.getModule();
   }
 
   public void addSourceFolder(String path, boolean testSource) {
@@ -183,14 +187,16 @@ public class RootModelAdapter {
     return ModuleManager.getInstance(myRootModel.getProject()).findModuleByName(moduleName);
   }
 
-  public void addLibraryDependency(MavenId id,
+  public void addLibraryDependency(Artifact artifact,
                                    @Nullable String urlClasses,
                                    @Nullable String urlSources,
                                    @Nullable String urlJavadoc,
                                    boolean isExportable) {
-    Library library = getLibraryTable().getLibraryByName(makeLibraryName(id));
+    String libraryName = makeLibraryName(artifact);
+
+    Library library = getLibraryTable().getLibraryByName(libraryName);
     if (library == null) {
-      library = getLibraryTable().createLibrary(makeLibraryName(id));
+      library = getLibraryTable().createLibrary(libraryName);
       Library.ModifiableModel libraryModel = library.getModifiableModel();
 
       setUrl(libraryModel, urlClasses, OrderRootType.CLASSES);
@@ -202,11 +208,11 @@ public class RootModelAdapter {
 
     myRootModel.addLibraryEntry(library).setExported(isExportable);
 
-    removeOldLibraryDependency(id);
+    removeOldLibraryDependency(artifact);
   }
 
-  private void removeOldLibraryDependency(MavenId id) {
-    Library lib = findLibrary(id, false);
+  private void removeOldLibraryDependency(Artifact artifact) {
+    Library lib = findLibrary(artifact, false);
     if (lib == null) return;
     LibraryOrderEntry entry = myRootModel.findLibraryOrderEntry(lib);
     if (entry == null) return;
@@ -227,22 +233,22 @@ public class RootModelAdapter {
     }
   }
 
-  public Library findLibrary(final MavenId id) {
-    return findLibrary(id, true);
+  public Library findLibrary(Artifact artifact) {
+    return findLibrary(artifact, true);
   }
 
-  private Library findLibrary(final MavenId id, final boolean newType) {
+  private Library findLibrary(final Artifact artifact, final boolean newType) {
     return myRootModel.processOrder(new RootPolicy<Library>() {
       @Override
       public Library visitLibraryOrderEntry(LibraryOrderEntry e, Library result) {
-        String name = newType ? makeLibraryName(id) : id.toString();
+        String name = newType ? makeLibraryName(artifact) : new MavenId(artifact).toString();
         return e.getLibraryName().equals(name) ? e.getLibrary() : result;
       }
     }, null);
   }
 
-  private String makeLibraryName(MavenId id) {
-    return MAVEN_LIB_PREFIX + id.toString();
+  private String makeLibraryName(Artifact artifact) {
+    return MAVEN_LIB_PREFIX + new MavenId(artifact).toString();
   }
 
   public void setLanguageLevel(LanguageLevel level) {

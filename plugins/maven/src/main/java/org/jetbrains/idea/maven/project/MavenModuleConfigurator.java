@@ -64,14 +64,15 @@ public class MavenModuleConfigurator {
     }
   }
 
-  public void configFacets() {
+  public void configFacets(List<PostProjectConfigurationTask> postTasks) {
     for (FacetImporter importer : getSuitableFacetImporters()) {
       importer.process(myModuleModel,
                        myModule,
                        myRootModelAdapter,
                        myMavenTree,
                        myMavenProject,
-                       myMavenProjectToModuleName);
+                       myMavenProjectToModuleName,
+                       postTasks);
     }
   }
 
@@ -91,23 +92,22 @@ public class MavenModuleConfigurator {
 
   private void configDependencies() {
     for (Artifact artifact : myMavenProject.getDependencies()) {
-      MavenId id = new MavenId(artifact);
 
-      if (isIgnored(id)) continue;
+      if (isIgnored(new MavenId(artifact))) continue;
 
       boolean isExportable = myMavenProject.isExportableDependency(artifact);
       MavenProjectModel p = myMavenTree.findProject(artifact);
       if (p != null) {
         myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(p),
-                                                  isExportable);
+                                               isExportable);
       }
       else {
         String artifactPath = artifact.getFile().getPath();
-        myRootModelAdapter.addLibraryDependency(id,
-                                               getUrl(artifactPath, null),
-                                               getUrl(artifactPath, MavenConstants.SOURCES_CLASSIFIER),
-                                               getUrl(artifactPath, MavenConstants.JAVADOC_CLASSIFIER),
-                                               isExportable);
+        myRootModelAdapter.addLibraryDependency(artifact,
+                                                getUrl(artifactPath, null),
+                                                getUrl(artifactPath, MavenConstants.SOURCES_CLASSIFIER),
+                                                getUrl(artifactPath, MavenConstants.JAVADOC_CLASSIFIER),
+                                                isExportable);
       }
     }
   }

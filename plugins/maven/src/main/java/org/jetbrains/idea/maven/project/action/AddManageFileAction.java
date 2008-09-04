@@ -9,7 +9,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.project.MavenConstants;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class AddManageFileAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {

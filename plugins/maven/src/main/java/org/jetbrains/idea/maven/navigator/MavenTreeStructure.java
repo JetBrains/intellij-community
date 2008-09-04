@@ -24,7 +24,7 @@ import org.jetbrains.idea.maven.events.MavenEventsManager;
 import org.jetbrains.idea.maven.core.util.MavenArtifactUtil;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;

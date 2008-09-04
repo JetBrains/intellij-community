@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.state.action;
+package org.jetbrains.idea.maven.project.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -7,9 +7,9 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
-import org.jetbrains.idea.maven.state.MavenIgnoreConfigurable;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
-import org.jetbrains.idea.maven.state.StateBundle;
+import org.jetbrains.idea.maven.project.ProjectBundle;
+import org.jetbrains.idea.maven.project.MavenIgnoreConfigurable;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.List;
 
@@ -23,10 +23,10 @@ public class IgnoreProjectAction extends AnAction {
     final boolean enabled = projectsManager != null && nodes != null && isEnabled(projectsManager, nodes);
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setText((enabled && projectsManager.getIgnoredFlag(nodes.get(0)))
-                                ? StateBundle.message("maven.ignore.clear")
+                                ? ProjectBundle.message("maven.ignore.clear")
                                 : (enabled && projectsManager.isIgnored(nodes.get(0)))
-                                  ? StateBundle.message("maven.ignore.edit")
-                                  : StateBundle.message("maven.ignore"));
+                                  ? ProjectBundle.message("maven.ignore.edit")
+                                  : ProjectBundle.message("maven.ignore"));
   }
 
   public void actionPerformed(AnActionEvent e) {

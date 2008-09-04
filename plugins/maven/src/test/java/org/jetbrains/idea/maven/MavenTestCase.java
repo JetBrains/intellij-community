@@ -260,7 +260,7 @@ public abstract class MavenTestCase extends TestCase {
     for (int i = 0; i < expected.length; i++) {
       T expectedElement = expected[i];
       U actualElement = actualList.get(i);
-      assertEquals(s, expectedElement, actualElement);
+      assertTrue(s, expectedElement.equals(actualElement));
     }
   }
 

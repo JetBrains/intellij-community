@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
 import java.util.ArrayList;

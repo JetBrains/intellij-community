@@ -13,7 +13,7 @@ import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.idea.maven.dom.model.Plugin;
 import org.jetbrains.idea.maven.dom.plugin.MavenPluginModel;
 import org.jetbrains.idea.maven.core.util.MavenArtifactUtil;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
 

@@ -1018,18 +1018,18 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     assertEquals(0, model.getModules(roots.get(0)).size());
   }
 
-  private void readModel(VirtualFile... files) throws CanceledException, MavenException {
+  private void readModel(VirtualFile... files) throws MavenProcessCanceledException, MavenException {
     readModel(Collections.<String>emptyList(), files);
   }
 
-  private void readModel(List<String> profiles, VirtualFile... files) throws CanceledException, MavenException {
+  private void readModel(List<String> profiles, VirtualFile... files) throws MavenProcessCanceledException, MavenException {
     model.read(asList(files),
                profiles,
                getMavenCoreSettings(),
                new MavenProcess(new EmptyProgressIndicator()));
   }
 
-  private void udpate(VirtualFile files) throws CanceledException {
+  private void udpate(VirtualFile files) throws MavenProcessCanceledException {
     model.update(asList(files), getMavenCoreSettings(), new MavenProcess(new EmptyProgressIndicator()));
   }
 }

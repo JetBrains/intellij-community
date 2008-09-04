@@ -27,7 +27,7 @@ import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenExternalExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.ArrayList;
 import java.util.List;

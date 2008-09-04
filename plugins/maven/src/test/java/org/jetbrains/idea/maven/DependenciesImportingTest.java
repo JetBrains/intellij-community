@@ -532,7 +532,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "<version>1</version>" +
 
                   "<dependencies>" +
-                  "   <dependency>" +
+                  "  <dependency>" +
                   "    <groupId>group</groupId>" +
                   "    <artifactId>artifact</artifactId>" +
                   "    <type>test-jar</type>" +
@@ -541,7 +541,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "</dependencies>");
 
     assertModules("project");
-    assertModuleLibDeps("project", "Maven: group:artifact:1:tests");
+    assertModuleLibDeps("project", "Maven: group:artifact:test-jar:tests:1");
   }
 
   public void testDependencyWithClassifier() throws Exception {
@@ -550,7 +550,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "<version>1</version>" +
 
                   "<dependencies>" +
-                  "   <dependency>" +
+                  "  <dependency>" +
                   "    <groupId>group</groupId>" +
                   "    <artifactId>artifact</artifactId>" +
                   "    <classifier>bar</classifier>" +
@@ -558,7 +558,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "  </dependency>" +
                   "</dependencies>");
     assertModules("project");
-    assertModuleLibDeps("project", "Maven: group:artifact:1:bar");
+    assertModuleLibDeps("project", "Maven: group:artifact:bar:1");
   }
 
   public void testDependencyWithVersionRangeOnModule() throws Exception {
@@ -878,7 +878,43 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     importProject();
 
     assertProjectLibraries("Maven: junit:junit:4.0");
-    assertModuleLibDep("project", "Maven: junit:junit:4.0");
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
+  }
+
+  public void testCreateSeparateLibraryForDifferentArtifactTypeAndClassifier() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "    <type>war</type>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "    <classifier>jdk5</classifier>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    importProject();
+
+    assertProjectLibraries("Maven: junit:junit:4.0",
+                           "Maven: junit:junit:war:4.0",
+                           "Maven: junit:junit:jdk5:4.0");
+    assertModuleLibDeps("project",
+                        "Maven: junit:junit:4.0",
+                        "Maven: junit:junit:war:4.0",
+                        "Maven: junit:junit:jdk5:4.0");
   }
 
   public void testDoNotResetUserLibraryDependencies() throws Exception {

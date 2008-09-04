@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.state;
+package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;

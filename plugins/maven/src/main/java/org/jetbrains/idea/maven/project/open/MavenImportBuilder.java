@@ -16,7 +16,7 @@ import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;
 import java.io.File;
@@ -114,7 +114,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
     if (getImportRoot() == null) return false;
 
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenProcess.MavenTask() {
-      public void run(MavenProcess p) throws CanceledException {
+      public void run(MavenProcess p) throws MavenProcessCanceledException {
         p.setText(ProjectBundle.message("maven.locating.files"));
         myFiles = FileFinder.findPomFiles(getImportRoot().getChildren(),
                                           getImporterPreferences().isLookForNested(),
@@ -146,7 +146,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
         if (!profiles.isEmpty()) myProfiles.addAll(profiles);
       }
     }
-    catch (CanceledException ignore) {
+    catch (MavenProcessCanceledException ignore) {
     }
     finally {
       e.release();
@@ -166,7 +166,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
     mySelectedProfiles = profiles;
 
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenProcess.MavenTask() {
-      public void run(MavenProcess p) throws CanceledException {
+      public void run(MavenProcess p) throws MavenProcessCanceledException {
         readMavenProjectTree(p);
         p.setText2("");
       }
@@ -177,14 +177,14 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
     try {
       MavenProcess.run(null, message, p);
     }
-    catch (CanceledException e) {
+    catch (MavenProcessCanceledException e) {
       return false;
     }
 
     return true;
   }
 
-  private void readMavenProjectTree(MavenProcess p) throws CanceledException {
+  private void readMavenProjectTree(MavenProcess p) throws MavenProcessCanceledException {
     myMavenProjectTree = new MavenProjectsTree();
     myMavenProjectTree.read(myFiles,
                             mySelectedProfiles,

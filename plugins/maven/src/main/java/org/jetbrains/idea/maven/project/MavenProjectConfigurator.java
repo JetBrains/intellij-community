@@ -13,11 +13,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
 import org.apache.maven.artifact.Artifact;
 
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class MavenProjectConfigurator {
@@ -43,15 +42,19 @@ public class MavenProjectConfigurator {
     myImporterSettings = importerSettings;
   }
 
-  public void config() {
+  public List<PostProjectConfigurationTask> config() {
+    List<PostProjectConfigurationTask> postTasks = new ArrayList<PostProjectConfigurationTask>();
+
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
     mapModulesToMavenProjects();
     configSettings();
     deleteObsoleteModules();
-    configModules();
+    configModules(postTasks);
     configModuleGroups();
     refreshResolvedArtifacts();
     commit();
+
+    return postTasks;
   }
 
   private void refreshResolvedArtifacts() {
@@ -129,7 +132,7 @@ public class MavenProjectConfigurator {
     return obsolete;
   }
 
-  private void configModules() {
+  private void configModules(List<PostProjectConfigurationTask> postTasks) {
     List<MavenProjectModel> projects = getMavenProjectsToConfigure();
     Set<MavenProjectModel> projectsWithNewlyCreatedModules = new HashSet<MavenProjectModel>();
 
@@ -153,7 +156,7 @@ public class MavenProjectConfigurator {
     }
 
     for (MavenProjectModel each : projects) {
-      configurators.get(myMavenProjectToModule.get(each)).configFacets();
+      configurators.get(myMavenProjectToModule.get(each)).configFacets(postTasks);
     }
 
     for (MavenModuleConfigurator each : configurators.values()) {

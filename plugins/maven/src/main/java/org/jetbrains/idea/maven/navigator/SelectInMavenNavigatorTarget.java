@@ -5,7 +5,7 @@ import com.intellij.ide.SelectInTarget;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.idea.maven.project.MavenConstants;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class SelectInMavenNavigatorTarget implements SelectInTarget {
   public boolean canSelect(SelectInContext context) {

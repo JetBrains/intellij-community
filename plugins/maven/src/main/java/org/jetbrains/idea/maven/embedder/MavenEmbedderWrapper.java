@@ -21,7 +21,7 @@ import org.codehaus.plexus.component.repository.exception.ComponentLookupExcepti
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.project.CanceledException;
+import org.jetbrains.idea.maven.project.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.project.TransferListenerAdapter;
 import org.jetbrains.idea.maven.runner.logger.MavenEmbeddedLogger;
 
@@ -51,13 +51,13 @@ public class MavenEmbedderWrapper {
     }
   }
 
-  public MavenExecutionResult readProjectWithDependencies(MavenExecutionRequest request) throws CanceledException {
+  public MavenExecutionResult readProjectWithDependencies(MavenExecutionRequest request) throws MavenProcessCanceledException {
     try {
       request.setTransferListener(new TransferListenerAdapter());
       return myEmbedder.readProjectWithDependencies(request);
     }
     catch (ProcessCanceledException e) {
-      throw new CanceledException();
+      throw new MavenProcessCanceledException();
     }
   }
 
@@ -77,26 +77,26 @@ public class MavenEmbedderWrapper {
     }
   }
 
-  public MavenExecutionResult execute(MavenExecutionRequest request) throws CanceledException {
+  public MavenExecutionResult execute(MavenExecutionRequest request) throws MavenProcessCanceledException {
     try {
       request.setTransferListener(new TransferListenerAdapter());
       return myEmbedder.execute(request);
     }
     catch (ProcessCanceledException e) {
-      throw new CanceledException();
+      throw new MavenProcessCanceledException();
     }
   }
 
-  public Model readModel(String path) throws CanceledException, IOException, XmlPullParserException {
+  public Model readModel(String path) throws MavenProcessCanceledException, IOException, XmlPullParserException {
     try {
       return myEmbedder.readModel(new File(path));
     }
     catch (ProcessCanceledException e) {
-      throw new CanceledException();
+      throw new MavenProcessCanceledException();
     }
   }
 
-  public MavenProject readProject(String path) throws CanceledException,
+  public MavenProject readProject(String path) throws MavenProcessCanceledException,
                                                       ExtensionScanningException,
                                                       MavenExecutionException,
                                                       ProjectBuildingException {
@@ -104,11 +104,11 @@ public class MavenEmbedderWrapper {
       return myEmbedder.readProject(new File(path));
     }
     catch (ProcessCanceledException e) {
-      throw new CanceledException();
+      throw new MavenProcessCanceledException();
     }
   }
 
-  public void resolve(Artifact artifact, List remoteRepositories) throws CanceledException {
+  public void resolve(Artifact artifact, List remoteRepositories) throws MavenProcessCanceledException {
     try {
       myEmbedder.resolve(artifact, remoteRepositories, myEmbedder.getLocalRepository());
     }
@@ -117,18 +117,18 @@ public class MavenEmbedderWrapper {
     catch (ArtifactNotFoundException e) {
     }
     catch (ProcessCanceledException e) {
-      throw new CanceledException();
+      throw new MavenProcessCanceledException();
     }
     catch (Exception e) {
     }
   }
 
-  public boolean resolvePlugin(Plugin plugin, MavenProject project) throws CanceledException {
+  public boolean resolvePlugin(Plugin plugin, MavenProject project) throws MavenProcessCanceledException {
     try {
       MavenEmbedderHelper.verifyPlugin(plugin, project, myEmbedder);
     }
     catch (ProcessCanceledException e) {
-      throw new CanceledException();
+      throw new MavenProcessCanceledException();
     }
     catch (Exception e) {
       return false;

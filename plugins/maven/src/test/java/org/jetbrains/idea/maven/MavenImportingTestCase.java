@@ -22,7 +22,7 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
@@ -316,16 +316,16 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       myMavenProjectsManager.doReimport();
       myMavenTree = myMavenProjectsManager.getMavenProjectTree();
     }
-    catch (CanceledException e) {
+    catch (MavenProcessCanceledException e) {
       throw new RuntimeException(e);
     }
   }
 
-  protected void resolveProject() throws MavenException, CanceledException {
+  protected void resolveProject() throws MavenException, MavenProcessCanceledException {
     myMavenProjectsManager.updateDependencies();
   }
 
-  protected void generateSources() throws MavenException, CanceledException {
+  protected void generateSources() throws MavenException, MavenProcessCanceledException {
     myMavenProjectsManager.updateFolders();
   }
 

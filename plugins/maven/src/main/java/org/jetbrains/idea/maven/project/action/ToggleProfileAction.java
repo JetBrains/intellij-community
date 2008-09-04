@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.state.action;
+package org.jetbrains.idea.maven.project.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
-import org.jetbrains.idea.maven.state.StateBundle;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.ProjectBundle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +26,8 @@ public class ToggleProfileAction extends AnAction {
 
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setText((enabled && projectsManager.getActiveProfiles().contains(profiles.get(0)))
-                                ? StateBundle.message("maven.profile.deactivate")
-                                : StateBundle.message("maven.profile.activate"));
+                                ? ProjectBundle.message("maven.profile.deactivate")
+                                : ProjectBundle.message("maven.profile.activate"));
   }
 
   public void actionPerformed(AnActionEvent e) {

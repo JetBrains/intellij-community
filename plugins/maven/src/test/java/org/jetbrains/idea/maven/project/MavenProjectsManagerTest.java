@@ -1,7 +1,7 @@
 package org.jetbrains.idea.maven.project;
 
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class MavenProjectsManagerTest extends MavenTestCase {
   public void testShouldReturnNullForUnprocessedFiles() throws Exception {

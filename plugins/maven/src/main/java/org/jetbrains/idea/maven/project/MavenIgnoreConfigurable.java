@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.state;
+package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.options.Configurable;
@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.core.util.Strings;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -54,7 +53,7 @@ public class MavenIgnoreConfigurable implements Configurable {
 
   @Nls
   public String getDisplayName() {
-    return StateBundle.message("maven.tab.ignore");
+    return ProjectBundle.message("maven.tab.ignore");
   }
 
   @Nullable

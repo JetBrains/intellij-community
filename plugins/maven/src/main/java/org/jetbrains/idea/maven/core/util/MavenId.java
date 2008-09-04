@@ -1,15 +1,15 @@
 package org.jetbrains.idea.maven.core.util;
 
+import com.intellij.openapi.util.Comparing;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.NotNull;
-
-import java.text.MessageFormat;
-import java.text.ParseException;
+import org.jetbrains.idea.maven.project.MavenConstants;
 
 public class MavenId implements Comparable<MavenId>{
   public String groupId;
   public String artifactId;
   public String version;
+  public String type;
   public String classifier;
   private String baseVersion;
 
@@ -25,8 +25,9 @@ public class MavenId implements Comparable<MavenId>{
 
   public MavenId(Artifact artifact) {
     this(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
-    this.baseVersion = artifact.getBaseVersion();
-    this.classifier = artifact.getClassifier();
+    type = artifact.getType();
+    classifier = artifact.getClassifier();
+    baseVersion = artifact.getBaseVersion();
   }
 
   public boolean equals(final Object o) {
@@ -52,48 +53,21 @@ public class MavenId implements Comparable<MavenId>{
   }
 
   public String toString() {
+    String result = groupId + ":" + artifactId;
+
+    if (type != null && !MavenConstants.JAR_TYPE.equals(type)) result += ":" + type;
+    if (classifier != null) result += ":" + classifier;
+
     String selectedVersion = baseVersion == null ? version : baseVersion;
+    if (selectedVersion != null) result += ":" + selectedVersion;
 
-    String result = selectedVersion != null
-                    ? MessageFormat.format("{0}:{1}:{2}", groupId, artifactId, selectedVersion)
-                    : MessageFormat.format("{0}:{1}", groupId, artifactId);
-    
-    return classifier == null ? result : result + ":" + classifier;
-  }
-
-  public static MavenId parse(final String text) throws ParseException {
-    final int colon1 = text.indexOf(":");
-    if (colon1 <= 0) {
-      throw new ParseException (text, 0);
-    }
-    final String groupId = text.substring(0, colon1);
-    final String artifactId;
-    final String version;
-    final int colon2 = text.indexOf(":", colon1 + 1);
-    if (colon2 <= 0) {
-      artifactId = text.substring(colon1 + 1);
-      version = null;
-    }
-    else {
-      artifactId = text.substring(colon1 + 1, colon2);
-      version = text.substring(colon2 + 1);
-      final int colon3 = text.indexOf(":", colon2 + 1);
-      if (colon3 > 0) {
-        throw new ParseException (text, colon3);
-      }
-    }
-    return new MavenId(groupId, artifactId, version);
+    return result;
   }
 
   public boolean matches(@NotNull final MavenId that) {
-    return nullAwareEqual(groupId, that.groupId)
-           && nullAwareEqual(artifactId, that.artifactId)
+    return Comparing.equal(groupId, that.groupId)
+           && Comparing.equal(artifactId, that.artifactId)
            && (version == null || that.version == null || version.equals(that.version));
-  }
-
-  private boolean nullAwareEqual(Object o1, Object o2) {
-    if (o1 == null) return o2 == null;
-    return o1.equals(o2);
   }
 
   public int compareTo(final MavenId that) {

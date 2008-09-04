@@ -22,7 +22,7 @@ public class MavenArtifactDownloader {
                               MavenArtifactSettings settings,
                               boolean demand,
                               MavenEmbedderWrapper embedder,
-                              MavenProcess p) throws CanceledException {
+                              MavenProcess p) throws MavenProcessCanceledException {
     new MavenArtifactDownloader(projectsTree, mavenProjects, settings, embedder, p).download(demand);
   }
 
@@ -38,7 +38,7 @@ public class MavenArtifactDownloader {
     myProgress = p;
   }
 
-  private void download(boolean demand) throws CanceledException {
+  private void download(boolean demand) throws MavenProcessCanceledException {
     List<File> downloadedFiles = new ArrayList<File>();
     try {
       Map<Artifact, Set<ArtifactRepository>> artifacts = collectArtifactsToDownload();
@@ -104,7 +104,7 @@ public class MavenArtifactDownloader {
 
   private void download(String classifier,
                         Map<Artifact, Set<ArtifactRepository>> libraryArtifacts,
-                        List<File> downloadedFiles) throws CanceledException {
+                        List<File> downloadedFiles) throws MavenProcessCanceledException {
     myProgress.setText(ProjectBundle.message("maven.downloading.artifact", classifier));
 
     int step = 0;
@@ -125,7 +125,7 @@ public class MavenArtifactDownloader {
     }
   }
 
-  private void downloadPlugins() throws CanceledException {
+  private void downloadPlugins() throws MavenProcessCanceledException {
     myProgress.setText(ProjectBundle.message("maven.downloading.artifact", "plugins"));
 
     int pluginsCount = 0;

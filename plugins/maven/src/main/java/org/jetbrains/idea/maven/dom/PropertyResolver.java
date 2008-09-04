@@ -13,7 +13,7 @@ import org.jetbrains.idea.maven.dom.model.MavenProperties;
 import org.jetbrains.idea.maven.dom.model.Profile;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
-import org.jetbrains.idea.maven.state.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Properties;

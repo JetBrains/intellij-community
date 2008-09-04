@@ -30,23 +30,23 @@ public class MavenProcess {
     if (myIndicator != null) myIndicator.setFraction(value);
   }
 
-  public boolean isCanceled() throws CanceledException {
+  public boolean isCanceled() {
     return myIndicator != null && myIndicator.isCanceled();
   }
 
-  public void checkCanceled() throws CanceledException {
-    if (myIndicator != null && myIndicator.isCanceled()) throw new CanceledException();
+  public void checkCanceled() throws MavenProcessCanceledException {
+    if (myIndicator != null && myIndicator.isCanceled()) throw new MavenProcessCanceledException();
   }
 
-  public static void run(Project project, String title, final MavenTask task) throws CanceledException {
-    final CanceledException[] canceledEx = new CanceledException[1];
+  public static void run(Project project, String title, final MavenTask task) throws MavenProcessCanceledException {
+    final MavenProcessCanceledException[] canceledEx = new MavenProcessCanceledException[1];
 
     ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
       public void run(@NotNull ProgressIndicator i) {
         try {
           task.run(new MavenProcess(i));
         }
-        catch (CanceledException e) {
+        catch (MavenProcessCanceledException e) {
           canceledEx[0] = e;
         }
       }
@@ -72,7 +72,7 @@ public class MavenProcess {
           startSemaphore.up();
           task.run(new MavenProcess(i));
         }
-        catch (CanceledException ignore) {
+        catch (MavenProcessCanceledException ignore) {
         }
         finally {
           finishSemaphore.up();
@@ -131,7 +131,7 @@ public class MavenProcess {
   }
 
   public static abstract class MavenTask {
-    public abstract void run(MavenProcess p) throws CanceledException;
+    public abstract void run(MavenProcess p) throws MavenProcessCanceledException;
 
     public boolean shouldStartInBackground() {
       return false;

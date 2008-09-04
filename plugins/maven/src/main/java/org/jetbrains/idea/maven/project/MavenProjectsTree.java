@@ -28,7 +28,7 @@ public class MavenProjectsTree {
   public void read(Collection<VirtualFile> filesToImport,
                    List<String> activeProfiles,
                    MavenCoreSettings mavenSettings,
-                   MavenProcess p) throws CanceledException {
+                   MavenProcess p) throws MavenProcessCanceledException {
     myProfiles = activeProfiles;
     update(filesToImport, mavenSettings, p, true);
     resolveIntermoduleDependencies();
@@ -46,12 +46,12 @@ public class MavenProjectsTree {
     }
   }
 
-  public void update(Collection<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p) throws CanceledException {
+  public void update(Collection<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p) throws MavenProcessCanceledException {
     update(files, mavenSettings, p, false);
   }
 
   private void update(Collection<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p, boolean force)
-      throws CanceledException {
+      throws MavenProcessCanceledException {
     MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(mavenSettings, this);
 
     try {
@@ -78,7 +78,7 @@ public class MavenProjectsTree {
                      Set<VirtualFile> readFiles,
                      Stack<MavenProjectModel> updateStack,
                      MavenProcess p, boolean force)
-      throws CanceledException {
+      throws MavenProcessCanceledException {
     MavenProjectModel newProject = new MavenProjectModel(f);
 
     MavenProjectModel intendedAggregator = visit(new Visitor<MavenProjectModel>() {
@@ -99,7 +99,7 @@ public class MavenProjectsTree {
                         Set<VirtualFile> readFiles,
                         Stack<MavenProjectModel> updateStack,
                         MavenProcess p,
-                        boolean force) throws CanceledException {
+                        boolean force) throws MavenProcessCanceledException {
     p.checkCanceled();
 
     if (updateStack.contains(project)) {
@@ -222,7 +222,7 @@ public class MavenProjectsTree {
     }
   }
 
-  public void delete(List<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p) throws CanceledException {
+  public void delete(List<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p) throws MavenProcessCanceledException {
     List<MavenProjectModel> projectsToUpdate = new ArrayList<MavenProjectModel>();
     List<MavenProjectModel> removedProjects = new ArrayList<MavenProjectModel>();
 
@@ -247,7 +247,7 @@ public class MavenProjectsTree {
   }
 
   private void doRemove(MavenProjectModel aggregator, MavenProjectModel project, List<MavenProjectModel> removedProjects)
-      throws CanceledException {
+      throws MavenProcessCanceledException {
     for (MavenProjectModel each : getModules(project)) {
       doRemove(project, each, removedProjects);
     }
@@ -391,7 +391,7 @@ public class MavenProjectsTree {
 
   public void resolve(MavenCoreSettings coreSettings,
                       MavenArtifactSettings artifactSettings,
-                      MavenProcess p) throws CanceledException {
+                      MavenProcess p) throws MavenProcessCanceledException {
     MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, this);
 
     try {
@@ -413,7 +413,7 @@ public class MavenProjectsTree {
   }
 
   public void generateSources(MavenCoreSettings coreSettings,
-                              MavenProcess p) throws CanceledException {
+                              MavenProcess p) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, this);
 
     try {
@@ -431,7 +431,7 @@ public class MavenProjectsTree {
 
   public void download(MavenCoreSettings coreSettings,
                        MavenArtifactSettings artifactSettings,
-                       MavenProcess p) throws CanceledException {
+                       MavenProcess p) throws MavenProcessCanceledException {
     MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings);
     try {
       doDownload(artifactSettings, p, e, getProjects(), true);
@@ -444,7 +444,8 @@ public class MavenProjectsTree {
   private void doDownload(MavenArtifactSettings artifactSettings,
                           MavenProcess p,
                           MavenEmbedderWrapper embedder,
-                          List<MavenProjectModel> projects, boolean demand) throws CanceledException {
+                          List<MavenProjectModel> projects,
+                          boolean demand) throws MavenProcessCanceledException {
     MavenArtifactDownloader.download(this, projects, artifactSettings, demand, embedder, p);
   }
 

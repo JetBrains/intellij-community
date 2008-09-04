@@ -41,6 +41,32 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
     assertTrue(javadoc.exists());
   }
 
+  public void testJavadocsAndSourcesForTestDeps() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "    <scope>test</scope>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    File sources = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar");
+    File javadoc = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar");
+
+    assertFalse(sources.exists());
+    assertFalse(javadoc.exists());
+
+    download();
+
+    assertTrue(sources.exists());
+    assertTrue(javadoc.exists());
+  }
+
   public void testDownloadingPlugins() throws Exception {
     // embedder does not release loaded plugins and does not let us remove the temp dir.
     if (ignore()) return;
