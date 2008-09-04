@@ -36,13 +36,12 @@ public class TypeExpression extends Expression {
   public Result calculateResult(ExpressionContext context) {
     final Project project = context.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    return new PsiTypeResult(myDefaultType.getType(), project);
+    final PsiType type = myDefaultType.getType();
+    return type == null? null : new PsiTypeResult(type, project);
   }
 
   public Result calculateQuickResult(ExpressionContext context) {
-    final Project project = context.getProject();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-    return new PsiTypeResult(myDefaultType.getType(), project);
+    return calculateResult(context);
   }
 
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
