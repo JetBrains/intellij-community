@@ -6,21 +6,19 @@ package com.intellij.util.xml.impl;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.xml.util.XmlTagUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -162,10 +160,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
       for (T variant: resolvingConverter.getVariants(convertContext)) {
         String name = converter.toString(variant, convertContext);
         if (name != null) {
-          final Icon presentationIcon = ElementPresentationManager.getIcon(variant);
-          final Icon icon = presentationIcon == null && variant instanceof Iconable? ((Iconable)variant).getIcon(Iconable.ICON_FLAG_READ_STATUS) : presentationIcon;
-          final String hint = ElementPresentationManager.getHintForElement(variant);
-          result.add(hint == null ? LookupValueFactory.createLookupValue(name, icon) : LookupValueFactory.createLookupValueWithHint(name, icon, hint));
+          result.add(ElementPresentationManager.getInstance().createVariant(variant, name, ((ResolvingConverter)converter).getPsiElement(variant)));
         }
       }
       for (final String string : resolvingConverter.getAdditionalVariants(convertContext)) {

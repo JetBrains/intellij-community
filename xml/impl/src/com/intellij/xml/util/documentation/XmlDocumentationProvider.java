@@ -74,7 +74,6 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
       }
     } else if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
-
       MyPsiElementProcessor processor = new MyPsiElementProcessor();
       XmlUtil.processXmlElements(tag,processor, true);
       String name = tag.getAttributeValue(NAME_ATTR_NAME);
@@ -89,8 +88,14 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
           typeName = declaration.getName();
         }
       }
-
+      if (processor.result == null) {
+      final PsiElement comment = findPreviousComment(element);
+        if (comment != null) {
+          return formatDocFromComment(comment, ((XmlTag)element).getName());
+        }
+      }
       return generateDoc(processor.result, name, typeName, processor.version);
+      
     } else if (element instanceof XmlAttributeDecl) {
       // Check for comment before attlist, it should not be right after previous declaration
       final PsiElement parent = element.getParent();
@@ -129,11 +134,15 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
     return null;
   }
 
+  @Nullable
   private static PsiElement findPreviousComment(final PsiElement element) {
     PsiElement curElement = element;
 
     while(curElement!=null && !(curElement instanceof XmlComment)) {
       curElement = curElement.getPrevSibling();
+      if (curElement instanceof XmlText && StringUtil.isEmptyOrSpaces(curElement.getText())) {
+        continue;
+      }
       if (!(curElement instanceof PsiWhiteSpace) &&
           !(curElement instanceof XmlProlog) &&
           !(curElement instanceof XmlComment)

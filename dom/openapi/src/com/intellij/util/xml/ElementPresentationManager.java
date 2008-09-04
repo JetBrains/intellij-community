@@ -18,12 +18,14 @@ package com.intellij.util.xml;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,6 +75,8 @@ public abstract class ElementPresentationManager {
     return createVariants(elements, namer, 0);
   }
 
+  public abstract Object createVariant(final Object variant, final String name, final PsiElement psiElement);
+
   @NotNull
   public abstract <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer, int iconFlags);
 
@@ -82,6 +86,14 @@ public abstract class ElementPresentationManager {
   private static final List<Function<Object, String>> ourNameProviders = new ArrayList<Function<Object, String>>();
   private static final List<Function<Object, String>> ourHintProviders = new ArrayList<Function<Object, String>>();
   private static final List<Function<Object, Icon>> ourIconProviders = new ArrayList<Function<Object, Icon>>();
+
+  static {
+    ourIconProviders.add(new NullableFunction<Object, Icon>() {
+      public Icon fun(final Object o) {
+        return o instanceof Iconable ? ((Iconable)o).getIcon(Iconable.ICON_FLAG_READ_STATUS) : null;
+      }
+    });
+  }
 
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
   public static void registerHintProvider(Function<Object, String> function) { ourHintProviders.add(function); }
