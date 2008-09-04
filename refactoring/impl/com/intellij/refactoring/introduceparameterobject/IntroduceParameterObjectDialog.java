@@ -4,7 +4,7 @@ import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -14,11 +14,10 @@ import com.intellij.refactoring.psi.PackageNameUtil;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
@@ -30,20 +29,26 @@ import java.util.List;
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
 public class IntroduceParameterObjectDialog extends RefactoringDialog {
 
-  private final PsiMethod sourceMethod;
-  private final ParameterTablePanel.VariableData[] parameterInfo;
-  private final JTextField classNameField;
-  private final JTextField packageTextField;
-  private final FixedSizeButton packageChooserButton;
-  private final JTextField sourceMethodTextField;
-  private final JTextField existingClassField;
-  private final FixedSizeButton existingClassChooserButton;
-  private final JRadioButton useExistingClassButton = new JRadioButton("Use existing class");
-  private final JRadioButton createNewClassButton = new JRadioButton("Create new class");
-  private final JCheckBox keepMethodAsDelegate = new JCheckBox("Keep method as delegate");
-  private JLabel classNameLabel;
-  private JLabel packageLabel;
+  private PsiMethod sourceMethod;
+  private ParameterTablePanel.VariableData[] parameterInfo;
+  private JTextField sourceMethodTextField;
 
+  private JRadioButton useExistingClassButton;
+  private TextFieldWithBrowseButton existingClassField;
+  private JPanel myUseExistingPanel;
+
+  private JRadioButton createNewClassButton;
+  private JTextField classNameField;
+  private TextFieldWithBrowseButton packageTextField;
+  private JPanel myCreateNewClassPanel;
+
+  private JRadioButton myCreateInnerClassRadioButton;
+  private JTextField myInnerClassNameTextField;
+  private JPanel myInnerClassPanel;
+
+  private JPanel myWholePanel;
+  private JPanel myParamsPanel;
+  private JCheckBox keepMethodAsDelegate;
 
   public IntroduceParameterObjectDialog(PsiMethod sourceMethod) {
     super(sourceMethod.getProject(), true);
@@ -54,15 +59,9 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
         validateButtons();
       }
     };
-    packageTextField = new JTextField();
-    packageTextField.getDocument().addDocumentListener(docListener);
-    packageChooserButton = new FixedSizeButton(packageTextField);
-    existingClassField = new JTextField();
-    existingClassField.getDocument().addDocumentListener(docListener);
-    existingClassChooserButton = new FixedSizeButton(existingClassField);
-    classNameField = new JTextField();
+    packageTextField.getTextField().getDocument().addDocumentListener(docListener);
+    existingClassField.getTextField().getDocument().addDocumentListener(docListener);
     classNameField.getDocument().addDocumentListener(docListener);
-    sourceMethodTextField = new JTextField();
     final PsiParameterList parameterList = sourceMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
     parameterInfo = new ParameterTablePanel.VariableData[parameters.length];
@@ -70,9 +69,6 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
       parameterInfo[i] = new ParameterTablePanel.VariableData(parameters[i]);
       parameterInfo[i].passAsParameter = true;
     }
-
-    classNameLabel = new JLabel(RefactorJBundle.message("name.for.wrapper.class.label"));
-    packageLabel = new JLabel(RefactorJBundle.message("package.for.wrapper.class.label"));
 
     final PsiFile file = sourceMethod.getContainingFile();
     if (file instanceof PsiJavaFile) {
@@ -83,6 +79,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     final ButtonGroup buttonGroup = new ButtonGroup();
     buttonGroup.add(useExistingClassButton);
     buttonGroup.add(createNewClassButton);
+    buttonGroup.add(myCreateInnerClassRadioButton);
     createNewClassButton.setSelected(true);
     init();
     final ActionListener listener = new ActionListener() {
@@ -93,19 +90,15 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     };
     useExistingClassButton.addActionListener(listener);
     createNewClassButton.addActionListener(listener);
+    myCreateInnerClassRadioButton.addActionListener(listener);
     toggleRadioEnablement();
     validateButtons();
   }
 
   private void toggleRadioEnablement() {
-    final boolean useExisting = useExistingClassButton.isSelected();
-    existingClassField.setEnabled(useExisting);
-    existingClassChooserButton.setEnabled(useExisting);
-    classNameField.setEnabled(!useExisting);
-    classNameLabel.setEnabled(!useExisting);
-    packageLabel.setEnabled(!useExisting);
-    packageTextField.setEnabled(!useExisting);
-    packageChooserButton.setEnabled(!useExisting);
+    UIUtil.setEnabled(myUseExistingPanel, useExistingClassButton.isSelected(), true);
+    UIUtil.setEnabled(myCreateNewClassPanel, createNewClassButton.isSelected(), true);
+    UIUtil.setEnabled(myInnerClassPanel, myCreateInnerClassRadioButton.isSelected(), true);
   }
 
   protected String getDimensionServiceKey() {
@@ -116,22 +109,27 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     final List<PsiParameter> params = getParametersToExtract();
     final boolean useExistingClass = useExistingClass();
     final boolean keepMethod = keepMethodAsDelegate();
-    final IntroduceParameterObjectProcessor processor;
+    final String className;
+    final String packageName;
+    final List<String> getterNames;
+    final boolean createInnerClass = myCreateInnerClassRadioButton.isSelected();
     if (!useExistingClass) {
-      processor =
-        new IntroduceParameterObjectProcessor(getClassName(), getPackageName(), sourceMethod, params, null, keepMethod, isPreviewUsages(),
-                                              useExistingClass);
+      packageName = getPackageName();
+      className = getClassName();
+      getterNames = null;
+    } else if (createInnerClass) {
+      className = getInnerClassName();
+      packageName = "";
+      getterNames = null;
     }
     else {
-
       final String existingClassName = getExistingClassName();
-      final List<String> getterNames = new ArrayList<String>();
-
-
-      processor = new IntroduceParameterObjectProcessor(StringUtil.getShortName(existingClassName), StringUtil.getPackageName(existingClassName),
-                                                        sourceMethod, params, getterNames, keepMethod, isPreviewUsages(), useExistingClass);
+      getterNames = new ArrayList<String>();
+      className = StringUtil.getShortName(existingClassName);
+      packageName = StringUtil.getPackageName(existingClassName);
     }
-    invokeRefactoring(processor);
+    invokeRefactoring(new IntroduceParameterObjectProcessor(className, packageName, sourceMethod, params, getterNames, keepMethod, useExistingClass,
+                                                            createInnerClass));
   }
 
   @Override
@@ -145,7 +143,10 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     if (parametersToExtract.isEmpty()) {
       return false;
     }
-    if (!useExistingClass()) {
+    if (myCreateInnerClassRadioButton.isSelected()) {
+      final String innerClassName = getInnerClassName();
+      return innerClassName.length() > 0 && sourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) == null;
+    } else if (!useExistingClass()) {
       final String className = getClassName();
       if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
         return false;
@@ -162,6 +163,10 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     else {
       return getExistingClassName().length() != 0;
     }
+  }
+
+  private String getInnerClassName() {
+    return  myInnerClassNameTextField.getText().trim();
   }
 
   @NotNull
@@ -190,26 +195,10 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     return out;
   }
 
-  protected JComponent createNorthPanel() {
-    final Box box = Box.createVerticalBox();
-
+  protected JComponent createCenterPanel() {
     sourceMethodTextField.setEditable(false);
-    final JPanel _panel = new JPanel(new BorderLayout());
-    _panel.add(new JLabel(RefactorJBundle.message("method.to.extract.parameters.from.label")), BorderLayout.NORTH);
-    _panel.add(sourceMethodTextField, BorderLayout.CENTER);
-    box.add(_panel);
 
-    box.add(Box.createVerticalStrut(10));
-
-    final JPanel existingClassPanel = new JPanel(new BorderLayout());
-    final JLabel existingClassLabel = new JLabel();
-    existingClassLabel.setLabelFor(classNameField);
-    existingClassLabel.setDisplayedMnemonic('N');
-    existingClassPanel.add(existingClassLabel, BorderLayout.WEST);
-    existingClassPanel.add(existingClassField, BorderLayout.CENTER);
-    existingClassPanel.add(existingClassChooserButton, BorderLayout.EAST);
-
-    existingClassChooserButton.addActionListener(new ActionListener() {
+    existingClassField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final Project project = sourceMethod.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -229,34 +218,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
       }
     });
 
-    box.add(Box.createVerticalStrut(10));
-    final JPanel classNamePanel = new JPanel(new GridBagLayout());
-    final TitledBorder newClassBorder = IdeBorderFactory.createTitledBorder("Parameter Class");
-    classNamePanel.setBorder(newClassBorder);
-    final GridBagConstraints gc = new GridBagConstraints();
-    gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.weighty = 0.0;
-
-
-    gc.gridx = 0;
-    gc.gridy = 0;
-    gc.gridwidth = 1;
-    gc.weightx = 0;
-    gc.insets.left = 5;
-    createNewClassButton.setMnemonic('C');
-    classNamePanel.add(createNewClassButton, gc);
-    gc.gridy = 1;
-    gc.gridwidth = 1;
-    classNameLabel.setLabelFor(classNameField);
-    classNameLabel.setDisplayedMnemonic('N');
-    gc.insets.left = 25;
-    classNamePanel.add(classNameLabel, gc);
-    gc.insets.left = 5;
-    gc.gridx = 1;
-    gc.gridwidth = 2;
-    classNamePanel.add(classNameField, gc);
-
-    packageChooserButton.addActionListener(new ActionListener() {
+    packageTextField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final Project project = sourceMethod.getProject();
         final PackageChooserDialog chooser = new PackageChooserDialog(RefactorJBundle.message("choose.destination.package.label"), project);
@@ -270,51 +232,8 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
         }
       }
     });
-    packageLabel.setLabelFor(packageTextField);
-    packageLabel.setDisplayedMnemonic('P');
-    gc.gridx = 0;
-    gc.gridy = 2;
-    gc.gridwidth = 1;
-    gc.insets.left = 25;
-    classNamePanel.add(packageLabel, gc);
-    gc.insets.left = 5;
-    gc.weightx = 1;
-    gc.gridx = 1;
-    classNamePanel.add(packageTextField, gc);
-    gc.gridx = 2;
-    gc.weightx = 0;
-    gc.insets.left = 2;
-    gc.fill = GridBagConstraints.NONE;
-    classNamePanel.add(packageChooserButton, gc);
 
 
-    gc.weightx = 0.0;
-    gc.gridwidth = 3;
-    gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.gridx = 0;
-    gc.gridy = 3;
-    gc.insets.left = 5;
-    useExistingClassButton.setMnemonic('U');
-    classNamePanel.add(useExistingClassButton, gc);
-
-    gc.gridx = 0;
-    gc.gridy = 4;
-    gc.insets.left = 25;
-    gc.weightx = 1;
-    classNamePanel.add(existingClassPanel, gc);
-
-
-    box.add(classNamePanel);
-
-    box.add(Box.createVerticalStrut(10));
-
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(box, BorderLayout.CENTER);
-    return panel;
-  }
-
-  protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
     final ParameterTablePanel paramsPanel = new ParameterTablePanel(myProject, parameterInfo, sourceMethod) {
       protected void updateSignature() {}
 
@@ -324,11 +243,8 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
         IntroduceParameterObjectDialog.this.doCancelAction();
       }
     };
-    paramsPanel.setBorder(IdeBorderFactory.createTitledBorder("Parameters to Extract"));
-    panel.add(paramsPanel, BorderLayout.CENTER);
-    keepMethodAsDelegate.setMnemonic('l');
-    panel.add(keepMethodAsDelegate, BorderLayout.SOUTH);
-    return panel;
+    myParamsPanel.add(paramsPanel, BorderLayout.CENTER);
+    return myWholePanel;
   }
 
   public JComponent getPreferredFocusedComponent() {

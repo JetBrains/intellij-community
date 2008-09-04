@@ -20,10 +20,10 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   private void doTest() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
-  private void doTest(final boolean delegate) throws Exception {
+  private void doTest(final boolean delegate, final boolean createInner) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test");
@@ -33,12 +33,17 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
         final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
         IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor("Param", "", method,
                                                                                             Arrays.asList(method.getParameterList().getParameters()),
-                                                                                            null, delegate, false, false);
+                                                                                            null, delegate, false,
+                                                                                            createInner);
         processor.run();
         LocalFileSystem.getInstance().refresh(false);
         FileDocumentManager.getInstance().saveAllDocuments();
       }
     });
+  }
+
+  public void testInnerClass() throws Exception {
+    doTest(false, true);
   }
 
   public void testPrimitive() throws Exception {
@@ -74,7 +79,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   public void testDelegate() throws Exception {
-    doTest(true);
+    doTest(true, false);
   }
 
   private void doTestExistingClass(final String existingClassName, final String existingClassPackage) throws Exception {
@@ -86,7 +91,8 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
         final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
         IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor(existingClassName, existingClassPackage, method,
                                                                                             Arrays.asList(method.getParameterList().getParameters()),
-                                                                                            new ArrayList<String>(), false, false, true);
+                                                                                            new ArrayList<String>(), false, true,
+                                                                                            false);
         processor.run();
         LocalFileSystem.getInstance().refresh(false);
         FileDocumentManager.getInstance().saveAllDocuments();

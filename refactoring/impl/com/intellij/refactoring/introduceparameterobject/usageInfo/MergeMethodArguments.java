@@ -18,6 +18,7 @@ import java.util.Map;
 @SuppressWarnings({"MethodWithTooManyParameters"})
 public class MergeMethodArguments extends FixableUsageInfo {
   private final PsiMethod method;
+  private final boolean myCreateInnerClass;
   private final boolean myKeepMethodAsDelegate;
   private final List<PsiTypeParameter> typeParams;
   private final String className;
@@ -32,13 +33,14 @@ public class MergeMethodArguments extends FixableUsageInfo {
                               String parameterName,
                               int[] paramsToMerge,
                               List<PsiTypeParameter> typeParams,
-                              final boolean keepMethodAsDelegate) {
+                              final boolean keepMethodAsDelegate, final boolean createInnerClass) {
     super(method);
     this.paramsToMerge = paramsToMerge;
     this.packageName = packageName;
     this.className = className;
     this.parameterName = parameterName;
     this.method = method;
+    myCreateInnerClass = createInnerClass;
     lastParamIsVararg = method.isVarArgs();
     myKeepMethodAsDelegate = keepMethodAsDelegate;
     this.typeParams = new ArrayList<PsiTypeParameter>(typeParams);
@@ -46,7 +48,7 @@ public class MergeMethodArguments extends FixableUsageInfo {
 
   public void fixUsage() throws IncorrectOperationException {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(method.getProject());
-    final PsiClass psiClass = psiFacade.findClass(StringUtil.getQualifiedName(packageName, className));
+    final PsiClass psiClass = myCreateInnerClass ? method.getContainingClass().findInnerClassByName(className, false) : psiFacade.findClass(StringUtil.getQualifiedName(packageName, className));
     final List<ParameterInfo> parametersInfo = new ArrayList<ParameterInfo>();
     final PsiMethod deepestSuperMethod = method.findDeepestSuperMethod();
     PsiSubstitutor subst = PsiSubstitutor.EMPTY;

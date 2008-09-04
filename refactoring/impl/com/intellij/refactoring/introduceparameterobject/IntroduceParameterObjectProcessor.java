@@ -47,6 +47,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
   private final List<String> getterNames;
   private final boolean keepMethodAsDelegate;
   private final boolean myUseExistingClass;
+  private final boolean myCreateInnerClass;
   private final List<PsiParameter> parameters;
   private final int[] paramsToMerge;
   private final List<PsiTypeParameter> typeParams;
@@ -59,9 +60,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
                                            PsiMethod method,
                                            List<PsiParameter> parameters,
                                            List<String> getterNames,
-                                           boolean keepMethodAsDelegate,
-                                           boolean previewUsages,
-                                           final boolean useExistingClass) {
+                                           boolean keepMethodAsDelegate, final boolean useExistingClass, final boolean createInnerClass) {
     super(method.getProject());
     this.method = method;
     this.className = className;
@@ -69,6 +68,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     this.getterNames = getterNames;
     this.keepMethodAsDelegate = keepMethodAsDelegate;
     myUseExistingClass = useExistingClass;
+    myCreateInnerClass = createInnerClass;
     this.parameters = new ArrayList<PsiParameter>(parameters);
     final PsiParameterList parameterList = method.getParameterList();
     final PsiParameter[] methodParams = parameterList.getParameters();
@@ -106,7 +106,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       if (existingClass == null) {
         conflicts.add(RefactorJBundle.message("cannot.perform.the.refactoring") + "Could not find the selected class");
       }
-      final String incompatibilityMessage = "Selected class is not compatible with chosenn parameters";
+      final String incompatibilityMessage = "Selected class is not compatible with chosen parameters";
       if (!myExistingClassCompatible) {
         conflicts
           .add(RefactorJBundle.message("cannot.perform.the.refactoring") + incompatibilityMessage);
@@ -149,7 +149,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     final Project project = psiManager.getProject();
     final String fixedParamName = calculateNewParamNameForMethod(overridingMethod);
 
-    usages.add(new MergeMethodArguments(overridingMethod, className, packageName, fixedParamName, paramsToMerge, typeParams, keepMethodAsDelegate));
+    usages.add(new MergeMethodArguments(overridingMethod, className, packageName, fixedParamName, paramsToMerge, typeParams, keepMethodAsDelegate, myCreateInnerClass));
 
     final ParamUsageVisitor visitor = new ParamUsageVisitor(overridingMethod, paramsToMerge);
     overridingMethod.accept(visitor);
@@ -282,25 +282,31 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     }
 
     try {
-      final PsiFile containingFile = method.getContainingFile();
-
-      final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
-      final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
-      final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, containingDirectory, true);
-
-      if (directory != null) {
-        final PsiFile newFile = PsiFileFactory.getInstance(project).createFileFromText(className + ".java", classString);
-
-        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
-        final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(newFile.getProject()).shortenClassReferences(newFile);
-        final PsiElement reformattedFile = codeStyleManager.reformat(shortenedFile);
-        directory.add(reformattedFile);
+      final PsiJavaFile newFile = (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText(className + ".java", classString);
+      if (myCreateInnerClass) {
+        final PsiClass containingClass = method.getContainingClass();
+        final PsiElement innerClass = containingClass.add(newFile.getClasses()[0]);
+        JavaCodeStyleManager.getInstance(newFile.getProject()).shortenClassReferences(innerClass);
       } else {
-        return false;
+        final PsiFile containingFile = method.getContainingFile();
+        final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
+        final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
+        final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, containingDirectory, true);
+
+        if (directory != null) {
+
+          final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+          final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(newFile.getProject()).shortenClassReferences(newFile);
+          final PsiElement reformattedFile = codeStyleManager.reformat(shortenedFile);
+          directory.add(reformattedFile);
+        } else {
+          return false;
+        }
       }
     }
     catch (IncorrectOperationException e) {
       logger.error(e);
+      return false;
     }
     return true;
   }
