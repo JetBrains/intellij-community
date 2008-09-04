@@ -216,38 +216,40 @@ public class MethodSignatureUtil {
     PsiSubstitutor result = getSuperMethodSignatureSubstitutorImpl(methodSignature, superMethodSignature);
     if (result == null) return null;
 
-    PsiTypeParameter[] typeParameters1 = methodSignature.getTypeParameters();
-    PsiTypeParameter[] typeParameters2 = superMethodSignature.getTypeParameters();
-    PsiSubstitutor substitutor1 = methodSignature.getSubstitutor();
+    PsiTypeParameter[] methoTypeParameters = methodSignature.getTypeParameters();
+    PsiTypeParameter[] superTypeParameters = superMethodSignature.getTypeParameters();
+    PsiSubstitutor methodSubstitutor = methodSignature.getSubstitutor();
 
     //check bounds
-    for (int i = 0; i < typeParameters1.length; i++) {
-      PsiTypeParameter typeParameter1 = typeParameters1[i];
-      PsiTypeParameter typeParameter2 = typeParameters2[i];
-      final PsiClassType[] supers1 = typeParameter1.getSuperTypes();
-      final PsiClassType[] supers2 = typeParameter2.getSuperTypes();
-      if (supers1.length != supers2.length) return null;
-      for (int j = 0; j < supers1.length; j++) {
-        PsiType type1 = substitutor1.substitute(supers1[j]);
-        PsiType type2 = substitutor1.substitute(result.substitute(supers2[j]));
+    for (int i = 0; i < methoTypeParameters.length; i++) {
+      PsiTypeParameter methoTypeParameter = methoTypeParameters[i];
+      PsiTypeParameter superTypeParameter = superTypeParameters[i];
+      final PsiClassType[] methoSupers = methoTypeParameter.getSuperTypes();
+      final PsiClassType[] superSupers = superTypeParameter.getSuperTypes();
+      if (methoSupers.length != superSupers.length) return null;
+      for (int j = 0; j < methoSupers.length; j++) {
+        PsiType type1 = methodSubstitutor.substitute(methoSupers[j]);
+        PsiType type2 = methodSubstitutor.substitute(PsiUtil.captureToplevelWildcards(result.substitute(superSupers[j]), methoTypeParameter));
         if (!type1.equals(type2)) return null;
       }
     }
     return result;
   }
 
-  private static PsiSubstitutor getSuperMethodSignatureSubstitutorImpl(MethodSignature signature1, MethodSignature signature2) {
+  private static PsiSubstitutor getSuperMethodSignatureSubstitutorImpl(MethodSignature methodSignature, MethodSignature superSignature) {
     // normalize generic method declarations: correlate type parameters
-    PsiTypeParameter[] typeParameters1 = signature1.getTypeParameters();
-    PsiTypeParameter[] typeParameters2 = signature2.getTypeParameters();
+    // todo: correlate type params by name?
+    PsiTypeParameter[] methodTypeParameters = methodSignature.getTypeParameters();
+    PsiTypeParameter[] superTypeParameters = superSignature.getTypeParameters();
 
     // both methods are parameterized and number of parameters mismatch
-    if (typeParameters1.length != typeParameters2.length) return null;
+    if (methodTypeParameters.length != superTypeParameters.length) return null;
 
-    PsiSubstitutor result = signature2.getSubstitutor();
-    for (int i = 0; i < typeParameters1.length; i++) {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(typeParameters1[i].getProject()).getElementFactory();
-      result = result.put(typeParameters2[i], factory.createType(typeParameters1[i]));
+    PsiSubstitutor result = superSignature.getSubstitutor();
+    for (int i = 0; i < methodTypeParameters.length; i++) {
+      PsiTypeParameter methodTypeParameter = methodTypeParameters[i];
+      PsiElementFactory factory = JavaPsiFacade.getInstance(methodTypeParameter.getProject()).getElementFactory();
+      result = result .put(superTypeParameters[i], factory.createType(methodTypeParameter));
     }
 
     return result;
