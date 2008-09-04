@@ -1,12 +1,13 @@
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -20,10 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.annotate.AnnotationListener;
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +31,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * author: lesya
@@ -98,14 +98,13 @@ public class AnnotateToggleAction extends ToggleAction {
 
       LOG.assertTrue(editor != null);
 
-      doAnnotate(editor, context);
+      doAnnotate(editor, context.getProject());
 
     }
   }
 
-  private static void doAnnotate(final Editor editor, final VcsContext context) {
+  private static void doAnnotate(final Editor editor, final Project project) {
     final VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
-    Project project = context.getProject();
     if (project == null) return;
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
     if (vcs == null) return;
@@ -133,12 +132,15 @@ public class AnnotateToggleAction extends ToggleAction {
       return;
     }
 
-    FileAnnotation fileAnnotation = fileAnnotationRef.get();
+    doAnnotate(editor, project, file, fileAnnotationRef.get());
+  }
+
+  public static void doAnnotate(final Editor editor, final Project project, final VirtualFile file, final FileAnnotation fileAnnotation) {
     String upToDateContent = fileAnnotation.getAnnotatedContent();
 
     final UpToDateLineNumberProvider getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(
       editor.getDocument(),
-      project, 
+      project,
       upToDateContent);
 
     editor.getGutter().closeAllAnnotations();
@@ -149,9 +151,10 @@ public class AnnotateToggleAction extends ToggleAction {
       editor.putUserData(KEY_IN_EDITOR, annotations);
     }
 
+    final HighlightAnnotationsActions highlighting = new HighlightAnnotationsActions(project, file, fileAnnotation);
     final LineAnnotationAspect[] aspects = fileAnnotation.getAspects();
     for (LineAnnotationAspect aspect : aspects) {
-      final AnnotationFieldGutter gutter = new AnnotationFieldGutter(getUpToDateLineNumber, fileAnnotation, editor, aspect);
+      final AnnotationFieldGutter gutter = new AnnotationFieldGutter(getUpToDateLineNumber, fileAnnotation, editor, aspect, highlighting);
       if (aspect instanceof EditorGutterAction) {
         editor.getGutter().registerTextAnnotation(gutter, gutter);
       }
@@ -167,16 +170,19 @@ public class AnnotateToggleAction extends ToggleAction {
     private final FileAnnotation myAnnotation;
     private final Editor myEditor;
     private LineAnnotationAspect myAspect;
+    private final HighlightAnnotationsActions myHighlighting;
     private AnnotationListener myListener;
 
     public AnnotationFieldGutter(UpToDateLineNumberProvider getUpToDateLineNumber,
                                  FileAnnotation annotation,
                                  Editor editor,
-                                 LineAnnotationAspect aspect) {
+                                 LineAnnotationAspect aspect,
+                                 final HighlightAnnotationsActions highlighting) {
       myGetUpToDateLineNumber = getUpToDateLineNumber;
       myAnnotation = annotation;
       myEditor = editor;
       myAspect = aspect;
+      myHighlighting = highlighting;
 
       myListener = new AnnotationListener() {
         public void onAnnotationChanged() {
@@ -195,7 +201,10 @@ public class AnnotateToggleAction extends ToggleAction {
 
     @Nullable
     public String getToolTip(final int line, final Editor editor) {
-      return XmlStringUtil.escapeString(myAnnotation.getToolTip(line));
+      int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
+      if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return null;
+
+      return XmlStringUtil.escapeString(myAnnotation.getToolTip(currentLine));
     }
 
     public void doAction(int line) {
@@ -205,7 +214,6 @@ public class AnnotateToggleAction extends ToggleAction {
 
         ((EditorGutterAction)myAspect).doAction(currentLine);
       }
-
     }
 
     public Cursor getCursor(final int line) {
@@ -218,6 +226,17 @@ public class AnnotateToggleAction extends ToggleAction {
         return Cursor.getDefaultCursor();
       }
 
+    }
+
+    public EditorFontType getStyle(final int line, final Editor editor) {
+      int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
+      if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return EditorFontType.PLAIN;
+      final boolean isBold = myHighlighting.isLineBold(currentLine);
+      return isBold ? EditorFontType.BOLD : EditorFontType.PLAIN;
+    }
+
+    public List<AnAction> getPopupActions(final Editor editor) {
+      return myHighlighting.getList();
     }
 
     public void gutterClosed() {

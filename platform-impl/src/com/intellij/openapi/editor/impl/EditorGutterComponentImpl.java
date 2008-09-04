@@ -47,9 +47,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.AffineTransform;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
@@ -201,6 +199,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       for (int j = startLineNumber; j < endLineNumber; j++) {
         int logLine = myEditor.visualToLogicalPosition(new VisualPosition(j, 0)).line;
         String s = gutterProvider.getLineText(logLine, myEditor);
+        final EditorFontType style = gutterProvider.getStyle(logLine, myEditor);
+        g.setFont(myEditor.getColorsScheme().getFont(style));
         if (s != null) {
           g.drawString(s,
                        x,
@@ -1130,6 +1130,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     final ActionManager actionManager = ActionManager.getInstance();
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
       DefaultActionGroup actionGroup = new DefaultActionGroup(EditorBundle.message("editor.annotations.action.group.name"), true);
+      final java.util.List<AnAction> addActions = new ArrayList<AnAction>();
+      for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
+        final java.util.List<AnAction> list = gutterProvider.getPopupActions(myEditor);
+        if (list != null) {
+          for (AnAction action : list) {
+            if (! addActions.contains(action)) {
+              addActions.add(action);
+            }
+          }
+        }
+      }
+      for (AnAction addAction : addActions) {
+        actionGroup.add(addAction);
+      }
       actionGroup.add(new CloseAnnotationsAction());
       JPopupMenu menu = actionManager.createActionPopupMenu("", actionGroup).getComponent();
       menu.show(this, e.getX(), e.getY());

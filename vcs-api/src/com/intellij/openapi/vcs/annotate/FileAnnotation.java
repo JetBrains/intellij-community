@@ -15,6 +15,12 @@
  */
 package com.intellij.openapi.vcs.annotate;
 
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
 public interface FileAnnotation {
   void addListener(AnnotationListener listener);
   void removeListener(AnnotationListener listener);
@@ -22,4 +28,8 @@ public interface FileAnnotation {
   LineAnnotationAspect[] getAspects();
   String getToolTip(int lineNumber);
   String getAnnotatedContent();
+  @Nullable
+  VcsRevisionNumber getLineRevisionNumber(int lineNumber);
+  @Nullable
+  List<VcsFileRevision> getRevisions();
 }

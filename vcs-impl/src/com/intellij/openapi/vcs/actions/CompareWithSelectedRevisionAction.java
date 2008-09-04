@@ -5,8 +5,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.HistoryAsTreeProvider;
@@ -18,6 +18,7 @@ import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.Consumer;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -105,7 +106,11 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
         showTreePopup(treeHistoryProvider.createTreeOn(revisions), file, project, vcs.getDiffProvider());
       }
       else {
-        showListPopup(revisions, vcs, file, project);
+        showListPopup(revisions, project, new Consumer<VcsFileRevision>() {
+          public void consume(final VcsFileRevision revision) {
+            DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project);
+          }
+        }, true);
       }
 
     }
@@ -189,7 +194,8 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     return textArea;
   }
 
-  private static void showListPopup(final List<VcsFileRevision> revisions, final AbstractVcs vcs, final VirtualFile file, final Project project) {
+  public static void showListPopup(final List<VcsFileRevision> revisions, final Project project, final Consumer<VcsFileRevision> selectedRevisionConsumer,
+                                   final boolean showComments) {
     ColumnInfo[] columns = new ColumnInfo[] { REVISION_TABLE_COLUMN, DATE_TABLE_COLUMN, AUTHOR_TABLE_COLUMN };
     for(VcsFileRevision revision: revisions) {
       if (revision.getBranchName() != null) {
@@ -204,7 +210,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       public void run() {
         VcsFileRevision revision = table.getSelectedObject();
         if (revision != null) {
-          DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project);
+          selectedRevisionConsumer.consume(revision);
         }
       }
     };
@@ -235,13 +241,17 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     };
 
     table.setMinimumSize(new Dimension(300, 50));
-    final JBPopup popup = new PopupChooserBuilder(table).
-        setSouthComponent(createCommentsPanel(table)).
-        setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
+    final PopupChooserBuilder builder = new PopupChooserBuilder(table);
+
+    if (showComments) {
+      builder.setSouthComponent(createCommentsPanel(table));
+    }
+
+    builder.setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
         setItemChoosenCallback(runnable).
         setResizable(true).
-        setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").setMinSize(new Dimension(300, 300)).
-        createPopup();
+        setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").setMinSize(new Dimension(300, 300));
+    final JBPopup popup = builder.createPopup();
     
     popup.showCenteredInCurrentWindow(project);
   }

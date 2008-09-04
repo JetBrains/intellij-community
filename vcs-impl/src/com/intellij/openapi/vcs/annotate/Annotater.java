@@ -32,17 +32,13 @@
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorGutter;
-import com.intellij.openapi.editor.EditorGutterAction;
-import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.Nullable;
 
 public class Annotater {
 
@@ -65,32 +61,7 @@ public class Annotater {
       return;
     }
 
-    EditorGutter gutterComponent = editor.getGutter();
-    gutterComponent.closeAllAnnotations();
-
-    final LineAnnotationAspect[] aspects = myFileAnnotation.getAspects();
-    for (int i = 0; i < aspects.length; i++) {
-      final LineAnnotationAspect aspect = aspects[i];
-      final TextAnnotationGutterProvider provider = new TextAnnotationGutterProvider() {
-        public String getLineText(int line, Editor editor) {
-          return aspect.getValue(line);
-        }
-
-        @Nullable
-        public String getToolTip(final int line, final Editor editor) {
-          return XmlStringUtil.escapeString(myFileAnnotation.getToolTip(line));
-        }
-
-        public void gutterClosed() {
-        }
-      };
-      if (aspect instanceof EditorGutterAction) {
-        gutterComponent.registerTextAnnotation(provider, (EditorGutterAction)aspect);
-      } else {
-       gutterComponent.registerTextAnnotation(provider);
-      }
-
-
-    }
+    AnnotateToggleAction.doAnnotate(editor, myProject, myVirtualFile, myFileAnnotation);
   }
+
 }

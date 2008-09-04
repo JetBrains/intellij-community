@@ -18,6 +18,7 @@ import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation;
+import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.Annotation;
 import com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui.EditOptionsDialog;
 import com.intellij.cvsSupport2.cvsstatuses.CvsChangeProvider;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
@@ -47,7 +48,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * This class intended to be an adapter of  AbstractVcs and ProjectComponent interfaces for CVS
@@ -295,6 +297,45 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
     return myCvsAnnotationProvider;
   }
 
+  private static class RevisionPresentation implements VcsFileRevision {
+    private final VcsRevisionNumber myNumber;
+    private final String myAuthor;
+    private final Date myDate;
+
+    private RevisionPresentation(final String revision, final String author, final Date date) {
+      myNumber = new CvsRevisionNumber(revision);
+      myAuthor = author;
+      myDate = date;
+    }
+
+    public VcsRevisionNumber getRevisionNumber() {
+      return myNumber;
+    }
+
+    public String getBranchName() {
+      return null;
+    }
+
+    public Date getRevisionDate() {
+      return myDate;
+    }
+
+    public String getAuthor() {
+      return myAuthor;
+    }
+
+    public String getCommitMessage() {
+      return null;
+    }
+
+    public void loadContent() throws VcsException {
+    }
+
+    public byte[] getContent() throws IOException {
+      return new byte[0];
+    }
+  }
+
   public FileAnnotation createAnnotation(VirtualFile cvsVirtualFile, String revision, CvsEnvironment environment) throws VcsException {
     // the VirtualFile has a full path if annotate is called from history (when we have a real file on disk),
     // and has the path equal to a CVS module name if annotate is called from the CVS repository browser
@@ -318,8 +359,16 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
         revisions = historyProvider.createRevisions(filePath);
       }
       else {
-        // TODO[yole]: implement loading history for nonlocal annotation
-        revisions = null;
+        // imitation
+        final Annotation[] lineAnnotations = annotateOperation.getLineAnnotations();
+        revisions = new ArrayList<VcsFileRevision>();
+        final Set<String> usedRevisions = new HashSet<String>();
+        for (Annotation annotation : lineAnnotations) {
+          if (! usedRevisions.contains(annotation.getRevision())) {
+            revisions.add(new RevisionPresentation(annotation.getRevision(), annotation.getUserName(), annotation.getDate()));
+            usedRevisions.add(annotation.getRevision());
+          }
+        }
       }
       return new CvsFileAnnotation(annotateOperation.getContent(), annotateOperation.getLineAnnotations(), revisions, cvsVirtualFile);
     }

@@ -35,23 +35,23 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.Annotation;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
+import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.vcs.annotate.AnnotationListener;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CvsFileAnnotation implements FileAnnotation{
   private final String myContent;
   private final Annotation[] myAnnotations;
   private final CvsEntriesListener myCvsEntriesListener;
   private final Map<String, String> myRevisionComments = new HashMap<String, String>();
+  @Nullable private final List<VcsFileRevision> myRevisions;
   private final VirtualFile myFile;
   private final List<AnnotationListener> myListeners = new ArrayList<AnnotationListener>();
 
@@ -93,11 +93,17 @@ public class CvsFileAnnotation implements FileAnnotation{
                            @Nullable final List<VcsFileRevision> revisions, VirtualFile file) {
     myContent = content;
     myAnnotations = annotations;
+    myRevisions = revisions;
     myFile = file;
     if (revisions != null) {
       for(VcsFileRevision revision: revisions) {
         myRevisionComments.put(revision.getRevisionNumber().toString(), revision.getCommitMessage());
       }
+      Collections.sort(myRevisions, new Comparator<VcsFileRevision>() {
+        public int compare(final VcsFileRevision o1, final VcsFileRevision o2) {
+          return -1 * o1.getRevisionNumber().compareTo(o2.getRevisionNumber());
+        }
+      });
     }
 
     myCvsEntriesListener = new CvsEntriesListener() {
@@ -154,5 +160,21 @@ public class CvsFileAnnotation implements FileAnnotation{
 
   public String getAnnotatedContent() {
     return myContent;
+  }
+
+  public VcsRevisionNumber getLineRevisionNumber(final int lineNumber) {
+    if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
+      return null;
+    }
+    final String revision = myAnnotations[lineNumber].getRevision();
+    if (revision != null) {
+      return new CvsRevisionNumber(revision);
+    }
+    return null;
+  }
+
+  @Nullable
+  public List<VcsFileRevision> getRevisions() {
+    return myRevisions;
   }
 }

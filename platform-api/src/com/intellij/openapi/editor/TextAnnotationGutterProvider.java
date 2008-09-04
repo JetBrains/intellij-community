@@ -15,7 +15,11 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Interface which should be implemented in order to draw custom text annotations in the
@@ -37,6 +41,13 @@ public interface TextAnnotationGutterProvider {
 
   @Nullable
   String getToolTip(int line, Editor editor);
+
+  EditorFontType getStyle(int line, Editor editor);
+
+  /***
+   * enables annotation view modifications
+   */
+  List<AnAction> getPopupActions(final Editor editor);
 
   /**
    * Called when the annotations are removed from the editor gutter.
