@@ -16,9 +16,11 @@ public class ThreadComboBoxRenderer extends BasicComboBoxRenderer {
                                                 final boolean isSelected,
                                                 final boolean cellHasFocus) {
     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    XExecutionStack executionStack = (XExecutionStack)value;
-    setText(executionStack.getDisplayName());
-    setIcon(executionStack.getIcon());
+    if (value != null) {
+      XExecutionStack executionStack = (XExecutionStack)value;
+      setText(executionStack.getDisplayName());
+      setIcon(executionStack.getIcon());
+    }
     return this;
   }
 }
