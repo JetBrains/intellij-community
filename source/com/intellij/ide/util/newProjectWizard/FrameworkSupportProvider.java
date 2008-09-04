@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ public abstract class FrameworkSupportProvider {
   }
 
   @NotNull
-  public abstract FrameworkSupportConfigurable createConfigurable();
+  public abstract FrameworkSupportConfigurable createConfigurable(@Nullable final Project project);
 
   @NonNls
   @Nullable

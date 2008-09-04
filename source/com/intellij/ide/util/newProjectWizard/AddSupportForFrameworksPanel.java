@@ -292,7 +292,7 @@ public class AddSupportForFrameworksPanel {
     private FrameworkSupportSettings(final FrameworkSupportProvider provider, final FrameworkSupportSettings parentNode) {
       myProvider = provider;
       myParentNode = parentNode;
-      myConfigurable = provider.createConfigurable();
+      myConfigurable = provider.createConfigurable(myLibrariesContainer.getProject());
       myCheckBox = new JCheckBox(provider.getTitle());
       if (parentNode != null) {
         parentNode.myChildren.add(this);

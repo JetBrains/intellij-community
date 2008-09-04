@@ -115,6 +115,11 @@ public class LibrariesContainerFactory {
       myRootModel = rootModel;
     }
 
+    @Nullable
+    public Project getProject() {
+      return myProject;
+    }
+
     @NotNull
     public Library[] getLibraies(@NotNull final LibraryLevel libraryLevel) {
       if (libraryLevel == LibraryLevel.MODULE && myModule != null) {
@@ -206,6 +211,11 @@ public class LibrariesContainerFactory {
         libraryEditor.addRoot(source, OrderRootType.SOURCES);
       }
       return library;
+    }
+
+    @Nullable
+    public Project getProject() {
+      return myProject;
     }
 
     @NotNull
