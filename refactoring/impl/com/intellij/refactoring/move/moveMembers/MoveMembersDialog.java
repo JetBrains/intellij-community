@@ -405,7 +405,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
       myTargetClass =
         JavaPsiFacade.getInstance(manager.getProject()).findClass(getTargetClassName(), GlobalSearchScope.projectScope(myProject));
       myTable.fireExternalDataChange();
-      myIntroduceEnumConstants.setEnabled(myTargetClass.isEnum());
+      myIntroduceEnumConstants.setEnabled(myTargetClass != null && myTargetClass.isEnum());
     }
   }
 }
