@@ -16,6 +16,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 import java.util.List;
@@ -64,10 +65,10 @@ public abstract class JspManager {
   public abstract String getTaglibUri(@NotNull XmlFile taglibFile);
 
   @Nullable
-  public abstract XmlFile getTldFileByUri(String uri, @NotNull JspFile jspFile);
+  public abstract XmlFile getTldFileByUri(@NonNls String uri, @NotNull JspFile jspFile);
 
   @Nullable
-  public abstract XmlFile getTldFileByUri(String uri, @Nullable Module module, @Nullable JspFile jspFile);
+  public abstract XmlFile getTldFileByUri(@NonNls String uri, @Nullable Module module, @Nullable JspFile jspFile);
 
   @Nullable
   public abstract XmlElementDescriptor getDirectiveDescriptorByName(String name, final @NotNull PsiFile context);
