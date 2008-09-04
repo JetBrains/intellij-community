@@ -118,8 +118,12 @@ public class ZipUtil {
 
   public static void extract(File file, File outputDir, FilenameFilter filenameFilter) throws IOException {
     final ZipFile zipFile = new ZipFile(file);
-    extract(zipFile, outputDir, filenameFilter);
-    zipFile.close();
+    try {
+      extract(zipFile, outputDir, filenameFilter);
+    }
+    finally {
+      zipFile.close();
+    }
   }
 
   public static void extract(final ZipFile zipFile,

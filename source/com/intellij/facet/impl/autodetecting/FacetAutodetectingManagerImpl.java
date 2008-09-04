@@ -289,6 +289,10 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     getState().addDisabled(type.getStringId());
   }
 
+  public void disableAutodetectionInDirs(@NotNull Module module, @NotNull String... dirUrls) {
+    // todo
+  }
+
   public void disableAutodetectionInFiles(@NotNull final FacetType type, @NotNull final Module module, @NotNull final String... fileUrls) {
     getState().addDisabled(type.getStringId(), module.getName(), fileUrls);
   }
