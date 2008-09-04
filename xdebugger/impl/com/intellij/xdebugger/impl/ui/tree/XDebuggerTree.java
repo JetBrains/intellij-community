@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.Tree;
 import com.intellij.xdebugger.XSourcePosition;
@@ -23,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author nik
  */
 public class XDebuggerTree extends Tree implements DataProvider {
-  public static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
+  private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
   private DefaultTreeModel myTreeModel;
   private final Project myProject;
   private final XDebuggerEditorsProvider myEditorsProvider;
@@ -138,5 +139,10 @@ public class XDebuggerTree extends Tree implements DataProvider {
   @Nullable
   public static XDebuggerTree getTree(final AnActionEvent e) {
     return e.getData(XDEBUGGER_TREE_KEY);
+  }
+
+  @Nullable
+  public static XDebuggerTree getTree(DataContext context) {
+    return XDEBUGGER_TREE_KEY.getData(context);
   }
 }

@@ -2,10 +2,12 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 
@@ -14,7 +16,7 @@ import javax.swing.tree.TreePath;
  */
 public abstract class XDebuggerTreeActionBase extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
-    XValueNodeImpl node = getSelectedNode(e);
+    XValueNodeImpl node = getSelectedNode(e.getDataContext());
     if (node == null) return;
 
     String nodeName = node.getName();
@@ -27,7 +29,7 @@ public abstract class XDebuggerTreeActionBase extends AnAction {
 
 
   public void update(final AnActionEvent e) {
-    XValueNodeImpl node = getSelectedNode(e);
+    XValueNodeImpl node = getSelectedNode(e.getDataContext());
     e.getPresentation().setEnabled(node != null && isEnabled(node));
   }
 
@@ -36,8 +38,8 @@ public abstract class XDebuggerTreeActionBase extends AnAction {
   }
 
   @Nullable
-  private static XValueNodeImpl getSelectedNode(AnActionEvent e) {
-    XDebuggerTree tree = XDebuggerTree.getTree(e);
+  private static XValueNodeImpl getSelectedNode(final DataContext dataContext) {
+    XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
     if (tree == null) return null;
 
     TreePath path = tree.getSelectionPath();
@@ -50,4 +52,9 @@ public abstract class XDebuggerTreeActionBase extends AnAction {
     return null;
   }
 
+  @Nullable
+  public static XValue getSelectedValue(@NotNull DataContext dataContext) {
+    XValueNodeImpl node = getSelectedNode(dataContext);
+    return node != null ? node.getValueContainer() : null;
+  }
 }

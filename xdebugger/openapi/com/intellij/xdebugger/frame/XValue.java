@@ -31,4 +31,13 @@ public abstract class XValue extends XValueContainer {
   public XValueModifier getModifier() {
     return null;
   }
+
+  /**
+   * Start computing source position of the value and call {@link XNavigatable#setSourcePosition(com.intellij.xdebugger.XSourcePosition)}
+   * when computation is finished 
+   * @param navigatable navigatable
+   */
+  public void computeSourcePosition(@NotNull XNavigatable navigatable) {
+    navigatable.setSourcePosition(null);
+  }
 }

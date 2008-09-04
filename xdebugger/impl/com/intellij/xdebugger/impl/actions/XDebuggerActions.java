@@ -20,6 +20,7 @@ public interface XDebuggerActions {
   @NonNls String FORCE_RUN_TO_CURSOR = "ForceRunToCursor";
 
   @NonNls String SHOW_EXECUTION_POINT = "ShowExecutionPoint";
+  @NonNls String JUMP_TO_SOURCE = "XDebugger.JumpToSource";
 
   @NonNls String EVALUATE_EXPRESSION = "EvaluateExpression";
 

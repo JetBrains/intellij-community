@@ -51,6 +51,9 @@ public abstract class XDebuggerUtil {
   @Nullable
   public abstract XSourcePosition createPosition(@NotNull VirtualFile file, int line);
 
+  @Nullable
+  public abstract XSourcePosition createPositionByOffset(@NotNull VirtualFile file, int offset);
+
   public abstract <B extends XLineBreakpoint<?>> XBreakpointGroupingRule<B, ?> getGroupingByFileRule();
 
   public abstract <B extends XBreakpoint<?>> Comparator<B> getDefaultBreakpointComparator(XBreakpointType<B, ?> type);

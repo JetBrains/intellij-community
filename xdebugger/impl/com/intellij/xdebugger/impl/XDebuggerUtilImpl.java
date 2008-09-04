@@ -119,6 +119,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return XSourcePositionImpl.create(file, line);
   }
 
+  @Nullable 
+  public XSourcePosition createPositionByOffset(@NotNull final VirtualFile file, final int offset) {
+    return XSourcePositionImpl.createByOffset(file, offset);
+  }
+
   public <B extends XLineBreakpoint<?>> XBreakpointGroupingRule<B, ?> getGroupingByFileRule() {
     return new XBreakpointFileGroupingRule<B>();
   }

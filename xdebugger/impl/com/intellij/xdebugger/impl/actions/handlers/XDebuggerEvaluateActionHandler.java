@@ -6,8 +6,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.evaluate.XExpressionEvaluationDialog;
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,6 +23,12 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
 
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     String expression = editor != null ? editor.getSelectionModel().getSelectedText() : null;
+    if (expression == null) {
+      XValue value = XDebuggerTreeActionBase.getSelectedValue(dataContext);
+      if (value != null) {
+        expression = value.getEvaluationExpression();
+      }
+    }
     new XExpressionEvaluationDialog(session, editorsProvider, stackFrame, expression).show();
   }
 

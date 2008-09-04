@@ -35,14 +35,17 @@ public class XDebuggerTreePanel {
         popupMenu.getComponent().show(comp, x, y);
       }
     };
-    AnAction action = actionManager.getAction(XDebuggerActions.SET_VALUE);
-    action.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), myTree);
+    AnAction setValueAction = actionManager.getAction(XDebuggerActions.SET_VALUE);
+    setValueAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), myTree);
+    AnAction jumpToSourceAction = actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE);
+    jumpToSourceAction.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), myTree);
     myTree.addMouseListener(myPopupHandler);
   }
 
   public void dispose() {
-    AnAction action = ActionManager.getInstance().getAction(XDebuggerActions.SET_VALUE);
-    action.unregisterCustomShortcutSet(myTree);
+    ActionManager actionManager = ActionManager.getInstance();
+    actionManager.getAction(XDebuggerActions.SET_VALUE).unregisterCustomShortcutSet(myTree);
+    actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).unregisterCustomShortcutSet(myTree);
     myTree.removeMouseListener(myPopupHandler);
   }
 
