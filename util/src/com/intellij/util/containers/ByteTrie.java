@@ -27,7 +27,7 @@ public class ByteTrie {
   @NonNls private static final String UTF_8_CHARSET_NAME = "UTF-8";
   private final ArrayList<Node> myAllNodes;
 
-  private class Node {
+  private static class Node {
     private final byte myChar;
     private final int myParent;
     private IntArrayList myChildren;

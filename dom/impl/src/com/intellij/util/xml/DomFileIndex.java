@@ -22,6 +22,8 @@ import gnu.trove.THashSet;
 import java.io.ByteArrayInputStream;
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author peter
  */
@@ -36,6 +38,7 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
 
   public DomFileIndex() {
     myDataIndexer = new DataIndexer<String, Void, FileContent>() {
+      @NotNull
       public Map<String, Void> map(final FileContent inputData) {
         final Set<String> namespaces = new THashSet<String>();
         final XmlFileHeader header = NanoXmlUtil.parseHeader(new ByteArrayInputStream(inputData.getContent()));

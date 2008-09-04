@@ -42,20 +42,17 @@ public class JDomConvertingUtil {
     catch (JDOMException e) {
       throw new QualifiedJDomException(e, file.getAbsolutePath());
     }
-    catch (IOException e) {
-      throw e;
-    }
   }
 
   public static String getOptionValue(Element element, String optionName) {
     return JDOMExternalizerUtil.readField(element, optionName);
   }
-
-  public static Condition<Element> createAttributeValueFilter(final @NonNls String name, final @NonNls String value) {
+                                                               
+  public static Condition<Element> createAttributeValueFilter(@NonNls final String name, @NonNls final String value) {
     return createAttributeValueFilter(name, Collections.singleton(value));
   }
 
-  public static Condition<Element> createAttributeValueFilter(final @NonNls String name, final @NonNls Collection<String> value) {
+  public static Condition<Element> createAttributeValueFilter(@NonNls final String name, @NonNls final Collection<String> value) {
     return new Condition<Element>() {
       public boolean value(final Element element) {
         return value.contains(element.getAttributeValue(name));
@@ -63,7 +60,7 @@ public class JDomConvertingUtil {
     };
   }
 
-  public static Condition<Element> createOptionElementFilter(final @NonNls String optionName) {
+  public static Condition<Element> createOptionElementFilter(@NonNls final String optionName) {
     return createElementWithAttributeFilter(OPTION_ELEMENT, NAME_ATTRIBUTE, optionName);
   }
 
@@ -103,7 +100,7 @@ public class JDomConvertingUtil {
     return null;
   }
 
-  public static Condition<Element> createElementNameFilter(final @NonNls String elementName) {
+  public static Condition<Element> createElementNameFilter(@NonNls final String elementName) {
     return new Condition<Element>() {
       public boolean value(final Element element) {
         return elementName.equals(element.getName());

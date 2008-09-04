@@ -24,6 +24,7 @@ import org.apache.velocity.exception.ResourceNotFoundException;
 import org.apache.velocity.exception.VelocityException;
 import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.RuntimeSingleton;
+import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.log.LogSystem;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.node.ASTReference;
@@ -44,7 +45,7 @@ import java.util.*;
 public class FileTemplateUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.FileTemplateUtil");
   private static boolean ourVelocityInitialized = false;
-  private static CreateFromTemplateHandler ourDefaultCreateFromTemplateHandler = new DefaultCreateFromTemplateHandler();
+  private static final CreateFromTemplateHandler ourDefaultCreateFromTemplateHandler = new DefaultCreateFromTemplateHandler();
 
   private FileTemplateUtil() {
   }
@@ -191,13 +192,13 @@ public class FileTemplateUtil{
           //todo[myakovlev] log somethere?
         }
       };
-      Velocity.setProperty(Velocity.RUNTIME_LOG_LOGSYSTEM, emptyLogSystem);
-      Velocity.setProperty(Velocity.RESOURCE_LOADER, "file,class");
+      Velocity.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, emptyLogSystem);
+      Velocity.setProperty(RuntimeConstants.RESOURCE_LOADER, "file,class");
       //todo[myakovlev] implement my oun Loader, with ability to load templates from classpath
       Velocity.setProperty("file.resource.loader.class", MyFileResourceLoader.class.getName());
       Velocity.setProperty("class.resource.loader.class", MyClasspathResourceLoader.class.getName());
-      Velocity.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, modifiedPatternsPath.getAbsolutePath());
-      Velocity.setProperty(Velocity.INPUT_ENCODING, FileTemplate.ourEncoding);
+      Velocity.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, modifiedPatternsPath.getAbsolutePath());
+      Velocity.setProperty(RuntimeConstants.INPUT_ENCODING, FileTemplate.ourEncoding);
       Velocity.init();
       ourVelocityInitialized = true;
     }
@@ -226,21 +227,15 @@ public class FileTemplateUtil{
     for (String dummyRef : dummyRefs) {
       props.setProperty(dummyRef, "");
     }
-    String mergedText;
 
-    try{
-      if (template.isJavaClassTemplate()){
-        String packageName = props.getProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
-        if(packageName == null || packageName.length() == 0){
-          props = new Properties(props);
-          props.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, FileTemplate.ATTRIBUTE_PACKAGE_NAME);
-        }
+    if (template.isJavaClassTemplate()){
+      String packageName = props.getProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
+      if(packageName == null || packageName.length() == 0){
+        props = new Properties(props);
+        props.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, FileTemplate.ATTRIBUTE_PACKAGE_NAME);
       }
-      mergedText = template.getText(props);
     }
-    catch (Exception e){
-      throw e;
-    }
+    String mergedText = template.getText(props);
     final String templateText = StringUtil.convertLineSeparators(mergedText);
     final Exception[] commandException = new Exception[1];
     final PsiElement[] result = new PsiElement[1];
@@ -310,7 +305,7 @@ public class FileTemplateUtil{
       try{
         Field pathsField = FileResourceLoader.class.getDeclaredField("paths");
         pathsField.setAccessible(true);
-        Collection paths = (Collection)pathsField.get(this);
+        Collection<String> paths = (Collection)pathsField.get(this);
         paths.clear();
         paths.add(modifiedPatternsPath.getAbsolutePath());
         if(ApplicationManager.getApplication().isUnitTestMode()){

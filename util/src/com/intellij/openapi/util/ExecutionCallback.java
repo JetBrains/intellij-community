@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 class ExecutionCallback {
-  private Executed myExecuted;
+  private final Executed myExecuted;
   private List<Runnable> myRunnables;
 
   ExecutionCallback() {
@@ -22,7 +22,7 @@ class ExecutionCallback {
     callback();
   }
 
-  final void doWhenExecuted(@NotNull final java.lang.Runnable runnable) {
+  final void doWhenExecuted(@NotNull final Runnable runnable) {
     if (myRunnables == null) {
       myRunnables = new ArrayList<Runnable>();
     }
@@ -33,7 +33,7 @@ class ExecutionCallback {
   }
 
   final void notifyWhenExecuted(final ActionCallback child) {
-    doWhenExecuted(new java.lang.Runnable() {
+    doWhenExecuted(new Runnable() {
       public void run() {
         child.setDone();
       }
@@ -42,15 +42,15 @@ class ExecutionCallback {
 
   private void callback() {
     if (myExecuted.isExecuted() && myRunnables != null) {
-      final java.lang.Runnable[] all = myRunnables.toArray(new java.lang.Runnable[myRunnables.size()]);
+      final Runnable[] all = myRunnables.toArray(new Runnable[myRunnables.size()]);
       myRunnables.clear();
-      for (java.lang.Runnable each : all) {
+      for (Runnable each : all) {
         each.run();
       }
     }
   }
 
-  private class Executed {
+  private static class Executed {
     int myCurrentCount;
     int myCountToExecution;
 

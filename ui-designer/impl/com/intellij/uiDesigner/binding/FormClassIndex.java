@@ -18,6 +18,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -55,6 +56,7 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
   }
 
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
+    @NotNull
     public Map<String, Void> map(final FileContent inputData) {
       String className = null;
       try {

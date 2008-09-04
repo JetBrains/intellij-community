@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
@@ -31,14 +32,14 @@ import java.util.Map;
 public class HotSwapManager implements ProjectComponent{
 
   private final Project myProject;
-  private Map<DebuggerSession, Long> myTimeStamps = new com.intellij.util.containers.HashMap<DebuggerSession, Long>();
-  private final String CLASS_EXTENSION = ".class";
+  private final Map<DebuggerSession, Long> myTimeStamps = new HashMap<DebuggerSession, Long>();
+  private static final String CLASS_EXTENSION = ".class";
 
   public HotSwapManager(Project project, DebuggerManagerEx manager) {
     myProject = project;
     manager.addDebuggerManagerListener(new DebuggerManagerListener() {
       public void sessionCreated(DebuggerSession session) {
-        myTimeStamps.put(session, new Long(System.currentTimeMillis()));
+        myTimeStamps.put(session, Long.valueOf(System.currentTimeMillis()));
       }
 
       public void sessionRemoved(DebuggerSession session) {
@@ -53,6 +54,7 @@ public class HotSwapManager implements ProjectComponent{
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "HotSwapManager";
   }
@@ -69,7 +71,7 @@ public class HotSwapManager implements ProjectComponent{
   }
 
   void setTimeStamp(DebuggerSession session, long tStamp) {
-    myTimeStamps.put(session, new Long(tStamp));
+    myTimeStamps.put(session, Long.valueOf(tStamp));
   }
 
   public HashMap<String, HotSwapFile> getModifiedClasses(final DebuggerSession session, final HotSwapProgress progress) {

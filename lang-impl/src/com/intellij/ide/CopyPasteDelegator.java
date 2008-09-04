@@ -127,9 +127,6 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
           return false;
         }
       }
-      catch (RuntimeException ex) {
-        throw ex;
-      }
       finally {
         updateView();
       }

@@ -8,12 +8,15 @@ import com.intellij.util.indexing.IdDataConsumer;
 
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Jan 20, 2008
  */
 public abstract class LexerBasedIdIndexer extends FileTypeIdIndexer {
   
+  @NotNull
   public final Map<IdIndexEntry,Integer> map(final FileContent inputData) {
     final IdDataConsumer consumer = new IdDataConsumer();
     final Lexer lexer = createLexer(new OccurrenceToIdDataConsumerAdapter(consumer));

@@ -11,6 +11,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -62,6 +63,7 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
   };
   
   private final DataIndexer<IdIndexEntry, Integer, FileContent> myIndexer = new DataIndexer<IdIndexEntry, Integer, FileContent>() {
+    @NotNull
     public Map<IdIndexEntry, Integer> map(final FileContent inputData) {
       final VirtualFile file = inputData.getFile();
       final FileTypeIdIndexer indexer = IdTableBuilding.getFileTypeIndexer(file.getFileType());

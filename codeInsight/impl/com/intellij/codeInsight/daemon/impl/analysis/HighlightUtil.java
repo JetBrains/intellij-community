@@ -208,7 +208,7 @@ public class HighlightUtil {
 
     Set<String> incompatibles = incompatibleModifiersHash.get(modifier);
     if (incompatibles == null) return null;
-    for (String incompatible : incompatibles) {
+    for (@Modifier String incompatible : incompatibles) {
       if (modifierList.hasModifierProperty(incompatible)) {
         return incompatible;
       }
@@ -716,7 +716,7 @@ public class HighlightUtil {
 
 
   static HighlightInfo checkIllegalModifierCombination(PsiKeyword keyword, PsiModifierList modifierList) {
-    String modifier = keyword.getText();
+    @Modifier String modifier = keyword.getText();
     String incompatible = getIncompatibleModifier(modifier, modifierList);
 
     HighlightInfo highlightInfo = null;
@@ -758,7 +758,7 @@ public class HighlightUtil {
     PsiElement modifierOwner = modifierList.getParent();
     if (modifierOwner == null) return null;
     if (PsiUtil.hasErrorElementChild(modifierOwner)) return null;
-    String modifier = keyword.getText();
+    @Modifier String modifier = keyword.getText();
     final Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList);
     if (incompatibleModifierMap == null) return null;
     Set<String> incompatibles = incompatibleModifierMap.get(modifier);

@@ -9,11 +9,14 @@ import com.intellij.util.indexing.FileContent;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Jan 20, 2008
  */
 public abstract class LexerBasedTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
+  @NotNull
   public Map<TodoIndexEntry,Integer> map(final FileContent inputData) {
     
     final TodoOccurrenceConsumer todoOccurrenceConsumer = new TodoOccurrenceConsumer();

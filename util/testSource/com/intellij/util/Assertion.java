@@ -57,7 +57,7 @@ public class Assertion extends Assert {
     }
   }
 
-  private void checkNotNulls(Object[] expected, Object[] actual) {
+  private static void checkNotNulls(Object[] expected, Object[] actual) {
     Assert.assertNotNull("Expected is null", expected);
     Assert.assertNotNull("Actual is null", actual);
   }
@@ -72,9 +72,8 @@ public class Assertion extends Assert {
   }
 
   private String convertToLines(Object[][] expected) {
-    StringBuffer expectedLines = new StringBuffer();
-    for (int i = 0; i < expected.length; i++) {
-      Object[] objects = expected[i];
+    StringBuilder expectedLines = new StringBuilder();
+    for (Object[] objects : expected) {
       expectedLines.append(concatenateAsStrings(objects, " "));
       expectedLines.append("\n");
     }
@@ -93,16 +92,14 @@ public class Assertion extends Assert {
   }
 
   private String concatenateAsStrings(Object[] objects, String separator) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     String lineEnd = "";
-    for (int i = 0; i < objects.length; i++) {
-      Object object = objects[i];
+    for (Object object : objects) {
       buffer.append(lineEnd);
       buffer.append(convertToString(object));
       lineEnd = separator;
     }
-    String reference = buffer.toString();
-    return reference;
+    return buffer.toString();
   }
 
   public void enumerate(Object[] objects) {
@@ -205,13 +202,6 @@ public class Assertion extends Assert {
     Assert.assertEquals(count, objects.size());
   }
 
-  public void empty(int[] ints) {
-    Object[] objects = new Object[ints.length];
-    for (int i = 0; i < ints.length; i++) {
-      objects[i] = new Integer(ints[i]);
-    }
-  }
-
   public void singleElement(Object[] objects, Object element) {
     singleElement(Arrays.asList(objects), element);
   }
@@ -232,7 +222,7 @@ public class Assertion extends Assert {
     Object[] result = new Object[ints.length];
     for (int i = 0; i < ints.length; i++) {
       int anInt = ints[i];
-      result[i] = new Integer(anInt);
+      result[i] = Integer.valueOf(anInt);
     }
     return result;
   }
@@ -259,11 +249,9 @@ public class Assertion extends Assert {
 
   public void containsAll(Collection list, Collection subCollection) {
     if (list.containsAll(subCollection)) return;
-    for (Iterator iterator = subCollection.iterator(); iterator.hasNext();) {
-      Object item = iterator.next();
+    for (Object item : subCollection) {
       boolean isContained = false;
-      for (Iterator iterator1 = list.iterator(); iterator1.hasNext();) {
-        Object superSetItem = iterator1.next();
+      for (Object superSetItem : list) {
         if (myEquality.equals(superSetItem, item)) {
           isContained = true;
           break;
@@ -283,8 +271,7 @@ public class Assertion extends Assert {
 
   public <T> int countOccurences(Collection<T> collection, T item) {
     int counter = 0;
-    for (Iterator<T> iterator = collection.iterator(); iterator.hasNext();) {
-      T obj = iterator.next();
+    for (T obj : collection) {
       if (Comparing.equal(item, obj)) counter++;
     }
     return counter;
@@ -306,7 +293,7 @@ public class Assertion extends Assert {
     compareAll(asObjectArray(expected), asObjectArray(actual));
   }
 
-  private Object[] asObjectArray(char[] chars) {
+  private static Object[] asObjectArray(char[] chars) {
     Object[] array = new Object[chars.length];
     for (int i = 0; i < chars.length; i++) {
       char c = chars[i];

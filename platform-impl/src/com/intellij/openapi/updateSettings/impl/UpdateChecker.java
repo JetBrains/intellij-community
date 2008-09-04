@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -241,9 +240,6 @@ public final class UpdateChecker {
     try {
       downloadThreadFuture.get(5, TimeUnit.SECONDS);
     }
-    catch (ExecutionException e) {
-      throw e;
-    }
     catch (TimeoutException e) {
     }
 
@@ -283,8 +279,8 @@ public final class UpdateChecker {
   }
 
   public static class NewVersion {
-    private int latestBuild;
-    private String latestVersion;
+    private final int latestBuild;
+    private final String latestVersion;
 
     public int getLatestBuild() {
       return latestBuild;

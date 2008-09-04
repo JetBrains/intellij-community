@@ -48,6 +48,7 @@ public class IdTableBuilding {
   }
 
   public static class PlainTextIndexer extends FileTypeIdIndexer {
+    @NotNull
     public Map<IdIndexEntry, Integer> map(final FileContent inputData) {
       final IdDataConsumer consumer = new IdDataConsumer();
       final CharSequence chars = inputData.getContentAsText();
@@ -66,6 +67,7 @@ public class IdTableBuilding {
   }
 
   public static class PlainTextTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
+    @NotNull
     public Map<TodoIndexEntry, Integer> map(final FileContent inputData) {
       final CharSequence chars = inputData.getContentAsText();
 
@@ -200,6 +202,7 @@ public class IdTableBuilding {
       myScanner = scanner;
     }
     
+    @NotNull
     public Map<IdIndexEntry, Integer> map(final FileContent inputData) {
       final CharSequence chars = inputData.getContentAsText();
       final char[] charsArray = CharArrayUtil.fromSequenceWithoutCopying(chars);
@@ -237,6 +240,7 @@ public class IdTableBuilding {
       myFile = file;
     }
 
+    @NotNull
     public Map<TodoIndexEntry,Integer> map(final FileContent inputData) {
       final CharSequence chars = inputData.getContentAsText();
       if (CacheUtil.getIndexPatternCount() > 0) {

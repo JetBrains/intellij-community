@@ -22,7 +22,7 @@ public class TestVirtualFile extends DeprecatedVirtualFile {
 
   private boolean IsDirectory;
   private VirtualFile myParent;
-  private List<TestVirtualFile> myChildren = new ArrayList<TestVirtualFile>();
+  private final List<TestVirtualFile> myChildren = new ArrayList<TestVirtualFile>();
 
   public TestVirtualFile(@NotNull String name, String content, long timestamp) {
     this(name, content,  timestamp, false);

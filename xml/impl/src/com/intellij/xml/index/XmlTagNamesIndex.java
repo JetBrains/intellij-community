@@ -11,6 +11,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -36,6 +38,7 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
 
   public DataIndexer<String, Void, FileContent> getIndexer() {
     return new DataIndexer<String, Void, FileContent>() {
+      @NotNull
       public Map<String, Void> map(final FileContent inputData) {
         final Collection<String> tags = XsdTagNameBuilder.computeTagNames(new ByteArrayInputStream(inputData.getContent()));
         if (tags != null && !tags.isEmpty()) {

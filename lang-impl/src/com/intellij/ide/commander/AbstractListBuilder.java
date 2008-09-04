@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,7 +32,7 @@ public abstract class AbstractListBuilder {
   private AbstractTreeNode myCurrentParent = null;
   private final AbstractTreeNode myShownRoot;
 
-  public static abstract class Model extends AbstractListModel {
+  public abstract static class Model extends AbstractListModel {
     public abstract void removeAllElements();
 
     public abstract void addElement(final Object node);
@@ -203,7 +204,7 @@ public abstract class AbstractListBuilder {
     Object[] childElements = getChildren(rootElement);
     List<AbstractTreeNode> nodes = getAllAcceptableNodes(childElements, file);
     if (nodes.size() == 1) return nodes.get(0);
-    if (nodes.size() == 0) return null;
+    if (nodes.isEmpty()) return null;
     if (!file.isDirectory()) {
       return performDeepSearch(nodes.toArray(), element);
     }
@@ -250,15 +251,15 @@ public abstract class AbstractListBuilder {
       myModel.addElement(new TopLevelNode(myProject, parentElement.getValue()));
     }
 
-    for (int i = 0; i < children.length; i++) {
-      AbstractTreeNode child = (AbstractTreeNode)children[i];
+    for (Object aChildren : children) {
+      AbstractTreeNode child = (AbstractTreeNode)aChildren;
       child.update();
     }
     if (myComparator != null) {
       Arrays.sort(children, myComparator);
     }
-    for (int i = 0; i < children.length; i++) {
-      myModel.addElement(children[i]);
+    for (Object aChildren : children) {
+      myModel.addElement(aChildren);
     }
 
     final int n = alarm.cancelAllRequests();
@@ -295,8 +296,7 @@ public abstract class AbstractListBuilder {
       myTreeStructure.commit();
     }
 
-    final AbstractTreeNode initialParentDescriptor = myCurrentParent;
-    AbstractTreeNode parentDescriptor = initialParentDescriptor;
+    AbstractTreeNode parentDescriptor = myCurrentParent;
 
     while (true) {
       parentDescriptor.update();
@@ -305,22 +305,21 @@ public abstract class AbstractListBuilder {
     }
 
     final Object[] children = getChildren(parentDescriptor);
-    final com.intellij.util.containers.HashMap<Object,Integer> elementToIndexMap = new com.intellij.util.containers.HashMap<Object, Integer>();
+    final HashMap<Object,Integer> elementToIndexMap = new HashMap<Object, Integer>();
     for (int i = 0; i < children.length; i++) {
-      elementToIndexMap.put(children[i], new Integer(i));
+      elementToIndexMap.put(children[i], Integer.valueOf(i));
     }
 
-    final List resultDescriptors = new ArrayList();
+    final List<NodeDescriptor> resultDescriptors = new ArrayList<NodeDescriptor>();
     final Object[] listChildren = myModel.toArray();
-    for (int i = 0; i < listChildren.length; i++) {
-      final Object child = listChildren[i];
+    for (final Object child : listChildren) {
       if (!(child instanceof NodeDescriptor)) {
-      continue;
+        continue;
       }
       final NodeDescriptor descriptor = (NodeDescriptor)child;
       descriptor.update();
       final Object newElement = descriptor.getElement();
-      final Integer index = (newElement != null) ? elementToIndexMap.get(newElement) : null;
+      final Integer index = newElement != null ? elementToIndexMap.get(newElement) : null;
       if (index != null) {
         resultDescriptors.add(descriptor);
         descriptor.setIndex(index.intValue());
@@ -328,8 +327,7 @@ public abstract class AbstractListBuilder {
       }
     }
 
-    for (Iterator iterator = elementToIndexMap.keySet().iterator(); iterator.hasNext();) {
-      final Object child = iterator.next();
+    for (final Object child : elementToIndexMap.keySet()) {
       final Integer index = elementToIndexMap.get(child);
       if (index != null) {
         final NodeDescriptor childDescr = myTreeStructure.createDescriptor(child, parentDescriptor);
@@ -362,11 +360,11 @@ public abstract class AbstractListBuilder {
   }
 
   private static final class SelectionInfo {
-    public final ArrayList mySelectedObjects;
+    public final ArrayList<Object> mySelectedObjects;
     public final Object myLeadSelection;
     public final int myLeadSelectionIndex;
 
-    public SelectionInfo(final ArrayList selectedObjects, final int leadSelectionIndex, final Object leadSelection) {
+    public SelectionInfo(final ArrayList<Object> selectedObjects, final int leadSelectionIndex, final Object leadSelection) {
       myLeadSelection = leadSelection;
       myLeadSelectionIndex = leadSelectionIndex;
       mySelectedObjects = selectedObjects;
@@ -375,12 +373,11 @@ public abstract class AbstractListBuilder {
 
   private SelectionInfo storeSelection() {
     final ListSelectionModel selectionModel = myList.getSelectionModel();
-    final ArrayList selectedObjects = new ArrayList();
+    final ArrayList<Object> selectedObjects = new ArrayList<Object>();
     final int[] selectedIndices = myList.getSelectedIndices();
     final int leadSelectionIndex = selectionModel.getLeadSelectionIndex();
     Object leadSelection = null;
-    for (int i = 0; i < selectedIndices.length; i++) {
-      final int index = selectedIndices[i];
+    for (final int index : selectedIndices) {
       if (index < myList.getModel().getSize()) {
         final Object o = myModel.getElementAt(index);
         selectedObjects.add(o);
@@ -393,13 +390,13 @@ public abstract class AbstractListBuilder {
   }
 
   private void restoreSelection(final SelectionInfo selection) {
-    final ArrayList selectedObjects = selection.mySelectedObjects;
-    int leadIndex = -1;
+    final ArrayList<Object> selectedObjects = selection.mySelectedObjects;
 
     final ListSelectionModel selectionModel = myList.getSelectionModel();
 
     selectionModel.clearSelection();
-    if (selectedObjects.size() > 0) {
+    if (!selectedObjects.isEmpty()) {
+      int leadIndex = -1;
       for (int i = 0; i < selectedObjects.size(); i++) {
         final Object o = selectedObjects.get(i);
         final int index = myModel.indexOf(o);

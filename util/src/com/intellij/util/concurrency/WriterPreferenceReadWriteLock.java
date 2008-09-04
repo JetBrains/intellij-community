@@ -73,7 +73,7 @@ public class WriterPreferenceReadWriteLock implements ReadWriteLock {
     // The allowWrite expression cannot be modified without
     // also changing startWrite, so is hard-wired
 
-    boolean allowWrite = (activeWriter_ == null && activeReaders_ == 0);
+    boolean allowWrite = activeWriter_ == null && activeReaders_ == 0;
     if (allowWrite)  activeWriter_ = Thread.currentThread();
     return allowWrite;
    }
@@ -146,7 +146,7 @@ public class WriterPreferenceReadWriteLock implements ReadWriteLock {
    * to perform the notifications.  This base class simplifies mechanics.
    **/
 
-  protected abstract class Signaller  { // base for ReaderLock and WriterLock
+  protected abstract static class Signaller  { // base for ReaderLock and WriterLock
     abstract void signalWaiters();
   }
 
@@ -158,8 +158,8 @@ public class WriterPreferenceReadWriteLock implements ReadWriteLock {
       synchronized(this) {
         if (!startReadFromNewReader()) {
           for (;;) {
-            try { 
-              ReaderLock.this.wait();  
+            try {
+              wait();
               if (startReadFromWaitingReader())
                 return;
             }
@@ -187,7 +187,8 @@ public class WriterPreferenceReadWriteLock implements ReadWriteLock {
     }
 
 
-    synchronized void signalWaiters() { ReaderLock.this.notifyAll(); }
+    synchronized void signalWaiters() {
+      notifyAll(); }
 
     public boolean attempt(long msecs) throws InterruptedException { 
      //TODO: [not sure why this is necessary but very inperformant] if (Thread.interrupted()) throw new InterruptedException();
@@ -201,7 +202,8 @@ public class WriterPreferenceReadWriteLock implements ReadWriteLock {
           long waitTime = msecs;
           long start = System.currentTimeMillis();
           for (;;) {
-            try { ReaderLock.this.wait(waitTime);  }
+            try {
+              wait(waitTime);  }
             catch(InterruptedException ex){
               cancelledWaitingReader();
               ie = ex;
@@ -235,14 +237,14 @@ public class WriterPreferenceReadWriteLock implements ReadWriteLock {
       synchronized(this) {
         if (!startWriteFromNewWriter()) {
           for (;;) {
-            try { 
-              WriterLock.this.wait();  
+            try {
+              wait();
               if (startWriteFromWaitingWriter())
                 return;
             }
             catch(InterruptedException ex){
               cancelledWaitingWriter();
-              WriterLock.this.notify();
+              notify();
               ie = ex;
               break;
             }
@@ -263,7 +265,8 @@ public class WriterPreferenceReadWriteLock implements ReadWriteLock {
       if (s != null) s.signalWaiters();
     }
 
-    synchronized void signalWaiters() { WriterLock.this.notify(); }
+    synchronized void signalWaiters() {
+      notify(); }
 
     public boolean attempt(long msecs) throws InterruptedException { 
       if (Thread.interrupted()) throw new InterruptedException();
@@ -277,10 +280,11 @@ public class WriterPreferenceReadWriteLock implements ReadWriteLock {
           long waitTime = msecs;
           long start = System.currentTimeMillis();
           for (;;) {
-            try { WriterLock.this.wait(waitTime);  }
+            try {
+              wait(waitTime);  }
             catch(InterruptedException ex){
               cancelledWaitingWriter();
-              WriterLock.this.notify();
+              notify();
               ie = ex;
               break;
             }
@@ -290,7 +294,7 @@ public class WriterPreferenceReadWriteLock implements ReadWriteLock {
               waitTime = msecs - (System.currentTimeMillis() - start);
               if (waitTime <= 0) {
                 cancelledWaitingWriter();
-                WriterLock.this.notify();
+                notify();
                 break;
               }
             }

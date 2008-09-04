@@ -18,6 +18,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -66,7 +67,7 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
     }
   };
   
-  private DataExternalizer<Integer> myValueExternalizer = new DataExternalizer<Integer>() {
+  private final DataExternalizer<Integer> myValueExternalizer = new DataExternalizer<Integer>() {
     public void save(final DataOutput out, final Integer value) throws IOException {
       out.writeInt(value.intValue());
     }
@@ -76,7 +77,8 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
     }
   };
 
-  private DataIndexer<TodoIndexEntry, Integer, FileContent> myIndexer = new DataIndexer<TodoIndexEntry, Integer, FileContent>() {
+  private final DataIndexer<TodoIndexEntry, Integer, FileContent> myIndexer = new DataIndexer<TodoIndexEntry, Integer, FileContent>() {
+    @NotNull
     public Map<TodoIndexEntry,Integer> map(final FileContent inputData) {
       final VirtualFile file = inputData.getFile();
       final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = IdTableBuilding.getTodoIndexer(file.getFileType(), file);
@@ -87,8 +89,8 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
     }
   };
   
-  private FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
-    private FileTypeManager myFtManager = FileTypeManager.getInstance();
+  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
+    private final FileTypeManager myFtManager = FileTypeManager.getInstance();
     public boolean acceptInput(final VirtualFile file) {
       if (!(file.getFileSystem() instanceof LocalFileSystem)) {
         return false; // do not index TODOs in library sources

@@ -7,6 +7,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.util.xml.NanoXmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.StringReader;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
   public static final Integer ANT_FILES_WITH_IMPORTS_KEY = new Integer(0);
   
   private static final DataIndexer<Integer,Void,FileContent> DATA_INDEXER = new DataIndexer<Integer, Void, FileContent>() {
+    @NotNull
     public Map<Integer, Void> map(final FileContent inputData) {
       final Map<Integer, Void> map = new HashMap<Integer, Void>();
       

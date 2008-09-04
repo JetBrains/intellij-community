@@ -95,9 +95,6 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
     try {
       anInterface = extractInterface(myTargetDir, myClass, myInterfaceName, mySelectedMembers, myJavaDocPolicy);
     }
-    catch (IncorrectOperationException ex) {
-      throw ex;
-    }
     finally {
       a.finish();
     }
@@ -112,8 +109,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
                                    String interfaceName,
                                    MemberInfo[] selectedMembers,
                                    JavaDocPolicy javaDocPolicy) throws IncorrectOperationException {
-    PsiClass anInterface;
-    anInterface = JavaDirectoryService.getInstance().createInterface(targetDir, interfaceName);
+    PsiClass anInterface = JavaDirectoryService.getInstance().createInterface(targetDir, interfaceName);
     PsiJavaCodeReferenceElement ref = ExtractSuperClassUtil.createExtendingReference(anInterface, aClass, selectedMembers);
     final PsiReferenceList referenceList = aClass.isInterface() ? aClass.getExtendsList() : aClass.getImplementsList();
     assert referenceList != null;

@@ -38,7 +38,6 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   protected static final SimpleNode[] NO_CHILDREN = new SimpleNode[0];
 
   protected final List<ColoredFragment> myColoredText = new CopyOnWriteArrayList<ColoredFragment>();
-  private final int myWeight = 10;
   private Font myFont;
 
   protected SimpleNode(Project project) {
@@ -63,7 +62,7 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   }
 
   public int getWeight() {
-    return myWeight;
+    return 10;
   }
 
   protected SimpleTextAttributes getErrorAttributes() {

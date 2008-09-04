@@ -107,6 +107,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
 
   public DataIndexer<Integer, SerializedStubTree, FileContent> getIndexer() {
     return new DataIndexer<Integer, SerializedStubTree, FileContent>() {
+      @NotNull
       public Map<Integer, SerializedStubTree> map(final FileContent inputData) {
         final Map<Integer, SerializedStubTree> result = new HashMap<Integer, SerializedStubTree>();
 

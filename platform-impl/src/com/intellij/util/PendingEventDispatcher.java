@@ -197,9 +197,6 @@ public class PendingEventDispatcher <T extends EventListener> {
     catch(AbstractMethodError e) {
       //Do nothing. This listener just does not implement something newly added yet.
     }
-    catch (RuntimeException e) {
-      throw e;
-    }
     catch (InvocationTargetException e) {
       LOG.error(e.getCause());
     }
