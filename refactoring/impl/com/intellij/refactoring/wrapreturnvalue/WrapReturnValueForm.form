@@ -24,14 +24,14 @@
       </hspacer>
       <vspacer id="a9180">
         <constraints>
-          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
       </vspacer>
       <component id="ca685" class="javax.swing.JRadioButton" binding="useExistingClassButton">
         <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="0.0" weighty="0.0"/>
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="10" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
           <text value="&amp;Use existing class"/>
@@ -52,7 +52,7 @@
             </constraints>
             <properties>
               <labelFor value="6b071"/>
-              <text value="Class &amp;name"/>
+              <text value="&amp;Name"/>
             </properties>
           </component>
           <component id="6b071" class="javax.swing.JTextField" binding="classNameField">
@@ -84,7 +84,7 @@
       </grid>
       <grid id="ab530" binding="myExistingClassPanel" layout-manager="GridBagLayout">
         <constraints>
-          <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="7" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag top="0" left="20" bottom="0" right="0" weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties/>
@@ -142,6 +142,44 @@
           <text resource-bundle="com/intellij/refactoring/RefactorJBundle" key="method.to.wrap.returns.from.label"/>
         </properties>
       </component>
+      <component id="809b1" class="javax.swing.JRadioButton" binding="myCreateInnerClassButton" default-binding="true">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="10" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <text value="Create &amp;inner class"/>
+        </properties>
+      </component>
+      <grid id="69b5" binding="myCreateInnerPanel" layout-manager="GridBagLayout">
+        <constraints>
+          <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag top="0" left="20" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="b32c5" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <labelFor value="3bee"/>
+              <text value="&amp;Name"/>
+            </properties>
+          </component>
+          <component id="3bee" class="javax.swing.JTextField" binding="myInnerClassNameTextField" default-binding="true">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                <preferred-size width="150" height="-1"/>
+              </grid>
+              <gridbag weightx="1.0" weighty="0.0"/>
+            </constraints>
+            <properties/>
+          </component>
+        </children>
+      </grid>
     </children>
   </grid>
 </form>

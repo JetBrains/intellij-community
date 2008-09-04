@@ -42,6 +42,10 @@ class WrapReturnValueDialog extends RefactoringDialog {
 
   private JPanel myWholePanel;
 
+  private JRadioButton myCreateInnerClassButton;
+  private JTextField myInnerClassNameTextField;
+  private JPanel myCreateInnerPanel;
+
   WrapReturnValueDialog(PsiMethod sourceMethod) {
     super(sourceMethod.getProject(), true);
     this.sourceMethod = sourceMethod;
@@ -55,6 +59,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
 
   protected void doAction() {
     final boolean useExistingClass = useExistingClassButton.isSelected();
+    final boolean createInnerClass = myCreateInnerClassButton.isSelected();
     final String existingClassName = existingClassField.getText().trim();
     final String className;
     final String packageName;
@@ -62,17 +67,25 @@ class WrapReturnValueDialog extends RefactoringDialog {
       className = StringUtil.getShortName(existingClassName);
       packageName = StringUtil.getPackageName(existingClassName);
     }
+    else if (createInnerClass) {
+      className = getInnerClassName();
+      packageName = "";
+    }
     else {
       className = getClassName();
       packageName = getPackageName();
     }
     invokeRefactoring(
-      new WrapReturnValueProcessor(className, packageName, sourceMethod, useExistingClass, (PsiField)myFieldsCombo.getSelectedItem()));
+      new WrapReturnValueProcessor(className, packageName, sourceMethod, useExistingClass, createInnerClass, (PsiField)myFieldsCombo.getSelectedItem()));
   }
 
   protected boolean areButtonsValid() {
     if (useExistingClassButton.isSelected()) {
       return myFieldsCombo.getSelectedItem() != null && existingClassField.getText().length() != 0;
+    }
+    if (myCreateInnerClassButton.isSelected()) {
+      final String innerClassName = getInnerClassName();
+      return innerClassName.length() > 0 && sourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) == null;
     }
     final Project project = sourceMethod.getProject();
     final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(project).getNameHelper();
@@ -82,6 +95,10 @@ class WrapReturnValueDialog extends RefactoringDialog {
     }
     final String className = getClassName();
     return !(className.length() == 0 || !nameHelper.isIdentifier(className));
+  }
+
+  private String getInnerClassName() {
+    return myInnerClassNameTextField.getText().trim();
   }
 
   @NotNull
@@ -124,14 +141,16 @@ class WrapReturnValueDialog extends RefactoringDialog {
     final ButtonGroup buttonGroup = new ButtonGroup();
     buttonGroup.add(useExistingClassButton);
     buttonGroup.add(createNewClassButton);
+    buttonGroup.add(myCreateInnerClassButton);
     createNewClassButton.setSelected(true);
-    final ActionListener listener = new ActionListener() {
+    final ActionListener enableListener = new ActionListener() {
       public void actionPerformed(ActionEvent actionEvent) {
         toggleRadioEnablement();
       }
     };
-    useExistingClassButton.addActionListener(listener);
-    createNewClassButton.addActionListener(listener);
+    useExistingClassButton.addActionListener(enableListener);
+    createNewClassButton.addActionListener(enableListener);
+    myCreateInnerClassButton.addActionListener(enableListener);
     toggleRadioEnablement();
     final DefaultComboBoxModel model = new DefaultComboBoxModel();
     myFieldsCombo.setModel(model);
@@ -181,9 +200,9 @@ class WrapReturnValueDialog extends RefactoringDialog {
   }
 
   private void toggleRadioEnablement() {
-    final boolean useExisting = useExistingClassButton.isSelected();
-    UIUtil.setEnabled(myExistingClassPanel, useExisting, true);
-    UIUtil.setEnabled(myNewClassPanel, !useExisting, true);
+    UIUtil.setEnabled(myExistingClassPanel, useExistingClassButton.isSelected(), true);
+    UIUtil.setEnabled(myNewClassPanel, createNewClassButton.isSelected(), true);
+    UIUtil.setEnabled(myCreateInnerPanel, myCreateInnerClassButton.isSelected(), true);
   }
 
 

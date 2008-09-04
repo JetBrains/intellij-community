@@ -4,8 +4,6 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -21,7 +19,12 @@ public class WrapReturnValueTest extends MultiFileTestCase{
     doTest(existing, false);
   }
 
-  private void doTest(final boolean existing, boolean fail) throws Exception {
+  private void doTest(final boolean existing, final boolean fail) throws Exception {
+    doTest(existing, fail, false);
+  }
+
+
+  private void doTest(final boolean existing, boolean fail, final boolean createInnerClass) throws Exception {
     try {
       doTest(new PerformAction() {
         public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
@@ -39,10 +42,11 @@ public class WrapReturnValueTest extends MultiFileTestCase{
 
           assertTrue(!existing || wrapperClass != null);
           final PsiField delegateField = existing ? wrapperClass.findFieldByName("myField", false) : null;
-          WrapReturnValueProcessor processor = new WrapReturnValueProcessor(wrapperClassName, "", method, existing, delegateField);
+          WrapReturnValueProcessor processor = new WrapReturnValueProcessor(wrapperClassName, "", method, existing, createInnerClass,
+                                                                            delegateField);
           processor.run();
-          LocalFileSystem.getInstance().refresh(false);
-          FileDocumentManager.getInstance().saveAllDocuments();
+          /*LocalFileSystem.getInstance().refresh(false);
+          FileDocumentManager.getInstance().saveAllDocuments();*/
         }
       });
     }
@@ -80,5 +84,13 @@ public class WrapReturnValueTest extends MultiFileTestCase{
 
   public void testNoConstructor() throws Exception {
     doTest(true, true);
+  }
+
+  public void testInnerClass() throws Exception {
+    doTest(false, false, true);
+  }
+
+  public void testHierarchy() throws Exception {
+    doTest(false, false, true);
   }
 }

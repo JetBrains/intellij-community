@@ -46,6 +46,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   private final PsiMethod method;
   private final String className;
   private final String packageName;
+  private final boolean myCreateInnerClass;
   private final PsiField myDelegateField;
   private final String myQualifiedName;
   private final boolean myUseExistingClass;
@@ -57,11 +58,12 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
                                   String packageName,
                                   PsiMethod method,
                                   boolean useExistingClass,
-                                  PsiField delegateField) {
+                                  final boolean createInnerClass, PsiField delegateField) {
     super(method.getProject());
     this.method = method;
     this.className = className;
     this.packageName = packageName;
+    myCreateInnerClass = createInnerClass;
     myDelegateField = delegateField;
     myQualifiedName = StringUtil.getQualifiedName(packageName, className);
     this.myUseExistingClass = useExistingClass;
@@ -185,13 +187,11 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
 
 
   protected void performRefactoring(UsageInfo[] usageInfos) {
-    if (!myUseExistingClass) {
-      buildClass();
-    }
+    if (!myUseExistingClass && !buildClass()) return;
     super.performRefactoring(usageInfos);
   }
 
-  private void buildClass() {
+  private boolean buildClass() {
     final PsiManager manager = method.getManager();
     final Project project = method.getProject();
     final ReturnValueBeanBuilder beanClassBuilder = new ReturnValueBeanBuilder();
@@ -210,28 +210,37 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     }
     catch (IOException e) {
       LOG.error(e);
-      return;
+      return false;
     }
 
     try {
-      final PsiFile containingFile = method.getContainingFile();
+      final PsiJavaFile psiFile = (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText(className + ".java", classString);
+      final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+      if (myCreateInnerClass) {
+        final PsiClass containingClass = method.getContainingClass();
+        final PsiElement innerClass = containingClass.add(psiFile.getClasses()[0]);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(innerClass);
+      } else {
+        final PsiFile containingFile = method.getContainingFile();
 
-      final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
-      final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
-      final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, containingDirectory, true);
+        final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
+        final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
+        final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, containingDirectory, true);
 
-      if (directory != null) {
-        final PsiFile newFile = PsiFileFactory.getInstance(project).createFileFromText(className + ".java", classString);
-
-        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
-        final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newFile);
-        final PsiElement reformattedFile = codeStyleManager.reformat(shortenedFile);
-        directory.add(reformattedFile);
+        if (directory != null) {
+          final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(project).shortenClassReferences(psiFile);
+          final PsiElement reformattedFile = codeStyleManager.reformat(shortenedFile);
+          directory.add(reformattedFile);
+        } else {
+          return false;
+        }
       }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
+      return false;
     }
+    return true;
   }
 
   protected String getCommandName() {
