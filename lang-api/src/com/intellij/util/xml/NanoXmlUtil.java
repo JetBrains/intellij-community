@@ -71,7 +71,6 @@ public class NanoXmlUtil {
       parse(reader, builder);
     }
     catch (IOException e) {
-      LOG.error(e);
     }
     finally {
       if (reader != null) {
@@ -165,8 +164,7 @@ public class NanoXmlUtil {
       return parseHeader(createReader(file));
     }
     catch (IOException e) {
-      LOG.error(e);
-      return null;
+      return XmlFileHeader.EMPTY;
     }
   }
 
