@@ -47,6 +47,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.PatchedWeakReference;
+import com.intellij.codeInsight.lookup.LookupManager;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -256,6 +257,7 @@ import java.util.HashSet;
   }
 
   protected void tearDown() throws Exception {
+    LookupManager.getInstance(myProject).hideActiveLookup();
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     try {
       assertNotNull("Application components damaged", ProjectManager.getInstance());
