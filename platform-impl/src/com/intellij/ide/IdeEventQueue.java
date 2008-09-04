@@ -6,6 +6,7 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -463,7 +464,9 @@ public class IdeEventQueue extends EventQueue {
     try {
       super.dispatchEvent(e);
     }
-    catch (Throwable exc) {
+    catch (ProcessCanceledException pce) {
+      throw pce;      
+    } catch (Throwable exc) {
       LOG.error("Error during dispatching of " + e, exc);
     }
   }
