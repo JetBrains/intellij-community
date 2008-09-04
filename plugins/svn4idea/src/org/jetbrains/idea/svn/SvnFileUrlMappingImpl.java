@@ -6,8 +6,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +129,23 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
   }
 
   public Map<String, RootUrlInfo> getAllWcInfos() {
-    return Collections.unmodifiableMap(myFile2UrlMap);
+    final List<String> keys = new ArrayList<String>(myFile2UrlMap.keySet());
+    Collections.sort(keys);
+
+    final Map<String, RootUrlInfo> result = new HashMap<String, RootUrlInfo>();
+    for (String key : keys) {
+      boolean add = true;
+      for (String path : result.keySet()) {
+        if (key.startsWith(path)) {
+          add = false;
+          break;
+        }
+      }
+      if (add) {
+        result.put(key, myFile2UrlMap.get(key));
+      }
+    }
+    return result;
   }
 
   private class FileUrlMappingCrawler implements NotNullFunction<VirtualFile, Collection<VirtualFile>> {
@@ -192,24 +206,29 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
   public void doRefresh() {
     //LOG.info("do refresh: " + new Time(System.currentTimeMillis()));
     myUserRootsDiffersFromReal = false;
-    // look WC roots under mappings
-    final List<VcsDirectoryMapping> mappings = ProjectLevelVcsManager.getInstance(myProject).getDirectoryMappings(myVcs);
-    // WC roots
-    final List<VirtualFile> wcRoots = new ArrayList<VirtualFile>();
-    for (VcsDirectoryMapping mapping : mappings) {
-      final VirtualFile directory = SvnUtil.correctRoot(myProject, mapping.getDirectory());
-      if (directory == null) {
-        continue;
-      }
-      wcRoots.add(LocalFileSystem.getInstance().findFileByPath(directory.getPath()));
-    }
+
+    // will call convertsRoots
+    ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs);
+  }
+
+  /**
+   * for: convertions of roots in direct root search; update of roots in indirect root search
+   */
+  public List<VirtualFile> convertRoots(final List<VirtualFile> result) {
+    myUserRootsDiffersFromReal = false;
 
     final FileUrlMappingCrawler crawler = new FileUrlMappingCrawler();
 
-    for (VirtualFile root : wcRoots) {
+    for (VirtualFile root : result) {
       crawler.setCurrentRoot(root);
       SvnUtil.crawlWCRoots(root, crawler);
     }
+    final Collection<Pair<String, VirtualFile>> pairCollection = myUrl2FileMap.values();
+    final List<VirtualFile> converted = new ArrayList<VirtualFile>();
+    for (Pair<String, VirtualFile> pair : pairCollection) {
+      converted.add(pair.getSecond());
+    }
+    return converted;
   }
 
   @Nullable

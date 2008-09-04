@@ -121,7 +121,6 @@ public class SvnVcs extends AbstractVcs {
   private final SvnFileUrlMappingRefresher myRootsInfo;
 
   private ChangeProvider myChangeProvider;
-  private final SvnConvertor myConvertor;
 
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
   @NonNls public static final String VCS_NAME = "svn";
@@ -173,7 +172,6 @@ public class SvnVcs extends AbstractVcs {
     myCheckoutOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKOUT, this);
 
     myRootsInfo = new SvnFileUrlMappingRefresher(new SvnFileUrlMappingImpl(myProject, this));
-    myConvertor = new SvnConvertor();
 
     if (! SvnBranchConfigurationManager.getInstance(myProject).upgradeTo15Asked()) {
       final SvnWorkingCopyChecker workingCopyChecker = new SvnWorkingCopyChecker();
@@ -745,19 +743,8 @@ public class SvnVcs extends AbstractVcs {
     }
   }
 
-  private class SvnConvertor implements RootsConvertor {
-    public List<VirtualFile> convertRoots(final List<VirtualFile> result) {
-      final List<VirtualFile> corrected = new ArrayList<VirtualFile>();
-      for (VirtualFile virtualFile : result) {
-        final VirtualFile directory = SvnUtil.correctRoot(myProject, virtualFile);
-        corrected.addAll(getSvnFileUrlMapping().getWcRootsUnderVcsRoot(directory));
-      }
-      return corrected;
-    }
-  }
-
   @Override
   public RootsConvertor getCustomConvertor() {
-    return myConvertor;
+    return myRootsInfo;
   }
 }
