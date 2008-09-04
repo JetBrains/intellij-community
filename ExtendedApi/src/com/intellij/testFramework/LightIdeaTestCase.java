@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -358,6 +359,8 @@ import java.util.Map;
 
   public static void doTearDown() throws Exception {
     IdeaTestCase.doPostponedFormatting(ourProject);
+
+    LookupManager.getInstance(ourProject).hideActiveLookup();
 
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(null);
