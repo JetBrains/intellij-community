@@ -18,6 +18,8 @@ package org.jetbrains.idea.svn.annotate;
 import com.intellij.openapi.vcs.annotate.AnnotationListener;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.util.text.SyncDateFormat;
@@ -144,6 +146,28 @@ public class SvnFileAnnotation implements FileAnnotation {
     myLineInfos.add(new LineInfo(date, revision, author));
     myContentBuffer.append(line);
     myContentBuffer.append("\n");
+  }
+
+  public VcsRevisionNumber getLineRevisionNumber(final int lineNumber) {
+    if (myLineInfos.size() <= lineNumber || lineNumber < 0) {
+      return null;
+    }
+    final LineInfo info = myLineInfos.get(lineNumber);
+    SvnFileRevision svnRevision = myRevisionMap.get(info.getRevision());
+    if (svnRevision != null) {
+      return svnRevision.getRevisionNumber();
+    }
+    return null;
+  }
+
+  public List<VcsFileRevision> getRevisions() {
+    final List<VcsFileRevision> result = new ArrayList<VcsFileRevision>(myRevisionMap.values());
+    Collections.sort(result, new Comparator<VcsFileRevision>() {
+      public int compare(final VcsFileRevision o1, final VcsFileRevision o2) {
+        return -1 * o1.getRevisionNumber().compareTo(o2.getRevisionNumber());
+      }
+    });
+    return result;
   }
 
   private class RevisionAnnotationAspect implements LineAnnotationAspect, EditorGutterAction {
