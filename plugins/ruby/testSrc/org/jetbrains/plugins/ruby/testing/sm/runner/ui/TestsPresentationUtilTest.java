@@ -316,10 +316,10 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     mySimpleTest.setFinished();
     TestsPresentationUtil.formatRootNodeWithoutChildren(mySimpleTest, myRenderer);
 
-    assertEquals(PoolOfTestIcons.NOT_RAN, myRenderer.getIcon());
+    assertEquals(PoolOfTestIcons.PASSED_ICON, myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
-    assertEquals("No tests were found.", myFragContainer.getTextAt(0));
-    assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
+    assertEquals("All Tests Passed.", myFragContainer.getTextAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
 
   }
 

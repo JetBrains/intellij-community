@@ -109,7 +109,12 @@ public class TestsPresentationUtil {
       renderer.setIcon(PoolOfTestIcons.TERMINATED_ICON);
       renderer.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.was.terminated"),
                       SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    } else {
+    } else if (magnitude == TestStateInfo.Magnitude.PASSED_INDEX) {
+      renderer.setIcon(PoolOfTestIcons.PASSED_ICON);
+      renderer.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.all.tests.passed"),
+                      SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
+    else {
       renderer.setIcon(PoolOfTestIcons.NOT_RAN);
       renderer.append(RBundle.message(
           "ruby.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found"),
