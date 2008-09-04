@@ -32,6 +32,10 @@ public abstract class ExtendClassImpl implements ExtendClass {
     return true;
   }
 
+  public boolean allowEnum() {
+    return true;
+  }
+
   public Class<? extends Annotation> annotationType() {
     return ExtendClass.class;
   }

@@ -52,5 +52,7 @@ public @interface ExtendClass {
 
   boolean allowInterface() default true;
 
+  boolean allowEnum() default true;
+
   boolean jvmFormat() default true;
 }

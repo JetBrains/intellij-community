@@ -52,6 +52,9 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
       if (!extendClass.allowInterface()) {
         provider.setOption(JavaClassReferenceProvider.NOT_INTERFACE, Boolean.TRUE);
       }
+      if (!extendClass.allowEnum()) {
+        provider.setOption(JavaClassReferenceProvider.NOT_ENUM, Boolean.TRUE);
+      }
       if (extendClass.jvmFormat()) {
         provider.setOption(JavaClassReferenceProvider.JVM_FORMAT, Boolean.TRUE);
       }
