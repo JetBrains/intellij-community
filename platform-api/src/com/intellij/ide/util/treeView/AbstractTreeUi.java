@@ -280,7 +280,7 @@ class AbstractTreeUi {
 
 
     if (result != null) {
-      LOG.assertTrue(TreeUtil.isAncestor(getRootNode(), result));
+      LOG.assertTrue(TreeUtil.isAncestor(getRootNode(), result), "builder=" + getBuilder() + " result=" + result);
       LOG.assertTrue(getRootNode() == myTreeModel.getRoot());
     }
 
