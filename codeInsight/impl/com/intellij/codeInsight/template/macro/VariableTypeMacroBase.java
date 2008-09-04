@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.psi.PsiElement;
@@ -17,7 +18,7 @@ public abstract class VariableTypeMacroBase implements Macro {
   @Nullable
   protected abstract PsiElement[] getVariables(Expression[] params, final ExpressionContext context);
 
-  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length < 2) return null;
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();

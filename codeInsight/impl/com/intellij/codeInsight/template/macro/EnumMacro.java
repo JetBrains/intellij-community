@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template.macro;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Macro;
@@ -35,7 +36,7 @@ public class EnumMacro implements Macro{
     return params[0].calculateQuickResult(context);
   }
 
-  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length ==0) return null;
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();
 

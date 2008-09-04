@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,5 +23,5 @@ public interface Macro {
   Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context);
 
   @Nullable
-  LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context);
+  LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context);
 }

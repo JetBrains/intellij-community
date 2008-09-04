@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
@@ -299,7 +300,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     final Result result = uniqueNames.isEmpty() ? null : new TextResult(uniqueNames.get(0));
 
     Expression expr = new Expression() {
-      public LookupItem[] calculateLookupItems(ExpressionContext context) {
+      public LookupElement[] calculateLookupItems(ExpressionContext context) {
         return lookupItems.length > 1 ? lookupItems : null;
       }
 

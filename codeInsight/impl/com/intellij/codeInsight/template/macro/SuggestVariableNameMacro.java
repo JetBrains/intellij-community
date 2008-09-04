@@ -2,6 +2,7 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -37,7 +38,7 @@ public class SuggestVariableNameMacro implements Macro {
     return null;
   }
 
-  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
     String[] names = getNames(context);
     if (names == null || names.length < 2) return null;
     LookupItem[] items = new LookupItem[names.length];

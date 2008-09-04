@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
@@ -8,7 +8,7 @@ import com.intellij.codeInsight.template.Result;
 /**
  *
  */
-public class VariableNode implements Expression {
+public class VariableNode extends Expression {
   private final String myName;
   private final Expression myInitialValue;
 
@@ -39,7 +39,7 @@ public class VariableNode implements Expression {
     return ret;
   }
 
-  public LookupItem[] calculateLookupItems(ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(ExpressionContext context) {
     if (myInitialValue == null){
       return null;
     }

@@ -4,6 +4,7 @@
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -258,7 +259,7 @@ public class VariableInplaceRenamer {
     return usages.isEmpty();
   }
 
-  private class MyExpression implements Expression {
+  private class MyExpression extends Expression {
     private final String myName;
     private final LookupItem[] myLookupItems;
 
@@ -274,7 +275,7 @@ public class VariableInplaceRenamer {
       }
     }
 
-    public LookupItem[] calculateLookupItems(ExpressionContext context) {
+    public LookupElement[] calculateLookupItems(ExpressionContext context) {
       return myLookupItems;
     }
 

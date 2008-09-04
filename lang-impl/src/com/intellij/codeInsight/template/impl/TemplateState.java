@@ -1,9 +1,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
-import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.Result;
@@ -373,15 +371,17 @@ public class TemplateState implements Disposable {
     Expression expressionNode = myTemplate.getExpressionAt(myCurrentVariableNumber);
 
     final ExpressionContext context = createExpressionContext(start);
-    final LookupItem[] lookupItems = expressionNode.calculateLookupItems(context);
+    final LookupElement[] lookupItems = expressionNode.calculateLookupItems(context);
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
     if (lookupItems != null && lookupItems.length > 0) {
       if (((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) {
         final String s = lookupItems[0].getLookupString();
         EditorModificationUtil.insertStringAtCaret(myEditor, s);
-        itemSelected(lookupItems[0], psiFile, currentSegmentNumber, ' ');
+        itemSelected(lookupItems[0], psiFile, currentSegmentNumber, ' ', lookupItems);
       } else {
-        lookupItems[0].setPriority(Integer.MAX_VALUE);
+        if (lookupItems[0] instanceof LookupItem) {
+          ((LookupItem)lookupItems[0]).setPriority(Integer.MAX_VALUE);
+        }
         runLookup(currentSegmentNumber, lookupItems, psiFile);
       }
     }
@@ -395,7 +395,7 @@ public class TemplateState implements Disposable {
     focusCurrentHighlighter(true);
   }
 
-  private void runLookup(final int currentSegmentNumber, final LookupItem[] lookupItems, final PsiFile psiFile) {
+  private void runLookup(final int currentSegmentNumber, final LookupElement[] lookupItems, final PsiFile psiFile) {
     if (myEditor == null) return;
 
     final LookupManager lookupManager = LookupManager.getInstance(myProject);
@@ -416,14 +416,19 @@ public class TemplateState implements Disposable {
         if (isFinished()) return;
         toProcessTab = true;
 
-        TemplateState.this.itemSelected(event.getItem(), psiFile, currentSegmentNumber, event.getCompletionChar());
+        TemplateState.this.itemSelected(event.getItem(), psiFile, currentSegmentNumber, event.getCompletionChar(), lookupItems);
       }
     });
   }
 
-  private void itemSelected(final LookupElement item, final PsiFile psiFile, final int currentSegmentNumber, final char completionChar) {
+  private void itemSelected(final LookupElement item, final PsiFile psiFile, final int currentSegmentNumber, final char completionChar, LookupElement[] elements) {
     if (item != null) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+      final OffsetMap offsetMap = new OffsetMap(myDocument);
+      final InsertionContext context = new InsertionContext(offsetMap, (char)0, false, elements, psiFile, myEditor);
+      context.setTailOffset(myEditor.getCaretModel().getOffset());
+      offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, context.getTailOffset() - item.getLookupString().length());
 
       Integer bracketCount = item instanceof LookupItem ? (Integer)((LookupItem)item).getAttribute(LookupItem.BRACKETS_COUNT_ATTR) : null;
       if (bracketCount != null) {
@@ -434,7 +439,6 @@ public class TemplateState implements Disposable {
         new WriteCommandAction(myProject) {
           protected void run(com.intellij.openapi.application.Result result) throws Throwable {
             EditorModificationUtil.insertStringAtCaret(myEditor, tail.toString());
-
           }
         }.execute();
         PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
@@ -444,6 +448,12 @@ public class TemplateState implements Disposable {
       if (handler != null) {
         handler.itemSelected(item, psiFile, myDocument,
                              mySegments.getSegmentStart(currentSegmentNumber), mySegments.getSegmentEnd(currentSegmentNumber));
+      } else {
+        new WriteCommandAction(myProject) {
+          protected void run(com.intellij.openapi.application.Result result) throws Throwable {
+            item.handleInsert(context);
+          }
+        }.execute();
       }
 
       if (completionChar == '.') {
@@ -714,7 +724,7 @@ public class TemplateState implements Disposable {
     if (result == null) {
       return true;
     }
-    LookupItem[] items = expression.calculateLookupItems(context);
+    LookupElement[] items = expression.calculateLookupItems(context);
     return items != null && items.length > 1;
   }
 

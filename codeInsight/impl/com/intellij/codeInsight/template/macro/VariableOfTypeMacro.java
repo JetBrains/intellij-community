@@ -2,6 +2,7 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.project.Project;
@@ -40,7 +41,7 @@ public class VariableOfTypeMacro implements Macro {
     return null;
   }
 
-  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length < 2) return null;
     final Set<LookupItem> set = new LinkedHashSet<LookupItem>();

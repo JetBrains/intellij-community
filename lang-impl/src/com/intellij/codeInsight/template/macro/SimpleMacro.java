@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ public abstract class SimpleMacro implements Macro {
     return calculateResult(params, context);
   }
 
-  public LookupItem[] calculateLookupItems(@NotNull final Expression[] params, final ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(@NotNull final Expression[] params, final ExpressionContext context) {
     return LookupItem.EMPTY_ARRAY;
   }
 

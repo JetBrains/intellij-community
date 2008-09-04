@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.Expression;
@@ -16,7 +17,7 @@ import com.intellij.psi.util.PsiUtil;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class TypeExpression implements Expression {
+public class TypeExpression extends Expression {
   private final LookupItem[] myItems;
   private final SmartTypePointer myDefaultType;
 
@@ -44,7 +45,7 @@ public class TypeExpression implements Expression {
     return new PsiTypeResult(myDefaultType.getType(), project);
   }
 
-  public LookupItem[] calculateLookupItems(ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(ExpressionContext context) {
     if (myItems.length <= 1) return null;
     PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
     return myItems;

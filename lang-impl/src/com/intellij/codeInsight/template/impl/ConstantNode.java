@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
@@ -9,7 +10,7 @@ import com.intellij.codeInsight.template.TextResult;
 /**
  *
  */
-public class ConstantNode implements Expression {
+public class ConstantNode extends Expression {
   private Result myValue;
 
   public ConstantNode(String value) {
@@ -24,7 +25,7 @@ public class ConstantNode implements Expression {
     return myValue;
   }
 
-  public LookupItem[] calculateLookupItems(ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(ExpressionContext context) {
     return LookupItem.EMPTY_ARRAY;
   }
 

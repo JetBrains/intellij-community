@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template.macro;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.project.Project;
@@ -41,7 +42,7 @@ public class GuessElementTypeMacro implements Macro {
     return null;
   }
 
-  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     PsiType[] types = guessTypes(params, context);
     if (types == null || types.length < 2) return null;
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();

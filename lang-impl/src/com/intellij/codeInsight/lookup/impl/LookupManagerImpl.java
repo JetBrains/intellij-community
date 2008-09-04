@@ -90,22 +90,18 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     myIsDisposed = true;
   }
 
-  public Lookup showLookup(final Editor editor, final LookupItem[] items, final LookupItemPreferencePolicy itemPreferencePolicy) {
-    return showLookup(editor, items, itemPreferencePolicy, null);
-  }
-
-  public Lookup showLookup(final Editor editor, LookupItem[] items, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable final String bottomText) {
+  public Lookup showLookup(final Editor editor, LookupElement[] items, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable final String bottomText) {
     return showLookup(editor, items, "", itemPreferencePolicy, null);
   }
 
-  public Lookup showLookup(final Editor editor, final LookupItem[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy,
+  public Lookup showLookup(final Editor editor, final LookupElement[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy,
                            @Nullable final String bottomText) {
     final LookupImpl lookup = createLookup(editor, items, prefix, itemPreferencePolicy, bottomText);
     lookup.show();
     return lookup;
   }
 
-  public LookupImpl createLookup(final Editor editor, final LookupItem[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy,
+  public LookupImpl createLookup(final Editor editor, final LookupElement[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy,
                                  final String bottomText) {
     hideActiveLookup();
 
@@ -127,7 +123,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     if (daemonCodeAnalyzer != null) {
       daemonCodeAnalyzer.setUpdateByTimerEnabled(false);
     }
-    for (final LookupItem item : items) {
+    for (final LookupElement item : items) {
       item.setPrefixMatcher(new CamelHumpMatcher(prefix));
     }
     myActiveLookup = new LookupImpl(myProject, editor, items, itemPreferencePolicy, bottomText);

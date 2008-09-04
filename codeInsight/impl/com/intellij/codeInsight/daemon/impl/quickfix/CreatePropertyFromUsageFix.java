@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
@@ -93,7 +94,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     return false;
   }
 
-  static class FieldExpression implements Expression {
+  static class FieldExpression extends Expression {
     private LookupItem[] myItems;
     private String myDefaultFieldName;
 
@@ -124,7 +125,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
       return new TextResult(myDefaultFieldName);
     }
 
-    public LookupItem[] calculateLookupItems(ExpressionContext context) {
+    public LookupElement[] calculateLookupItems(ExpressionContext context) {
       if (myItems.length < 2) return null;
       return myItems;
     }

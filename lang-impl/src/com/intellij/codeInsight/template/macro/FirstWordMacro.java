@@ -2,6 +2,7 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.CodeInsightBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ public class FirstWordMacro implements Macro {
     return execute(result);
   }
 
-  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     return LookupItem.EMPTY_ARRAY;
   }
 }

@@ -2,6 +2,7 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiDocumentManager;
@@ -22,15 +23,18 @@ public class ComponentTypeOfMacro implements Macro {
     return "A";
   }
 
-  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length != 1) return null;
-    LookupItem[] lookupItems = params[0].calculateLookupItems(context);
+    LookupElement[] lookupItems = params[0].calculateLookupItems(context);
     if (lookupItems == null) return null;
 
-    for (LookupItem item : lookupItems) {
-      Integer bracketsCount = (Integer)item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
-      if (bracketsCount == null) return null;
-      item.setAttribute(LookupItem.BRACKETS_COUNT_ATTR, new Integer(bracketsCount.intValue() - 1));
+    for (LookupElement element : lookupItems) {
+      if (element instanceof LookupItem) {
+        final LookupItem item = (LookupItem)element;
+        Integer bracketsCount = (Integer)item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
+        if (bracketsCount == null) return null;
+        item.setAttribute(LookupItem.BRACKETS_COUNT_ATTR, new Integer(bracketsCount.intValue() - 1));
+      }
     }
 
     return lookupItems;

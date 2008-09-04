@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template.macro;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -90,7 +91,7 @@ public class DescendantClassesEnumMacro implements Macro {
     return results[0];
   }
 
-  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     final List<PsiClass> classes = findDescendants(context, params);
     if (classes == null || classes.size() == 0) return null;
 

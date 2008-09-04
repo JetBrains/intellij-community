@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
@@ -8,7 +8,7 @@ import com.intellij.codeInsight.template.Result;
 /**
  *
  */
-public class EmptyNode implements Expression {
+public class EmptyNode extends Expression {
   public EmptyNode() {
   }
 
@@ -20,7 +20,7 @@ public class EmptyNode implements Expression {
     return null;
   }
 
-  public LookupItem[] calculateLookupItems(ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(ExpressionContext context) {
     return null;
   }
 

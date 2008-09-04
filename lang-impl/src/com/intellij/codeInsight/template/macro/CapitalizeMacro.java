@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +41,7 @@ public class CapitalizeMacro implements Macro {
     return new TextResult(text);
   }
 
-  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
     return null;
   }
 }

@@ -2,6 +2,7 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.guess.GuessManager;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
@@ -49,7 +50,7 @@ class JavaWithCastSurrounder extends JavaExpressionSurrounder {
     final Result result = suggestedTypes.length > 0 ? new PsiTypeResult(suggestedTypes[0], project) : null;
 
     Expression expr = new Expression() {
-      public LookupItem[] calculateLookupItems(ExpressionContext context) {
+      public LookupElement[] calculateLookupItems(ExpressionContext context) {
         return lookupItems.length > 1 ? lookupItems : null;
       }
 

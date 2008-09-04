@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Macro;
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 /**
  *
  */
-public class MacroCallNode implements Expression {
+public class MacroCallNode extends Expression {
   public Macro getMacro() {
     return myMacro;
   }
@@ -37,7 +37,7 @@ public class MacroCallNode implements Expression {
     return myMacro.calculateQuickResult(parameters, context);
   }
 
-  public LookupItem[] calculateLookupItems(ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(ExpressionContext context) {
     Expression[] parameters = myParameters.toArray(new Expression[myParameters.size()]);
     return myMacro.calculateLookupItems(parameters, context);
   }

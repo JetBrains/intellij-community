@@ -7,6 +7,7 @@ import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.*;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -744,7 +745,7 @@ public class CreateFromUsageUtils {
     }
   }
 
-  private static class ParameterNameExpression implements Expression {
+  private static class ParameterNameExpression extends Expression {
     private final String[] myNames;
 
     public ParameterNameExpression(String[] names) {
@@ -752,7 +753,7 @@ public class CreateFromUsageUtils {
     }
 
     public Result calculateResult(ExpressionContext context) {
-      LookupItem[] lookupItems = calculateLookupItems(context);
+      LookupElement[] lookupItems = calculateLookupItems(context);
       if (lookupItems.length == 0) return new TextResult("");
 
       return new TextResult(lookupItems[0].getLookupString());
@@ -762,7 +763,7 @@ public class CreateFromUsageUtils {
       return null;
     }
 
-    public LookupItem[] calculateLookupItems(ExpressionContext context) {
+    public LookupElement[] calculateLookupItems(ExpressionContext context) {
       Project project = context.getProject();
       int offset = context.getStartOffset();
       PsiDocumentManager.getInstance(project).commitAllDocuments();

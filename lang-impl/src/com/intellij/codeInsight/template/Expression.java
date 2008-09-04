@@ -1,18 +1,17 @@
 package com.intellij.codeInsight.template;
 
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.openapi.util.Key;
+import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.Nullable;
 
-public interface Expression {
+public abstract class Expression {
 
   @Nullable
-  Result calculateResult(ExpressionContext context);
+  public abstract Result calculateResult(ExpressionContext context);
 
   @Nullable
-  Result calculateQuickResult(ExpressionContext context);
+  public abstract Result calculateQuickResult(ExpressionContext context);
 
   @Nullable
-  LookupItem[] calculateLookupItems(ExpressionContext context);
+  public abstract LookupElement[] calculateLookupItems(ExpressionContext context);
 }
 

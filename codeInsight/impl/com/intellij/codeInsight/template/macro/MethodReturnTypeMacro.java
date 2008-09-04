@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -47,7 +47,7 @@ public class MethodReturnTypeMacro implements Macro {
     return null;
   }
 
-  public LookupItem[] calculateLookupItems(@NotNull final Expression[] params, final ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(@NotNull final Expression[] params, final ExpressionContext context) {
     return null;
   }
 }

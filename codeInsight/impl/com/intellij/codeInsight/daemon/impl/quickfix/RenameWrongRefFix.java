@@ -11,6 +11,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
@@ -60,7 +61,7 @@ public class RenameWrongRefFix implements IntentionAction {
     return !CreateFromUsageUtils.isValidReference(myRefExpr, false);
   }
 
-  private class ReferenceNameExpression implements Expression {
+  private class ReferenceNameExpression extends Expression {
     class HammingComparator implements Comparator<LookupItem> {
       public int compare(LookupItem lookupItem1, LookupItem lookupItem2) {
         String s1 = lookupItem1.getLookupString();
@@ -97,7 +98,7 @@ public class RenameWrongRefFix implements IntentionAction {
       return null;
     }
 
-    public LookupItem[] calculateLookupItems(ExpressionContext context) {
+    public LookupElement[] calculateLookupItems(ExpressionContext context) {
       if (myItems == null || myItems.length == 1) return null;
       return myItems;
     }

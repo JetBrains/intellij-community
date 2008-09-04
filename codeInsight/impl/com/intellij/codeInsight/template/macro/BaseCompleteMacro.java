@@ -105,7 +105,7 @@ public abstract class BaseCompleteMacro implements Macro {
     return null;
   }
 
-  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     return null;
   }
 
