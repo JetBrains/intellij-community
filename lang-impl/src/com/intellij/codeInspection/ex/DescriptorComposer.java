@@ -83,7 +83,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
     if (refElement instanceof RefElement && !((RefElement)refElement).isValid()) return;
 
     final QuickFix[] fixes = descriptor.getFixes();
-    if (fixes != null) {
+    if (fixes != null && fixes.length > 0) {
       //noinspection HardCodedStringLiteral
       buf.append("<br><br>");
       appendHeading(buf, InspectionsBundle.message("inspection.problem.resolution"));
