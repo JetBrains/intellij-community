@@ -21,15 +21,72 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * A provider of file annotations related to VCS
+ */
 public interface FileAnnotation {
+  /**
+   * Add the listener that is notified when annotations might
+   * have been changed.
+   *
+   * @param listener the listener to add
+   * @see #removeListener(AnnotationListener)
+   */
   void addListener(AnnotationListener listener);
+
+  /**
+   * Remove the listener
+   * @param listener the listener to remove
+   * @see #addListener(AnnotationListener)
+   */
   void removeListener(AnnotationListener listener);
+
+  /**
+   * This method is invoked when the annotation provider is no
+   * more used by UI.
+   */
   void dispose();
+
+  /**
+   * Get annotation aspects. The typical aspects are revision
+   * number, date, author. The aspects are displayed each
+   * in own column in the returned order.
+   *
+   * @return annotation aspects
+   */
   LineAnnotationAspect[] getAspects();
+
+  /**
+   * The tooltip that is shown over annotation. Typically this
+   * is a comment associated with commit that has added or modified
+   * the line.
+   *
+   * @param lineNumber the line number
+   * @return the tooltip text
+   */
   String getToolTip(int lineNumber);
+
+  /**
+   * @return the text of the annotated file
+   */
   String getAnnotatedContent();
+
+  /**
+   * Get revistion number for the line.
+   *
+   * @param lineNumber the line number
+   * @return the revision number or null for lines that contain uncommitted changes.
+   */
   @Nullable
   VcsRevisionNumber getLineRevisionNumber(int lineNumber);
+
+  /**
+   * Get all revisions that added at least one line of the text
+   * that still presents in the current version of the file.
+   *
+   * @return the list of revisions which affected current version of the file. Or null
+   *   if before/after popups cannot be suported by the VCS system.
+   */
   @Nullable
   List<VcsFileRevision> getRevisions();
 }

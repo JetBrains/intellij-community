@@ -23,5 +23,10 @@ package com.intellij.openapi.vcs.annotate;
  * @see FileAnnotation#getAspects()
  */
 public interface LineAnnotationAspect {
+  /**
+   * Get annotation text for the spcific line number
+   * @param lineNumber the line number to query
+   * @return the annotation text 
+   */
   String getValue(int lineNumber);
 }
