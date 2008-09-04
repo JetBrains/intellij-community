@@ -182,7 +182,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertEquals(PoolOfTestIcons.FAILED_ICON, renderer1.getIcon());
     assertOneElement(renderer1.getFragmentsContainer().getFragments());
-    assertEquals("Test Results.", renderer1.getFragmentsContainer().getTextAt(0));
+    assertEquals("Test Results:", renderer1.getFragmentsContainer().getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getFragmentsContainer().getAttribsAt(0));
 
     final MyRenderer renderer2 = new MyRenderer(false, myFragContainer = new UITestUtil.FragmentsContainer());
@@ -190,7 +190,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     mySuite.setFinished();
     assertEquals(PoolOfTestIcons.FAILED_ICON, renderer1.getIcon());
     assertOneElement(renderer1.getFragmentsContainer().getFragments());
-    assertEquals("Test Results.", renderer1.getFragmentsContainer().getTextAt(0));
+    assertEquals("Test Results:", renderer1.getFragmentsContainer().getTextAt(0));
   }
 
   public void testFormatRootNodeWithChildren_Error() {
@@ -207,7 +207,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertEquals(PoolOfTestIcons.ERROR_ICON, renderer1.getIcon());
     assertOneElement(renderer1.getFragmentsContainer().getFragments());
-    assertEquals("Test Results.", renderer1.getFragmentsContainer().getTextAt(0));
+    assertEquals("Test Results:", renderer1.getFragmentsContainer().getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getFragmentsContainer().getAttribsAt(0));
 
     final MyRenderer renderer2 = new MyRenderer(false, myFragContainer = new UITestUtil.FragmentsContainer());
@@ -215,7 +215,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     mySuite.setFinished();
     assertEquals(PoolOfTestIcons.ERROR_ICON, renderer1.getIcon());
     assertOneElement(renderer1.getFragmentsContainer().getFragments());
-    assertEquals("Test Results.", renderer1.getFragmentsContainer().getTextAt(0));
+    assertEquals("Test Results:", renderer1.getFragmentsContainer().getTextAt(0));
   }
 
   public void testFormatRootNodeWithChildren_Ignored() {
@@ -232,7 +232,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertEquals(PoolOfTestIcons.IGNORED_ICON, renderer1.getIcon());
     assertOneElement(renderer1.getFragmentsContainer().getFragments());
-    assertEquals("Test Results.", renderer1.getFragmentsContainer().getTextAt(0));
+    assertEquals("Test Results:", renderer1.getFragmentsContainer().getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, renderer1.getFragmentsContainer().getAttribsAt(0));
 
     final MyRenderer renderer2 = new MyRenderer(false, myFragContainer = new UITestUtil.FragmentsContainer());
@@ -240,7 +240,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     mySuite.setFinished();
     assertEquals(PoolOfTestIcons.IGNORED_ICON, renderer1.getIcon());
     assertOneElement(renderer1.getFragmentsContainer().getFragments());
-    assertEquals("Test Results.", renderer1.getFragmentsContainer().getTextAt(0));
+    assertEquals("Test Results:", renderer1.getFragmentsContainer().getTextAt(0));
   }
 
   public void testFormatRootNodeWithChildren_Passed() {
@@ -254,7 +254,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertEquals(PoolOfTestIcons.PASSED_ICON, myRenderer.getIcon());
     assertOneElement(myRenderer.getFragmentsContainer().getFragments());
-    assertEquals("Test Results.", myRenderer.getFragmentsContainer().getTextAt(0));
+    assertEquals("Test Results:", myRenderer.getFragmentsContainer().getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myRenderer.getFragmentsContainer().getAttribsAt(0));
   }
 
@@ -269,7 +269,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertEquals(PoolOfTestIcons.TERMINATED_ICON, myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
-    assertEquals("Terminated.", myFragContainer.getTextAt(0));
+    assertEquals("Terminated", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
   }
 
@@ -286,7 +286,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     mySuite.setFinished();
     assertEquals(PoolOfTestIcons.TERMINATED_ICON, myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
-    assertEquals("Terminated.", myFragContainer.getTextAt(0));
+    assertEquals("Terminated", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
   }
 
@@ -295,7 +295,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertEquals(PoolOfTestIcons.NOT_RAN, myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
-    assertEquals("No Test Results.", myFragContainer.getTextAt(0));
+    assertEquals("No Test Results", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
 
   }
@@ -318,7 +318,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertEquals(PoolOfTestIcons.PASSED_ICON, myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
-    assertEquals("All Tests Passed.", myFragContainer.getTextAt(0));
+    assertEquals("All Tests Passed", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
 
   }
@@ -330,7 +330,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertEquals(PoolOfTestIcons.TERMINATED_ICON, myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
-    assertEquals("Terminated.", myFragContainer.getTextAt(0));
+    assertEquals("Terminated", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
 
   }
