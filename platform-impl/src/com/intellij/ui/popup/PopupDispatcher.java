@@ -107,14 +107,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
     if (ourShowingStep == null) {
       return false;
     }
-
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (ourShowingStep != null) {
-          ourShowingStep.dispatch(e);
-        }
-      }
-    });
+    ourShowingStep.dispatch(e);
 
     return true;
   }
