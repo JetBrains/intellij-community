@@ -27,4 +27,7 @@ public abstract class CompilerConfiguration {
   public abstract boolean isExcludedFromCompilation(VirtualFile virtualFile);
 
   public abstract boolean isResourceFile(String name);
+
+  public abstract void addResourceFilePattern(String namePattern) throws MalformedPatternException;
+
 }

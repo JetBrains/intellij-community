@@ -139,11 +139,15 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private static Pattern compilePattern(@NonNls String s) throws MalformedPatternException {
     final PatternCompiler compiler = new Perl5Compiler();
     final Pattern pattern;
-    if (SystemInfo.isFileSystemCaseSensitive) {
-      pattern = compiler.compile(s);
-    }
-    else {
-      pattern = compiler.compile(s, Perl5Compiler.CASE_INSENSITIVE_MASK);
+    try {
+      if (SystemInfo.isFileSystemCaseSensitive) {
+        pattern = compiler.compile(s);
+      }
+      else {
+        pattern = compiler.compile(s, Perl5Compiler.CASE_INSENSITIVE_MASK);
+      }
+    } catch (org.apache.oro.text.regex.MalformedPatternException ex) {
+      throw new MalformedPatternException(ex);
     }
     return pattern;
   }

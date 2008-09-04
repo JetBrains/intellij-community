@@ -1,9 +1,6 @@
 package com.intellij.compiler.options;
 
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.RmicSettings;
+import com.intellij.compiler.*;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -16,7 +13,6 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
 import com.intellij.util.Options;
-import org.apache.oro.text.regex.MalformedPatternException;
 
 import javax.swing.*;
 import java.awt.*;
