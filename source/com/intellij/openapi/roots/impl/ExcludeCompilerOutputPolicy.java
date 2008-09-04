@@ -50,6 +50,9 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
   public VirtualFilePointer[] getExcludeRootsForModule(final ModuleRootModel rootModel) {
     ArrayList<VirtualFilePointer> result = new ArrayList<VirtualFilePointer>();
     final CompilerModuleExtension extension = rootModel.getModuleExtension(CompilerModuleExtension.class);
+    if (extension == null) {
+      return VirtualFilePointer.EMPTY_ARRAY;
+    }
     if (extension.isCompilerOutputPathInherited()) {
       result.add(CompilerProjectExtension.getInstance(myProject).getCompilerOutputPointer());
     }
