@@ -292,8 +292,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
     }
     else {
-      methodSubstitutor1 = createRawSubstitutor(typeParameters1);
-      methodSubstitutor2 = createRawSubstitutor(typeParameters2);
+      PsiElementFactory factory = JavaPsiFacade.getInstance(myArgumentsList.getProject()).getElementFactory();
+      methodSubstitutor1 = factory.createRawSubstitutor(PsiSubstitutor.EMPTY, typeParameters1);
+      methodSubstitutor2 = factory.createRawSubstitutor(PsiSubstitutor.EMPTY, typeParameters2);
     }
 
     int[] boxingHappened = new int[2];
@@ -360,15 +361,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         substitutor = substitutor.put(typeParameter, TypeConversionUtil.typeParameterErasure(typeParameter));
       }
     }
-    return substitutor;
-  }
-
-  private static PsiSubstitutor createRawSubstitutor(final PsiTypeParameter[] typeParameters) {
-    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-    for (final PsiTypeParameter typeParameter : typeParameters) {
-      substitutor = substitutor.put(typeParameter, null);
-    }
-
     return substitutor;
   }
 }

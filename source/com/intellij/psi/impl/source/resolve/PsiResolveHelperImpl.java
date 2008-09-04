@@ -300,7 +300,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       }
 
       if (substitution == null) {
-        return createRawSubstitutor(partialSubstitutor, typeParameters);
+        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        return factory.createRawSubstitutor(partialSubstitutor, typeParameters);
       }
       else if (substitution != PsiType.NULL) {
         partialSubstitutor = partialSubstitutor.put(typeParameter, substitution);
@@ -358,14 +359,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         substitutor = substitutor.put(typeParameter, substitution);
       }
     }
-    return substitutor;
-  }
-
-  private static PsiSubstitutor createRawSubstitutor(PsiSubstitutor substitutor, PsiTypeParameter[] typeParameters) {
-    for (PsiTypeParameter typeParameter : typeParameters) {
-      substitutor = substitutor.put(typeParameter, null);
-    }
-
     return substitutor;
   }
 

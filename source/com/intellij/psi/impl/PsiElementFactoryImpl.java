@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
 import java.util.Map;
 
 public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
@@ -300,13 +299,21 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   public PsiSubstitutor createRawSubstitutor(@NotNull PsiTypeParameterListOwner owner) {
-    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(owner);
-    if (!iterator.hasNext()) return PsiSubstitutor.EMPTY;
-    Map<PsiTypeParameter, PsiType> substMap = new HashMap<PsiTypeParameter, PsiType>();
-    while (iterator.hasNext()) {
-      substMap.put(iterator.next(), null);
+    Map<PsiTypeParameter, PsiType> substMap = null;
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(owner)) {
+      if (substMap == null) substMap = new HashMap<PsiTypeParameter, PsiType>();
+      substMap.put(parameter, null);
     }
     return PsiSubstitutorImpl.createSubstitutor(substMap);
+  }
+  @NotNull
+  public PsiSubstitutor createRawSubstitutor(@NotNull PsiSubstitutor baseSubstitutor, @NotNull PsiTypeParameter[] typeParameters) {
+    Map<PsiTypeParameter, PsiType> substMap = null;
+    for (PsiTypeParameter parameter : typeParameters) {
+      if (substMap == null) substMap = new HashMap<PsiTypeParameter, PsiType>();
+      substMap.put(parameter, null);
+    }
+    return baseSubstitutor.putAll(PsiSubstitutorImpl.createSubstitutor(substMap));
   }
 
   @NotNull

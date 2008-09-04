@@ -18,7 +18,6 @@ package com.intellij.psi;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -480,4 +479,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
    * @throws IncorrectOperationException if some of the references are invalid.
    */
   @NotNull PsiReferenceList createReferenceList(@NotNull PsiJavaCodeReferenceElement[] references) throws IncorrectOperationException;
+
+  @NotNull
+  PsiSubstitutor createRawSubstitutor(@NotNull PsiSubstitutor baseSubstitutor, @NotNull PsiTypeParameter[] typeParameters);
 }

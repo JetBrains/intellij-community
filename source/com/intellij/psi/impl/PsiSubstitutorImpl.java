@@ -6,6 +6,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -302,16 +303,10 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   public PsiSubstitutor putAll(PsiSubstitutor another) {
     if (another instanceof EmptySubstitutorImpl) return this;
     final PsiSubstitutorImpl anotherImpl = (PsiSubstitutorImpl)another;
-    Set<PsiTypeParameter> typeParameters = anotherImpl.mySubstitutionMap.keySet();
-    final PsiTypeParameter[] params = typeParameters.toArray(new PsiTypeParameter[typeParameters.size()]);
     PsiSubstitutorImpl substitutor = new PsiSubstitutorImpl(new HashMap<PsiTypeParameter, PsiType>(mySubstitutionMap));
-    for (final PsiTypeParameter param : params) {
-      substitutor.mySubstitutionMap.put(param, another.substitute(param));
-    }
-
+    substitutor.mySubstitutionMap.putAll(anotherImpl.mySubstitutionMap);
     return substitutor;
   }
-
 
   public String toString() {
     @NonNls StringBuilder buffer = new StringBuilder();
@@ -342,8 +337,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return buffer.toString();
   }
 
-  public static PsiSubstitutor createSubstitutor(Map<PsiTypeParameter, PsiType> map) {
-    if (map == null || map.keySet().isEmpty()) return EMPTY;
+  public static PsiSubstitutor createSubstitutor(@Nullable Map<PsiTypeParameter, PsiType> map) {
+    if (map == null || map.isEmpty()) return EMPTY;
     return new PsiSubstitutorImpl(map);
   }
 
