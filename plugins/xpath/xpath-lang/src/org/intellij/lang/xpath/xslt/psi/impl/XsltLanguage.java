@@ -57,7 +57,7 @@ public class XsltLanguage extends Language {
         });
     }
 
-    private class MyFindUsagesProvider implements FindUsagesProvider {
+    private static class MyFindUsagesProvider implements FindUsagesProvider {
         @Nullable
         public WordsScanner getWordsScanner() {
             return LanguageFindUsages.INSTANCE.forLanguage(StdLanguages.XML).getWordsScanner();

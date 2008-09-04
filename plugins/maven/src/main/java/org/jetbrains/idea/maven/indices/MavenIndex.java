@@ -655,7 +655,7 @@ public class MavenIndex {
     }
   }
 
-  private class MyScanningListener implements ArtifactScanningListener {
+  private static class MyScanningListener implements ArtifactScanningListener {
     private ProgressIndicator p;
 
     public MyScanningListener() {
