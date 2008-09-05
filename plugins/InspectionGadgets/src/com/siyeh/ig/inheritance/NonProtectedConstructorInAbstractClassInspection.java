@@ -36,23 +36,27 @@ public class NonProtectedConstructorInAbstractClassInspection
      */
     public boolean m_ignoreNonPublicClasses = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.protected.constructor.in.abstract.class.display.name");
     }
 
+    @Override
     @NotNull
     public String getID() {
         return "ConstructorNotProtectedInAbstractClass";
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "non.protected.constructor.in.abstract.class.problem.descriptor");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
@@ -60,10 +64,12 @@ public class NonProtectedConstructorInAbstractClassInspection
                 this, "m_ignoreNonPublicClasses");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new NonProtectedConstructorInAbstractClassVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new ChangeModifierFix(PsiModifier.PROTECTED);
     }
@@ -77,7 +83,8 @@ public class NonProtectedConstructorInAbstractClassInspection
                 return;
             }
             if (method.hasModifierProperty(PsiModifier.PROTECTED)
-                || method.hasModifierProperty(PsiModifier.PRIVATE)) {
+                || method.hasModifierProperty(PsiModifier.PRIVATE)
+                    || method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
