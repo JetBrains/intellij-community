@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Git VCS implementation
@@ -50,25 +51,25 @@ import java.util.Iterator;
 public class GitVcs extends AbstractVcs implements Disposable {
   private static final String GIT = "Git";
   private static final String UNUNDEXED_FILES_CHANGELIST_NAME = "Unindexed Files";
-  private ChangeProvider changeProvider;
-  private VcsShowConfirmationOption addConfirmation;
-  private VcsShowConfirmationOption delConfirmation;
+  private final ChangeProvider changeProvider;
+  private final VcsShowConfirmationOption addConfirmation;
+  private final VcsShowConfirmationOption delConfirmation;
 
-  private CheckinEnvironment checkinEnvironment;
-  private RollbackEnvironment rollbackEnvironment;
-  private GitUpdateEnvironment updateEnvironment;
+  private final CheckinEnvironment checkinEnvironment;
+  private final RollbackEnvironment rollbackEnvironment;
+  private final GitUpdateEnvironment updateEnvironment;
 
-  private GitAnnotationProvider annotationProvider;
-  private DiffProvider diffProvider;
-  private VcsHistoryProvider historyProvider;
-  private GitChangeListListener changeListListener;
+  private final GitAnnotationProvider annotationProvider;
+  private final DiffProvider diffProvider;
+  private final VcsHistoryProvider historyProvider;
+  private final GitChangeListListener changeListListener;
 
   private Disposable activationDisposable;
   private final ProjectLevelVcsManager vcsManager;
   private final GitVcsSettings settings;
-  private EditorColorsScheme editorColorsScheme;
-  private Configurable configurable;
-  private RevisionSelector revSelector;
+  private final EditorColorsScheme editorColorsScheme;
+  private final Configurable configurable;
+  private final RevisionSelector revSelector;
 
   public static GitVcs getInstance(@NotNull Project project) {
     return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(GIT);
@@ -238,15 +239,14 @@ public class GitVcs extends AbstractVcs implements Disposable {
     return changeProvider;
   }
 
-  public void showErrors(@NotNull java.util.List<VcsException> list, @NotNull String action) {
+  public void showErrors(@NotNull List<VcsException> list, @NotNull String action) {
     if (list.size() > 0) {
       StringBuffer buffer = new StringBuffer();
       buffer.append("\n");
       buffer.append(action).append(" Error: ");
-      VcsException e;
-      for (Iterator<VcsException> iterator = list.iterator(); iterator.hasNext(); buffer.append(e.getMessage())) {
-        e = iterator.next();
+      for (Iterator<VcsException> iterator = list.iterator(); iterator.hasNext(); ) {
         buffer.append("\n");
+        buffer.append(iterator.next().getMessage());
       }
       String msg = buffer.toString();
       showMessage(msg, CodeInsightColors.ERRORS_ATTRIBUTES);

@@ -19,23 +19,32 @@ package git4idea.validators;
 
 import com.intellij.openapi.ui.InputValidator;
 
+import java.util.regex.Pattern;
+
 /**
- * Git branch name validator
+ * Git branch name validator. The validation rule is based on what is described
+ * git-check-ref-format(1) command description.
  */
 public class GitBranchNameValidator implements InputValidator {
-  static final String REGEX;
-
+  /** the regular expression that */
+  private static final Pattern REGEX;
   static {
     // based on the git-check-ref-format command description
     final String goodChar = "[ -\\~&&[^\\^\\~\\:\\[\\?\\*\\.\\/]]";
-    final String component = goodChar + "+(?:\\." + goodChar + ")*\\.?";
-    REGEX = component + "+(?:/*" + component + ")*";
+    final String component = "(?:" + goodChar + "+\\.?)+";
+    REGEX = Pattern.compile(component + "+(?:/*" + component + ")*");
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public boolean checkInput(String inputString) {
-    return inputString.matches(REGEX);
+    return REGEX.matcher(inputString).matches();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public boolean canClose(String inputString) {
     return checkInput(inputString);
   }

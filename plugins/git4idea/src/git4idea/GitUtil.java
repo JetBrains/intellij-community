@@ -30,6 +30,13 @@ import java.util.*;
  */
 public class GitUtil {
 
+  /**
+   * A private constructor to suppress instance creation
+   */
+  private GitUtil() {
+    // do nothink
+  }
+
   @NotNull
   public static VirtualFile getVcsRoot(@NotNull final Project project, @NotNull final FilePath filePath) {
     VirtualFile vfile = VcsUtil.getVcsRootFor(project, filePath);
@@ -46,7 +53,7 @@ public class GitUtil {
   }
 
   @NotNull
-  public static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(@NotNull Project project, @NotNull List<VirtualFile> virtualFiles) {
+  private static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(@NotNull Project project, @NotNull List<VirtualFile> virtualFiles) {
     Map<VirtualFile, List<VirtualFile>> result = new HashMap<VirtualFile, List<VirtualFile>>();
 
     for (VirtualFile file : virtualFiles) {
