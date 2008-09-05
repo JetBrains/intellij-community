@@ -34,22 +34,6 @@ public class JavaDocUtil {
   private JavaDocUtil() {
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static void createHyperlink(StringBuilder buffer, String refText,String label,boolean plainLink) {
-    buffer.append("<a href=\"");
-    buffer.append("psi_element://"); // :-)
-    buffer.append(refText);
-    buffer.append("\">");
-    if (!plainLink) {
-      buffer.append("<code>");
-    }
-    buffer.append(label);
-    if (!plainLink) {
-      buffer.append("</code>");
-    }
-    buffer.append("</a>");
-  }
-
   public static String[] getDocPaths(Project project) {
     ArrayList<String> result = new ArrayList<String>();
 

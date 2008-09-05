@@ -2,8 +2,8 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -579,6 +579,22 @@ public class DocumentationManager implements ProjectComponent {
   public Project getProject(@Nullable final PsiElement element) {
     assert element == null || myProject == element.getProject();
     return myProject;
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static void createHyperlink(StringBuilder buffer, String refText,String label,boolean plainLink) {
+    buffer.append("<a href=\"");
+    buffer.append("psi_element://"); // :-)
+    buffer.append(refText);
+    buffer.append("\">");
+    if (!plainLink) {
+      buffer.append("<code>");
+    }
+    buffer.append(label);
+    if (!plainLink) {
+      buffer.append("</code>");
+    }
+    buffer.append("</a>");
   }
 
   private static interface DocumentationCollector {
