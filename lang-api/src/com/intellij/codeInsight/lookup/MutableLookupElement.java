@@ -45,4 +45,6 @@ public abstract class MutableLookupElement<T> extends LookupElement{
   public abstract MutableLookupElement<T> setInsertHandler(InsertHandler<? extends LookupElement> insertHandler);
 
   public abstract InsertHandler<? extends MutableLookupElement> getInsertHandler();
+
+  public abstract boolean isBold();
 }

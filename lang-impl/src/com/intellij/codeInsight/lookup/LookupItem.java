@@ -163,6 +163,10 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     return myInsertHandler;
   }
 
+  public boolean isBold() {
+    return getAttribute(HIGHLIGHTED_ATTR) != null;
+  }
+
   @Override
   public void handleInsert(final InsertionContext context) {
     super.handleInsert(context);
