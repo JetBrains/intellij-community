@@ -41,13 +41,14 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
     @NonNls public String callCheckString = "java.io.InputStream,read," +
-        "java.io.InputStream,skip," +
-        "java.lang.StringBuffer,toString," +
-        "java.lang.StringBuilder,toString," +
-        "java.lang.String,.*," +
-        "java.math.BigInteger,.*," +
-        "java.math.BigDecimal,.*," +
-        "java.net.InetAddress,.*";
+            "java.io.InputStream,skip," +
+            "java.lang.StringBuffer,toString," +
+            "java.lang.StringBuilder,toString," +
+            "java.lang.String,.*," +
+            "java.math.BigInteger,.*," +
+            "java.math.BigDecimal,.*," +
+            "java.net.InetAddress,.*," +
+            "java.io.File,.*";
 
     final List<String> methodNamePatterns = new ArrayList();
     final List<String> classNames = new ArrayList();
@@ -57,17 +58,20 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
         parseString(callCheckString, classNames, methodNamePatterns);
     }
 
+    @Override
     @NotNull
     public String getID(){
         return "ResultOfMethodCallIgnored";
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "result.of.method.call.ignored.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         final PsiClass containingClass = (PsiClass)infos[0];
@@ -77,25 +81,30 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
                 className);
     }
 
+    @Override
     public void readSettings(Element element) throws InvalidDataException{
         super.readSettings(element);
         parseString(callCheckString, classNames, methodNamePatterns);
     }
 
+    @Override
     public void writeSettings(Element element) throws WriteExternalException{
         callCheckString = formatString(classNames, methodNamePatterns);
         super.writeSettings(element);
     }
 
+    @Override
     public JComponent createOptionsPanel(){
         final Form form = new Form();
         return form.getContentPanel();
     }
 
+    @Override
     public boolean isEnabledByDefault(){
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new IgnoreResultOfCallVisitor();
     }
