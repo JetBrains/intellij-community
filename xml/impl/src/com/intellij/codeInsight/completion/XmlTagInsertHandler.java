@@ -16,6 +16,7 @@ import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -127,7 +128,7 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
     return false;
   }
 
-  private static void insertIncompleteTag(char completionChar, final Editor editor, Project project, XmlElementDescriptor descriptor, XmlTag tag) {
+  private static void insertIncompleteTag(char completionChar, final Editor editor, final Project project, XmlElementDescriptor descriptor, XmlTag tag) {
     TemplateManager templateManager = TemplateManager.getInstance(project);
     Template template = templateManager.createTemplate("", "");
 
@@ -231,7 +232,11 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
         if (weInsertedSomeCodeThatCouldBeInvalidated1 &&
             offset >= 3 &&
             editor.getDocument().getCharsSequence().charAt(offset - 3) == '/') {
-          editor.getDocument().replaceString(offset - 2, offset + 1, ">");
+          new WriteCommandAction.Simple(project) {
+            protected void run() throws Throwable {
+              editor.getDocument().replaceString(offset - 2, offset + 1, ">");
+            }
+          }.execute();
         }
       }
 
