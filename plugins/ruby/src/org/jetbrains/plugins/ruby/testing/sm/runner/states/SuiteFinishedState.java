@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NonNls;
  * @author Roman Chernyatchik
  */
 public abstract class SuiteFinishedState extends AbstractState {
-  @NonNls private static final String EMPTY_SUITE_TEXT = RBundle.message("ruby.test.runner.states.suite.is.empty");
+  @NonNls private static final String EMPTY_SUITE_TEXT = RBundle.message(
+      "sm.test.runner.states.suite.is.empty");
 
   //This states are common for all instances and doesn't contains
   //instance-specific information

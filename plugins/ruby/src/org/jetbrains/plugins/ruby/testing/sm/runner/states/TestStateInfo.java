@@ -46,15 +46,16 @@ public interface TestStateInfo {
 
   //WARN: It is Hack, see PoolOfTestStates, API is necessary
   enum Magnitude {
-    SKIPPED_INDEX(0, 1, RBundle.message("ruby.test.runner.magnitude.skipped.failed.title")),
-    COMPLETE_INDEX(1, 3, RBundle.message("ruby.test.runner.magnitude.completed.failed.title")),
-    NOT_RUN_INDEX(2, 0, RBundle.message("ruby.test.runner.magnitude.not.run.failed.title")),
-    RUNNING_INDEX(3, 7, RBundle.message("ruby.test.runner.magnitude.running.failed.title")),
-    TERMINATED_INDEX(4, 6, RBundle.message("ruby.test.runner.magnitude.terminated.failed.title")),
-    IGNORED_INDEX(5, 2, RBundle.message("ruby.test.runner.magnitude.ignored.failed.title")),
-    FAILED_INDEX(6, 4, RBundle.message("ruby.test.runner.magnitude.assertion.failed.title")),
-    ERROR_INDEX(8, 5, RBundle.message("ruby.test.runner.magnitude.testerror.title")),
-    PASSED_INDEX(COMPLETE_INDEX.getValue(), COMPLETE_INDEX.getSortWeitht(), RBundle.message("ruby.test.runner.magnitude.passed.title"));
+    SKIPPED_INDEX(0, 1, RBundle.message("sm.test.runner.magnitude.skipped.failed.title")),
+    COMPLETE_INDEX(1, 3, RBundle.message("sm.test.runner.magnitude.completed.failed.title")),
+    NOT_RUN_INDEX(2, 0, RBundle.message("sm.test.runner.magnitude.not.run.failed.title")),
+    RUNNING_INDEX(3, 7, RBundle.message("sm.test.runner.magnitude.running.failed.title")),
+    TERMINATED_INDEX(4, 6, RBundle.message("sm.test.runner.magnitude.terminated.failed.title")),
+    IGNORED_INDEX(5, 2, RBundle.message("sm.test.runner.magnitude.ignored.failed.title")),
+    FAILED_INDEX(6, 4, RBundle.message("sm.test.runner.magnitude.assertion.failed.title")),
+    ERROR_INDEX(8, 5, RBundle.message("sm.test.runner.magnitude.testerror.title")),
+    PASSED_INDEX(COMPLETE_INDEX.getValue(), COMPLETE_INDEX.getSortWeitht(), RBundle.message(
+        "sm.test.runner.magnitude.passed.title"));
 
     private final int myValue;
     private final int mySortWeitht;

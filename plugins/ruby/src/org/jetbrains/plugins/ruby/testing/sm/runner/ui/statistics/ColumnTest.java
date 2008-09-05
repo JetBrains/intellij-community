@@ -17,7 +17,7 @@ import java.util.Comparator;
 */
 public class ColumnTest extends BaseColumn implements Comparator<SMTestProxy>{
   public ColumnTest() {
-    super(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.test.title"));
+    super(RBundle.message("sm.test.runner.ui.tabs.statistics.columns.test.title"));
   }
 
   @NotNull
@@ -40,7 +40,8 @@ public class ColumnTest extends BaseColumn implements Comparator<SMTestProxy>{
   }
 
   public static class TestsCellRenderer extends ColoredTableCellRenderer implements ColoredRenderer {
-    @NonNls private static final String TOTAL_TITLE = RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.test.total.title");
+    @NonNls private static final String TOTAL_TITLE = RBundle.message(
+        "sm.test.runner.ui.tabs.statistics.columns.test.total.title");
 
     private final SMTestProxy myProxy;
 

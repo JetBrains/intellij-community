@@ -38,7 +38,7 @@ public class ColumnResults extends BaseColumn implements Comparator<SMTestProxy>
   };
 
   public ColumnResults() {
-    super(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.title"));
+    super(RBundle.message("sm.test.runner.ui.tabs.statistics.columns.results.title"));
   }
 
   @Override

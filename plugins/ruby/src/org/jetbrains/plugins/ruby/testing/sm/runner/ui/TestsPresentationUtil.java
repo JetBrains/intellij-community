@@ -25,22 +25,24 @@ import java.util.List;
 public class TestsPresentationUtil {
   @NonNls private static final String DOUBLE_SPACE = "  ";
   @NonNls private static final String WORLD_CREATION_TIME = "0.0";
-  @NonNls private static final String SECONDS_SUFFIX = " " + RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.seconds");
+  @NonNls private static final String SECONDS_SUFFIX = " " + RBundle.message(
+      "sm.test.runner.ui.tests.tree.presentation.labels.seconds");
   @NonNls private static final String DURATION_UNKNOWN = RBundle.message(
-      "ruby.test.runner.ui.tabs.statistics.columns.duration.unknown");
+      "sm.test.runner.ui.tabs.statistics.columns.duration.unknown");
   @NonNls private static final String DURATION_NO_TESTS = RBundle.message(
-      "ruby.test.runner.ui.tabs.statistics.columns.duration.no.tests");
+      "sm.test.runner.ui.tabs.statistics.columns.duration.no.tests");
   @NonNls private static final String DURATION_NOT_RUN = RBundle.message(
-      "ruby.test.runner.ui.tabs.statistics.columns.duration.not.run");
+      "sm.test.runner.ui.tabs.statistics.columns.duration.not.run");
   @NonNls private static final String DURATION_RUNNING_PREFIX = RBundle.message(
-      "ruby.test.runner.ui.tabs.statistics.columns.duration.prefix.running");
+      "sm.test.runner.ui.tabs.statistics.columns.duration.prefix.running");
   @NonNls private static final String DURATION_TERMINATED_PREFIX = RBundle.message(
-      "ruby.test.runner.ui.tabs.statistics.columns.duration.prefix.terminated");
+      "sm.test.runner.ui.tabs.statistics.columns.duration.prefix.terminated");
   @NonNls private static final String COLON = ": ";
   public static final SimpleTextAttributes PASSED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, TestsUIUtil.PASSED_COLOR);
   public static final SimpleTextAttributes DEFFECT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.RED);
   public static final SimpleTextAttributes TERMINATED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.ORANGE);
-  @NonNls private static final String RESULTS_NO_TESTS = RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.no.tests");
+  @NonNls private static final String RESULTS_NO_TESTS = RBundle.message(
+      "sm.test.runner.ui.tabs.statistics.columns.results.no.tests");
 
 
   private TestsPresentationUtil() {
@@ -53,17 +55,17 @@ public class TestsPresentationUtil {
                                               final int failuresCount) {
     final StringBuilder sb = new StringBuilder();
     if (endTime == 0) {
-      sb.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.running"));
+      sb.append(RBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.running"));
     } else {
-      sb.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.done"));
+      sb.append(RBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.done"));
     }
     sb.append(' ').append(testsCount).append(' ');
-    sb.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.of"));
+    sb.append(RBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.of"));
     sb.append(' ').append(testsTotal);
 
     if (failuresCount > 0) {
       sb.append(DOUBLE_SPACE);
-      sb.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.failed"));
+      sb.append(RBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.failed"));
       sb.append(' ').append(failuresCount);
     }
     if (endTime != 0) {
@@ -85,11 +87,11 @@ public class TestsPresentationUtil {
 
     final String text;
     if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
-      text = RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.running.tests");
+      text = RBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.running.tests");
     } else if (magnitude == TestStateInfo.Magnitude.TERMINATED_INDEX) {
-      text = RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.was.terminated");
+      text = RBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.was.terminated");
     } else {
-      text = RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.test.results");
+      text = RBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.results");
     }
     renderer.append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
@@ -99,25 +101,29 @@ public class TestsPresentationUtil {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
     if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
       renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
-      renderer.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.instantiating.tests"),
+      renderer.append(RBundle.message(
+          "sm.test.runner.ui.tests.tree.presentation.labels.instantiating.tests"),
                       SimpleTextAttributes.REGULAR_ATTRIBUTES);
     } else if (magnitude == TestStateInfo.Magnitude.NOT_RUN_INDEX) {
       renderer.setIcon(PoolOfTestIcons.NOT_RAN);
-      renderer.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.not.test.results"),
+      renderer.append(RBundle.message(
+          "sm.test.runner.ui.tests.tree.presentation.labels.not.test.results"),
                       SimpleTextAttributes.ERROR_ATTRIBUTES);
     } else if (magnitude == TestStateInfo.Magnitude.TERMINATED_INDEX) {
       renderer.setIcon(PoolOfTestIcons.TERMINATED_ICON);
-      renderer.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.was.terminated"),
+      renderer.append(RBundle.message(
+          "sm.test.runner.ui.tests.tree.presentation.labels.was.terminated"),
                       SimpleTextAttributes.REGULAR_ATTRIBUTES);
     } else if (magnitude == TestStateInfo.Magnitude.PASSED_INDEX) {
       renderer.setIcon(PoolOfTestIcons.PASSED_ICON);
-      renderer.append(RBundle.message("ruby.test.runner.ui.tests.tree.presentation.labels.all.tests.passed"),
+      renderer.append(RBundle.message(
+          "sm.test.runner.ui.tests.tree.presentation.labels.all.tests.passed"),
                       SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
     else {
       renderer.setIcon(PoolOfTestIcons.NOT_RAN);
       renderer.append(RBundle.message(
-          "ruby.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found"),
+          "sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found"),
                       SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
   }
@@ -226,25 +232,29 @@ public class TestsPresentationUtil {
     final String separator = TextUtil.SPACE_STRING;
 
     if (failedCount > 0) {
-      renderer.append(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.count.msg.failed",
+      renderer.append(RBundle.message(
+          "sm.test.runner.ui.tabs.statistics.columns.results.count.msg.failed",
                                       failedCount) + separator,
                       DEFFECT_ATTRIBUTES);
     }
 
     if (errorsCount > 0) {
-      renderer.append(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.count.msg.errors",
+      renderer.append(RBundle.message(
+          "sm.test.runner.ui.tabs.statistics.columns.results.count.msg.errors",
                                       errorsCount) + separator,
                       DEFFECT_ATTRIBUTES);
     }
 
     if (ignoredCount > 0) {
-      renderer.append(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.count.msg.ignored",
+      renderer.append(RBundle.message(
+          "sm.test.runner.ui.tabs.statistics.columns.results.count.msg.ignored",
                                       ignoredCount) + separator,
                       SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
     }
 
     if (passedCount > 0) {
-      renderer.append(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.results.count.msg.passed",
+      renderer.append(RBundle.message(
+          "sm.test.runner.ui.tabs.statistics.columns.results.count.msg.passed",
                                       passedCount),
                       PASSED_ATTRIBUTES);
     }

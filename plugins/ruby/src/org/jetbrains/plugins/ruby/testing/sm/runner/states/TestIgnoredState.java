@@ -10,7 +10,8 @@ import org.jetbrains.plugins.ruby.RBundle;
  * @author Roman Chernyatchik
  */
 public class TestIgnoredState extends AbstractState {
-  @NonNls private static final String IGNORED_TEST_TEXT = RBundle.message("ruby.test.runner.states.test.is.ignored");
+  @NonNls private static final String IGNORED_TEST_TEXT = RBundle.message(
+      "sm.test.runner.states.test.is.ignored");
   private final String myText;
 
   public TestIgnoredState(final String ignoredComment) {

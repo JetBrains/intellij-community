@@ -16,7 +16,7 @@ import java.util.Comparator;
 */
 public class ColumnDuration extends BaseColumn implements Comparator<SMTestProxy> {
   public ColumnDuration() {
-    super(RBundle.message("ruby.test.runner.ui.tabs.statistics.columns.duration.title"));
+    super(RBundle.message("sm.test.runner.ui.tabs.statistics.columns.duration.title"));
   }
 
   public String valueOf(final SMTestProxy testProxy) {
