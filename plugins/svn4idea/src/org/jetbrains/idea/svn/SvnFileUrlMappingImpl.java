@@ -168,9 +168,9 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
           return Collections.emptyList();
         }
 
+        final File ioFile = new File(virtualFile.getPath());
         SVNURL repositoryUrl = info.getRepositoryRootURL();
         if (repositoryUrl == null) {
-          final File ioFile = new File(virtualFile.getPath());
           // in very few cases go there
           info = myClient.doInfo(ioFile, SVNRevision.HEAD);
           repositoryUrl = info.getRepositoryRootURL();
@@ -182,7 +182,8 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
 
         final String currentPath = FileUtil.toSystemDependentName(virtualFile.getPath()) + File.separator;
 
-        final SvnFileUrlMappingRefresher.RootUrlInfo rootInfo = new SvnFileUrlMappingRefresher.RootUrlInfo(repositoryUrl, info.getURL());
+        final SvnFileUrlMappingRefresher.RootUrlInfo rootInfo = new SvnFileUrlMappingRefresher.RootUrlInfo(repositoryUrl, info.getURL(),
+                                                                                           SvnFormatSelector.getWorkingCopyFormat(ioFile));
 
         if ((! myUserRootsDiffersFromReal) && (! myCurrentRoot.equals(virtualFile))) {
           myUserRootsDiffersFromReal = true;

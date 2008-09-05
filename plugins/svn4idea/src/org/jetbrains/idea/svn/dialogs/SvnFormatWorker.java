@@ -9,6 +9,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -19,14 +21,15 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 
 public class SvnFormatWorker extends Task.Backgroundable {
   private List<Throwable> myExceptions;
   private final Project myProject;
   private final WorkingCopyFormat myNewFormat;
   private final List<WCInfo> myWcInfos;
+  private List<LocalChangeList> myBeforeChangeLists;
 
   public SvnFormatWorker(final Project project, final WorkingCopyFormat newFormat, final List<WCInfo> wcInfos) {
     super(project, SvnBundle.message("action.change.wcopy.format.task.title"), false, DEAF);
@@ -75,6 +78,10 @@ public class SvnFormatWorker extends Task.Backgroundable {
 
   @Override
   public void onSuccess() {
+    // to map to native
+    if (WorkingCopyFormat.ONE_DOT_FIVE.equals(myNewFormat)) {
+      SvnVcs.getInstance(myProject).processChangeLists(myBeforeChangeLists);
+    }
     ProjectLevelVcsManager.getInstance(myProject).stopBackgroundVcsOperation();
 
     if (! myExceptions.isEmpty()) {
@@ -90,6 +97,9 @@ public class SvnFormatWorker extends Task.Backgroundable {
   public void run(@NotNull final ProgressIndicator indicator) {
     ProjectLevelVcsManager.getInstance(myProject).startBackgroundVcsOperation();
     indicator.setIndeterminate(true);
+    if (WorkingCopyFormat.ONE_DOT_FIVE.equals(myNewFormat)) {
+      myBeforeChangeLists = ChangeListManager.getInstance(myProject).getChangeLists();
+    }
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final SVNWCClient wcClient = vcs.createWCClient();
 

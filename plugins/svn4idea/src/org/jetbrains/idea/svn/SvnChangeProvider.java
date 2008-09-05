@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -39,6 +40,7 @@ public class SvnChangeProvider implements ChangeProvider {
   private final SvnBranchConfigurationManager myBranchConfigurationManager;
   private final ExcludedFileIndex myExcludedFileIndex;
   private final ChangeListManager myClManager;
+  private final SvnFileUrlMapping myMapping;
 
   public SvnChangeProvider(final SvnVcs vcs) {
     myVcs = vcs;
@@ -46,6 +48,7 @@ public class SvnChangeProvider implements ChangeProvider {
     myBranchConfigurationManager = SvnBranchConfigurationManager.getInstance(myVcs.getProject());
     myExcludedFileIndex = ExcludedFileIndex.getInstance(myVcs.getProject());
     myClManager = ChangeListManager.getInstance(myVcs.getProject());
+    myMapping = myVcs.getSvnFileUrlMapping();
   }
 
   public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, ProgressIndicator progress) throws VcsException {
@@ -84,10 +87,14 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   private String changeListNameFromStatus(final SVNStatus status) {
-    if (SVNNodeKind.FILE.equals(status.getKind())) {
-      final String clName = status.getChangelistName();
-      return (clName == null) ? myClManager.getDefaultChangeList().getName() : clName;
+    final Pair<String,SvnFileUrlMapping.RootUrlInfo> infoPair = myMapping.getWcRootForFilePath(status.getFile());
+    if (infoPair != null && WorkingCopyFormat.ONE_DOT_FIVE.equals(infoPair.getSecond().getFormat())) {
+      if (SVNNodeKind.FILE.equals(status.getKind())) {
+        final String clName = status.getChangelistName();
+        return (clName == null) ? myClManager.getDefaultChangeList().getName() : clName;
+      }
     }
+    // always null for earlier versions
     return null;
   }
 

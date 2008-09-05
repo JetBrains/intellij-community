@@ -193,7 +193,7 @@ public class SvnVcs extends AbstractVcs {
     }
   }
 
-  private void processChangeLists(final List<LocalChangeList> lists) {
+  public void processChangeLists(final List<LocalChangeList> lists) {
     final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     final SVNChangelistClient client = createChangelistClient();
     for (LocalChangeList list : lists) {
