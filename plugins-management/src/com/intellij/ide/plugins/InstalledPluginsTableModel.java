@@ -168,7 +168,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
               }
               if (!enabled.booleanValue()) {
                 deps.add(pluginId);
-                return false;
               }
               return true;
             }
