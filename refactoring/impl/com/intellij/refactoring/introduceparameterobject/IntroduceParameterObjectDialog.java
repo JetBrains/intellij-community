@@ -62,6 +62,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     packageTextField.getTextField().getDocument().addDocumentListener(docListener);
     existingClassField.getTextField().getDocument().addDocumentListener(docListener);
     classNameField.getDocument().addDocumentListener(docListener);
+    myInnerClassNameTextField.getDocument().addDocumentListener(docListener);
     final PsiParameterList parameterList = sourceMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
     parameterInfo = new ParameterTablePanel.VariableData[parameters.length];
