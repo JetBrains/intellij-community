@@ -262,9 +262,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       return true;
     }
     final ParameterObjectBuilder beanClassBuilder = new ParameterObjectBuilder();
-    final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
-    final CodeStyleSettings settings = settingsManager.getCurrentSettings();
-    beanClassBuilder.setCodeStyleSettings(settings);
+    beanClassBuilder.setProject(myProject);
     beanClassBuilder.setTypeArguments(typeParams);
     beanClassBuilder.setClassName(className);
     beanClassBuilder.setPackageName(packageName);

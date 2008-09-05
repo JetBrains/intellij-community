@@ -1,8 +1,11 @@
 package com.intellij.refactoring.introduceparameterobject;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.NonNls;
 
@@ -16,9 +19,10 @@ class ParameterObjectBuilder {
     private String packageName = null;
     private final List<ParameterSpec> fields = new ArrayList<ParameterSpec>(5);
     private final List<PsiTypeParameter> typeParams = new ArrayList<PsiTypeParameter>();
-    private CodeStyleSettings settings = null;
+    private Project myProject;
+  private JavaCodeStyleManager myJavaCodeStyleManager ;
 
-    public void setClassName(String className) {
+  public void setClassName(String className) {
         this.className = className;
     }
 
@@ -36,11 +40,12 @@ class ParameterObjectBuilder {
         this.typeParams.addAll(typeParams);
     }
 
-    public void setCodeStyleSettings(CodeStyleSettings settings) {
-        this.settings = settings;
-    }
+  public void setProject(final Project project) {
+    myProject = project;
+    myJavaCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
+  }
 
-    public String buildBeanClass() throws IOException {
+  public String buildBeanClass() throws IOException {
         @NonNls final StringBuffer out = new StringBuffer(1024);
         if (packageName.length() > 0) out.append("package " + packageName + ';');
         out.append('\n');
@@ -101,16 +106,14 @@ class ParameterObjectBuilder {
         final String name = calculateStrippedName(parameter);
         final String capitalizedName = StringUtil.capitalize(name);
         final String parameterName =
-                settings.PARAMETER_NAME_PREFIX + name + settings.PARAMETER_NAME_SUFFIX;
+                myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
 
         out.append("\tpublic void set" + capitalizedName + '(');
         outputAnnotationString(parameter, out);
-        out.append(settings.GENERATE_FINAL_PARAMETERS?"final " : "");
+        out.append(CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS?"final " : "");
         out.append(' ' +typeText + ' ' + parameterName + ")\n");
         out.append("\t{\n");
-        final String prefix = settings.FIELD_NAME_PREFIX;
-        final String suffix = settings.FIELD_NAME_SUFFIX;
-        final String fieldName = prefix + name + suffix;
+        final String fieldName = myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.FIELD);
       generateFieldAssignment(out, parameterName, fieldName);
       out.append("\t}\n");
     }
@@ -125,14 +128,7 @@ class ParameterObjectBuilder {
 
   @NonNls
     private String calculateStrippedName(PsiParameter parameter) {
-        @NonNls String name = parameter.getName();
-        if (name.startsWith(settings.PARAMETER_NAME_PREFIX)) {
-            name = name.substring(settings.PARAMETER_NAME_PREFIX.length());
-        }
-        if (name.endsWith(settings.PARAMETER_NAME_SUFFIX)) {
-            name = name.substring(0, name.length() - settings.PARAMETER_NAME_SUFFIX.length());
-        }
-        return name;
+        return myJavaCodeStyleManager.variableNameToPropertyName(parameter.getName(), VariableKind.PARAMETER);
     }
 
     private void outputGetter(ParameterSpec field, @NonNls StringBuffer out) {
@@ -156,16 +152,7 @@ class ParameterObjectBuilder {
             out.append(" public " +typeText + " get" + capitalizedName + "()\n");
         }
         out.append("\t{\n");
-        final String prefix;
-        final String suffix;
-        if (parameter.hasModifierProperty(PsiModifier.STATIC)) {
-            prefix = settings.STATIC_FIELD_NAME_PREFIX;
-            suffix = settings.STATIC_FIELD_NAME_SUFFIX;
-        } else {
-            prefix = settings.FIELD_NAME_PREFIX;
-            suffix = settings.FIELD_NAME_SUFFIX;
-        }
-        final String fieldName = prefix + name + suffix;
+        final String fieldName = myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.FIELD);
         out.append("\t\treturn " + fieldName + ";\n");
         out.append("\t}\n");
     }
@@ -184,9 +171,9 @@ class ParameterObjectBuilder {
             }
             final String name = calculateStrippedName(parameter);
             final String parameterName =
-                    settings.PARAMETER_NAME_PREFIX + name + settings.PARAMETER_NAME_SUFFIX;
+                     myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
             outputAnnotationString(parameter, out);
-            out.append(settings.GENERATE_FINAL_PARAMETERS ? "final " : "");
+            out.append(CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS ? "final " : "");
             out.append(' ' +typeText + ' ' + parameterName);
             if (iterator.hasNext()) {
                 out.append(", ");
@@ -196,19 +183,11 @@ class ParameterObjectBuilder {
         out.append("\t{\n");
         for (final ParameterSpec field : fields) {
             final PsiParameter parameter = field.getParameter();
-            final String prefix;
-            final String suffix;
-            if (parameter.hasModifierProperty(PsiModifier.STATIC)) {
-                prefix = settings.STATIC_FIELD_NAME_PREFIX;
-                suffix = settings.STATIC_FIELD_NAME_SUFFIX;
-            } else {
-                prefix = settings.FIELD_NAME_PREFIX;
-                suffix = settings.FIELD_NAME_SUFFIX;
-            }
+
             final String name = calculateStrippedName(parameter);
-            final String fieldName = prefix + name + suffix;
+            final String fieldName = myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.FIELD);
             final String parameterName =
-                    settings.PARAMETER_NAME_PREFIX + name + settings.PARAMETER_NAME_SUFFIX;
+            myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
           generateFieldAssignment(out, parameterName, fieldName);
         }
         out.append("\t}\n");
@@ -231,13 +210,11 @@ class ParameterObjectBuilder {
         }
         final String name = calculateStrippedName(parameter);
         @NonNls String modifierString = "private ";
-        final String prefix = settings.FIELD_NAME_PREFIX;
-        final String suffix = settings.FIELD_NAME_SUFFIX;
         if (!field.isSetterRequired()) {
             modifierString += "final ";
         }
         outputAnnotationString(parameter, out);
-        out.append('\t' + modifierString + typeText + ' ' + prefix + name + suffix + ";\n");
+        out.append('\t' + modifierString + typeText + ' ' + myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.FIELD) + ";\n");
     }
 
     private void outputAnnotationString(PsiParameter parameter, StringBuffer out) {
