@@ -104,7 +104,7 @@ class UndoableGroup {
   }
 
   private void performWritableUndoOrRedoAction(final boolean isUndo) {
-    final Iterator<UndoableAction> each = isUndo ? reverseIterator(myActions.listIterator(myActions.size())) : myActions.iterator();
+    final Iterator<UndoableAction> actions = isUndo ? reverseIterator(myActions.listIterator(myActions.size())) : myActions.iterator();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -119,8 +119,8 @@ class UndoableGroup {
           message = CommonBundle.message("cannot.redo.message");
         }
 
-        while (each.hasNext()) {
-          UndoableAction undoableAction = each.next();
+        while (actions.hasNext()) {
+          UndoableAction undoableAction = actions.next();
           try {
             if (isUndo) {
               undoableAction.undo();
