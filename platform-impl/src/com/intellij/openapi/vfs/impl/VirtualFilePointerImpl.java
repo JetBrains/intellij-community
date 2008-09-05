@@ -6,8 +6,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -36,9 +36,6 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     myUrl = url;
     myVirtualFileManager = virtualFileManager;
     myListener = listener;
-    if (Disposer.isDebugMode()) {
-      putUserData(CREATE_TRACE, new Throwable("parent ="+parentDisposable));
-    }
     useCount = 0;
   }
 
