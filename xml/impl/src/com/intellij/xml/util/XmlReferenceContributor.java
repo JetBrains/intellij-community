@@ -9,12 +9,14 @@ import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.patterns.XmlPatterns.*;
 import com.intellij.psi.PsiReferenceContributor;
-import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.DtdReferencesProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.xml.*;
 
 /**
@@ -41,11 +43,10 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, null, dtdReferencesProvider.getSystemReferenceFilter(), uriProvider);
 
     HtmlReferenceProvider provider = new HtmlReferenceProvider();
-    String[] attributeNames2 = HtmlReferenceProvider.getAttributeValues();
-    ElementFilter elementFilter2 = HtmlReferenceProvider.getFilter();
+    String[] htmlAttrs = HtmlReferenceProvider.getAttributeValues();
+    ElementFilter htmlFilter = HtmlReferenceProvider.getFilter();
     boolean caseSensitive1 = false;
-    PsiReferenceProvider provider3 = provider;
-    XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, attributeNames2, elementFilter2, caseSensitive1, provider3);
+    XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, htmlAttrs, htmlFilter, caseSensitive1, provider);
 
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, new String[] { "href" }, new ScopeFilter(
       new ParentElementFilter(
