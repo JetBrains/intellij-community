@@ -1,9 +1,12 @@
 package com.intellij.refactoring.wrapreturnvalue;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
@@ -14,10 +17,10 @@ class ReturnValueBeanBuilder {
     private String className = null;
     private String packageName = null;
     private final List<PsiTypeParameter> typeParams = new ArrayList<PsiTypeParameter>();
-    private CodeStyleSettings settings = null;
+    private Project myProject = null;
     private PsiType valueType = null;
 
-    public void setClassName(String className) {
+  public void setClassName(String className) {
         this.className = className;
     }
 
@@ -30,8 +33,8 @@ class ReturnValueBeanBuilder {
         this.typeParams.addAll(typeParams);
     }
 
-    public void setCodeStyleSettings(CodeStyleSettings settings) {
-        this.settings = settings;
+    public void setCodeStyleSettings(Project settings) {
+        this.myProject = settings;
     }
 
     public String buildBeanClass() throws IOException {
@@ -71,20 +74,15 @@ class ReturnValueBeanBuilder {
         final String capitalizedName = StringUtil.capitalize(name);
         out.append("\tpublic " + typeText + " get" + capitalizedName + "()\n");
         out.append("\t{\n");
-        final String prefix = settings.FIELD_NAME_PREFIX;
-        final String suffix = settings.FIELD_NAME_SUFFIX;
-        final String fieldName = prefix + name + suffix;
-        out.append("\t\treturn " + fieldName + ";\n");
+      final String fieldName = getFieldName(name);
+      out.append("\t\treturn " + fieldName + ";\n");
         out.append("\t}\n");
         out.append('\n');
     }
 
     private void outputField(@NonNls StringBuffer out) {
         final String typeText = valueType.getCanonicalText();
-        @NonNls final String name = "value";
-        final String prefix = settings.FIELD_NAME_PREFIX;
-        final String suffix = settings.FIELD_NAME_SUFFIX;
-        out.append('\t' + "private final " + typeText + ' ' + prefix + name + suffix + ";\n");
+      out.append('\t' + "private final " + typeText + ' ' + getFieldName("value") + ";\n");
     }
 
     private void outputConstructor(@NonNls StringBuffer out) {
@@ -92,13 +90,13 @@ class ReturnValueBeanBuilder {
         final String typeText = valueType.getCanonicalText();
         @NonNls final String name = "value";
         final String parameterName =
-                settings.PARAMETER_NAME_PREFIX + name + settings.PARAMETER_NAME_SUFFIX;
-        out.append(settings.GENERATE_FINAL_PARAMETERS ? "final " : "");
+                JavaCodeStyleManager.getInstance(myProject).propertyNameToVariableName(name, VariableKind.PARAMETER);
+        out.append(CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS ? "final " : "");
         out.append(typeText + ' ' + parameterName);
         out.append(")\n");
         out.append("\t{\n");
-        final String fieldName = settings.FIELD_NAME_PREFIX + name + settings.FIELD_NAME_SUFFIX;
-        if (fieldName.equals(parameterName)) {
+      final String fieldName = getFieldName(name);
+      if (fieldName.equals(parameterName)) {
             out.append("\t\tthis." + fieldName + " = " + parameterName + ";\n");
         } else {
             out.append("\t\t" + fieldName + " = " + parameterName + ";\n");
@@ -107,7 +105,11 @@ class ReturnValueBeanBuilder {
         out.append('\n');
     }
 
-    public void setValueType(PsiType valueType) {
+  private String getFieldName(final String name) {
+    return JavaCodeStyleManager.getInstance(myProject).propertyNameToVariableName(name, VariableKind.FIELD);
+  }
+
+  public void setValueType(PsiType valueType) {
         this.valueType = valueType;
     }
 }
