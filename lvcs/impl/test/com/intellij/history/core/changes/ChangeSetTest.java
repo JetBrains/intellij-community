@@ -1,7 +1,7 @@
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.IdPath;
 import com.intellij.history.core.LocalVcsTestCase;
+import com.intellij.history.core.IdPath;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import org.junit.Test;
@@ -91,7 +91,7 @@ public class ChangeSetTest extends LocalVcsTestCase {
     }
 
     @Override
-    protected IdPath doApplyTo(Entry root) {
+    protected IdPath doApplyTo(Entry root, StructuralChangeAppliedState newState) {
       log.add(myId);
       return null;
     }

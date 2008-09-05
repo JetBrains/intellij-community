@@ -7,26 +7,36 @@ import com.intellij.history.core.tree.Entry;
 
 import java.io.IOException;
 
-public abstract class CreateEntryChange extends StructuralChange {
-  protected int myId; // transient
+public abstract class CreateEntryChange<NON_APPLIED_STATE_TYPE extends CreateEntryChangeNonAppliedState>
+    extends StructuralChange<NON_APPLIED_STATE_TYPE, StructuralChangeAppliedState> {
 
   public CreateEntryChange(int id, String path) {
     super(path);
-    myId = id;
+    getNonAppliedState().myId = id;
   }
 
   public CreateEntryChange(Stream s) throws IOException {
     super(s);
   }
 
+  @Override
+  protected NON_APPLIED_STATE_TYPE createNonAppliedState() {
+    return (NON_APPLIED_STATE_TYPE)new CreateEntryChangeNonAppliedState();
+  }
+
+  @Override
+  protected StructuralChangeAppliedState createAppliedState() {
+    return new StructuralChangeAppliedState();
+  }
+
   protected String getEntryParentPath() {
-    return Paths.getParentOf(myPath);
+    return Paths.getParentOf(getPath());
   }
 
   protected String getEntryName() {
     // new String() is for trimming rest part of path to
     // minimaze memory usage after bulk updates and refreshes.
-    return new String(Paths.getNameOf(myPath));
+    return new String(Paths.getNameOf(getPath()));
   }
 
   protected IdPath addEntry(Entry r, String parentPath, Entry e) {
@@ -37,7 +47,7 @@ public abstract class CreateEntryChange extends StructuralChange {
 
   @Override
   public void revertOn(Entry root) {
-    Entry e = root.getEntry(myAffectedIdPath);
+    Entry e = root.getEntry(getAffectedIdPath());
     removeEntry(e);
   }
 
@@ -47,7 +57,7 @@ public abstract class CreateEntryChange extends StructuralChange {
   }
 
   public boolean isCreationalFor(IdPath p) {
-    return p.getId() == myAffectedIdPath.getId();
+    return p.getId() == getAffectedIdPath().getId();
   }
 
   @Override

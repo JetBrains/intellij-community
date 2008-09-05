@@ -8,16 +8,12 @@ import com.intellij.history.core.tree.FileEntry;
 
 import java.io.IOException;
 
-public class CreateFileChange extends CreateEntryChange {
-  private Content myContent; // transient
-  private long myTimestamp; // transient
-  private boolean isReadOnly; // transient
-
+public class CreateFileChange extends CreateEntryChange<CreateFileChangeNonAppliedState> {
   public CreateFileChange(int id, String path, Content content, long timestamp, boolean isReadOnly) {
     super(id, path);
-    myContent = content;
-    myTimestamp = timestamp;
-    this.isReadOnly = isReadOnly;
+    getNonAppliedState().myContent = content;
+    getNonAppliedState().myTimestamp = timestamp;
+    getNonAppliedState().isReadOnly = isReadOnly;
   }
 
   public CreateFileChange(Stream s) throws IOException {
@@ -25,11 +21,20 @@ public class CreateFileChange extends CreateEntryChange {
   }
 
   @Override
-  protected IdPath doApplyTo(Entry r) {
+  protected CreateFileChangeNonAppliedState createNonAppliedState() {
+    return new CreateFileChangeNonAppliedState();
+  }
+
+  @Override
+  protected IdPath doApplyTo(Entry r, StructuralChangeAppliedState newState) {
     String name = getEntryName();
     String parentPath = getEntryParentPath();
 
-    Entry e = new FileEntry(myId, name, myContent, myTimestamp, isReadOnly);
+    Entry e = new FileEntry(getNonAppliedState().myId,
+                            name,
+                            getNonAppliedState().myContent,
+                            getNonAppliedState().myTimestamp,
+                            getNonAppliedState().isReadOnly);
 
     return addEntry(r, parentPath, e);
   }

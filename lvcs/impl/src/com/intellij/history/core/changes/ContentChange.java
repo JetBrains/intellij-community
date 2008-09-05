@@ -1,67 +1,73 @@
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.IdPath;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.storage.Stream;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.IdPath;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-public class ContentChange extends StructuralChange {
-  private Content myNewContent; // transient
-  private long myNewTimestamp; // transient
-  private Content myOldContent;
-  private long myOldTimestamp;
-
+public class ContentChange extends StructuralChange<ContentChangeNonAppliedState, ContentChangeAppliedState> {
   public ContentChange(String path, Content newContent, long timestamp) {
     super(path);
-    myNewContent = newContent;
-    myNewTimestamp = timestamp;
+    getNonAppliedState().myNewContent = newContent;
+    getNonAppliedState().myNewTimestamp = timestamp;
   }
 
   public ContentChange(Stream s) throws IOException {
     super(s);
-    myOldContent = s.readContent();
-    myOldTimestamp = s.readLong();
+    getAppliedState().myOldContent = s.readContent();
+    getAppliedState().myOldTimestamp = s.readLong();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
-    s.writeContent(myOldContent);
-    s.writeLong(myOldTimestamp);
-  }
-
-  public Content getOldContent() {
-    return myOldContent;
-  }
-
-  public long getOldTimestamp() {
-    return myOldTimestamp;
+    s.writeContent(getAppliedState().myOldContent);
+    s.writeLong(getAppliedState().myOldTimestamp);
   }
 
   @Override
-  protected IdPath doApplyTo(Entry root) {
-    Entry e = root.getEntry(myPath);
+  protected ContentChangeAppliedState createAppliedState() {
+    return new ContentChangeAppliedState();
+  }
 
-    myOldContent = e.getContent();
-    myOldTimestamp = e.getTimestamp();
+  @Override
+  protected ContentChangeNonAppliedState createNonAppliedState() {
+    return new ContentChangeNonAppliedState();
+  }
 
-    e.changeContent(myNewContent, myNewTimestamp);
+
+  public Content getOldContent() {
+    return getAppliedState().myOldContent;
+  }
+
+  public long getOldTimestamp() {
+    return getAppliedState().myOldTimestamp;
+  }
+
+  @Override
+  protected IdPath doApplyTo(Entry root, ContentChangeAppliedState newState) {
+    Entry e = root.getEntry(getPath());
+
+    newState.myOldContent = e.getContent();
+    newState.myOldTimestamp = e.getTimestamp();
+
+    e.changeContent(getNonAppliedState().myNewContent, getNonAppliedState().myNewTimestamp);
     return e.getIdPath();
   }
 
   @Override
   public void revertOn(Entry root) {
-    Entry e = root.getEntry(myAffectedIdPath);
-    e.changeContent(myOldContent, myOldTimestamp);
+    Entry e = root.getEntry(getAffectedIdPath());
+    e.changeContent(getAppliedState().myOldContent, getAppliedState().myOldTimestamp);
   }
 
   @Override
   public List<Content> getContentsToPurge() {
-    return Collections.singletonList(myOldContent);
+    return Collections.singletonList(getAppliedState().myOldContent);
   }
 
   @Override

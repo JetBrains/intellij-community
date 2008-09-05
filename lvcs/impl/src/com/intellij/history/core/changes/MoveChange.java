@@ -6,37 +6,44 @@ import com.intellij.history.core.tree.Entry;
 
 import java.io.IOException;
 
-public class MoveChange extends StructuralChange {
-  private String myNewParentPath; // transient
-  private IdPath myTargetIdPath;
-
+public class MoveChange extends StructuralChange<MoveChangeNonAppliedState, MoveChangeAppliedState> {
   public MoveChange(String path, String newParentPath) {
     super(path);
-    myNewParentPath = newParentPath;
+    getNonAppliedState().myNewParentPath = newParentPath;
   }
 
   public MoveChange(Stream s) throws IOException {
     super(s);
-    myTargetIdPath = s.readIdPath();
+    getAppliedState().myTargetIdPath = s.readIdPath();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
-    s.writeIdPath(myTargetIdPath);
+    s.writeIdPath(getAppliedState().myTargetIdPath);
   }
 
   @Override
-  protected IdPath doApplyTo(Entry r) {
-    Entry e = r.getEntry(myPath);
+  protected MoveChangeAppliedState createAppliedState() {
+    return new MoveChangeAppliedState();
+  }
+
+  @Override
+  protected MoveChangeNonAppliedState createNonAppliedState() {
+    return new MoveChangeNonAppliedState();
+  }
+
+  @Override
+  protected IdPath doApplyTo(Entry r, MoveChangeAppliedState newState) {
+    Entry e = r.getEntry(getPath());
     IdPath firstIdPath = e.getIdPath();
 
     removeEntry(e);
 
-    Entry newParent = r.getEntry(myNewParentPath);
+    Entry newParent = r.getEntry(getNonAppliedState().myNewParentPath);
     newParent.addChild(e);
 
-    myTargetIdPath = e.getIdPath();
+    newState.myTargetIdPath = e.getIdPath();
 
     return firstIdPath;
   }
@@ -56,16 +63,16 @@ public class MoveChange extends StructuralChange {
   }
 
   private Entry getEntry(Entry r) {
-    return r.getEntry(myTargetIdPath);
+    return r.getEntry(getAppliedState().myTargetIdPath);
   }
 
   private Entry getOldParent(Entry r) {
-    return r.getEntry(myAffectedIdPath.getParent());
+    return r.getEntry(getAffectedIdPath().getParent());
   }
 
   @Override
   public IdPath[] getAffectedIdPaths() {
-    return new IdPath[]{myAffectedIdPath, myTargetIdPath};
+    return new IdPath[]{getAffectedIdPath(), getAppliedState().myTargetIdPath};
   }
 
   @Override

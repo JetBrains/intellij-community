@@ -1,18 +1,15 @@
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.IdPath;
 import com.intellij.history.core.storage.Stream;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.IdPath;
 
 import java.io.IOException;
 
-public class CreateDirectoryChange extends CreateEntryChange {
-  private int myId; // transient
-
+public class CreateDirectoryChange extends CreateEntryChange<CreateEntryChangeNonAppliedState> {
   public CreateDirectoryChange(int id, String path) {
     super(id, path);
-    myId = id;
   }
 
   public CreateDirectoryChange(Stream s) throws IOException {
@@ -20,7 +17,7 @@ public class CreateDirectoryChange extends CreateEntryChange {
   }
 
   @Override
-  protected IdPath doApplyTo(Entry r) {
+  protected IdPath doApplyTo(Entry r, StructuralChangeAppliedState newState) {
     // todo messsssss!!!! should introduce createRoot method instead?
     // todo and simplify addEntry method too?
     String name = getEntryName();
@@ -28,10 +25,10 @@ public class CreateDirectoryChange extends CreateEntryChange {
 
     if (parentPath == null || !r.hasEntry(parentPath)) { // is it supposed to be a root?
       parentPath = null;
-      name = myPath;
+      name = getPath();
     }
 
-    DirectoryEntry e = new DirectoryEntry(myId, name);
+    DirectoryEntry e = new DirectoryEntry(getNonAppliedState().myId, name);
     return addEntry(r, parentPath, e);
   }
 }

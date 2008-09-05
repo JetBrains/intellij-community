@@ -1,50 +1,58 @@
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.IdPath;
 import com.intellij.history.core.storage.Stream;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.IdPath;
 
 import java.io.IOException;
 
-public class ROStatusChange extends StructuralChange {
-  private boolean myOldStatus;
-  private boolean myNewStatus; // transient
-
+public class ROStatusChange extends StructuralChange<ROStatusChangeNonAppliedState, ROStatusChangeAppliedState> {
   public ROStatusChange(String path, boolean isReadOnly) {
     super(path);
-    myNewStatus = isReadOnly;
+    getNonAppliedState().myNewStatus = isReadOnly;
   }
 
   public ROStatusChange(Stream s) throws IOException {
     super(s);
-    myOldStatus = s.readBoolean();
+    getAppliedState().myOldStatus = s.readBoolean();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
-    s.writeBoolean(myOldStatus);
-  }
-
-  public boolean getOldStatus() {
-    return myOldStatus;
+    s.writeBoolean(getAppliedState().myOldStatus);
   }
 
   @Override
-  protected IdPath doApplyTo(Entry r) {
-    Entry e = r.getEntry(myPath);
-    myOldStatus = e.isReadOnly();
-    e.setReadOnly(myNewStatus);
+  protected ROStatusChangeAppliedState createAppliedState() {
+    return new ROStatusChangeAppliedState();
+  }
+
+  @Override
+  protected ROStatusChangeNonAppliedState createNonAppliedState() {
+    return new ROStatusChangeNonAppliedState();
+  }
+
+  public boolean getOldStatus() {
+    return getAppliedState().myOldStatus;
+  }
+
+  @Override
+  protected IdPath doApplyTo(Entry r, ROStatusChangeAppliedState newState) {
+    Entry e = r.getEntry(getPath());
+    newState.myOldStatus = e.isReadOnly();
+    e.setReadOnly(getNonAppliedState().myNewStatus);
+
     return e.getIdPath();
   }
 
   @Override
   public void revertOn(Entry r) {
-    getEntry(r).setReadOnly(myOldStatus);
+    getEntry(r).setReadOnly(getAppliedState().myOldStatus);
   }
 
   private Entry getEntry(Entry r) {
-    return r.getEntry(myAffectedIdPath);
+    return r.getEntry(getAffectedIdPath());
   }
 
   @Override

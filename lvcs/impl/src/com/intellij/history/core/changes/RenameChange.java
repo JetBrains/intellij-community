@@ -7,54 +7,61 @@ import com.intellij.history.core.tree.Entry;
 
 import java.io.IOException;
 
-public class RenameChange extends StructuralChange {
-  private String myOldName;
-  private String myNewName; // transient
-
+public class RenameChange extends StructuralChange<RenameChangeNonAppliedState, RenameChangeAppliedState> {
   public RenameChange(String path, String newName) {
     super(path);
-    myNewName = newName;
+    getNonAppliedState().myNewName = newName;
   }
 
   public RenameChange(Stream s) throws IOException {
     super(s);
-    myOldName = s.readString();
+    getAppliedState().myOldName = s.readString();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
-    s.writeString(myOldName);
-  }
-
-  public String getOldName() {
-    return myOldName;
+    s.writeString(getAppliedState().myOldName);
   }
 
   @Override
-  protected IdPath doApplyTo(Entry r) {
-    Entry e = r.getEntry(myPath);
+  protected RenameChangeAppliedState createAppliedState() {
+    return new RenameChangeAppliedState();
+  }
+
+  @Override
+  protected RenameChangeNonAppliedState createNonAppliedState() {
+    return new RenameChangeNonAppliedState();
+  }
+
+  public String getOldName() {
+    return getAppliedState().myOldName;
+  }
+
+  @Override
+  protected IdPath doApplyTo(Entry r, RenameChangeAppliedState newState) {
+    Entry e = r.getEntry(getPath());
 
     // todo one more hack to support roots...
     // todo i defitilety have to do something with it...
-    myOldName = Paths.getNameOf(e.getName());
-    rename(e, myNewName);
+    newState.myOldName = Paths.getNameOf(e.getName());
+    rename(e, getNonAppliedState().myNewName);
 
     return e.getIdPath();
   }
 
   @Override
   public void revertOn(Entry r) {
-    rename(getEntry(r), myOldName);
+    rename(getEntry(r), getAppliedState().myOldName);
   }
 
   @Override
   public boolean canRevertOn(Entry r) {
-    return hasNoSuchEntry(getEntry(r).getParent(), myOldName);
+    return hasNoSuchEntry(getEntry(r).getParent(), getAppliedState().myOldName);
   }
 
   private Entry getEntry(Entry r) {
-    return r.getEntry(myAffectedIdPath);
+    return r.getEntry(getAffectedIdPath());
   }
 
   private void rename(Entry e, String newName) {
