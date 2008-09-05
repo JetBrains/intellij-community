@@ -233,15 +233,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        final String text = initialText != null ? initialText : "";
-        if (text.indexOf("\n") >= 0) {
-          setRegexp(true);
-          mySearchField.setText(StringUtil.escapeToRegexp(text));
-        }
-        else {
-          mySearchField.setText(text);
-        }
-        mySearchField.selectAll();
+        setInitialText(initialText);
       }
     });
 
@@ -254,6 +246,18 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     };
 
     myEditor.getDocument().addDocumentListener(myDocumentListener);
+  }
+
+  public void setInitialText(final String initialText) {
+    final String text = initialText != null ? initialText : "";
+    if (text.indexOf("\n") >= 0) {
+      setRegexp(true);
+      setTextInField(StringUtil.escapeToRegexp(text));
+    }
+    else {
+      setTextInField(text);
+    }
+    mySearchField.selectAll();
   }
 
   private void requestFocus(Component c) {
