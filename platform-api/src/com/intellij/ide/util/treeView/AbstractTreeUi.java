@@ -238,7 +238,6 @@ class AbstractTreeUi {
     return myBuilder == null;
   }
 
-
   protected void doExpandNodeChildren(final DefaultMutableTreeNode node) {
     getTreeStructure().commit();
     getUpdater().addSubtreeToUpdate(node);
@@ -1158,9 +1157,14 @@ class AbstractTreeUi {
             public void run() {
               if (isReleased()) return;
 
-              ApplicationManager.getApplication().runReadAction(runnable);
+              final Application app = ApplicationManager.getApplication();
+              app.runReadAction(runnable);
               if (postRunnable != null) {
-                ApplicationManager.getApplication().invokeLater(postRunnable, ModalityState.stateForComponent(myTree));
+                if (myTree.isVisible()) {
+                  app.invokeLater(postRunnable, ModalityState.stateForComponent(myTree));
+                } else {
+                  app.invokeLater(postRunnable);
+                }
               }
             }
           };

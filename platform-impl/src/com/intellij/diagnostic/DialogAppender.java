@@ -23,7 +23,7 @@ public class DialogAppender extends AppenderSkeleton {
   private Runnable myDialogRunnable = null;
 
   protected synchronized void append(final LoggingEvent event) {
-    if (!event.level.isGreaterOrEqual(Priority.WARN)) return;
+    if (!event.level.isGreaterOrEqual(Priority.ERROR)) return;
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {

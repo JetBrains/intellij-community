@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
@@ -324,15 +325,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     final CommandProcessorEx commandProcessor = ApplicationManager.getApplication() != null ? (CommandProcessorEx)CommandProcessor.getInstance() : null;
     final boolean appStarted = commandProcessor != null;
+
     if (myDialog.isModal() && !isProgressDialog()) {
-      /* TODO: Temporarily disable due to J2EE dialogs. Lots of code to rewrite there.
-      if (ApplicationManager.getApplication() != null) { // [dsl] for license dialog
+      if (ApplicationManager.getApplication() != null) {
         if (ApplicationManager.getApplication().getCurrentWriteAction(null) != null) {
-          LOG.error(
-            "Showing of modal dialog is prohibited inside write-action, modalityState=" + ModalityState.current());
+          LOG.warn(
+            "Showing of a modal dialog inside write-action may be dangerous and resulting in unpredictable behavior! Current modalityState=" + ModalityState.current(), new Exception());
         }
       }
-      */
       if (appStarted) {
         commandProcessor.enterModal();
         LaterInvocator.enterModal(myDialog);
