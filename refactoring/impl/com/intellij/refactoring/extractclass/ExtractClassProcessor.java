@@ -493,9 +493,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final PsiManager manager = sourceClass.getManager();
     final Project project = sourceClass.getProject();
     final ExtractedClassBuilder extractedClassBuilder = new ExtractedClassBuilder();
-    final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
-    final CodeStyleSettings settings = settingsManager.getCurrentSettings();
-    extractedClassBuilder.setCodeStyleSettings(settings);
+    extractedClassBuilder.setProject(myProject);
     extractedClassBuilder.setClassName(newClassName);
     extractedClassBuilder.setPackageName(newPackageName);
     extractedClassBuilder.setOriginalClassName(sourceClass.getQualifiedName());

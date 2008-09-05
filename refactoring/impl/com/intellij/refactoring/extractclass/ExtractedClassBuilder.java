@@ -1,10 +1,12 @@
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
@@ -30,10 +32,12 @@ class ExtractedClassBuilder {
   private final List<PsiClass> innerClassesToMakePublic = new ArrayList<PsiClass>(5);
   private final List<PsiTypeParameter> typeParams = new ArrayList<PsiTypeParameter>();
   private final List<PsiClass> interfaces = new ArrayList<PsiClass>();
-  private CodeStyleSettings settings = null;
+
   private boolean requiresBackPointer = false;
   private String originalClassName = null;
   private String backPointerName = null;
+  private Project myProject;
+  private JavaCodeStyleManager myJavaCodeStyleManager;
 
   public void setClassName(String className) {
     this.className = className;
@@ -77,9 +81,6 @@ class ExtractedClassBuilder {
     this.interfaces.addAll(interfaces);
   }
 
-  public void setCodeStyleSettings(CodeStyleSettings settings) {
-    this.settings = settings;
-  }
 
   public String buildBeanClass() throws IOException {
     if (requiresBackPointer) {
@@ -169,14 +170,14 @@ class ExtractedClassBuilder {
       final String simpleClassName = originalClassName.substring(originalClassName.lastIndexOf('.') + 1);
       baseName = toLowerCase(simpleClassName);
     }
-    String name = settings.FIELD_NAME_PREFIX + baseName + settings.FIELD_NAME_SUFFIX;
+    String name = myJavaCodeStyleManager.propertyNameToVariableName(baseName, VariableKind.FIELD);
     if (!existsFieldWithName(name)) {
       backPointerName = name;
       return;
     }
     int counter = 1;
     while (true) {
-      name = settings.FIELD_NAME_PREFIX + baseName + counter + settings.FIELD_NAME_SUFFIX;
+      name = name + counter;
       if (!existsFieldWithName(name)) {
         backPointerName = name;
         return;
@@ -298,13 +299,14 @@ class ExtractedClassBuilder {
     }
     final PsiField variable = field.getField();
     final String name = calculateStrippedName(variable);
-    final String setterName = createSetterNameForField(variable);
+
+    final String setterName = PropertyUtil.suggestSetterName(variable.getProject(), variable);
     for (PsiMethod method : methods) {
       if (method.getName().equals(setterName) && method.getParameterList().getParameters().length == 1) {
         return;
       }
     }
-    final String parameterName = settings.PARAMETER_NAME_PREFIX + name + settings.PARAMETER_NAME_SUFFIX;
+    final String parameterName = myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
     final PsiType type = variable.getType();
     final String typeText = type.getCanonicalText();
     out.append("\tpublic ");
@@ -320,13 +322,8 @@ class ExtractedClassBuilder {
     out.append(")\n");
     out.append("\t{\n");
 
-    final String fieldName;
-    if (variable.hasModifierProperty(PsiModifier.STATIC)) {
-      fieldName = settings.STATIC_FIELD_NAME_PREFIX + name + settings.STATIC_FIELD_NAME_SUFFIX;
-    }
-    else {
-      fieldName = settings.FIELD_NAME_PREFIX + name + settings.FIELD_NAME_SUFFIX;
-    }
+    final String fieldName = myJavaCodeStyleManager
+      .propertyNameToVariableName(name, variable.hasModifierProperty(PsiModifier.STATIC) ? VariableKind.STATIC_FIELD : VariableKind.FIELD);
     if (fieldName.equals(parameterName)) {
       out.append("\t\tthis." + fieldName + " = " + parameterName + ";\n");
     }
@@ -342,21 +339,10 @@ class ExtractedClassBuilder {
     if (name == null) {
       return null;
     }
-    if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC)) {
-      if (name.startsWith(settings.STATIC_FIELD_NAME_PREFIX)) {
-        name = name.substring(settings.STATIC_FIELD_NAME_PREFIX.length());
-      }
-      if (name.endsWith(settings.STATIC_FIELD_NAME_SUFFIX)) {
-        name = name.substring(0, name.length() - settings.STATIC_FIELD_NAME_SUFFIX.length());
-      }
-    }
-    else if (variable instanceof PsiField && !variable.hasModifierProperty(PsiModifier.STATIC)) {
-      if (name.startsWith(settings.FIELD_NAME_PREFIX)) {
-        name = name.substring(settings.FIELD_NAME_PREFIX.length());
-      }
-      if (name.endsWith(settings.FIELD_NAME_SUFFIX)) {
-        name = name.substring(0, name.length() - settings.FIELD_NAME_SUFFIX.length());
-      }
+    if (variable instanceof PsiField) {
+      name = myJavaCodeStyleManager.variableNameToPropertyName(name, variable.hasModifierProperty(PsiModifier.STATIC)
+                                                                     ? VariableKind.STATIC_FIELD
+                                                                     : VariableKind.FIELD);
     }
     return name;
   }
@@ -394,13 +380,7 @@ class ExtractedClassBuilder {
     out.append(getterName);
     out.append("()\n");
     out.append("\t{\n");
-    final String fieldName;
-    if (variable.hasModifierProperty(PsiModifier.STATIC)) {
-      fieldName = settings.STATIC_FIELD_NAME_PREFIX + name + settings.STATIC_FIELD_NAME_SUFFIX;
-    }
-    else {
-      fieldName = settings.FIELD_NAME_PREFIX + name + settings.FIELD_NAME_SUFFIX;
-    }
+    final String fieldName = myJavaCodeStyleManager.propertyNameToVariableName(name, variable.hasModifierProperty(PsiModifier.STATIC) ? VariableKind.STATIC_FIELD : VariableKind.FIELD);
     out.append("\t\treturn " + fieldName + ";\n");
     out.append("\t}\n");
     out.append('\n');
@@ -410,7 +390,7 @@ class ExtractedClassBuilder {
     out.append("\tpublic " + className + '(');
     boolean isFirst = true;
     if (requiresBackPointer) {
-      final String parameterName = settings.PARAMETER_NAME_PREFIX + backPointerName + settings.PARAMETER_NAME_SUFFIX;
+      final String parameterName = myJavaCodeStyleManager.propertyNameToVariableName(backPointerName, VariableKind.PARAMETER);
       out.append(originalClassName);
       if (!typeParams.isEmpty()) {
         out.append('<');
@@ -446,14 +426,14 @@ class ExtractedClassBuilder {
       final PsiType type = variable.getType();
       final String typeText = type.getCanonicalText();
       final String name = calculateStrippedName(variable);
-      final String parameterName = settings.PARAMETER_NAME_PREFIX + name + settings.PARAMETER_NAME_SUFFIX;
+      final String parameterName = myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
       out.append(typeText + ' ' + parameterName);
     }
 
     out.append(")\n");
     out.append("\t{\n");
     if (requiresBackPointer) {
-      final String parameterName = settings.PARAMETER_NAME_PREFIX + backPointerName + settings.PARAMETER_NAME_SUFFIX;
+      final String parameterName = myJavaCodeStyleManager.propertyNameToVariableName(backPointerName, VariableKind.PARAMETER);
       if (backPointerName.equals(parameterName)) {
         out.append("\t\tthis." + backPointerName + " = " + parameterName + ";\n");
       }
@@ -475,14 +455,9 @@ class ExtractedClassBuilder {
         continue;
       }
       final String name = calculateStrippedName(variable);
-      final String fieldName;
-      if (variable.hasModifierProperty(PsiModifier.STATIC)) {
-        fieldName = settings.STATIC_FIELD_NAME_PREFIX + name + settings.STATIC_FIELD_NAME_SUFFIX;
-      }
-      else {
-        fieldName = settings.FIELD_NAME_PREFIX + name + settings.FIELD_NAME_SUFFIX;
-      }
-      final String parameterName = settings.PARAMETER_NAME_PREFIX + name + settings.PARAMETER_NAME_SUFFIX;
+      final String fieldName = myJavaCodeStyleManager
+      .propertyNameToVariableName(name, variable.hasModifierProperty(PsiModifier.STATIC) ? VariableKind.STATIC_FIELD : VariableKind.FIELD);
+      final String parameterName = myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
       if (fieldName.equals(parameterName)) {
         out.append("\t\tthis." + fieldName + " = " + parameterName + ";\n");
       }
@@ -512,13 +487,10 @@ class ExtractedClassBuilder {
     else {
       modifierString = "private ";
     }
-    final String fieldName;
+    final String fieldName = myJavaCodeStyleManager
+      .propertyNameToVariableName(name, variable.hasModifierProperty(PsiModifier.STATIC) ? VariableKind.STATIC_FIELD : VariableKind.FIELD);
     if (variable.hasModifierProperty(PsiModifier.STATIC)) {
       modifierString += "static ";
-      fieldName = settings.STATIC_FIELD_NAME_PREFIX + name + settings.STATIC_FIELD_NAME_SUFFIX;
-    }
-    else {
-      fieldName = settings.FIELD_NAME_PREFIX + name + settings.FIELD_NAME_SUFFIX;
     }
     if (!field.isSetterRequired() && variable.hasModifierProperty(PsiModifier.FINAL)) {
       modifierString += "final ";
@@ -562,15 +534,9 @@ class ExtractedClassBuilder {
   }
 
 
-  @NonNls
-  private String createSetterNameForField(PsiField field) {
-
-    return PropertyUtil.suggestSetterName(field.getProject(), field);
-  }
-
-  @NonNls
-  private String createGetterNameForField(PsiField field) {
-    return PropertyUtil.suggestGetterName(field.getProject(), field);
+  public void setProject(final Project project) {
+    myProject = project;
+    myJavaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
   }
 
   private class Mutator extends JavaElementVisitor {
@@ -608,13 +574,8 @@ class ExtractedClassBuilder {
           if (fieldIsExtracted(field)) {
 
             final String name = calculateStrippedName(field);
-            final String fieldName;
-            if (field.hasModifierProperty(PsiModifier.STATIC)) {
-              fieldName = settings.STATIC_FIELD_NAME_PREFIX + name + settings.STATIC_FIELD_NAME_SUFFIX;
-            }
-            else {
-              fieldName = settings.FIELD_NAME_PREFIX + name + settings.FIELD_NAME_SUFFIX;
-            }
+            final String fieldName = myJavaCodeStyleManager
+      .propertyNameToVariableName(name, field.hasModifierProperty(PsiModifier.STATIC) ? VariableKind.STATIC_FIELD : VariableKind.FIELD);
             if (qualifier != null && fieldName.equals(expression.getReferenceName())) {
               out.append("this.");
             }
@@ -626,11 +587,11 @@ class ExtractedClassBuilder {
                 out.append(originalClassName + '.' + field.getName());
               }
               else {
-                out.append(originalClassName + '.' + createGetterNameForField(field) + "()");
+                out.append(originalClassName + '.' + PropertyUtil.suggestGetterName(field.getProject(), field) + "()");
               }
             }
             else {
-              out.append(backPointerName + '.' + createGetterNameForField(field) + "()");
+              out.append(backPointerName + '.' + PropertyUtil.suggestGetterName(field.getProject(), field) + "()");
             }
           }
         }
@@ -659,40 +620,10 @@ class ExtractedClassBuilder {
         final IElementType tokenType = sign.getTokenType();
         assert field != null;
         if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-          if (tokenType.equals(JavaTokenType.EQ)) {
-            final String setterName = createSetterNameForField(field);
-            out.append(backPointerName + '.' + setterName + '(');
-            rhs.accept(this);
-            out.append(')');
-          }
-          else {
-            final String operator = sign.getText().substring(0, sign.getTextLength() - 1);
-            final String setterName = createSetterNameForField(field);
-            out.append(backPointerName + '.' + setterName + '(');
-            final String getterName = createGetterNameForField(field);
-            out.append(backPointerName + '.' + getterName + "()");
-            out.append(operator);
-            rhs.accept(this);
-            out.append(')');
-          }
+          delegate(rhs, field, sign, tokenType, backPointerName);
         }
         else if (!field.hasModifierProperty(PsiModifier.PUBLIC)) {
-          if (tokenType.equals(JavaTokenType.EQ)) {
-            final String setterName = createSetterNameForField(field);
-            out.append(originalClassName + '.' + setterName + '(');
-            rhs.accept(this);
-            out.append(')');
-          }
-          else {
-            final String operator = sign.getText().substring(0, sign.getTextLength() - 1);
-            final String setterName = createSetterNameForField(field);
-            out.append(originalClassName + '.' + setterName + '(');
-            final String getterName = createGetterNameForField(field);
-            out.append(originalClassName + '.' + getterName + "()");
-            out.append(operator);
-            rhs.accept(this);
-            out.append(')');
-          }
+          delegate(rhs, field, sign, tokenType, originalClassName);
         }
         else {
           visitElement(expression);  //for public static fields, the
@@ -700,6 +631,26 @@ class ExtractedClassBuilder {
       }
       else {
         visitElement(expression);
+      }
+    }
+
+    private void delegate(final PsiExpression rhs, final PsiField field, final PsiJavaToken sign, final IElementType tokenType,
+                          final String fieldName) {
+      if (tokenType.equals(JavaTokenType.EQ)) {
+        final String setterName = PropertyUtil.suggestSetterName(field.getProject(), field);
+        out.append(fieldName + '.' + setterName + '(');
+        rhs.accept(this);
+        out.append(')');
+      }
+      else {
+        final String operator = sign.getText().substring(0, sign.getTextLength() - 1);
+        final String setterName = PropertyUtil.suggestSetterName(field.getProject(), field);
+        out.append(fieldName + '.' + setterName + '(');
+        final String getterName = PropertyUtil.suggestGetterName(field.getProject(), field);
+        out.append(fieldName + '.' + getterName + "()");
+        out.append(operator);
+        rhs.accept(this);
+        out.append(')');
       }
     }
 
@@ -731,24 +682,20 @@ class ExtractedClassBuilder {
         assert field != null;
         if (!field.hasModifierProperty(PsiModifier.STATIC)) {
           out.append(backPointerName +
-                     '.' +
-                     createSetterNameForField(field) +
+                     '.' + PropertyUtil.suggestSetterName(field.getProject(), field) +
                      '(' +
                      backPointerName +
-                     '.' +
-                     createGetterNameForField(field) +
+                     '.' + PropertyUtil.suggestGetterName(field.getProject(), field) +
                      "()" +
                      operator +
                      "1)");
         }
         else if (!field.hasModifierProperty(PsiModifier.PUBLIC)) {
           out.append(originalClassName +
-                     '.' +
-                     createSetterNameForField(field) +
+                     '.' + PropertyUtil.suggestSetterName(field.getProject(), field) +
                      '(' +
                      originalClassName +
-                     '.' +
-                     createGetterNameForField(field) +
+                     '.' + PropertyUtil.suggestGetterName(field.getProject(), field) +
                      "()" +
                      operator +
                      "1)");
