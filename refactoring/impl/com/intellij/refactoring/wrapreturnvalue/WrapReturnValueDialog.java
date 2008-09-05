@@ -127,6 +127,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
         validateButtons();
       }
     });
+    myInnerClassNameTextField.getDocument().addDocumentListener(docListener);
 
     final PsiFile file = sourceMethod.getContainingFile();
     if (file instanceof PsiJavaFile) {
