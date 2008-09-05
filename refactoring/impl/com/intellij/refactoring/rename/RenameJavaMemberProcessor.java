@@ -1,17 +1,17 @@
 package com.intellij.refactoring.rename;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.openapi.diagnostic.Logger;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -79,6 +79,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
 
   protected static void findMemberHidesOuterMemberCollisions(final PsiMember member, final String newName, final List<UsageInfo> result) {
     final PsiMember patternMember;
+    if (member instanceof PsiCompiledElement) return;
     if (member instanceof PsiMethod) {
       PsiMethod patternMethod = (PsiMethod) member.copy();
       try {
