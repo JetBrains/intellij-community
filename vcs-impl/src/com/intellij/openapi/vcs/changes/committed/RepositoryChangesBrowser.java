@@ -41,25 +41,9 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
     super.buildToolBar(toolBarGroup);
 
     toolBarGroup.add(new ShowDiffWithLocalAction());
-    final Icon editSourceIcon = IconLoader.getIcon("/actions/editSource.png");
-    toolBarGroup.add(new EditSourceAction() {
-      public void update(final AnActionEvent event) {
-        super.update(event);
-        event.getPresentation().setIcon(editSourceIcon);
-        event.getPresentation().setText("Edit Source");
-        if (CommittedChangesBrowserUseCase.IN_AIR.equals(event.getDataContext().getData(CommittedChangesBrowserUseCase.CONTEXT_NAME))) {
-          event.getPresentation().setEnabled(false);
-        }
-      }
-      protected Navigatable[] getNavigatables(final DataContext dataContext) {
-        Change[] changes = (Change[])dataContext.getData(VcsDataKeys.SELECTED_CHANGES.getName());
-        if (changes != null) {
-          Collection<Change> changeCollection = Arrays.asList(changes);
-          return ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changeCollection));
-        }
-        return null;
-      }
-    });
+    final MyEditSourceAction editSourceAction = new MyEditSourceAction();
+    editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
+    toolBarGroup.add(editSourceAction);
     OpenRepositoryVersionAction action = new OpenRepositoryVersionAction();
     toolBarGroup.add(action);
 
@@ -85,6 +69,32 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
     } else {
       final TypeSafeDataProviderAdapter adapter = new TypeSafeDataProviderAdapter(this);
       return adapter.getData(dataId);
+    }
+  }
+
+  private class MyEditSourceAction extends EditSourceAction {
+    private final Icon myEditSourceIcon;
+
+    public MyEditSourceAction() {
+      myEditSourceIcon = IconLoader.getIcon("/actions/editSource.png");
+    }
+
+    public void update(final AnActionEvent event) {
+      super.update(event);
+      event.getPresentation().setIcon(myEditSourceIcon);
+      event.getPresentation().setText("Edit Source");
+      if (CommittedChangesBrowserUseCase.IN_AIR.equals(event.getDataContext().getData(CommittedChangesBrowserUseCase.CONTEXT_NAME))) {
+        event.getPresentation().setEnabled(false);
+      }
+    }
+
+    protected Navigatable[] getNavigatables(final DataContext dataContext) {
+      Change[] changes = (Change[])dataContext.getData(VcsDataKeys.SELECTED_CHANGES.getName());
+      if (changes != null) {
+        Collection<Change> changeCollection = Arrays.asList(changes);
+        return ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changeCollection));
+      }
+      return null;
     }
   }
 }

@@ -97,11 +97,21 @@ public class ActionMenuItem extends JMenuItem {
     String id = ActionManager.getInstance().getId(myAction);
     if (id != null) {
       Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(id);
-      for (Shortcut shortcut : shortcuts) {
-        if (shortcut instanceof KeyboardShortcut) {
-          setAccelerator(((KeyboardShortcut)shortcut).getFirstKeyStroke());
-          break;
-        }
+      setAcceleratorFromShortcuts(shortcuts);
+    }
+    else {
+      final ShortcutSet shortcutSet = myAction.getShortcutSet();
+      if (shortcutSet != null) {
+        setAcceleratorFromShortcuts(shortcutSet.getShortcuts());
+      }
+    }
+  }
+
+  private void setAcceleratorFromShortcuts(final Shortcut[] shortcuts) {
+    for (Shortcut shortcut : shortcuts) {
+      if (shortcut instanceof KeyboardShortcut) {
+        setAccelerator(((KeyboardShortcut)shortcut).getFirstKeyStroke());
+        break;
       }
     }
   }
