@@ -48,6 +48,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -57,6 +58,7 @@ import com.intellij.util.containers.SoftHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.dialogs.SvnFormatWorker;
@@ -103,7 +105,6 @@ public class SvnVcs extends AbstractVcs {
 
   private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
-  private final Project myProject;
 
   private CheckinEnvironment myCheckinEnvironment;
   private RollbackEnvironment myRollbackEnvironment;
@@ -121,6 +122,7 @@ public class SvnVcs extends AbstractVcs {
   private final SvnFileUrlMappingRefresher myRootsInfo;
 
   private ChangeProvider myChangeProvider;
+  private MergeProvider myMergeProvider;
 
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
   @NonNls public static final String VCS_NAME = "svn";
@@ -150,7 +152,6 @@ public class SvnVcs extends AbstractVcs {
   public SvnVcs(Project project, SvnConfiguration svnConfiguration) {
     super(project);
     LOG.debug("ct");
-    myProject = project;
     myConfiguration = svnConfiguration;
 
     dumpFileStatus(FileStatus.ADDED);
@@ -746,5 +747,13 @@ public class SvnVcs extends AbstractVcs {
   @Override
   public RootsConvertor getCustomConvertor() {
     return myRootsInfo;
+  }
+
+  @Override
+  public MergeProvider getMergeProvider() {
+    if (myMergeProvider == null) {
+      myMergeProvider = new SvnMergeProvider(myProject);
+    }
+    return myMergeProvider;
   }
 }
