@@ -390,4 +390,25 @@ public class GroovyConfigUtils {
     return LibrariesUtil.getGroovyOrGrailsLibraryHome(library);
   }
 
+  public static void setUpGroovyFacet(final ModifiableRootModel model) {
+    LibraryTable libTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
+    final Project project = model.getModule().getProject();
+    String name = GroovyApplicationSettings.getInstance().DEFAULT_GROOVY_LIB_NAME;
+    if (name != null && libTable.getLibraryByName(name) != null) {
+      Library library = libTable.getLibraryByName(name);
+      if (isGroovySdkLibrary(library)) {
+        LibraryOrderEntry entry = model.addLibraryEntry(library);
+        LibrariesUtil.placeEntryToCorrectPlace(model, entry);
+      }
+    } else {
+      final Library[] libraries = getAllGroovyLibraries(project);
+      if (libraries.length > 0) {
+        Library library = libraries[0];
+        if (isGroovySdkLibrary(library)) {
+          LibraryOrderEntry entry = model.addLibraryEntry(library);
+          LibrariesUtil.placeEntryToCorrectPlace(model, entry);
+        }
+      }
+    }
+  }
 }
