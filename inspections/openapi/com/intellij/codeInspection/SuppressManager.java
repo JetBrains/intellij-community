@@ -9,18 +9,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.regex.Pattern;
 
 public abstract class SuppressManager {
-  @NonNls public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
   public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
-  @NonNls public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN =
-    Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(s*,\\w+)*)");
 
   public static SuppressManager getInstance() {
     return ServiceManager.getService(SuppressManager.class);
@@ -37,8 +32,6 @@ public abstract class SuppressManager {
 
   @Nullable
   public abstract PsiElement getDocCommentToolSuppressedIn(PsiDocCommentOwner owner, String inspectionToolID);
-
-  public abstract boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID);
 
   @NotNull
   public abstract Collection<String> getInspectionIdsSuppressedInAnnotation(PsiModifierListOwner owner);

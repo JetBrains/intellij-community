@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SuppressManager;
-import com.intellij.codeInspection.SuppressManagerImpl;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -108,21 +108,21 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
       }
       else {
         PsiComment newComment = JavaPsiFacade.getInstance(comment.getProject()).getElementFactory()
-          .createCommentFromText("// " + SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME+" "+newText, comment);
+          .createCommentFromText("// " + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME+" "+newText, comment);
         comment.replace(newComment);
       }
     }
   }
 
   private void removeFromJavaDoc(PsiDocComment docComment) throws IncorrectOperationException {
-    PsiDocTag tag = docComment.findTagByName(SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
+    PsiDocTag tag = docComment.findTagByName(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME);
     if (tag == null) return;
     String newText = removeFromElementText(tag.getDataElements());
     if (newText != null && newText.length() == 0) {
       tag.delete();
     }
     else if (newText != null) {
-      newText = "@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + newText;
+      newText = "@" + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME + " " + newText;
       PsiDocTag newTag = JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createDocTagFromText(newText, tag);
       tag.replace(newTag);
     }
@@ -135,7 +135,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
       text += StringUtil.trimStart(element.getText(), "//").trim();
     }
     text = StringUtil.trimStart(text, "@").trim();
-    text = StringUtil.trimStart(text, SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME).trim();
+    text = StringUtil.trimStart(text, SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME).trim();
     List<String> ids = StringUtil.split(text, ",");
     int i = ArrayUtil.find(ids.toArray(), myID);
     if (i==-1) return null;

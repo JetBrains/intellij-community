@@ -5,7 +5,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.SuppressManagerImpl;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -322,7 +322,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
       super.visitDocComment(comment);
       final PsiDocTag[] tags = comment.getTags();
       for (PsiDocTag tag : tags) {
-        if (Comparing.strEqual(tag.getName(), SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME)) {
+        if (Comparing.strEqual(tag.getName(), SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME)) {
           final PsiElement[] dataElements = tag.getDataElements();
           if (dataElements != null && dataElements.length > 0) {
             final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(comment, PsiModifierListOwner.class);

@@ -18,14 +18,12 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiVariableEx;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +36,11 @@ import java.util.regex.Matcher;
 public class SuppressManagerImpl extends SuppressManager {
 
   public SuppressIntentionAction[] createSuppressActions(final HighlightDisplayKey displayKey) {
-    return new SuppressIntentionAction[]{new AddNoInspectionCommentFix(displayKey), new AddSuppressInspectionFix(displayKey),
-      new AddSuppressInspectionForClassFix(displayKey), new AddSuppressInspectionAllForClassFix()
+    return new SuppressIntentionAction[]{
+        new AddNoInspectionCommentFix(displayKey), 
+        new AddSuppressInspectionFix(displayKey),
+        new AddSuppressInspectionForClassFix(displayKey),
+        new AddSuppressInspectionAllForClassFix()
       };
   }
 
@@ -71,7 +72,7 @@ public class SuppressManagerImpl extends SuppressManager {
     PsiModifierList modifierList = owner.getModifierList();
     Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation(modifierList);
     for (String ids : suppressedIds) {
-      if (isInspectionToolIdMentioned(ids, inspectionToolID)) {
+      if (SuppressionUtil.isInspectionToolIdMentioned(ids, inspectionToolID)) {
         return modifierList != null ? modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
       }
     }
@@ -82,27 +83,18 @@ public class SuppressManagerImpl extends SuppressManager {
   public PsiElement getDocCommentToolSuppressedIn(final PsiDocCommentOwner owner, final String inspectionToolID) {
     PsiDocComment docComment = owner.getDocComment();
     if (docComment != null) {
-      PsiDocTag inspectionTag = docComment.findTagByName(SUPPRESS_INSPECTIONS_TAG_NAME);
+      PsiDocTag inspectionTag = docComment.findTagByName(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME);
       if (inspectionTag != null) {
         final PsiElement[] dataElements = inspectionTag.getDataElements();
         for (PsiElement dataElement : dataElements) {
           String valueText = dataElement.getText();
-          if (isInspectionToolIdMentioned(valueText, inspectionToolID)) {
+          if (SuppressionUtil.isInspectionToolIdMentioned(valueText, inspectionToolID)) {
             return docComment;
           }
         }
       }
     }
     return null;
-  }
-
-  public boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID) {
-    Iterable<String> ids = StringUtil.tokenize(inspectionsList, "[,]");
-
-    for (@NonNls String id : ids) {
-      if (id.equals(inspectionToolID) || id.equals("ALL")) return true;
-    }
-    return false;
   }
 
   @NotNull
@@ -116,7 +108,7 @@ public class SuppressManagerImpl extends SuppressManager {
   public String getSuppressedInspectionIdsIn(PsiElement element) {
     if (element instanceof PsiComment) {
       String text = element.getText();
-      Matcher matcher = SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(text);
+      Matcher matcher = SuppressionUtil.SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(text);
       if (matcher.matches()) {
         return matcher.group(1);
       }
@@ -124,7 +116,7 @@ public class SuppressManagerImpl extends SuppressManager {
     if (element instanceof PsiDocCommentOwner) {
       PsiDocComment docComment = ((PsiDocCommentOwner)element).getDocComment();
       if (docComment != null) {
-        PsiDocTag inspectionTag = docComment.findTagByName(SUPPRESS_INSPECTIONS_TAG_NAME);
+        PsiDocTag inspectionTag = docComment.findTagByName(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME);
         if (inspectionTag != null) {
           String valueText = "";
           for (PsiElement dataElement : inspectionTag.getDataElements()) {
@@ -147,16 +139,9 @@ public class SuppressManagerImpl extends SuppressManager {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
       @Nullable
       public PsiElement compute() {
-        PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class);
+        final PsiElement statement = SuppressionUtil.getStatementToolSuppressedIn(place, toolId, PsiStatement.class);
         if (statement != null) {
-          PsiElement prev = PsiTreeUtil.skipSiblingsBackward(statement, PsiWhiteSpace.class);
-          if (prev instanceof PsiComment) {
-            String text = prev.getText();
-            Matcher matcher = SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(text);
-            if (matcher.matches() && isInspectionToolIdMentioned(matcher.group(1), toolId)) {
-              return prev;
-            }
-          }
+          return statement;
         }
 
         PsiLocalVariable local = PsiTreeUtil.getParentOfType(place, PsiLocalVariable.class);
@@ -250,6 +235,6 @@ public class SuppressManagerImpl extends SuppressManager {
 
   public boolean alreadyHas14Suppressions(final PsiDocCommentOwner commentOwner) {
     final PsiDocComment docComment = commentOwner.getDocComment();
-    return docComment != null && docComment.findTagByName(SUPPRESS_INSPECTIONS_TAG_NAME) != null;
+    return docComment != null && docComment.findTagByName(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME) != null;
   }
 }
