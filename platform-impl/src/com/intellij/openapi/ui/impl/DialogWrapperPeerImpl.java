@@ -214,8 +214,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     return myWrapper.isModalProgress();
   }
 
+  @Nullable
   public Container getContentPane() {
-    return myDialog.getContentPane();
+    return getRootPane() != null ? myDialog.getContentPane() : null;
   }
 
   /**

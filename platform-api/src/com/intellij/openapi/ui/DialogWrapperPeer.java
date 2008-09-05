@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyListener;
@@ -59,6 +61,7 @@ public abstract class DialogWrapperPeer {
   /**
    * @see javax.swing.JDialog#getContentPane
    */
+  @Nullable
   public abstract Container getContentPane();
 
   /**
