@@ -88,6 +88,16 @@ public abstract class AbstractVcsHelper {
   @NotNull
   public abstract List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider);
 
+  /**
+   * Shows the multiple file merge dialog for resolving conflicts in the specified set of virtual files.
+   * Assumes all files are under the same VCS.
+   *
+   * @param files the files to show in the merge dialog.
+   * @return the files for which the merge was actually performed.
+   */
+  @NotNull
+  public abstract List<VirtualFile> showMergeDialog(List<VirtualFile> files);
+
   public abstract void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path, final AbstractVcs vcs,
                                        final String repositoryPath);
 

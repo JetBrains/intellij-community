@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -307,6 +308,17 @@ public abstract class AbstractVcs {
 
   public interface RootsConvertor {
     List<VirtualFile> convertRoots(List<VirtualFile> result);
+  }
+
+  /**
+   * Returns the implementation of the merge provider which is used to load the revisions to be merged
+   * for a particular file.
+   *
+   * @return the merge provider implementation, or null if the VCS doesn't support merge operations.
+   */
+  @Nullable
+  public MergeProvider getMergeProvider() {
+    return null;
   }
 }
 

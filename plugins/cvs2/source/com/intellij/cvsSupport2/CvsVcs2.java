@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2;
 
 
 import com.intellij.CvsBundle;
+import com.intellij.cvsSupport2.actions.merge.CvsMergeProvider;
 import com.intellij.cvsSupport2.annotate.CvsAnnotationProvider;
 import com.intellij.cvsSupport2.annotate.CvsFileAnnotation;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
@@ -40,6 +41,7 @@ import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -85,6 +87,7 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
   private final VcsShowConfirmationOption myRemoveConfirmation;
 
   private ChangeProvider myChangeProvider;
+  private MergeProvider myMergeProvider;
 
   public CvsVcs2(Project project, CvsStorageComponent cvsStorageComponent) {
     super(project);
@@ -421,6 +424,14 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
 
   public CvsCheckoutProvider getCheckoutProvider() {
     return myCvsCheckoutProvider;
+  }
+
+  @Override
+  public MergeProvider getMergeProvider() {
+    if (myMergeProvider != null) {
+      myMergeProvider = new CvsMergeProvider();
+    }
+    return myMergeProvider;
   }
 }
 

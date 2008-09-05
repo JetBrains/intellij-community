@@ -449,6 +449,21 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return fileMergeDialog.getProcessedFiles();
   }
 
+  @NotNull
+  public List<VirtualFile> showMergeDialog(final List<VirtualFile> files) {
+    if (files.isEmpty()) return Collections.emptyList();
+    MergeProvider provider = null;
+    for (VirtualFile virtualFile : files) {
+      final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
+      if (vcs != null) {
+        provider = vcs.getMergeProvider();
+        if (provider != null) break;
+      }
+    }
+    if (provider == null) return Collections.emptyList();
+    return showMergeDialog(files, provider);
+  }
+
   private static DiffContent getContentForVersion(final VcsFileRevision version, final File file) throws IOException {
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     if (vFile != null && (version instanceof CurrentRevision) && !vFile.getFileType().isBinary()) {
