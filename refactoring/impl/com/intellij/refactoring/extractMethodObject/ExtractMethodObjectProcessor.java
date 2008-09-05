@@ -19,6 +19,7 @@ import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
@@ -143,9 +144,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         var2FieldNames.put(name, fieldName);
         innerClass.add(myElementFactory.createField(fieldName, var.getType()));
       }
-      innerClass.add(myElementFactory.createMethodFromText(
-        "public " + var.getType().getCanonicalText() + " get" + StringUtil.capitalize(name) + "(){return " + name + "; }",
-        innerClass));
+      final PsiField field = PropertyUtil.findPropertyField(myProject, innerClass, name, false);
+      LOG.assertTrue(field != null);
+      innerClass.add(PropertyUtil.generateGetterPrototype(field));
     }
 
     PsiParameter[] params = getMethod().getParameterList().getParameters();
