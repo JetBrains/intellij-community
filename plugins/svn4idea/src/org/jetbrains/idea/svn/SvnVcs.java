@@ -127,6 +127,7 @@ public class SvnVcs extends AbstractVcs {
   @NonNls public static final String VCS_NAME = "svn";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
   public static final String pathToDirProps = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.DIR_PROPS_FILE_NAME;
+  private final SvnChangelistListener myChangeListListener;
 
   static {
     //noinspection UseOfArchaicSystemPropertyAccessors
@@ -178,7 +179,8 @@ public class SvnVcs extends AbstractVcs {
     upgradeTo15(supportOptions);
     changeListSynchronizationIdeaVersionToNative(supportOptions);
 
-    ChangeListManager.getInstance(myProject).addChangeListListener(new SvnChangelistListener(createChangelistClient()));
+    myChangeListListener = new SvnChangelistListener(myProject, createChangelistClient());
+    ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
   }
 
   private void changeListSynchronizationIdeaVersionToNative(final SvnBranchConfigurationManager.SvnSupportOptions supportOptions) {
@@ -264,6 +266,7 @@ public class SvnVcs extends AbstractVcs {
     if (myCommittedChangesProvider != null) {
       myCommittedChangesProvider.deactivate();
     }
+    ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
     super.deactivate();
   }
 
