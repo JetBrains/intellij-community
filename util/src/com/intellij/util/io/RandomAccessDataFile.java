@@ -31,11 +31,15 @@ public class RandomAccessDataFile implements Forceable {
   private final int myCount = ourFilesCount++;
   private final File myFile;
   private final PagePool myPool;
+  private long lastSeek = -1l;
 
   private final byte[] myTypedIOBuffer = new byte[8];
 
+  private final FileWriter log;
+
   private volatile long mySize;
   private volatile boolean myIsDirty = false;
+  private static final boolean DEBUG = false;
 
   public RandomAccessDataFile(final File file) throws IOException {
     this(file, PagePool.SHARED);
@@ -49,6 +53,12 @@ public class RandomAccessDataFile implements Forceable {
     }
 
     mySize = file.length();
+    if (DEBUG) {
+      log = new FileWriter(file.getPath() + ".log");
+    }
+    else {
+      log = null;
+    }
   }
 
   public void put(long addr, byte[] bytes, int off, int len) {
@@ -140,6 +150,20 @@ public class RandomAccessDataFile implements Forceable {
     return mySize;
   }
 
+  public long physicalLength() {
+    long res;
+
+    try {
+      res = getFile().length();
+    }
+    catch (IOException e) {
+      return 0;
+    }
+
+    releaseFile();
+    return res;
+  }
+
   public void dispose() {
     myPool.flushPages(this);
     ourCache.closeChannel(myFile);
@@ -165,6 +189,7 @@ public class RandomAccessDataFile implements Forceable {
   public static int totalReads = 0;
   public static long totalReadBytes = 0;
 
+  public static int seekcount = 0;
   public static int totalWrites = 0;
   public static long totalWriteBytes = 0;
 
@@ -173,14 +198,17 @@ public class RandomAccessDataFile implements Forceable {
       final RandomAccessFile file = getFile();
       try {
         synchronized (file) {
-          file.seek(page.getOffset());
+          seek(file, page.getOffset());
           final ByteBuffer buf = page.getBuf();
 
           totalReads++;
           totalReadBytes += Page.PAGE_SIZE;
 
-//          System.out.println("Read at: \t" + page.getOffset() + "\t len: " + Page.PAGE_SIZE);
+          if (DEBUG) {
+            log.write("Read at: \t" + page.getOffset() + "\t len: " + Page.PAGE_SIZE + ", size: " + mySize + "\n");
+          }
           file.read(buf.array(), 0, Page.PAGE_SIZE);
+          lastSeek += Page.PAGE_SIZE;
         }
       }
       finally {
@@ -209,17 +237,34 @@ public class RandomAccessDataFile implements Forceable {
     final RandomAccessFile file = getFile();
     try {
       synchronized (file) {
-        file.seek(fileOffset);
+        seek(file, fileOffset);
+
         totalWrites++;
         totalWriteBytes += length;
 
-//        System.out.println("Write at: \t" + fileOffset + "\t len: " + length);
+        if (DEBUG) {
+          log.write("Write at: \t" + fileOffset + "\t len: " + length + ", size: " + mySize + ", filesize: " + file.length() + "\n");
+        }
         file.write(buf.array(), bufOffset, length);
+        lastSeek += length;
       }
     }
     finally {
       releaseFile();
     }
+  }
+
+  private void seek(final RandomAccessFile file, final long fileOffset) throws IOException {
+    if (DEBUG) {
+      if (lastSeek != -1L && fileOffset != lastSeek) {
+        long delta = fileOffset - lastSeek;
+        seekcount++;
+        log.write("Seeking: " + delta + "\n");
+      }
+      lastSeek = fileOffset;
+    }
+
+    file.seek(fileOffset);
   }
 
   public int hashCode() {

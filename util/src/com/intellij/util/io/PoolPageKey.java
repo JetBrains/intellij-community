@@ -16,6 +16,14 @@ class PoolPageKey implements Comparable<PoolPageKey> {
     return (int)(owner.hashCode() * 31 + offset);
   }
 
+  public RandomAccessDataFile getOwner() {
+    return owner;
+  }
+
+  public long getOffset() {
+    return offset;
+  }
+
   @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
   public boolean equals(final Object obj) {
     PoolPageKey k = (PoolPageKey)obj;

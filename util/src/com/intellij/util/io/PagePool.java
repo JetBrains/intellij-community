@@ -19,21 +19,17 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class PagePool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PagePool");
-
   private final Map<PoolPageKey, Page> myProtectedQueue;
   private final Map<PoolPageKey, Page> myProbationalQueue;
 
   private int finalizationId = 0;
-  private boolean flushNow = false;
 
   private final TreeMap<PoolPageKey, FinalizationRequest> myFinalizationQueue = new TreeMap<PoolPageKey, FinalizationRequest>();
 
@@ -42,14 +38,13 @@ public class PagePool {
   private final PoolPageKey keyInstance = new PoolPageKey(null, -1);
 
   private PoolPageKey lastFinalizedKey = null;
-  private Thread myFinalizerThread;
 
   public PagePool(final int protectedPagesLimit, final int probationalPagesLimit) {
     myProbationalQueue = new LinkedHashMap<PoolPageKey,Page>(probationalPagesLimit * 2, 0.6f, true) {
       @Override
       protected boolean removeEldestEntry(final Map.Entry<PoolPageKey, Page> eldest) {
         if (size() > probationalPagesLimit) {
-          flushNow = scheduleFinalization(eldest.getValue());
+          scheduleFinalization(eldest.getValue());
           return true;
         }
         return false;
@@ -75,7 +70,6 @@ public class PagePool {
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int probational_queue_hits = 0;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int finalization_queue_hits = 0;
 
-  @NonNls private static final String FINALIZER_THREAD_NAME = "Disk cache finalization queue";
   public final static PagePool SHARED = new PagePool(500, 500);
 
   private RandomAccessDataFile lastOwner = null;
@@ -87,7 +81,6 @@ public class PagePool {
   public Page alloc(RandomAccessDataFile owner, long offset) {
     synchronized (lock) {
       offset -= offset % Page.PAGE_SIZE;
-      flushNow = false;
       hits++;
 
       if (owner == lastOwner && offset == lastOffset) {
@@ -256,35 +249,6 @@ public class PagePool {
     return false;
   }
 
-  private class FinalizationThreadWorker implements Runnable {
-    public void run() {
-      //noinspection InfiniteLoopStatement
-      while (true) {
-        try {
-          FinalizationRequest request = retreiveFinalizationRequest();
-
-          if (request != null) {
-            processFinalizationRequest(request);
-            Thread.sleep(5);
-          }
-          else {
-            synchronized (finalizationMonitor) {
-              try {
-                finalizationMonitor.wait(10);
-              }
-              catch (InterruptedException e) {
-                throw new RuntimeException(e);
-              }
-            }
-          }
-        }
-        catch (Throwable e) {
-          LOG.info(e);
-        }
-      }
-    }
-  }
-
   private void processFinalizationRequest(final FinalizationRequest request) {
     final Page page = request.page;
     try {
@@ -308,7 +272,13 @@ public class PagePool {
           key = myFinalizationQueue.firstKey();
         }
         else {
-          final SortedMap<PoolPageKey, FinalizationRequest> tail = myFinalizationQueue.tailMap(lastFinalizedKey);
+          PoolPageKey k = lastFinalizedKey;
+          PoolPageKey kk = new PoolPageKey(k.getOwner(), k.getOwner().physicalLength());
+
+          SortedMap<PoolPageKey, FinalizationRequest> tail = myFinalizationQueue.tailMap(kk);
+          if (tail == null || tail.isEmpty()) {
+            tail = myFinalizationQueue.tailMap(k);
+          }
           key = tail.isEmpty() ? myFinalizationQueue.firstKey() : tail.firstKey();
         }
         lastFinalizedKey = key;
