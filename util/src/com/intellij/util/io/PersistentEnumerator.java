@@ -55,7 +55,7 @@ public class PersistentEnumerator<Data> implements Forceable {
 
   private boolean myClosed = false;
   private boolean myDirty = false;
-  private final DataDescriptor<Data> myDataDescriptor;
+  private final KeyDescriptor<Data> myDataDescriptor;
   private final byte[] myBuffer = new byte[RECORD_SIZE];
 
   private static final CacheKey ourFlyweight = new CacheKey(null, null);
@@ -67,7 +67,7 @@ public class PersistentEnumerator<Data> implements Forceable {
 
   private final MyAppenderStream myKeyStream;
   private final MyDataIS myKeyReadStream;
-  private final RandomAccessFile myRaf;
+  private final RandomAccessFile myKeyRaf;
 
   private static class MyAppenderStream extends DataOutputStream {
     public MyAppenderStream(final File out) throws FileNotFoundException {
@@ -121,10 +121,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     }
   }
 
-  public static interface DataDescriptor<T> extends EqualityPolicy<T>, DataExternalizer<T> {
-  }
-  
-  public PersistentEnumerator(File file, DataDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
+  public PersistentEnumerator(File file, KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     myDataDescriptor = dataDescriptor;
     myFile = file;
     if (!file.exists()) {
@@ -155,8 +152,8 @@ public class PersistentEnumerator<Data> implements Forceable {
       }
     }
 
-    myRaf = new RandomAccessFile(keystreamFile(), "r");
-    myKeyReadStream = new MyDataIS(myRaf);
+    myKeyRaf = new RandomAccessFile(keystreamFile(), "r");
+    myKeyReadStream = new MyDataIS(myKeyRaf);
   }
   
   protected synchronized int tryEnumerate(Data value) throws IOException {
@@ -453,7 +450,7 @@ public class PersistentEnumerator<Data> implements Forceable {
       try {
         myKeyStream.close();
         myKeyReadStream.close();
-        myRaf.close();
+        myKeyRaf.close();
         flush();
       }
       finally {

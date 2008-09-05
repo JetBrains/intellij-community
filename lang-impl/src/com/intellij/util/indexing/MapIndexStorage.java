@@ -8,7 +8,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,10 +28,10 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   private final SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
   private Key myKeyBeingRemoved = null;
   private final File myStorageFile;
-  private final PersistentEnumerator.DataDescriptor<Key> myKeyDescriptor;
+  private final KeyDescriptor<Key> myKeyDescriptor;
   private final ValueContainerExternalizer<Value> myValueContainerExternalizer;
 
-  public MapIndexStorage(File storageFile, final PersistentEnumerator.DataDescriptor<Key> keyDescriptor, final DataExternalizer<Value> valueExternalizer,
+  public MapIndexStorage(File storageFile, final KeyDescriptor<Key> keyDescriptor, final DataExternalizer<Value> valueExternalizer,
                          final int cacheSize) throws IOException {
 
     myStorageFile = storageFile;

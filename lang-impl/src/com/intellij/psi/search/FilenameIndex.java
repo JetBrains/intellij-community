@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +31,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     return myDataIndexer;
   }
 
-  public PersistentEnumerator.DataDescriptor<String> getKeyDescriptor() {
+  public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 

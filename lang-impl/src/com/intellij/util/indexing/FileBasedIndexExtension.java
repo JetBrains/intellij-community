@@ -2,7 +2,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.KeyDescriptor;
 
 /**
  * @author Eugene Zhuravlev
@@ -16,7 +16,7 @@ public interface FileBasedIndexExtension<K, V> {
   
   DataIndexer<K, V, FileContent> getIndexer();
   
-  PersistentEnumerator.DataDescriptor<K> getKeyDescriptor();
+  KeyDescriptor<K> getKeyDescriptor();
   
   DataExternalizer<V> getValueExternalizer();
   

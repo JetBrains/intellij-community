@@ -9,7 +9,7 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +44,7 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
     }
   };
   
-  private final PersistentEnumerator.DataDescriptor<IdIndexEntry> myKeyDescriptor = new PersistentEnumerator.DataDescriptor<IdIndexEntry>() {
+  private final KeyDescriptor<IdIndexEntry> myKeyDescriptor = new KeyDescriptor<IdIndexEntry>() {
     public int getHashCode(final IdIndexEntry value) {
       return value.hashCode();
     }
@@ -99,7 +99,7 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
     return myValueExternalizer;
   }
 
-  public PersistentEnumerator.DataDescriptor<IdIndexEntry> getKeyDescriptor() {
+  public KeyDescriptor<IdIndexEntry> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 

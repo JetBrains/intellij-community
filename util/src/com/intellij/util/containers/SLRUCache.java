@@ -21,7 +21,7 @@ public abstract class SLRUCache<K, V> extends SLRUMap<K,V> {
     }
 
     value = createValue(key);
-    put(getStableKey(key), value);
+    put(key, value);
 
     return value;
   }

@@ -23,7 +23,7 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +79,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     }
   };
 
-  private static final PersistentEnumerator.DataDescriptor<Integer> DATA_DESCRIPTOR = new PersistentEnumerator.DataDescriptor<Integer>() {
+  private static final KeyDescriptor<Integer> DATA_DESCRIPTOR = new KeyDescriptor<Integer>() {
     public int getHashCode(final Integer value) {
       return value.hashCode();
     }
@@ -152,7 +152,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     return ((IStubFileElementType)type).getBuilder().buildStubTree(copy);
   }
 
-  public PersistentEnumerator.DataDescriptor<Integer> getKeyDescriptor() {
+  public KeyDescriptor<Integer> getKeyDescriptor() {
     return DATA_DESCRIPTOR;
   }
 

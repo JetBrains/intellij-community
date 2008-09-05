@@ -8,7 +8,7 @@ import java.io.IOException;
  * @author Eugene Zhuravlev
 *         Date: Dec 18, 2007
 */
-public class EnumeratorStringDescriptor implements PersistentEnumerator.DataDescriptor<String> {
+public class EnumeratorStringDescriptor implements KeyDescriptor<String> {
   private final byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
 
   public int getHashCode(final String value) {

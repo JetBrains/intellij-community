@@ -7,7 +7,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class EnumeratorIntegerDescriptor implements PersistentEnumerator.DataDescriptor<Integer> {
+public class EnumeratorIntegerDescriptor implements KeyDescriptor<Integer> {
   public int getHashCode(final Integer value) {
     return value.intValue();
   }

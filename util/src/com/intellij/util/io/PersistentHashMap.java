@@ -84,11 +84,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
   };
 
-  public PersistentHashMap(final File file, PersistentEnumerator.DataDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer) throws IOException {
+  public PersistentHashMap(final File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer) throws IOException {
     this(file, keyDescriptor, valueExternalizer, 1024 * 4);
   }
   
-  public PersistentHashMap(final File file, PersistentEnumerator.DataDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
+  public PersistentHashMap(final File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
     super(checkDataFile(file), keyDescriptor, initialSize);
     myFile = file;
     myValueExternalizer = valueExternalizer;

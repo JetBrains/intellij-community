@@ -4,14 +4,14 @@
  */
 package com.intellij.util.io;
 
+import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.io.DataInput;
 
 /**
  * @author peter
  */
-public class BooleanDataDescriptor implements PersistentEnumerator.DataDescriptor<Boolean>{
+public class BooleanDataDescriptor implements KeyDescriptor<Boolean> {
   public static final BooleanDataDescriptor INSTANCE = new BooleanDataDescriptor();
 
   private BooleanDataDescriptor() {

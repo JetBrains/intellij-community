@@ -1,14 +1,14 @@
 package com.intellij.xml.index;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -38,7 +38,7 @@ public abstract class XmlIndex<V> implements FileBasedIndexExtension<String, V> 
     };
   }
 
-  public PersistentEnumerator.DataDescriptor<String> getKeyDescriptor() {
+  public KeyDescriptor<String> getKeyDescriptor() {
     return KEY_DESCRIPTOR;
   }
 

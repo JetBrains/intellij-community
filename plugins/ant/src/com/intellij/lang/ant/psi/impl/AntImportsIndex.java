@@ -5,7 +5,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,7 +79,7 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
     return DATA_INDEXER;
   }
 
-  public PersistentEnumerator.DataDescriptor<Integer> getKeyDescriptor() {
+  public KeyDescriptor<Integer> getKeyDescriptor() {
     return new EnumeratorIntegerDescriptor();
   }
 

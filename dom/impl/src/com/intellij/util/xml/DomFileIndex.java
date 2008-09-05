@@ -14,15 +14,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.xml.impl.DomApplicationComponent;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -88,7 +87,7 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
     return myDataIndexer;
   }
 
-  public PersistentEnumerator.DataDescriptor<String> getKeyDescriptor() {
+  public KeyDescriptor<String> getKeyDescriptor() {
     return new EnumeratorStringDescriptor();
   }
 

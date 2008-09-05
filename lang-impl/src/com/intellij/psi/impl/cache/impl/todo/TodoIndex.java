@@ -16,7 +16,7 @@ import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +46,7 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
     });
   }
 
-  private final PersistentEnumerator.DataDescriptor<TodoIndexEntry> myKeyDescriptor = new PersistentEnumerator.DataDescriptor<TodoIndexEntry>() {
+  private final KeyDescriptor<TodoIndexEntry> myKeyDescriptor = new KeyDescriptor<TodoIndexEntry>() {
     public int getHashCode(final TodoIndexEntry value) {
       return value.hashCode();
     }
@@ -133,7 +133,7 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
     return myIndexer;
   }
 
-  public PersistentEnumerator.DataDescriptor<TodoIndexEntry> getKeyDescriptor() {
+  public KeyDescriptor<TodoIndexEntry> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
