@@ -43,7 +43,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
@@ -55,6 +55,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +71,7 @@ import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
@@ -89,10 +91,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
@@ -174,7 +173,58 @@ public class SvnVcs extends AbstractVcs {
 
     myRootsInfo = new SvnFileUrlMappingRefresher(new SvnFileUrlMappingImpl(myProject, this));
 
-    if (! SvnBranchConfigurationManager.getInstance(myProject).upgradeTo15Asked()) {
+    final SvnBranchConfigurationManager.SvnSupportOptions supportOptions =
+      SvnBranchConfigurationManager.getInstance(myProject).getSupportOptions();
+    upgradeTo15(supportOptions);
+    changeListSynchronizationIdeaVersionToNative(supportOptions);
+
+    ChangeListManager.getInstance(myProject).addChangeListListener(new SvnChangelistListener(createChangelistClient()));
+  }
+
+  private void changeListSynchronizationIdeaVersionToNative(final SvnBranchConfigurationManager.SvnSupportOptions supportOptions) {
+    if (! supportOptions.changeListsSynchronized()) {
+      final MessageBusConnection messageBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
+      messageBusConnection.subscribe(ChangeListManagerImpl.LISTS_LOADED, new LocalChangeListsLoadedListener() {
+        public void processLoadedLists(final List<LocalChangeList> lists) {
+          processChangeLists(lists);
+          messageBusConnection.disconnect();
+        }
+      });
+    }
+  }
+
+  private void processChangeLists(final List<LocalChangeList> lists) {
+    final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    final SVNChangelistClient client = createChangelistClient();
+    for (LocalChangeList list : lists) {
+      if (! list.isDefault()) {
+        final Collection<Change> changes = list.getChanges();
+        for (Change change : changes) {
+          correctListForRevision(plVcsManager, change.getBeforeRevision(), client, list.getName());
+          correctListForRevision(plVcsManager, change.getAfterRevision(), client, list.getName());
+        }
+      }
+    }
+  }
+
+  private void correctListForRevision(final ProjectLevelVcsManager plVcsManager, final ContentRevision revision,
+                                      final SVNChangelistClient client, final String name) {
+    if (revision != null) {
+      final FilePath path = revision.getFile();
+      final AbstractVcs vcs = plVcsManager.getVcsFor(path);
+      if ((vcs != null) && VCS_NAME.equals(vcs.getName())) {
+        try {
+          client.doAddToChangelist(new File[] {path.getIOFile()}, SVNDepth.EMPTY, name, null);
+        }
+        catch (SVNException e) {
+          // left in default list
+        }
+      }
+    }
+  }
+
+  private void upgradeTo15(final SvnBranchConfigurationManager.SvnSupportOptions supportOptions) {
+    if (! supportOptions.upgradeTo15Asked()) {
       final SvnWorkingCopyChecker workingCopyChecker = new SvnWorkingCopyChecker();
 
       if (workingCopyChecker.upgradeNeeded()) {
@@ -195,7 +245,6 @@ public class SvnVcs extends AbstractVcs {
         });
       }
     }
-
   }
 
   @Override
@@ -287,6 +336,10 @@ public class SvnVcs extends AbstractVcs {
 
   public SVNDiffClient createDiffClient() {
     return new SVNDiffClient(myConfiguration.getAuthenticationManager(myProject), myConfiguration.getOptions(myProject));
+  }
+
+  public SVNChangelistClient createChangelistClient() {
+    return new SVNChangelistClient(myConfiguration.getAuthenticationManager(myProject), myConfiguration.getOptions(myProject));
   }
 
   public SVNWCAccess createWCAccess() {

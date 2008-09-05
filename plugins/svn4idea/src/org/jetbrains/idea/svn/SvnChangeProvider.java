@@ -38,12 +38,14 @@ public class SvnChangeProvider implements ChangeProvider {
   private final VcsContextFactory myFactory;
   private final SvnBranchConfigurationManager myBranchConfigurationManager;
   private final ExcludedFileIndex myExcludedFileIndex;
+  private final ChangeListManager myClManager;
 
   public SvnChangeProvider(final SvnVcs vcs) {
     myVcs = vcs;
     myFactory = VcsContextFactory.SERVICE.getInstance();
     myBranchConfigurationManager = SvnBranchConfigurationManager.getInstance(myVcs.getProject());
     myExcludedFileIndex = ExcludedFileIndex.getInstance(myVcs.getProject());
+    myClManager = ChangeListManager.getInstance(myVcs.getProject());
   }
 
   public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, ProgressIndicator progress) throws VcsException {
@@ -81,6 +83,14 @@ public class SvnChangeProvider implements ChangeProvider {
     processFile(path, context, null, recursive, context.getClient());
   }
 
+  private String changeListNameFromStatus(final SVNStatus status) {
+    if (SVNNodeKind.FILE.equals(status.getKind())) {
+      final String clName = status.getChangelistName();
+      return (clName == null) ? myClManager.getDefaultChangeList().getName() : clName;
+    }
+    return null;
+  }
+
   private void processCopiedFile(SvnChangedFile copiedFile, ChangelistBuilder builder, SvnChangeProviderContext context) throws SVNException {
     boolean foundRename = false;
     final SVNStatus copiedStatus = copiedFile.getStatus();
@@ -103,8 +113,9 @@ public class SvnChangeProvider implements ChangeProvider {
       SvnChangedFile deletedFile = iterator.next();
       final SVNStatus deletedStatus = deletedFile.getStatus();
       if ((deletedStatus != null) && (deletedStatus.getURL() != null) && Comparing.equal(copyFromURL, deletedStatus.getURL().toString())) {
-        builder.processChange(new Change(createBeforeRevision(deletedFile, true),
-                                         CurrentContentRevision.create(copiedFile.getFilePath())));
+        final String clName = changeListNameFromStatus(copiedFile.getStatus());
+        builder.processChangeInList(new Change(createBeforeRevision(deletedFile, true),
+                                         CurrentContentRevision.create(copiedFile.getFilePath())), clName);
         deletedToDelete.add(deletedFile);
         for(Iterator<SvnChangedFile> iterChild = context.getDeletedFiles().iterator(); iterChild.hasNext();) {
           SvnChangedFile deletedChild = iterChild.next();
@@ -122,8 +133,8 @@ public class SvnChangeProvider implements ChangeProvider {
             File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);
             FilePath newFilePath = myFactory.createFilePathOn(newPath);
             if (! context.isDeleted(newFilePath)) {
-              builder.processChange(new Change(createBeforeRevision(deletedChild, true),
-                                             CurrentContentRevision.create(newFilePath)));
+              builder.processChangeInList(new Change(createBeforeRevision(deletedChild, true),
+                                             CurrentContentRevision.create(newFilePath)), clName);
               deletedToDelete.add(deletedChild);
             }
           }
@@ -153,7 +164,7 @@ public class SvnChangeProvider implements ChangeProvider {
         final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
         final SvnContentRevision beforeRevision = SvnContentRevision.create(myVcs, filePath, status.getRevision());
         final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
-        builder.processChange(new Change(beforeRevision, afterRevision));
+        builder.processChangeInList(new Change(beforeRevision, afterRevision), changeListNameFromStatus(status));
         foundRename = true;
       }
     }
@@ -347,15 +358,16 @@ public class SvnChangeProvider implements ChangeProvider {
                statusType == SVNStatusType.STATUS_MODIFIED ||
                statusType == SVNStatusType.STATUS_REPLACED ||
                propStatus == SVNStatusType.STATUS_MODIFIED) {
-        builder.processChange(new Change(SvnContentRevision.create(myVcs, filePath, status.getRevision()),
-                                         CurrentContentRevision.create(filePath), fStatus));
+        builder.processChangeInList(new Change(SvnContentRevision.create(myVcs, filePath, status.getRevision()),
+                                         CurrentContentRevision.create(filePath), fStatus), changeListNameFromStatus(status));
         checkSwitched(filePath, builder, status, fStatus);
       }
       else if (statusType == SVNStatusType.STATUS_ADDED) {
-        builder.processChange(new Change(null, CurrentContentRevision.create(filePath), fStatus));
+        builder.processChangeInList(new Change(null, CurrentContentRevision.create(filePath), fStatus), changeListNameFromStatus(status));
       }
       else if (statusType == SVNStatusType.STATUS_DELETED) {
-        builder.processChange(new Change(SvnContentRevision.create(myVcs, filePath, status.getRevision()), null, fStatus));
+        builder.processChangeInList(new Change(SvnContentRevision.create(myVcs, filePath, status.getRevision()), null, fStatus),
+                                    changeListNameFromStatus(status));
       }
       else if (statusType == SVNStatusType.STATUS_MISSING) {
         builder.processLocallyDeletedFile(filePath);
@@ -369,8 +381,8 @@ public class SvnChangeProvider implements ChangeProvider {
       else if ((fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) && statusType != SVNStatusType.STATUS_NONE) {
         VirtualFile file = filePath.getVirtualFile();
         if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
-          builder.processChange(new Change(SvnContentRevision.create(myVcs, filePath, status.getRevision()),
-                                           CurrentContentRevision.create(filePath), FileStatus.MODIFIED));
+          builder.processChangeInList(new Change(SvnContentRevision.create(myVcs, filePath, status.getRevision()),
+                                           CurrentContentRevision.create(filePath), FileStatus.MODIFIED), changeListNameFromStatus(status));
         }
         checkSwitched(filePath, builder, status, fStatus);
       }
