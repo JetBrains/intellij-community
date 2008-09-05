@@ -6,7 +6,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionCommentFix;
+import com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionJavaCommentFix;
 import com.intellij.codeInsight.daemon.impl.actions.AddSuppressInspectionAllForClassFix;
 import com.intellij.codeInsight.daemon.impl.actions.AddSuppressInspectionFix;
 import com.intellij.codeInsight.daemon.impl.actions.AddSuppressInspectionForClassFix;
@@ -37,7 +37,7 @@ public class SuppressManagerImpl extends SuppressManager {
 
   public SuppressIntentionAction[] createSuppressActions(final HighlightDisplayKey displayKey) {
     return new SuppressIntentionAction[]{
-        new AddNoInspectionCommentFix(displayKey), 
+        new AddNoInspectionJavaCommentFix(displayKey),
         new AddSuppressInspectionFix(displayKey),
         new AddSuppressInspectionForClassFix(displayKey),
         new AddSuppressInspectionAllForClassFix()

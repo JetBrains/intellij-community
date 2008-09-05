@@ -1,6 +1,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -19,6 +20,12 @@ public interface PsiParserFacade {
    */
   @NotNull
   PsiElement createWhiteSpaceFromText(@NotNull @NonNls String s) throws IncorrectOperationException;
+
+  /**
+   * Creates a comment for the specified language.
+   */
+  @NotNull
+  PsiComment createLineCommentFromText(@NotNull LanguageFileType fileType, @NotNull String text) throws IncorrectOperationException;
 
   class SERVICE {
     private SERVICE() {
