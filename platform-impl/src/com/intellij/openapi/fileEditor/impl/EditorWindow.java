@@ -121,7 +121,7 @@ public class EditorWindow {
                 public void run() {
                   editorManager.disposeComposite(editor);
 
-                  if (indexToSelect >= 0 && indexToSelect < myTabbedPane.getTabCount()) {
+                  if (!myIsDisposed && indexToSelect >= 0 && indexToSelect < myTabbedPane.getTabCount()) {
                     myTabbedPane.setSelectedIndex(indexToSelect);
                   }
                 }
