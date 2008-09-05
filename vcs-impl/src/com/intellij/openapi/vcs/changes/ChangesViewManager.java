@@ -259,7 +259,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
       scheduleRefresh();
     }
 
-    public void defaultListChanged(ChangeList newDefaultList) {
+    public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
       scheduleRefresh();
     }
 

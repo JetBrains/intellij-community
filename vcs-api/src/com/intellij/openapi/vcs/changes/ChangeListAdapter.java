@@ -40,7 +40,7 @@ public class ChangeListAdapter implements ChangeListListener {
   public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
   }
 
-  public void defaultListChanged(ChangeList newDefaultList) {
+  public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
   }
 
   public void unchangedFileStatusChanged() {

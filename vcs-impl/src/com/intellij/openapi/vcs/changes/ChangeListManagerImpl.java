@@ -27,6 +27,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.messages.Topic;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -102,6 +103,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<Object>("DOCUMENT_BEING_COMMITTED");
 
+  public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED = new Topic<LocalChangeListsLoadedListener>(
+    "LOCAL_CHANGE_LISTS_LOADED", LocalChangeListsLoadedListener.class);
+
   private VcsListener myVcsListener = new VcsListener() {
     public void directoryMappingChanged() {
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
@@ -135,9 +139,18 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
         public void run() {
           myInitialized = true;
+          broadcastStateAfterLoad();
           ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
         }
       });
+    }
+  }
+
+  private void broadcastStateAfterLoad() {
+    synchronized (myChangeLists) {
+      if (! myChangeLists.isEmpty()) {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(LISTS_LOADED).processLoadedLists(myChangeLists);
+      }
     }
   }
 
@@ -816,22 +829,21 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       for (Change change : changes) {
         myDefaultChangelist.addChange(change);
       }
-    }
-    myListeners.getMulticaster().changesMoved(changes, realList, myDefaultChangelist);
-    synchronized (myChangeLists) {
       myChangeLists.remove(realList);
     }
+    myListeners.getMulticaster().changesMoved(changes, realList, myDefaultChangelist);
     myListeners.getMulticaster().changeListRemoved(realList);
   }
 
   public void setDefaultChangeList(@NotNull LocalChangeList list) {
+    final LocalChangeListImpl previousDefault = myDefaultChangelist;
     synchronized (myChangeLists) {
       if (myDefaultChangelist != null) myDefaultChangelist.setDefault(false);
       LocalChangeListImpl realList = findRealByCopy(list);
       realList.setDefault(true);
       myDefaultChangelist = realList;
     }
-    myListeners.getMulticaster().defaultListChanged(list);
+    myListeners.getMulticaster().defaultListChanged(previousDefault, list);
   }
 
   public LocalChangeList getDefaultChangeList() {

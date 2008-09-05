@@ -30,7 +30,7 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
   }
 
   private final class MyChangeListManagerListener extends ChangeListAdapter {
-    public void defaultListChanged(final ChangeList newDefaultList) {
+    public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
       rebuild();
       setDisplayName(IdeBundle.message("changelist.todo.title", newDefaultList.getName()));
     }
