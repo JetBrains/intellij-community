@@ -16,6 +16,7 @@ package git4idea.validators;
  *
  * This code was originally derived from the MKS & Mercurial IDEA VCS plugins
  */
+
 import com.intellij.openapi.ui.InputValidator;
 
 /**
@@ -23,18 +24,19 @@ import com.intellij.openapi.ui.InputValidator;
  */
 public class GitBranchNameValidator implements InputValidator {
   static final String REGEX;
+
   static {
     // based on the git-check-ref-format command description
     final String goodChar = "[ -\\~&&[^\\^\\~\\:\\[\\?\\*\\.\\/]]";
-    final String component = goodChar + "+(?:\\."+goodChar+")*\\.?";
-    REGEX = component + "+(?:/*"+component+")*";
+    final String component = goodChar + "+(?:\\." + goodChar + ")*\\.?";
+    REGEX = component + "+(?:/*" + component + ")*";
   }
 
-    public boolean checkInput(String inputString) {
-        return inputString.matches(REGEX);
-    }
+  public boolean checkInput(String inputString) {
+    return inputString.matches(REGEX);
+  }
 
-    public boolean canClose(String inputString) {
-        return checkInput(inputString);
-    }
+  public boolean canClose(String inputString) {
+    return checkInput(inputString);
+  }
 }

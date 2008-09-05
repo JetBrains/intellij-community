@@ -16,6 +16,7 @@ package git4idea;
  *
  * This code was originally derived from the MKS & Mercurial IDEA VCS plugins
  */
+
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,46 +30,42 @@ import java.util.*;
  */
 public class GitUtil {
 
-    @NotNull
-    public static VirtualFile getVcsRoot(@NotNull final Project project, @NotNull final FilePath filePath) {
-        VirtualFile vfile = VcsUtil.getVcsRootFor(project, filePath);
-        if (vfile == null)
-            vfile = GitFileSystem.getInstance().findFileByPath(project,filePath.getPath());
+  @NotNull
+  public static VirtualFile getVcsRoot(@NotNull final Project project, @NotNull final FilePath filePath) {
+    VirtualFile vfile = VcsUtil.getVcsRootFor(project, filePath);
+    if (vfile == null) vfile = GitFileSystem.getInstance().findFileByPath(project, filePath.getPath());
 
-        return vfile;
+    return vfile;
+  }
+
+  @NotNull
+  public static VirtualFile getVcsRoot(@NotNull final Project project, final VirtualFile virtualFile) {
+    VirtualFile vfile = VcsUtil.getVcsRootFor(project, virtualFile);
+    if (vfile == null) vfile = project.getBaseDir();
+    return vfile;
+  }
+
+  @NotNull
+  public static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(@NotNull Project project, @NotNull List<VirtualFile> virtualFiles) {
+    Map<VirtualFile, List<VirtualFile>> result = new HashMap<VirtualFile, List<VirtualFile>>();
+
+    for (VirtualFile file : virtualFiles) {
+      final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
+      assert vcsRoot != null;
+
+      List<VirtualFile> files = result.get(vcsRoot);
+      if (files == null) {
+        files = new ArrayList<VirtualFile>();
+        result.put(vcsRoot, files);
+      }
+      files.add(file);
     }
 
-    @NotNull
-    public static VirtualFile getVcsRoot(@NotNull final Project project, final VirtualFile virtualFile) {
-        VirtualFile vfile = VcsUtil.getVcsRootFor(project, virtualFile);
-        if (vfile == null)
-            vfile = project.getBaseDir();
-        return vfile;
-    }
+    return result;
+  }
 
-    @NotNull
-    public static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(
-            @NotNull Project project,
-            @NotNull List<VirtualFile> virtualFiles) {
-        Map<VirtualFile, List<VirtualFile>> result = new HashMap<VirtualFile, List<VirtualFile>>();
-
-        for (VirtualFile file : virtualFiles) {
-            final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
-            assert vcsRoot != null;
-
-            List<VirtualFile> files = result.get(vcsRoot);
-            if (files == null) {
-                files = new ArrayList<VirtualFile>();
-                result.put(vcsRoot, files);
-            }
-            files.add(file);
-        }
-
-        return result;
-    }
-
-    @NotNull
-    public static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(Project project, VirtualFile[] affectedFiles) {
-        return sortFilesByVcsRoot(project, Arrays.asList(affectedFiles));
-    }
+  @NotNull
+  public static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(Project project, VirtualFile[] affectedFiles) {
+    return sortFilesByVcsRoot(project, Arrays.asList(affectedFiles));
+  }
 }
