@@ -84,6 +84,7 @@ public abstract class ElementPresentationManager {
   private static final Map<Class, Icon[]> ourIcons = new HashMap<Class, Icon[]>();
 
   private static final List<Function<Object, String>> ourNameProviders = new ArrayList<Function<Object, String>>();
+  private static final List<Function<Object, String>> ourDocumentationProviders = new ArrayList<Function<Object, String>>();
   private static final List<Function<Object, String>> ourHintProviders = new ArrayList<Function<Object, String>>();
   private static final List<Function<Object, Icon>> ourIconProviders = new ArrayList<Function<Object, Icon>>();
 
@@ -96,6 +97,7 @@ public abstract class ElementPresentationManager {
   }
 
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
+  public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
   public static void registerHintProvider(Function<Object, String> function) { ourHintProviders.add(function); }
   public static void registerIconProvider(Function<Object, Icon> function) { ourIconProviders.add(function); }
 
@@ -127,6 +129,17 @@ public abstract class ElementPresentationManager {
   @Nullable
   public static String getHintForElement(Object element) {
     for (final Function<Object, String> function : ourHintProviders) {
+      final String s = function.fun(element);
+      if (s != null) {
+        return s;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static String getDocumentationForElement(Object element) {
+    for (final Function<Object, String> function : ourDocumentationProviders) {
       final String s = function.fun(element);
       if (s != null) {
         return s;

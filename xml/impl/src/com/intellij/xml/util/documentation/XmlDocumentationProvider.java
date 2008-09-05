@@ -89,7 +89,11 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
         }
       }
       if (processor.result == null) {
-      final PsiElement comment = findPreviousComment(element);
+        final String s = super.generateDoc(element, originalElement);
+        if (s != null) {
+          return s;
+        }
+        final PsiElement comment = findPreviousComment(element);
         if (comment != null) {
           return formatDocFromComment(comment, ((XmlTag)element).getName());
         }
