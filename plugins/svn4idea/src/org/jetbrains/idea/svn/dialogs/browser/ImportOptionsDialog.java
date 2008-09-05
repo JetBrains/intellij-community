@@ -1,32 +1,33 @@
 package org.jetbrains.idea.svn.dialogs.browser;
 
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.DepthCombo;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNDepth;
 
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
+import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-
-import org.tmatesoft.svn.core.SVNURL;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public class ImportOptionsDialog extends DialogWrapper implements ActionListener {
 
   private SVNURL myURL;
   private File myFile;
   private TextFieldWithBrowseButton myPathField;
-  private JCheckBox myRecursiveCheckbox;
+  private DepthCombo myDepth;
   private JCheckBox myIncludeIgnoredCheckbox;
   private JTextArea myCommitMessage;
   private Project myProject;
@@ -49,8 +50,8 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     return new File(myPathField.getText());
   }
 
-  public boolean isRecursive() {
-    return myRecursiveCheckbox.isSelected();
+  public SVNDepth getDepth() {
+    return myDepth.getSelectedItem();
   }
 
   public boolean isIncludeIgnored() {
@@ -108,9 +109,15 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     gc.gridwidth = 3;
     gc.fill = GridBagConstraints.NONE;
 
-    myRecursiveCheckbox = new JCheckBox("Import directories recursively");
-    myRecursiveCheckbox.setSelected(true);
-    panel.add(myRecursiveCheckbox, gc);
+    final JLabel depthLabel = new JLabel(SvnBundle.message("label.depth.text"));
+    depthLabel.setToolTipText(SvnBundle.message("label.depth.description"));
+    panel.add(depthLabel, gc);
+    ++ gc.gridx;
+    myDepth = new DepthCombo();
+    panel.add(myDepth, gc);
+    depthLabel.setLabelFor(myDepth);
+
+    gc.gridx = 0;
     gc.gridy += 1;
     myIncludeIgnoredCheckbox = new JCheckBox("Include ignored resources");
     myIncludeIgnoredCheckbox.setSelected(true);

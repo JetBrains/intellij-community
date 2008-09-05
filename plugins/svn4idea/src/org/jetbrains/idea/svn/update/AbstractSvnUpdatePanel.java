@@ -19,6 +19,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
@@ -80,7 +81,7 @@ public abstract class AbstractSvnUpdatePanel {
 
   public void reset(final SvnConfiguration configuration) {
     getStatusBox().setSelected(configuration.UPDATE_RUN_STATUS);
-    getRecursiveBox().setSelected(configuration.UPDATE_RECURSIVELY);
+    getDepthBox().setSelectedItem(configuration.UPDATE_DEPTH);
 
     for (FilePath filePath : myRootToPanel.keySet()) {
       myRootToPanel.get(filePath).reset(configuration);
@@ -90,7 +91,7 @@ public abstract class AbstractSvnUpdatePanel {
 
   public void apply(final SvnConfiguration configuration) throws ConfigurationException {
     configuration.UPDATE_RUN_STATUS = getStatusBox().isSelected();
-    configuration.UPDATE_RECURSIVELY = getRecursiveBox().isSelected();
+    configuration.UPDATE_DEPTH = getDepthBox().getSelectedItem();
 
     for (FilePath filePath : myRootToPanel.keySet()) {
       final SvnPanel svnPanel = myRootToPanel.get(filePath);
@@ -119,5 +120,5 @@ public abstract class AbstractSvnUpdatePanel {
 
   protected abstract JCheckBox getStatusBox();
 
-  protected abstract JCheckBox getRecursiveBox();
+  protected abstract DepthCombo getDepthBox();
 }

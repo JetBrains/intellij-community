@@ -90,18 +90,18 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
         final SVNURL url = rootInfo.getUrl();
         if (url != null && url.equals(getSourceUrl(myVcs, root))) {
           if (rootInfo.isUpdateToRevision()) {
-            rev = updateClient.doUpdate(root, rootInfo.getRevision(), configuration.UPDATE_RECURSIVELY);
+            rev = updateClient.doUpdate(root, rootInfo.getRevision(), configuration.UPDATE_DEPTH, false, false);
           } else {
-            rev = updateClient.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_RECURSIVELY);
+            rev = updateClient.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_DEPTH, false, false);
           }
 
         } else if (url != null) {
-          rev = updateClient.doSwitch(root, url, SVNRevision.UNDEFINED, rootInfo.getRevision(), configuration.UPDATE_RECURSIVELY, true);
+          rev = updateClient.doSwitch(root, url, SVNRevision.UNDEFINED, rootInfo.getRevision(), configuration.UPDATE_DEPTH, false, false);
         } else {
-          rev = updateClient.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_RECURSIVELY);
+          rev = updateClient.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_DEPTH, false, false);
         }
       } else {
-        rev = updateClient.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_RECURSIVELY);
+        rev = updateClient.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_DEPTH, false, false);
       }
 
       myPostUpdateFiles.setRevisions(root.getAbsolutePath(), myVcs, new SvnRevisionNumber(SVNRevision.create(rev)));

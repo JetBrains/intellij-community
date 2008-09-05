@@ -772,7 +772,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       ExportOptionsDialog dialog = new ExportOptionsDialog(p, url, dir);
       dialog.show();
       if (dialog.isOK()) {
-        SvnCheckoutProvider.doExport(myProject, dir, url.toString(), dialog.isRecursive(),
+        SvnCheckoutProvider.doExport(myProject, dir, url.toString(), dialog.getDepth(),
                 dialog.isIgnoreExternals(), dialog.isForce(), dialog.getEOLStyle());
       }
     }
@@ -975,7 +975,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
           return;
         }
 
-      SvnCheckoutProvider.doCheckout(myProject, dir, url.toString(), revision, dialog.isRecursive(), dialog.isIgnoreExternals(), listener);
+      SvnCheckoutProvider.doCheckout(myProject, dir, url.toString(), revision, dialog.getDepth(), dialog.isIgnoreExternals(), listener);
     }
   }
 
@@ -998,10 +998,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     VcsConfiguration.getInstance(myProject).saveCommitMessage(dialog.getCommitMessage());
     if (dialog.isOK()) {
       File src = dialog.getTarget();
-      boolean recursive = dialog.isRecursive();
       boolean ignored = dialog.isIncludeIgnored();
       String message = dialog.getCommitMessage();
-      SvnCheckoutProvider.doImport(myProject, src, url, recursive, ignored, message);
+      SvnCheckoutProvider.doImport(myProject, src, url, dialog.getDepth(), ignored, message);
       selectedNode.reload(false);
     }
     return dialog.isOK();

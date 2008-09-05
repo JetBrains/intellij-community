@@ -52,7 +52,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   public static void doCheckout(final Project project, final File target, final String url, final SVNRevision revision,
-                                final boolean recursive, final boolean ignoreExternals, @Nullable final Listener listener) {
+                                final SVNDepth depth, final boolean ignoreExternals, @Nullable final Listener listener) {
     final Ref<Boolean> checkoutSuccessful = new Ref<Boolean>();
 
     final SVNException[] exception = new SVNException[1];
@@ -76,7 +76,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         client.setIgnoreExternals(ignoreExternals);
         try {
           progressIndicator.setText(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
-          client.doCheckout(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, revision, recursive ? SVNDepth.INFINITY : SVNDepth.FILES, true);
+          client.doCheckout(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, revision, depth, true);
           progressIndicator.checkCanceled();
           checkoutSuccessful.set(Boolean.TRUE);
         }
@@ -143,7 +143,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     return Boolean.TRUE.equals(wasOk.get());
   }
 
-  public static void doExport(final Project project, final File target, final String url, final boolean recursive,
+  public static void doExport(final Project project, final File target, final String url, final SVNDepth depth,
                               final boolean ignoreExternals, final boolean force, final String eolStyle) {
     try {
       final SVNException[] exception = new SVNException[1];
@@ -156,7 +156,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           client.setIgnoreExternals(ignoreExternals);
           try {
             progressIndicator.setText(SvnBundle.message("progress.text.export", target.getAbsolutePath()));
-            client.doExport(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, SVNRevision.HEAD, eolStyle, force, recursive);
+            client.doExport(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, SVNRevision.HEAD, eolStyle, force, depth);
           }
           catch (SVNException e) {
             exception[0] = e;
@@ -176,7 +176,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
-  public static void doImport(final Project project, final File target, final SVNURL url, final boolean recursive,
+  public static void doImport(final Project project, final File target, final SVNURL url, final SVNDepth depth,
                               final boolean includeIgnored, final String message) {
     final Ref<String> errorMessage = new Ref<String>();
     final SVNCommitClient client = SvnVcs.getInstance(project).createCommitClient();
@@ -202,7 +202,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
                     client.doImport(ioFile, subUrl, message, null, !includeIgnored, false, SVNDepth.EMPTY);
                   }
-                }, recursive);
+                }, depth);
 
               final VirtualFile targetVf = SvnUtil.getVirtualFile(targetPath);
               if (targetVf == null) {

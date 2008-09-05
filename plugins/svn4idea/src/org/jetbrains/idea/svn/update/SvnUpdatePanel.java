@@ -16,20 +16,22 @@
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.vcs.FilePath;
+import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Collection;
 
 public class SvnUpdatePanel extends AbstractSvnUpdatePanel{
   private JPanel myConfigureRootsPanel;
   private JCheckBox myStatusBox;
-  private JCheckBox myRecursiveBox;
   private JPanel myPanel;
   private JCheckBox myLockOnDemand;
+  private DepthCombo myDepthCombo;
+  private JLabel myDepthLabel;
 
   public SvnUpdatePanel(SvnVcs vcs, Collection<FilePath> roots) {
     super(vcs);
@@ -42,7 +44,9 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel{
         break;  
       }
     }
-    myRecursiveBox.setVisible(descend);
+    myDepthCombo.setVisible(descend);
+    myDepthLabel.setVisible(descend);
+    myDepthLabel.setLabelFor(myDepthCombo);
 
     final String updateOnDemandEnabled = System.getProperty("subversion.update.on.demand");
     final boolean enable = "yes".equals(updateOnDemandEnabled);
@@ -77,7 +81,7 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel{
     return myStatusBox;
   }
 
-  protected JCheckBox getRecursiveBox() {
-    return myRecursiveBox;
+  protected DepthCombo getDepthBox() {
+    return myDepthCombo;
   }
 }

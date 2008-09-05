@@ -1,27 +1,30 @@
 package org.jetbrains.idea.svn.dialogs.browser;
 
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.DepthCombo;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
-import java.io.File;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
 
 public class ExportOptionsDialog extends DialogWrapper implements ActionListener {
 
   private SVNURL myURL;
   private File myFile;
   private TextFieldWithBrowseButton myPathField;
-  private JCheckBox myRecursiveCheckbox;
+  private DepthCombo myDepth;
   private JCheckBox myExternalsCheckbox;
   private JCheckBox myForceCheckbox;
   private JComboBox myEOLStyleBox;
@@ -43,8 +46,8 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     return new File(myPathField.getText());
   }
 
-  public boolean isRecursive() {
-    return myRecursiveCheckbox.isSelected();
+  public SVNDepth getDepth() {
+    return myDepth.getSelectedItem();
   }
 
   public boolean isForce() {
@@ -109,9 +112,15 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     gc.fill = GridBagConstraints.NONE;
 
     // other options.
-    myRecursiveCheckbox = new JCheckBox("Export directories recursively");
-    myRecursiveCheckbox.setSelected(true);
-    panel.add(myRecursiveCheckbox, gc);
+    final JLabel depthLabel = new JLabel(SvnBundle.message("label.depth.text"));
+    depthLabel.setToolTipText(SvnBundle.message("label.depth.description"));
+    panel.add(depthLabel, gc);
+    ++ gc.gridx;
+    myDepth = new DepthCombo();
+    panel.add(myDepth, gc);
+    depthLabel.setLabelFor(myDepth);
+
+    gc.gridx = 0;
     gc.gridy += 1;
     myForceCheckbox = new JCheckBox("Replace existing files");
     myForceCheckbox.setSelected(true);

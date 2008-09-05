@@ -42,6 +42,7 @@ import org.jdom.Element;
 import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
 import org.jetbrains.idea.svn.update.UpdateRootInfo;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
@@ -78,7 +79,8 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
   public String LAST_MERGED_REVISION = null;
   public boolean UPDATE_RUN_STATUS = false;
-  public boolean UPDATE_RECURSIVELY = true;
+  public SVNDepth UPDATE_DEPTH = SVNDepth.INFINITY;
+
   public boolean MERGE_DRY_RUN = false;
   public boolean MERGE_DIFF_USE_ANCESTRY = true;
   public boolean UPDATE_LOCK_ON_DEMAND = false;

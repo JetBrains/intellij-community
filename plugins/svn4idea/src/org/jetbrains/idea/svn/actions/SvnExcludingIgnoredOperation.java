@@ -4,19 +4,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 
 public class SvnExcludingIgnoredOperation {
   private final Project myProject;
   private final Operation myImportAction;
-  private final boolean myRecursive;
+  private final SVNDepth myDepth;
   private final ExcludedFileIndex myIndex;
   private final ChangeListManager myClManager;
 
-  public SvnExcludingIgnoredOperation(final Project project, final Operation importAction, final boolean recursive) {
+  public SvnExcludingIgnoredOperation(final Project project, final Operation importAction, final SVNDepth depth) {
     myProject = project;
     myImportAction = importAction;
-    myRecursive = recursive;
+    myDepth = depth;
 
     if (! project.isDefault()) {
       myIndex = ExcludedFileIndex.getInstance(project);
@@ -27,22 +28,49 @@ public class SvnExcludingIgnoredOperation {
     }
   }
 
-  public void execute(final VirtualFile file) throws SVNException {
+  private boolean operation(final VirtualFile file) throws SVNException {
     if (! myProject.isDefault()) {
       if (myIndex.isExcludedFile(file)) {
-        return;
+        return false;
       }
       if (myClManager.isIgnoredFile(file)) {
-        return;
+        return false;
       }
     }
 
     myImportAction.doOperation(file);
+    return true;
+  }
 
-    if (myRecursive) {
-      for (VirtualFile child : file.getChildren()) {
-        execute(child);
+  private void executeDown(final VirtualFile file) throws SVNException {
+    if (! operation(file)) {
+      return;
+    }
+
+    for (VirtualFile child : file.getChildren()) {
+      executeDown(child);
+    }
+  }
+
+  public void execute(final VirtualFile file) throws SVNException {
+    if (SVNDepth.INFINITY.equals(myDepth)) {
+      executeDown(file);
+      return;
+    }
+
+    if (! operation(file)) {
+      return;
+    }
+
+    if (SVNDepth.EMPTY.equals(myDepth)) {
+      return;
+    }
+
+    for (VirtualFile child : file.getChildren()) {
+      if (SVNDepth.FILES.equals(myDepth) && child.isDirectory()) {
+        continue;
       }
+      operation(child);
     }
   }
 

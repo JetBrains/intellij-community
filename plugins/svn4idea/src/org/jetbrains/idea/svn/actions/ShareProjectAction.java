@@ -131,7 +131,7 @@ public class ShareProjectAction extends BasicAction {
         final File ioFile = new File(virtualFile.getPath());
         wcClient.doAdd(ioFile, true, false, false, SVNDepth.EMPTY, false, false);
       }
-    }, true);
+    }, SVNDepth.INFINITY);
 
     operation.execute(file);
   }

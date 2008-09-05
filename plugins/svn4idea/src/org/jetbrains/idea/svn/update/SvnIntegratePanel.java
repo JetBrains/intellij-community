@@ -19,6 +19,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.DepthCombo;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -27,14 +28,26 @@ public class SvnIntegratePanel extends AbstractSvnUpdatePanel{
 
   private JCheckBox myDryRunCheckbox;
   private JCheckBox myStatusBox;
-  private JCheckBox myRecursiveBox;
   private JPanel myRootOptionsPanel;
   private JPanel myPanel;
   private JCheckBox myUseAncestry;
+  private DepthCombo myDepthCombo;
+  private JLabel myDepthLabel;
 
   public SvnIntegratePanel(final SvnVcs vcs, Collection<FilePath> roots) {
     super(vcs);
     init(roots);
+
+    boolean descend = false;
+    for (FilePath root : roots) {
+      if (root.isDirectory()) {
+        descend = true;
+        break;
+      }
+    }
+    myDepthCombo.setVisible(descend);
+    myDepthLabel.setVisible(descend);
+    myDepthLabel.setLabelFor(myDepthCombo);
   }
 
   protected SvnPanel createRootPanel(final FilePath root, final SvnVcs p1) {
@@ -64,7 +77,7 @@ public class SvnIntegratePanel extends AbstractSvnUpdatePanel{
     return myStatusBox;
   }
 
-  protected JCheckBox getRecursiveBox() {
-    return myRecursiveBox;
+  protected DepthCombo getDepthBox() {
+    return myDepthCombo;
   }
 }

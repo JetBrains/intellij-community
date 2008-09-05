@@ -10,9 +10,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.revision.SvnSelectRevisionPanel;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -23,11 +25,12 @@ import java.io.File;
 
 public class CheckoutOptionsDialog extends DialogWrapper implements ActionListener {
   private TextFieldWithBrowseButton myPathField;
-  private JCheckBox myRecursiveCheckbox;
   private JCheckBox myExternalsCheckbox;
   private JLabel myUrlLabel;
   private JPanel myTopPanel;
   private SvnSelectRevisionPanel svnSelectRevisionPanel;
+  private DepthCombo myDepthCombo;
+  private JLabel myDepthLabel;
 
   public CheckoutOptionsDialog(Project project, SVNURL url, File target, final VirtualFile root) {
     super(project, true);
@@ -45,6 +48,7 @@ public class CheckoutOptionsDialog extends DialogWrapper implements ActionListen
     });
 
     setTitle(SvnBundle.message("checkout.options.dialog.title"));
+    myDepthLabel.setLabelFor(myDepthCombo);
     init();
   }
 
@@ -57,8 +61,8 @@ public class CheckoutOptionsDialog extends DialogWrapper implements ActionListen
     return new File(myPathField.getText());
   }
 
-  public boolean isRecursive() {
-    return myRecursiveCheckbox.isSelected();
+  public SVNDepth getDepth() {
+    return myDepthCombo.getSelectedItem();
   }
 
   public boolean isIgnoreExternals() {
