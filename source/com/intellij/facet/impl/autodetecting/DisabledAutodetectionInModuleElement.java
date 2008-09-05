@@ -18,6 +18,7 @@ import java.util.Set;
 public class DisabledAutodetectionInModuleElement {
   private String myModuleName;
   private Set<String> myFiles = new LinkedHashSet<String>();
+  private Set<String> myDirectories = new LinkedHashSet<String>();
 
   public DisabledAutodetectionInModuleElement() {
   }
@@ -26,9 +27,14 @@ public class DisabledAutodetectionInModuleElement {
     myModuleName = moduleName;
   }
 
-  public DisabledAutodetectionInModuleElement(final String moduleName, final String url) {
+  public DisabledAutodetectionInModuleElement(final String moduleName, final String url, final boolean recursively) {
     myModuleName = moduleName;
-    myFiles.add(url);
+    if (recursively) {
+      myDirectories.add(url);
+    }
+    else {
+      myFiles.add(url);
+    }
   }
 
   @Attribute("name")
@@ -42,6 +48,13 @@ public class DisabledAutodetectionInModuleElement {
     return myFiles;
   }
 
+  @Tag("directories")
+  @AbstractCollection(surroundWithTag = false, elementTag = "directory", elementValueAttribute = "url")
+  public Set<String> getDirectories() {
+    return myDirectories;
+  }
+
+
   public void setModuleName(final String moduleName) {
     myModuleName = moduleName;
   }
@@ -50,16 +63,26 @@ public class DisabledAutodetectionInModuleElement {
     myFiles = files;
   }
 
+  public void setDirectories(final Set<String> directories) {
+    myDirectories = directories;
+  }
+
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
     final DisabledAutodetectionInModuleElement that = (DisabledAutodetectionInModuleElement)o;
-    return myFiles.equals(that.myFiles) && myModuleName.equals(that.myModuleName);
+    return myDirectories.equals(that.myDirectories) && myFiles.equals(that.myFiles) && myModuleName.equals(that.myModuleName);
 
   }
 
+  @Override
   public int hashCode() {
-    return 31 * myModuleName.hashCode() + myFiles.hashCode();
+    return 31 * (31 * myModuleName.hashCode() + myFiles.hashCode()) + myDirectories.hashCode();
+  }
+
+  public boolean isDisableInWholeModule() {
+    return myFiles.isEmpty() && myDirectories.isEmpty();
   }
 }

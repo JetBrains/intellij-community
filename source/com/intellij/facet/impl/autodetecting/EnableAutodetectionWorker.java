@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -47,18 +48,22 @@ public class EnableAutodetectionWorker {
 
     List<DisabledAutodetectionInModuleElement> moduleElements = oldElement.getModuleElements();
     for (DisabledAutodetectionInModuleElement moduleElement : moduleElements) {
-      Set<String> files = moduleElement.getFiles();
-      if (!files.isEmpty()) {
-        for (String url : files) {
+      if (moduleElement.isDisableInWholeModule()) {
+        Module module = moduleManager.findModuleByName(moduleElement.getModuleName());
+        if (module != null) {
+          modulesToProcess.add(module);
+        }
+      }
+      else {
+        for (String url : moduleElement.getFiles()) {
           if (newElement == null || !newElement.isDisabled(moduleElement.getModuleName(), url)) {
             addFile(facetType, url);
           }
         }
-      }
-      else {
-        Module module = moduleManager.findModuleByName(moduleElement.getModuleName());
-        if (module != null) {
-          modulesToProcess.add(module);
+        for (String directoryUrl : moduleElement.getDirectories()) {
+          if (newElement == null || !newElement.isDisabled(moduleElement.getModuleName(), directoryUrl)) {
+            addFile(facetType, directoryUrl);
+          }
         }
       }
     }
@@ -69,7 +74,7 @@ public class EnableAutodetectionWorker {
     if (newElement != null) {
       Set<String> toRemove = new THashSet<String>();
       for (DisabledAutodetectionInModuleElement moduleElement : newElement.getModuleElements()) {
-        if (moduleElement.getFiles().isEmpty()) {
+        if (moduleElement.isDisableInWholeModule()) {
           toRemove.add(moduleElement.getModuleName());
         }
       }
@@ -119,12 +124,31 @@ public class EnableAutodetectionWorker {
 
   private void detectFacetsInFile(final FacetType<?, ?> type, final VirtualFile file) {
     //todo[nik] detect only facets of specified type
-    myFacetAutodetectingManager.processFile(file);
+    if (file.isDirectory()) {
+      for (VirtualFile child : file.getChildren()) {
+        detectFacetsInFile(type, child);
+      }
+    }
+    else {
+      myFacetAutodetectingManager.processFile(file);
+    }
   }
 
   private void detectFacetsInFiles(final FacetType<?, ?> type, final Collection<VirtualFile> virtualFiles) {
     for (VirtualFile file : virtualFiles) {
       detectFacetsInFile(type, file);
     }
+  }
+
+  @TestOnly
+  @Nullable
+  public Collection<Module> getModulesToProcess(FacetType<?, ?> facetType) {
+    return myModulesToProcess.get(facetType);
+  }
+
+  @TestOnly
+  @Nullable
+  public Collection<VirtualFile> getFilesToProcess(FacetType<?, ?> facetType) {
+    return myFilesToProcess.get(facetType);
   }
 }

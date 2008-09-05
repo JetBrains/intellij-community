@@ -74,12 +74,7 @@ public class ImplicitFacetsTreeComponent {
     for (DetectedFacetsTree.FacetTypeNode facetTypeNode : myFacetTypeNodes) {
       for (DetectedFacetsTree.ModuleNode moduleNode : facetTypeNode.getModuleNodes()) {
         boolean accept = facetTypeNode.isChecked() && moduleNode.isChecked();
-        if (accept) {
-          processFacetNodes(moduleNode.getRootFacets(), true, null);
-        }
-        else {
-          myDetectedFacetManager.disableDetectionInModule(facetTypeNode.getFacetType(), ((ModuleNodeImpl)moduleNode).myModule);
-        }
+        processFacetNodes(moduleNode.getRootFacets(), accept, null);
       }
     }
   }

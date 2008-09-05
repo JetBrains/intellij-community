@@ -33,6 +33,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -222,6 +223,11 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     myEnableAutodetectionWorker.redetectFacets();
   }
 
+  @TestOnly
+  public EnableAutodetectionWorker getEnableAutodetectionWorker() {
+    return myEnableAutodetectionWorker;
+  }
+
   public boolean isAutodetectionEnabled(final Module module, final FacetType facetType, final String url) {
     return !myDisabledAutodetectionInfo.isDisabled(facetType.getStringId(), module.getName(), url);
   }
@@ -290,14 +296,18 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   }
 
   public void disableAutodetectionInDirs(@NotNull Module module, @NotNull String... dirUrls) {
-    // todo
+    for (FacetType<?, ?> facetType : myFacetTypesWithDetectors) {
+      for (String dirUrl : dirUrls) {
+        getState().addDisabled(facetType.getStringId(), module.getName(), dirUrl, true);
+      }
+    }
   }
 
   public void disableAutodetectionInFiles(@NotNull final FacetType type, @NotNull final Module module, @NotNull final String... fileUrls) {
     getState().addDisabled(type.getStringId(), module.getName(), fileUrls);
   }
 
-  public void setDisabledAutodetectionState(final FacetType<?, ?> facetType, final DisabledAutodetectionByTypeElement element) {
+  public void setDisabledAutodetectionState(final @NotNull FacetType<?, ?> facetType, final @Nullable DisabledAutodetectionByTypeElement element) {
     String id = facetType.getStringId();
     DisabledAutodetectionByTypeElement oldElement = myDisabledAutodetectionInfo.findElement(id);
     myEnableAutodetectionWorker.queueChanges(facetType, oldElement, element);

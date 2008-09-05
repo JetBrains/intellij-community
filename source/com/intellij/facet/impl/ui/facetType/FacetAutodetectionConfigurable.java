@@ -12,21 +12,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Icons;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
@@ -51,6 +52,10 @@ public class FacetAutodetectionConfigurable implements Configurable {
   private DefaultListModel myModulesListModel;
   private DefaultListModel myFilesListModel;
   private BidirectionalMap<String, String> myFile2Module = new BidirectionalMap<String, String>();
+  private Set<String> myRemovedModules = new HashSet<String>();
+  private Set<String> myAddedModules = new HashSet<String>();
+  private Set<String> myRemovedFiles = new HashSet<String>();
+  private boolean myAutodetectionWasEnabled;
 
   public FacetAutodetectionConfigurable(@NotNull Project project, final StructureConfigurableContext context, final @NotNull FacetType<?, ?> facetType) {
     myProject = project;
@@ -77,6 +82,9 @@ public class FacetAutodetectionConfigurable implements Configurable {
           for (Module module : chosenElements) {
             String moduleName = module.getName();
             myModulesListModel.addElement(moduleName);
+            if (!myRemovedModules.remove(moduleName)) {
+              myAddedModules.add(moduleName);
+            }
           }
           updateButtons();
           myModulesList.repaint();
@@ -86,14 +94,20 @@ public class FacetAutodetectionConfigurable implements Configurable {
 
     myRemoveModuleButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        ListUtil.removeSelectedItems(myModulesList);
+        List<String> removed = ListUtil.removeSelectedItems(myModulesList);
+        for (String moduleName : removed) {
+          if (!myAddedModules.remove(moduleName)) {
+            myRemovedModules.add(moduleName);
+          }
+        }
         updateButtons();
       }
     });
 
     myRemoveFileButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        ListUtil.removeSelectedItems(myFilesList);
+        List<String> removed = ListUtil.removeSelectedItems(myFilesList);
+        myRemovedFiles.addAll(removed);
         updateButtons();
       }
     });
@@ -114,7 +128,7 @@ public class FacetAutodetectionConfigurable implements Configurable {
   }
 
   private List<Module> getEnabledModules() {
-    List<Module> modules = new ArrayList<Module>(Arrays.asList(myContext.getModules()));
+    List<Module> modules = new ArrayList<Module>(Arrays.asList(getAllModules()));
     Iterator<Module> iterator = modules.iterator();
 
     Set<String> disabled = getDisabledModules();
@@ -126,6 +140,10 @@ public class FacetAutodetectionConfigurable implements Configurable {
       }
     }
     return modules;
+  }
+
+  protected Module[] getAllModules() {
+    return myContext.getModules();
   }
 
   private Set<String> getDisabledModules() {
@@ -153,42 +171,68 @@ public class FacetAutodetectionConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    DisabledAutodetectionByTypeElement state = getAutodetectingManager().getDisabledAutodetectionState(myFacetType);
-    return !Comparing.equal(state, createElement());
+    return myAutodetectionWasEnabled != myEnableAutoDetectionCheckBox.isSelected()
+           || !myRemovedFiles.isEmpty() || !myAddedModules.isEmpty() || !myRemovedModules.isEmpty();
   }
 
   public void apply() throws ConfigurationException {
-    getAutodetectingManager().setDisabledAutodetectionState(myFacetType, createElement());
+    DisabledAutodetectionByTypeElement state = getAutodetectingManager().getDisabledAutodetectionState(myFacetType);
+    DisabledAutodetectionByTypeElement newState = modifyState(state);
+    getAutodetectingManager().setDisabledAutodetectionState(myFacetType, newState);
   }
 
   @Nullable
-  private DisabledAutodetectionByTypeElement createElement() {
-    if (myEnableAutoDetectionCheckBox.isSelected() && myModulesListModel.isEmpty() && myFilesListModel.isEmpty()) {
-      return null;
+  private DisabledAutodetectionByTypeElement modifyState(final DisabledAutodetectionByTypeElement state) {
+    if (!myEnableAutoDetectionCheckBox.isSelected()) {
+      return new DisabledAutodetectionByTypeElement(myFacetType.getStringId());
     }
-    
-    DisabledAutodetectionByTypeElement element = new DisabledAutodetectionByTypeElement(myFacetType.getStringId());
-    if (myEnableAutoDetectionCheckBox.isSelected()) {
-      Set<String> disabledModules = getDisabledModules();
-      for (String moduleName : disabledModules) {
-        element.getModuleElements().add(new DisabledAutodetectionInModuleElement(moduleName));
-      }
 
-      for (int i = 0; i < myFilesListModel.getSize(); i++) {
-        String url = (String)myFilesListModel.getElementAt(i);
-        String moduleName = myFile2Module.get(url);
-        if (!disabledModules.contains(moduleName)) {
-          DisabledAutodetectionInModuleElement moduleElement = element.findElement(moduleName);
-          if (moduleElement != null) {
-            moduleElement.getFiles().add(url);
-          }
-          else {
-            element.getModuleElements().add(new DisabledAutodetectionInModuleElement(moduleName, url));
-          }
+    if (state == null) {
+      if (myAddedModules.isEmpty()) {
+        return null;
+      }
+      DisabledAutodetectionByTypeElement newState = new DisabledAutodetectionByTypeElement(myFacetType.getStringId());
+      for (String moduleName : myAddedModules) {
+        newState.getModuleElements().add(new DisabledAutodetectionInModuleElement(moduleName));
+      }
+      return newState;
+    }
+
+    DisabledAutodetectionByTypeElement newState = copyState(state);
+    boolean someModuleRemoved = false;
+    for (String url : myRemovedFiles) {
+      String moduleName = myFile2Module.get(url);
+      DisabledAutodetectionInModuleElement element = newState.findElement(moduleName);
+      if (element != null) {
+        boolean removed = element.getFiles().remove(url) | element.getDirectories().remove(url);
+        if (removed && element.isDisableInWholeModule()) {
+          newState.removeDisabled(moduleName);
+          someModuleRemoved = true;
         }
       }
     }
-    return element;
+    for (String moduleName : myAddedModules) {
+      newState.getModuleElements().add(new DisabledAutodetectionInModuleElement(moduleName));
+    }
+    for (String moduleName : myRemovedModules) {
+      someModuleRemoved |= newState.findElement(moduleName) != null;
+      newState.removeDisabled(moduleName);
+    }
+    if ((someModuleRemoved || !myAutodetectionWasEnabled) && newState.getModuleElements().isEmpty()) {
+      return null;
+    }
+    return newState;
+  }
+
+  private DisabledAutodetectionByTypeElement copyState(final DisabledAutodetectionByTypeElement state) {
+    DisabledAutodetectionByTypeElement newState = new DisabledAutodetectionByTypeElement(myFacetType.getStringId());
+    for (DisabledAutodetectionInModuleElement moduleElement : state.getModuleElements()) {
+      DisabledAutodetectionInModuleElement newModuleElement = new DisabledAutodetectionInModuleElement(moduleElement.getModuleName());
+      newModuleElement.getFiles().addAll(moduleElement.getFiles());
+      newModuleElement.getDirectories().addAll(moduleElement.getDirectories());
+      newState.getModuleElements().add(newModuleElement);
+    }
+    return newState;
   }
 
   public void reset() {
@@ -196,6 +240,9 @@ public class FacetAutodetectionConfigurable implements Configurable {
     myModulesListModel.removeAllElements();
     myFilesListModel.removeAllElements();
     myFile2Module.clear();
+    myRemovedModules.clear();
+    myAddedModules.clear();
+    myRemovedFiles.clear();
 
     myEnableAutoDetectionCheckBox.setSelected(true);
     if (autodetectionInfo != null) {
@@ -206,7 +253,7 @@ public class FacetAutodetectionConfigurable implements Configurable {
       else {
         for (DisabledAutodetectionInModuleElement moduleElement : moduleElements) {
           String moduleName = moduleElement.getModuleName();
-          if (moduleElement.getFiles().isEmpty()) {
+          if (moduleElement.isDisableInWholeModule()) {
             myModulesListModel.addElement(moduleName);
           }
           else {
@@ -214,14 +261,39 @@ public class FacetAutodetectionConfigurable implements Configurable {
               myFile2Module.put(url, moduleName);
               myFilesListModel.addElement(url);
             }
+            for (String url : moduleElement.getDirectories()) {
+              myFile2Module.put(url, moduleName);
+              myFilesListModel.addElement(url);
+            }
           }
         }
       }
     }
+    myAutodetectionWasEnabled = myEnableAutoDetectionCheckBox.isSelected();
     mySkipFilesLabel.setVisible(!myFilesListModel.isEmpty());
     mySkipFilesListPanel.setVisible(!myFilesListModel.isEmpty());
     myRemoveFileButton.setVisible(!myFilesListModel.isEmpty());
     updateButtons();
+  }
+
+  @TestOnly
+  public Set<String> getRemovedModules() {
+    return myRemovedModules;
+  }
+
+  @TestOnly
+  public Set<String> getAddedModules() {
+    return myAddedModules;
+  }
+
+  @TestOnly
+  public Set<String> getRemovedFiles() {
+    return myRemovedFiles;
+  }
+
+  @TestOnly
+  public JCheckBox getEnableAutoDetectionCheckBox() {
+    return myEnableAutoDetectionCheckBox;
   }
 
   private void updateButtons() {
@@ -259,7 +331,7 @@ public class FacetAutodetectionConfigurable implements Configurable {
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       if (file != null) {
         append(path, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        setIcon(file.getIcon());
+        setIcon(file.isDirectory() ? Icons.FOLDER_ICON : file.getIcon());
       }
       else {
         append(path, SimpleTextAttributes.ERROR_ATTRIBUTES);

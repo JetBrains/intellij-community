@@ -78,19 +78,19 @@ public class DisabledAutodetectionInfo {
     }
   }
 
-  public void addDisabled(final @NotNull String facetTypeId, final @NotNull String moduleName, String url) {
+  public void addDisabled(final @NotNull String facetTypeId, final @NotNull String moduleName, String url, final boolean recursively) {
     DisabledAutodetectionByTypeElement element = findElement(facetTypeId);
     if (element != null) {
-      element.addDisabled(moduleName, url);
+      element.addDisabled(moduleName, url, recursively);
     }
     else {
-      myElements.add(new DisabledAutodetectionByTypeElement(facetTypeId, moduleName, url));
+      myElements.add(new DisabledAutodetectionByTypeElement(facetTypeId, moduleName, url, recursively));
     }
   }
 
   public void addDisabled(final @NotNull String facetTypeId, final @NotNull String moduleName, final @NotNull String... urls) {
     for (String url : urls) {
-      addDisabled(facetTypeId, moduleName, url);
+      addDisabled(facetTypeId, moduleName, url, false);
     }
   }
 }

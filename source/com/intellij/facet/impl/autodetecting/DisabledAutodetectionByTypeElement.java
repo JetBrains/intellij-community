@@ -7,13 +7,14 @@ package com.intellij.facet.impl.autodetecting;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author nik
@@ -35,9 +36,9 @@ public class DisabledAutodetectionByTypeElement {
     myModuleElements.add(new DisabledAutodetectionInModuleElement(moduleName));
   }
 
-  public DisabledAutodetectionByTypeElement(String facetTypeId, String moduleName, String url) {
+  public DisabledAutodetectionByTypeElement(String facetTypeId, String moduleName, String url, final boolean recursively) {
     this(facetTypeId);
-    myModuleElements.add(new DisabledAutodetectionInModuleElement(moduleName, url));
+    myModuleElements.add(new DisabledAutodetectionInModuleElement(moduleName, url, recursively));
   }
 
   @Attribute("id")
@@ -65,6 +66,7 @@ public class DisabledAutodetectionByTypeElement {
     DisabledAutodetectionInModuleElement element = findElement(moduleName);
     if (element != null) {
       element.getFiles().clear();
+      element.getDirectories().clear();
       return;
     }
 
@@ -75,17 +77,22 @@ public class DisabledAutodetectionByTypeElement {
     myModuleElements.clear();
   }
 
-  public void addDisabled(@NotNull String moduleName, @NotNull String fileUrl) {
+  public void addDisabled(@NotNull String moduleName, @NotNull String fileUrl, final boolean recursively) {
     if (myModuleElements.isEmpty()) return;
 
     DisabledAutodetectionInModuleElement element = findElement(moduleName);
     if (element != null) {
-      if (!element.getFiles().isEmpty()) {
-        element.getFiles().add(fileUrl);
+      if (!element.isDisableInWholeModule()) {
+        if (recursively) {
+          element.getDirectories().add(fileUrl);
+        }
+        else {
+          element.getFiles().add(fileUrl);
+        }
       }
       return;
     }
-    myModuleElements.add(new DisabledAutodetectionInModuleElement(moduleName, fileUrl));
+    myModuleElements.add(new DisabledAutodetectionInModuleElement(moduleName, fileUrl, recursively));
   }
 
   @Nullable
@@ -117,8 +124,18 @@ public class DisabledAutodetectionByTypeElement {
     DisabledAutodetectionInModuleElement element = findElement(moduleName);
     if (element == null) return false;
 
-    Set<String> files = element.getFiles();
-    return files.isEmpty() || files.contains(url);
+    if (element.isDisableInWholeModule() || element.getFiles().contains(url)) {
+      return true;
+    }
+    for (String directoryUrl : element.getDirectories()) {
+      if (!directoryUrl.endsWith("/")) {
+        directoryUrl += "/";
+      }
+      if (url.startsWith(directoryUrl) || !SystemInfo.isFileSystemCaseSensitive && StringUtil.startsWithIgnoreCase(url, directoryUrl)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public boolean removeDisabled(final String moduleName) {

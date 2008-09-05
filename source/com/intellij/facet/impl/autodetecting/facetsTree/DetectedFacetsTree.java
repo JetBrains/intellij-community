@@ -31,7 +31,7 @@ public class DetectedFacetsTree extends CheckboxTreeBase {
   private static final Icon MODULE_ICON = IconLoader.getIcon("/nodes/ModuleClosed.png");
 
   public DetectedFacetsTree(final Collection<? extends CheckedTreeNode> roots) {
-    super(new FacetsCheckboxTreeCellRenderer(), createRoot(roots));
+    super(new FacetsCheckboxTreeCellRenderer(), createRoot(roots), new CheckPolicy(true, true, true, false));
   }
 
   private static CheckedTreeNode createRoot(final Collection<? extends CheckedTreeNode> nodes) {
