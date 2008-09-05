@@ -30,7 +30,6 @@ import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -203,7 +202,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
       return new IntentionListStep(intentions, errorFixes, inspectionFixes){
         public String getTitle() {
-          return XmlStringUtil.escapeString(action.getToolName());
+          return action.getToolName();
         }
       };
     }
