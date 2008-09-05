@@ -279,12 +279,16 @@ class AbstractTreeUi {
     }
 
 
-    if (result != null) {
-      LOG.assertTrue(TreeUtil.isAncestor(getRootNode(), result), "builder=" + getBuilder() + " result=" + result);
-      LOG.assertTrue(getRootNode() == myTreeModel.getRoot());
+    if (result != null && !isNodeInStructure(result)) {
+      disposeNode(result);
+      result = null;
     }
 
     return result;
+  }
+
+  private boolean isNodeInStructure(DefaultMutableTreeNode node) {
+    return TreeUtil.isAncestor(getRootNode(), node) && getRootNode() == myTreeModel.getRoot();
   }
 
   private boolean isNodeValidForElement(final Object element, final DefaultMutableTreeNode node) {
