@@ -3,13 +3,19 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.jetbrains.python.psi.*;
-import static com.jetbrains.python.psi.PyCallExpression.*;
+import static com.jetbrains.python.psi.PyCallExpression.Flag;
+import static com.jetbrains.python.psi.PyCallExpression.PyMarkedFunction;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.reflect.Array;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author yole
  */
-public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, PyCallExpression.PyMarkedFunction> {
+public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, PyArgumentList.AnalysisResult> {
   
   public boolean couldShowInLookup() {
     return true;
@@ -18,31 +24,17 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     return new Object[0];  //To change body of implemented methods use File | Settings | File Templates.
   }
 
-  public Object[] getParametersForDocumentation(final PyCallExpression.PyMarkedFunction p, final ParameterInfoContext context) {
+  public Object[] getParametersForDocumentation(final PyArgumentList.AnalysisResult p, final ParameterInfoContext context) {
     return new Object[0];  //To change body of implemented methods use File | Settings | File Templates.
   }
 
   public PyArgumentList findElementForParameterInfo(final CreateParameterInfoContext context) {
-    PyArgumentList result = findArgumentList(context);
-    if (result != null) {
-      PyCallExpression callExpression = result.getCallExpression(); /*PsiTreeUtil.getParentOfType(result, PyCallExpression.class);*/
-      if (callExpression == null) return null;
-      /*
-      boolean is_inst = callExpression.isByInstance();
-      PyElement callee = callExpression.resolveCallee();
-      if (callee instanceof PyClass) { // constructor call
-        final PyClass cls = (PyClass)callee;
-        callee = cls.findMethodByName("__init__");
-        is_inst |= true;
-      }
-      if (!(callee instanceof PyFunction)) return null;
-      PyFunction function = (PyFunction) callee;
-
-      context.setItemsToShow(new Object[] { new PyCallExpression.PyMarkedFunction(function, is_inst) });
-      */
-      context.setItemsToShow(new Object[] { callExpression.resolveCallee() });
+    PyArgumentList arglist = findArgumentList(context);
+    if (arglist != null) {
+      PyArgumentList.AnalysisResult result = arglist.analyzeCall();  
+      context.setItemsToShow(new Object[] { result });
     }
-    return result;
+    return arglist;
   }
 
   private static PyArgumentList findArgumentList(final ParameterInfoContext context) {
@@ -74,43 +66,78 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     return true;
   }
 
-  public void updateUI(final PyMarkedFunction p, final ParameterInfoUIContext context) {
-    if (p == null) return;
-    final PyFunction py_function = p.getFunction();
+  public void updateUI(final PyArgumentList.AnalysisResult result, final ParameterInfoUIContext context) {
+    if (result == null) return;
+    PyMarkedFunction marked = result.getMarkedFunction();
+    if (marked == null) return;
+    final PyFunction py_function = marked.getFunction();
     if (py_function == null) return; // resolution failed
-    final PyParameterList parameterList = py_function.getParameterList();
-    final PyParameter[] params = parameterList.getParameters();
-    int currentParameterIndex = context.getCurrentParameterIndex() >= 0 ? context.getCurrentParameterIndex():params.length;
+    final PyParameter[] params = py_function.getParameterList().getParameters();
+    final PyArgumentList arglist = result.getArgumentList();
+    int arg_index = context.getCurrentParameterIndex() >= 0 ? context.getCurrentParameterIndex():params.length;
 
-    int highlightStartOffset = -1;
-    int highlightEndOffset = -1;
-
-    StringBuilder signatureBuilder = new StringBuilder();
-
-    for(int i=0; i<params.length; i++) {
-      if (i == currentParameterIndex) {
-        highlightStartOffset = signatureBuilder.length();
-      }
-      if (params [i].isPositionalContainer()) {
-        signatureBuilder.append("*");
-      }
-      else if (i == 0 && p.getFlags().contains(Flag.IMPLICIT_FIRST_ARG)) {
-        currentParameterIndex += 1;
-        continue;
-      }
-      else if (params [i].isKeywordContainer()) {
-        signatureBuilder.append("**");
-      }
-      signatureBuilder.append(params [i].getName());
-      if (i == currentParameterIndex) {
-        highlightEndOffset = signatureBuilder.length();
-      }
-      if (i < params.length-1) {
-        signatureBuilder.append(", ");
-      }
+    // param texts
+    String[] param_texts = new String[params.length];
+    for (int i = 0; i < param_texts.length; i += 1) {
+      StringBuilder strb = new StringBuilder();
+      final PyParameter param = params[i];
+      if (param.isKeywordContainer()) strb.append("**");
+      else if (param.isPositionalContainer()) strb.append("*");
+      strb.append(param.getName());
+      PyExpression default_v = param.getDefaultValue(); 
+      if (default_v != null) strb.append("=").append(PyResolveUtil.getReadableRepr(default_v));
+      if (i < param_texts.length-1) strb.append(",");
+      param_texts[i] = strb.toString();
     }
 
+    // formatting
+    Map<PyParameter, Integer> param_indexes = new HashMap<PyParameter, Integer>();
+    for (int i=0; i < params.length; i += 1) param_indexes.put(params[i], i);
+    EnumSet<ParameterInfoUIContextEx.Flag>[] flags = (EnumSet<ParameterInfoUIContextEx.Flag>[])Array.newInstance(EnumSet.class, params.length);
+    // ^^ gotta hate the covariance issues
+    for (int i =0; i < flags.length; i += 1) flags[i] = EnumSet.noneOf(ParameterInfoUIContextEx.Flag.class); 
+
+    if (marked.getFlags().contains(Flag.IMPLICIT_FIRST_ARG)) {
+      //arg_index -= 1; // argument 0 is parameter 1, thus kipping para,eter 0 which is 'self'
+      flags[0].add(ParameterInfoUIContextEx.Flag.STRIKEOUT); // show but mark as absent
+    }
+    int cur_arg_index = 0;
+    for (PyExpression arg : arglist.getArguments()) {
+      if (cur_arg_index == arg_index) {
+        PyParameter param = result.getPlainMappedParams().get(arg);
+        if (param != null) {
+          final Integer param_index = param_indexes.get(param);
+          if  (param_index < flags.length) {
+            flags[param_index].add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+          }
+        }
+        else if (arg == result.getTupleArg()) {
+          // mark all params that map to *arg
+          for (PyParameter tpar : result.getTupleMappedParams()) {
+            final Integer param_index = param_indexes.get(tpar);
+            if (param_index != null && param_index.intValue() < flags.length) flags[param_index.intValue()].add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+          }
+        }
+        else if (arg == result.getKwdArg()) {
+          // mark all params that map to **arg
+          for (PyParameter tpar : result.getKwdMappedParams()) {
+            final Integer param_index = param_indexes.get(tpar);
+            if (param_index != null && param_index < flags.length) flags[param_index].add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+          }
+        }
+      }
+      // else: stay unhilited
+      cur_arg_index += 1;
+    }
+
+
+    if (context instanceof ParameterInfoUIContextEx) {
+      final ParameterInfoUIContextEx pic = (ParameterInfoUIContextEx)context;
+      pic.setupUIComponentPresentation(param_texts, flags, false, context.getDefaultParameterColor());
+    }
+    /*
     context.setupUIComponentPresentation(signatureBuilder.toString(), highlightStartOffset, highlightEndOffset, false, false, false,
                                          context.getDefaultParameterColor());
+    */
   }
 }

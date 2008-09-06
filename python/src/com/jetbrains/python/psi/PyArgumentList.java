@@ -19,12 +19,12 @@ package com.jetbrains.python.psi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.*;
+
 /**
- * Created by IntelliJ IDEA.
+ * Represents an argument list of a function call.
  * User: yole
  * Date: 29.05.2005
- * Time: 13:44:24
- * To change this template use File | Settings | File Templates.
  */
 public interface PyArgumentList extends PyElement {
 
@@ -38,5 +38,80 @@ public interface PyArgumentList extends PyElement {
 
   @Nullable
   PyCallExpression getCallExpression();
+
+  /**
+   * Tries to map the argument list to callee's idea of parameters.
+   * @return a result object with mappings and diagnostic flags.
+   */
+  AnalysisResult analyzeCall();
+
+  /**
+   * Flags to mark analysis results for an argument.
+   * Theoretically can be used together, but currently only make sense as a single value per argument.
+   */
+  enum ArgFlag {
+    /** duplicate plain */          IS_DUP,
+    /** unexpected */               IS_UNMAPPED,
+    /** duplicate **arg */          IS_DUP_KWD,
+    /** duplicate *arg */           IS_DUP_TUPLE,
+    /** positional past keyword */  IS_POS_PAST_KWD
+  }
+
+
+  /**
+   * Result of analysis of argument list application to the callee.
+   * Contains neatly arranged lists and mappinga between arguments and parameters,
+   * including error diagnostics.
+   */
+  interface AnalysisResult {
+
+    /**
+     * @return A mapping parameter->argument for non-starred parameters (but includes starred argument).
+     */
+    @NotNull Map<PyExpression, PyParameter> getPlainMappedParams();
+
+    /**
+     * @return First *arg, or null.
+     */
+    @Nullable
+    PyStarArgument getTupleArg();
+
+    /**
+     * @return A list of parameters mapped to a *arg.
+     */
+    @NotNull List<PyParameter> getTupleMappedParams();
+
+    /**
+     * @return First **arg, or null.
+     */
+    @Nullable
+    PyStarArgument getKwdArg();
+
+    /**
+     * @return A list of parameters mapped to an **arg.
+     */
+    @NotNull List<PyParameter> getKwdMappedParams();
+
+    /**
+     * @return A list of parameters for which no arguments were found ('missing').
+     */
+    @NotNull
+    List<PyParameter> getUnmappedParams();
+
+
+    /**
+     * @return Lists all args with their flags.
+     * @see ArgFlag
+     */
+    Map<PyExpression, EnumSet<ArgFlag>> getArgumentFlags();
+
+    /**
+     * @return result of a resolveCallee() against the function call to which the paramater list belongs.
+     */
+    @Nullable
+    PyCallExpression.PyMarkedFunction getMarkedFunction();
+
+    PyArgumentList getArgumentList();
+  }
 
 }
