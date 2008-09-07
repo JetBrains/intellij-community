@@ -246,7 +246,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return new Object[0];
     }
 
-    if (PsiTreeUtil.getParentOfType(this, PyImportElement.class) != null) {
+    if (PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class) != null) {
       // complete to possible modules
       return ResolveImportUtil.suggestImportVariants(this);
     }

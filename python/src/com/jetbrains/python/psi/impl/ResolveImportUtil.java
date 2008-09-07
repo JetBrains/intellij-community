@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -8,10 +9,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NonNls;
@@ -344,9 +343,29 @@ public class ResolveImportUtil {
    * @param partial_ref reference containing the partial name.
    * @return an array of names ready for getVariants().
    */
-  public static String[] suggestImportVariants(final PyReferenceExpression partial_ref) {
+  public static Object[] suggestImportVariants(final PyReferenceExpression partial_ref) {
+    List<Object> variants = new ArrayList<Object>();
+    // are we in "import _" or "from foo import _"?
+    PyFromImportStatement maybe_from_import = PsiTreeUtil.getParentOfType(partial_ref, PyFromImportStatement.class);
+    if (maybe_from_import != null) {
+      if (partial_ref.getParent() != maybe_from_import) { // in "from foo import _"
+        PyReferenceExpression src = maybe_from_import.getImportSource();
+        if (src != null) {
+          PsiElement mod = src.resolve();
+          if (mod != null) {
+            final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();
+            PyResolveUtil.treeCrawlUp(processor, mod, true);
+            for (LookupElement le : processor.getResult()) {
+              if (le.getObject() instanceof PsiNamedElement) variants.add(le);
+              else variants.add(le.toString()); // NOTE: a rather silly way to handle assignment targets
+            }
+            return variants.toArray(new Object[variants.size()]);
+          }
+        }
+      }
+    }
+    // in "import _" or "from _ import"
     // look in builtins
-    List<String> variants = new ArrayList<String>();
     DataContext dataContext = DataManager.getInstance().getDataContext();
     // look at current dir
     final VirtualFile pfile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
