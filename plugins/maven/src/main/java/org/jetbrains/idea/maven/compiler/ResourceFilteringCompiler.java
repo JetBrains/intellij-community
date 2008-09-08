@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.PropertyResolver;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
@@ -79,33 +80,38 @@ public class ResourceFilteringCompiler implements ClassPostProcessingCompiler {
     }
   }
 
-  public ProcessingItem[] process(CompileContext context, ProcessingItem[] items) {
+  public ProcessingItem[] process(final CompileContext context, ProcessingItem[] items) {
     context.getProgressIndicator().setText("Filtering Maven resources...");
-    List<ProcessingItem> result = new ArrayList<ProcessingItem>(items.length);
+    final List<ProcessingItem> result = new ArrayList<ProcessingItem>(items.length);
     int count = 0;
-    for (ProcessingItem each : items) {
+    for (final ProcessingItem each : items) {
       context.getProgressIndicator().setFraction(((double)count) / items.length);
       context.getProgressIndicator().checkCanceled();
 
-      MyProcessingItem eachItem = (MyProcessingItem)each;
-      VirtualFile outputFile = each.getFile();
-      VirtualFile sourceFile = eachItem.getSourceFile();
-      try {
-        if (eachItem.isFiltered()) {
-          String resolved = PropertyResolver.resolve(eachItem.getModule(), VfsUtil.loadText(outputFile));
-          VfsUtil.saveText(outputFile, resolved);
-        }
-        else {
-          boolean wasFiltered = outputFile.getTimeStamp() != sourceFile.getTimeStamp();
-          if (wasFiltered) {
-            VfsUtil.saveText(outputFile, VfsUtil.loadText(sourceFile));
+      final MyProcessingItem eachItem = (MyProcessingItem)each;
+      final VirtualFile outputFile = each.getFile();
+      final VirtualFile sourceFile = eachItem.getSourceFile();
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          try {
+            if (eachItem.isFiltered()) {
+              String resolved = PropertyResolver.resolve(eachItem.getModule(), VfsUtil.loadText(outputFile));
+              VfsUtil.saveText(outputFile, resolved);
+            }
+            else {
+              boolean wasFiltered = outputFile.getTimeStamp() != sourceFile.getTimeStamp();
+              if (wasFiltered) {
+                VfsUtil.saveText(outputFile, VfsUtil.loadText(sourceFile));
+              }
+            }
+            result.add(each);
+          }
+          catch (IOException e) {
+            context.addMessage(CompilerMessageCategory.ERROR, "Maven: Cannot filter properties", outputFile.getUrl(), -1, -1);
           }
         }
-        result.add(each);
-      }
-      catch (IOException e) {
-        context.addMessage(CompilerMessageCategory.ERROR, "Maven: Cannot filter properties", outputFile.getUrl(), -1, -1);
-      }
+      });
     }
     return result.toArray(new ProcessingItem[result.size()]);
   }
