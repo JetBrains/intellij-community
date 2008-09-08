@@ -279,6 +279,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
       myOutputVariables = outputVariables.toArray(new PsiVariable[outputVariables.size()]);
     }
+    Arrays.sort(myOutputVariables, PsiUtil.BY_POSITION);
 
     final List<PsiVariable> inputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
     if (myGenerateConditionalExit) {

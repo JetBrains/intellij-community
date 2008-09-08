@@ -21,12 +21,12 @@ class Test {
             this.j = j;
         }
 
-        public int getK() {
-            return k;
-        }
-
         public int getJ() {
             return j;
+        }
+
+        public int getK() {
+            return k;
         }
 
         public Inner invoke() {
