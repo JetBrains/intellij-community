@@ -181,7 +181,7 @@ public class FileStatusMap {
     }
   }
 
-  public void markFileScopeDirty(@NotNull Document document, @NotNull TextRange scope) {
+  public void markFileScopeDirty(@NotNull Document document, @NotNull TextRange scope, int fileLength) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("********************************* Mark dirty: "+scope);
     }
@@ -191,16 +191,16 @@ public class FileStatusMap {
       if (status.defensivelyMarked) {
         status.defensivelyMarked = false;
       }
-      status.dirtyScope = combineScopes(status.dirtyScope, scope, document);
-      status.localInspectionsDirtyScope = combineScopes(status.localInspectionsDirtyScope, scope, document);
-      status.externalDirtyScope = combineScopes(status.externalDirtyScope, scope, document);
+      status.dirtyScope = combineScopes(status.dirtyScope, scope, fileLength);
+      status.localInspectionsDirtyScope = combineScopes(status.localInspectionsDirtyScope, scope, fileLength);
+      status.externalDirtyScope = combineScopes(status.externalDirtyScope, scope, fileLength);
     }
   }
 
-  private static TextRange combineScopes(TextRange scope1, TextRange scope2, Document document) {
+  private static TextRange combineScopes(TextRange scope1, TextRange scope2, int textLength) {
     if (scope1 == null) return scope2;
     if (scope2 == null) return scope1;
-    TextRange documentRange = TextRange.from(0, document.getTextLength());
+    TextRange documentRange = TextRange.from(0, textLength);
     if (!documentRange.contains(scope1) || !documentRange.contains(scope2)) return documentRange;
     return scope1.union(scope2);
   }

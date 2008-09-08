@@ -94,15 +94,16 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     if (document == null) return;
 
+    int fileLength = file.getTextLength();
     if (!file.getViewProvider().isPhysical()) {
-      fileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength()));
+      fileStatusMap.markFileScopeDirty(document, new TextRange(0, fileLength), fileLength);
       return;
     }
 
     // optimization
     if (whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)) {
       if (child instanceof PsiWhiteSpace || child instanceof PsiComment) {
-        fileStatusMap.markFileScopeDirty(document, child.getTextRange());
+        fileStatusMap.markFileScopeDirty(document, child.getTextRange(), fileLength);
         return;
       }
     }
@@ -116,7 +117,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
 
       final PsiElement scope = getChangeHighlightingScope(element);
       if (scope != null) {
-        fileStatusMap.markFileScopeDirty(document, scope.getTextRange());
+        fileStatusMap.markFileScopeDirty(document, scope.getTextRange(), fileLength);
         return;
       }
 

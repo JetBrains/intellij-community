@@ -412,7 +412,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public static class MutableTextRange{
-    private int myLength;
+    private final int myLength;
     private int myStartOffset;
 
     public MutableTextRange(final int startOffset, final int endOffset) {
