@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ruby.rake.runConfigurations;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -10,8 +11,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.codeInsight.hint.HintUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.lang.TextUtil;
 
 import javax.swing.*;
@@ -28,7 +32,7 @@ public class TextFieldWithAutoCompletion extends JTextField {
   //TODO refactor with something
   private static final Color COMPLETION_BACKGROUND_COLOR = new Color(235, 244, 254);
 
-  private final List<String> myVariants;
+  private List<String> myVariants;
   private Project myProject;
   //private TextFieldWithAutoCompletion.CancelAction myCancelAction;
   //private Set<Action> myDisabledTextActions;
@@ -36,9 +40,9 @@ public class TextFieldWithAutoCompletion extends JTextField {
 
 
 
-  public TextFieldWithAutoCompletion(final List<String> variants, final Project project) {
-    myVariants = variants;
+  public TextFieldWithAutoCompletion(@Nullable final List<String> variants, final Project project) {
     myProject = project;
+    setVariants(variants);
 
     //putClientProperty("AuxEditorComponent", Boolean.TRUE);
     new VariantsCompletionAction();
@@ -86,6 +90,7 @@ public class TextFieldWithAutoCompletion extends JTextField {
     public void actionPerformed(final AnActionEvent e) {
       final String[] array = calcWords(getPrefix());
       if (array.length == 0) {
+        showNoSuggestionsPopup();
         return;
       }
 
@@ -130,6 +135,21 @@ public class TextFieldWithAutoCompletion extends JTextField {
 
       return sortedWords.toArray(new String[sortedWords.size()]);
     }
+  }
+
+  private void showNoSuggestionsPopup() {
+    final JLabel message = HintUtil.createErrorLabel(IdeBundle.message("file.chooser.completion.no.suggestions"));
+    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(message, message);
+    builder.setRequestFocus(true).setResizable(false).setAlpha(0.1f).setFocusOwners(new Component[] {this});
+    builder.createPopup().showUnderneathOf(this);
+  }
+
+  public void setVariants(@Nullable final List<String> variants) {
+    if (variants == null) {
+      myVariants = Collections.emptyList();
+      return;
+    }
+    myVariants = variants;
   }
 
   //@SuppressWarnings("HardCodedStringLiteral")
