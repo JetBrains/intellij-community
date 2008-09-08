@@ -12,9 +12,9 @@ class Test {
    }
 
     private class Inner {
-        private int k;
         private int i;
         private int j;
+        private int k;
 
         public Inner(int i, int j) {
             this.i = i;
