@@ -3,10 +3,12 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.Patches;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
@@ -22,10 +24,10 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 import javax.swing.*;
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,6 +55,8 @@ public class FileBasedStorage extends XmlElementStorage {
     myRootElementName = rootElementName;
     myFilePath = filePath;
     myFile = FILE_SYSTEM.createFile(myFilePath);
+
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
 
     VirtualFileTracker virtualFileTracker = (VirtualFileTracker)picoContainer.getComponentInstanceOfType(VirtualFileTracker.class);
     MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
@@ -113,7 +117,22 @@ public class FileBasedStorage extends XmlElementStorage {
     protected void doSave() throws StateStorageException {
       final byte[] text = StorageUtil.printDocument(getDocumentToSave());
 
-      StorageUtil.save(myFile, text);
+      //StorageUtil.save(myFile, text);
+      VirtualFile virtualFile = ensureVirtualFile();
+      if (virtualFile != null) {
+        try {
+          OutputStream out = virtualFile.getOutputStream(this);
+          try {
+            out.write(text);
+          }
+          finally {
+            out.close();
+          }
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
     }
 
     public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
@@ -133,6 +152,20 @@ public class FileBasedStorage extends XmlElementStorage {
       return Collections.singletonList(myFile);
     }
 
+  }
+
+  private VirtualFile ensureVirtualFile() {
+    if (!myFile.exists()) {
+      try {
+        File ioFile = new File(myFile.getPath());
+        ioFile.getParentFile().mkdirs();
+        ioFile.createNewFile();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
   }
 
 
@@ -183,23 +216,26 @@ public class FileBasedStorage extends XmlElementStorage {
   @Nullable
   protected Document loadDocument() throws StateStorage.StateStorageException {
     try {
-      if (!myFile.exists() || myFile.length() == 0) {
+      VirtualFile file = getVirtualFile();
+      if (file == null || file.isDirectory()) {
         return null;
       }
       else {
-        return loadDocumentImpl();
+        return loadDocumentImpl(file);
       }
     }
     catch (final JDOMException e) {
-      SwingUtilities.invokeLater(new Runnable(){
-        public void run() {
-          JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                        "Cannot load settings from file '" + myFile.getPath() + "': " + e.getLocalizedMessage() + "\n" +
-                                        "File content will be recreated",
-                                        "Load Settings",
-                                        JOptionPane.ERROR_MESSAGE);
-        }
-      });
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        SwingUtilities.invokeLater(new Runnable(){
+          public void run() {
+            JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                          "Cannot load settings from file '" + myFile.getPath() + "': " + e.getLocalizedMessage() + "\n" +
+                                          "File content will be recreated",
+                                          "Load Settings",
+                                          JOptionPane.ERROR_MESSAGE);
+          }
+        });
+      }
 
       /*
       throw new StateStorage.StateStorageException(
@@ -208,15 +244,17 @@ public class FileBasedStorage extends XmlElementStorage {
       return createEmptyElement();
     }
     catch (final IOException e) {
-      SwingUtilities.invokeLater(new Runnable(){
-        public void run() {
-          JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                        "Cannot load settings from file '" + myFile.getPath() + "': " + e.getLocalizedMessage() + "\n" +
-                                        "File content will be recreated",
-                                        "Load Settings",
-                                        JOptionPane.ERROR_MESSAGE);
-        }
-      });
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        SwingUtilities.invokeLater(new Runnable(){
+          public void run() {
+            JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                          "Cannot load settings from file '" + myFile.getPath() + "': " + e.getLocalizedMessage() + "\n" +
+                                          "File content will be recreated",
+                                          "Load Settings",
+                                          JOptionPane.ERROR_MESSAGE);
+          }
+        });
+      }
 
       return createEmptyElement();
 
@@ -224,10 +262,11 @@ public class FileBasedStorage extends XmlElementStorage {
     }
   }
 
-  private Document loadDocumentImpl() throws IOException, JDOMException {
-    int bytesToSkip = skipBom();
+  private Document loadDocumentImpl(final VirtualFile file) throws IOException, JDOMException {
 
-    InputStream stream = new BufferedInputStream(myFile.openInputStream());
+    int bytesToSkip = skipBom(file);
+
+    InputStream stream = file.getInputStream();
     try {
       if (bytesToSkip > 0) {
         synchronized (BUFFER) {
@@ -247,11 +286,11 @@ public class FileBasedStorage extends XmlElementStorage {
     }
   }
 
-  private int skipBom() {
+  private int skipBom(final VirtualFile virtualFile) {
     synchronized (BUFFER) {
       final int read;
       try {
-        InputStream input = myFile.openInputStream();
+        InputStream input = virtualFile.getInputStream();
         try {
           read = input.read(BUFFER);
         }
@@ -277,7 +316,9 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   private Document createEmptyElement() {
-    return new Document(new Element(myRootElementName));
+    final Element element = new Element(myRootElementName);
+    element.setAttribute("version", String.valueOf(ProjectManagerImpl.CURRENT_FORMAT_VERSION));
+    return new Document(element);
   }
 
   public String getFileName() {

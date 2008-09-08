@@ -1,8 +1,7 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
@@ -12,7 +11,10 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.RoamingTypePerPlatform;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -25,12 +27,15 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * @author Anton Katilin
- * @author Eugene Belyaev
- * @author Vladimir Kondratyev
- */
-public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent,
+@State(
+  name = "KeymapManager",
+  storages = {
+    @Storage(
+        id="keymap",
+        file = "$APP_CONFIG$/keymap.xml"
+    )}
+)
+public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ExportableComponent,
                                                                   RoamingTypePerPlatform {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.keymap.KeymapManager");
@@ -66,7 +71,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
           }
 
           public void initScheme(final KeymapImpl scheme) {
-            
+
           }
 
           public void onSchemeAdded(final KeymapImpl scheme) {
@@ -77,7 +82,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
           }
 
           public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
-            
+
           }
         },
         RoamingType.PER_USER);
@@ -95,18 +100,12 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
 
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this),getKeymapDirectory(true)};
+    return new File[]{new File(PathManager.getOptionsPath()+File.separatorChar+"keymap.xml"),getKeymapDirectory(true)};
   }
 
   @NotNull
   public String getPresentableName() {
     return KeyMapBundle.message("key.maps.name");
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
   }
 
   public Keymap[] getAllKeymaps() {
@@ -141,7 +140,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
   }
 
   public SchemesManager<Keymap, KeymapImpl> getSchemesManager() {
-    return mySchemesManager;    
+    return mySchemesManager;
   }
 
   public void addKeymap(Keymap keymap) {
@@ -164,6 +163,26 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
 
   public String getExternalFileName() {
     return "keymap";
+  }
+
+  public Element getState() {
+    Element result = new Element("component");
+    try {
+      writeExternal(result);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    return result;
+  }
+
+  public void loadState(final Element state) {
+    try {
+      readExternal(state);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
   }
 
   public void readExternal(Element element) throws InvalidDataException{

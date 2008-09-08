@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -71,6 +72,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private final Map<VirtualFile, byte[]> mySavedCopies = new HashMap<VirtualFile, byte[]>();
   private final TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
   private final HashMap<Project, List<Pair<VirtualFile, StateStorage>>> myChangedProjectFiles = new HashMap<Project, List<Pair<VirtualFile, StateStorage>>>();
+  private final List<Pair<VirtualFile, StateStorage>> myChangedApplicationFiles = new ArrayList<Pair<VirtualFile, StateStorage>>();
   private volatile int myReloadBlockCount = 0;
 
   private static ProjectManagerListener[] getListeners(Project project) {
@@ -80,6 +82,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public ProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx) {
+    Application app = ApplicationManager.getApplication();
+    MessageBus messageBus = app.getMessageBus();
+    MessageBusConnection connection = messageBus.connect(app);
+    connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
+      public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
+        VirtualFile file = event.getFile();
+        if (!file.isDirectory()) {
+          saveChangedProjectFile(file, null, storage);
+        }
+      }
+    });
+
     addProjectManagerListener(
       new ProjectManagerListener() {
 
@@ -410,6 +424,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
 
       public void afterRefreshFinish(boolean asynchonous) {
+        tryToReloadApplication();
         askToReloadProjectIfConfigFilesChangedExternally();
       }
     });
@@ -436,6 +451,37 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         }
       }
     }, ModalityState.NON_MODAL);
+  }
+
+  private void tryToReloadApplication(){
+    try {
+      final Application app = ApplicationManager.getApplication();
+
+      if (app.isDisposed()) return;
+      final HashSet<Pair<VirtualFile, StateStorage>> causes = new HashSet<Pair<VirtualFile, StateStorage>>(myChangedApplicationFiles);
+
+      final boolean[] reloadOk = new boolean[]{false};
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          try {
+            reloadOk[0] = ((ApplicationImpl)app).getStateStore().reload(causes);
+          }
+          catch (StateStorage.StateStorageException e) {
+            Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
+                                       ProjectBundle.message("project.reload.failed.title"));
+          }
+          catch (IOException e) {
+            Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
+                                       ProjectBundle.message("project.reload.failed.title"));
+          }
+        }
+      });
+    }
+    finally {
+      myChangedApplicationFiles.clear();
+    }
+
   }
 
   private boolean shouldReloadProject(final Project project) {
@@ -489,6 +535,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   public void unblockReloadingProjectOnExternalChanges() {
     myReloadBlockCount--;
+    tryToReloadApplication();
     askToReloadProjectIfConfigFilesChangedExternally();
   }
 
@@ -519,14 +566,19 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
 
   private void registerProjectToReload(final Project project, final VirtualFile cause, final StateStorage storage) {
-    List<Pair<VirtualFile, StateStorage>> changedProjectFiles = myChangedProjectFiles.get(project);
+    if (project != null) {
+      List<Pair<VirtualFile, StateStorage>> changedProjectFiles = myChangedProjectFiles.get(project);
 
-    if (changedProjectFiles == null) {
-      changedProjectFiles = new ArrayList<Pair<VirtualFile, StateStorage>>();
-      myChangedProjectFiles.put(project, changedProjectFiles);
+      if (changedProjectFiles == null) {
+        changedProjectFiles = new ArrayList<Pair<VirtualFile, StateStorage>>();
+        myChangedProjectFiles.put(project, changedProjectFiles);
+      }
+
+      changedProjectFiles.add(new Pair<VirtualFile, StateStorage>(cause, storage));
     }
-
-    changedProjectFiles.add(new Pair<VirtualFile, StateStorage>(cause, storage));
+    else {
+      myChangedApplicationFiles.add(new Pair<VirtualFile, StateStorage>(cause, storage));
+    }
   }
 
   private void copyToTemp(VirtualFile file) {
