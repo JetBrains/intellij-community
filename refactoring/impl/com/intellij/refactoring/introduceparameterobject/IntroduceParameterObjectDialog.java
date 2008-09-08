@@ -93,13 +93,13 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     createNewClassButton.addActionListener(listener);
     myCreateInnerClassRadioButton.addActionListener(listener);
     toggleRadioEnablement();
-    validateButtons();
   }
 
   private void toggleRadioEnablement() {
     UIUtil.setEnabled(myUseExistingPanel, useExistingClassButton.isSelected(), true);
     UIUtil.setEnabled(myCreateNewClassPanel, createNewClassButton.isSelected(), true);
     UIUtil.setEnabled(myInnerClassPanel, myCreateInnerClassRadioButton.isSelected(), true);
+    validateButtons();
   }
 
   protected String getDimensionServiceKey() {

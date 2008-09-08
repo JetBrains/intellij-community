@@ -153,6 +153,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
     createNewClassButton.addActionListener(enableListener);
     myCreateInnerClassButton.addActionListener(enableListener);
     toggleRadioEnablement();
+    
     final DefaultComboBoxModel model = new DefaultComboBoxModel();
     myFieldsCombo.setModel(model);
     myFieldsCombo.setRenderer(new DefaultPsiElementCellRenderer());
@@ -204,6 +205,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
     UIUtil.setEnabled(myExistingClassPanel, useExistingClassButton.isSelected(), true);
     UIUtil.setEnabled(myNewClassPanel, createNewClassButton.isSelected(), true);
     UIUtil.setEnabled(myCreateInnerPanel, myCreateInnerClassButton.isSelected(), true);
+    validateButtons();
   }
 
 
