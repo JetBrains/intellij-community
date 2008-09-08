@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -380,7 +381,8 @@ public class GroovyConfigUtils {
   }
 
   public static boolean isGroovyConfigured(Module module) {
-    return module != null && (getGroovyLibrariesByModule(module).length > 0 || tryToSetUpGroovyFacetOntheFly(module)) ||
+    return module != null &&
+           FacetManager.getInstance(module).getFacetByType(GroovyFacet.ID) != null ||
            GrailsConfigUtils.isGrailsConfigured(module);
   }
 

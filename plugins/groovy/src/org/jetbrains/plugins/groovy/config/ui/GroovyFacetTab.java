@@ -90,6 +90,8 @@ public class GroovyFacetTab extends FacetEditorTab {
     if (o instanceof GroovySDKComboBox.DefaultGroovySDKComboBoxItem) {
       GroovySDKComboBox.DefaultGroovySDKComboBoxItem item = (GroovySDKComboBox.DefaultGroovySDKComboBoxItem)o;
       oldGroovyLibName = newGroovyLibName = item.getName();
+    } else if (o == null){
+      myComboBox.setSelectedIndex(0);
     }
   }
 
