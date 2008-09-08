@@ -1,3 +1,4 @@
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
   <name>Git4Idea</name>
   <description>Provides basic Git version control support for IDEA</description>
@@ -17,15 +18,15 @@
       <add-to-group group-id="VcsGroups" anchor="last"/>
     </action>
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="Git">
-      <reference ref="CheckinFiles"/>
+      <reference id="CheckinFiles"/>
       <!-- <reference id="CheckinProject"/>
    <reference id="UpdateFiles"/>
    <reference id="Compare.SameVersion"/>
    <reference id="IntegrateFiles"/>  -->
-      <reference ref="Annotate"/>
-      <reference ref="Compare.LastVersion"/>
-      <reference ref="Compare.Selected"/>
-      <reference ref="Vcs.ShowTabbedFileHistory"/>
+      <reference id="Annotate"/>
+      <reference id="Compare.LastVersion"/>
+      <reference id="Compare.Selected"/>
+      <reference id="Vcs.ShowTabbedFileHistory"/>
       <action id="Git.RevisionGraph" class="git4idea.actions.GitRevisionGraph" text="Show Revision Graph"/>
       <!-- <reference id="Vcs.ShowHistoryForBlock"/>  -->
       <!-- <reference id="ChangesView.Browse"/>   -->

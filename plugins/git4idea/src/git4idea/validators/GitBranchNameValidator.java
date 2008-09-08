@@ -26,8 +26,11 @@ import java.util.regex.Pattern;
  * git-check-ref-format(1) command description.
  */
 public class GitBranchNameValidator implements InputValidator {
-  /** the regular expression that */
+  /**
+   * the regular expression that
+   */
   private static final Pattern REGEX;
+
   static {
     // based on the git-check-ref-format command description
     final String goodChar = "[ -\\~&&[^\\^\\~\\:\\[\\?\\*\\.\\/]]";

@@ -42,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -244,9 +243,9 @@ public class GitVcs extends AbstractVcs implements Disposable {
       StringBuffer buffer = new StringBuffer();
       buffer.append("\n");
       buffer.append(action).append(" Error: ");
-      for (Iterator<VcsException> iterator = list.iterator(); iterator.hasNext(); ) {
+      for (final VcsException exception : list) {
         buffer.append("\n");
-        buffer.append(iterator.next().getMessage());
+        buffer.append(exception.getMessage());
       }
       String msg = buffer.toString();
       showMessage(msg, CodeInsightColors.ERRORS_ATTRIBUTES);
