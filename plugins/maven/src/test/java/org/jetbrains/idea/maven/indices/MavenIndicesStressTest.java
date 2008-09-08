@@ -16,7 +16,7 @@ public abstract class MavenIndicesStressTest extends MavenTestCase implements Ma
   public void test1() throws Exception {
     MavenCustomRepositoryTestFixture fixture;
 
-    fixture = new MavenCustomRepositoryTestFixture(myDir);
+    fixture = new MavenCustomRepositoryTestFixture(myDir, "plugins", "local1", "local2");
     fixture.setUp();
     fixture.copy("plugins", "local1");
     fixture.copy("local2", "local1");
@@ -76,7 +76,7 @@ public abstract class MavenIndicesStressTest extends MavenTestCase implements Ma
   public void test2() throws Exception {
     MavenCustomRepositoryTestFixture fixture;
 
-    fixture = new MavenCustomRepositoryTestFixture(myDir);
+    fixture = new MavenCustomRepositoryTestFixture(myDir, "plugins", "local1", "local2");
     fixture.setUp();
     fixture.copy("plugins", "local1");
     fixture.copy("local2", "local1");

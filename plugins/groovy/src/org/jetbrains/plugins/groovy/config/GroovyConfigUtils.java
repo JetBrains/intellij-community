@@ -64,8 +64,8 @@ import java.util.jar.Manifest;
 public class GroovyConfigUtils {
   private static final String GROOVY_STARTER_FILE_NAME = "groovy";
   public static final String UNDEFINED_VERSION = "undefined";
-  public static final String GROOVY_LIB_PATTERN = "groovy-\\d.*";
-  public static final String GROOVY_JAR_PATTERN = "groovy-all-\\d.*jar";
+  public static final String GROOVY_LIB_PATTERN = "groovy-.*";
+  public static final String GROOVY_JAR_PATTERN = "groovy-all-.*\\.jar";
   public static final String GROOVY_LIB_PREFIX = "groovy-";
 
   public static final String MANIFEST_PATH = "META-INF/MANIFEST.MF";

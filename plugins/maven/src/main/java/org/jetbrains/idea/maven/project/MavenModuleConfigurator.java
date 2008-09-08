@@ -4,9 +4,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +11,6 @@ import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.Strings;
 import org.jetbrains.idea.maven.facets.FacetImporter;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -102,34 +98,13 @@ public class MavenModuleConfigurator {
                                                isExportable);
       }
       else {
-        String artifactPath = artifact.getFile().getPath();
-        myRootModelAdapter.addLibraryDependency(artifact,
-                                                getUrl(artifactPath, null),
-                                                getUrl(artifactPath, MavenConstants.SOURCES_CLASSIFIER),
-                                                getUrl(artifactPath, MavenConstants.JAVADOC_CLASSIFIER),
-                                                isExportable);
+        myRootModelAdapter.addLibraryDependency(artifact, isExportable);
       }
     }
   }
 
   private boolean isIgnored(MavenId id) {
     return myIgnorePatternCache.matcher(id.toString()).matches();
-  }
-
-  @Nullable
-  private String getUrl(String artifactPath, String classifier) {
-    String path = artifactPath;
-
-    if (classifier != null) {
-      int dotPos = path.lastIndexOf(".");
-      if (dotPos == -1) return null; // somethimes path doesn't contain '.'; but i can't make up any reason.
-
-      String withoutExtension = path.substring(0, dotPos);
-      path = MessageFormat.format("{0}-{1}.jar", withoutExtension, classifier);
-    }
-
-    String normalizedPath = FileUtil.toSystemIndependentName(path);
-    return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, normalizedPath) + JarFileSystem.JAR_SEPARATOR;
   }
 
   private void configLanguageLevel() {

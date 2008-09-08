@@ -9,14 +9,19 @@ import java.io.IOException;
 public class MavenCustomRepositoryTestFixture {
   private File myTempDir;
   private File myWorkingData;
+  private String[] mySubFolders;
 
-  public MavenCustomRepositoryTestFixture(File tempDir) {
+  public MavenCustomRepositoryTestFixture(File tempDir, String... subFolders) {
     myTempDir = tempDir;
+    mySubFolders = subFolders;
   }
 
   public void setUp() throws Exception {
     myWorkingData = new File(myTempDir, "testData");
-    FileUtil.copyDir(new File(getOriginalTestDataPath()), myWorkingData);
+
+    for (String each : mySubFolders) {
+      FileUtil.copyDir(new File(getOriginalTestDataPath(), each), new File(myWorkingData, each));
+    }
   }
 
   private String getOriginalTestDataPath() {

@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import junit.framework.TestCase;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
@@ -27,8 +26,9 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class MavenTestCase extends TestCase {
+  private static File ourTempDir;
+
   protected IdeaProjectTestFixture myTestFixture;
-  protected TempDirTestFixture myTempDirFixture;
 
   protected Project myProject;
 
@@ -41,6 +41,11 @@ public abstract class MavenTestCase extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+
+    ensureTempDirCreated();
+
+    myDir = FileUtil.createTempFile(ourTempDir, "test", "", false);
+    myDir.mkdirs();
 
     setUpCommonFixtures();
 
@@ -58,17 +63,20 @@ public abstract class MavenTestCase extends TestCase {
     });
   }
 
-  protected void setUpCommonFixtures() throws Exception {
-    myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
-    myTempDirFixture.setUp();
+  private void ensureTempDirCreated() {
+    if (ourTempDir != null) return;
 
+    ourTempDir = new File(FileUtil.getTempDirectory(), "mavenTests");
+    FileUtil.delete(ourTempDir);
+    ourTempDir.mkdirs();
+  }
+
+  protected void setUpCommonFixtures() throws Exception {
     myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder().getFixture();
     myTestFixture.setUp();
   }
 
   protected void setUpInWriteAction() throws Exception {
-    myDir = new File(myTempDirFixture.getTempDirPath());
-
     File projectDir = new File(myDir, "project");
     projectDir.mkdirs();
     myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
@@ -77,13 +85,18 @@ public abstract class MavenTestCase extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     tearDownCommonFixtures();
-    resetClassFields(getClass());    
+
+    if (!FileUtil.delete(myDir)) {
+      System.out.println("Cannot delete " + myDir);
+      myDir.deleteOnExit();
+    }
+
+    resetClassFields(getClass());
     super.tearDown();
   }
 
   protected void tearDownCommonFixtures() throws Exception {
     myTestFixture.tearDown();
-    myTempDirFixture.tearDown();
   }
 
   private void resetClassFields(final Class<?> aClass) {
@@ -234,6 +247,10 @@ public abstract class MavenTestCase extends TestCase {
 
   protected <T, U> void assertUnorderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {
     assertUnorderedElementsAreEqual(actual, expected.toArray());
+  }
+
+  protected <T, U> void assertUnorderedElementsAreEqual(U[] actual, T... expected) {
+    assertUnorderedElementsAreEqual(Arrays.asList(actual), expected);
   }
 
   protected <T, U> void assertUnorderedElementsAreEqual(Collection<U> actual, T... expected) {

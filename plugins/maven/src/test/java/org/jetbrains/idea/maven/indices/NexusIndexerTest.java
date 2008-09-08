@@ -34,7 +34,7 @@ public class NexusIndexerTest extends MavenTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myRepositoryFixture = new MavenCustomRepositoryTestFixture(new File(myTempDirFixture.getTempDirPath()));
+    myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir, "local1_index", "local1", "remote");
     myRepositoryFixture.setUp();
 
     embedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings()).getEmbedder();
@@ -87,7 +87,7 @@ public class NexusIndexerTest extends MavenTestCase {
     ArtifactContext a = new ArtifactContext(new File(myProjectPom.getPath()), null, null, ai);
 
     indexer.addArtifactToIndex(a, c);
-    
+
     Query q = new TermQuery(new Term(ArtifactInfo.GROUP_ID, "group"));
     Collection<ArtifactInfo> result = indexer.searchFlat(ArtifactInfo.VERSION_COMPARATOR, q);
 

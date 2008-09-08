@@ -10,7 +10,7 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir);
+    myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir, "plugins", "local1");
     myRepositoryFixture.setUp();
     myRepositoryFixture.copy("plugins", "local1");
     setRepositoryPath(myRepositoryFixture.getTestDataPath("local1"));

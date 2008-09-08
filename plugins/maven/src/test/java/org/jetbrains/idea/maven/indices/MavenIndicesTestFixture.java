@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.maven.core.MavenCore;
 
 import java.io.File;
@@ -26,7 +27,7 @@ public class MavenIndicesTestFixture {
   }
 
   public void setUp() throws Exception {
-    myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir);
+    myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir, ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
     myRepositoryFixture.setUp();
 
     for (String each : myExtraRepoDirs) {

@@ -33,8 +33,6 @@ public abstract class MavenCompletionAndResolutionTestCase extends MavenImportin
     myCodeInsightFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture);
     myCodeInsightFixture.setUp();
 
-    myTempDirFixture = myCodeInsightFixture.getTempDirFixture();
-
     myCodeInsightFixture.enableInspections(MavenModelInspection.class);
 
     myOriginalAutoCompletion = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;

@@ -15,7 +15,7 @@ public class MavenPluginInfoReaderTest extends MavenTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir);
+    myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir, "plugins");
     myRepositoryFixture.setUp();
 
     setRepositoryPath(myRepositoryFixture.getTestDataPath("plugins"));

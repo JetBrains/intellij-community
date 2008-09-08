@@ -7,6 +7,8 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +18,7 @@ import org.jetbrains.idea.maven.core.util.Url;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 
 public class RootModelAdapter {
   private static final String MAVEN_LIB_PREFIX = "Maven: ";
@@ -187,11 +190,7 @@ public class RootModelAdapter {
     return ModuleManager.getInstance(myRootModel.getProject()).findModuleByName(moduleName);
   }
 
-  public void addLibraryDependency(Artifact artifact,
-                                   @Nullable String urlClasses,
-                                   @Nullable String urlSources,
-                                   @Nullable String urlJavadoc,
-                                   boolean isExportable) {
+  public void addLibraryDependency(Artifact artifact, boolean isExportable) {
     String libraryName = makeLibraryName(artifact);
 
     Library library = getLibraryTable().getLibraryByName(libraryName);
@@ -199,9 +198,11 @@ public class RootModelAdapter {
       library = getLibraryTable().createLibrary(libraryName);
       Library.ModifiableModel libraryModel = library.getModifiableModel();
 
-      setUrl(libraryModel, urlClasses, OrderRootType.CLASSES);
-      setUrl(libraryModel, urlSources, OrderRootType.SOURCES);
-      setUrl(libraryModel, urlJavadoc, JavadocOrderRootType.getInstance());
+      String artifactPath = artifact.getFile().getPath();
+
+      setUrl(libraryModel, getUrl(artifactPath, null), OrderRootType.CLASSES);
+      setUrl(libraryModel, getUrl(artifactPath, MavenConstants.SOURCES_CLASSIFIER), OrderRootType.SOURCES);
+      setUrl(libraryModel, getUrl(artifactPath, MavenConstants.JAVADOC_CLASSIFIER), JavadocOrderRootType.getInstance());
 
       libraryModel.commit();
     }
@@ -209,6 +210,22 @@ public class RootModelAdapter {
     myRootModel.addLibraryEntry(library).setExported(isExportable);
 
     removeOldLibraryDependency(artifact);
+  }
+
+  @Nullable
+  private String getUrl(String artifactPath, String classifier) {
+    String path = artifactPath;
+
+    if (classifier != null) {
+      int dotPos = path.lastIndexOf(".");
+      if (dotPos == -1) return null; // somethimes path doesn't contain '.'; but i can't make up any reason.
+
+      String withoutExtension = path.substring(0, dotPos);
+      path = MessageFormat.format("{0}-{1}.jar", withoutExtension, classifier);
+    }
+
+    String normalizedPath = FileUtil.toSystemIndependentName(path);
+    return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, normalizedPath) + JarFileSystem.JAR_SEPARATOR;
   }
 
   private void removeOldLibraryDependency(Artifact artifact) {
@@ -242,7 +259,7 @@ public class RootModelAdapter {
       @Override
       public Library visitLibraryOrderEntry(LibraryOrderEntry e, Library result) {
         String name = newType ? makeLibraryName(artifact) : new MavenId(artifact).toString();
-        return e.getLibraryName().equals(name) ? e.getLibrary() : result;
+        return name.equals(e.getLibraryName()) ? e.getLibrary() : result;
       }
     }, null);
   }

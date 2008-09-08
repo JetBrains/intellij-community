@@ -152,6 +152,7 @@
     <orderEntry type="module" module-name="idea-tests" />
     <orderEntry type="module" module-name="JavaScriptLanguage" />
     <orderEntry type="module" module-name="FlexSupport" />
+    <orderEntry type="module" module-name="jetgroovy" />
   </component>
   <component name="copyright">
     <Base>

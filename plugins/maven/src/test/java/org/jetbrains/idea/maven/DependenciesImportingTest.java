@@ -831,7 +831,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   public void testResolvingFromRepositoriesIfSeveral() throws Exception {
-    MavenCustomRepositoryTestFixture fixture = new MavenCustomRepositoryTestFixture(myDir);
+    MavenCustomRepositoryTestFixture fixture = new MavenCustomRepositoryTestFixture(myDir, "local1");
     setRepositoryPath(fixture.getTestDataPath("local1"));
     removeFromLocalRepository("junit");
 

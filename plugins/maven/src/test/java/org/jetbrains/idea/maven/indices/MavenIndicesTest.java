@@ -23,7 +23,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir);
+    myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir, "local1", "local2", "remote");
     myRepositoryFixture.setUp();
 
     initIndices();
@@ -97,34 +97,12 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testUpdatingRemote() throws Exception {
-    // NexusIndexer holds 'timestamp' file and we cannot remove directory in tearDown
-    if (ignore()) {
-      System.out.println("Don't forget to unignore the test if you change MavenIndex class");
-      return;
-    }
-
     MavenIndex i = myIndices.add("file:///" + myRepositoryFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
     myIndices.updateOrRepair(i, true, new EmptyProgressIndicator());
 
     //shouldn't throw 'The existing index is for repository [remote] and not for repository [xxx]'
     myIndices.updateOrRepair(i, true, new EmptyProgressIndicator());
   }
-
-  //public void testRemoving() throws Exception {
-  //  MavenIndex i = myIndices.add("file:///" + myRepositoryFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
-  //  myIndices.update(i, new EmptyProgressIndicator());
-  //  myIndices.remove(i);
-  //  assertFalse(i.getDir().exists());
-  //}
-
-  //public void testClearIndexAfterRemoving() throws Exception {
-  //  MavenIndex i = myIndices.add("file:///" + myRepositoryFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
-  //  myIndices.update(i, new EmptyProgressIndicator());
-  //
-  //  myIndices.remove(i);
-  //  i = myIndices.add("file:///" + myRepositoryFixture.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
-  //  assertTrue(i.getGroupIds().isEmpty());
-  //}
 
   public void testDoNotAddSameIndexTwice() throws Exception {
     MavenIndex local = myIndices.add(myRepositoryFixture.getTestDataPath("foo"), MavenIndex.Kind.LOCAL);

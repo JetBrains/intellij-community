@@ -539,7 +539,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   public void testDoNotReportResolvedPlugins() throws Exception {
-    MavenCustomRepositoryTestFixture fixture = new MavenCustomRepositoryTestFixture(myDir);
+    MavenCustomRepositoryTestFixture fixture = new MavenCustomRepositoryTestFixture(myDir, "plugins");
     fixture.setUp();
 
     setRepositoryPath(fixture.getTestDataPath("plugins"));

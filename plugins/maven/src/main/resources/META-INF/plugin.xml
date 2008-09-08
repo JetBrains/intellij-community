@@ -17,6 +17,7 @@
   <depends optional="true" config-file="jee-support.xml">com.intellij.javaee</depends>
   <depends optional="true" config-file="gwt-support.xml">com.intellij.gwt</depends>
   <depends optional="true" config-file="flex-support.xml">com.intellij.flex</depends>
+  <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectImportProvider implementation="org.jetbrains.idea.maven.project.open.MavenProjectImportProvider"/>
