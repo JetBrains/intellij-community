@@ -109,7 +109,12 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       final int separatorIndex = text.indexOf('/');
       if (separatorIndex >= 0) {
         final List<ResolveResult> resolvedContexts = new ArrayList<ResolveResult>();
-        innerResolveInContext(text.substring(0, separatorIndex), context, resolvedContexts);
+        if (separatorIndex == 0 /*starts with slash*/ && "/".equals(context.getName())) {
+          resolvedContexts.add(new PsiElementResolveResult(context));
+        }
+        else {
+          innerResolveInContext(text.substring(0, separatorIndex), context, resolvedContexts);
+        }
         final String restOfText = text.substring(separatorIndex + 1);
         for (ResolveResult contextVariant : resolvedContexts) {
           final PsiFileSystemItem item = (PsiFileSystemItem)contextVariant.getElement();
