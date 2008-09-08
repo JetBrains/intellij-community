@@ -87,13 +87,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     try {
       if (isCreateInnerClass()) {
         final PsiClass innerClass = (PsiClass)getMethod().getContainingClass().add(myElementFactory.createClass(getInnerClassName()));
-
-        if (myMultipleExitPoints) {
-          addOutputVariableFieldsWithGetters(innerClass);
-        }
-
         final boolean isStatic = copyMethodModifiers(innerClass) && notHasGeneratedFields();
-
         for (UsageInfo usage : usages) {
           final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(usage.getElement(), PsiMethodCallExpression.class);
           if (methodCallExpression != null) {
@@ -108,9 +102,14 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           final PsiMethod copy = (PsiMethod)getMethod().copy();
           copy.setName("invoke");
           innerClass.add(copy);
+          if (myMultipleExitPoints) {
+            addOutputVariableFieldsWithGetters(innerClass);
+          }
           return;
         }
-
+        if (myMultipleExitPoints) {
+          addOutputVariableFieldsWithGetters(innerClass);
+        }
         copyMethodWithoutParameters(innerClass);
         copyMethodTypeParameters(innerClass);
       } else {
@@ -160,6 +159,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     cp.run();
     final PsiCodeBlock body = getMethod().getBody();
     LOG.assertTrue(body != null);
+    final List<PsiLocalVariable> vars = new ArrayList<PsiLocalVariable>();
     final Map<PsiStatement, PsiStatement> replacementMap = new LinkedHashMap<PsiStatement, PsiStatement>();
     body.accept(new JavaRecursiveElementVisitor() {
       @Override
@@ -199,7 +199,29 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           }
         }
       }
+
+      @Override
+      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        final PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiLocalVariable) {
+          final String var = ((PsiLocalVariable)resolved).getName();
+          for (PsiVariable variable : outputVariables) {
+            if (Comparing.strEqual(variable.getName(), var)) {
+              vars.add((PsiLocalVariable)resolved);
+              break;
+            }
+          }
+        }
+      }
     });
+
+    for (PsiLocalVariable var : vars) {
+      final String fieldName = var2FieldNames.get(var.getName());
+      for (PsiReference reference : ReferencesSearch.search(var)) {
+        reference.handleElementRename(fieldName);
+      }
+    }
 
     for (PsiStatement statement : replacementMap.keySet()) {
       final PsiStatement replacement = replacementMap.get(statement);
