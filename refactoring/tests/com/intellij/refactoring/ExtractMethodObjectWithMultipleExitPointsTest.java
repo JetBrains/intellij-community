@@ -53,4 +53,8 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends CodeInsightTe
     doTest();
   }
 
+  public void testOutputVarsReferences() throws Exception {
+    doTest();
+  }
+
 }
