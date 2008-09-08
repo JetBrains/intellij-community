@@ -45,7 +45,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.DefaultInsertHandler");
 
   protected InsertionContext myContext;
-  private LookupItem myLookupItem;
+  private LookupItem<?> myLookupItem;
 
   private Project myProject;
   private PsiFile myFile;
@@ -84,10 +84,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     myContext = null;
   }
 
-  private boolean handleInsertInner(InsertionContext context,
-                                    LookupItem item,
-                                    final char completionChar) {
-
+  private void handleInsertInner(InsertionContext context, LookupItem item, final char completionChar) {
     LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getEditor().getDocument());
     myContext = context;
@@ -161,7 +158,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
         myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         myEditor.getSelectionModel().removeSelection();
       }
-      return false;
+      return;
     }
 
     if (completionChar == '#') {
@@ -197,7 +194,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
         }
       }
     }
-    return true;
   }
 
   private void qualifyIfNeeded() {
@@ -397,7 +393,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     if (!(obj instanceof PsiClass)) return false;
     final PsiClass aClass = (PsiClass)obj;
     if (!aClass.isAnnotationType()) return false;
-    final PsiAnnotation retentionPolicy = AnnotationUtil.findAnnotation((PsiClass)obj, "java.lang.annotation.Retention");
+    final PsiAnnotation retentionPolicy = AnnotationUtil.findAnnotation((PsiModifierListOwner)obj, "java.lang.annotation.Retention");
     if (retentionPolicy == null) return true; //CLASS by default
     final PsiAnnotationMemberValue value = retentionPolicy.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
     return !(value instanceof PsiReferenceExpression) || !"RUNTIME".equals(((PsiReferenceExpression)value).getReferenceName());
@@ -437,7 +433,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       case '!': if (!(myLookupItem.getObject() instanceof PsiVariable)) return TailType.EXCLAMATION;
     }
     final TailType attr = myLookupItem.getTailType();
-    return attr != TailType.UNKNOWN ? attr : TailType.NONE;
+    return attr == TailType.UNKNOWN ? TailType.NONE : attr;
   }
 
   private int processTail(TailType tailType, int caretOffset, int tailOffset) {
@@ -464,7 +460,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       myEditor.getSelectionModel().removeSelection();
     }
-    final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element);
+    final SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element);
     return new Runnable() {
       public void run(){
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
@@ -490,7 +486,8 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
                 public void run() {
                   try{
-                    List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false, false);
+                    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
+                    List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false, styleSettings.INSERT_OVERRIDE_ANNOTATION);
                     List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
                     List<PsiGenerationInfo<PsiMethod>> resultMembers = GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
                     GenerateMembersUtil.positionCaret(myEditor, resultMembers.get(0).getPsiMember(), true);
@@ -580,7 +577,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       if (i >= 0) length = i;
       final int newOffset = addImportForClass(file, startOffset, startOffset + length, aClass);
       shortenReference(file, newOffset);
-      return;
     }
     else if (o instanceof PsiType){
       PsiType type = ((PsiType)o).getDeepComponentType();
@@ -616,7 +612,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
   }
 
   private static int addImportForClass(PsiFile file, int startOffset, int endOffset, PsiClass aClass) throws IncorrectOperationException {
-    SmartPsiElementPointer pointer = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(aClass);
+    SmartPsiElementPointer<PsiClass> pointer = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(aClass);
     LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().getCurrentWriteAction(null) != null);
 
