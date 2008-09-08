@@ -101,15 +101,13 @@ public class BackendCompilerWrapper {
       do {
         dependentFiles = findDependentFiles();
 
-
-        if (myCompileContext.getProgressIndicator().isCanceled() || myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
-          break COMPILE;
-        }
-
         if (dependentFiles.length > 0) {
           final List<VirtualFile> deps = Arrays.asList(dependentFiles);
           myFilesToRecompile.addAll(deps);
           allDependent.addAll(deps);
+          if (myCompileContext.getProgressIndicator().isCanceled() || myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+            break COMPILE;
+          }
           final VirtualFile[] filesInScope = getFilesInScope(dependentFiles);
           if (filesInScope.length == 0) {
             break;
