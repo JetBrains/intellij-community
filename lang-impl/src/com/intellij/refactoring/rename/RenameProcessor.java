@@ -314,7 +314,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   protected void prepareTestRun() {
-    if (!PsiElementRenameHandler.canRename(myPrimaryElement, myProject)) return;
+    if (!PsiElementRenameHandler.canRename(myProject, null, myPrimaryElement)) return;
     prepareRenaming();
   }
 

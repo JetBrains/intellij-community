@@ -2,6 +2,7 @@ package com.intellij.refactoring.anonymousToInner;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,11 +42,11 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
   private VariableInfo[] myVariableInfos;
   protected boolean myMakeStatic;
-  private Set<PsiTypeParameter> myTypeParametersToCreate = new LinkedHashSet<PsiTypeParameter>();
+  private final Set<PsiTypeParameter> myTypeParametersToCreate = new LinkedHashSet<PsiTypeParameter>();
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length == 1 && elements[0] instanceof PsiAnonymousClass) {
-      invoke(project, (PsiAnonymousClass)elements[0]);
+      invoke(project, PlatformDataKeys.EDITOR.getData(dataContext), (PsiAnonymousClass)elements[0]);
     }
   }
 
@@ -56,17 +57,17 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final PsiAnonymousClass anonymousClass = findAnonymousClass(file, offset);
     if (anonymousClass == null) {
-      CommonRefactoringUtil.showErrorMessage(
-              REFACTORING_NAME,
-              RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.anonymous")),
-              HelpID.ANONYMOUS_TO_INNER,
-              project);
+      showErrorMessage(editor, RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.anonymous")));
       return;
     }
-    invoke(project, anonymousClass);
+    invoke(project, editor, anonymousClass);
   }
 
-  public void invoke(final Project project, final PsiAnonymousClass anonymousClass) {
+  private void showErrorMessage(Editor editor, String message) {
+    CommonRefactoringUtil.showErrorHint(myProject, editor, message, REFACTORING_NAME, HelpID.ANONYMOUS_TO_INNER);
+  }
+
+  public void invoke(final Project project, Editor editor, final PsiAnonymousClass anonymousClass) {
     myProject = project;
 
     myManager = PsiManager.getInstance(myProject);
@@ -76,13 +77,13 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
     if (baseRef.resolve() == null) {
       String message = RefactoringBundle.message("error.cannot.resolve", baseRef.getCanonicalText());
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.ANONYMOUS_TO_INNER, project);
+      showErrorMessage(editor, message);
       return;
     }
     PsiElement targetContainer = findTargetContainer(myAnonClass);
     if (PsiUtil.isInJspFile(targetContainer) && targetContainer instanceof PsiFile) {
       String message = RefactoringBundle.message("error.not.supported.for.jsp", REFACTORING_NAME);
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.ANONYMOUS_TO_INNER, project);
+      showErrorMessage(editor, message);
       return;
     }
     LOG.assertTrue(targetContainer instanceof PsiClass);

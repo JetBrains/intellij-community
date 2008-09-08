@@ -50,7 +50,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
     if (elements.length == 0) {
         String message = RefactoringBundle
           .getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
-        CommonRefactoringUtil.showErrorMessage(ExtractMethodObjectProcessor.REFACTORING_NAME, message, HelpID.EXTRACT_METHOD_OBJECT, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, ExtractMethodObjectProcessor.REFACTORING_NAME, HelpID.EXTRACT_METHOD_OBJECT);
       return;
     }
 
@@ -60,8 +60,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
       if (!extractProcessor.prepare()) return;
     }
     catch (PrepareFailedException e) {
-      CommonRefactoringUtil
-          .showErrorMessage(ExtractMethodObjectProcessor.REFACTORING_NAME, e.getMessage(), HelpID.EXTRACT_METHOD_OBJECT, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), ExtractMethodObjectProcessor.REFACTORING_NAME, HelpID.EXTRACT_METHOD_OBJECT);
       ExtractMethodHandler.highlightPrepareError(e, file, editor, project);
       return;
     }

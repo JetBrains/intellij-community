@@ -17,13 +17,12 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
-
-import org.jetbrains.annotations.NonNls;
 
 public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
   public static interface Callback {
@@ -33,7 +32,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
   private JLabel myNameLabel;
   private TextFieldWithBrowseButton myTargetDirectoryField;
   private String myHelpID;
-  private Project myProject;
+  private final Project myProject;
   private final Callback myCallback;
   private PsiDirectory myTargetDirectory;
 
@@ -99,7 +98,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
       myNameLabel.setText(text);
     }
     else {
-      myNameLabel.setText((psiElements[0] instanceof PsiFile)?
+      myNameLabel.setText(psiElements[0] instanceof PsiFile ?
                           RefactoringBundle.message("move.specified.files") :
                           RefactoringBundle.message("move.specified.directories"));
     }
@@ -134,7 +133,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
       }
     }, RefactoringBundle.message("create.directory"), null);
     if (myTargetDirectory == null){
-      CommonRefactoringUtil.showErrorMessage(MoveFilesOrDirectoriesDialog.this.getTitle(),
+      CommonRefactoringUtil.showErrorMessage(getTitle(),
                                               RefactoringBundle.message("cannot.create.directory"), myHelpID, myProject);
       return;
     }

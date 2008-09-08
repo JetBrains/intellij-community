@@ -2,6 +2,7 @@ package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -35,7 +36,7 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
 
     if(!(element instanceof PsiMethod)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CONVERT_TO_INSTANCE_METHOD, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.CONVERT_TO_INSTANCE_METHOD);
       return;
     }
     if(LOG.isDebugEnabled()) {
@@ -46,10 +47,11 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1 || !(elements[0] instanceof PsiMethod)) return;
-    final PsiMethod method = ((PsiMethod)elements[0]);
+    final PsiMethod method = (PsiMethod)elements[0];
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       String message = RefactoringBundle.message("convertToInstanceMethod.method.is.not.static", method.getName());
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CONVERT_TO_INSTANCE_METHOD, project);
+      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.CONVERT_TO_INSTANCE_METHOD);
       return;
     }
     final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -84,9 +86,8 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
         message = RefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.are.not.in.project");
       }
       LOG.assertTrue(message != null);
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME,
-                                              RefactoringBundle.getCannotRefactorMessage(message),
-                                              HelpID.CONVERT_TO_INSTANCE_METHOD, project);
+      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), REFACTORING_NAME, HelpID.CONVERT_TO_INSTANCE_METHOD);
       return;
     }
 

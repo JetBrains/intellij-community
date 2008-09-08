@@ -2,6 +2,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -180,13 +181,13 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   }
 
   @Nullable
-  public PsiElement substituteElementToRename(PsiElement element) {
+  public PsiElement substituteElementToRename(PsiElement element, Editor editor) {
     PsiMethod psiMethod = (PsiMethod)element;
     if (psiMethod.isConstructor()) {
       PsiClass containingClass = psiMethod.getContainingClass();
       if (containingClass == null) return null;
       element = containingClass;
-      if (!PsiElementRenameHandler.canRename(element, element.getProject())) {
+      if (!PsiElementRenameHandler.canRename(element.getProject(), editor, element)) {
         return null;
       }
       return element;

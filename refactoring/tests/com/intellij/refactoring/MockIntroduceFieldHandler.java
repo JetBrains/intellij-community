@@ -1,6 +1,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -19,13 +20,8 @@ public class MockIntroduceFieldHandler extends IntroduceFieldHandler {
     myDeclareStatic = declareStatic;
   }
 
-  protected Settings showRefactoringDialog(Project project,
-                                                                        PsiClass parentClass,
-                                                                        PsiExpression expr,
-                                                                        PsiType type,
-                                                                        PsiExpression[] occurences,
-                                                                        PsiElement anchorElement,
-                                                                        PsiElement anchorElementIfAll) {
+  protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass, PsiExpression expr, PsiType type,
+                                           PsiExpression[] occurences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
     SuggestedNameInfo name = JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.FIELD, null, expr, type);
     return new Settings(name.names[0], true, myDeclareStatic, true, myInitializationPlace,
             PsiModifier.PUBLIC,

@@ -67,9 +67,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     myParentClass = getParentClass(selectedExpr);
     if (myParentClass == null) {
       if (PsiUtil.isInJspFile(file)) {
-        CommonRefactoringUtil.showErrorMessage(getRefactoringName(),
-                                               RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName()), getHelpID(),
-                                               project);
+        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName()),
+                                            getRefactoringName(), getHelpID());
         return false;
       }
       else {
@@ -78,20 +77,20 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       }
     }
 
-    if (!validClass(myParentClass)) {
+    if (!validClass(myParentClass, editor)) {
       return false;
     }
 
     PsiType tempType = getTypeByExpression(selectedExpr);
     if (tempType == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("unknown.expression.type"));
-      CommonRefactoringUtil.showErrorMessage(getRefactoringName(), message, getHelpID(), project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return false;
     }
 
     if (tempType == PsiType.VOID) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
-      CommonRefactoringUtil.showErrorMessage(getRefactoringName(), message, getHelpID(), project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return false;
     }
 
@@ -99,7 +98,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     if (tempAnchorElement == null) {
       //TODO : work outside code block (e.g. field initializer)
       String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName());
-      CommonRefactoringUtil.showErrorMessage(getRefactoringName(), message, getHelpID(), project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return false;
     }
 
@@ -121,9 +120,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
 
     final Settings settings =
-      showRefactoringDialog(project, myParentClass, selectedExpr, tempType,
-                            occurrences, tempAnchorElement, anchorStatementIfAll
-      );
+      showRefactoringDialog(project, editor, myParentClass, selectedExpr, tempType,
+                            occurrences, tempAnchorElement, anchorStatementIfAll);
 
     if (settings == null) return false;
 
@@ -323,7 +321,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return myParentClass;
   }
 
-  protected abstract boolean validClass(PsiClass parentClass);
+  protected abstract boolean validClass(PsiClass parentClass, Editor editor);
 
   protected boolean isStaticField() {
     return false;
@@ -351,7 +349,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   protected abstract String getHelpID();
 
-  protected abstract Settings showRefactoringDialog(Project project, PsiClass parentClass, PsiExpression expr,
+  protected abstract Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass, PsiExpression expr,
                                                     PsiType type, PsiExpression[] occurences, PsiElement anchorElement,
                                                     PsiElement anchorElementIfAll);
 

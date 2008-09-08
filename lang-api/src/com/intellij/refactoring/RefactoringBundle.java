@@ -68,7 +68,7 @@ public class RefactoringBundle {
   }
 
   public static String getCannotRefactorMessage(final String message) {
-    return message("cannot.perform.refactoring") + "\n" + message;
+    return message("cannot.perform.refactoring") + (message == null ? "" : "\n" + message);
   }
 
   public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {

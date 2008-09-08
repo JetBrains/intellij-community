@@ -112,7 +112,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
       if (showErrorMessages) {
         String message = RefactoringBundle
           .getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_METHOD);
       }
       return null;
     }
@@ -122,7 +122,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
         if (showErrorMessages) {
           String message = RefactoringBundle
             .getCannotRefactorMessage(RefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));
-          CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
+          CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_METHOD);
         }
         return null;
       }
@@ -136,7 +136,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     }
     catch (PrepareFailedException e) {
       if (showErrorMessages) {
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, e.getMessage(), HelpID.EXTRACT_METHOD, project);
+        CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), REFACTORING_NAME, HelpID.EXTRACT_METHOD);
         highlightPrepareError(e, file, editor, project);
       }
       return null;

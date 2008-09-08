@@ -2,6 +2,7 @@ package com.intellij.refactoring.removemiddleman;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
@@ -37,13 +38,11 @@ public class RemoveMiddlemanHandler implements RefactoringActionHandler {
     scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE);
     final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (!(element instanceof PsiField)) {
-      CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
-                                                   RefactorJBundle
-                                                     .message("the.caret.should.be.positioned.at.the.name.of.the.field.to.be.refactored"),
-                                             getHelpID(), project);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message(
+          "the.caret.should.be.positioned.at.the.name.of.the.field.to.be.refactored"), null, getHelpID());
       return;
     }
-    invoke((PsiField)element);
+    invoke((PsiField)element, editor);
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
@@ -51,17 +50,18 @@ public class RemoveMiddlemanHandler implements RefactoringActionHandler {
       return;
     }
     if (elements[0] instanceof PsiField) {
-      invoke((PsiField)elements[0]);
+      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      invoke((PsiField)elements[0], editor);
     }
   }
 
-  private static void invoke(final PsiField field) {
+  private static void invoke(final PsiField field, Editor editor) {
     final Project project = field.getProject();
     final Set<PsiMethod> delegating = DelegationUtils.getDelegatingMethodsForField(field);
     if (delegating.isEmpty()) {
       final String message =
         RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("field.selected.is.not.used.as.a.delegate");
-      CommonRefactoringUtil.showErrorMessage(null, message, getHelpID(), project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, null, getHelpID());
       return;
     }
 

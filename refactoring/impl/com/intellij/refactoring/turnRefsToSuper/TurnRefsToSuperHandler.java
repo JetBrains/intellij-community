@@ -5,6 +5,7 @@
 package com.intellij.refactoring.turnRefsToSuper;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -15,12 +16,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringHierarchyUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NotNull;
 
 public class TurnRefsToSuperHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("use.interface.where.possible.title");
@@ -33,7 +33,7 @@ public class TurnRefsToSuperHandler implements RefactoringActionHandler {
     while (true) {
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.TURN_REFS_TO_SUPER, project);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.TURN_REFS_TO_SUPER);
         return;
       }
       if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)) {
@@ -53,7 +53,8 @@ public class TurnRefsToSuperHandler implements RefactoringActionHandler {
 
     if (basesList.isEmpty()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("interface.does.not.have.base.interfaces", subClass.getQualifiedName()));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.TURN_REFS_TO_SUPER*/, project);
+      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.TURN_REFS_TO_SUPER);
       return;
     }
 

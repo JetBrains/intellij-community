@@ -45,7 +45,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (!(element instanceof PsiLocalVariable)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.name"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.REPLACE_TEMP_WITH_QUERY, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.REPLACE_TEMP_WITH_QUERY);
       return;
     }
 
@@ -59,7 +59,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
     final PsiExpression initializer = local.getInitializer();
     if (initializer == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.has.no.initializer", localName));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.REPLACE_TEMP_WITH_QUERY, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.REPLACE_TEMP_WITH_QUERY);
       return;
     }
 
@@ -67,7 +67,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
 
     if (refs.length == 0) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.never.used", localName));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.REPLACE_TEMP_WITH_QUERY, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.REPLACE_TEMP_WITH_QUERY);
       return;
     }
 
@@ -84,7 +84,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
         PsiReference[] refsForWriting = array.toArray(new PsiReference[array.size()]);
         highlightManager.addOccurrenceHighlights(editor, refsForWriting, attributes, true, null);
         String message =  RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.REPLACE_TEMP_WITH_QUERY, project);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.REPLACE_TEMP_WITH_QUERY);
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return;
       }
@@ -100,14 +100,14 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
       if (!processor.prepare()) return;
     }
     catch (PrepareFailedException e) {
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, e.getMessage(), HelpID.REPLACE_TEMP_WITH_QUERY, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), REFACTORING_NAME, HelpID.REPLACE_TEMP_WITH_QUERY);
       ExtractMethodHandler.highlightPrepareError(e, file, editor, project);
       return;
     }
     final PsiClass targetClass = processor.getTargetClass();
     if (targetClass != null && targetClass.isInterface()) {
       String message = RefactoringBundle.message("cannot.replace.temp.with.query.in.interface");
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.REPLACE_TEMP_WITH_QUERY, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.REPLACE_TEMP_WITH_QUERY);
       return;
     }
 
@@ -158,7 +158,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    if (elements != null && elements.length == 1 && elements[0] instanceof PsiLocalVariable) {
+    if (elements.length == 1 && elements[0] instanceof PsiLocalVariable) {
       if (dataContext != null) {
         final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
         final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);

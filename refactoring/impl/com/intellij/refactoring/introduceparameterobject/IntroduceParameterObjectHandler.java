@@ -3,6 +3,7 @@ package com.intellij.refactoring.introduceparameterobject;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -43,10 +44,10 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     if (selectedMethod == null) {
       final String message = RefactorJBundle.message("cannot.perform.the.refactoring") +
                              RefactorJBundle.message("the.caret.should.be.positioned.at.the.name.of.the.method.to.be.refactored");
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.IntroduceParameterObject, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.IntroduceParameterObject);
       return;
     }
-    invoke(project, selectedMethod);
+    invoke(project, selectedMethod, editor);
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
@@ -57,10 +58,11 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     if (method == null) {
       return;
     }
-    invoke(project, method);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    invoke(project, method, editor);
   }
 
-  private static void invoke(final Project project, final PsiMethod selectedMethod) {
+  private static void invoke(final Project project, final PsiMethod selectedMethod, Editor editor) {
     PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(selectedMethod, RefactoringBundle.message("to.refactor"));
     if (newMethod == null) return;
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, newMethod)) return;
@@ -69,14 +71,12 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     if (parameters.length == 0) {
       final String message =
         RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("method.selected.has.no.parameters");
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.IntroduceParameterObject, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.IntroduceParameterObject);
       return;
     }
     if (newMethod instanceof PsiCompiledElement) {
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, RefactorJBundle.message("cannot.perform.the.refactoring") +
-                                                               RefactorJBundle.message(
-                                                                 "the.selected.method.cannot.be.wrapped.because.it.is.defined.in.a.non.project.class"),
-                                             HelpID.IntroduceParameterObject, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message(
+          "the.selected.method.cannot.be.wrapped.because.it.is.defined.in.a.non.project.class"), REFACTORING_NAME, HelpID.IntroduceParameterObject);
       return;
     }
     new IntroduceParameterObjectDialog(newMethod).show();

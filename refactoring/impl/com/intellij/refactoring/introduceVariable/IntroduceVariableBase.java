@@ -74,7 +74,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
     if (expr == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.an.expression"));
-      showErrorMessage(message, project);
+      showErrorMessage(project, editor, message);
       return false;
     }
     final PsiFile file = expr.getContainingFile();
@@ -85,19 +85,19 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     PsiType originalType = RefactoringUtil.getTypeByExpressionWithExpectedType(expr);
     if (originalType == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("unknown.expression.type"));
-      showErrorMessage(message, project);
+      showErrorMessage(project, editor, message);
       return false;
     }
 
     if(originalType == PsiType.VOID) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
-      showErrorMessage(message, project);
+      showErrorMessage(project, editor, message);
       return false;
     }
 
     PsiElement anchorStatement = RefactoringUtil.getParentStatement(expr, false);
     if (anchorStatement == null) {
-        return parentStatementNotFound(project);
+      return parentStatementNotFound(project, editor);
     }
     if (anchorStatement instanceof PsiExpressionStatement) {
       PsiExpression enclosingExpr = ((PsiExpressionStatement)anchorStatement).getExpression();
@@ -106,7 +106,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         if (method != null && method.isConstructor()) {
           //This is either 'this' or 'super', both must be the first in the respective contructor
           String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("invalid.expression.context"));
-          showErrorMessage(message, project);
+          showErrorMessage(project, editor, message);
           return false;
         }
       }
@@ -116,13 +116,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
     if (!(tempContainer instanceof PsiCodeBlock) && !isLoopOrIf(tempContainer)) {
       String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME);
-      showErrorMessage(message, project);
+      showErrorMessage(project, editor, message);
       return false;
     }
 
     if(!NotInSuperCallOccurenceFilter.INSTANCE.isOK(expr)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.introduce.variable.in.super.constructor.call"));
-      showErrorMessage(message, project);
+      showErrorMessage(project, editor, message);
       return false;
     }
 
@@ -321,9 +321,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     return declaration;
   }
 
-  private boolean parentStatementNotFound(final Project project) {
+  private boolean parentStatementNotFound(final Project project, Editor editor) {
     String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME);
-    showErrorMessage(message, project);
+    showErrorMessage(project, editor, message);
     return false;
   }
 
@@ -351,7 +351,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                                                            boolean anyAssignmentLHS, final boolean declareFinalIfAll, final PsiType type,
                                                            TypeSelectorManagerImpl typeSelectorManager, InputValidator validator);
 
-  protected abstract void showErrorMessage(String message, Project project);
+  protected abstract void showErrorMessage(Project project, Editor editor, String message);
 
   @Nullable
   private static PsiStatement getLoopBody(PsiElement container, PsiElement anchorStatement) {

@@ -48,7 +48,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   public static void invoke(PsiElement element, Project project, PsiElement nameSuggestionContext, Editor editor) {
-    if (element != null && !canRename(element, project)) {
+    if (element != null && !canRename(project, editor, element)) {
       return;
     }
     FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.rename");
@@ -56,41 +56,41 @@ public class PsiElementRenameHandler implements RenameHandler {
     rename(element, project, nameSuggestionContext, editor);
   }
 
-  static boolean canRename(PsiElement element, Project project) {
-    final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
-
-    boolean hasRenameProcessor = (RenamePsiElementProcessor.forElement(element) != RenamePsiElementProcessor.DEFAULT);
-    boolean hasWritableMetaData = element instanceof PsiMetaOwner && ((PsiMetaOwner) element).getMetaData() instanceof PsiWritableMetaData;
+  static boolean canRename(Project project, Editor editor, PsiElement element) {
+    boolean hasRenameProcessor = RenamePsiElementProcessor.forElement(element) != RenamePsiElementProcessor.DEFAULT;
+    boolean hasWritableMetaData = element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() instanceof PsiWritableMetaData;
 
     if (!hasRenameProcessor && !hasWritableMetaData && !(element instanceof PsiNamedElement)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol"));
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
+        showErrorMessage(project, editor, message);
       }
       return false;
     }
 
     if (!PsiManager.getInstance(project).isInProject(element) && element.isPhysical()) {
       String message = RefactoringBundle
-        .getCannotRefactorMessage(RefactoringBundle.message("error.out.of.project.element", UsageViewUtil.getType(element)));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
+          .getCannotRefactorMessage(RefactoringBundle.message("error.out.of.project.element", UsageViewUtil.getType(element)));
+      showErrorMessage(project, editor, message);
       return false;
     }
 
     if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(element)) {
-      String message = RefactoringBundle
-        .getCannotRefactorMessage(RefactoringBundle.message("error.in.injected.lang.prefix.suffix", UsageViewUtil.getType(element)));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.in.injected.lang.prefix.suffix", UsageViewUtil.getType(element)));
+      showErrorMessage(project, editor, message);
       return false;
     }
 
     return true;//CommonRefactoringUtil.checkReadOnlyStatus(project, element);
   }
 
+  private static void showErrorMessage(Project project, Editor editor, String message) {
+    CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("rename.title"), null);
+  }
 
   public static void rename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor) {
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
-    element = processor.substituteElementToRename(element);
+    element = processor.substituteElementToRename(element, editor);
     if (element == null) return;
 
     final RenameDialog dialog = new RenameDialog(project, element, nameSuggestionContext, editor);

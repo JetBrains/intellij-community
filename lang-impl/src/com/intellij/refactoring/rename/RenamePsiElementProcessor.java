@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -99,7 +100,7 @@ public abstract class RenamePsiElementProcessor {
   }
 
   @Nullable
-  public PsiElement substituteElementToRename(final PsiElement element) {
+  public PsiElement substituteElementToRename(final PsiElement element, Editor editor) {
     return element;
   }
 

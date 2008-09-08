@@ -2,6 +2,7 @@ package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -41,7 +42,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
 
     if (!(element instanceof PsiMethod)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_INSTANCE_METHOD, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
       return;
     }
     if (LOG.isDebugEnabled()) {
@@ -69,7 +70,8 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
       for (PsiClass aClass : classes) {
         if (aClass instanceof JspClass) {
           message = RefactoringBundle.message("synthetic.jsp.class.is.referenced.in.the.method");
-          CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_INSTANCE_METHOD, project);
+          Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+          CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
           break;
         }
       }
@@ -113,9 +115,8 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     }
 
     if (message != null) {
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME,
-                                              RefactoringBundle.getCannotRefactorMessage(message),
-                                              HelpID.MOVE_INSTANCE_METHOD, project);
+      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
       return;
     }
 

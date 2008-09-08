@@ -89,14 +89,14 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     myProject = project;
     if (expr == null && localVar == null) {
       String message =  RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.an.expression"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INTRODUCE_PARAMETER, myProject);
+      showErrorMessage(myProject, message, editor);
       return false;
     }
 
 
     if (method == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INTRODUCE_PARAMETER, myProject);
+      showErrorMessage(myProject, message, editor);
       return false;
     }
 
@@ -105,13 +105,13 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     final PsiType typeByExpression = invokedOnDeclaration ? null : RefactoringUtil.getTypeByExpressionWithExpectedType(expr);
     if (!invokedOnDeclaration && typeByExpression == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("type.of.the.selected.expression.cannot.be.determined"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INTRODUCE_PARAMETER, myProject);
+      showErrorMessage(myProject, message, editor);
       return false;
     }
 
     if (!invokedOnDeclaration && typeByExpression == PsiType.VOID) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INTRODUCE_PARAMETER, project);
+      showErrorMessage(project, message, editor);
       return false;
     }
 
@@ -208,6 +208,10 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
                                    typeSelectorManager, methodToSearchFor, method, parametersToRemove, mustBeFinal).show();
     }
     return true;
+  }
+
+  private static void showErrorMessage(Project project, String message, Editor editor) {
+    CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INTRODUCE_PARAMETER);
   }
 
 

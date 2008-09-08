@@ -27,23 +27,23 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
       invoke((PsiMethod) element, project, editor);
     }
     else if (element instanceof PsiClass) {
-      invoke((PsiClass) element);
+      invoke((PsiClass) element, editor);
     }
     else {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.class.name"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CHANGE_SIGNATURE, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.CHANGE_SIGNATURE);
     }
   }
 
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     if (elements.length != 1) return;
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (elements[0] instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)elements[0];
-
-      invoke(method, project, PlatformDataKeys.EDITOR.getData(dataContext));
+      invoke(method, project, editor);
     }
     else if (elements[0] instanceof PsiClass){
-      invoke((PsiClass) elements[0]);
+      invoke((PsiClass) elements[0], editor);
     }
   }
 
@@ -67,12 +67,12 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
     dialog.show();
   }
 
-  private static void invoke(final PsiClass aClass) {
+  private static void invoke(final PsiClass aClass, Editor editor) {
     final PsiTypeParameterList typeParameterList = aClass.getTypeParameterList();
     Project project = aClass.getProject();
     if (typeParameterList == null) {
       final String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("changeClassSignature.no.type.parameters"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CHANGE_CLASS_SIGNATURE, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.CHANGE_CLASS_SIGNATURE);
       return;
     }
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;

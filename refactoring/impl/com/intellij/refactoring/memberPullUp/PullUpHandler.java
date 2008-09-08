@@ -11,6 +11,7 @@ package com.intellij.refactoring.memberPullUp;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,7 +50,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle
           .getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MEMBERS_PULL_UP, project);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
         return;
       }
 
@@ -86,10 +87,11 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
       return;
     }
 
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (aClass == null) {
       String message =
         RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MEMBERS_PULL_UP, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
       return;
     }
 
@@ -98,7 +100,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
     if (bases.isEmpty()) {
       String message = RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("class.does.not.have.base.classes.interfaces.in.current.project", aClass.getQualifiedName()));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MEMBERS_PULL_UP, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
       return;
     }
 

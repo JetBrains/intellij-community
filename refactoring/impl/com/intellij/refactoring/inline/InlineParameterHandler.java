@@ -46,7 +46,7 @@ public class InlineParameterHandler {
 
     String errorMessage = getCannotInlineMessage(psiParameter, method);
     if (errorMessage != null) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.parameter.refactoring"), errorMessage, null, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
     }
 
@@ -84,19 +84,17 @@ public class InlineParameterHandler {
       }
     });
     if (occurrences.isEmpty()) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.parameter.refactoring"),
-                                             "Method has no usages", null, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, "Method has no usages", RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
     }
     if (!result) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.parameter.refactoring"),
-                                             "Cannot find constant initializer for parameter", null, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot find constant initializer for parameter", RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
     }
     final ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     if ((app.isInternal() || app.isUnitTestMode()) && !refInitializer.isNull()) {
       try {
-        new InlineParameterExpressionProcessor(refMethodCall.get(), method, psiParameter, refInitializer.get()).run();
+        new InlineParameterExpressionProcessor(refMethodCall.get(), method, psiParameter, refInitializer.get(), editor).run();
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -104,8 +102,7 @@ public class InlineParameterHandler {
       return;
     }
     if (refConstantInitializer.isNull()) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.parameter.refactoring"),
-                                             "Cannot find constant initializer for parameter", null, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot find constant initializer for parameter", RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
     }
 

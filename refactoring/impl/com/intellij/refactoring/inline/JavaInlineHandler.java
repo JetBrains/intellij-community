@@ -104,9 +104,8 @@ public class JavaInlineHandler implements RefactoringActionHandler {
       InlineIncludeFileHandler.invoke(project, editor, jspFile);
     }
     else if (element != null && element.getLanguage() instanceof JavaLanguage){
-      String message =
-        RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.local.name"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.local.name"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, null);
     }
   }
 

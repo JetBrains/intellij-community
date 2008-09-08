@@ -43,7 +43,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
     while (true) {
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INTERFACE, project);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_INTERFACE);
         return;
       }
       if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)) {

@@ -10,6 +10,7 @@ package com.intellij.refactoring.makeStatic;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -41,7 +42,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
 
     if(!(element instanceof PsiTypeParameterListOwner)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.class.name"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MAKE_METHOD_STATIC, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MAKE_METHOD_STATIC);
       return;
     }
     if(LOG.isDebugEnabled()) {
@@ -58,7 +59,8 @@ public class MakeStaticHandler implements RefactoringActionHandler {
 
     String error = validateTarget(member);
     if (error != null) {
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, error, HelpID.MAKE_METHOD_STATIC, project);
+      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      CommonRefactoringUtil.showErrorHint(project, editor, error, REFACTORING_NAME, HelpID.MAKE_METHOD_STATIC);
       return;
     }
 

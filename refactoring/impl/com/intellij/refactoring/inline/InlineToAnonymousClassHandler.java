@@ -25,7 +25,7 @@ public class InlineToAnonymousClassHandler {
 
     String errorMessage = getCannotInlineMessage(psiClass);
     if (errorMessage != null) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.to.anonymous.refactoring"), errorMessage, null, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, RefactoringBundle.message("inline.to.anonymous.refactoring"), null);
       return;
     }
 

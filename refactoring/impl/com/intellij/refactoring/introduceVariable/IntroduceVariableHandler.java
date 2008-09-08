@@ -57,8 +57,8 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
     return dialog;
   }
 
-  protected void showErrorMessage(String message, final Project project) {
-    CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INTRODUCE_VARIABLE, project);
+  protected void showErrorMessage(final Project project, Editor editor, String message) {
+    CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INTRODUCE_VARIABLE);
   }
 
   protected void highlightReplacedOccurences(final Project project, Editor editor, final PsiElement[] replacedOccurences) {

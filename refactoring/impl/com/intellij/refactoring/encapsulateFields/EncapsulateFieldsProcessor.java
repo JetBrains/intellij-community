@@ -36,7 +36,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsProcessor");
 
   private PsiClass myClass;
-  private EncapsulateFieldsDialog myDialog;
+  private final EncapsulateFieldsDialog myDialog;
   private PsiField[] myFields;
 
   private HashMap<String,PsiMethod> myNameToGetter;
@@ -49,9 +49,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     PsiField[] fields = new PsiField[myFields.length];
-    for (int idx = 0; idx < myFields.length; idx++) {
-      fields[idx] = myFields[idx];
-    }
+    System.arraycopy(myFields, 0, fields, 0, myFields.length);
     return new EncapsulateFieldsViewDescriptor(fields);
   }
 

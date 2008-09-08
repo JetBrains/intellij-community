@@ -27,19 +27,19 @@ public class InlineConstantFieldHandler {
 
     if (!field.hasModifierProperty(PsiModifier.FINAL)) {
       String message = RefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", REFACTORING_NAME);
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_FIELD, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
       return;
     }
 
     if (!field.hasInitializer()) {
       String message = RefactoringBundle.message("no.initializer.present.for.the.field");
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_FIELD, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
       return;
     }
 
     if (ReferencesSearch.search(field, ProjectScope.getProjectScope(project), false).findFirst() == null) {
       String message = RefactoringBundle.message("field.0.is.never.used", field.getName());
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_FIELD, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
       return;
     }
 

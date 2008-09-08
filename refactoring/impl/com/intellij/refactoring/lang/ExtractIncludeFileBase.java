@@ -25,8 +25,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileSystemItemUtil;
 import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -139,7 +137,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     if (!editor.getSelectionModel().hasSelection()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("no.selection"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INCLUDE, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_INCLUDE);
       return;
     }
     final int start = editor.getSelectionModel().getSelectionStart();
@@ -148,20 +146,20 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
     final Pair<XmlTagChild, XmlTagChild> children = XmlUtil.findTagChildrenInRange(myIncludingFile, start, end);
     if (children == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selection.does.not.form.a.fragment.for.extraction"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INCLUDE, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_INCLUDE);
       return;
     }
 
     if (!verifyChildRange(children.getFirst(), children.getSecond())) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.extract.selected.elements.into.include.file"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INCLUDE, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_INCLUDE);
       return;
     }
 
     final FileType fileType = getFileType(getLanguageForExtract(children.getFirst()));
     if (!(fileType instanceof LanguageFileType)) {
       String message = RefactoringBundle.message("the.language.for.selected.elements.has.no.associated.file.type");
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INCLUDE, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_INCLUDE);
       return;
     }
 

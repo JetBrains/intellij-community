@@ -86,7 +86,7 @@ public class HintUtil {
 
   public static JLabel createErrorLabel(String text) {
     JLabel label = new HintLabel();
-    label.setText(text);
+    label.setText(text.replaceAll("\n"," "));
     label.setIcon(ERROR_ICON);
 //    label.setBorder(BorderFactory.createLineBorder(Color.black));
     label.setBorder(

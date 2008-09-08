@@ -59,8 +59,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   }
 
 
-  protected Settings showRefactoringDialog(Project project,
-                                           PsiClass parentClass,
+  protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass,
                                            PsiExpression expr,
                                            PsiType type,
                                            PsiExpression[] occurences,
@@ -77,19 +76,19 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     if (localVariable == null) {
       if (!isStaticFinalInitializer(expr)) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.cannot.be.a.constant.initializer"));
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(), project);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
         return null;
       }
     } else {
       final PsiExpression initializer = localVariable.getInitializer();
       if (initializer == null) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.does.not.have.an.initializer", localVariable.getName()));
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(), project);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
         return null;
       }
       if (!isStaticFinalInitializer(initializer)) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("initializer.for.variable.cannot.be.a.constant.initializer", localVariable.getName()));
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(), project);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
         return null;
       }
     }
@@ -184,7 +183,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return null;
   }
 
-  protected boolean validClass(PsiClass parentClass) {
+  protected boolean validClass(PsiClass parentClass, Editor editor) {
     return true;
   }
 

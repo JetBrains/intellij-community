@@ -35,7 +35,7 @@ class InlineMethodHandler {
       else {
         message = RefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", REFACTORING_NAME);
       }
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
       return;
     }
 
@@ -47,26 +47,26 @@ class InlineMethodHandler {
       }
       else {
         String message = RefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
         return;
       }
     }
 
     if (reference == null && checkRecursive(method)) {
       String message = RefactoringBundle.message("refactoring.is.not.supported.for.recursive.methods", REFACTORING_NAME);
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
       return;
     }
 
     if (method.isConstructor()) {
       if (method.isVarArgs()) {
         String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.vararg.constructors", REFACTORING_NAME);
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_CONSTRUCTOR, project);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_CONSTRUCTOR);
         return;
       }
       if (!isChainingConstructor(method)) {
         String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors", REFACTORING_NAME);
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_CONSTRUCTOR, project);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_CONSTRUCTOR);
         return;
       }
       if (reference != null) {

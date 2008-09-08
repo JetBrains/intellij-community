@@ -57,24 +57,24 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     if (method == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("locate.caret.inside.a.method"));
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
       return;
     }
     if (method.isConstructor()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("replace.with.method.call.does.not.work.for.constructors"));
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
     }
     final PsiCodeBlock body = method.getBody();
     if (body == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("method.does.not.have.a.body", method.getName()));
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
       return;
     }
     final PsiStatement[] statements = body.getStatements();
     if (statements.length == 0) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("method.has.an.empty.body", method.getName()));
 
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
       return;
     }
     final AnalysisScope scope = new AnalysisScope(file);
@@ -190,8 +190,8 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     return RefactoringBundle.message("method.duplicates.found.message", duplicatesNo);
   }
 
-  private static void showErrorMessage(String message, Project project) {
-    CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.METHOD_DUPLICATES, project);
+  private static void showErrorMessage(String message, Project project, Editor editor) {
+    CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.METHOD_DUPLICATES);
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {

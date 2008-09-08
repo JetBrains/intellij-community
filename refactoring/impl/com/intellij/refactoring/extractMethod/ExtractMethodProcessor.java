@@ -1143,7 +1143,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       highlightManager.addOccurrenceHighlights(myEditor, exitStatementsArray, attributes, true, null);
       String message = RefactoringBundle
         .getCannotRefactorMessage(RefactoringBundle.message("there.are.multiple.exit.points.in.the.selected.code.fragment"));
-      CommonRefactoringUtil.showErrorMessage(myRefactoringName, message, myHelpId, myProject);
+      CommonRefactoringUtil.showErrorHint(myProject, myEditor, message, myRefactoringName, myHelpId);
       WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
     }
   }

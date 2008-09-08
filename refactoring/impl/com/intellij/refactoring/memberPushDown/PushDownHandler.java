@@ -32,13 +32,13 @@ public class PushDownHandler implements RefactoringActionHandler {
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle.getCannotRefactorMessage(
           RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MEMBERS_PUSH_DOWN, project);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PUSH_DOWN);
         return;
       }
 
       if (element instanceof PsiClass || element instanceof PsiField || element instanceof PsiMethod) {
         if (element instanceof JspClass) {
-          RefactoringMessageUtil.showNotSupportedForJspClassesError(project, REFACTORING_NAME, HelpID.MEMBERS_PUSH_DOWN);
+          RefactoringMessageUtil.showNotSupportedForJspClassesError(project, editor, REFACTORING_NAME, HelpID.MEMBERS_PUSH_DOWN);
           return;
         }
         invoke(project, new PsiElement[]{element}, dataContext);

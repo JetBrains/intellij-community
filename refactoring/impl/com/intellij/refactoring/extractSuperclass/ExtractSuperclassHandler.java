@@ -7,6 +7,7 @@ package com.intellij.refactoring.extractSuperclass;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,7 +44,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     while (true) {
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_SUPERCLASS, project);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_SUPERCLASS);
         return;
       }
       if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)) {
@@ -62,16 +63,17 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, mySubclass)) return;
 
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (mySubclass.isInterface()) {
       String message =
         RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("superclass.cannot.be.extracted.from.an.interface"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_SUPERCLASS, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_SUPERCLASS);
       return;
     }
 
     if (mySubclass.isEnum()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("superclass.cannot.be.extracted.from.an.enum"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_SUPERCLASS, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_SUPERCLASS);
       return;
     }
 

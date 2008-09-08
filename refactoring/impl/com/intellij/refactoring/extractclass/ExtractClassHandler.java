@@ -39,38 +39,33 @@ public class ExtractClassHandler implements RefactoringActionHandler {
     final PsiClass containingClass = selectedMember instanceof PsiClass ? (PsiClass)selectedMember : selectedMember.getContainingClass();
 
     if (containingClass == null) {
-      CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
-                                                   RefactorJBundle
-                                                     .message("the.caret.should.be.positioned.within.a.class.to.be.refactored"),
-                                             getHelpID(), project);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("the.caret.should.be.positioned.within.a.class.to.be.refactored"),
+                                          null, getHelpID());
       return;
     }
     if (containingClass.isInterface()) {
-      CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
-                                                   RefactorJBundle.message("the.selected.class.is.an.interface"), getHelpID(), project);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("the.selected.class.is.an.interface"), null,
+                                          getHelpID());
       return;
     }
     if (containingClass.isEnum()) {
-      CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
-                                                   RefactorJBundle.message("the.selected.class.is.an.enumeration"), getHelpID(), project);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("the.selected.class.is.an.enumeration"), null,
+                                          getHelpID());
       return;
     }
     if (containingClass.isAnnotationType()) {
-      CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
-                                                   RefactorJBundle.message("the.selected.class.is.an.annotation.type"), getHelpID(),
-                                             project);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("the.selected.class.is.an.annotation.type"), null,
+                                          getHelpID());
       return;
     }
     if (classIsInner(containingClass) && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
-      CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
-                                                   RefactorJBundle.message("the.refactoring.is.not.supported.on.non.static.inner.classes"),
-                                             getHelpID(), project);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("the.refactoring.is.not.supported.on.non.static.inner.classes"),
+                                          null, getHelpID());
       return;
     }
     if (classIsTrivial(containingClass)) {
-      CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
-                                                   RefactorJBundle.message("the.selected.class.has.no.members.to.extract"), getHelpID(),
-                                             project);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("the.selected.class.has.no.members.to.extract"), null,
+                                          getHelpID());
       return;
     }
     new ExtractClassDialog(containingClass, selectedMember).show();

@@ -23,11 +23,10 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     return REFACTORING_NAME;
   }
 
-  protected boolean validClass(PsiClass parentClass) {
+  protected boolean validClass(PsiClass parentClass, Editor editor) {
     if (parentClass.isInterface()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.introduce.field.in.interface"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(),
-                                              parentClass.getProject());
+      CommonRefactoringUtil.showErrorHint(parentClass.getProject(), editor, message, REFACTORING_NAME, getHelpID());
       return false;
     }
     else {
@@ -59,7 +58,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     }
   }
 
-  protected Settings showRefactoringDialog(Project project, PsiClass parentClass, PsiExpression expr,
+  protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass, PsiExpression expr,
                                            PsiType type,
                                            PsiExpression[] occurences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);

@@ -3,6 +3,7 @@ package com.intellij.refactoring.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -58,8 +59,8 @@ public class RefactoringMessageUtil {
     return text;
   }
 
-  public static void showNotSupportedForJspClassesError(final Project project, final String refactoringName, final String helpId) {
+  public static void showNotSupportedForJspClassesError(final Project project, Editor editor, final String refactoringName, final String helpId) {
     String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("refactoring.is.not.supported.for.jsp.classes"));
-    CommonRefactoringUtil.showErrorMessage(refactoringName, message, helpId, project);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpId);
   }
 }

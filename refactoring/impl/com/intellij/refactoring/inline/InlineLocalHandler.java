@@ -56,7 +56,7 @@ class InlineLocalHandler {
     if (query.findFirst() == null){
       LOG.assertTrue(refExpr == null);
       String message = RefactoringBundle.message("variable.is.never.used", localName);
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
       return;
     }
 
@@ -84,7 +84,7 @@ class InlineLocalHandler {
     if (defToInline == null){
       final String key = refExpr == null ? "variable.has.no.initializer" : "variable.has.no.dominating.definition";
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(key, localName));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
       return;
     }
 
@@ -97,7 +97,7 @@ class InlineLocalHandler {
     }
     if (refsToInlineList.size() == 0) {
       String message = RefactoringBundle.message("variable.is.never.used.before.modification", localName);
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
       return;
     }
     final PsiElement[] refsToInline = refsToInlineList.toArray(new PsiElement[refsToInlineList.size()]);
@@ -110,7 +110,7 @@ class InlineLocalHandler {
       LOG.assertTrue(defs.length > 0);
       highlightManager.addOccurrenceHighlights(editor, defs, attributes, true, null);
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
       WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       return;
     }
@@ -120,7 +120,7 @@ class InlineLocalHandler {
       final PsiFile otherFile = ref.getContainingFile();
       if (!otherFile.equals(workingFile)) {
         String message = RefactoringBundle.message("variable.is.referenced.in.multiple.files", localName);
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
         return;
       }
     }
@@ -132,7 +132,7 @@ class InlineLocalHandler {
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{ref}, attributes, true, null);
         String message =
           RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return;
       }
@@ -221,7 +221,7 @@ class InlineLocalHandler {
           HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{element}, writeAttributes, true, null);
 
           String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
-          CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
+          CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
           WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
           return true;
         }

@@ -3,6 +3,7 @@ package com.intellij.refactoring.wrapreturnvalue;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -15,11 +16,12 @@ import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.NotNull;
 
 class WrapReturnValueHandler implements RefactoringActionHandler {
     public static final String REFACTORING_NAME = RefactorJBundle.message("wrap.return.value");
 
-    public void invoke(Project project,
+    public void invoke(@NotNull Project project,
                        Editor editor,
                        PsiFile file,
                        DataContext dataContext){
@@ -42,13 +44,11 @@ class WrapReturnValueHandler implements RefactoringActionHandler {
             }
         }
         if(selectedMethod == null){
-          CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
-                        RefactorJBundle
-                                .message("the.caret.should.be.positioned.at.the.name.of.the.method.to.be.refactored"), this.getHelpID(),
-                                                 project);
+          CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message(
+              "the.caret.should.be.positioned.at.the.name.of.the.method.to.be.refactored"), null, this.getHelpID());
           return;
         }
-      invoke(project, selectedMethod);
+      invoke(project, selectedMethod, editor);
     }
 
     protected String getRefactoringName(){
@@ -59,8 +59,8 @@ class WrapReturnValueHandler implements RefactoringActionHandler {
         return HelpID.WrapReturnValue;
     }
 
-    public void invoke(Project project,
-                       PsiElement[] elements,
+    public void invoke(@NotNull Project project,
+                       @NotNull PsiElement[] elements,
                        DataContext dataContext){
         if(elements.length != 1){
             return;
@@ -70,29 +70,27 @@ class WrapReturnValueHandler implements RefactoringActionHandler {
         if(method == null){
             return;
         }
-      invoke(project, method);
+      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      invoke(project, method, editor);
     }
 
-  private void invoke(final Project project, PsiMethod method) {
+  private void invoke(final Project project, PsiMethod method, Editor editor) {
     if(method.isConstructor()){
-          CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
-                    RefactorJBundle.message("constructor.returns.can.not.be.wrapped"), this.getHelpID(), project);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("constructor.returns.can.not.be.wrapped"), null,
+                                          this.getHelpID());
       return;
     }
     final PsiType returnType = method.getReturnType();
     if(PsiType.VOID.equals(returnType)){
-          CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
-                    RefactorJBundle.message("method.selected.returns.void"), this.getHelpID(), project);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("method.selected.returns.void"), null, this.getHelpID());
       return;
     }
     method = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
     if (method == null) return;
 
     if(method instanceof PsiCompiledElement){
-      CommonRefactoringUtil.showErrorMessage(null, RefactorJBundle.message("cannot.perform.the.refactoring") +
-                    RefactorJBundle.message(
-                            "the.selected.method.cannot.be.wrapped.because.it.is.defined.in.a.non.project.class"), this.getHelpID(),
-                                             project);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message(
+          "the.selected.method.cannot.be.wrapped.because.it.is.defined.in.a.non.project.class"), null, this.getHelpID());
       return;
     }
 

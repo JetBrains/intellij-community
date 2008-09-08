@@ -7,6 +7,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -33,18 +34,20 @@ public class InlineParameterExpressionProcessor {
   private final PsiMethod myMethod;
   private final PsiParameter myParameter;
   private final PsiExpression myInitializer;
+  private final Editor myEditor;
   private final boolean mySameClass;
-  private PsiMethod myCallingMethod;
+  private final PsiMethod myCallingMethod;
   private Map<PsiVariable, PsiElement> myLocalReplacements;
 
   public InlineParameterExpressionProcessor(final PsiCallExpression methodCall,
                                             final PsiMethod method,
                                             final PsiParameter parameter,
-                                            final PsiExpression initializer) {
+                                            final PsiExpression initializer, Editor editor) {
     myMethodCall = methodCall;
     myMethod = method;
     myParameter = parameter;
     myInitializer = initializer;
+    myEditor = editor;
 
     PsiClass callingClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class);
     mySameClass = (callingClass == myMethod.getContainingClass());
@@ -74,9 +77,9 @@ public class InlineParameterExpressionProcessor {
     final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
     final boolean canEvaluate = replaceLocals(initializerInMethod, elementsToReplace);
     if (!canEvaluate) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.parameter.refactoring"),
-                                             "Parameter initializer depends on values which are not available inside the method and cannot be inlined",
-                                             null, myMethod.getProject());
+      CommonRefactoringUtil.showErrorHint(myMethod.getProject(), myEditor,
+                                          "Parameter initializer depends on values which are not available inside the method and cannot be inlined",
+                                          RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
     }
 

@@ -19,7 +19,7 @@ public class InlineSuperClassRefactoringHandler {
 
   public static void invoke(final Project project, final Editor editor, final PsiClass superClass, Collection<PsiClass> inheritors) {
     if (inheritors.size() > 1) {
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, "Classes which have multiple subclasses cannot be inlined", null, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, "Classes which have multiple subclasses cannot be inlined", REFACTORING_NAME, null);
       return;
     }
 
