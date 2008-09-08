@@ -221,16 +221,18 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
   private void callReloadMergeInfo() {
     for (final RootsAndBranches action : myMergeInfoRefreshActions) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        action.reloadPanels();
-        action.refresh();
-      } else {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            action.reloadPanels();
-            action.refresh();
-          }
-        });
+      if (action.strategyInitialized()) {
+        if (ApplicationManager.getApplication().isDispatchThread()) {
+          action.reloadPanels();
+          action.refresh();
+        } else {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              action.reloadPanels();
+              action.refresh();
+            }
+          });
+        }
       }
     }
   }
@@ -282,6 +284,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
     final DefaultActionGroup popup = new DefaultActionGroup(myVcs.getDisplayName(), true);
     popup.add(rootsAndBranches.getIntegrateAction());
+    popup.add(rootsAndBranches.getUndoIntegrateAction());
     popup.add(new ConfigureBranchesAction());
 
     final ShowHideMergePanel action = new ShowHideMergePanel(myProject, manager, rootsAndBranches.getStrategy(), location);
