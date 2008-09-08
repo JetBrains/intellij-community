@@ -202,28 +202,29 @@ public class PsiClassImplUtil {
 
   @NonNls private static final String ALL = "Intellij-IDEA-ALL";
 
-  private static Map<Class<? extends PsiMember>, Map<String, List>> buildAllMaps(final PsiClass psiClass) {
-    final List<Pair<PsiClass, PsiSubstitutor>> classes = new ArrayList<Pair<PsiClass, PsiSubstitutor>>();
-    final List<Pair<PsiField, PsiSubstitutor>> fields = new ArrayList<Pair<PsiField, PsiSubstitutor>>();
-    final List<Pair<PsiMethod, PsiSubstitutor>> methods = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
+  private static Map<Class<? extends PsiMember>, Map<String, List<Pair<PsiMember, PsiSubstitutor>>>> buildAllMaps(final PsiClass psiClass) {
+    final List<Pair<PsiMember, PsiSubstitutor>> classes = new ArrayList<Pair<PsiMember, PsiSubstitutor>>();
+    final List<Pair<PsiMember, PsiSubstitutor>> fields = new ArrayList<Pair<PsiMember, PsiSubstitutor>>();
+    final List<Pair<PsiMember, PsiSubstitutor>> methods = new ArrayList<Pair<PsiMember, PsiSubstitutor>>();
 
     FilterScopeProcessor<MethodCandidateInfo> processor = new FilterScopeProcessor<MethodCandidateInfo>(
       new OrFilter(new ClassFilter(PsiMethod.class), new ClassFilter(PsiField.class), new ClassFilter(PsiClass.class))) {
       protected void add(PsiElement element, PsiSubstitutor substitutor) {
         if (element instanceof PsiMethod) {
-          methods.add(new Pair<PsiMethod, PsiSubstitutor>((PsiMethod)element, substitutor));
+          methods.add(new Pair<PsiMember, PsiSubstitutor>((PsiMethod)element, substitutor));
         }
         else if (element instanceof PsiField) {
-          fields.add(new Pair<PsiField, PsiSubstitutor>((PsiField)element, substitutor));
+          fields.add(new Pair<PsiMember, PsiSubstitutor>((PsiField)element, substitutor));
         }
         else if (element instanceof PsiClass) {
-          classes.add(new Pair<PsiClass, PsiSubstitutor>((PsiClass)element, substitutor));
+          classes.add(new Pair<PsiMember, PsiSubstitutor>((PsiClass)element, substitutor));
         }
       }
     };
-    processDeclarationsInClassNotCached(psiClass, processor, ResolveState.initial(),  new THashSet<PsiClass>(), null, psiClass, false);
+    PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+    processDeclarationsInClassNotCached(psiClass, processor, ResolveState.initial(),  new THashSet<PsiClass>(), null, psiClass, false, factory);
 
-    Map<Class<? extends PsiMember>, Map<String, List>> result = new HashMap<Class<? extends PsiMember>, Map<String, List>>(3);
+    Map<Class<? extends PsiMember>, Map<String, List<Pair<PsiMember, PsiSubstitutor>>>> result = new HashMap<Class<? extends PsiMember>, Map<String, List<Pair<PsiMember, PsiSubstitutor>>>>(3);
     result.put(PsiClass.class, generateMapByList(classes));
     result.put(PsiMethod.class, generateMapByList(methods));
     result.put(PsiField.class, generateMapByList(fields));
@@ -231,15 +232,15 @@ public class PsiClassImplUtil {
     return result;
   }
 
-  private static <T extends PsiMember> Map<String, List> generateMapByList(@NotNull final List<Pair<T, PsiSubstitutor>> list) {
-    Map<String, List> map = new HashMap<String, List>();
+  private static Map<String, List<Pair<PsiMember, PsiSubstitutor>>> generateMapByList(@NotNull final List<Pair<PsiMember, PsiSubstitutor>> list) {
+    Map<String, List<Pair<PsiMember, PsiSubstitutor>>> map = new HashMap<String, List<Pair<PsiMember, PsiSubstitutor>>>();
     map.put(ALL, list);
-    for (final Pair<T, PsiSubstitutor> info : list) {
-      final T element = info.getFirst();
+    for (final Pair<PsiMember, PsiSubstitutor> info : list) {
+      final PsiMember element = info.getFirst();
       final String currentName = element.getName();
-      List<Pair<T, PsiSubstitutor>> listByName = map.get(currentName);
+      List<Pair<PsiMember, PsiSubstitutor>> listByName = map.get(currentName);
       if (listByName == null) {
-        listByName = new ArrayList<Pair<T, PsiSubstitutor>>(1);
+        listByName = new ArrayList<Pair<PsiMember, PsiSubstitutor>>(1);
         map.put(currentName, listByName);
       }
       listByName.add(info);
@@ -247,7 +248,7 @@ public class PsiClassImplUtil {
     return map;
   }
 
-  static <T extends PsiMember> Map<String, List<Pair<T, PsiSubstitutor>>> getMap(final PsiClass aClass, Class<T> memberClazz) {
+  private static <T extends PsiMember> Map<String, List<Pair<T, PsiSubstitutor>>> getMap(final PsiClass aClass, Class<T> memberClazz) {
     CachedValue<Map> value = aClass.getUserData(MAP_IN_CLASS_KEY);
     if (value == null) {
       final CachedValueProvider<Map> provider = new ByNameCachedValueProvider(aClass);
@@ -316,7 +317,7 @@ public class PsiClassImplUtil {
     }
 
     public Result<Map> compute() {
-      final Map<Class<? extends PsiMember>, Map<String, List>> map = buildAllMaps(myClass);
+      final Map<Class<? extends PsiMember>, Map<String, List<Pair<PsiMember, PsiSubstitutor>>>> map = buildAllMaps(myClass);
       return new Result<Map>(map, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }
   }
@@ -333,8 +334,9 @@ public class PsiClassImplUtil {
     isRaw = isRaw || PsiUtil.isRawSubstitutor(aClass, substitutor);
     if (last instanceof PsiTypeParameterList || last instanceof PsiModifierList) return true; //TypeParameterList and ModifierList do not see our declarations
     final Boolean built = aClass.getUserData(NAME_MAPS_BUILT_FLAG);
+    PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
     if (built == null) {
-      return processDeclarationsInClassNotCached(aClass, processor, state, visited, last, place, isRaw);
+      return processDeclarationsInClassNotCached(aClass, processor, state, visited, last, place, isRaw, factory);
     }
 
     final NameHint nameHint = processor.getHint(NameHint.class);
@@ -355,7 +357,7 @@ public class PsiClassImplUtil {
             for (final Pair<PsiField, PsiSubstitutor> candidate : list) {
               PsiField candidateField = candidate.getFirst();
               PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(candidateField.getContainingClass(), candidate.getSecond(), aClass,
-                                                                       substitutor, place);
+                                                                       substitutor, place, factory);
 
               processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, candidateField.getContainingClass());
               if (!processor.execute(candidateField, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
@@ -388,7 +390,7 @@ public class PsiClassImplUtil {
                 final PsiClass containingClass = inner.getContainingClass();
                 if (containingClass != null) {
                   PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
-                                                                           substitutor, place);
+                                                                           substitutor, place, factory);
                   processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
                   if (!processor.execute(inner, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
                 }
@@ -419,12 +421,10 @@ public class PsiClassImplUtil {
             }
             final PsiClass containingClass = candidateMethod.getContainingClass();
             PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
-                                                                     substitutor, place);
+                                                                     substitutor, place, factory);
             if (isRaw && !candidateMethod.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
               PsiTypeParameter[] methodTypeParameters = candidateMethod.getTypeParameters();
-              for (PsiTypeParameter methodTypeParameter : methodTypeParameters) {
-                finalSubstitutor = finalSubstitutor.put(methodTypeParameter, null);
-              }
+              finalSubstitutor = factory.createRawSubstitutor(finalSubstitutor, methodTypeParameters);
             }
             processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
             if (!processor.execute(candidateMethod, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
@@ -434,15 +434,13 @@ public class PsiClassImplUtil {
       return true;
     }
 
-    return processDeclarationsInClassNotCached(aClass, processor, state, visited, last, place, isRaw);
+    return processDeclarationsInClassNotCached(aClass, processor, state, visited, last, place, isRaw, factory);
   }
 
-  private static PsiSubstitutor obtainFinalSubstitutor(@NotNull PsiClass candidateClass,
-                                               PsiSubstitutor candidateSubstitutor,
-                                               PsiClass aClass,
-                                               PsiSubstitutor substitutor,
-                                               final PsiElement place) {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(candidateClass.getProject()).getElementFactory();
+  private static PsiSubstitutor obtainFinalSubstitutor(@NotNull PsiClass candidateClass, PsiSubstitutor candidateSubstitutor, PsiClass aClass,
+                                                       PsiSubstitutor substitutor,
+                                                       final PsiElement place,
+                                                       PsiElementFactory elementFactory) {
     if (PsiUtil.isRawSubstitutor(aClass, substitutor)) {
       return elementFactory.createRawSubstitutor(candidateClass);
     }
@@ -453,13 +451,11 @@ public class PsiClassImplUtil {
     return ((PsiClassType)type).resolveGenerics().getSubstitutor();
   }
 
-  private static boolean processDeclarationsInClassNotCached(PsiClass aClass,
-                                                            PsiScopeProcessor processor,
-                                                            ResolveState state,
-                                                            Set<PsiClass> visited,
-                                                            PsiElement last,
-                                                            PsiElement place,
-                                                            boolean isRaw) {
+  private static boolean processDeclarationsInClassNotCached(PsiClass aClass, PsiScopeProcessor processor, ResolveState state, Set<PsiClass> visited,
+                                                             PsiElement last,
+                                                             PsiElement place,
+                                                             boolean isRaw,
+                                                             PsiElementFactory factory) {
     if (visited == null) visited = new THashSet<PsiClass>();
     if (!visited.add(aClass)) return true;
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
@@ -487,10 +483,8 @@ public class PsiClassImplUtil {
       for (final PsiMethod method : methods) {
         if (isRaw && !method.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
           PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
-          for (PsiTypeParameter methodTypeParameter : methodTypeParameters) {
-            PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
-            state = state.put(PsiSubstitutor.KEY, substitutor.put(methodTypeParameter, null));
-          }
+          PsiSubstitutor raw = factory.createRawSubstitutor(state.get(PsiSubstitutor.KEY), methodTypeParameters);
+          state = state.put(PsiSubstitutor.KEY, raw);
         }
         if (!processor.execute(method, state)) return false;
       }
@@ -520,7 +514,7 @@ public class PsiClassImplUtil {
       }
     }
 
-    return last instanceof PsiReferenceList || processSuperTypes(aClass, processor, visited, last, place, state, isRaw);
+    return last instanceof PsiReferenceList || processSuperTypes(aClass, processor, visited, last, place, state, isRaw, factory);
   }
 
   private static boolean processSuperTypes(PsiClass aClass,
@@ -529,13 +523,13 @@ public class PsiClassImplUtil {
                                            PsiElement last,
                                            PsiElement place,
                                            ResolveState state,
-                                           boolean isRaw) {
+                                           boolean isRaw, PsiElementFactory factory) {
     for (final PsiClassType superType : aClass.getSuperTypes()) {
       final PsiClassType.ClassResolveResult superTypeResolveResult = superType.resolveGenerics();
       PsiClass superClass = superTypeResolveResult.getElement();
       if (superClass == null) continue;
       PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), aClass, state.get(PsiSubstitutor.KEY),
-                                                               place);
+                                                               place, factory);
       if (!processDeclarationsInClass(superClass, processor, state.put(PsiSubstitutor.KEY, finalSubstitutor), visited, last, place, isRaw)) {
         return false;
       }
@@ -661,18 +655,17 @@ public class PsiClassImplUtil {
     return result;
   }
 
-  private static PsiClassType getAnnotationSuperType(PsiClass psiClass) {
-    return JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory()
-      .createTypeByFQClassName("java.lang.annotation.Annotation", psiClass.getResolveScope());
+  private static PsiClassType getAnnotationSuperType(PsiClass psiClass, PsiElementFactory factory) {
+    return factory.createTypeByFQClassName("java.lang.annotation.Annotation", psiClass.getResolveScope());
   }
 
-  private static PsiClassType getEnumSuperType(PsiClass psiClass) {
+  private static PsiClassType getEnumSuperType(PsiClass psiClass, PsiElementFactory factory) {
     PsiClassType superType;
     final PsiManager manager = psiClass.getManager();
     final PsiClass enumClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Enum", psiClass.getResolveScope());
     if (enumClass == null) {
       try {
-        superType = (PsiClassType)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeFromText("java.lang.Enum", null);
+        superType = (PsiClassType)factory.createTypeFromText("java.lang.Enum", null);
       }
       catch (IncorrectOperationException e) {
         superType = null;
@@ -685,7 +678,7 @@ public class PsiClassImplUtil {
       }
       else {
         superType = new PsiImmediateClassType(enumClass, PsiSubstitutor.EMPTY.put(
-          typeParameters[0], JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(psiClass)
+          typeParameters[0], factory.createType(psiClass)
         ));
       }
     }
@@ -771,10 +764,10 @@ public class PsiClassImplUtil {
 
   public static PsiClassType[] getExtendsListTypes(PsiClass psiClass) {
     if (psiClass.isEnum()) {
-      return new PsiClassType[]{getEnumSuperType(psiClass)};
+      return new PsiClassType[]{getEnumSuperType(psiClass, JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory())};
     }
     else if (psiClass.isAnnotationType()) {
-      return new PsiClassType[]{getAnnotationSuperType(psiClass)};
+      return new PsiClassType[]{getAnnotationSuperType(psiClass, JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory())};
     }
     final PsiReferenceList extendsList = psiClass.getExtendsList();
     if (extendsList != null) {

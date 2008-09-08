@@ -289,9 +289,7 @@ public class GenerateMembersUtil {
     PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length > 0) {
       if (PsiUtil.isRawSubstitutor(hisClass, substitutor)) {
-        for (PsiTypeParameter typeParameter : typeParameters) {
-          substitutor = substitutor.put(typeParameter, null);
-        }
+        substitutor = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(substitutor, typeParameters);
       }
     }
     return substitutor;
