@@ -14,10 +14,7 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
@@ -109,33 +106,39 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new MyRunContentDescriptor(profile, myExecutionResult, myReuseProhibited, myUi.getComponent(), this);
     }
-
     final ExecutionConsole console = myExecutionResult.getExecutionConsole();
     if (console != null) {
-      DefaultActionGroup consoleActions = new DefaultActionGroup();
-      if (console instanceof ConsoleView) {
-        AnAction[] actions = ((ConsoleView)console).createUpDownStacktraceActions();
-        for (AnAction goaction: actions) {
-          consoleActions.add(goaction);
-        }
+      if (console instanceof ExecutionConsoleEx) {
+        ((ExecutionConsoleEx)console).buildUi(myUi);
       }
-
-      final Content consoleContent = myUi.createContent("Console", console.getComponent(), "Console",
-                                                        IconLoader.getIcon("/debugger/console.png"),
-                                                        console.getPreferredFocusableComponent());
-
-      consoleContent.setActions(consoleActions, ActionPlaces.UNKNOWN, console.getComponent());
-      myUi.addContent(consoleContent, 0, PlaceInGrid.bottom, false);
-      if (profile instanceof RunConfigurationBase){
+      else {
+        buildConsoleUiDefault(console);
+      }
+      if (profile instanceof RunConfigurationBase) {
         myManager.initLogConsoles((RunConfigurationBase)profile, myExecutionResult.getProcessHandler());
       }
     }
-
     MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(profile, myExecutionResult, myReuseProhibited, myUi.getComponent(), this);
-
     myUi.getOptions().setLeftToolbar(createActionToolbar(contentDescriptor, myUi.getComponent()), ActionPlaces.UNKNOWN);
 
     return contentDescriptor;
+  }
+
+  private void buildConsoleUiDefault(final ExecutionConsole console) {
+    DefaultActionGroup consoleActions = new DefaultActionGroup();
+    if (console instanceof ConsoleView) {
+      AnAction[] actions = ((ConsoleView)console).createUpDownStacktraceActions();
+      for (AnAction goaction: actions) {
+        consoleActions.add(goaction);
+      }
+    }
+
+    final Content consoleContent = myUi.createContent("Console", console.getComponent(), "Console",
+                                                      IconLoader.getIcon("/debugger/console.png"),
+                                                      console.getPreferredFocusableComponent());
+
+    consoleContent.setActions(consoleActions, ActionPlaces.UNKNOWN, console.getComponent());
+    myUi.addContent(consoleContent, 0, PlaceInGrid.bottom, false);
   }
 
   public void addLogConsole(final String name, final String path, final long skippedContent) {
