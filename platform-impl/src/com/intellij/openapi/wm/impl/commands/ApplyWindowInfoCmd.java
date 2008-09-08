@@ -6,6 +6,7 @@ package com.intellij.openapi.wm.impl.commands;
 import com.intellij.openapi.wm.impl.InternalDecorator;
 import com.intellij.openapi.wm.impl.StripeButton;
 import com.intellij.openapi.wm.impl.WindowInfoImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Apply <code>info</code> to the corresponded tool button and decarator.
@@ -17,9 +18,9 @@ public final class ApplyWindowInfoCmd extends FinalizableCommand{
   private final InternalDecorator myDecorator;
 
   public ApplyWindowInfoCmd(
-    final WindowInfoImpl info,
-    final StripeButton button,
-    final InternalDecorator decorator,
+    @NotNull final WindowInfoImpl info,
+    @NotNull final StripeButton button,
+    @NotNull final InternalDecorator decorator,
     final Runnable finishCallBack
   ){
     super(finishCallBack);
