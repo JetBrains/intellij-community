@@ -50,13 +50,6 @@
       <add-to-group group-id="NewGroup" anchor="first"/>
     </group>
 
-    <group id="NewGroup2">
-      <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
-      <separator/>
-
-      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewFile"/>
-    </group>
-
     <!-- File -->
     <group id="OpenProjectGroup">
       <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction"/>

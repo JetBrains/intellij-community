@@ -290,6 +290,8 @@
 
     <group id="NewGroup" popup="true">
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
+      <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
+      <separator/>
       <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 
