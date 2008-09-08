@@ -82,13 +82,13 @@ public class GroovyCompiler implements TranslatingCompiler {
       assert sdk != null; //verified before
       SdkType sdkType = sdk.getSdkType();
       assert sdkType instanceof JavaSdkType;
-      commandLine.setExePath(((JavaSdkType) sdkType).getVMExecutablePath(sdk));
+      commandLine.setExePath(((JavaSdkType)sdkType).getVMExecutablePath(sdk));
 
 //      for debug
 //      commandLine.addParameter("-Xdebug");
 //      commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=127.0.0.1:5557");
 
-        //todo: check it
+      //todo: check it
       //commandLine.addParameter("-c UTF-8");     //charset ==  --encoding
       commandLine.addParameter("-cp");
 
@@ -102,8 +102,9 @@ public class GroovyCompiler implements TranslatingCompiler {
       String groovyPath = GroovyConfigUtils.getGroovyInstallPath(module);
       String grailsPath = GrailsConfigUtils.getGrailsInstallPath(module);
 
-      String libPath = (moduleType instanceof GrailsModuleType && grailsPath != null && grailsPath.length() > 0 ||
-          groovyPath.length() == 0 ? grailsPath : groovyPath) + "/lib";
+      String libPath = (moduleType instanceof GrailsModuleType && grailsPath != null && grailsPath.length() > 0 || groovyPath.length() == 0
+                        ? grailsPath
+                        : groovyPath) + "/lib";
 
       libPath = libPath.replace(File.separatorChar, '/');
       VirtualFile lib = LocalFileSystem.getInstance().findFileByPath(libPath);
@@ -127,7 +128,8 @@ public class GroovyCompiler implements TranslatingCompiler {
         fillFileWithGroovycParameters(entry.getKey(), entry.getValue(), fileWithParameters);
 
         commandLine.addParameter(fileWithParameters.getPath());
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
         LOG.error(e);
       }
 
@@ -152,17 +154,16 @@ public class GroovyCompiler implements TranslatingCompiler {
 
           final String url = compilerMessage.getUrl();
 
-          compileContext.addMessage(category, compilerMessage.getMessage(),
-              url.replace('\\', '/'),
-              compilerMessage.getLineNum(), compilerMessage.getColumnNum());
+          compileContext.addMessage(category, compilerMessage.getMessage(), url.replace('\\', '/'), compilerMessage.getLineNum(),
+                                    compilerMessage.getColumnNum());
         }
 
         StringBuffer unparsedBuffer = processHandler.getUnparsedOutput();
-        if (unparsedBuffer.length() != 0)
-          compileContext.addMessage(CompilerMessageCategory.ERROR, unparsedBuffer.toString(), null, -1, -1);
+        if (unparsedBuffer.length() != 0) compileContext.addMessage(CompilerMessageCategory.ERROR, unparsedBuffer.toString(), null, -1, -1);
 
         addSuccessfullyCompiled(successfullyCompiled, processHandler);
-      } catch (ExecutionException e) {
+      }
+      catch (ExecutionException e) {
         LOG.error(e);
       }
     }
@@ -177,7 +178,7 @@ public class GroovyCompiler implements TranslatingCompiler {
         ModuleRootManager manager = ModuleRootManager.getInstance(module);
         for (OrderEntry entry : manager.getOrderEntries()) {
           if (entry instanceof LibraryOrderEntry) {
-            Library library = ((LibraryOrderEntry) entry).getLibrary();
+            Library library = ((LibraryOrderEntry)entry).getLibrary();
             if (library == null) continue;
             for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
               String path = file.getPath();
@@ -226,8 +227,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
   private boolean required(String name) {
     name = name.toLowerCase();
-    if (!name.endsWith(".jar"))
-      return false;
+    if (!name.endsWith(".jar")) return false;
 
     name = name.substring(0, name.lastIndexOf('.'));
     int ind = name.lastIndexOf('-');
@@ -277,7 +277,8 @@ public class GroovyCompiler implements TranslatingCompiler {
     FileOutputStream stream;
     try {
       stream = new FileOutputStream(f);
-    } catch (FileNotFoundException e) {
+    }
+    catch (FileNotFoundException e) {
       LOG.error(e);
       return;
     }
@@ -308,8 +309,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
     //Grails injections  support
     printer.println(GroovycRunner.IS_GRAILS);
-    printer.println(GrailsConfigUtils.isGrailsConfigured(module) &&
-        module.getModuleType() instanceof GrailsModuleType);
+    printer.println(GrailsConfigUtils.isGrailsConfigured(module) && module.getModuleType() instanceof GrailsModuleType);
 
     //production output
     printer.println(GroovycRunner.OUTPUTPATH);
@@ -345,9 +345,11 @@ public class GroovyCompiler implements TranslatingCompiler {
     for (Module module : modules) {
       final String groovyInstallPath = GroovyConfigUtils.getGroovyInstallPath(module);
       final String grailsInstallPath = GrailsConfigUtils.getGrailsInstallPath(module);
-      if (groovyInstallPath.length() == 0 &&
-          (grailsInstallPath == null || grailsInstallPath.length() == 0)) {
-        Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet", module.getName()), GroovyBundle.message("cannot.compile"));
+      if (groovyInstallPath.length() == 0 && (grailsInstallPath == null || grailsInstallPath.length() == 0)) {
+        if (!GroovyConfigUtils.tryToSetUpGroovyFacetOntheFly(module)) {
+          Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet", module.getName()),
+                                   GroovyBundle.message("cannot.compile"));
+        }
         return false;
       }
     }
@@ -361,14 +363,16 @@ public class GroovyCompiler implements TranslatingCompiler {
     if (!nojdkModules.isEmpty()) {
       final Module[] noJdkArray = nojdkModules.toArray(new Module[nojdkModules.size()]);
       if (noJdkArray.length == 1) {
-        Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.sdk", noJdkArray[0].getName()), GroovyBundle.message("cannot.compile"));
+        Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.sdk", noJdkArray[0].getName()),
+                                 GroovyBundle.message("cannot.compile"));
       } else {
         StringBuffer modulesList = new StringBuffer();
         for (int i = 0; i < noJdkArray.length; i++) {
           if (i > 0) modulesList.append(", ");
           modulesList.append(noJdkArray[i].getName());
         }
-        Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.sdk.mult", modulesList.toString()), GroovyBundle.message("cannot.compile"));
+        Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.sdk.mult", modulesList.toString()),
+                                 GroovyBundle.message("cannot.compile"));
       }
       return false;
     }

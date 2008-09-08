@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
@@ -378,7 +380,8 @@ public class GroovyConfigUtils {
   }
 
   public static boolean isGroovyConfigured(Module module) {
-    return module != null && getGroovyLibrariesByModule(module).length > 0 || GrailsConfigUtils.isGrailsConfigured(module);
+    return module != null && (getGroovyLibrariesByModule(module).length > 0 || tryToSetUpGroovyFacetOntheFly(module)) ||
+           GrailsConfigUtils.isGrailsConfigured(module);
   }
 
   @NotNull
@@ -410,5 +413,31 @@ public class GroovyConfigUtils {
         }
       }
     }
+  }
+
+  public static boolean tryToSetUpGroovyFacetOntheFly(final Module module) {
+    final Project project = module.getProject();
+    final Library[] libraries = getAllGroovyLibraries(project);
+    if (libraries.length > 0) {
+      final Library library = libraries[0];
+      int result = Messages.showOkCancelDialog(
+        GroovyBundle.message("groovy.like.library.found.text", library.getName(), getGroovyLibVersion(library)),
+        GroovyBundle.message("groovy.like.library.found"), GroovyIcons.BIG_ICON);
+      final Ref<Boolean> ref = new Ref<Boolean>();
+      ref.set(false);
+      if (result == 0) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+            LibraryOrderEntry entry = model.addLibraryEntry(libraries[0]);
+            LibrariesUtil.placeEntryToCorrectPlace(model, entry);
+            model.commit();
+            ref.set(true);
+          }
+        });
+      }
+      return ref.get();
+    }
+    return false;
   }
 }
