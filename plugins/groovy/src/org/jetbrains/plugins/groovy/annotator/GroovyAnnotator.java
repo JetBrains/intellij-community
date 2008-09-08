@@ -38,6 +38,7 @@ import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamize.DynamizeInvalidCodeFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
@@ -861,6 +862,11 @@ public class GroovyAnnotator implements Annotator {
         String message = clazz.isInterface() ? GroovyBundle.message("cannot.instantiate.interface", clazz.getName()) :
                 GroovyBundle.message("cannot.instantiate.abstract.class", clazz.getName());
         holder.createErrorAnnotation(refElement, message);
+        if (clazz.isInterface()) {
+          Annotation annotation = holder.createInfoAnnotation(newExpression, null);
+          annotation.registerFix(DynamizeInvalidCodeFix.replaceInterfaceInstanceByMapFix(newExpression));
+          annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        }
         return;
       }
     }

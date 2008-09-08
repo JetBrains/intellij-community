@@ -69,9 +69,8 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     }
 
-    if (project == null || !handleEnter(editor, dataContext, project) &&
-            myOriginalHandler != null &&
-            myOriginalHandler.isEnabled(editor, dataContext)) {
+    if (project == null ||
+        !handleEnter(editor, dataContext, project) && myOriginalHandler != null && myOriginalHandler.isEnabled(editor, dataContext)) {
       Document document = editor.getDocument();
       if (project != null) {
         PsiDocumentManager.getInstance(project).commitDocument(document);
@@ -90,6 +89,9 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     if (handleBetweenSquareBraces(editor, caretOffset, dataContext, project)) {
       return true;
     }
+    if (handleBeforeCurlyBrace(editor, caretOffset, dataContext, project)) {
+      return true;
+    }
     if (handleInString(editor, caretOffset, dataContext)) {
       return true;
     }
@@ -98,9 +100,8 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
 
   private boolean handleBetweenSquareBraces(Editor editor, int caret, DataContext context, Project project) {
     String text = editor.getDocument().getText();
-    if (text == null || text.length() == 0)
-      return false;
-    final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
+    if (text == null || text.length() == 0) return false;
+    final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     if (caret < 1 || caret > text.length() - 1) {
       return false;
     }
@@ -120,43 +121,52 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     return false;
   }
 
-  private static TokenSet AFTER_DOLLAR = TokenSet.create(
-          GroovyTokenTypes.mLCURLY,
-          GroovyTokenTypes.mIDENT,
-          GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
-          GroovyTokenTypes.mGSTRING_SINGLE_CONTENT
-  );
+  private boolean handleBeforeCurlyBrace(Editor editor, int caret, DataContext context, Project project) {
+    String text = editor.getDocument().getText();
+    if (text == null || text.length() == 0) return false;
+    final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    if (caret < 1 || caret > text.length() - 1) {
+      return false;
+    }
+    HighlighterIterator iterator = highlighter.createIterator(caret);
+    if (GroovyTokenTypes.mRCURLY == iterator.getTokenType()) {
+      PsiFile file = DataKeys.PSI_FILE.getData(context);
+      if (file != null) {
+        final PsiElement element = file.findElementAt(caret);
+        if (element != null &&
+            element.getNode().getElementType() == GroovyTokenTypes.mRCURLY && element.getParent() instanceof GrClosableBlock &&
+            text.length() > caret) {
+          iterator = highlighter.createIterator(caret);
+          if (GroovyTokenTypes.mRCURLY == iterator.getTokenType()) {
+            myOriginalHandler.execute(editor, context);
+            myOriginalHandler.execute(editor, context);
+            editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
+            GroovyEditorActionUtil.insertSpacesByGroovyIndent(editor, project);
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
 
-  private static TokenSet ALL_STRINGS = TokenSet.create(
-          GroovyTokenTypes.mSTRING_LITERAL,
-          GroovyTokenTypes.mGSTRING_LITERAL,
-          GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
-          GroovyTokenTypes.mGSTRING_SINGLE_END,
-          GroovyTokenTypes.mGSTRING_SINGLE_CONTENT,
-          GroovyTokenTypes.mRCURLY,
-          GroovyTokenTypes.mIDENT
-  );
+  private static TokenSet AFTER_DOLLAR = TokenSet
+    .create(GroovyTokenTypes.mLCURLY, GroovyTokenTypes.mIDENT, GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
+            GroovyTokenTypes.mGSTRING_SINGLE_CONTENT);
 
-  private static TokenSet BEFORE_DOLLAR = TokenSet.create(
-          GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
-          GroovyTokenTypes.mGSTRING_SINGLE_CONTENT
-  );
+  private static TokenSet ALL_STRINGS = TokenSet
+    .create(GroovyTokenTypes.mSTRING_LITERAL, GroovyTokenTypes.mGSTRING_LITERAL, GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
+            GroovyTokenTypes.mGSTRING_SINGLE_END, GroovyTokenTypes.mGSTRING_SINGLE_CONTENT, GroovyTokenTypes.mRCURLY,
+            GroovyTokenTypes.mIDENT);
 
-  private static TokenSet EXPR_END = TokenSet.create(
-          GroovyTokenTypes.mRCURLY,
-          GroovyTokenTypes.mIDENT
-  );
+  private static TokenSet BEFORE_DOLLAR = TokenSet.create(GroovyTokenTypes.mGSTRING_SINGLE_BEGIN, GroovyTokenTypes.mGSTRING_SINGLE_CONTENT);
 
-  private static TokenSet AFTER_EXPR_END = TokenSet.create(
-          GroovyTokenTypes.mGSTRING_SINGLE_END,
-          GroovyTokenTypes.mGSTRING_SINGLE_CONTENT
-  );
+  private static TokenSet EXPR_END = TokenSet.create(GroovyTokenTypes.mRCURLY, GroovyTokenTypes.mIDENT);
 
-  private static TokenSet STRING_END = TokenSet.create(
-          GroovyTokenTypes.mSTRING_LITERAL,
-          GroovyTokenTypes.mGSTRING_LITERAL,
-          GroovyTokenTypes.mGSTRING_SINGLE_END
-  );
+  private static TokenSet AFTER_EXPR_END = TokenSet.create(GroovyTokenTypes.mGSTRING_SINGLE_END, GroovyTokenTypes.mGSTRING_SINGLE_CONTENT);
+
+  private static TokenSet STRING_END =
+    TokenSet.create(GroovyTokenTypes.mSTRING_LITERAL, GroovyTokenTypes.mGSTRING_LITERAL, GroovyTokenTypes.mGSTRING_SINGLE_END);
 
 
   private boolean handleInString(Editor editor, int caretOffset, DataContext dataContext) {
@@ -194,8 +204,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     }
 
     // For expression injection in GString like "abc ${}<caret>  abc"
-    if (!GroovyEditorActionUtil.GSTRING_TOKENS.contains(node.getElementType()) &&
-            checkGStringInnerExpression(stringElement)) {
+    if (!GroovyEditorActionUtil.GSTRING_TOKENS.contains(node.getElementType()) && checkGStringInnerExpression(stringElement)) {
       stringElement = stringElement.getParent().getNextSibling();
       if (stringElement == null) return false;
       node = stringElement.getNode();
@@ -210,8 +219,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
       if (parent == null || parent.getLastChild() instanceof PsiErrorElement) return false;
       if (GroovyEditorActionUtil.isPlainGString(parent.getNode())) {
         PsiElement exprSibling = stringElement.getNextSibling();
-        boolean rightFromDollar = exprSibling instanceof GrExpression &&
-                exprSibling.getTextRange().getStartOffset() == caretOffset;
+        boolean rightFromDollar = exprSibling instanceof GrExpression && exprSibling.getTextRange().getStartOffset() == caretOffset;
         if (rightFromDollar) caretOffset--;
         String text = parent.getText();
         String innerText = text.equals("\"\"") ? "" : text.substring(1, text.length() - 1);
@@ -231,31 +239,36 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
   }
 
   private static boolean checkStringApplicable(Editor editor, int caret) {
-    final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
+    final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator iteratorLeft = highlighter.createIterator(caret - 1);
     HighlighterIterator iteratorRight = highlighter.createIterator(caret);
 
     if (iteratorLeft != null && !(ALL_STRINGS.contains(iteratorLeft.getTokenType()))) {
       return false;
     }
-    if (iteratorLeft != null && BEFORE_DOLLAR.contains(iteratorLeft.getTokenType()) &&
-            iteratorRight != null && !AFTER_DOLLAR.contains(iteratorRight.getTokenType())) {
+    if (iteratorLeft != null &&
+        BEFORE_DOLLAR.contains(iteratorLeft.getTokenType()) &&
+        iteratorRight != null &&
+        !AFTER_DOLLAR.contains(iteratorRight.getTokenType())) {
       return false;
     }
-    if (iteratorLeft != null && EXPR_END.contains(iteratorLeft.getTokenType()) &&
-            iteratorRight != null && !AFTER_EXPR_END.contains(iteratorRight.getTokenType())) {
+    if (iteratorLeft != null &&
+        EXPR_END.contains(iteratorLeft.getTokenType()) &&
+        iteratorRight != null &&
+        !AFTER_EXPR_END.contains(iteratorRight.getTokenType())) {
       return false;
     }
-    if (iteratorLeft != null && STRING_END.contains(iteratorLeft.getTokenType()) &&
-            iteratorRight != null && !STRING_END.contains(iteratorRight.getTokenType())) {
+    if (iteratorLeft != null &&
+        STRING_END.contains(iteratorLeft.getTokenType()) &&
+        iteratorRight != null &&
+        !STRING_END.contains(iteratorRight.getTokenType())) {
       return false;
     }
     return true;
   }
 
   private static boolean checkGStringInnerExpression(PsiElement element) {
-    if (element != null &&
-            (element.getParent() instanceof GrReferenceExpression || element.getParent() instanceof GrClosableBlock)) {
+    if (element != null && (element.getParent() instanceof GrReferenceExpression || element.getParent() instanceof GrClosableBlock)) {
       PsiElement nextSibling = element.getParent().getNextSibling();
       if (nextSibling == null) return false;
       return GroovyEditorActionUtil.GSTRING_TOKENS_INNER.contains(nextSibling.getNode().getElementType());

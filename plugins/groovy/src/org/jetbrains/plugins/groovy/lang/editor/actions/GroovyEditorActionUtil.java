@@ -16,22 +16,16 @@
 package org.jetbrains.plugins.groovy.lang.editor.actions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.plugins.grails.fileType.GspFileType;
-import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ilyas
@@ -40,6 +34,15 @@ public abstract class GroovyEditorActionUtil {
 
   public static void insertSpacesByGroovyContinuationIndent(Editor editor, Project project) {
     int indentSize = CodeStyleSettingsManager.getSettings(project).getContinuationIndentSize(GroovyFileType.GROOVY_FILE_TYPE);
+    StringBuffer buffer = new StringBuffer();
+    for (int i = 0; i < indentSize; i++) {
+      buffer.append(" ");
+    }
+    EditorModificationUtil.insertStringAtCaret(editor, buffer.toString());
+  }
+
+  public static void insertSpacesByGroovyIndent(Editor editor, Project project) {
+    int indentSize = CodeStyleSettingsManager.getSettings(project).getIndentSize(GroovyFileType.GROOVY_FILE_TYPE);
     StringBuffer buffer = new StringBuffer();
     for (int i = 0; i < indentSize; i++) {
       buffer.append(" ");

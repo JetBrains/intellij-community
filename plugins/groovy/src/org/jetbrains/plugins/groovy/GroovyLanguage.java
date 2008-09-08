@@ -16,11 +16,6 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.lang.Language;
-import com.intellij.psi.impl.source.codeStyle.ReferenceAdjuster;
-import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.IStubFileElementType;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyReferenceAdjuster;
 
 /**
  * All main properties for Groovy language
