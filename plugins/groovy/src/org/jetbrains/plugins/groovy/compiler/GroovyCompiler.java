@@ -28,6 +28,8 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,6 +47,7 @@ import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.grails.module.GrailsModuleType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.*;
@@ -349,6 +352,11 @@ public class GroovyCompiler implements TranslatingCompiler {
         if (!GroovyConfigUtils.tryToSetUpGroovyFacetOntheFly(module)) {
           Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet", module.getName()),
                                    GroovyBundle.message("cannot.compile"));
+          int result = Messages.showOkCancelDialog(GroovyBundle.message("groovy.configure.facet.question.text"),
+                                                   GroovyBundle.message("groovy.configure.facet.question"), GroovyIcons.BIG_ICON);
+          if (result == 0) {
+            ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
+          }
         }
         return false;
       }

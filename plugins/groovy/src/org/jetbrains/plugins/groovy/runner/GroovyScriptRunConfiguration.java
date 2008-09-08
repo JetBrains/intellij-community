@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -29,11 +30,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 
@@ -160,7 +166,18 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     }
 
     if (!GroovyConfigUtils.isGroovyConfigured(module)) {
-      throw new ExecutionException("Groovy is not configured");
+      //throw new ExecutionException("Groovy is not configured");
+      Messages.showErrorDialog(module.getProject(), ExecutionBundle.message("error.running.configuration.with.error.error.message",
+                                                                  getName(), "Groovy is not configured"),
+                                          ExecutionBundle.message("run.error.message.title"));
+
+      int result = Messages.showOkCancelDialog(
+        GroovyBundle.message("groovy.configure.facet.question.text"),
+        GroovyBundle.message("groovy.configure.facet.question"), GroovyIcons.BIG_ICON);
+      if (result == 0) {
+        ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
+      }
+      return null;
     }
 
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
