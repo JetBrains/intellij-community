@@ -40,8 +40,8 @@ import java.util.ArrayList;
  */
 public class GroovyIntroduceVariableHandler extends GroovyIntroduceVariableBase {
 
-  protected void showErrorMessage(String message, final Project project) {
-    CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INTRODUCE_VARIABLE, project);
+  protected void showErrorMessage(final Project project, Editor editor, String message) {
+    CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INTRODUCE_VARIABLE);
   }
 
   protected boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {

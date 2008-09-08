@@ -64,14 +64,14 @@ public abstract class GroovyInlineMethodUtil {
     final Project project = method.getProject();
     if (method.isConstructor()) {
       String message = GroovyRefactoringBundle.message("refactoring.cannot.be.applied.to.constructors", REFACTORING_NAME);
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
       return null;
     }
 
     PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
     if (!invokedOnReference || reference == null) {
       String message = GroovyRefactoringBundle.message("multiple.method.inline.is.not.suppored", REFACTORING_NAME);
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
       return null;
     }
 
@@ -86,7 +86,7 @@ public abstract class GroovyInlineMethodUtil {
 
     if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) {
       String message = GroovyRefactoringBundle.message("refactoring.is.available.only.for.method.calls", REFACTORING_NAME);
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
       return null;
     }
 
@@ -94,7 +94,7 @@ public abstract class GroovyInlineMethodUtil {
 
     if (PsiTreeUtil.getParentOfType(element, GrParameter.class) != null) {
       String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.in.parameter.initializers", REFACTORING_NAME);
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
       return null;
     }
 
@@ -107,13 +107,13 @@ public abstract class GroovyInlineMethodUtil {
       } else {
         message = GroovyRefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", REFACTORING_NAME);
       }
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
       return null;
     }
 
     if (hasBadReturns(method) && !isTailMethodCall(call)) {
       String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
       return null;
     }
 
@@ -235,11 +235,11 @@ public abstract class GroovyInlineMethodUtil {
 
   }
 
-  private static void showErrorMessage(String message, final Project project) {
+  private static void showErrorMessage(String message, final Project project, Editor editor) {
     Application application = ApplicationManager.getApplication();
     myErrorMessage = message;
     if (!application.isUnitTestMode()) {
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
     }
   }
 

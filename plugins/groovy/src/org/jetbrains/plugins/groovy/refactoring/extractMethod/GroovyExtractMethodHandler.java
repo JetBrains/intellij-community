@@ -41,7 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
@@ -61,11 +60,11 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   protected static String REFACTORING_NAME = GroovyRefactoringBundle.message("extract.method.title");
   private String myInvokeResult = "ok";
 
-  protected void showErrorMessage(String message, final Project project) {
+  protected void showErrorMessage(String message, final Project project, Editor editor) {
     Application application = ApplicationManager.getApplication();
     myInvokeResult = message;
     if (!application.isUnitTestMode()) {
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_METHOD);
     }
   }
 
@@ -85,7 +84,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     //todo implement in GSP files
     if (!(file instanceof GroovyFileBase /* || file instanceof GspFile*/)) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("only.in.groovy.files"));
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
       return false;
     }
 
@@ -103,7 +102,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
     if (statements.length == 0) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.block.should.represent.a.statement.set"));
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
       return false;
     }
 
@@ -111,7 +110,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     for (GrStatement statement : statements) {
       if (GroovyRefactoringUtil.isSuperOrThisCall(statement, true, true)) {
         String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));
-        showErrorMessage(message, project);
+        showErrorMessage(message, project, editor);
         return false;
       }
     }
@@ -121,7 +120,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     if (owner == null ||
         (declarationOwner == null && !ExtractMethodUtil.isSingleExpression(statements))) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
       return false;
     }
     if (declarationOwner == null &&
@@ -129,7 +128,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
         statements[0] instanceof GrExpression &&
         PsiType.VOID == ((GrExpression) statements[0]).getType()) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
       return false;
     }
 
@@ -146,7 +145,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     if (outputInfos.length > 1 ||
         outputInfos.length == 1 && returnStatements.size() > 0) {
       String message = GroovyRefactoringBundle.message("multiple.output.values");
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
       return false;
     }
 
@@ -164,7 +163,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     boolean isReturnStatement = ExtractMethodUtil.isReturnStatement(statements[statements.length - 1], returnStatements);
     if (!isReturnStatement && hasReturns || hasInterruptingStatements) {
       String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow");
-      showErrorMessage(message, project);
+      showErrorMessage(message, project, editor);
       return false;
     }
 

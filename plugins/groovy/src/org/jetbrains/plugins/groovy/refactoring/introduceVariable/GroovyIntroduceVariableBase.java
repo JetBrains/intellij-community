@@ -69,7 +69,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     if (!(file instanceof GroovyFileBase || file instanceof GspFile)) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("only.in.groovy.files"));
-      showErrorMessage(message, project);
+      showErrorMessage(project, editor, message);
       return false;
     }
     // Expression or block to be introduced as a variable
@@ -93,7 +93,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
     if (selectedExpr == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.block.should.represent.an.expression"));
-      showErrorMessage(message, project);
+      showErrorMessage(project, editor, message);
       return false;
     }
 
@@ -107,7 +107,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
     if (type == PsiType.VOID) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
-      showErrorMessage(message, project);
+      showErrorMessage(project, editor, message);
       return false;
     }
 
@@ -121,13 +121,13 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
     if (checkInFieldInitializer(selectedExpr)) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
-      showErrorMessage(message, project);
+      showErrorMessage(project, editor, message);
       return false;
     }
 
     if (parent instanceof GrParameter) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.method.parameters"));
-      showErrorMessage(message, project);
+      showErrorMessage(project, editor, message);
       return false;
     }
 
@@ -139,7 +139,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     final GroovyPsiElement tempContainer = ((GroovyPsiElement) enclosingContainer);
     if (!GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(tempContainer)) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
-      showErrorMessage(message, project);
+      showErrorMessage(project, editor, message);
       return false;
     }
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
@@ -415,7 +415,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
   private boolean tempContainerNotFound(final Project project) {
     String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME);
-    showErrorMessage(message, project);
+    showErrorMessage(project, null, message);
     return false;
   }
 
@@ -427,7 +427,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
                                                              PsiType type, PsiElement[] occurrences, boolean decalreFinal,
                                                              Validator validator);
 
-  protected abstract void showErrorMessage(String message, Project project);
+  protected abstract void showErrorMessage(Project project, Editor editor, String message);
 
   protected abstract void highlightOccurrences(final Project project, Editor editor, final PsiElement[] replacedOccurrences);
 

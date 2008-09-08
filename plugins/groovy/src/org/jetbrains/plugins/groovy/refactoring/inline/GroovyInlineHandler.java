@@ -49,7 +49,7 @@ public class GroovyInlineHandler implements InlineHandler {
       Application application = ApplicationManager.getApplication();
       if (!application.isUnitTestMode()) {
         String message = GroovyRefactoringBundle.message("wrong.element.to.inline");
-        CommonRefactoringUtil.showErrorMessage(INLINE_REFACTORING, message, HelpID.INLINE_VARIABLE, element.getProject());
+        CommonRefactoringUtil.showErrorHint(element.getProject(), editor, message, INLINE_REFACTORING, HelpID.INLINE_VARIABLE);
       }
     }
     return null;
