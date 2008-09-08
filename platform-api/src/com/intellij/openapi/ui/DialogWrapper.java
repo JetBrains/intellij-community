@@ -41,14 +41,20 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+/**
+ * The dialog wrapper. The dialog wrapper could be used only on event dispatch thread.
+ * In case when the dialog must be created from other threads use
+ * {@link EventQueue#invokeLater(Runnable)} or {@link EventQueue#invokeAndWait(Runnable)}. 
+ *
+ */
 public abstract class DialogWrapper {
   /**
-     * The default exit code for "OK" action.
-     */
+   * The default exit code for "OK" action.
+   */
   public static final int OK_EXIT_CODE = 0;
   /**
-     * The default exit code for "Cancel" action.
-     */
+   * The default exit code for "Cancel" action.
+   */
   public static final int CANCEL_EXIT_CODE = 1;
   /**
    * If you use your custom exit codes you have have to start them with
@@ -68,15 +74,15 @@ public abstract class DialogWrapper {
   private int myExitCode = CANCEL_EXIT_CODE;
 
   /**
-     * The shared instance of default border for dialog's content pane.
-     */
+   * The shared instance of default border for dialog's content pane.
+   */
   public static final Border ourDefaultBorder = BorderFactory.createEmptyBorder(8, 8, 8, 8);
 
   private float myHorizontalStretch = 1.0f;
   private float myVerticalStretch = 1.0f;
   /**
-     * Defines horizontal alignment of buttons.
-     */
+   * Defines horizontal alignment of buttons.
+   */
   private int myButtonAlignment = SwingConstants.RIGHT;
   private boolean myCrossClosesWindow = true;
   private Insets myButtonMargins = new Insets(2, 16, 2, 16);
@@ -90,7 +96,6 @@ public abstract class DialogWrapper {
 
   protected boolean myPerformAction = false;
 
-  private static final Object ourLock = new Object();
   private Action myYesAction = null;
   private Action myNoAction = null;
 
@@ -114,34 +119,40 @@ public abstract class DialogWrapper {
    *                    will be suggested based on current focused window.
    * @param canBeParent specifies whether the dialog can be parent for other windows. This parameter is used
    *                    by <code>WindowManager</code>.
+   * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
   protected DialogWrapper(Project project, boolean canBeParent) {
-    synchronized (ourLock) {
-      myPeer = DialogWrapperPeerFactory.getInstance().createPeer(this, project, canBeParent);
-      createDefaultActions();
-    }
+    ensureEventDispatchThread();
+    myPeer = DialogWrapperPeerFactory.getInstance().createPeer(this, project, canBeParent);
+    createDefaultActions();
   }
 
+  /**
+   * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
+   *
+   * @param canBeParent specifies whether the dialog can be parent for other windows. This parameter is used
+   *                    by <code>WindowManager</code>.
+   * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
+   */
   protected DialogWrapper(boolean canBeParent) {
     this((Project)null, canBeParent);
   }
 
   protected DialogWrapper(boolean canBeParent, boolean toolkitModalIfPossible) {
-    synchronized (ourLock) {
-      myPeer = DialogWrapperPeerFactory.getInstance().createPeer(this, canBeParent, toolkitModalIfPossible);
-      createDefaultActions();
-    }
+    ensureEventDispatchThread();
+    myPeer = DialogWrapperPeerFactory.getInstance().createPeer(this, canBeParent, toolkitModalIfPossible);
+    createDefaultActions();
   }
 
   /**
    * @param parent parent component whicg is used to canculate heavy weight window ancestor.
    *               <code>parent</code> cannot be <code>null</code> and must be showing.
+   * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
   protected DialogWrapper(Component parent, boolean canBeParent) {
-    synchronized (ourLock) {
-      myPeer = DialogWrapperPeerFactory.getInstance().createPeer(this, parent, canBeParent);
-      createDefaultActions();
-    }
+    ensureEventDispatchThread();
+    myPeer = DialogWrapperPeerFactory.getInstance().createPeer(this, parent, canBeParent);
+    createDefaultActions();
   }
 
   protected void createDefaultActions() {
@@ -177,8 +188,11 @@ public abstract class DialogWrapper {
 
   /**
    * Closes and disposes the dialog and sets the specified exit code.
+   *
+   * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
   public final void close(int exitCode) {
+    ensureEventDispatchThread();
     if (myClosed) return;
     myClosed = true;
     myExitCode = exitCode;
@@ -222,21 +236,25 @@ public abstract class DialogWrapper {
       if (leftSideActions.length > 0) {
         JPanel buttonsPanel = createButtons(leftSideActions, buttons);
         lrButtonsPanel.add(buttonsPanel,
-                  new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0, 0));
+                           new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0,
+                                                  0));
 
       }
       lrButtonsPanel.add(// left strut
-                Box.createHorizontalGlue(),
-                new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0, 0));
+                         Box.createHorizontalGlue(),
+                         new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0,
+                                                0));
       if (actions.length > 0) {
         JPanel buttonsPanel = createButtons(actions, buttons);
         lrButtonsPanel.add(buttonsPanel,
-                  new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0, 0));
+                           new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0,
+                                                  0));
       }
       if (SwingConstants.CENTER == myButtonAlignment) {
         lrButtonsPanel.add(// right strut
-                  Box.createHorizontalGlue(),
-                  new GridBagConstraints(gridx, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0, 0));
+                           Box.createHorizontalGlue(),
+                           new GridBagConstraints(gridx, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0,
+                                                  0));
       }
       myButtons = buttons.toArray(new Component[buttons.size()]);
     }
@@ -382,30 +400,30 @@ public abstract class DialogWrapper {
    * Dispose the wrapped and releases all resources allocated be the wrapper to help
    * more effecient garbage collection. You should never invoke this method twice or
    * invoke any method of the wrapper after invocation of <code>dispose</code>.
+   *
+   * @throws IllegalStateException if the dialog is disposed not on the event dispatch thread
    */
   protected void dispose() {
-    synchronized (ourLock) {
-      final JRootPane rootPane = getRootPane();
-      // if rootPane = null, dialog has already been disposed
-      if (rootPane != null) {
-        new AwtVisitor(rootPane) {
-          public boolean visit(final Component component) {
-            if (component instanceof JComponent) {
-              final JComponent eachComp = (JComponent)component;
-              final KeyStroke[] strokes = eachComp.getRegisteredKeyStrokes();
-              for (KeyStroke eachStroke : strokes) {
-                eachComp.unregisterKeyboardAction(eachStroke);                
-              }
+    ensureEventDispatchThread();
+    final JRootPane rootPane = getRootPane();
+    // if rootPane = null, dialog has already been disposed
+    if (rootPane != null) {
+      new AwtVisitor(rootPane) {
+        public boolean visit(final Component component) {
+          if (component instanceof JComponent) {
+            final JComponent eachComp = (JComponent)component;
+            final KeyStroke[] strokes = eachComp.getRegisteredKeyStrokes();
+            for (KeyStroke eachStroke : strokes) {
+              eachComp.unregisterKeyboardAction(eachStroke);
             }
-            return false;
           }
-        };
-        myPeer.dispose();
-      }
+          return false;
+        }
+      };
+      myPeer.dispose();
     }
   }
 
-  
 
   /**
    * This method is invoked by default implementation of "Cancel" action. It just closes dialog
@@ -529,7 +547,8 @@ public abstract class DialogWrapper {
    * If this method returns <code>null</code> then the component does not require installation
    * into dimension service. This default implementation returns <code>null</code>.
    */
-  @NonNls protected String getDimensionServiceKey() {
+  @NonNls
+  protected String getDimensionServiceKey() {
     return null;
   }
 
@@ -730,8 +749,7 @@ public abstract class DialogWrapper {
   protected void doHelpAction() {
     if (myHelpAction.isEnabled()) {
       Messages.showMessageDialog(getContentPane(), UIBundle.message("there.is.no.help.for.this.dialog.error.message"),
-                                 UIBundle.message("no.help.available.dialog.title"),
-                                 Messages.getInformationIcon());
+                                 UIBundle.message("no.help.available.dialog.title"), Messages.getInformationIcon());
     }
   }
 
@@ -810,11 +828,15 @@ public abstract class DialogWrapper {
     myPeer.centerInParent();
   }
 
+  /**
+   * Show the dialog
+   *
+   * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
+   */
   public void show() {
-    synchronized (ourLock) {
-      registerKeyboardShortcuts();
-      myPeer.show();
-    }
+    ensureEventDispatchThread();
+    registerKeyboardShortcuts();
+    myPeer.show();
   }
 
   /**
@@ -838,41 +860,31 @@ public abstract class DialogWrapper {
           doCancelAction();
         }
       }
-    },
-                                         KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                                         JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
     getRootPane().registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         doHelpAction();
       }
-    },
-                                         KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0),
-                                         JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
     getRootPane().registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         doHelpAction();
       }
-    },
-                                         KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0),
-                                         JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
     if (myButtons != null) {
       getRootPane().registerKeyboardAction(new AbstractAction() {
         public void actionPerformed(ActionEvent e) {
           focusPreviousButton();
         }
-      },
-                                           KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0),
-                                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
       getRootPane().registerKeyboardAction(new AbstractAction() {
         public void actionPerformed(ActionEvent e) {
           focusNextButton();
         }
-      },
-                                           KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0),
-                                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
     if (myYesAction != null) {
@@ -988,7 +1000,8 @@ public abstract class DialogWrapper {
         myLabel.setText("");
         myLabel.setIcon(null);
         setBorder(null);
-      } else {
+      }
+      else {
         myLabel.setText("<html><body><font color=red><left>" + text + "</left></b></font></body></html>");
         myLabel.setIcon(IconLoader.getIcon("/actions/lightning.png"));
         myLabel.setBorder(new EmptyBorder(2, 2, 0, 0));
@@ -1006,5 +1019,16 @@ public abstract class DialogWrapper {
 
   public final DialogWrapperPeer getPeer() {
     return myPeer;
+  }
+
+  /**
+   * Ensure that dialog is used from even dispatch thread.
+   *
+   * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
+   */
+  private static void ensureEventDispatchThread() {
+    if (!EventQueue.isDispatchThread()) {
+      throw new IllegalStateException("The DialogWrapper can be used only on event dispatch thread.");
+    }
   }
 }
