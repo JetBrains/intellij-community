@@ -131,16 +131,19 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       final WCInfoWithBranches wcInfo = entry.getValue().getWcInfo();
       states.put(new Pair<String, String>(localPath, wcInfo.getUrl().toString()), entry.getValue().getInfo());
     }
-    createPanels(myLocation);
-    for (Map.Entry<String, SvnMergeInfoRootPanelManual> entry : myMergePanels.entrySet()) {
-      final String localPath = entry.getKey();
-      final WCInfoWithBranches wcInfo = entry.getValue().getWcInfo();
-      final Pair<String, String> key = new Pair<String, String>(localPath, wcInfo.getUrl().toString());
-      final SvnMergeInfoRootPanelManual.InfoHolder infoHolder = states.get(key);
-      if (infoHolder !=  null) {
-        entry.getValue().initSelection(infoHolder);
+    createPanels(myLocation, new Runnable() {
+      public void run() {
+        for (Map.Entry<String, SvnMergeInfoRootPanelManual> entry : myMergePanels.entrySet()) {
+          final String localPath = entry.getKey();
+          final WCInfoWithBranches wcInfo = entry.getValue().getWcInfo();
+          final Pair<String, String> key = new Pair<String, String>(localPath, wcInfo.getUrl().toString());
+          final SvnMergeInfoRootPanelManual.InfoHolder infoHolder = states.get(key);
+          if (infoHolder !=  null) {
+            entry.getValue().initSelection(infoHolder);
+          }
+        }
       }
-    }
+    });
   }
 
   public void turnFromHereHighlighting() {
@@ -176,7 +179,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     return (status == null) ? MergeInfoHolder.ListMergeStatus.ALIEN.getIcon() : status.getIcon();
   }
   
-  private void createPanels(final RepositoryLocation location) {
+  private void createPanels(final RepositoryLocation location, final Runnable afterRefresh) {
     final Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Subversion: loading working copies data..", false,
                                                                         new PerformInBackgroundOption() {
                                                                           public boolean shouldStartInBackground() {
@@ -198,6 +201,9 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
               myPanelWrapper.repaint();
             } else {
               myPanel = mainPanel;
+            }
+            if (afterRefresh != null) {
+              afterRefresh.run();
             }
           }
         });
@@ -885,7 +891,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
     public JComponent getFilterUI() {
       if (! myInitialized) {
-        createPanels(myLocation);
+        createPanels(myLocation, null);
       }
       myInitialized = true;
       return myPanel;
