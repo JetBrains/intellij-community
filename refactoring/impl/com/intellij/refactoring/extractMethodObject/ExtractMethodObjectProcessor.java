@@ -50,7 +50,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private MyExtractMethodProcessor myExtractProcessor;
   private boolean myCreateInnerClass = true;
   private String myInnerClassName;
+
   private boolean myMultipleExitPoints;
+  private PsiField[] myOutputFields;
 
   private PsiMethod myInnerMethod;
   private boolean myMadeStatic = false;
@@ -129,19 +131,14 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private void addOutputVariableFieldsWithGetters(final PsiClass innerClass) throws IncorrectOperationException {
     final Map<String, String> var2FieldNames = new HashMap<String, String>();
     final PsiVariable[] outputVariables = myExtractProcessor.getOutputVariables();
-    Arrays.sort(outputVariables, new Comparator<PsiVariable>() {
-      public int compare(final PsiVariable o1, final PsiVariable o2) {
-        return o1.getTextOffset() - o2.getTextOffset();
-      }
-    });
-    for (PsiVariable var : outputVariables) {
+    for (int i = 0; i < outputVariables.length; i++) {
+      final PsiVariable var = outputVariables[i];
+      final PsiField outputField = myOutputFields[i];
       final String name = var.getName();
       LOG.assertTrue(name != null);
-      if (!myExtractProcessor.getInputVariables().contains(var)) { //one field creation
-        final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(getMethod().getProject());
-        final String fieldName = styleManager.suggestVariableName(VariableKind.FIELD, name, null, var.getType()).names[0];
-        var2FieldNames.put(name, fieldName);
-        innerClass.add(myElementFactory.createField(fieldName, var.getType()));
+      if (outputField != null) {
+        var2FieldNames.put(name, outputField.getName());
+        innerClass.add(outputField);
       }
       final PsiField field = PropertyUtil.findPropertyField(myProject, innerClass, name, false);
       LOG.assertTrue(field != null);
@@ -485,6 +482,21 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     @Override
     protected boolean checkOutputVariablesCount() {
       myMultipleExitPoints = super.checkOutputVariablesCount();
+      myOutputFields = new PsiField[myOutputVariables.length];
+      for (int i = 0; i < myOutputVariables.length; i++) {
+        PsiVariable variable = myOutputVariables[i];
+        if (!myInputVariables.contains(variable)) { //one field creation
+          final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
+          final String fieldName =
+            styleManager.suggestVariableName(VariableKind.FIELD, variable.getName(), null, variable.getType()).names[0];
+          try {
+            myOutputFields[i] = myElementFactory.createField(fieldName, variable.getType());
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
+      }
       return !myCreateInnerClass && myMultipleExitPoints;
     }
 
