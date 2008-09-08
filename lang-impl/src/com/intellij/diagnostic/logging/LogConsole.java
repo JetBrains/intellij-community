@@ -212,7 +212,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
         myReaderThread.myFileStream.close();
       }
       catch (IOException e) {
-        LOG.error(e);
+        LOG.warn(e);
       }
       myReaderThread.myFileStream = null;
       myReaderThread = null;
