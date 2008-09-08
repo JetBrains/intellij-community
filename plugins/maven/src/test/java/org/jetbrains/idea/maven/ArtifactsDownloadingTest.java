@@ -68,9 +68,6 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
   }
 
   public void testDownloadingPlugins() throws Exception {
-    // embedder does not release loaded plugins and does not let us remove the temp dir.
-    if (ignore()) return;
-
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
