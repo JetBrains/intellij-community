@@ -49,7 +49,7 @@ public class SvnRepositoryContentRevision implements ContentRevision {
   private final String myRepositoryRoot;
   private final SvnVcs myVcs;
   private final String myPath;
-  @Nullable private final FilePath myLocalPath;
+  @NotNull private final FilePath myFilePath;
   private final long myRevision;
   private String myContent;
 
@@ -58,7 +58,12 @@ public class SvnRepositoryContentRevision implements ContentRevision {
     myVcs = vcs;
     myPath = path;
     myRepositoryRoot = repositoryRoot;
-    myLocalPath = localPath;
+    if (localPath != null) {
+      myFilePath = localPath;
+    }
+    else {
+      myFilePath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(myPath, false);
+    }
     myRevision = revision;
   }
 
@@ -90,10 +95,7 @@ public class SvnRepositoryContentRevision implements ContentRevision {
 
   @NotNull
   public FilePath getFile() {
-    if (myLocalPath != null) {
-      return myLocalPath;
-    }
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(myPath, false);
+    return myFilePath;
   }
 
   @NotNull
