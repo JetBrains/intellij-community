@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 import java.io.*;
 import java.net.URL;
@@ -47,11 +46,11 @@ import java.util.List;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMUtil {
-  private static ThreadLocal<SAXBuilder> ourSaxBuilder = new ThreadLocal<SAXBuilder>(){
+  private static final ThreadLocal<SAXBuilder> ourSaxBuilder = new ThreadLocal<SAXBuilder>(){
     protected SAXBuilder initialValue() {
       SAXBuilder saxBuilder = new SAXBuilder();
       saxBuilder.setEntityResolver(new EntityResolver() {
-        public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
+        public InputSource resolveEntity(String publicId, String systemId) {
           return new InputSource(new CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY));
         }
       });
@@ -92,8 +91,8 @@ public class JDOMUtil {
     i = addToHash(i, element.getText());
 
     final List list = element.getAttributes();
-    for (int j = 0; j < list.size(); j++) {
-      Attribute attribute = (Attribute)list.get(j);
+    for (Object aList : list) {
+      Attribute attribute = (Attribute)aList;
       i = addToHash(i, attribute);
     }
 
@@ -137,7 +136,7 @@ public class JDOMUtil {
   }
 
   public static String concatTextNodesValues(final Object[] nodes) {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     for (Object node : nodes) {
       result.append(((Content)node).getValue());
     }
@@ -196,7 +195,7 @@ public class JDOMUtil {
 
   public static String legalizeText(final String str) {
     StringReader reader = new StringReader(str);
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     while(true) {
       try {
         int each = reader.read();
@@ -459,7 +458,7 @@ public class JDOMUtil {
     // If there were any entities, return the escaped characters
     // that we put in the StringBuffer. Otherwise, just return
     // the unmodified input string.
-    return (buffer == null) ? text : buffer.toString();
+    return buffer == null ? text : buffer.toString();
   }
 
   public static List<Element> getChildrenFromAllNamespaces(final Element element, @NonNls final String name) {
@@ -500,7 +499,7 @@ public class JDOMUtil {
 
   private static ElementInfo getElementInfo(Element element) {
     ElementInfo info = new ElementInfo();
-    StringBuffer buf = new StringBuffer(element.getName());
+    StringBuilder buf = new StringBuilder(element.getName());
     List attributes = element.getAttributes();
     if (attributes != null) {
       int length = attributes.size();
@@ -547,7 +546,7 @@ public class JDOMUtil {
     for (int i = 0; i < newFilePaths.length; i++) {
       String newFilePath = newFilePaths[i];
 
-      JDOMUtil.writeDocument(newFileDocuments[i], newFilePath, lineSeparator);
+      writeDocument(newFileDocuments[i], newFilePath, lineSeparator);
       writtenFilesPaths.add(newFilePath);
     }
 

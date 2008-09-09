@@ -32,14 +32,14 @@ import java.util.*;
  * Date: 07-Feb-2006
  */
 public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
-  private Map<String, Set<OptionDescription>> myStorage = Collections.synchronizedMap(new THashMap<String, Set<OptionDescription>>(1500, 0.9f));
-  private Map<String, String> myId2Name = Collections.synchronizedMap(new THashMap<String, String>(20, 0.9f));
+  private final Map<String, Set<OptionDescription>> myStorage = Collections.synchronizedMap(new THashMap<String, Set<OptionDescription>>(1500, 0.9f));
+  private final Map<String, String> myId2Name = Collections.synchronizedMap(new THashMap<String, String>(20, 0.9f));
 
-  private Set<String> myStopWords = Collections.synchronizedSet(new HashSet<String>());
-  private Map<Pair<String, String>, Set<String>> myHighlightOption2Synonym = Collections.synchronizedMap(new THashMap<Pair<String, String>, Set<String>>());
+  private final Set<String> myStopWords = Collections.synchronizedSet(new HashSet<String>());
+  private final Map<Pair<String, String>, Set<String>> myHighlightOption2Synonym = Collections.synchronizedMap(new THashMap<Pair<String, String>, Set<String>>());
 
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private StringInterner myIdentifierTable = new StringInterner() {
+  private final StringInterner myIdentifierTable = new StringInterner() {
     @NotNull
     public String intern(@NotNull final String name) {
       synchronized (this) {
@@ -163,10 +163,10 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       }
     }
     final Set<Configurable> currentConfigurables = new HashSet<Configurable>(configurables);
-    Set<String> helpIds = null;
     if (options.isEmpty()) { //operate with substring
       options.add(option);
     }
+    Set<String> helpIds = null;
     for (String opt : options) {
       final Set<OptionDescription> optionIds = getAcceptableDescriptions(opt);
       if (optionIds == null) {
@@ -246,7 +246,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         if (hit != null) {
           boolean theBest = true;
           for (String word : words) {
-            if (hit.indexOf(word) == -1) {
+            if (!hit.contains(word)) {
               theBest = false;
             }
           }
