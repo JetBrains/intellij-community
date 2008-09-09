@@ -289,6 +289,19 @@ public class AbstractVcsTestCase {
     }.execute();
   }
 
+  public static void editFileInCommand(final Project project, final VirtualFile file, final String newContent) {
+    new WriteCommandAction.Simple(project) {
+      protected void run() throws Throwable {
+        try {
+          file.setBinaryContent(newContent.getBytes());
+        }
+        catch(IOException ex) {
+          throw new RuntimeException(ex);
+        }
+      }
+    }.execute();
+  }
+
   protected void copyFileInCommand(final VirtualFile file, final String toName) {
     new WriteCommandAction.Simple(myProject) {
       protected void run() throws Throwable {

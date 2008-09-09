@@ -171,11 +171,23 @@ public class Change {
     return "Change:" + myBeforeRevision + " -> " + myAfterRevision; 
   }
 
-  public String getRenamedText() {
+  @Nullable
+  public String getOriginText(final Project project) {
+    if (isMoved()) {
+      return getMovedText(project);
+    } else if (isRenamed()) {
+      return getRenamedText();
+    }
+    return myIsReplaced ? VcsBundle.message("change.file.replaced.text") : null;
+  }
+
+  @Nullable
+  protected String getRenamedText() {
     return VcsBundle.message("change.file.renamed.from.text", myBeforeRevision.getFile().getName());
   }
 
-  public String getMovedText(final Project project) {
+  @Nullable
+  protected String getMovedText(final Project project) {
     return VcsBundle.message("change.file.moved.from.text", getMoveRelativePath(project));
   }
 

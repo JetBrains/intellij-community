@@ -3,24 +3,24 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.Nullable;
 
 public class ExternallyRenamedChange extends Change {
   private String myRenamedTargetName;
+  private boolean myCopied;
+  private final String myOriginUrl;
 
-  public ExternallyRenamedChange(final ContentRevision beforeRevision, final ContentRevision afterRevision) {
+  public ExternallyRenamedChange(final ContentRevision beforeRevision, final ContentRevision afterRevision, final String originUrl) {
     super(beforeRevision, afterRevision);
-  }
-
-  public ExternallyRenamedChange(final ContentRevision beforeRevision, final ContentRevision afterRevision, final FileStatus fileStatus) {
-    super(beforeRevision, afterRevision, fileStatus);
+    myOriginUrl = originUrl;
+    myCopied = true;
   }
 
   public void setRenamedOrMovedTarget(final FilePath target) {
     myMoved = myRenamed = false;
-    
-    if ((getBeforeRevision() != null) && (getAfterRevision() != null)) {
+
+    if ((getBeforeRevision() != null) || (getAfterRevision() == null)) {
       // not external rename or move
       return;
     }
@@ -35,16 +35,41 @@ public class ExternallyRenamedChange extends Change {
     } else {
       myMoved = true;
     }
+    myCopied = false;
 
     myRenamedTargetName = target.getName();
     myRenameOrMoveCached = true;
   }
 
-  public String getRenamedText() {
-    return VcsBundle.message((getBeforeRevision() != null) ? "change.file.renamed.to.text" : "change.file.renamed.from.text", myRenamedTargetName);
+  @Override
+  public String getOriginText(final Project project) {
+    if (myCopied) {
+      return VcsBundle.message("change.file.copied.from.text", myOriginUrl);
+    }
+    return super.getOriginText(project);
   }
 
-  public String getMovedText(final Project project) {
-    return VcsBundle.message((getBeforeRevision() != null) ? "change.file.moved.to.text" : "change.file.moved.from.text", myRenamedTargetName);
+  @Nullable
+  protected String getRenamedText() {
+    if (myRenamedTargetName != null) {
+      return VcsBundle.message((getBeforeRevision() != null) ? "change.file.renamed.to.text" : "change.file.renamed.from.text", myRenamedTargetName);
+    }
+    return super.getRenamedText();
+  }
+
+  @Nullable
+  protected String getMovedText(final Project project) {
+    if (myRenamedTargetName != null) {
+      return VcsBundle.message((getBeforeRevision() != null) ? "change.file.moved.to.text" : "change.file.moved.from.text", myRenamedTargetName);
+    }
+    return super.getMovedText(project);
+  }
+
+  public boolean isCopied() {
+    return myCopied;
+  }
+
+  public void setCopied(final boolean copied) {
+    myCopied = copied;
   }
 }

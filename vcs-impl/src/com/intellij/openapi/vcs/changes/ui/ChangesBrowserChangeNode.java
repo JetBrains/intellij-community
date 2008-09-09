@@ -45,11 +45,9 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> {
     final Color changeColor = change.getFileStatus().getColor();
     renderer.appendFileName(vFile, fileName, changeColor);
 
-    if (change.isRenamed()) {
-      renderer.append(" " + change.getRenamedText(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    }
-    else if (change.isMoved()) {
-      renderer.append(" " + change.getMovedText(myProject), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    final String originText = change.getOriginText(myProject);
+    if (originText != null) {
+      renderer.append(" " + originText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
     if (renderer.isShowFlatten()) {

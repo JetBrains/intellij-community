@@ -18,6 +18,15 @@ public class RelativePathCalculator {
   }
 
   public void execute() {
+    if (myShifted == null || myBase == null) {
+      myResult = null;
+      return;
+    }
+    if (myShifted.equals(myBase)) {
+      myResult = ".";
+      myRename = false;
+      return;
+    }
     final String[] baseParts = split(myBase);
     final String[] shiftedParts = split(myShifted);
 

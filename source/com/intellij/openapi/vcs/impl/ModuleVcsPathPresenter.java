@@ -7,8 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -59,7 +59,11 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
         return getPresentableRelativePathFor(oldFile);
       }
     }
-    return FileUtil.getRelativePath(toRevision.getFile().getIOFile(), fromRevision.getFile().getIOFile());
+    final RelativePathCalculator calculator =
+      new RelativePathCalculator(toRevision.getFile().getIOFile().getAbsolutePath(), fromRevision.getFile().getIOFile().getAbsolutePath());
+    calculator.execute();
+    final String result = calculator.getResult();
+    return (result == null) ? null : result.replace("/", File.separator);
   }
 
 }
