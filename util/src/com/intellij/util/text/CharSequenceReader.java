@@ -21,7 +21,7 @@ import java.io.Reader;
  * @author max
  */
 public class CharSequenceReader extends Reader {
-  private CharSequence myText;
+  private final CharSequence myText;
   private int myCurPos;
 
   public CharSequenceReader(final CharSequence text) {
@@ -32,7 +32,7 @@ public class CharSequenceReader extends Reader {
   public void close() {}
 
   public int read(char[] cbuf, int off, int len) {
-    if ((off < 0) || (off > cbuf.length) || (len < 0) || ((off + len) > cbuf.length) || ((off + len) < 0)) {
+    if (off < 0 || off > cbuf.length || len < 0 || off + len > cbuf.length || off + len < 0) {
         throw new IndexOutOfBoundsException();
     } else if (len == 0) {
         return 0;
