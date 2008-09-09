@@ -1,7 +1,10 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -10,9 +13,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.ui.TestDialog;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -28,8 +28,9 @@ import java.util.List;
  * @author yole
  */
 public abstract class SvnTestCase extends AbstractVcsTestCase {
-  private TempDirTestFixture myTempDirFixture;
+  protected TempDirTestFixture myTempDirFixture;
   private File myWcRoot;
+  protected String myRepoUrl;
 
   @Before
   public void setUp() throws Exception {
@@ -53,8 +54,8 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
     myWcRoot = new File(myTempDirFixture.getTempDirPath(), "wcroot");
     myWcRoot.mkdir();
 
-    final String url = "file:///" + FileUtil.toSystemIndependentName(svnRoot.getPath());
-    verify(runSvn("co", url, "."));
+    myRepoUrl = "file:///" + FileUtil.toSystemIndependentName(svnRoot.getPath());
+    verify(runSvn("co", myRepoUrl, "."));
 
     initProject(myWcRoot);
     activateVCS(SvnVcs.VCS_NAME);
@@ -87,6 +88,10 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
 
   protected void checkin() throws IOException {
     verify(runSvn("ci", "-m", "test"));
+  }
+
+  protected void update() throws IOException {
+    verify(runSvn("up"));
   }
 
   protected List<Change> getAllChanges() throws VcsException {
