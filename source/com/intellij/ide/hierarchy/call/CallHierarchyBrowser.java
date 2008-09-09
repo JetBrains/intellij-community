@@ -8,6 +8,7 @@ import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.ide.hierarchy.*;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,7 +43,7 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
-public final class CallHierarchyBrowser extends JPanel implements DataProvider, OccurenceNavigator {
+public final class CallHierarchyBrowser extends JPanel implements DataProvider, OccurenceNavigator, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.call.CallHierarchyBrowser");
 
   static final String SCOPE_PROJECT = IdeBundle.message("hierarchy.scope.project");

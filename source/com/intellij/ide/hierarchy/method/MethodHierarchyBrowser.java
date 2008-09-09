@@ -7,6 +7,7 @@ import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.hierarchy.*;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,7 +42,7 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
-public final class MethodHierarchyBrowser extends JPanel implements DataProvider, OccurenceNavigator {
+public final class MethodHierarchyBrowser extends JPanel implements DataProvider, OccurenceNavigator, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.MethodHierarchyBrowser");
 
   @NonNls private static final String HELP_ID = "reference.toolWindows.hierarchy";

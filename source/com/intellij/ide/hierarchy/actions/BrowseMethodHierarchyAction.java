@@ -4,18 +4,18 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyBrowserManager;
 import com.intellij.ide.hierarchy.method.MethodHierarchyBrowser;
 import com.intellij.ide.hierarchy.method.MethodHierarchyTreeStructure;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -37,24 +37,14 @@ public final class BrowseMethodHierarchyAction extends AnAction {
     if (selectedContent != null && !selectedContent.isPinned()) {
       content = selectedContent;
       final Component component = content.getComponent();
-      if (component instanceof MethodHierarchyBrowser) {
-        ((MethodHierarchyBrowser)component).dispose();
+      if (component instanceof Disposable) {
+        Disposer.dispose((Disposable)component);
       }
       content.setComponent(hierarchyBrowser);
     }
     else {
-      content = PeerFactory.getInstance().getContentFactory().createContent(hierarchyBrowser, null, true);
+      content = ContentFactory.SERVICE.getInstance().createContent(hierarchyBrowser, null, true);
       contentManager.addContent(content);
-      contentManager.addContentManagerListener(new ContentManagerAdapter() {
-        public void contentRemoved(final ContentManagerEvent event){
-          final Content content = event.getContent();
-          final Component component = content.getComponent();
-          if (component instanceof MethodHierarchyBrowser) {
-            ((MethodHierarchyBrowser)component).dispose();
-            content.release();
-          }
-        }
-      });
     }
     contentManager.setSelectedContent(content);
     hierarchyBrowser.setContent(content);
