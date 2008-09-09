@@ -141,7 +141,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
 
     final ArrayList<HierarchyNodeDescriptor> descriptors = new ArrayList<HierarchyNodeDescriptor>(subclasses.size());
     for (final PsiClass aClass : subclasses) {
-      if (HierarchyBrowserManager.getInstance(myProject).HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED) {
+      if (HierarchyBrowserManager.getInstance(myProject).getState().HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED) {
         if (shouldHideClass(aClass)) {
           continue;
         }

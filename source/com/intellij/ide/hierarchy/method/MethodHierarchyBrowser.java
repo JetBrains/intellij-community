@@ -94,11 +94,11 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
 
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       protected boolean isAutoScrollMode() {
-        return HierarchyBrowserManager.getInstance(myProject).IS_AUTOSCROLL_TO_SOURCE;
+        return HierarchyBrowserManager.getInstance(myProject).getState().IS_AUTOSCROLL_TO_SOURCE;
       }
 
       protected void setAutoScrollMode(final boolean state) {
-        HierarchyBrowserManager.getInstance(myProject).IS_AUTOSCROLL_TO_SOURCE = state;
+        HierarchyBrowserManager.getInstance(myProject).getState().IS_AUTOSCROLL_TO_SOURCE = state;
       }
     };
 
@@ -377,11 +377,11 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     }
 
     public final boolean isSelected(final AnActionEvent event) {
-      return HierarchyBrowserManager.getInstance(myProject).HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED;
+      return HierarchyBrowserManager.getInstance(myProject).getState().HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED;
     }
 
     public final void setSelected(final AnActionEvent event, final boolean flag) {
-      HierarchyBrowserManager.getInstance(myProject).HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED = flag;
+      HierarchyBrowserManager.getInstance(myProject).getState().HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED = flag;
 
       final Object[] storedInfo = new Object[1];
       if (myCurrentViewName != null) {
@@ -512,12 +512,12 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     }
 
     public final boolean isSelected(final AnActionEvent event) {
-      return HierarchyBrowserManager.getInstance(myProject).SORT_ALPHABETICALLY;
+      return HierarchyBrowserManager.getInstance(myProject).getState().SORT_ALPHABETICALLY;
     }
 
     public final void setSelected(final AnActionEvent event, final boolean flag) {
       final HierarchyBrowserManager hierarchyBrowserManager = HierarchyBrowserManager.getInstance(myProject);
-      hierarchyBrowserManager.SORT_ALPHABETICALLY = flag;
+      hierarchyBrowserManager.getState().SORT_ALPHABETICALLY = flag;
       final Comparator<NodeDescriptor> comparator = JavaHierarchyUtil.getComparator(myProject);
       final Collection<HierarchyTreeBuilder> builders = myBuilders.values();
       for (final HierarchyTreeBuilder builder : builders) {

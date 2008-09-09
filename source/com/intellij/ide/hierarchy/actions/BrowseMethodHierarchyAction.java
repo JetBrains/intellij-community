@@ -30,7 +30,7 @@ public final class BrowseMethodHierarchyAction extends AnAction {
 
     final Content content;
 
-    final HierarchyBrowserManager hierarchyBrowserManager = project.getComponent(HierarchyBrowserManager.class);
+    final HierarchyBrowserManager hierarchyBrowserManager = HierarchyBrowserManager.getInstance(project);
 
     final ContentManager contentManager = hierarchyBrowserManager.getContentManager();
     final Content selectedContent = contentManager.getSelectedContent();

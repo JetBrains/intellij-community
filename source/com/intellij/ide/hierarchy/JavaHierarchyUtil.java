@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
@@ -14,7 +15,11 @@ import java.util.Comparator;
  * @author yole
  */
 public class JavaHierarchyUtil {
-  public static final String getPackageName(final PsiClass psiClass) {
+  private JavaHierarchyUtil() {
+  }
+
+  @Nullable
+  public static String getPackageName(final PsiClass psiClass) {
     final PsiFile file = psiClass.getContainingFile();
     if (file instanceof PsiJavaFile){
       return ((PsiJavaFile)file).getPackageName();
@@ -25,7 +30,7 @@ public class JavaHierarchyUtil {
   }
 
   public static Comparator<NodeDescriptor> getComparator(Project project) {
-    if (HierarchyBrowserManager.getInstance(project).SORT_ALPHABETICALLY) {
+    if (HierarchyBrowserManager.getInstance(project).getState().SORT_ALPHABETICALLY) {
       return AlphaComparator.INSTANCE;
     }
     else {
