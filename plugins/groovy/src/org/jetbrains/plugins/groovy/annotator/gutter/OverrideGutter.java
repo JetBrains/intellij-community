@@ -30,7 +30,6 @@ import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.structure.GroovyElementPresentation;
 
 import javax.swing.*;
@@ -70,12 +69,10 @@ public class OverrideGutter extends GutterIconRenderer {
           }
         } else {
           // show popup for selecting navigation target from list
-          final JBPopup gotoDeclarationPopup = NavigationUtil.getPsiElementPopup(
-              methods,
-              GROOVY_METHOD_LIST_CELL_RENDERER,
-              GroovyBundle.message("goto.override.method.declaration"));
+          final JBPopup gotoDeclarationPopup = NavigationUtil
+            .getPsiElementPopup(methods, GROOVY_METHOD_LIST_CELL_RENDERER, GroovyBundle.message("goto.override.method.declaration"));
 
-          gotoDeclarationPopup.show(new RelativePoint((MouseEvent) e.getInputEvent()));
+          gotoDeclarationPopup.show(new RelativePoint((MouseEvent)e.getInputEvent()));
         }
       }
     };
@@ -110,7 +107,7 @@ public class OverrideGutter extends GutterIconRenderer {
     public String getElementText(PsiElement element) {
 //      assert element instanceof GrMethod;
 
-      return GroovyElementPresentation.getPresentableText((GroovyPsiElement) element);
+      return GroovyElementPresentation.getPresentableText(element);
     }
 
     protected String getContainerText(PsiElement psiElement, String s) {

@@ -1,11 +1,7 @@
 package org.jetbrains.plugins.groovy.structure;
 
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
@@ -18,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  * Date: 21.05.2007
  */
 public class GroovyElementPresentation {
-  public static String getPresentableText(GroovyPsiElement element) {
+  public static String getPresentableText(PsiElement element) {
     assert element != null;
 
     if (element instanceof GroovyFileBase) {
