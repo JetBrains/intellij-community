@@ -32,7 +32,8 @@ import java.util.ArrayList;
 /**
  * @author max
  */
-public class EditorTextField extends JPanel implements DocumentListener, TextComponent, DataProvider {
+public class EditorTextField extends JPanel implements DocumentListener, TextComponent, DataProvider,
+                                                       DocumentBasedComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
 

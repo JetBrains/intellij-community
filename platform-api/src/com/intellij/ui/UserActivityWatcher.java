@@ -38,6 +38,14 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
       fireUIChanged();
     }
   };
+
+  private com.intellij.openapi.editor.event.DocumentListener myIdeaDocumentListener = new com.intellij.openapi.editor.event.DocumentAdapter() {
+    @Override
+    public void documentChanged(final com.intellij.openapi.editor.event.DocumentEvent e) {
+      fireUIChanged();
+    }
+  };
+
   private TableModelListener myTableModelListener = new TableModelListener() {
     public void tableChanged(TableModelEvent e) {
       fireUIChanged();
@@ -142,6 +150,8 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
       ((JList)parentComponent).getModel().addListDataListener(myListDataListener);
     } else if (parentComponent instanceof JTree) {
       ((JTree)parentComponent).getModel().addTreeModelListener(myTreeModelListener);
+    } else if (parentComponent instanceof DocumentBasedComponent) {
+      ((DocumentBasedComponent)parentComponent).getDocument().addDocumentListener(myIdeaDocumentListener);
     }
 
     if (parentComponent instanceof JComboBox) {
