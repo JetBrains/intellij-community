@@ -1,10 +1,8 @@
 package org.jetbrains.plugins.ruby.rake.runConfigurations;
 
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.PresentableLookupValue;
-import com.intellij.ide.IdeBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -15,8 +13,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -26,8 +22,6 @@ import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.lang.TextUtil;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -87,10 +81,10 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
 
   private void calcItemsAndShowPopup() {
     final LookupItem<PresentableLookupValue>[] items = calcLookupItems(getPrefix());
-    if (items.length == 0) {
-      showNoSuggestionsPopup();
-      return;
-    }
+    //if (items.length == 0) {
+    //  showNoSuggestionsPopup();
+    //  return;
+    //}
 
     showCompletionPopup(items, null);
   }
@@ -128,15 +122,15 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
     return getText().substring(0, getCaretModel().getOffset());
   }
 
-  private void showNoSuggestionsPopup() {
-    // hide active popup
-    LookupManager.getInstance(getProject()).hideActiveLookup();
-
-    final JLabel message = HintUtil.createErrorLabel(IdeBundle.message("file.chooser.completion.no.suggestions"));
-    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(message, message);
-    builder.setRequestFocus(false).setResizable(false).setAlpha(0.1f).setFocusOwners(new Component[] {this});
-    builder.createPopup().showUnderneathOf(this);
-  }
+  //private void showNoSuggestionsPopup() {
+  //  // hide active popup
+  //  LookupManager.getInstance(getProject()).hideActiveLookup();
+  //
+  //  final JLabel message = HintUtil.createErrorLabel(IdeBundle.message("file.chooser.completion.no.suggestions"));
+  //  final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(message, message);
+  //  builder.setRequestFocus(true).setResizable(false).setAlpha(0.1f).setFocusOwners(new Component[] {this});
+  //  builder.createPopup().showUnderneathOf(this);
+  //}
 
   private void showCompletionPopup(final LookupItem[] lookupItems, final String title) {
     final Editor editor = getEditor();
