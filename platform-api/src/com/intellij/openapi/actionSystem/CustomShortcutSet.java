@@ -29,7 +29,7 @@ public final class CustomShortcutSet implements ShortcutSet {
    * single stroke keyboard shortcut.
    */
   public CustomShortcutSet(KeyStroke keyStroke){
-    this(new Shortcut[]{new KeyboardShortcut(keyStroke, null)});
+    this(new KeyboardShortcut(keyStroke, null));
   }
 
   /**
@@ -38,7 +38,7 @@ public final class CustomShortcutSet implements ShortcutSet {
    *
    * @param shortcuts keyboard shortcuts
    */
-  public CustomShortcutSet(Shortcut[] shortcuts){
+  public CustomShortcutSet(Shortcut... shortcuts){
     myShortcuts = (Shortcut[])shortcuts.clone();
   }
 
