@@ -4,6 +4,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -30,6 +31,10 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
 
   public boolean isVisible() {
     return false;
+  }
+
+  protected boolean isMuted(final DebugProcessImpl debugProcess) {
+    return false;  // always enabled
   }
 
   @Nullable

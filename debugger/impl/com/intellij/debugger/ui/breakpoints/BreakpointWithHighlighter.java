@@ -2,7 +2,6 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.CommonBundle;
 import com.intellij.debugger.*;
-import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -10,7 +9,6 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.xdebugger.ui.DebuggerColors;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -39,6 +37,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
+import com.intellij.xdebugger.ui.DebuggerColors;
 import com.intellij.xml.util.XmlStringUtil;
 import com.sun.jdi.ReferenceType;
 import org.jdom.Element;
@@ -123,7 +123,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   private Icon calcIcon(DebugProcessImpl debugProcess) {
-    if (!ENABLED || (debugProcess != null && debugProcess.areBreakpointsMuted())) {
+    if (!ENABLED || (debugProcess != null && isMuted(debugProcess))) {
       return getDisabledIcon();
     }
 
@@ -280,7 +280,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   public void createRequest(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     // check is this breakpoint is enabled, vm reference is valid and there're no requests created yet
-    if (!ENABLED || !debugProcess.isAttached() || debugProcess.areBreakpointsMuted() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
+    if (!ENABLED || !debugProcess.isAttached() || isMuted(debugProcess) || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
       return;
     }
 
@@ -290,6 +290,10 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
     createOrWaitPrepare(debugProcess, getSourcePosition());
     updateUI();
+  }
+
+  protected boolean isMuted(final DebugProcessImpl debugProcess) {
+    return debugProcess.areBreakpointsMuted();
   }
 
   public void processClassPrepare(final DebugProcess debugProcess, final ReferenceType classType) {
