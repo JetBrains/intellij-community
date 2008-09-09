@@ -32,6 +32,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   @Override
   protected void tearDown() throws Exception {
     shutdownIndices();
+    myRepositoryFixture.tearDown();
     super.tearDown();
   }
 

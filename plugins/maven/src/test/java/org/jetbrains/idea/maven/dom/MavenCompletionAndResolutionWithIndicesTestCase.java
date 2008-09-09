@@ -8,11 +8,11 @@ public abstract class MavenCompletionAndResolutionWithIndicesTestCase extends Ma
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myIndicesFixture = createIndicesFicture();
+    myIndicesFixture = createIndicesFixture();
     myIndicesFixture.setUp();
   }
 
-  protected MavenIndicesTestFixture createIndicesFicture() {
+  protected MavenIndicesTestFixture createIndicesFixture() {
     return new MavenIndicesTestFixture(myDir, myProject);
   }
 

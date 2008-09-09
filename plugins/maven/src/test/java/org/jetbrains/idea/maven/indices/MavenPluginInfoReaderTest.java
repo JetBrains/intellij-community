@@ -24,6 +24,12 @@ public class MavenPluginInfoReaderTest extends MavenTestCase {
     p = MavenArtifactUtil.readPluginInfo(getRepositoryFile(), id);
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myRepositoryFixture.tearDown();
+    super.tearDown();
+  }
+
   public void testLoadingPluginInfo() throws Exception {
     assertEquals("org.apache.maven.plugins", p.getGroupId());
     assertEquals("maven-compiler-plugin", p.getArtifactId());

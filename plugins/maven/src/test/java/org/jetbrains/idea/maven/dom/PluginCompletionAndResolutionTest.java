@@ -13,7 +13,7 @@ import java.util.List;
 
 public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
   @Override
-  protected MavenIndicesTestFixture createIndicesFicture() {
+  protected MavenIndicesTestFixture createIndicesFixture() {
     return new MavenIndicesTestFixture(myDir, myProject, "plugins");
   }
 

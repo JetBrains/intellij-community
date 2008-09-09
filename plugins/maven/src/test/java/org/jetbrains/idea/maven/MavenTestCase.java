@@ -47,7 +47,7 @@ public abstract class MavenTestCase extends TestCase {
     myDir = FileUtil.createTempFile(ourTempDir, "test", "", false);
     myDir.mkdirs();
 
-    setUpCommonFixtures();
+    setUpFixtures();
 
     myProject = myTestFixture.getProject();
 
@@ -71,7 +71,7 @@ public abstract class MavenTestCase extends TestCase {
     ourTempDir.mkdirs();
   }
 
-  protected void setUpCommonFixtures() throws Exception {
+  protected void setUpFixtures() throws Exception {
     myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder().getFixture();
     myTestFixture.setUp();
   }
@@ -84,7 +84,7 @@ public abstract class MavenTestCase extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    tearDownCommonFixtures();
+    tearDownFixtures();
 
     if (!FileUtil.delete(myDir)) {
       System.out.println("Cannot delete " + myDir);
@@ -95,7 +95,7 @@ public abstract class MavenTestCase extends TestCase {
     super.tearDown();
   }
 
-  protected void tearDownCommonFixtures() throws Exception {
+  protected void tearDownFixtures() throws Exception {
     myTestFixture.tearDown();
   }
 

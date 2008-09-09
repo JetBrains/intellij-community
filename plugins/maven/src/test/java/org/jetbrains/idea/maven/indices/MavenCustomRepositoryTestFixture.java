@@ -24,6 +24,9 @@ public class MavenCustomRepositoryTestFixture {
     }
   }
 
+  public void tearDown() throws Exception {
+  }
+
   private String getOriginalTestDataPath() {
     String path = PathManager.getHomePath() + "/svnPlugins/maven/src/test/data";
     return FileUtil.toSystemIndependentName(path);

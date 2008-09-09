@@ -53,6 +53,7 @@ public class RootModelAdapter {
       }
       if (e instanceof ModuleOrderEntry) {
         Module m = ((ModuleOrderEntry)e).getModule();
+        if (m == null) continue;
         if (!MavenProjectsManager.getInstance(myRootModel.getProject()).isMavenizedModule(m)) continue;
       }
       myRootModel.removeOrderEntry(e);

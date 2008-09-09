@@ -5,11 +5,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.testFramework.PsiTestUtil;
 
 public class NonMavenProjectInspectionsTest extends MavenCompletionAndResolutionTestCase {
-  @Override
-  protected void setUpCommonFixtures() throws Exception {
-    super.setUpCommonFixtures();
-  }
-
   public void testDisablingInpaectionForNonMavenProjects() throws Throwable {
     Module m = createModule("module");
     PsiTestUtil.addContentRoot(m, myProjectRoot);

@@ -26,10 +26,10 @@ import java.util.List;
 
 public class NexusIndexerTest extends MavenTestCase {
   private MavenCustomRepositoryTestFixture myRepositoryFixture;
-  private MavenEmbedder embedder;
-  private NexusIndexer indexer;
-  private IndexUpdater updater;
-  private File indexDir;
+  private MavenEmbedder myEmbedder;
+  private NexusIndexer myIndexer;
+  private IndexUpdater myUpdater;
+  private File myIndexDir;
 
   @Override
   public void setUp() throws Exception {
@@ -37,25 +37,26 @@ public class NexusIndexerTest extends MavenTestCase {
     myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir, "local1_index", "local1", "remote");
     myRepositoryFixture.setUp();
 
-    embedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings()).getEmbedder();
+    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings()).getEmbedder();
 
-    PlexusContainer p = embedder.getPlexusContainer();
-    indexer = (NexusIndexer)p.lookup(NexusIndexer.class);
-    updater = (IndexUpdater)p.lookup(IndexUpdater.class);
+    PlexusContainer p = myEmbedder.getPlexusContainer();
+    myIndexer = (NexusIndexer)p.lookup(NexusIndexer.class);
+    myUpdater = (IndexUpdater)p.lookup(IndexUpdater.class);
 
-    assertNotNull(indexer);
-    assertNotNull(updater);
+    assertNotNull(myIndexer);
+    assertNotNull(myUpdater);
 
-    indexDir = new File(myDir, "index");
-    assertNotNull(indexDir);
+    myIndexDir = new File(myDir, "index");
+    assertNotNull(myIndexDir);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    for (IndexingContext c : indexer.getIndexingContexts().values()) {
-      indexer.removeIndexingContext(c, false);
+    for (IndexingContext c : myIndexer.getIndexingContexts().values()) {
+      myIndexer.removeIndexingContext(c, false);
     }
-    embedder.stop();
+    myEmbedder.stop();
+    myRepositoryFixture.tearDown();
     super.tearDown();
   }
 
@@ -65,31 +66,31 @@ public class NexusIndexerTest extends MavenTestCase {
   }
 
   public void testUpdatingLocal() throws Exception {
-    IndexingContext c = addContext("local1", indexDir, new File(myRepositoryFixture.getTestDataPath("local1")), null);
-    indexer.scan(c, new NullScanningListener());
+    IndexingContext c = addContext("local1", myIndexDir, new File(myRepositoryFixture.getTestDataPath("local1")), null);
+    myIndexer.scan(c, new NullScanningListener());
 
     assertSearchWorks();
   }
 
   public void testDownloading() throws Exception {
-    IndexingContext c = addContext("remote", indexDir, null, "file:///" + myRepositoryFixture.getTestDataPath("remote"));
-    updater.fetchAndUpdateIndex(c, new NullTransferListener());
+    IndexingContext c = addContext("remote", myIndexDir, null, "file:///" + myRepositoryFixture.getTestDataPath("remote"));
+    myUpdater.fetchAndUpdateIndex(c, new NullTransferListener());
 
     assertSearchWorks();
   }
 
   public void testAddingArtifacts() throws Exception {
-    IndexingContext c = addContext("virtual", indexDir, null, null);
+    IndexingContext c = addContext("virtual", myIndexDir, null, null);
 
     createProjectPom("");
 
     ArtifactInfo ai = new ArtifactInfo(c.getRepositoryId(), "group", "id", "version", null);
     ArtifactContext a = new ArtifactContext(new File(myProjectPom.getPath()), null, null, ai);
 
-    indexer.addArtifactToIndex(a, c);
+    myIndexer.addArtifactToIndex(a, c);
 
     Query q = new TermQuery(new Term(ArtifactInfo.GROUP_ID, "group"));
-    Collection<ArtifactInfo> result = indexer.searchFlat(ArtifactInfo.VERSION_COMPARATOR, q);
+    Collection<ArtifactInfo> result = myIndexer.searchFlat(ArtifactInfo.VERSION_COMPARATOR, q);
 
     assertEquals(1, result.size());
 
@@ -105,7 +106,7 @@ public class NexusIndexerTest extends MavenTestCase {
   }
 
   public void ignoreTestIteratingAddedArtifacts() throws Exception {
-    IndexingContext c = addContext("virtual", indexDir, null, null);
+    IndexingContext c = addContext("virtual", myIndexDir, null, null);
 
     addArtifact(c, "group1", "id1", "version1", "x:/path1");
     addArtifact(c, "group2", "id2", "version2", "x:/path2");
@@ -131,11 +132,11 @@ public class NexusIndexerTest extends MavenTestCase {
     ai.javadocExists = ArtifactAvailablility.fromString(Integer.toString(0));
 
     ArtifactContext a = new ArtifactContext(new File(path), null, null, ai);
-    indexer.addArtifactToIndex(a, c);
+    myIndexer.addArtifactToIndex(a, c);
   }
 
   private IndexingContext addContext(String id, File indexDir, File repoDir, String repoUrl) throws Exception {
-    return indexer.addIndexingContext(
+    return myIndexer.addIndexingContext(
         id,
         id,
         repoDir,
@@ -147,7 +148,7 @@ public class NexusIndexerTest extends MavenTestCase {
 
   private void assertSearchWorks() throws IOException, IndexContextInInconsistentStateException {
     WildcardQuery q = new WildcardQuery(new Term(ArtifactInfo.ARTIFACT_ID, "junit*"));
-    Collection<ArtifactInfo> result = indexer.searchFlat(ArtifactInfo.VERSION_COMPARATOR, q);
+    Collection<ArtifactInfo> result = myIndexer.searchFlat(ArtifactInfo.VERSION_COMPARATOR, q);
     assertEquals(3, result.size());
   }
 
