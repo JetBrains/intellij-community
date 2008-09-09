@@ -31,7 +31,7 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
           return classes.length == 1 ? classes[0] : null;
         }
         if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)) {
-          return (PsiClass)element;
+          return element;
         }
         element = element.getParent();
       }
