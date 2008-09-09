@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
@@ -177,17 +178,22 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
           myRootPanel.setLayout(new BorderLayout());
 
+          final SimpleToolWindowPanel twPanel = new SimpleToolWindowPanel(false, true);
+          myRootPanel.add(twPanel, BorderLayout.CENTER);
+
+
           JPanel toolbarPanel = new JPanel(new BorderLayout());
           toolbarPanel.add(createActionsToolbar(), BorderLayout.WEST);
           toolbarPanel.add(createFiltersToolbar(), BorderLayout.CENTER);
-          myRootPanel.add(toolbarPanel, BorderLayout.WEST);
+          twPanel.setToolbar(toolbarPanel);
 
           myCentralPanel = new JPanel();
           myCentralPanel.setLayout(new BorderLayout());
-          myRootPanel.add(myCentralPanel, BorderLayout.CENTER);
           setupCentralPanel();
 
           initTree();
+          twPanel.setContent(myCentralPanel);
+
 
           myTree.setCellRenderer(new UsageViewTreeCellRenderer(UsageViewImpl.this));
           collapseAll();

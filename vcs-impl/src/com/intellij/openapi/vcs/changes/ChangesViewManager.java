@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
@@ -98,7 +99,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
   }
 
   private JComponent createChangeViewComponent() {
-    JPanel panel = new JPanel(new BorderLayout());
+    SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
 
     DefaultActionGroup group = (DefaultActionGroup) ActionManager.getInstance().getAction("ChangesViewToolbar");
 
@@ -141,9 +142,12 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
 
     myProgressLabel = new JLabel();
 
-    panel.add(toolbarPanel, BorderLayout.WEST);
-    panel.add(new JScrollPane(myView), BorderLayout.CENTER);
-    panel.add(myProgressLabel, BorderLayout.SOUTH);
+    panel.setToolbar(toolbarPanel);
+
+    final JPanel content = new JPanel(new BorderLayout());
+    content.add(new JScrollPane(myView), BorderLayout.CENTER);
+    content.add(myProgressLabel, BorderLayout.SOUTH);
+    panel.setContent(content);
 
     myView.installDndSupport(ChangeListManagerImpl.getInstanceImpl(myProject));
     return panel;

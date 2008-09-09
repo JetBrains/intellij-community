@@ -11,19 +11,26 @@ public class SimpleToolWindowPanel extends JPanel {
   private JComponent myContent;
 
   private boolean myBorderless;
+  private boolean myVertical;
 
-  public SimpleToolWindowPanel() {
-    this(false);
+  public SimpleToolWindowPanel(boolean vertical) {
+    this(vertical, false);
   }
 
-  public SimpleToolWindowPanel(boolean borderless) {
-    setLayout(new BorderLayout(0, 1));
+  public SimpleToolWindowPanel(boolean vertical, boolean borderless) {
+    setLayout(new BorderLayout(vertical ? 0 : 1, vertical ? 1 : 0));
     myBorderless = borderless;
+    myVertical = vertical;
   }
 
   public void setToolbar(JComponent c) {
     myToolbar = c;
-    add(c, BorderLayout.NORTH);
+
+    if (myVertical) {
+      add(c, BorderLayout.NORTH);
+    } else {
+      add(c, BorderLayout.WEST);
+    }
 
     if (myBorderless) {
       UIUtil.removeScrollBorder(c);
@@ -51,8 +58,13 @@ public class SimpleToolWindowPanel extends JPanel {
 
     if (myToolbar != null && myToolbar.getParent() == this && myContent != null && myContent.getParent() == this) {
       g.setColor(UIUtil.getBorderSeparatorColor());
-      final int y = (int)myToolbar.getBounds().getMaxY();
-      g.drawLine(0, y, getWidth(), y);
+      if (myVertical) {
+        final int y = (int)myToolbar.getBounds().getMaxY();
+        g.drawLine(0, y, getWidth(), y);
+      } else {
+        int x = (int)myToolbar.getBounds().getMaxX();
+        g.drawLine(x, 0, x, getHeight());
+      }
     }
   }
 }

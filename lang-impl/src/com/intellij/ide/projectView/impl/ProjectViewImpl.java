@@ -264,7 +264,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     splitter.setFirstComponent(myViewContentPanel);
     splitter.setSecondComponent(myStructureViewPanel);
 
-    myPanel = new SimpleToolWindowPanel();
+    myPanel = new SimpleToolWindowPanel(true);
     myPanel.setToolbar(top);
     myPanel.setContent(splitter);
 

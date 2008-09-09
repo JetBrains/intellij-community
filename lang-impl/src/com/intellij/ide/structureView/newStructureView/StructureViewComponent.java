@@ -78,7 +78,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
                                 final StructureViewModel structureViewModel,
                                 final Project project,
                                 final boolean showRootNode) {
-    super(true);
+    super(true, true);
 
     myProject = project;
     myFileEditor = editor;

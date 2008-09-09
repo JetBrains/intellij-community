@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -53,7 +54,7 @@ import java.awt.event.KeyEvent;
 /**
  * @author Vladimir Kondratyev
  */
-abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvider {
+abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavigator, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.todo.TodoPanel");
 
   protected Project myProject;
@@ -75,7 +76,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
                    TodoPanelSettings settings,
                    boolean currentFileMode,
                    Content content) {
-    super(new BorderLayout());
+    super(false, true);
     myProject = project;
     mySettings = settings;
     myCurrentFileMode = currentFileMode;
@@ -130,7 +131,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
         }
       }
     );
-    add(new JScrollPane(myTree), BorderLayout.CENTER);
+    setContent(new JScrollPane(myTree));
 
     // Create tool bars and register custom shortcuts
 
@@ -181,7 +182,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     toolBarPanel.add(
       ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, rightGroup, false).getComponent());
 
-    add(toolBarPanel, BorderLayout.WEST);
+    setToolbar(toolBarPanel);
   }
 
   void dispose() {
