@@ -1,9 +1,6 @@
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.ide.util.treeView.AlphaComparator;
-import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.ide.util.treeView.SourceComparator;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -11,13 +8,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.TabbedPaneContentUI;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Comparator;
 
 public final class HierarchyBrowserManager implements JDOMExternalizable, ProjectComponent {
   public boolean IS_AUTOSCROLL_TO_SOURCE;
@@ -36,9 +29,9 @@ public final class HierarchyBrowserManager implements JDOMExternalizable, Projec
   public final void initComponent() { }
 
   public final void projectOpened() {
-    myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(new TabbedPaneContentUI(), true, myProject);
     final ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(myProject);
-    final ToolWindow toolWindow=toolWindowManager.registerToolWindow(ToolWindowId.HIERARCHY, myContentManager.getComponent(),ToolWindowAnchor.RIGHT);
+    final ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.HIERARCHY, true, ToolWindowAnchor.RIGHT);
+    myContentManager = toolWindow.getContentManager();
     toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowHierarchy.png"));
     new ContentManagerWatcher(toolWindow,myContentManager);
   }
@@ -56,15 +49,6 @@ public final class HierarchyBrowserManager implements JDOMExternalizable, Projec
     return project.getComponent(HierarchyBrowserManager.class);
   }
 
-  public final Comparator<NodeDescriptor> getComparator() {
-    if (SORT_ALPHABETICALLY) {
-      return AlphaComparator.INSTANCE;
-    }
-    else {
-      return SourceComparator.INSTANCE;
-    }
-  }
-  
   @NotNull
   public final String getComponentName() {
     return "HierarchyBrowserManager";

@@ -241,7 +241,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
         LOG.error("unexpected type: " + typeName);
         return;
       }
-      final Comparator<NodeDescriptor> comparator = HierarchyBrowserManager.getInstance(myProject).getComparator();
+      final Comparator<NodeDescriptor> comparator = JavaHierarchyUtil.getComparator(myProject);
       final HierarchyTreeBuilder builder = new HierarchyTreeBuilder(myProject, tree, model, structure, comparator);
 
       myBuilders.put(typeName, builder);
@@ -529,7 +529,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
     public final void setSelected(final AnActionEvent event, final boolean flag) {
       final HierarchyBrowserManager hierarchyBrowserManager = HierarchyBrowserManager.getInstance(myProject);
       hierarchyBrowserManager.SORT_ALPHABETICALLY = flag;
-      final Comparator<NodeDescriptor> comparator = hierarchyBrowserManager.getComparator();
+      final Comparator<NodeDescriptor> comparator = JavaHierarchyUtil.getComparator(myProject);
       final Collection<HierarchyTreeBuilder> builders = myBuilders.values();
       for (final HierarchyTreeBuilder builder : builders) {
         builder.setNodeDescriptorComparator(comparator);

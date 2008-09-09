@@ -1,6 +1,5 @@
 package com.intellij.ide.hierarchy;
 
-import com.intellij.ide.hierarchy.call.CallerMethodsTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeBuilderUtil;
@@ -61,7 +60,7 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
   }
 
   protected boolean isAlwaysShowPlus(final NodeDescriptor nodeDescriptor) {
-    return getTreeStructure() instanceof CallerMethodsTreeStructure;
+    return ((HierarchyTreeStructure) getTreeStructure()).isAlwaysShowPlus();
   }
 
   protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {

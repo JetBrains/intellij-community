@@ -1,7 +1,8 @@
 package com.intellij.ide.hierarchy.method;
 
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
@@ -121,7 +122,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
       classNameAttributes = new TextAttributes(myColor, null, null, null, Font.PLAIN);
     }
     myHighlightedText.getEnding().addText(ClassPresentationUtil.getNameForClass(psiClass, false), classNameAttributes);
-    myHighlightedText.getEnding().addText("  (" + getPackageName(psiClass) + ")", HierarchyNodeDescriptor.getPackageNameAttributes());
+    myHighlightedText.getEnding().addText("  (" + JavaHierarchyUtil.getPackageName(psiClass) + ")", HierarchyNodeDescriptor.getPackageNameAttributes());
     myName = myHighlightedText.getText();
 
     if (!Comparing.equal(myHighlightedText, oldText)) {

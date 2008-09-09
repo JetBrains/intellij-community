@@ -6,10 +6,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 
@@ -48,16 +45,6 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
 
   protected final boolean isMarkModified() {
     return true;
-  }
-
-  protected static final String getPackageName(final PsiClass psiClass) {
-    final PsiFile file = psiClass.getContainingFile();
-    if (file instanceof PsiJavaFile){
-      return ((PsiJavaFile)file).getPackageName();
-    }
-    else{
-      return null;
-    }
   }
 
   public final CompositeAppearance getHighlightedText() {

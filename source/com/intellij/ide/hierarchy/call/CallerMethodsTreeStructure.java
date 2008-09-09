@@ -111,4 +111,9 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
 
     return methodToDescriptorMap.values().toArray(new Object[methodToDescriptorMap.size()]);
   }
+
+  @Override
+  public boolean isAlwaysShowPlus() {
+    return true;
+  }
 }

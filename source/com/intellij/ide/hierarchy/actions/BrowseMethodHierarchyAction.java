@@ -16,6 +16,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -93,6 +94,7 @@ public final class BrowseMethodHierarchyAction extends AnAction {
     }
   }
 
+  @Nullable
   private static PsiMethod getMethodImpl(final DataContext dataContext){
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;

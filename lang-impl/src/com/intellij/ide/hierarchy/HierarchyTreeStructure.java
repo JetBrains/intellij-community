@@ -5,10 +5,9 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   protected HierarchyNodeDescriptor myBaseDescriptor;
@@ -123,5 +122,9 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     public final boolean update() {
       return true;
     }
+  }
+
+  public boolean isAlwaysShowPlus() {
+    return false;
   }
 }
