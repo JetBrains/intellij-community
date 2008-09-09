@@ -22,7 +22,7 @@ import javax.swing.tree.DefaultTreeModel;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
+public class HierarchyTreeBuilder extends AbstractTreeBuilder {
   private final Project myProject;
 
   private final PsiTreeChangeListener myPsiTreeChangeListener;
