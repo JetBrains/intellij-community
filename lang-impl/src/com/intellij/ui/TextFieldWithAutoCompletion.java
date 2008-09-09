@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ruby.rake.runConfigurations;
+package com.intellij.ui;
 
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
@@ -17,10 +18,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.ui.EditorTextField;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.ruby.lang.TextUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,9 +30,20 @@ import java.util.regex.Pattern;
 
 /**
  * @author Roman Chernyatchik
+ *
+ * It is text field with autocompletion from list of values.
+ *
+ * Autocompletion is implemented via LookupManager.
+ * Use setVariants(..) set list of values for autocompletion.
+ * For variants you can use not only instances of PresentableLookupValue, but
+ * also instances of LookupValueWithPriority and LookupValueWithUIHint  
  */
 public class TextFieldWithAutoCompletion extends EditorTextField {
   private List<LookupItem<PresentableLookupValue>> myLookupItems;
+
+  public TextFieldWithAutoCompletion() {
+    super();
+  }
 
   public TextFieldWithAutoCompletion(final Project project) {
     super(createDocument(project), project, PlainTextLanguage.INSTANCE.getAssociatedFileType());
@@ -41,9 +51,12 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
     new VariantsCompletionAction();
   }
 
-  private static Document createDocument(final Project project) {
-    final Language language = PlainTextLanguage.INSTANCE;
+  private static Document createDocument(@Nullable final Project project) {
+    if (project == null) {
+      return EditorFactory.getInstance().createDocument("");
+    }
 
+    final Language language = PlainTextLanguage.INSTANCE;
     final PsiFileFactory factory = PsiFileFactory.getInstance(project);
     final FileType fileType = language.getAssociatedFileType();
     assert fileType != null;
@@ -64,7 +77,9 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      calcItemsAndShowPopup();
+      final LookupItem<PresentableLookupValue>[] lookupItems = calcLookupItems(getPrefix());
+
+      showCompletionPopup(lookupItems, null);
     }
   }
 
@@ -79,19 +94,9 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
     }
   }
 
-  private void calcItemsAndShowPopup() {
-    final LookupItem<PresentableLookupValue>[] items = calcLookupItems(getPrefix());
-    //if (items.length == 0) {
-    //  showNoSuggestionsPopup();
-    //  return;
-    //}
-
-    showCompletionPopup(items, null);
-  }
-
   private LookupItem<PresentableLookupValue>[] calcLookupItems(final String prefix) {
     final List<LookupItem<PresentableLookupValue>> items = new ArrayList<LookupItem<PresentableLookupValue>>();
-    if (TextUtil.isEmpty(prefix)) {
+    if (prefix == null || prefix.length() == 0) {
       for (LookupItem<PresentableLookupValue> lookupItem : myLookupItems) {
         items.add(lookupItem);
       }
@@ -121,16 +126,6 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
   private String getPrefix() {
     return getText().substring(0, getCaretModel().getOffset());
   }
-
-  //private void showNoSuggestionsPopup() {
-  //  // hide active popup
-  //  LookupManager.getInstance(getProject()).hideActiveLookup();
-  //
-  //  final JLabel message = HintUtil.createErrorLabel(IdeBundle.message("file.chooser.completion.no.suggestions"));
-  //  final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(message, message);
-  //  builder.setRequestFocus(true).setResizable(false).setAlpha(0.1f).setFocusOwners(new Component[] {this});
-  //  builder.createPopup().showUnderneathOf(this);
-  //}
 
   private void showCompletionPopup(final LookupItem[] lookupItems, final String title) {
     final Editor editor = getEditor();
