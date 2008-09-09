@@ -19,7 +19,7 @@ public class ShowPropertiesDiffAction extends AbstractShowPropertiesDiffAction {
   }
 
   protected DataKey<Change[]> getChangesKey() {
-    return VcsDataKeys.SELECTED_CHANGES;
+    return VcsDataKeys.CHANGE_LEAD_SELECTION;
   }
 
   protected SVNRevision getBeforeRevisionValue(final Change change, final SvnVcs vcs) throws SVNException {
