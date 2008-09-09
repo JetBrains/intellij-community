@@ -65,8 +65,10 @@ public abstract class HierarchyBrowserBase extends JPanel implements HierarchyBr
     return getPsiElementFromNodeDescriptor(userObject);
   }
 
+  @Nullable
   protected abstract PsiElement getPsiElementFromNodeDescriptor(Object userObject);
 
+  @Nullable
   protected PsiElement getSelectedElement() {
     final TreePath path = getSelectedPath();
     return extractPsiElement(path);
@@ -76,6 +78,7 @@ public abstract class HierarchyBrowserBase extends JPanel implements HierarchyBr
     JTree currentTree = getCurrentTree();
     if (currentTree == null) return PsiElement.EMPTY_ARRAY;
     TreePath[] paths = currentTree.getSelectionPaths();
+    if (paths == null) return PsiElement.EMPTY_ARRAY;
     ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
     for (TreePath path : paths) {
       PsiElement psiElement = extractPsiElement(path);

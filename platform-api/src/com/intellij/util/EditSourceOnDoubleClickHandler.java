@@ -33,35 +33,9 @@ import java.awt.event.MouseEvent;
 
 public class EditSourceOnDoubleClickHandler {
   public static void install(final JTree tree) {
-    tree.addMouseListener(new MouseAdapter(){
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() != 2) return;
-        if (tree.getPathForLocation(e.getX(), e.getY()) == null) return;
-        DataContext dataContext = DataManager.getInstance().getDataContext(tree);
-        Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-        if (project == null) return;
-
-        final TreePath selectionPath = tree.getSelectionPath();
-        if (selectionPath == null) return;
-        final Object lastPathComponent = selectionPath.getLastPathComponent();
-        if (((TreeNode)lastPathComponent).isLeaf() || !expandOnDoubleClick(((TreeNode)lastPathComponent))) {
-          //Node expansion for non-leafs has a higher priority
-          OpenSourceUtil.openSourcesFrom(dataContext, true);
-        }
-      }
-
-      private boolean expandOnDoubleClick(final TreeNode treeNode) {
-        if (treeNode instanceof DefaultMutableTreeNode) {
-          final Object userObject = ((DefaultMutableTreeNode)treeNode).getUserObject();
-          if (userObject instanceof NodeDescriptor) {
-            return ((NodeDescriptor)userObject).expandOnDoubleClick();
-          }
-        }
-        return true;
-      }
-
-    });
+    tree.addMouseListener(new TreeMouseListener(tree));
   }
+
   public static void install(final TreeTable treeTable) {
     treeTable.addMouseListener(new MouseAdapter(){
       public void mouseClicked(MouseEvent e) {
@@ -103,5 +77,44 @@ public class EditSourceOnDoubleClickHandler {
         whenPerformed.run();
       }
     });
+  }
+
+  public static class TreeMouseListener extends MouseAdapter {
+    private final JTree myTree;
+
+    public TreeMouseListener(final JTree tree) {
+      myTree = tree;
+    }
+
+    public void mouseClicked(MouseEvent e) {
+      if (e.getClickCount() != 2) return;
+      if (myTree.getPathForLocation(e.getX(), e.getY()) == null) return;
+      DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      if (project == null) return;
+
+      final TreePath selectionPath = myTree.getSelectionPath();
+      if (selectionPath == null) return;
+      final Object lastPathComponent = selectionPath.getLastPathComponent();
+      if (((TreeNode)lastPathComponent).isLeaf() || !expandOnDoubleClick(((TreeNode)lastPathComponent))) {
+        //Node expansion for non-leafs has a higher priority
+        processDoubleClick(e, dataContext, (TreeNode) lastPathComponent);
+      }
+    }
+
+    protected void processDoubleClick(final MouseEvent e, final DataContext dataContext, final TreeNode lastPathComponent) {
+      OpenSourceUtil.openSourcesFrom(dataContext, true);
+    }
+
+    private static boolean expandOnDoubleClick(final TreeNode treeNode) {
+      if (treeNode instanceof DefaultMutableTreeNode) {
+        final Object userObject = ((DefaultMutableTreeNode)treeNode).getUserObject();
+        if (userObject instanceof NodeDescriptor) {
+          return ((NodeDescriptor)userObject).expandOnDoubleClick();
+        }
+      }
+      return true;
+    }
+
   }
 }
