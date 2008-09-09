@@ -45,7 +45,6 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
     super(createDocument(project), project, PlainTextLanguage.INSTANCE.getAssociatedFileType());
 
     new VariantsCompletionAction();
-
   }
 
   private static Document createDocument(final Project project) {
@@ -71,42 +70,7 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      final LookupItem<PresentableLookupValue>[] items = calcLookupItems(getPrefix());
-      if (items.length == 0) {
-        showNoSuggestionsPopup();
-        return;
-      }
-
-      showCompletionPopup(items, null);
-    }
-
-    private LookupItem<PresentableLookupValue>[] calcLookupItems(final String prefix) {
-      final List<LookupItem<PresentableLookupValue>> items = new ArrayList<LookupItem<PresentableLookupValue>>();
-      if (TextUtil.isEmpty(prefix)) {
-        for (LookupItem<PresentableLookupValue> lookupItem : myLookupItems) {
-          items.add(lookupItem);
-        }
-      } else {
-        final String regexp = NameUtil.buildRegexp(prefix, 0, true, true);
-        final Pattern pattern = Pattern.compile(regexp);
-        final Matcher matcher = pattern.matcher("");
-
-        for (LookupItem<PresentableLookupValue> lookupItem : myLookupItems) {
-          matcher.reset(lookupItem.getLookupString());
-          if (matcher.matches()) {
-            items.add(lookupItem);
-          }
-        }
-      }
-
-      Collections.sort(items, new Comparator<LookupItem<PresentableLookupValue>>() {
-        public int compare(final LookupItem<PresentableLookupValue> item1,
-                           final LookupItem<PresentableLookupValue> item2) {
-          return item1.getLookupString().compareTo(item2.getLookupString());
-        }
-      });
-
-      return (LookupItem<PresentableLookupValue>[])items.toArray(new LookupItem[items.size()]);
+      calcItemsAndShowPopup();
     }
   }
 
@@ -121,14 +85,56 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
     }
   }
 
+  private void calcItemsAndShowPopup() {
+    final LookupItem<PresentableLookupValue>[] items = calcLookupItems(getPrefix());
+    if (items.length == 0) {
+      showNoSuggestionsPopup();
+      return;
+    }
+
+    showCompletionPopup(items, null);
+  }
+
+  private LookupItem<PresentableLookupValue>[] calcLookupItems(final String prefix) {
+    final List<LookupItem<PresentableLookupValue>> items = new ArrayList<LookupItem<PresentableLookupValue>>();
+    if (TextUtil.isEmpty(prefix)) {
+      for (LookupItem<PresentableLookupValue> lookupItem : myLookupItems) {
+        items.add(lookupItem);
+      }
+    } else {
+      final String regexp = NameUtil.buildRegexp(prefix, 0, true, true);
+      final Pattern pattern = Pattern.compile(regexp);
+      final Matcher matcher = pattern.matcher("");
+
+      for (LookupItem<PresentableLookupValue> lookupItem : myLookupItems) {
+        matcher.reset(lookupItem.getLookupString());
+        if (matcher.matches()) {
+          items.add(lookupItem);
+        }
+      }
+    }
+
+    Collections.sort(items, new Comparator<LookupItem<PresentableLookupValue>>() {
+      public int compare(final LookupItem<PresentableLookupValue> item1,
+                         final LookupItem<PresentableLookupValue> item2) {
+        return item1.getLookupString().compareTo(item2.getLookupString());
+      }
+    });
+
+    return (LookupItem<PresentableLookupValue>[])items.toArray(new LookupItem[items.size()]);
+  }
+
   private String getPrefix() {
     return getText().substring(0, getCaretModel().getOffset());
   }
 
   private void showNoSuggestionsPopup() {
+    // hide active popup
+    LookupManager.getInstance(getProject()).hideActiveLookup();
+
     final JLabel message = HintUtil.createErrorLabel(IdeBundle.message("file.chooser.completion.no.suggestions"));
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(message, message);
-    builder.setRequestFocus(true).setResizable(false).setAlpha(0.1f).setFocusOwners(new Component[] {this});
+    builder.setRequestFocus(false).setResizable(false).setAlpha(0.1f).setFocusOwners(new Component[] {this});
     builder.createPopup().showUnderneathOf(this);
   }
 
