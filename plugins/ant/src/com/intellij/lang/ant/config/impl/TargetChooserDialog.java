@@ -19,7 +19,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.*;
 import com.intellij.util.Icons;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -30,10 +32,15 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class TargetChooserDialog extends DialogWrapper {
   private AntBuildTarget mySelectedTarget;
   private AntConfiguration myAntConfiguration;
+  private Tree myTree;
 
   protected TargetChooserDialog(final Project project,
                                 final AntBuildTarget selectedTarger,
@@ -48,7 +55,22 @@ public class TargetChooserDialog extends DialogWrapper {
   @Nullable
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(ScrollPaneFactory.createScrollPane(initTree()), BorderLayout.CENTER);
+    myTree = initTree();
+    panel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+    myTree.addKeyListener(new KeyAdapter() {
+      public void keyPressed(KeyEvent e) {
+        if (KeyEvent.VK_ENTER == e.getKeyCode()) {
+          doOKAction();
+        }
+      }
+    });
+    myTree.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(final MouseEvent e) {
+        if (UIUtil.isActionClick(e) && e.getClickCount() == 2 && mySelectedTarget != null) {
+          doOKAction();
+        }
+      }
+    });
     return panel;
   }
 
@@ -77,7 +99,16 @@ public class TargetChooserDialog extends DialogWrapper {
     tree.setLineStyleAngled();
     TreeToolTipHandler.install(tree);
     TreeUtil.installActions(tree);
-    new TreeSpeedSearch(tree);
+    new TreeSpeedSearch(tree, new Convertor<TreePath, String>() {
+      public String convert(final TreePath path) {
+        final Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+        if (userObject instanceof AntTargetNodeDescriptor) {
+          final AntBuildTarget target = ((AntTargetNodeDescriptor)userObject).getAntTarget();
+          return target.getDisplayName();
+        }
+        return null;
+      }
+    });
 
     DefaultMutableTreeNode selectedNode = null;
     final AntBuildFile[] antBuildFiles = myAntConfiguration.getBuildFiles();
@@ -96,6 +127,10 @@ public class TargetChooserDialog extends DialogWrapper {
     TreeUtil.expandAll(tree);
     TreeUtil.selectInTree(selectedNode, true, tree);
     return tree;
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myTree;
   }
 
   private DefaultMutableTreeNode processFileTargets(final AntBuildTarget[] targets, final AntBuildFile buildFile, final DefaultMutableTreeNode buildFileNode) {
