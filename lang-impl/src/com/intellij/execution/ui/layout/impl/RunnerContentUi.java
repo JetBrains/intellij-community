@@ -132,11 +132,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
             }
             return null;
           }
-        }).setInnerInsets(new Insets(1, 0, 0, 0));
+        }).setInnerInsets(new Insets(1, 0, 0, 0)).setToDrawBorderIfTabsHidden(false).getJBTabs();
     rebuildTabPopup();
-    myTabs.setPaintBorder(-1, 0, 0, 0);
-    myTabs.setPaintFocus(false);
-    myTabs.setRequestFocusOnLastFocusedComponent(true);
+
+
+    myTabs.getPresentation().setPaintBorder(-1, 0, 0, 0).setPaintFocus(false).setRequestFocusOnLastFocusedComponent(true);
 
     final NonOpaquePanel wrappper = new NonOpaquePanel(new BorderLayout(0, 0));
     wrappper.add(myToolbar, BorderLayout.WEST);
@@ -421,7 +421,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       hasToolbarContent |= updateTabUI(each);
     }
 
-    myTabs.setHideTabs(!hasToolbarContent);
+    myTabs.getPresentation().setHideTabs(!hasToolbarContent);
 
     myTabs.updateTabActions(validateNow);
 
@@ -928,7 +928,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   public void validate(final Content content, final ActionCallback.Runnable toRestore) {
     final TabInfo current = myTabs.getSelectedInfo();
-    myTabs.setPaintBlocked(true);
+    myTabs.getPresentation().setPaintBlocked(true);
 
     select(content, false).doWhenDone(new Runnable() {
       public void run() {
@@ -936,7 +936,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         toRestore.run().doWhenDone(new Runnable() {
           public void run() {
             myTabs.select(current, true);
-            myTabs.setPaintBlocked(false);
+            myTabs.getPresentation().setPaintBlocked(false);
           }
         });
       }

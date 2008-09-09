@@ -72,15 +72,15 @@ public class GridCellImpl implements GridCell, Disposable {
         return null;
       }
     });
-    myTabs.setUiDecorator(new UiDecorator() {
+    myTabs.getPresentation().setUiDecorator(new UiDecorator() {
       @NotNull
       public UiDecoration getDecoration() {
         return new UiDecoration(null, new Insets(1, -1, 1, -1));
       }
-    });
-    myTabs.setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal());
-    myTabs.setStealthTabMode(true);
-    myTabs.setFocusCycle(false);
+    }).setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
+      .setStealthTabMode(true)
+      .setFocusCycle(false);
+
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
         if (UIUtil.isCloseClick(e)) {
@@ -164,7 +164,7 @@ public class GridCellImpl implements GridCell, Disposable {
   }
 
   void setHideTabs(boolean hide) {
-    myTabs.setHideTabs(hide);
+    myTabs.getPresentation().setHideTabs(hide);
   }
 
   private TabInfo createTabInfoFor(Content content) {
@@ -248,7 +248,7 @@ public class GridCellImpl implements GridCell, Disposable {
   }
 
   public void setToolbarHorizontal(final boolean horizontal) {
-    myTabs.setSideComponentVertical(!horizontal);
+    myTabs.getPresentation().setSideComponentVertical(!horizontal);
   }
 
   public ActionCallback restoreLastUiState() {

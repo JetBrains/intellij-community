@@ -12,10 +12,7 @@ import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
-import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsListener;
-import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.ui.tabs.impl.table.TablePassInfo;
@@ -41,7 +38,7 @@ import java.util.*;
 import java.util.List;
 
 public class JBTabsImpl extends JComponent
-    implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable {
+    implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation {
 
   static DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
@@ -111,6 +108,7 @@ public class JBTabsImpl extends JComponent
 
   boolean myGhostsAlwaysVisible = false;
   private boolean myDisposed;
+  private boolean myToDrawBorderIfTabsHidden = true;
 
 
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
@@ -821,6 +819,21 @@ public class JBTabsImpl extends JComponent
     myDeferredToRemove = new WeakReference<Component>(c);
   }
 
+  public boolean isToDrawBorderIfTabsHidden() {
+    return myToDrawBorderIfTabsHidden;
+  }
+
+  @NotNull
+  public JBTabsPresentation setToDrawBorderIfTabsHidden(final boolean toDrawBorderIfTabsHidden) {
+    myToDrawBorderIfTabsHidden = toDrawBorderIfTabsHidden;
+    return this;
+  }
+
+  @NotNull
+  public JBTabs getJBTabs() {
+    return this;
+  }
+
   public static class Toolbar extends JPanel {
     private JBTabsImpl myTabs;
 
@@ -907,7 +920,7 @@ public class JBTabsImpl extends JComponent
   }
 
 
-  public JBTabs setInnerInsets(final Insets innerInsets) {
+  public JBTabsPresentation setInnerInsets(final Insets innerInsets) {
     myInnerInsets = innerInsets;
     return this;
   }
@@ -1302,8 +1315,10 @@ public class JBTabsImpl extends JComponent
 
     if (myBorderSize.top > 0) {
       if (isHideTabs()) {
-        g2d.setColor(borderColor);
-        g2d.drawLine(x, y, x + width - 1, y);
+        if (isToDrawBorderIfTabsHidden()) {
+          g2d.setColor(borderColor);
+          g2d.drawLine(x, y, x + width - 1, y);
+        }
       }
       else if (isStealthModeEffective()) {
         g2d.setColor(borderColor);
@@ -1451,6 +1466,11 @@ public class JBTabsImpl extends JComponent
 
   public int getTabCount() {
     return getTabs().size();
+  }
+
+  @NotNull
+  public JBTabsPresentation getPresentation() {
+    return this;
   }
 
   public ActionCallback removeTab(final JComponent component) {
@@ -1721,7 +1741,7 @@ public class JBTabsImpl extends JComponent
     relayout(true, false);
   }
 
-  public JBTabs setPaintBorder(int top, int left, int right, int bottom) {
+  public JBTabsPresentation setPaintBorder(int top, int left, int right, int bottom) {
     if (myBorderSize.top == top && myBorderSize.left == left && myBorderSize.right == right && myBorderSize.bottom == bottom) return this;
 
     myBorderSize = new Insets(getBorder(top), getBorder(left), getBorder(bottom), getBorder(right));
@@ -1740,12 +1760,12 @@ public class JBTabsImpl extends JComponent
   }
 
   @NotNull
-  public JBTabs setAdjustBorders(final boolean adjust) {
+  public JBTabsPresentation setAdjustBorders(final boolean adjust) {
     myAdjustBorders = adjust;
     return this;
   }
 
-  public JBTabs setFocusCycle(final boolean root) {
+  public JBTabsPresentation setFocusCycle(final boolean root) {
     setFocusCycleRoot(root);
     return this;
   }
@@ -1774,12 +1794,13 @@ public class JBTabsImpl extends JComponent
 
 
   private static boolean isPrimitive(Component c) {
-    return c instanceof JPanel;
+    return c instanceof JPanel || c instanceof JLayeredPane;
   }
 
 
-  public void setPaintFocus(final boolean paintFocus) {
+  public JBTabsPresentation setPaintFocus(final boolean paintFocus) {
     myPaintFocus = paintFocus;
+    return this;
   }
 
   private static abstract class BaseNavigationAction extends AnAction {
@@ -1853,17 +1874,19 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  public void setStealthTabMode(final boolean stealthTabMode) {
+  public JBTabsPresentation setStealthTabMode(final boolean stealthTabMode) {
     myStealthTabMode = stealthTabMode;
 
     relayout(true, false);
+
+    return this;
   }
 
   public boolean isStealthTabMode() {
     return myStealthTabMode;
   }
 
-  public void setSideComponentVertical(final boolean vertical) {
+  public JBTabsPresentation setSideComponentVertical(final boolean vertical) {
     myHorizontalSide = !vertical;
 
     for (TabInfo each : myVisibleInfos) {
@@ -1872,15 +1895,19 @@ public class JBTabsImpl extends JComponent
 
 
     relayout(true, false);
+
+    return this;
   }
 
-  public void setSingleRow(boolean singleRow) {
+  public JBTabsPresentation setSingleRow(boolean singleRow) {
     myLayout = singleRow ? mySingleRowLayout : myTableLayout;
 
     relayout(true, false);
+
+    return this;
   }
 
-  public JBTabs setGhostsAlwaysVisible(final boolean visible) {
+  public JBTabsPresentation setGhostsAlwaysVisible(final boolean visible) {
     myGhostsAlwaysVisible = visible;
 
     relayout(true, false);
@@ -1900,7 +1927,7 @@ public class JBTabsImpl extends JComponent
     return !myHorizontalSide;
   }
 
-  public JBTabs setUiDecorator(UiDecorator decorator) {
+  public JBTabsPresentation setUiDecorator(UiDecorator decorator) {
     myUiDecorator = decorator == null ? ourDefaultDecorator : decorator;
     applyDecoration();
     return this;
@@ -1954,8 +1981,9 @@ public class JBTabsImpl extends JComponent
     return myRequestFocusOnLastFocusedComponent;
   }
 
-  public void setRequestFocusOnLastFocusedComponent(final boolean requestFocusOnLastFocusedComponent) {
+  public JBTabsPresentation setRequestFocusOnLastFocusedComponent(final boolean requestFocusOnLastFocusedComponent) {
     myRequestFocusOnLastFocusedComponent = requestFocusOnLastFocusedComponent;
+    return this;
   }
 
 

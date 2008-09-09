@@ -11,8 +11,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Comparator;
 
 public interface JBTabs {
 
@@ -50,29 +50,8 @@ public interface JBTabs {
 
   int getTabCount();
 
-  boolean isHideTabs();
-
-  void setHideTabs(boolean hideTabs);
-
-  JBTabs setPaintBorder(int top, int left, int right, int bottom);
-
-  boolean isPaintFocus();
-
-  void setPaintFocus(boolean paintFocus);
-
-  void setStealthTabMode(boolean stealthTabMode);
-
-  boolean isStealthTabMode();
-
-  void setSideComponentVertical(boolean vertical);
-
-  void setSingleRow(boolean singleRow);
-
-  boolean isSingleRow();
-
-  boolean isSideComponentVertical();
-
-  JBTabs setUiDecorator(@Nullable UiDecorator decorator);
+  @NotNull
+  JBTabsPresentation getPresentation();
 
   @Nullable
   DataProvider getDataProvider();
@@ -104,28 +83,8 @@ public interface JBTabs {
   @Nullable
   TabInfo findInfo(Object object);
 
-  boolean isRequestFocusOnLastFocusedComponent();
-
-  void setRequestFocusOnLastFocusedComponent(boolean requestFocusOnLastFocusedComponent);
-
-  void sortTabs(Comparator<TabInfo> comparator);
-
-  void setPaintBlocked(boolean blocked);
-
-  void setFocused(boolean focused);
-
   int getIndexOf(@Nullable final TabInfo tabInfo);
 
-  JBTabs setInnerInsets(Insets innerInsets);
-
-  Insets getInnerInsets();
-
-  JBTabs setGhostsAlwaysVisible(boolean visible);
-
-  boolean isGhostsAlwaysVisible();
-
-  @NotNull
-  JBTabs setAdjustBorders(boolean adjust);
-
-  JBTabs setFocusCycle(final boolean root);
+  void sortTabs(Comparator<TabInfo> comparator);
+  
 }

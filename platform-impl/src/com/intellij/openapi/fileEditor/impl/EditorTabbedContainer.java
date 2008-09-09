@@ -85,12 +85,12 @@ final class EditorTabbedContainer implements Disposable {
           ActionUtil.execute("HideAllWindows", e, null, ActionPlaces.UNKNOWN, 0);
         }
       }
-    }).setUiDecorator(new UiDecorator() {
+    }).getPresentation().setUiDecorator(new UiDecorator() {
       @NotNull
       public UiDecoration getDecoration() {
         return new UiDecoration(null, new Insets(1, 6, 1, 6));
       }
-    }).setGhostsAlwaysVisible(true).addListener(new TabsListener() {
+    }).setGhostsAlwaysVisible(true).getJBTabs().addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
         final FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
         final FileEditor oldEditor = editorManager.getSelectedEditor((VirtualFile)oldSelection.getObject());
@@ -138,7 +138,7 @@ final class EditorTabbedContainer implements Disposable {
     myTabs.getComponent().setBorder(new EmptyBorder(1, 0, 0, 0));
     final List<String> rightIds =
         ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).getIdsOn(ToolWindowAnchor.RIGHT);
-     myTabs.setPaintBorder(10, -1, rightIds.size() > 0 ? 1 : 0, -1);
+     myTabs.getPresentation().setPaintBorder(10, -1, rightIds.size() > 0 ? 1 : 0, -1);
   }
 
   public Component getComponent() {
@@ -179,10 +179,10 @@ final class EditorTabbedContainer implements Disposable {
   public void setTabLayoutPolicy(final int policy) {
     switch (policy) {
       case JTabbedPane.SCROLL_TAB_LAYOUT:
-        myTabs.setSingleRow(true);
+        myTabs.getPresentation().setSingleRow(true);
         break;
       case JTabbedPane.WRAP_TAB_LAYOUT:
-        myTabs.setSingleRow(false);
+        myTabs.getPresentation().setSingleRow(false);
         break;
       default:
         throw new IllegalArgumentException("Unsupported tab layout policy: " + policy);
