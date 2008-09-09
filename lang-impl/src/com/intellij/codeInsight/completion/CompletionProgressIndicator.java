@@ -20,11 +20,12 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.util.EventObject;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.EventObject;
 
 /**
  * @author peter
@@ -186,6 +187,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myQueue.dispose();
     cleanup();
+  }
+
+  @TestOnly
+  public static void cleanupForNextTest() {
+    CompletionProgressIndicator currentCompletion = getCurrentCompletion();
+    if (currentCompletion != null) {
+      currentCompletion.finishCompletion();
+    }
   }
 
   private void cleanup() {

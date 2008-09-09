@@ -1,5 +1,7 @@
 package com.intellij.testFramework;
 
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
@@ -47,7 +49,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.PatchedWeakReference;
-import com.intellij.codeInsight.lookup.LookupManager;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -300,6 +301,8 @@ import java.util.HashSet;
       finally {
         ourTestCase = null;
       }
+      CompletionProgressIndicator.cleanupForNextTest();
+
       super.tearDown();
 
       EditorFactory editorFactory = EditorFactory.getInstance();
