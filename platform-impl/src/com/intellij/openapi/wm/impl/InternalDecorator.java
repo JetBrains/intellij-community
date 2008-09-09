@@ -372,7 +372,6 @@ public final class InternalDecorator extends JPanel {
     final JPanel contentPane = new JPanel(new BorderLayout());
     contentPane.add(myTitlePanel, BorderLayout.NORTH);
     JPanel innerPanel = new JPanel(new BorderLayout());
-    innerPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
     JComponent toolWindowComponent = myToolWindow.getComponent();
     innerPanel.add(toolWindowComponent, BorderLayout.CENTER);
 
@@ -392,7 +391,7 @@ public final class InternalDecorator extends JPanel {
 
   private static class InnerPanelBorder implements Border {
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-      g.setColor(ActivatableLineBorder.INACTIVE_COLOR);
+      g.setColor(UIUtil.getBorderInactiveColor());
       UIUtil.drawLine(g, x, y, x, y + height - 2);
       UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height - 2);
       UIUtil.drawLine(g, x + 1, y + height - 1, x + width - 2, y + height - 1);

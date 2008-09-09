@@ -20,6 +20,7 @@ import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public interface ToolWindow {
@@ -141,5 +142,15 @@ public interface ToolWindow {
   boolean isToHideOnEmptyContent();
   
   boolean isDisposed();
+
+  class Border extends EmptyBorder {
+    public Border() {
+      this(true, true, true, true);
+    }
+
+    public Border(boolean top, boolean left, boolean right, boolean bottom) {
+      super(top ? 2 : 0, left ? 2 : 0, right ? 2 : 0, bottom ? 2 : 0);
+    }
+  }
 
 }

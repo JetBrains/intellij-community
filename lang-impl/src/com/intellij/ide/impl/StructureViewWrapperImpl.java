@@ -172,6 +172,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     myPanel.repaint();
   }
 
+
   protected boolean isStructureViewShowing() {
     ToolWindowManager windowManager = ToolWindowManager.getInstance(myProject);
     ToolWindow toolWindow=windowManager.getToolWindow(ToolWindowId.STRUCTURE_VIEW);

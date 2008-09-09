@@ -12,6 +12,7 @@ import com.intellij.ide.util.treeView.*;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.ide.util.treeView.smartTree.TreeModel;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,7 +47,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class StructureViewComponent extends JPanel implements TreeActionsOwner, DataProvider, StructureView {
+public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
   @NonNls private static final String ourHelpID = "viewingStructure.fileStructureView";
 
@@ -77,7 +78,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
                                 final StructureViewModel structureViewModel,
                                 final Project project,
                                 final boolean showRootNode) {
-    super(new BorderLayout());
+    super(true);
 
     myProject = project;
     myFileEditor = editor;
@@ -121,7 +122,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       }
     });
 
-    add(new JScrollPane(myAbstractTreeBuilder.getTree()), BorderLayout.CENTER);
+    setContent(new JScrollPane(myAbstractTreeBuilder.getTree()));
 
     myAbstractTreeBuilder.getTree().setCellRenderer(new NodeRenderer());
 
@@ -130,7 +131,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
     JComponent toolbarComponent =
       ActionManager.getInstance().createActionToolbar(ActionPlaces.STRUCTURE_VIEW_TOOLBAR, createActionGroup(), true).getComponent();
-    add(toolbarComponent, BorderLayout.NORTH);
+    setToolbar(toolbarComponent);
 
     installTree();
 

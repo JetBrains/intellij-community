@@ -17,7 +17,6 @@ import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.ui.tabs.impl.table.TablePassInfo;
 import com.intellij.util.ui.Animator;
-import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1770,33 +1769,6 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
-  public static void removeScrollBorder(final Component c) {
-    new AwtVisitor(c) {
-      public boolean visit(final Component component) {
-        if (component instanceof JScrollPane) {
-          if (!hasNonPrimitiveParents(c, component)) {
-            ((JScrollPane)component).setBorder(null);
-          }
-        }
-        return false;
-      }
-    };
-  }
-
-  private static boolean hasNonPrimitiveParents(Component stopParent, Component c) {
-    Component eachParent = c.getParent();
-    while (true) {
-      if (eachParent == null || eachParent == stopParent) return false;
-      if (!isPrimitive(eachParent)) return true;
-      eachParent = eachParent.getParent();
-    }
-  }
-
-
-  private static boolean isPrimitive(Component c) {
-    return c instanceof JPanel || c instanceof JLayeredPane;
-  }
-
 
   public JBTabsPresentation setPaintFocus(final boolean paintFocus) {
     myPaintFocus = paintFocus;
@@ -1967,7 +1939,7 @@ public class JBTabsImpl extends JComponent
 
   private void adjust(final TabInfo each) {
     if (myAdjustBorders) {
-      removeScrollBorder(each.getComponent());
+      UIUtil.removeScrollBorder(each.getComponent());
     }
   }
 

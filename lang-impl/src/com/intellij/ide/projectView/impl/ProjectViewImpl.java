@@ -34,9 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.SplitterProportionsData;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -59,6 +57,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Icons;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -69,6 +68,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -122,7 +122,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private JPanel myStructureViewPanel;
   private MyStructureViewWrapperImpl myStructureViewWrapper;
 
-  private JPanel myPanel;
+  private SimpleToolWindowPanel myPanel;
   private final Map<String, AbstractProjectViewPane> myId2Pane = new LinkedHashMap<String, AbstractProjectViewPane>();
   private final Collection<AbstractProjectViewPane> myUninitializedPanes = new THashSet<AbstractProjectViewPane>();
 
@@ -164,6 +164,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager, final ToolWindowManagerEx toolWindowManager) {
     myProject = project;
+
+    constructUi();
+
+
     Disposer.register(myProject, this);
     myFileEditorManager = fileEditorManager;
     mySelectInManager = selectInManager;
@@ -221,6 +225,50 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         toolWindowVisible = window.isVisible();
       }
     });
+  }
+
+  private void constructUi() {
+    myActionGroupPanel = new JPanel();
+
+    myLabel = new JLabel("View as:");
+    myLabel.setDisplayedMnemonic('a');
+    myCombo = new ComboBox();
+    myLabel.setLabelFor(myCombo);
+
+    final JPanel combo = new JPanel(new BorderLayout());
+    combo.setBorder(new EmptyBorder(2, 4, 2, 4));
+    combo.add(myLabel, BorderLayout.WEST);
+    combo.add(myCombo, BorderLayout.CENTER);
+
+
+    final JPanel top = new JPanel(new BorderLayout());
+    top.add(myActionGroupPanel, BorderLayout.NORTH);
+    top.add(combo, BorderLayout.CENTER);
+
+
+    myStructureViewPanel = new JPanel() {
+      {
+        setBorder(new EmptyBorder(1, 0, 0, 0));
+      }
+
+      @Override
+      protected void paintComponent(final Graphics g) {
+        super.paintComponent(g);
+        g.setColor(UIUtil.getBorderSeparatorColor());
+        g.drawRect(0, 0, getWidth(), 0);
+      }
+    };
+    myViewContentPanel = new JPanel();
+
+    final Splitter splitter = new Splitter(true);
+    splitter.setFirstComponent(myViewContentPanel);
+    splitter.setSecondComponent(myStructureViewPanel);
+
+    myPanel = new SimpleToolWindowPanel();
+    myPanel.setToolbar(top);
+    myPanel.setContent(splitter);
+
+    myPanel.setBorder(new ToolWindow.Border(true, false, false, false));
   }
 
   public void disposeComponent() {
@@ -362,6 +410,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     removeLabelFocusListener();
     myViewContentPanel.removeAll();
     JComponent component = newPane.createComponent();
+    UIUtil.removeScrollBorder(component);
     myViewContentPanel.setLayout(new BorderLayout());
     myViewContentPanel.add(component, BorderLayout.CENTER);
     myCurrentViewId = newPane.getId();

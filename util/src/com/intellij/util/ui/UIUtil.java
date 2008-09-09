@@ -51,6 +51,11 @@ public class UIUtil {
   @NonNls public static final String ARIAL_FONT_NAME = "Arial";
   @NonNls public static final String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
 
+
+  private static Color ACTIVE_COLOR = new Color(160, 186, 213);
+  private static Color INACTIVE_COLOR = new Color(128, 128, 128);
+  private static Color SEPARATOR_COLOR = INACTIVE_COLOR.brighter();
+
   private UIUtil() {
   }
 
@@ -828,6 +833,44 @@ public class UIUtil {
       return false;
     }
     return true;
+  }
+
+  public static Color getBorderActiveColor() {
+    return ACTIVE_COLOR;
+  }
+
+  public static Color getBorderInactiveColor() {
+    return INACTIVE_COLOR;
+  }
+
+  public static Color getBorderSeparatorColor() {
+    return SEPARATOR_COLOR;
+  }
+
+  public static void removeScrollBorder(final Component c) {
+    new AwtVisitor(c) {
+      public boolean visit(final Component component) {
+        if (component instanceof JScrollPane) {
+          if (!hasNonPrimitiveParents(c, component)) {
+            ((JScrollPane)component).setBorder(null);
+          }
+        }
+        return false;
+      }
+    };
+  }
+
+  public static boolean hasNonPrimitiveParents(Component stopParent, Component c) {
+    Component eachParent = c.getParent();
+    while (true) {
+      if (eachParent == null || eachParent == stopParent) return false;
+      if (!isPrimitive(eachParent)) return true;
+      eachParent = eachParent.getParent();
+    }
+  }
+
+  public static boolean isPrimitive(Component c) {
+    return c instanceof JPanel || c instanceof JLayeredPane;
   }
 }
 
