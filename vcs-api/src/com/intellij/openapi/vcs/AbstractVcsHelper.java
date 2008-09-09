@@ -62,6 +62,10 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showChangesListBrowser(CommittedChangeList changelist, @Nls String title);
 
+  public abstract void showChangesBrowser(List<CommittedChangeList> changelists);
+
+  public abstract void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title);
+
   public abstract void showChangesBrowser(CommittedChangesProvider provider,
                                           final RepositoryLocation location,
                                           @Nls String title,

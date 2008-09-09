@@ -319,6 +319,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   }
 
+  public void showChangesBrowser(List<CommittedChangeList> changelists) {
+    showChangesBrowser(changelists, null);
+  }
+
+  public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
+    showChangesBrowser(new CommittedChangesTableModel(changelists), title, false, null);
+  }
+
   private void showChangesBrowser(CommittedChangesTableModel changelists,
                                   String title,
                                   boolean showSearchAgain,
