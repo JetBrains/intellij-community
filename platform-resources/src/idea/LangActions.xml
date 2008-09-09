@@ -161,6 +161,16 @@
       <add-to-group group-id="ViewRecentActions" anchor="last"/>
     </action>
 
+    <group id="HierarchyGroup">
+      <separator/>
+      <action id="TypeHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction"/>
+      <action id="MethodHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseMethodHierarchyAction"/>
+      <action id="CallHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseCallHierarchyAction"/>
+      <separator/>
+
+      <add-to-group group-id="ViewMenu" anchor="last"/>
+    </group>
+
     <!-- Go To -->
     <group id="GoToTargetEx">
       <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction"/>

@@ -43,7 +43,7 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
-public final class CallHierarchyBrowser extends JPanel implements DataProvider, OccurenceNavigator, Disposable {
+public final class CallHierarchyBrowser extends JPanel implements HierarchyBrowser, DataProvider, OccurenceNavigator, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.call.CallHierarchyBrowser");
 
   static final String SCOPE_PROJECT = IdeBundle.message("hierarchy.scope.project");
@@ -150,6 +150,10 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
       myTreePanel.add(new JScrollPane(tree), key);
     }
     add(myTreePanel, BorderLayout.CENTER);
+  }
+
+  public JComponent getComponent() {
+    return this;
   }
 
   private JTree createTree() {

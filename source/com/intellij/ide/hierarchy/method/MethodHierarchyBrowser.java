@@ -42,7 +42,7 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
-public final class MethodHierarchyBrowser extends JPanel implements DataProvider, OccurenceNavigator, Disposable {
+public final class MethodHierarchyBrowser extends JPanel implements DataProvider, OccurenceNavigator, Disposable, HierarchyBrowser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.MethodHierarchyBrowser");
 
   @NonNls private static final String HELP_ID = "reference.toolWindows.hierarchy";
@@ -145,6 +145,10 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     add(myTreePanel, BorderLayout.CENTER);
 
     add(createLegendPanel(), BorderLayout.SOUTH);
+  }
+
+  public JComponent getComponent() {
+    return this;
   }
 
   private static JPanel createLegendPanel() {

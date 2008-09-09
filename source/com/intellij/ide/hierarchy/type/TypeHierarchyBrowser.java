@@ -45,7 +45,7 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
-public final class TypeHierarchyBrowser extends JPanel implements DataProvider, OccurenceNavigator, Disposable {
+public final class TypeHierarchyBrowser extends JPanel implements DataProvider, OccurenceNavigator, Disposable, HierarchyBrowser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.type.TypeHierarchyBrowser");
 
   @NonNls private static final String HELP_ID = "reference.toolWindows.hierarchy";
@@ -150,6 +150,10 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
       myTreePanel.add(new JScrollPane(tree), key);
     }
     add(myTreePanel, BorderLayout.CENTER);
+  }
+
+  public JComponent getComponent() {
+    return this;
   }
 
   public String getCurrentViewName() {

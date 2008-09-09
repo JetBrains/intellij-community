@@ -77,16 +77,6 @@
       <add-to-group group-id="CodeEditorViewGroup" anchor="before" relative-to-action="ShowErrorDescription"/>
     </action>
 
-    <group id="HierarchyGroup">
-      <separator/>
-      <action id="TypeHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction"/>
-      <action id="MethodHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseMethodHierarchyAction"/>
-      <action id="CallHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseCallHierarchyAction"/>
-      <separator/>
-
-      <add-to-group group-id="ViewMenu" anchor="last"/>
-    </group>
-
     <action id="ExpandJavadocs" class="com.intellij.codeInsight.folding.impl.actions.ExpandJavadocsAction">
       <add-to-group group-id="LanguageSpecificFoldingGroup" anchor="last"/>
     </action>
