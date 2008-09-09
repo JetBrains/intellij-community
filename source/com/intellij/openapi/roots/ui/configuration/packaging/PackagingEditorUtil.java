@@ -1,15 +1,15 @@
 package com.intellij.openapi.roots.ui.configuration.packaging;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.ModuleLibraryTable;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
-import com.intellij.openapi.roots.impl.ModuleLibraryTable;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
+import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
@@ -45,7 +45,7 @@ public class PackagingEditorUtil {
         renderer.append(getLibraryTableComment(library), commentAttributes);
       }
       else {
-        CellAppearanceUtils.forLibrary(library).customize(renderer);
+        OrderEntryCellAppearanceUtils.forLibrary(library).customize(renderer);
       }
     }
   }

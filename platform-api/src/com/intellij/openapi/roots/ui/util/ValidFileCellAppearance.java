@@ -1,6 +1,6 @@
 package com.intellij.openapi.roots.ui.util;
 
-import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
@@ -14,7 +14,7 @@ public class ValidFileCellAppearance extends BaseTextCommentCellAppearance {
   }
 
   protected Icon getIcon() {
-    return FileTypeManagerImpl.getInstance().getFileTypeByFile(myFile).getIcon();
+    return FileTypeManager.getInstance().getFileTypeByFile(myFile).getIcon();
   }
 
   protected String getSecondaryText() {

@@ -1,7 +1,5 @@
 package com.intellij.openapi.roots.ui.util;
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -10,71 +8,22 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.LightFilePointer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
 import java.io.File;
 
-// Author: dyoma
-
-public class CellAppearanceUtils {
-  public static final Icon INVALID_ICON = IconLoader.getIcon("/nodes/ppInvalid.png");
-  public static final Icon JAVA_DOC_FOLDER = IconLoader.getIcon("/nodes/javaDocFolder.png");
-  public static final Icon CLASSES_FOLDER = IconLoader.getIcon("/nodes/compiledClassesFolder.png");
-  public static final Icon EXCLUDE_FOLDERS_ICON = excludeIcon(Icons.SOURCE_FOLDERS_ICON);
-  public static final Icon EXCLUDE_FOLDER_ICON = excludeIcon(Icons.FOLDER_ICON);
-  public static final CellAppearance EMPTY = new EmptyAppearance();
+public class OrderEntryCellAppearanceUtils {
+  public static final Icon EXCLUDE_FOLDER_ICON = CellAppearanceUtils.excludeIcon(Icons.FOLDER_ICON);
   public static final Icon GENERIC_JDK_ICON = IconLoader.getIcon("/general/jdk.png");
   public static final String NO_JDK = ProjectBundle.message("jdk.missing.item");
 
-  private CellAppearanceUtils() {
-  }
-
-  public static SimpleTextAttributes createSimpleCellAttributes(boolean isSelected){
-    return isSelected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES;
-  }
-
-
-  private static CellAppearance forVirtualFilePointer(LightFilePointer filePointer) {
-    return filePointer.isValid() ?
-           forValidVirtualFile(filePointer.getFile()) :
-           forInvalidVirtualFilePointer(filePointer);
-  }
-
-  public static CellAppearance forVirtualFile(VirtualFile virtualFile) {
-    return virtualFile.isValid() ?
-           forValidVirtualFile(virtualFile) :
-           forInvalidVirtualFilePointer(new LightFilePointer(virtualFile.getUrl()));
-  }
-
-  private static SimpleTextCellAppearance forInvalidVirtualFilePointer(LightFilePointer filePointer) {
-    return SimpleTextCellAppearance.invalid(filePointer.getPresentableUrl(), INVALID_ICON);
-  }
-
-  private static CellAppearance forValidVirtualFile(VirtualFile virtualFile) {
-    final VirtualFileSystem fileSystem = virtualFile.getFileSystem();
-    if (fileSystem.getProtocol().equals(JarFileSystem.PROTOCOL)) {
-      return new JarSubfileCellAppearance(virtualFile);
-    }
-    if (fileSystem instanceof HttpFileSystem) {
-      return new HttpUrlCellAppearance(virtualFile);
-    }
-    if (virtualFile.isDirectory()) {
-      return SimpleTextCellAppearance.normal(virtualFile.getPresentableUrl(), Icons.FOLDER_ICON);
-    }
-    return new ValidFileCellAppearance(virtualFile);
-  }
-
-  public static Icon iconForFile(VirtualFile file) {
-    if (file.getFileSystem().getProtocol().equals(JarFileSystem.PROTOCOL) && file.getParent() == null) {
-      return file.getIcon();
-    }
-    if (file.isDirectory()) return Icons.FOLDER_ICON;
-    return file.getIcon();
+  private OrderEntryCellAppearanceUtils() {
   }
 
   public static CellAppearance forOrderEntry(OrderEntry orderEntry, boolean selected) {
@@ -83,18 +32,19 @@ public class CellAppearanceUtils {
       Sdk jdk = jdkLibraryEntry.getJdk();
       if (!orderEntry.isValid()) {
         final String oldJdkName = jdkLibraryEntry.getJdkName();
-        return SimpleTextCellAppearance.invalid(oldJdkName != null ? oldJdkName : NO_JDK, INVALID_ICON);
+        return SimpleTextCellAppearance.invalid(oldJdkName != null ? oldJdkName : NO_JDK,
+                                                CellAppearanceUtils.INVALID_ICON);
       }
       return forJdk(jdk, false, selected);
     }
     else if (!orderEntry.isValid()) {
-      return SimpleTextCellAppearance.invalid(orderEntry.getPresentableName(), INVALID_ICON);
+      return SimpleTextCellAppearance.invalid(orderEntry.getPresentableName(), CellAppearanceUtils.INVALID_ICON);
     }
     else if (orderEntry instanceof LibraryOrderEntry) {
       LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
       final Library library = libraryOrderEntry.getLibrary();
       if (!libraryOrderEntry.isValid()){ //library can be removed
-        return SimpleTextCellAppearance.invalid(orderEntry.getPresentableName(), INVALID_ICON);
+        return SimpleTextCellAppearance.invalid(orderEntry.getPresentableName(), CellAppearanceUtils.INVALID_ICON);
       }
       return forLibrary(library);
     }
@@ -130,12 +80,32 @@ public class CellAppearanceUtils {
     return SimpleTextCellAppearance.normal(url.substring(startIndex), Icons.LIBRARY_ICON);
   }
 
-  public static SimpleTextCellAppearance forSourceFolder(SourceFolder folder) {
-    return formatRelativePath(folder, Icons.FOLDER_ICON);
-  }
-
   public static Icon sourceFolderIcon(boolean testSource) {
     return testSource ? Icons.TEST_SOURCE_FOLDER : Icons.SOURCE_FOLDERS_ICON;
+  }
+
+  public static CellAppearance forJdk(Sdk jdk, boolean isInComboBox, final boolean selected) {
+    if (jdk == null) {
+      return SimpleTextCellAppearance.invalid(NO_JDK, CellAppearanceUtils.INVALID_ICON);
+    }
+    String name = jdk.getName();
+    CompositeAppearance appearance = new CompositeAppearance();
+    appearance.setIcon(jdk.getSdkType().getIcon());
+    VirtualFile homeDirectory = jdk.getHomeDirectory();
+    SimpleTextAttributes attributes =
+        homeDirectory != null && homeDirectory.isValid() ? CellAppearanceUtils.createSimpleCellAttributes(selected) : SimpleTextAttributes.ERROR_ATTRIBUTES;
+    CompositeAppearance.DequeEnd ending = appearance.getEnding();
+    ending.addText(name, attributes);
+    String versionString = jdk.getVersionString();
+    if (versionString != null && !versionString.equals(name)) {
+      SimpleTextAttributes textAttributes = isInComboBox ? SimpleTextAttributes.SYNTHETIC_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
+      ending.addComment(versionString, textAttributes);
+    }
+    return ending.getAppearance();
+  }
+
+  public static SimpleTextCellAppearance forSourceFolder(SourceFolder folder) {
+    return formatRelativePath(folder, Icons.FOLDER_ICON);
   }
 
   public static CellAppearance forExcludeFolder(ExcludeFolder folder) {
@@ -183,46 +153,6 @@ public class CellAppearanceUtils {
     return new SimpleTextCellAppearance(relativePath, icon, textAttributes);
   }
 
-  public static CellAppearance forJdk(Sdk jdk, boolean isInComboBox, final boolean selected) {
-    if (jdk == null) {
-      return SimpleTextCellAppearance.invalid(NO_JDK, INVALID_ICON);
-    }
-    String name = jdk.getName();
-    CompositeAppearance appearance = new CompositeAppearance();
-    appearance.setIcon(jdk.getSdkType().getIcon());
-    VirtualFile homeDirectory = jdk.getHomeDirectory();
-    SimpleTextAttributes attributes =
-        homeDirectory != null && homeDirectory.isValid() ? createSimpleCellAttributes(selected) : SimpleTextAttributes.ERROR_ATTRIBUTES;
-    CompositeAppearance.DequeEnd ending = appearance.getEnding();
-    ending.addText(name, attributes);
-    String versionString = jdk.getVersionString();
-    if (versionString != null && !versionString.equals(name)) {
-      SimpleTextAttributes textAttributes = isInComboBox ? SimpleTextAttributes.SYNTHETIC_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
-      ending.addComment(versionString, textAttributes);
-    }
-    return ending.getAppearance();
-  }
-
-  public static Icon excludeIcon(Icon icon) {
-    return IconLoader.getDisabledIcon(icon);
-  }
-
-  public static CompositeAppearance forFile(File file) {
-    String absolutePath = file.getAbsolutePath();
-    if (!file.exists()) return CompositeAppearance.invalid(absolutePath);
-    if (file.isDirectory()) {
-      CompositeAppearance appearance = CompositeAppearance.single(absolutePath);
-      appearance.setIcon(Icons.FOLDER_ICON);
-      return appearance;
-    }
-    String name = file.getName();
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
-    File parent = file.getParentFile();
-    CompositeAppearance appearance = CompositeAppearance.textComment(name, parent.getAbsolutePath());
-    appearance.setIcon(fileType.getIcon());
-    return appearance;
-  }
-
   public static CellAppearance forProjectJdk(final Project project) {
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
     final Sdk projectJdk = projectRootManager.getProjectJdk();
@@ -234,7 +164,8 @@ public class CellAppearanceUtils {
       // probably invalid JDK
       final String projectJdkName = projectRootManager.getProjectJdkName();
       if (projectJdkName != null) {
-        appearance = SimpleTextCellAppearance.invalid(ProjectBundle.message("jdk.combo.box.invalid.item", projectJdkName), INVALID_ICON);
+        appearance = SimpleTextCellAppearance.invalid(ProjectBundle.message("jdk.combo.box.invalid.item", projectJdkName),
+                                                      CellAppearanceUtils.INVALID_ICON);
       }
       else {
         appearance = forJdk(null, false, false);
@@ -243,12 +174,13 @@ public class CellAppearanceUtils {
     return appearance;
   }
 
-  private static class EmptyAppearance implements CellAppearance {
-    public void customize(SimpleColoredComponent component) {
-    }
+  public static CellAppearance forVirtualFilePointer(LightFilePointer filePointer) {
+    return filePointer.isValid() ?
+           CellAppearanceUtils.forValidVirtualFile(filePointer.getFile()) :
+           forInvalidVirtualFilePointer(filePointer);
+  }
 
-    public String getText() {
-      return "";
-    }
+  static SimpleTextCellAppearance forInvalidVirtualFilePointer(LightFilePointer filePointer) {
+    return SimpleTextCellAppearance.invalid(filePointer.getPresentableUrl(), CellAppearanceUtils.INVALID_ICON);
   }
 }

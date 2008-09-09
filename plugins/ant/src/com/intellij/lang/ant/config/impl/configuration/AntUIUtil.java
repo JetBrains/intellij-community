@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
+import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.IconLoader;
@@ -165,7 +166,7 @@ public class AntUIUtil {
       Sdk jdk = myAntConfiguration.findJdk(jdkName);
       if (jdk == null) {
         if (myProjectJdkName.length() > 0) {
-          setIcon(CellAppearanceUtils.GENERIC_JDK_ICON);
+          setIcon(OrderEntryCellAppearanceUtils.GENERIC_JDK_ICON);
           append(AntBundle.message("project.jdk.project.jdk.name.list.column.value", myProjectJdkName), selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
         }
         else {
@@ -174,7 +175,7 @@ public class AntUIUtil {
         }
       }
       else  {
-        CellAppearanceUtils.forJdk(jdk, myInComboBox, selected).customize(this);
+        OrderEntryCellAppearanceUtils.forJdk(jdk, myInComboBox, selected).customize(this);
       }
     }
   }

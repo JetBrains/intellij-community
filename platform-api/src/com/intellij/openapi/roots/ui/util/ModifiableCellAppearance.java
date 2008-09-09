@@ -1,6 +1,6 @@
 package com.intellij.openapi.roots.ui.util;
 
-import javax.swing.Icon;
+import javax.swing.*;
 
 // Author: dyoma
 

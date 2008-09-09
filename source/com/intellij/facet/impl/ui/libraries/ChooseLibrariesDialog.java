@@ -3,15 +3,15 @@ package com.intellij.facet.impl.ui.libraries;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
+import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -50,7 +50,7 @@ public class ChooseLibrariesDialog extends DialogWrapper {
     }
 
     protected String getItemText(final Library value) {
-      return CellAppearanceUtils.forLibrary(value).getText();
+      return OrderEntryCellAppearanceUtils.forLibrary(value).getText();
     }
   }
 }
