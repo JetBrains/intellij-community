@@ -249,9 +249,9 @@ public class FileReferenceSet {
     final Project project = file.getProject();
     final FileContextProvider contextProvider = FileContextProvider.getProvider(file);
     if (contextProvider != null) {
-      final PsiFileSystemItem item = contextProvider.getContextFolder(file);
-      if (item != null) {
-        return Collections.singleton(item);
+      final Collection<PsiFileSystemItem> folders = contextProvider.getContextFolders(file);
+      if (!folders.isEmpty()) {
+        return folders;
       }
       if (useIncludingFileAsContext()) {
         final PsiFile contextFile = contextProvider.getContextFile(file);

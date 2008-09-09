@@ -5,6 +5,8 @@ import com.intellij.openapi.extensions.Extensions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -24,8 +26,8 @@ public abstract class FileContextProvider {
 
   protected abstract boolean isAvailable(final PsiFile file);
 
-  @Nullable
-  public abstract PsiFileSystemItem getContextFolder(final PsiFile file);
+  @NotNull
+  public abstract Collection<PsiFileSystemItem> getContextFolders(final PsiFile file);
 
   @Nullable
   public abstract PsiFile getContextFile(final PsiFile file);
