@@ -62,6 +62,15 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
       protected List<Change> getSelectedObjects(final ChangesBrowserNode node) {
         return node.getAllChangesUnder();
       }
+
+      @Nullable
+      protected Change getLeadSelectedObject(final ChangesBrowserNode node) {
+        final Object o = node.getUserObject();
+        if (o instanceof Change) {
+          return (Change) o;
+        }
+        return null;
+      }
     };
 
     myViewer.setDoubleClickHandler(new Runnable() {

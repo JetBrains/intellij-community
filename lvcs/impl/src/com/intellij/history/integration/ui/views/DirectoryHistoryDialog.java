@@ -80,6 +80,14 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       protected List<Change> getSelectedObjects(ChangesBrowserNode node) {
         return node.getAllChangesUnder();
       }
+
+      protected Change getLeadSelectedObject(final ChangesBrowserNode node) {
+        final Object o = node.getUserObject();
+        if (o instanceof Change) {
+          return (Change) o;
+        }
+        return null;
+      }
     };
   }
 

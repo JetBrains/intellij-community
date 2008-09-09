@@ -336,6 +336,25 @@ public abstract class ChangesTreeList<T> extends JPanel {
   protected abstract List<T> getSelectedObjects(final ChangesBrowserNode node);
 
   @Nullable
+  protected abstract T getLeadSelectedObject(final ChangesBrowserNode node);
+
+  @Nullable
+  public T getHighestLeadSelection() {
+    if (myShowFlatten) {
+      final int index = myList.getLeadSelectionIndex();
+      ListModel listModel = myList.getModel();
+      if (index < 0 || index >= listModel.getSize()) return null;
+      //noinspection unchecked
+      return (T)listModel.getElementAt(index);
+    }
+    else {
+      final TreePath path = myTree.getSelectionPath();
+      if (path == null) return null;
+      return getLeadSelectedObject((ChangesBrowserNode)path.getLastPathComponent());
+    }
+  }
+
+  @Nullable
   public T getLeadSelection() {
     if (myShowFlatten) {
       final int index = myList.getLeadSelectionIndex();

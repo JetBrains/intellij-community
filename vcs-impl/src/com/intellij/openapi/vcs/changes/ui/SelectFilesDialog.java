@@ -29,6 +29,14 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
       protected List<VirtualFile> getSelectedObjects(final ChangesBrowserNode node) {
         return node.getAllFilesUnder();
       }
+
+      protected VirtualFile getLeadSelectedObject(final ChangesBrowserNode node) {
+        final Object o = node.getUserObject();
+        if (o instanceof VirtualFile) {
+          return (VirtualFile) o;
+        }
+        return null;
+      }
     };
     myFileList.setChangesToDisplay(originalFiles);
     myPanel.add(myFileList, BorderLayout.CENTER);

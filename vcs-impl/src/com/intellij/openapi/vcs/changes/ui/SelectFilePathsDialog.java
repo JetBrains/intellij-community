@@ -7,6 +7,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
@@ -28,6 +29,15 @@ public class SelectFilePathsDialog extends AbstractSelectFilesDialog<FilePath> {
 
       protected List<FilePath> getSelectedObjects(final ChangesBrowserNode node) {
         return node.getAllFilePathsUnder();
+      }
+
+      @Nullable
+      protected FilePath getLeadSelectedObject(final ChangesBrowserNode node) {
+        final Object userObject = node.getUserObject();
+        if (userObject instanceof FilePath) {
+          return (FilePath) userObject;
+        }
+        return null;
       }
     };
     myFileList.setChangesToDisplay(originalFiles);

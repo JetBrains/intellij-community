@@ -66,6 +66,9 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
     else if (VcsDataKeys.SELECTED_CHANGES.getName().equals(dataId)) {
       final List<Change> list = myViewer.getSelectedChanges();
       return list.toArray(new Change [list.size()]);
+    } else if (VcsDataKeys.CHANGE_LEAD_SELECTION.getName().equals(dataId)) {
+      final Change highestSelection = myViewer.getHighestLeadSelection();
+      return (highestSelection == null) ? new Change[]{} : new Change[] {highestSelection};
     } else {
       final TypeSafeDataProviderAdapter adapter = new TypeSafeDataProviderAdapter(this);
       return adapter.getData(dataId);
