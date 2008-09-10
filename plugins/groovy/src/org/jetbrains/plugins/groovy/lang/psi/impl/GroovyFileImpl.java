@@ -258,7 +258,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     } else {
       final ASTNode anchor = fileNode.getFirstChildNode();
       fileNode.addChild(newNode, anchor);
-      fileNode.addLeaf(GroovyTokenTypes.mNLS, "\n", anchor);
+      fileNode.addLeaf(GroovyTokenTypes.mNLS, "\n\n", anchor);
     }
   }
 
