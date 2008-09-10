@@ -3,8 +3,6 @@ package com.intellij.openapi.roots.ui.configuration.packaging;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.deployment.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -16,12 +14,8 @@ import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -31,6 +25,8 @@ import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -93,57 +89,20 @@ public class PackagingEditorImpl implements PackagingEditor {
 
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        JBPopupFactory.getInstance().createListPopup(createAddActionsPopup()).showUnderneathOf(myAddButton);
+        JBPopupFactory.getInstance().createListPopup(new AddPackagingElementPopupStep(PackagingEditorImpl.this, myPolicy.getAddActions())).showUnderneathOf(myAddButton);
       }
     });
     myEditButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        ContainerElement element = getSelectedElement();
-        if (element != null) {
-          editElement(element);
+        PackagingElementsToEditInfo elementsToEdit = getSelectedElements().getElementsToEdit(myPolicy);
+        if (elementsToEdit != null) {
+          editElement(elementsToEdit);
         }
       }
     });
     myRemoveButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        Pair<List<ContainerElement>, Set<PackagingArtifact>> pair = getSelectedElements();
-        List<ContainerElement> toRemove = pair.getFirst();
-        Set<PackagingArtifact> owners = pair.getSecond();
-
-        if (!owners.isEmpty()) {
-          String message;
-          if (owners.size() == 1 && toRemove.isEmpty()) {
-            PackagingArtifact artifact = owners.iterator().next();
-            message = ProjectBundle.message("message.text.packaging.selected.item.belongs.to.0.do.you.want.to.exlude.1.from.2",
-                                            artifact.getDisplayName(), artifact.getDisplayName(), myRootArtifact.getDisplayName());
-          }
-          else {
-            StringBuilder ownersBuffer = new StringBuilder();
-            for (PackagingArtifact owner : owners) {
-              if (ownersBuffer.length() > 0) {
-                ownersBuffer.append(", ");
-              }
-              ownersBuffer.append(owner.getDisplayName());
-            }
-            message = ProjectBundle .message("message.text.packaging.do.you.want.to.exlude.0.from.1", ownersBuffer, myRootArtifact.getDisplayName());
-          }
-          int answer = Messages.showYesNoDialog(myMainPanel, message, ProjectBundle.message("dialog.title.packaging.remove.included"), null);
-          if (answer != 0) {
-            return;
-          }
-        }
-
-        saveData();
-        for (ContainerElement containerElement : toRemove) {
-          myModifiedConfiguration.removeContainerElement(containerElement);
-        }
-        for (PackagingArtifact owner : owners) {
-          ContainerElement element = owner.getContainerElement();
-          if (element != null) {
-            myModifiedConfiguration.removeContainerElement(element);
-          }
-        }
-        rebuildTree();
+        removeSelectedElements();
       }
     });
     ActionListener actionListener = new ActionListener() {
@@ -157,40 +116,30 @@ public class PackagingEditorImpl implements PackagingEditor {
     myShowLibraryFilesCheckBox.addActionListener(actionListener);
   }
 
-  @Nullable
-  private ContainerElement getSelectedElement() {
-    Pair<List<ContainerElement>, Set<PackagingArtifact>> pair = getSelectedElements();
-    List<ContainerElement> elements = pair.getFirst();
-    Set<PackagingArtifact> artifacts = pair.getSecond();
-    if (elements.size() == 1) {
-      return elements.get(0);
+  public void removeSelectedElements() {
+    SelectedPackagingElements selectedElements = getSelectedElements();
+    if (!selectedElements.showRemovingWarning(this)) return;
+
+    saveData();
+    for (ContainerElement containerElement : selectedElements.getContainerElements()) {
+      myModifiedConfiguration.removeContainerElement(containerElement);
     }
-    else if (artifacts.size() == 1){
-      ContainerElement element = artifacts.iterator().next().getContainerElement();
+    for (PackagingArtifact owner : selectedElements.getOwners()) {
+      ContainerElement element = owner.getContainerElement();
       if (element != null) {
-        return element;
+        myModifiedConfiguration.removeContainerElement(element);
       }
     }
-    return null;
+    rebuildTree();
   }
 
-  private Pair<List<ContainerElement>, Set<PackagingArtifact>> getSelectedElements() {
+  public PackagingArtifact getRootArtifact() {
+    return myRootArtifact;
+  }
+
+  private SelectedPackagingElements getSelectedElements() {
     PackagingTreeNode[] treeNodes = myTree.getSelectedNodes(PackagingTreeNode.class, null);
-    Set<PackagingArtifact> owners = new HashSet<PackagingArtifact>();
-    List<ContainerElement> elements = new ArrayList<ContainerElement>();
-    for (PackagingTreeNode treeNode : treeNodes) {
-      ContainerElement containerElement = treeNode.getContainerElement();
-      if (containerElement == null) continue;
-      
-      PackagingArtifact owner = treeNode.getOwner();
-      if (owner != null && owner.getContainerElement() != null) {
-        owners.add(owner);
-      }
-      else {
-        elements.add(containerElement);
-      }
-    }
-    return Pair.create(elements, owners);
+    return new SelectedPackagingElements(treeNodes);
   }
 
   public void addModules(final List<Module> modules) {
@@ -210,14 +159,30 @@ public class PackagingEditorImpl implements PackagingEditor {
     }
   }
 
-
-  private void editElement(final @NotNull ContainerElement element) {
+  private void editElement(final @NotNull PackagingElementsToEditInfo elementsToEdit) {
     saveData();
-    boolean ok = PackagingElementPropertiesComponent.showDialog(element, myMainPanel, myPolicy);
+    boolean ok = PackagingElementPropertiesComponent.showDialog(elementsToEdit, myMainPanel, myPolicy);
     if (ok) {
       rebuildTree();
-      selectElement(element, false);
+      selectElements(elementsToEdit.getElements());
     }
+  }
+
+  @TestOnly
+  @Nullable
+  public PackagingElementPropertiesComponent editSelectedElements() {
+    SelectedPackagingElements selectedElements = getSelectedElements();
+    if (selectedElements == null) return null;
+
+    PackagingElementsToEditInfo elementsInfo = selectedElements.getElementsToEdit(myPolicy);
+    if (elementsInfo == null) return null;
+
+    return PackagingElementPropertiesComponent.createPropertiesComponent(elementsInfo, myPolicy);
+  }
+
+  private void selectElements(final List<ContainerElement> elements) {
+    //todo[nik]
+    selectElement(elements.get(0), false);
   }
 
   public void addElement(final ContainerElement element) {
@@ -252,6 +217,27 @@ public class PackagingEditorImpl implements PackagingEditor {
       }
     }
     myPolicy.processNewLibraries(this, libraries);
+  }
+
+  @TestOnly
+  public boolean selectNodes(@NotNull @NonNls final String... nodeNames) {
+    final List<PackagingTreeNode> toSelect = new ArrayList<PackagingTreeNode>();
+    TreeUtil.traverseDepth(myRoot, new TreeUtil.Traverse() {
+      public boolean accept(final Object node) {
+        if (node instanceof PackagingTreeNode) {
+          PackagingTreeNode packagingNode = (PackagingTreeNode)node;
+          if (Arrays.asList(nodeNames).contains(packagingNode.getOutputFileName())) {
+            toSelect.add(packagingNode);
+          }
+        }
+        return true;
+      }
+    });
+    myTree.getSelectionModel().clearSelection();
+    for (PackagingTreeNode node : toSelect) {
+      myTree.getSelectionModel().addSelectionPath(new TreePath(node.getPath()));
+    }
+    return toSelect.size() == nodeNames.length;
   }
 
   @Nullable
@@ -292,36 +278,6 @@ public class PackagingEditorImpl implements PackagingEditor {
     if (last != null) {
       selectElement(last, false);
     }
-  }
-
-  private BaseListPopupStep<AddPackagingElementAction> createAddActionsPopup() {
-    return new BaseListPopupStep<AddPackagingElementAction>(null, myPolicy.getAddActions()) {
-      @Override
-      public PopupStep onChosen(final AddPackagingElementAction selectedValue, final boolean finalChoice) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            selectedValue.perform(PackagingEditorImpl.this);
-          }
-        }, ModalityState.stateForComponent(myMainPanel));
-        return FINAL_CHOICE;
-      }
-
-      @Override
-      public boolean isSelectable(final AddPackagingElementAction value) {
-        return value.isEnabled(PackagingEditorImpl.this);
-      }
-
-      @Override
-      public Icon getIconFor(final AddPackagingElementAction aValue) {
-        return aValue.getIcon();
-      }
-
-      @NotNull
-      @Override
-      public String getTextFor(final AddPackagingElementAction value) {
-        return value.getText();
-      }
-    };
   }
 
   public void setTreeParameters(PackagingTreeParameters parameters) {
@@ -438,12 +394,12 @@ public class PackagingEditorImpl implements PackagingEditor {
   }
 
   private void updateButtons() {
-    Pair<List<ContainerElement>, Set<PackagingArtifact>> pair = getSelectedElements();
-    List<ContainerElement> elements = pair.getFirst();
-    Set<PackagingArtifact> artifacts = pair.getSecond();
+    SelectedPackagingElements selectedElements = getSelectedElements();
+    List<ContainerElement> elements = selectedElements.getContainerElements();
+    Set<PackagingArtifact> artifacts = selectedElements.getOwners();
     myRemoveButton.setEnabled(!elements.isEmpty() || !artifacts.isEmpty());
-    ContainerElement selectedElement = getSelectedElement();
-    myEditButton.setEnabled(selectedElement != null && PackagingElementPropertiesComponent.isEnabled(selectedElement, myPolicy));
+    PackagingElementsToEditInfo elementsToEdit = selectedElements.getElementsToEdit(myPolicy);
+    myEditButton.setEnabled(elementsToEdit != null && PackagingElementPropertiesComponent.isEnabled(elementsToEdit));
   }
 
   public JPanel getMainPanel() {
@@ -498,7 +454,7 @@ public class PackagingEditorImpl implements PackagingEditor {
             ContainerElement element = node.getContainerElement();
             if (element != null) {
               if (node.getOwner() == null) {
-                editElement(element);
+                editElement(new PackagingElementsToEditInfo(element, myPolicy));
               }
               else {
                 navigate(node);

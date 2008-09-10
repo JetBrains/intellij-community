@@ -5,12 +5,17 @@ import com.intellij.openapi.deployment.PackagingMethod;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author nik
@@ -24,21 +29,22 @@ public class PackagingElementPropertiesComponent {
   private JLabel myElementNameLabel;
   private JPanel myLabelsPanel;
   private JPanel myFieldPanel;
-  private final ContainerElement myElement;
   private final PackagingEditorPolicy myEditorPolicy;
   private PackagingMethod myLastSelectedMethod;
   private PackagingEditorPolicy.AdditionalPropertiesConfigurable myAdditionalPropertiesConfigurable;
+  private PackagingElementsToEditInfo myElementsInfo;
+  private Map<ContainerElement,String> myPathTails;
 
-  private PackagingElementPropertiesComponent(ContainerElement element, PackagingEditorPolicy editorPolicy) {
-    myElement = element;
-    myElementNameLabel.setText(editorPolicy.getElementText(element));
+  private PackagingElementPropertiesComponent(PackagingElementsToEditInfo elementsInfo, PackagingEditorPolicy editorPolicy) {
+    myElementsInfo = elementsInfo;
+    myElementNameLabel.setText(elementsInfo.getElementText());
     myEditorPolicy = editorPolicy;
-    if (editorPolicy.getAllowedPackagingMethods(element).length > 1) {
-      for (PackagingMethod method : myEditorPolicy.getAllowedPackagingMethods(element)) {
+    if (elementsInfo.getAllowedPackagingMethods().length > 1 && elementsInfo.getPackagingMethod() != null) {
+      for (PackagingMethod method : elementsInfo.getAllowedPackagingMethods()) {
         myPackagingMethodBox.addItem(method);
       }
       myPackagingMethodBox.setRenderer(new PackagingMethodListCellRenderer());
-      myPackagingMethodBox.setSelectedItem(myLastSelectedMethod = element.getPackagingMethod());
+      myPackagingMethodBox.setSelectedItem(myLastSelectedMethod = elementsInfo.getPackagingMethod());
       myPackagingMethodBox.addActionListener(new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
           updateOutputPath();
@@ -50,30 +56,50 @@ public class PackagingElementPropertiesComponent {
       myPackagingMethodLabel.setVisible(false);
     }
 
-    if (editorPolicy.isRelativePathCellEditable(element)) {
-      myOutputPathField.setText(element.getURI());
+    String outputPath = elementsInfo.getRelativePath();
+    myPathTails = elementsInfo.getPathTails();
+    if (outputPath != null) {
+      myOutputPathField.setText(outputPath);
     }
     else {
       myOutputPathField.setVisible(false);
       myOutputPathLabel.setVisible(false);
     }
-    myAdditionalPropertiesConfigurable = editorPolicy.getAdditionalPropertiesConfigurable(element);
-    if (myAdditionalPropertiesConfigurable != null) {
-      myLabelsPanel.add(myAdditionalPropertiesConfigurable.getLabelsComponent(), BorderLayout.CENTER);
-      myFieldPanel.add(myAdditionalPropertiesConfigurable.getFieldsComponent(), BorderLayout.CENTER);
-      myAdditionalPropertiesConfigurable.resetFrom(element);
+    List<ContainerElement> elements = elementsInfo.getElements();
+    if (elements.size() == 1) {
+      ContainerElement element = elements.get(0);
+      myAdditionalPropertiesConfigurable = editorPolicy.getAdditionalPropertiesConfigurable(element);
+      if (myAdditionalPropertiesConfigurable != null) {
+        myLabelsPanel.add(myAdditionalPropertiesConfigurable.getLabelsComponent(), BorderLayout.CENTER);
+        myFieldPanel.add(myAdditionalPropertiesConfigurable.getFieldsComponent(), BorderLayout.CENTER);
+        myAdditionalPropertiesConfigurable.resetFrom(element);
+      }
     }
   }
 
   private void updateOutputPath() {
     PackagingMethod method = getSelectedMethod();
     if (method != myLastSelectedMethod) {
-      PackagingMethod oldMethod = myElement.getPackagingMethod();
-      myElement.setPackagingMethod(method);
-      myOutputPathField.setText(myEditorPolicy.suggestDefaultRelativePath(myElement));
-      myElement.setPackagingMethod(oldMethod);
+      Map<ContainerElement, String> paths = new HashMap<ContainerElement, String>();
+      for (ContainerElement element : myElementsInfo.getElements()) {
+        PackagingMethod oldMethod = element.getPackagingMethod();
+        element.setPackagingMethod(method);
+        paths.put(element, myEditorPolicy.suggestDefaultRelativePath(element));
+        element.setPackagingMethod(oldMethod);
+      }
+      Pair<String,Map<ContainerElement,String>> pair = PackagingElementsToEditInfo.getPrefixAndSuffixes(paths, myEditorPolicy);
+      if (pair != null) {
+        myOutputPathField.setText(pair.getFirst());
+        myPathTails = pair.getSecond();
+      }
+      myOutputPathField.setEnabled(pair != null);
       myLastSelectedMethod = method;
     }
+  }
+
+  @TestOnly
+  public JTextField getOutputPathField() {
+    return myOutputPathField;
   }
 
   public JPanel getMainPanel() {
@@ -82,16 +108,36 @@ public class PackagingElementPropertiesComponent {
 
   public void applyChanges() {
     PackagingMethod packagingMethod = getSelectedMethod();
-    if (packagingMethod != null) {
-      myElement.setPackagingMethod(packagingMethod);
+    if (packagingMethod != null && myElementsInfo.getPackagingMethod() != null) {
+      for (ContainerElement element : myElementsInfo.getElements()) {
+        element.setPackagingMethod(packagingMethod);
+      }
     }
     String text = myOutputPathField.getText();
     if (text.length() == 0) {
       text = "/";
     }
-    myElement.setURI(FileUtil.toSystemIndependentName(text));
-    if (myAdditionalPropertiesConfigurable != null) {
-      myAdditionalPropertiesConfigurable.applyTo(myElement);
+    if (myElementsInfo.getRelativePath() != null) {
+      for (ContainerElement element : myElementsInfo.getElements()) {
+        String path = text;
+        if (myPathTails != null) {
+          String tail = myPathTails.get(element);
+          if (tail.startsWith("/")) {
+            tail = tail.substring(1);
+          }
+          if (!path.endsWith("/")) {
+            path += "/";
+          }
+          path += tail;
+        }
+        if (path.length() > 1 && path.endsWith("/")) {
+          path = path.substring(0, path.length() - 1);
+        }
+        element.setURI(FileUtil.toSystemIndependentName(path));
+      }
+    }
+    if (myAdditionalPropertiesConfigurable != null && myElementsInfo.getElements().size() == 1) {
+      myAdditionalPropertiesConfigurable.applyTo(myElementsInfo.getElements().get(0));
     }
   }
 
@@ -100,21 +146,26 @@ public class PackagingElementPropertiesComponent {
     return (PackagingMethod)myPackagingMethodBox.getSelectedItem();
   }
 
-  public static boolean isEnabled(ContainerElement element, PackagingEditorPolicy editorPolicy) {
-    boolean showPackagingMethodBox = editorPolicy.getAllowedPackagingMethods(element).length > 1;
-    boolean showOutputPathField = editorPolicy.isRelativePathCellEditable(element);
+  @TestOnly
+  public JComboBox getPackagingMethodBox() {
+    return myPackagingMethodBox;
+  }
+
+  public static boolean isEnabled(PackagingElementsToEditInfo elementsToEdit) {
+    boolean showPackagingMethodBox = elementsToEdit.getAllowedPackagingMethods().length > 1 && elementsToEdit.getPackagingMethod() != null;
+    boolean showOutputPathField = elementsToEdit.getRelativePath() != null;
     return showOutputPathField || showPackagingMethodBox;
   }
 
   @Nullable
-  public static PackagingElementPropertiesComponent createPropertiesComponent(ContainerElement element, PackagingEditorPolicy editorPolicy) {
-    if (!isEnabled(element, editorPolicy)) return null;
+  public static PackagingElementPropertiesComponent createPropertiesComponent(PackagingElementsToEditInfo elementsToEdit, PackagingEditorPolicy editorPolicy) {
+    if (!isEnabled(elementsToEdit)) return null;
 
-    return new PackagingElementPropertiesComponent(element, editorPolicy);
+    return new PackagingElementPropertiesComponent(elementsToEdit, editorPolicy);
   }
 
-  public static boolean showDialog(final ContainerElement element, JPanel component, PackagingEditorPolicy policy) {
-    PackagingElementPropertiesComponent propertiesComponent = createPropertiesComponent(element, policy);
+  public static boolean showDialog(final PackagingElementsToEditInfo elementsToEdit, JPanel component, PackagingEditorPolicy policy) {
+    PackagingElementPropertiesComponent propertiesComponent = createPropertiesComponent(elementsToEdit, policy);
     if (propertiesComponent == null) {
       return false;
     }
@@ -131,7 +182,8 @@ public class PackagingElementPropertiesComponent {
                                                   final int index,
                                                   final boolean isSelected,
                                                   final boolean cellHasFocus) {
-      value = myElement.getDescriptionForPackagingMethod((PackagingMethod)value);
+      ContainerElement element = myElementsInfo.getElements().get(0);
+      value = element.getDescriptionForPackagingMethod((PackagingMethod)value);
       return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     }
   }
