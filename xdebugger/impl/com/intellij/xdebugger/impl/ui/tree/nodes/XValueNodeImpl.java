@@ -19,6 +19,7 @@ import javax.swing.*;
  */
 public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNode, XCompositeNode {
   private String myName;
+  private String myType;
   private String myValue;
   private String mySeparator;
   private boolean myChanged;
@@ -43,6 +44,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         myName = name;
         myValue = value;
         mySeparator = separator;
+        myType = type;
 
         updateText();
         setLeaf(!hasChildren);
@@ -56,6 +58,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     myText.clear();
     myText.append(myName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
     myText.append(mySeparator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    if (myType != null) {
+      myText.append("{" + myType + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
+    }
     myText.append(myValue, myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
