@@ -546,6 +546,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   public void setActionActive(String name, boolean state) {
     StructureViewFactoryEx.getInstanceEx(myProject).setActiveAction(name, state);
     rebuild();
+    TreeUtil.expand(getTree(), 2);
   }
 
   protected void rebuild() {
