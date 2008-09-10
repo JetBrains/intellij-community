@@ -15,6 +15,20 @@
  */
 package com.intellij.openapi.vcs.annotate;
 
-public interface AnnotationListener {
+import java.util.EventListener;
+
+/**
+ * Annotation listener. This interface is used to notify that file annotation
+ * has changed so the current {@link com.intellij.openapi.vcs.annotate.FileAnnotation}
+ * object is no more valid.
+ *
+ * @author lesya
+ */
+public interface AnnotationListener extends EventListener {
+  /**
+   * This method is invoked when
+   * {@link com.intellij.openapi.vcs.annotate.FileAnnotation}
+   * is no more valid.
+   */
   void onAnnotationChanged();
 }
