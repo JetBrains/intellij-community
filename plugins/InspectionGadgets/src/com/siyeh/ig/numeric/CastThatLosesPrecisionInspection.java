@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,51 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.psi.*;
+import com.intellij.openapi.project.Project;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JComponent;
 import java.util.HashMap;
 import java.util.Map;
 
 public class CastThatLosesPrecisionInspection extends BaseInspection {
 
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreIntegerCharCasts = false;
+
+    /** @noinspection StaticCollection */
+    private static final Map<PsiType, Integer> s_typePrecisions =
+            new HashMap<PsiType, Integer>(7);
+
+    static {
+        s_typePrecisions.put(PsiType.BYTE, 1);
+        s_typePrecisions.put(PsiType.CHAR, 2);
+        s_typePrecisions.put(PsiType.SHORT, 2);
+        s_typePrecisions.put(PsiType.INT, 3);
+        s_typePrecisions.put(PsiType.LONG, 4);
+        s_typePrecisions.put(PsiType.FLOAT, 5);
+        s_typePrecisions.put(PsiType.DOUBLE, 6);
+    }
+
+    @Override
     @NotNull
     public String getID() {
         return "NumericCastThatLosesPrecision";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "cast.that.loses.precision.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final PsiType operandType = (PsiType)infos[0];
@@ -46,28 +69,20 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
                 operandType.getPresentableText());
     }
 
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "cast.that.loses.precision.option"), 
+                this, "ignoreIntegerCharCasts");
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CastThatLosesPrecisionVisitor();
     }
 
-    private static class CastThatLosesPrecisionVisitor
+    private class CastThatLosesPrecisionVisitor
             extends BaseInspectionVisitor {
-
-        /**
-         * @noinspection StaticCollection
-         */
-        private static final Map<PsiType, Integer> s_typePrecisions =
-                new HashMap<PsiType, Integer>(7);
-
-        static {
-            s_typePrecisions.put(PsiType.BYTE, 1);
-            s_typePrecisions.put(PsiType.CHAR, 2);
-            s_typePrecisions.put(PsiType.SHORT, 2);
-            s_typePrecisions.put(PsiType.INT, 3);
-            s_typePrecisions.put(PsiType.LONG, 4);
-            s_typePrecisions.put(PsiType.FLOAT, 5);
-            s_typePrecisions.put(PsiType.DOUBLE, 6);
-        }
 
         @Override public void visitTypeCastExpression(
                 @NotNull PsiTypeCastExpression expression) {
@@ -86,8 +101,16 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
             if (hasLowerPrecision(operandType, castType)) {
                 return;
             }
-            final PsiManager manager = expression.getManager();
-          final PsiConstantEvaluationHelper evaluationHelper = JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
+            if (ignoreIntegerCharCasts) {
+                if (operandType == PsiType.INT &&
+                        castType == PsiType.CHAR) {
+                    return;
+                }
+            }
+            final Project project = expression.getProject();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiConstantEvaluationHelper evaluationHelper =
+                  psiFacade.getConstantEvaluationHelper();
             Object result =
                     evaluationHelper.computeConstantExpression(operand);
 
@@ -96,7 +119,7 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
             }
             if (result instanceof Number) {
                 final Number number = (Number)result;
-                if (valueIsContainableType(number, castType)) {
+                if (valueIsContainableInType(number, castType)) {
                     return;
                 }
             }
@@ -107,14 +130,15 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
             registerError(castTypeElement, operandType);
         }
 
-        private static boolean hasLowerPrecision(PsiType operandType,
-                                                 PsiType castType) {
+        private boolean hasLowerPrecision(PsiType operandType,
+                                          PsiType castType) {
             final Integer operandPrecision = s_typePrecisions.get(operandType);
             final Integer castPrecision = s_typePrecisions.get(castType);
             return operandPrecision <= castPrecision;
         }
 
-        private static boolean valueIsContainableType(Number value, PsiType type) {
+        private boolean valueIsContainableInType(Number value,
+                                                 PsiType type) {
             final long longValue = value.longValue();
             final double doubleValue = value.doubleValue();
             if (PsiType.BYTE.equals(type)) {
