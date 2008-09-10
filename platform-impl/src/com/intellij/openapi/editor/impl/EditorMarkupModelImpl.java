@@ -587,7 +587,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private void showTooltip(MouseEvent e, final TooltipRenderer tooltipObject) {
-    final TooltipController tooltipController = HintManagerImpl.getInstanceImpl().getTooltipController();
+    TooltipController tooltipController = HintManagerImpl.getInstanceImpl().getTooltipController();
     tooltipController.showTooltipByMouseMove(myEditor, e, tooltipObject,
                                              myEditor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT,
                                              ERROR_STRIPE_TOOLTIP_GROUP);
@@ -637,26 +637,26 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private static class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
     public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<RangeHighlighter> highlighters) {
-        LineTooltipRenderer bigRenderer = null;
-        Collection<String> tooltips = new THashSet<String>(); //do not show same tooltip twice
+      LineTooltipRenderer bigRenderer = null;
+      Collection<String> tooltips = new THashSet<String>(); //do not show same tooltip twice
 
-        for (RangeHighlighter highlighter : highlighters) {
-          final Object tooltipObject = highlighter.getErrorStripeTooltip();
-          if (tooltipObject == null) continue;
+      for (RangeHighlighter highlighter : highlighters) {
+        final Object tooltipObject = highlighter.getErrorStripeTooltip();
+        if (tooltipObject == null) continue;
 
-          final String text = tooltipObject.toString();
-          if (tooltips.add(text)) {
-            if (bigRenderer == null) {
-              bigRenderer = new LineTooltipRenderer(text);
-            }
-            else {
-              bigRenderer.addBelow(text);
-            }
+        final String text = tooltipObject.toString();
+        if (tooltips.add(text)) {
+          if (bigRenderer == null) {
+            bigRenderer = new LineTooltipRenderer(text);
+          }
+          else {
+            bigRenderer.addBelow(text);
           }
         }
-
-        return bigRenderer;
       }
+
+      return bigRenderer;
+    }
 
     public TooltipRenderer calcTooltipRenderer(@NotNull final String text) {
       return new LineTooltipRenderer(text);

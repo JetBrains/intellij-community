@@ -16,7 +16,7 @@ public class TooltipController {
   private LightweightHint myCurrentTooltip;
   private TooltipRenderer myCurrentTooltipObject;
   private TooltipGroup myCurrentTooltipGroup;
-  private Alarm myTooltipAlarm = new Alarm();
+  private final Alarm myTooltipAlarm = new Alarm();
 
   public void cancelTooltips() {
     myTooltipAlarm.cancelAllRequests();

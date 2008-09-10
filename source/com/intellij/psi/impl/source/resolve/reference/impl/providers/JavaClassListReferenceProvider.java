@@ -19,12 +19,11 @@ import java.util.regex.Pattern;
  * To change this template use Options | File Templates.
  */
 public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
-
   @NonNls private static final Pattern PATTERN = Pattern.compile("([A-Za-z]\\w*\\s*([\\.\\$]\\s*[A-Za-z]\\w*\\s*)+)");
 
   public JavaClassListReferenceProvider(final Project project) {
     super(project);
-    setOption(JavaClassReferenceProvider.ADVANCED_RESOLVE, Boolean.TRUE);
+    setOption(ADVANCED_RESOLVE, Boolean.TRUE);
   }
 
   @NotNull

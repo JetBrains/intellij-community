@@ -29,7 +29,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
-  private Project myProject;
+  private final Project myProject;
 
   public DaemonTooltipRendererProvider(final Project project) {
     myProject = project;
@@ -137,7 +137,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       final int linkIdx = text.indexOf("<a href=");
       if (linkIdx != -1) {
         final String ref = text.substring(linkIdx + 9);
-        final int quatIdx = ref.indexOf("\"");
+        final int quatIdx = ref.indexOf('"');
         if (quatIdx > 0) {
           return ref.substring(0, quatIdx);
         }

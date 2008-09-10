@@ -21,26 +21,20 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
 
 public class VcsFileSystem extends DeprecatedVirtualFileSystem implements ApplicationComponent {
 
-  @NonNls private final String myProtocol;
   public static final String COULD_NOT_IMPLEMENT_MESSAGE = VcsBundle.message("exception.text.internal.errror.could.not.implement.method");
 
   public static VcsFileSystem getInstance() {
     return ApplicationManager.getApplication().getComponent(VcsFileSystem.class);
   }
 
-  public VcsFileSystem() {
-    myProtocol = "vcs";
-  }
-
   public String getProtocol() {
-    return myProtocol;
+    return "vcs";
   }
 
   public VirtualFile findFileByPath(@NotNull String path) {
@@ -66,6 +60,7 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements Applic
     super.fireFileDeleted(requestor, file, fileName, parent);
   }
 
+  @NotNull
   public String getComponentName() {
     return "VcsFileSystem";
   }

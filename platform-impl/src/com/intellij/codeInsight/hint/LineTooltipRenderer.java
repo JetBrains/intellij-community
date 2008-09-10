@@ -53,7 +53,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
     pane.setCaretPosition(0);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     final JComponent contentComponent = editor.getContentComponent();
-    // This listeners makes hint transparent for mouse events. It means that hint is closed
+    // This listener makes hint transparent for mouse events. It means that hint is closed
     // by MousePressed and this MousePressed goes into the underlying editor component.
     pane.addMouseListener(new MouseAdapter() {
       public void mouseReleased(final MouseEvent e) {

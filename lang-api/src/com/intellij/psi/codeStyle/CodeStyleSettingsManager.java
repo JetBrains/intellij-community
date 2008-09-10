@@ -42,6 +42,7 @@ public class CodeStyleSettingsManager implements ApplicationComponent, ProjectCo
     return ApplicationManager.getApplication().getComponent(CodeStyleSettingsManager.class);
   }
 
+  @SuppressWarnings({"UnusedDeclaration"})
   public CodeStyleSettingsManager(Project project) {
   }
   public CodeStyleSettingsManager() {}
