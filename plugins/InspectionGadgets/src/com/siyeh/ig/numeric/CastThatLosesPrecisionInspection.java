@@ -30,22 +30,22 @@ import java.util.Map;
 
 public class CastThatLosesPrecisionInspection extends BaseInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean ignoreIntegerCharCasts = false;
-
     /** @noinspection StaticCollection */
-    private static final Map<PsiType, Integer> s_typePrecisions =
+    private static final Map<PsiType, Integer> typePrecisions =
             new HashMap<PsiType, Integer>(7);
 
     static {
-        s_typePrecisions.put(PsiType.BYTE, 1);
-        s_typePrecisions.put(PsiType.CHAR, 2);
-        s_typePrecisions.put(PsiType.SHORT, 2);
-        s_typePrecisions.put(PsiType.INT, 3);
-        s_typePrecisions.put(PsiType.LONG, 4);
-        s_typePrecisions.put(PsiType.FLOAT, 5);
-        s_typePrecisions.put(PsiType.DOUBLE, 6);
+        typePrecisions.put(PsiType.BYTE, 1);
+        typePrecisions.put(PsiType.CHAR, 2);
+        typePrecisions.put(PsiType.SHORT, 2);
+        typePrecisions.put(PsiType.INT, 3);
+        typePrecisions.put(PsiType.LONG, 4);
+        typePrecisions.put(PsiType.FLOAT, 5);
+        typePrecisions.put(PsiType.DOUBLE, 6);
     }
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreIntegerCharCasts = false;
 
     @Override
     @NotNull
@@ -132,8 +132,8 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
 
         private boolean hasLowerPrecision(PsiType operandType,
                                           PsiType castType) {
-            final Integer operandPrecision = s_typePrecisions.get(operandType);
-            final Integer castPrecision = s_typePrecisions.get(castType);
+            final Integer operandPrecision = typePrecisions.get(operandType);
+            final Integer castPrecision = typePrecisions.get(castType);
             return operandPrecision <= castPrecision;
         }
 

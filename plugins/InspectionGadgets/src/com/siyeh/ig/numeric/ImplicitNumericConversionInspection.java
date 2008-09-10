@@ -28,7 +28,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,37 +40,45 @@ import java.util.Map;
 public class ImplicitNumericConversionInspection extends BaseInspection {
 
     /** @noinspection StaticCollection */
-    private static final Map<PsiType, Integer> s_typePrecisions =
+    private static final Map<PsiType, Integer> typePrecisions =
             new HashMap<PsiType, Integer>(7);
 
     static {
-        s_typePrecisions.put(PsiType.BYTE, 1);
-        s_typePrecisions.put(PsiType.CHAR, 2);
-        s_typePrecisions.put(PsiType.SHORT, 2);
-        s_typePrecisions.put(PsiType.INT, 3);
-        s_typePrecisions.put(PsiType.LONG, 4);
-        s_typePrecisions.put(PsiType.FLOAT, 5);
-        s_typePrecisions.put(PsiType.DOUBLE, 6);
+        typePrecisions.put(PsiType.BYTE, 1);
+        typePrecisions.put(PsiType.CHAR, 2);
+        typePrecisions.put(PsiType.SHORT, 2);
+        typePrecisions.put(PsiType.INT, 3);
+        typePrecisions.put(PsiType.LONG, 4);
+        typePrecisions.put(PsiType.FLOAT, 5);
+        typePrecisions.put(PsiType.DOUBLE, 6);
     }
 
-    /**
-     * @noinspection PublicField
-     */
-    public boolean m_ignoreWideningConversions = false;
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreWideningConversions = false;
 
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreCharConversions = false;
+
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "implicit.numeric.conversion.display.name");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "implicit.numeric.conversion.ignore.option"),
-                this, "m_ignoreWideningConversions");
+        final MultipleCheckboxOptionsPanel optionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "implicit.numeric.conversion.ignore.option"),
+                "ignoreWideningConversions");
+        optionsPanel.addCheckbox("Ignore conversions from and to char",
+                "ignoreCharConversions");
+        return optionsPanel;
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final PsiType type = (PsiType) infos[1];
@@ -80,10 +88,12 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
                 type.getPresentableText(), expectedType.getPresentableText());
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ImplicitNumericConversionVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new ImplicitNumericConversionFix((PsiExpression)infos[0],
                 (PsiType) infos[2]);
@@ -112,6 +122,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
             return m_name;
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiExpression expression = (
@@ -232,14 +243,14 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
             return operand instanceof PsiLiteralExpression;
         }
 
-        private static boolean isIntegral(PsiType expressionType) {
-            return expressionType.equals(PsiType.INT) ||
-                    expressionType.equals(PsiType.LONG);
+        private static boolean isIntegral(@Nullable PsiType expressionType) {
+            return PsiType.INT.equals(expressionType) ||
+                    PsiType.LONG.equals(expressionType);
         }
 
-        private static boolean isFloatingPoint(PsiType expressionType) {
-            return expressionType.equals(PsiType.FLOAT) ||
-                    expressionType.equals(PsiType.DOUBLE);
+        private static boolean isFloatingPoint(@Nullable PsiType expressionType) {
+            return PsiType.FLOAT.equals(expressionType) ||
+                    PsiType.DOUBLE.equals(expressionType);
         }
     }
 
@@ -311,15 +322,20 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
             if (parent instanceof PsiParenthesizedExpression) {
                 return;
             }
-            if (isArgumentOfStringIndexOf(parent)) {
-                return;
-            }
             final PsiType expressionType = expression.getType();
             if (expressionType == null) {
                 return;
             }
             if (!ClassUtils.isPrimitiveNumericType(expressionType)) {
                 return;
+            }
+            if (expressionType == PsiType.CHAR) {
+                if (ignoreCharConversions) {
+                    return;
+                }
+                if (isArgumentOfStringIndexOf(parent)) {
+                    return;
+                }
             }
             final PsiType expectedType =
                     ExpectedTypeUtils.findExpectedType(expression, true);
@@ -329,8 +345,11 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
             if (expressionType.equals(expectedType)) {
                 return;
             }
-            if (m_ignoreWideningConversions && hasLowerPrecision(expressionType,
+            if (ignoreWideningConversions && hasLowerPrecision(expressionType,
                     expectedType)) {
+                return;
+            }
+            if (ignoreCharConversions && expectedType == PsiType.CHAR) {
                 return;
             }
             registerError(expression, expression, expressionType, expectedType);
@@ -365,8 +384,8 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
 
     static boolean hasLowerPrecision(PsiType expressionType,
                                      PsiType expectedType) {
-        final Integer operandPrecision = s_typePrecisions.get(expressionType);
-        final Integer castPrecision = s_typePrecisions.get(expectedType);
+        final Integer operandPrecision = typePrecisions.get(expressionType);
+        final Integer castPrecision = typePrecisions.get(expectedType);
         return operandPrecision <= castPrecision;
     }
 }
