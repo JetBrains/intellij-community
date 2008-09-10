@@ -409,9 +409,11 @@
 
     <group id="Grails" class="org.jetbrains.plugins.grails.actions.GrailsGroup"
             text="Grails">
+      <!--
       <action id="Grails.NewApp" class="org.jetbrains.plugins.grails.actions.NewGrailsAppAction"
               text="Grails Application"
               description="Create new Grails application"/>
+      -->
       <action id="Grails.DomainClass" class="org.jetbrains.plugins.grails.actions.NewGrailsDomainClassAction"
               text="Grails Domain Class" description="Create new Grails domain class">
       </action>
