@@ -19,9 +19,13 @@ package git4idea;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -74,5 +78,35 @@ public class GitUtil {
   @NotNull
   public static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(Project project, VirtualFile[] affectedFiles) {
     return sortFilesByVcsRoot(project, Arrays.asList(affectedFiles));
+  }
+
+  public static String getRelativeFilePath(VirtualFile file, @NotNull final VirtualFile baseDir) {
+    return getRelativeFilePath(file.getPath(), baseDir);
+  }
+
+  public static String getRelativeFilePath(FilePath file, @NotNull final VirtualFile baseDir) {
+    return getRelativeFilePath(file.getPath(), baseDir);
+  }
+
+  public static String getRelativeFilePath(String file, @NotNull final VirtualFile baseDir) {
+    if (SystemInfo.isWindows) {
+      file = file.replace('\\', '/');
+    }
+    final String basePath = baseDir.getPath();
+    if (!file.startsWith(basePath)) {
+      return file;
+    }
+    else if (file.equals(basePath)) return ".";
+    return file.substring(baseDir.getPath().length() + 1);
+  }
+
+  /**
+   * Show error associated with the specified operation
+   * @param project the project
+   * @param ex an exception
+   * @param operation the operation name
+   */
+  public static void showOperationError(final Project project, final VcsException ex, @NonNls final String operation) {
+    Messages.showErrorDialog(project, ex.getMessage(), GitBundle.message("error.occurred.during", operation));
   }
 }

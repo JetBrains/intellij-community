@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,8 +49,8 @@ import java.util.List;
  * Git VCS implementation
  */
 public class GitVcs extends AbstractVcs implements Disposable {
-  private static final String GIT = "Git";
-  private static final String UNUNDEXED_FILES_CHANGELIST_NAME = "Unindexed Files";
+  @NonNls public static final String NAME = "Git";
+  private static final String UNUNDEXED_FILES_CHANGELIST_NAME = GitBundle.getString("unindexed.files.changlelist.name");
   private final ChangeProvider changeProvider;
   private final VcsShowConfirmationOption addConfirmation;
   private final VcsShowConfirmationOption delConfirmation;
@@ -71,7 +72,7 @@ public class GitVcs extends AbstractVcs implements Disposable {
   private final RevisionSelector revSelector;
 
   public static GitVcs getInstance(@NotNull Project project) {
-    return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(GIT);
+    return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
   }
 
   public GitVcs(@NotNull Project project,
@@ -107,7 +108,7 @@ public class GitVcs extends AbstractVcs implements Disposable {
 
   @Override
   public String getName() {
-    return GIT;
+    return NAME;
   }
 
   @Override
@@ -131,7 +132,7 @@ public class GitVcs extends AbstractVcs implements Disposable {
   @Override
   @NotNull
   public String getDisplayName() {
-    return GIT;
+    return NAME;
   }
 
   @Override
@@ -194,7 +195,7 @@ public class GitVcs extends AbstractVcs implements Disposable {
   @Override
   public void shutdown() throws VcsException {
     super.shutdown();
-    dispose();
+    Disposer.dispose(this);
   }
 
   @Override
@@ -242,14 +243,14 @@ public class GitVcs extends AbstractVcs implements Disposable {
     if (list.size() > 0) {
       StringBuffer buffer = new StringBuffer();
       buffer.append("\n");
-      buffer.append(action).append(" Error: ");
+      buffer.append(GitBundle.message("error.list.title", action));
       for (final VcsException exception : list) {
         buffer.append("\n");
         buffer.append(exception.getMessage());
       }
       String msg = buffer.toString();
       showMessage(msg, CodeInsightColors.ERRORS_ATTRIBUTES);
-      Messages.showErrorDialog(myProject, msg, "Error");
+      Messages.showErrorDialog(myProject, msg, GitBundle.getString("error.dialog.title"));
     }
   }
 
