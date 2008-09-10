@@ -20,22 +20,24 @@ import java.util.ArrayList;
 /**
  * @author yole
  */
-public abstract class HierarchyBrowserBase implements HierarchyBrowser, Disposable, DataProvider {
+public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel implements HierarchyBrowser, Disposable, DataProvider {
   protected Content myContent;
 
-  private SimpleToolWindowPanel myComponent = new SimpleToolWindowPanel(true, true);
+  protected HierarchyBrowserBase() {
+    super(true, true);
+  }
 
   public void setContent(final Content content) {
     myContent = content;
   }
 
   public JComponent getComponent() {
-    return myComponent;
+    return this;
   }
 
   protected void buildUi(JComponent toolbar, JComponent content) {
-    myComponent.setToolbar(toolbar);
-    myComponent.setContent(content);
+    setToolbar(toolbar);
+    setContent(content);
   }
 
   public void dispose() {
