@@ -288,20 +288,33 @@ public class DocumentationManager implements ProjectComponent {
       }
     }
     if (element == null && editor != null) {
-      final PsiReference ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+      element = getElementFromLookup(editor, file);
+    }
 
-      if (ref != null) {
-        element = TargetElementUtilBase.getInstance().adjustReference(ref);
-        if (element == null && ref instanceof PsiPolyVariantReference) {
-          element = ref.getElement();
-        }
+    storeOriginalElement(myProject, contextElement, element);
+
+    return element;
+  }
+
+  @Nullable
+  public PsiElement getElementFromLookup(final Editor editor, final PsiFile file) {
+
+    final PsiElement contextElement = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiElement element = null;
+    final PsiReference ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+
+    if (ref != null) {
+      element = TargetElementUtilBase.getInstance().adjustReference(ref);
+      if (element == null && ref instanceof PsiPolyVariantReference) {
+        element = ref.getElement();
       }
+    }
 
-      final Lookup activeLookup = LookupManager.getInstance(myProject).getActiveLookup();
+    final Lookup activeLookup = LookupManager.getInstance(myProject).getActiveLookup();
 
-      if (activeLookup != null) {
-        LookupElement item = activeLookup.getCurrentItem();
-        if (item == null) return null;
+    if (activeLookup != null) {
+      LookupElement item = activeLookup.getCurrentItem();
+      if (item != null) {
 
         final DocumentationProvider documentationProvider = getProviderFromElement(file);
 
@@ -314,9 +327,6 @@ public class DocumentationManager implements ProjectComponent {
         }
       }
     }
-
-    storeOriginalElement(myProject, contextElement, element);
-
     return element;
   }
 

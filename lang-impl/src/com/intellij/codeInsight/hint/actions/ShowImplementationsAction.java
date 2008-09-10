@@ -33,6 +33,7 @@ package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.ImplementationSearcher;
@@ -103,6 +104,9 @@ public class ShowImplementationsAction extends AnAction {
       ref = null;
     }
 
+    if (element == null && file != null && editor != null) {
+      element = DocumentationManager.getInstance(project).getElementFromLookup(editor, file);
+    }
     String text = "";
     PsiElement[] impls = null;
     if (element != null) {
@@ -130,10 +134,10 @@ public class ShowImplementationsAction extends AnAction {
       }
     }
 
-    showImplementations(impls, project, text, editor);
+    showImplementations(impls, project, text, editor, file);
   }
 
-  private static void updateElementImplementations(final PsiElement element, final Editor editor, final Project project) {
+  private static void updateElementImplementations(final PsiElement element, final Editor editor, final Project project, final PsiFile file) {
     PsiElement[] impls = null;
     String text = "";
     if (element != null) {
@@ -143,10 +147,11 @@ public class ShowImplementationsAction extends AnAction {
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
 
-    showImplementations(impls, project, text, editor);
+    showImplementations(impls, project, text, editor, file);
   }
 
-  private static void showImplementations(final PsiElement[] impls, final Project project, final String text, final Editor editor) {
+  private static void showImplementations(final PsiElement[] impls, final Project project, final String text, final Editor editor,
+                                          final PsiFile file) {
     if (impls == null || impls.length == 0) return;
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKDEFINITION_FEATURE);
@@ -158,7 +163,8 @@ public class ShowImplementationsAction extends AnAction {
     if (component.hasElementsToShow()) {
       final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor() {
         public void updatePopup(Object lookupItemObject) {
-          updateElementImplementations((PsiElement)lookupItemObject, editor, project);
+          final PsiElement element = lookupItemObject instanceof PsiElement ? (PsiElement)lookupItemObject : DocumentationManager.getInstance(project).getElementFromLookup(editor, file);
+          updateElementImplementations(element, editor, project, file);
         }
       };
       final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPrefferedFocusableComponent())
