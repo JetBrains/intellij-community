@@ -18,14 +18,14 @@ package git4idea;
  */
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -102,8 +102,9 @@ public class GitUtil {
 
   /**
    * Show error associated with the specified operation
-   * @param project the project
-   * @param ex an exception
+   *
+   * @param project   the project
+   * @param ex        an exception
    * @param operation the operation name
    */
   public static void showOperationError(final Project project, final VcsException ex, @NonNls final String operation) {
