@@ -109,9 +109,7 @@ public final class TypeHierarchyBrowser extends HierarchyBrowserBase implements 
     };
 
     setHierarchyBase(psiClass);
-    setLayout(new BorderLayout());
 
-    add(createToolbar(ActionPlaces.TYPE_HIERARCHY_VIEW_TOOLBAR, HELP_ID).getComponent(), BorderLayout.NORTH);
 
     myCardLayout = new CardLayout();
     myTreePanel = new JPanel(myCardLayout);
@@ -145,7 +143,8 @@ public final class TypeHierarchyBrowser extends HierarchyBrowserBase implements 
       });
       myTreePanel.add(new JScrollPane(tree), key);
     }
-    add(myTreePanel, BorderLayout.CENTER);
+
+    buildUi(createToolbar(ActionPlaces.TYPE_HIERARCHY_VIEW_TOOLBAR, HELP_ID).getComponent(), myTreePanel);
   }
 
   public String getCurrentViewName() {
@@ -193,14 +192,14 @@ public final class TypeHierarchyBrowser extends HierarchyBrowserBase implements 
     /*int n =*/
     myAlarm.cancelAllRequests();
     //    if (n == 0) {
-    setCursor(Cursor.getDefaultCursor());
+    getComponent().setCursor(Cursor.getDefaultCursor());
     //    }
   }
 
   private void setWaitCursor() {
     myAlarm.addRequest(new Runnable() {
       public void run() {
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
       }
     }, 100);
   }
@@ -323,7 +322,7 @@ public final class TypeHierarchyBrowser extends HierarchyBrowserBase implements 
       final String[] name = new String[]{myCurrentViewName};
       dispose();
       setHierarchyBase(base);
-      validate();
+      getComponent().validate();
       if (myIsInterface && TypeHierarchyTreeStructure.TYPE.equals(name[0])) {
         name[0] = SubtypesHierarchyTreeStructure.TYPE;
       }
@@ -437,7 +436,7 @@ public final class TypeHierarchyBrowser extends HierarchyBrowserBase implements 
       final String[] name = new String[]{browser.myCurrentViewName};
       browser.dispose();
       browser.setHierarchyBase(selectedClass);
-      browser.validate();
+      browser.getComponent().validate();
       if (browser.myIsInterface && TypeHierarchyTreeStructure.TYPE.equals(name[0])) {
         name[0] = SubtypesHierarchyTreeStructure.TYPE;
       }

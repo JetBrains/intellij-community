@@ -3,6 +3,7 @@ package com.intellij.ide.hierarchy;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.NavigatablePsiElement;
@@ -19,15 +20,22 @@ import java.util.ArrayList;
 /**
  * @author yole
  */
-public abstract class HierarchyBrowserBase extends JPanel implements HierarchyBrowser, Disposable, DataProvider {
+public abstract class HierarchyBrowserBase implements HierarchyBrowser, Disposable, DataProvider {
   protected Content myContent;
+
+  private SimpleToolWindowPanel myComponent = new SimpleToolWindowPanel(true, true);
 
   public void setContent(final Content content) {
     myContent = content;
   }
 
   public JComponent getComponent() {
-    return this;
+    return myComponent;
+  }
+
+  protected void buildUi(JComponent toolbar, JComponent content) {
+    myComponent.setToolbar(toolbar);
+    myComponent.setContent(content);
   }
 
   public void dispose() {
