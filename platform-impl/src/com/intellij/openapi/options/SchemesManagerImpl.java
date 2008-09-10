@@ -263,7 +263,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     Collection<String> result = new HashSet<String>();
     for (StreamProvider provider : getEnabledProviders()) {
       try {
-        Document deletedNameDoc = provider.loadDocument(getFileFullPath(DELETED_XML), myRoamingType);
+        Document deletedNameDoc = StorageUtil.loadDocument(provider.loadContent(getFileFullPath(DELETED_XML), myRoamingType));
         if (deletedNameDoc != null) {
           for (Object child : deletedNameDoc.getRootElement().getChildren()) {
             String deletedSchemeName = ((Element)child).getAttributeValue("name");
@@ -296,7 +296,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       for (String subpath : paths) {
         if (!subpath.equals(DELETED_XML)) {
           try {
-            final Document subDocument = provider.loadDocument(getFileFullPath(subpath), myRoamingType);
+            final Document subDocument = StorageUtil.loadDocument(provider.loadContent(getFileFullPath(subpath), myRoamingType));
             if (subDocument != null) {
               checkFileNameIsFree(subpath);
               byte[] text = JDOMUtil.writeDocument(subDocument, "\n").getBytes();
@@ -520,7 +520,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     final StreamProvider[] providers = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager()
         .getStreamProviders(RoamingType.GLOBAL);
     for (StreamProvider provider : providers) {
-      Document document = provider.loadDocument(schemePath, RoamingType.GLOBAL);
+      Document document = StorageUtil.loadDocument(provider.loadContent(schemePath, RoamingType.GLOBAL));
       if (document != null) return document;
     }
 
@@ -583,7 +583,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
           String[] paths = provider.listSubFiles(myFileSpec);
           for (String subpath : paths) {
             try {
-              final Document subDocument = provider.loadDocument(getFileFullPath(subpath), RoamingType.GLOBAL);
+              final Document subDocument = StorageUtil.loadDocument(provider.loadContent(getFileFullPath(subpath), RoamingType.GLOBAL));
               if (subDocument != null) {
                 SharedSchemeData original = unwrap(subDocument);
                 final E scheme = myProcessor.readScheme(original.original);
@@ -665,7 +665,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
             }
           }
           try {
-            provider.saveContent(getFileFullPath(UniqueFileNamesProvider.convertName(scheme.getName())) + EXT, wrapped, RoamingType.GLOBAL);
+            provider.saveContent(getFileFullPath(UniqueFileNamesProvider.convertName(scheme.getName())) + EXT, StorageUtil.printDocument(wrapped), RoamingType.GLOBAL);
           }
           catch (IOException e) {
             LOG.debug(e);
@@ -755,7 +755,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       if (myDeletedNames.size() > 0) {
         for (StreamProvider provider : getEnabledProviders()) {
           try {
-            provider.saveContent(getFileFullPath(DELETED_XML), createDeletedDocument(), myRoamingType);
+            provider.saveContent(getFileFullPath(DELETED_XML), StorageUtil.printDocument(createDeletedDocument()), myRoamingType);
           }
           catch (IOException e) {
             LOG.debug(e);
@@ -886,7 +886,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private void saveOnServer(final String fileName, final Document document) {
     for (StreamProvider provider : getEnabledProviders()) {
       try {
-        provider.saveContent(getFileFullPath(fileName), document, myRoamingType);
+        provider.saveContent(getFileFullPath(fileName), StorageUtil.printDocument(document), myRoamingType);
       }
       catch (IOException e) {
         LOG.debug(e);

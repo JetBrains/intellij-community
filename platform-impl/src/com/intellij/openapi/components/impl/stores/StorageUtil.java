@@ -14,9 +14,11 @@ import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.ByteArrayInputStream;
 import java.util.Arrays;
 
 /**
@@ -125,6 +127,20 @@ public class StorageUtil {
     }
     catch (IOException e) {
       throw new StateStorage.StateStorageException(e);
+    }
+  }
+
+
+  @Nullable
+  public static Document loadDocument(final byte[] bytes) {
+    try {
+      return (bytes == null || bytes.length == 0) ? null : JDOMUtil.loadDocument(new ByteArrayInputStream(bytes));
+    }
+    catch (JDOMException e) {
+      return null;
+    }
+    catch (IOException e) {
+      return null;
     }
   }
 }

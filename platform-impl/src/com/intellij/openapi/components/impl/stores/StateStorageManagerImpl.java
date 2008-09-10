@@ -1,16 +1,15 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.fs.IFile;
-import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
@@ -176,7 +175,7 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
     };
   }
 
-  public void saveContent(final String fileSpec, final Document content, final RoamingType roamingType) {
+  public void saveContent(final String fileSpec, final byte[] content, final RoamingType roamingType) {
 
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
@@ -218,11 +217,12 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
     }
   }
 
-  public Document loadDocument(final String fileSpec, final RoamingType roamingType) {
+  public byte[] loadContent(final String fileSpec, final RoamingType roamingType) {
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
-        final Document document = streamProvider.loadDocument(fileSpec, roamingType);
-        if (document != null) return document;
+        byte[] content = streamProvider.loadContent(fileSpec, roamingType);
+
+        if (content != null && content.length > 0) return content;
       }
       catch (ConnectException e) {
         LOG.debug("Cannot send user profile o server: " + e.getLocalizedMessage());

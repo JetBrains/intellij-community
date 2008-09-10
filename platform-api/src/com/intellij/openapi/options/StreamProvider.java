@@ -1,7 +1,6 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.RoamingType;
-import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,11 +8,11 @@ import java.io.IOException;
 
 public interface StreamProvider {
   StreamProvider DEFAULT = new StreamProvider(){
-    public void saveContent(final String fileSpec, final Document content, final RoamingType roamingType) throws IOException {
+    public void saveContent(final String fileSpec, final byte[] content, final RoamingType roamingType) throws IOException {
 
     }
 
-    public Document loadDocument(final String fileSpec, final RoamingType roamingType) throws IOException, JDOMException {
+    public byte[] loadContent(final String fileSpec, final RoamingType roamingType) throws IOException, JDOMException {
       return null;
     }
 
@@ -30,10 +29,10 @@ public interface StreamProvider {
     }
   };
 
-  void saveContent(String fileSpec, Document content, final RoamingType roamingType) throws IOException;
+  void saveContent(String fileSpec, byte[] content, final RoamingType roamingType) throws IOException;
 
   @Nullable
-  Document loadDocument(final String fileSpec, final RoamingType roamingType) throws IOException, JDOMException;
+  byte[] loadContent(final String fileSpec, final RoamingType roamingType) throws IOException, JDOMException;
 
   String[] listSubFiles(final String fileSpec);
 
