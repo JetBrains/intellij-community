@@ -55,7 +55,9 @@ public class QuickFixWrapper implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    //if (!CodeInsightUtil.prepareFileForWrite(file)) return; consider all local quick fixes do it themselves
+    //if (!CodeInsightUtil.prepareFileForWrite(file)) return; 
+    // consider all local quick fixes do it themselves
+
     LocalQuickFix fix = (LocalQuickFix)myDescriptor.getFixes()[myFixNumber];
     fix.applyFix(project, myDescriptor);
     DaemonCodeAnalyzer.getInstance(project).restart();

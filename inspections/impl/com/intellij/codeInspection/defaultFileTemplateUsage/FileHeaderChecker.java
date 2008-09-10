@@ -1,5 +1,6 @@
 package com.intellij.codeInspection.defaultFileTemplateUsage;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -74,6 +75,7 @@ public class FileHeaderChecker {
     final ReplaceWithFileTemplateFix replaceTemplateFix = new ReplaceWithFileTemplateFix() {
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         if (!element.isValid()) return;
+        if (!CodeInsightUtil.preparePsiElementsForWrite(element)) return;
         String newText;
         try {
           newText = template.getText(computeProperties(matcher, offsetToProperty));
@@ -95,8 +97,6 @@ public class FileHeaderChecker {
           documentManager.commitDocument(document);
 
           document.insertString(offset, newText);
-          //PsiDocComment newDoc = element.getManager().getElementFactory().createDocCommentFromText(newText, element);
-          //element.replace(newDoc);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
