@@ -153,10 +153,7 @@ public class FrameDebuggerTree extends DebuggerTree {
     }
     
     TextRange alreadyChecked = null;
-    for (PsiElement elem = file.findElementAt(_start); 
-         elem != null && elem.getTextOffset() <= end && (alreadyChecked == null || !alreadyChecked .contains(elem.getTextRange())); 
-         elem = elem.getNextSibling()) {
-      
+    for (PsiElement elem = file.findElementAt(_start); elem != null && elem.getTextOffset() <= end && (alreadyChecked == null || !alreadyChecked .contains(elem.getTextRange())); elem = elem.getNextSibling()) {
       for (PsiElement _elem = elem; _elem.getTextOffset() >= _start; _elem = _elem.getParent()) {
         alreadyChecked = _elem.getTextRange();
         

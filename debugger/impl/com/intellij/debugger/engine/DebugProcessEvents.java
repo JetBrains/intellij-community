@@ -172,6 +172,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
                   catch (VMDisconnectedException e) {
                     LOG.debug(e);
                   }
+                  catch (InternalException e) {
+                    LOG.info(e);
+                  }
                   catch (Throwable e) {
                     LOG.error(e);
                   }
