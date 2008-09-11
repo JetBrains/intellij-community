@@ -2,11 +2,13 @@ package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.PropertyResolver;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
@@ -14,7 +16,9 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -92,28 +96,41 @@ public class ResourceFilteringCompiler implements ClassPostProcessingCompiler {
       final VirtualFile outputFile = each.getFile();
       final VirtualFile sourceFile = eachItem.getSourceFile();
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          try {
-            if (eachItem.isFiltered()) {
-              String resolved = PropertyResolver.resolve(eachItem.getModule(), VfsUtil.loadText(outputFile));
-              VfsUtil.saveText(outputFile, resolved);
-            }
-            else {
-              boolean wasFiltered = outputFile.getTimeStamp() != sourceFile.getTimeStamp();
-              if (wasFiltered) {
-                VfsUtil.saveText(outputFile, VfsUtil.loadText(sourceFile));
-              }
-            }
-            result.add(each);
-          }
-          catch (IOException e) {
-            context.addMessage(CompilerMessageCategory.ERROR, "Maven: Cannot filter properties", outputFile.getUrl(), -1, -1);
+      try {
+        if (eachItem.isFiltered()) {
+          File file = new File(outputFile.getPath());
+
+          String charset = getCharsetName(sourceFile);
+          String text = new String(FileUtil.loadFileBytes(file), charset);
+
+          text = PropertyResolver.resolve(eachItem.getModule(), text);
+          FileUtil.writeToFile(file, text.getBytes(charset));
+        }
+        else {
+          boolean wasFiltered = outputFile.getTimeStamp() != sourceFile.getTimeStamp();
+          if (wasFiltered) {
+            FileUtil.copy(new File(sourceFile.getPath()), new File(outputFile.getPath()));
           }
         }
-      });
+        result.add(each);
+      }
+      catch (IOException e) {
+        context.addMessage(CompilerMessageCategory.ERROR, "Maven: Cannot filter properties", outputFile.getUrl(), -1, -1);
+      }
     }
     return result.toArray(new ProcessingItem[result.size()]);
+  }
+
+  private String getCharsetName(VirtualFile sourceFile) {
+    EncodingManager manager = EncodingManager.getInstance();
+    Charset charset;
+    if (StdFileTypes.PROPERTIES.equals(sourceFile.getFileType())) {
+      charset = manager.getDefaultCharsetForPropertiesFiles(sourceFile);
+    } else {
+      charset = manager.getEncoding(sourceFile, true);
+    }
+    if (charset == null) charset = manager.getDefaultCharset();
+    return charset.name();
   }
 
   @NotNull
