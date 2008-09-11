@@ -1376,4 +1376,13 @@ public class StringUtil {
       return -1;
     }
   }
+
+  public static int parseInt(final String string, final int def) {
+    try {
+      return Integer.parseInt(string);
+    }
+    catch (NumberFormatException e) {
+      return def;
+    }
+  }
 }
