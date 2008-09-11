@@ -36,7 +36,6 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private String myPlace;
 
   private JComponent myPreferredFocusableComponent;
-  private static final Icon PIN_ICON = IconLoader.getIcon("/nodes/tabPin.png");
   private AlertIcon myAlertIcon;
 
   private boolean myAlerting = false;
@@ -70,17 +69,21 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   public void setIcon(Icon icon) {
     Icon oldValue = getIcon();
     myIcon = icon;
-    myLayeredIcon = LayeredIcon.create(myIcon, PIN_ICON);
+    myLayeredIcon = LayeredIcon.create(myIcon, getPinIcon());
     myChangeSupport.firePropertyChange(PROP_ICON, oldValue, getIcon());
   }
 
   public Icon getIcon() {
     if (myIsLocked) {
-      return myIcon == null ? IconLoader.getIcon("/nodes/pin.png") : myLayeredIcon;
+      return myIcon == null ? getPinIcon() : myLayeredIcon;
     }
     else {
       return myIcon;
     }
+  }
+
+  private static Icon getPinIcon() {
+    return IconLoader.getIcon("/nodes/pinToolWindow.png");
   }
 
   public void setDisplayName(String displayName) {

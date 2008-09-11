@@ -137,8 +137,10 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
     }
 
     if (wasHidden) {
+      hasToolbarContent = false;
+    } {
       final Content onlyContent = myContents.get(0);
-      hasToolbarContent = onlyContent.getSearchComponent() != null;      
+      hasToolbarContent = onlyContent.getSearchComponent() != null;
     }
 
 

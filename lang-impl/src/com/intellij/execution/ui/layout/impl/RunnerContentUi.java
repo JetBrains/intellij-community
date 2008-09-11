@@ -11,6 +11,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
@@ -677,6 +678,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     public MyComponent() {
       setOpaque(true);
       setFocusCycleRoot(true);
+      setBorder(new ToolWindow.Border(true, false, true, true));
     }
 
     @Nullable
