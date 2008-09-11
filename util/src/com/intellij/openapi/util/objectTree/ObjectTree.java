@@ -18,6 +18,7 @@ package com.intellij.openapi.util.objectTree;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.Equality;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -30,18 +31,18 @@ public final class ObjectTree<T> {
 
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
   private final Set<T> myRootObjects = new THashSet<T>(TObjectHashingStrategy.IDENTITY);
-  private final Map<T, ObjectNode<T>> myObject2NodeMap = new IdentityHashMap<T, ObjectNode<T>>();
+  private final Map<T, ObjectNode<T>> myObject2NodeMap = new THashMap<T, ObjectNode<T>>(TObjectHashingStrategy.IDENTITY);
 
-  private final List<ObjectNode<T>> myExecutedNodes = Collections.synchronizedList(new ArrayList<ObjectNode<T>>());
-  private final List<T> myExecutedUnregisteredNodes = Collections.synchronizedList(new ArrayList<T>());
+  private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>();
+  private final List<T> myExecutedUnregisteredNodes = new ArrayList<T>();
   final Object treeLock = new Object();
 
-  public ObjectNode<T> getNode(T object) {
+  public ObjectNode<T> getNode(@NotNull T object) {
     synchronized (treeLock) {
       return myObject2NodeMap.get(object);
     }
   }
-  public ObjectNode<T> putNode(T object, ObjectNode<T> node) {
+  public ObjectNode<T> putNode(@NotNull T object, ObjectNode<T> node) {
     synchronized (treeLock) {
       return node == null ? myObject2NodeMap.remove(object) : myObject2NodeMap.put(object, node);
     }
@@ -53,7 +54,7 @@ public final class ObjectTree<T> {
 
   public final void register(T parent, T child) {
     synchronized (treeLock) {
-      checkIfValid(child);
+      checkValid(child);
 
       final ObjectNode<T> parentNode = getOrCreateNodeFor(parent);
       final ObjectNode<T> childNode = getOrCreateNodeFor(child);
@@ -73,7 +74,7 @@ public final class ObjectTree<T> {
     }
   }
 
-  private void checkIfValid(T child) {
+  private void checkValid(T child) {
     ObjectNode childNode = getNode(child);
     boolean childIsInTree = childNode != null && childNode.getParent() != null;
     if (!childIsInTree) return;
@@ -87,7 +88,7 @@ public final class ObjectTree<T> {
     }
   }
 
-  private ObjectNode<T> getOrCreateNodeFor(T parentObject) {
+  private ObjectNode<T> getOrCreateNodeFor(@NotNull T parentObject) {
     final ObjectNode<T> parentNode = getNode(parentObject);
 
     if (parentNode != null) return parentNode;
@@ -98,7 +99,7 @@ public final class ObjectTree<T> {
     return parentless;
   }
 
-  public final boolean executeAll(@NotNull T object, boolean disposeTree, ObjectTreeAction<T> action, boolean processUnregistered) {
+  public final boolean executeAll(@NotNull T object, boolean disposeTree, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
     ObjectNode<T> node = getNode(object);
     if (node == null) {
       if (processUnregistered) {
@@ -114,23 +115,27 @@ public final class ObjectTree<T> {
     }
   }
 
-  static <T> void executeActionWithRecursiveGuard(T object, final ObjectTreeAction<T> action, List<T> recursiveGuard) {
-    if (ArrayUtil.indexOf(recursiveGuard, object, Equality.IDENTITY) != -1) return;
+  static <T> void executeActionWithRecursiveGuard(@NotNull T object, @NotNull final ObjectTreeAction<T> action, List<T> recursiveGuard) {
+    synchronized (recursiveGuard) {
+      if (ArrayUtil.indexOf(recursiveGuard, object, Equality.IDENTITY) != -1) return;
+      recursiveGuard.add(object);
+    }
 
-    recursiveGuard.add(object);
     try {
       action.execute(object);
     }
     finally {
-      recursiveGuard.remove(object);
+      synchronized (recursiveGuard) {
+        recursiveGuard.remove(object);
+      }
     }
   }
 
-  private void executeUnregistered(final T object, final ObjectTreeAction<T> action) {
+  private void executeUnregistered(@NotNull final T object, @NotNull final ObjectTreeAction<T> action) {
     executeActionWithRecursiveGuard(object, action, myExecutedUnregisteredNodes);
   }
 
-  public final void executeChildAndReplace(T toExecute, T toReplace, boolean disposeTree, ObjectTreeAction<T> action) {
+  public final void executeChildAndReplace(@NotNull T toExecute, @NotNull T toReplace, boolean disposeTree, @NotNull ObjectTreeAction<T> action) {
     final ObjectNode<T> toExecuteNode = getNode(toExecute);
     assert toExecuteNode != null : "Object " + toExecute + " wasn't registered or already disposed";
 
@@ -145,7 +150,7 @@ public final class ObjectTree<T> {
     register(parentObject, toReplace);
   }
 
-  public boolean containsKey(T object) {
+  public boolean containsKey(@NotNull T object) {
     return getNode(object) != null;
   }
 
@@ -157,7 +162,7 @@ public final class ObjectTree<T> {
     }
   }
 
-  public void removeRootObject(T object) {
+  public void removeRootObject(@NotNull T object) {
     synchronized (treeLock) {
       myRootObjects.remove(object);
     }

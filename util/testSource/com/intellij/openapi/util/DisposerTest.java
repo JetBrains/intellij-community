@@ -32,9 +32,9 @@ public class DisposerTest extends TestCase {
   private MyDisposable myLeaf1;
   private MyDisposable myLeaf2;
 
-  private List<MyDisposable> myDisposedObjects = new ArrayList<MyDisposable>();
+  private final List<MyDisposable> myDisposedObjects = new ArrayList<MyDisposable>();
 
-  @NonNls private List<String> myDisposeActions = new ArrayList<String>();
+  @NonNls private final List<String> myDisposeActions = new ArrayList<String>();
 
   protected void setUp() throws Exception {
     myRoot = new MyDisposable("root");
