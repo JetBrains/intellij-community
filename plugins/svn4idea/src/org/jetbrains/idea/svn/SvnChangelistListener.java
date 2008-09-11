@@ -95,7 +95,9 @@ public class SvnChangelistListener implements ChangeListListener {
 
   public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
     // to track list addition
-    changeListRenamed(oldDefaultList, null);
+    if (oldDefaultList != null) {
+      changeListRenamed(oldDefaultList, null);
+    }
     changeListRemoved(newDefaultList);
     ChangeListManager.getInstance(myProject).getDefaultChangeList().setReadOnly(true);
   }
