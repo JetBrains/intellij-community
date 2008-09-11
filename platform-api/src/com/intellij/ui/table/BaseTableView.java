@@ -52,7 +52,9 @@ public abstract class BaseTableView extends Table {
       tableHeader.addMouseListener(new MouseAdapter() {
         public void mouseClicked(final MouseEvent e) {
           final int column = convertColumnIndexToModel(tableHeader.columnAtPoint(e.getPoint()));
-          onHeaderClicked(column);
+          if (column > -1) {
+            onHeaderClicked(column);
+          }
         }
       });
 
