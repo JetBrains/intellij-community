@@ -27,7 +27,11 @@ public class SimpleAccessorReferenceSearcher implements QueryExecutor<PsiReferen
         public SearchScope compute() {
           SearchScope searchScope = queryParameters.getEffectiveSearchScope();
           if (searchScope instanceof GlobalSearchScope) {
-            searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, StdFileTypes.JSP, StdFileTypes.JSPX, StdFileTypes.XML);
+            searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope,
+                                                                          StdFileTypes.JSP,
+                                                                          StdFileTypes.JSPX,
+                                                                          StdFileTypes.XML,
+                                                                          StdFileTypes.XHTML);
           }
           return searchScope;
         }

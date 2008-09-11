@@ -125,7 +125,8 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
           (GlobalSearchScope)searchScope,
           StdFileTypes.JSP,
           StdFileTypes.JSPX,
-          StdFileTypes.XML
+          StdFileTypes.XML,
+          StdFileTypes.XHTML
         );
         toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
                                                                         restrictedSeachScope,

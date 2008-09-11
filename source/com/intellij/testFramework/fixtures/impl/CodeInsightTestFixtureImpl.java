@@ -28,8 +28,6 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.ide.DataManager;
-import com.intellij.lang.findUsages.FindUsagesProvider;
-import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -84,7 +82,12 @@ import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.usageView.UsageInfo;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
@@ -410,12 +413,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public PsiReference[] testFindUsages(@NonNls final String... fileNames) throws Throwable {
     configureByFiles(fileNames);
-    FindUsagesProvider handler = LanguageFindUsages.INSTANCE.forLanguage(getFile().getLanguage());
     PsiElement referenceTo = TargetElementUtilBase
       .findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
 
-    assert referenceTo != null && handler.canFindUsagesFor(referenceTo) : "Cannot find element in caret";
+    assert referenceTo != null : "Cannot find referenced element";
     final Project project = getProject();
+    final FindUsagesHandler handler = new FindUsagesManager(project, null).getFindUsagesHandler(referenceTo, false);
+
+    final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
+    final FindUsagesOptions options = new FindUsagesOptions(project);
+    assert handler != null : "Cannot find handler for: " + referenceTo;
+    handler.processElementUsages(referenceTo, processor, options);
     return ReferencesSearch.search(referenceTo, GlobalSearchScope.projectScope(project), false).toArray(PsiReference.EMPTY_ARRAY);
   }
 
