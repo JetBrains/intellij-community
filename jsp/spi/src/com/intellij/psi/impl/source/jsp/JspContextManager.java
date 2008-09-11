@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class JspContextManager {
 
-  @Nullable
   public static JspContextManager getInstance(Project project) {
     return project.getComponent(JspContextManager.class);
   }
