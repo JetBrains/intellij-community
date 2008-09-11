@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
 import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.pom.Navigatable;
 
 /**
@@ -43,7 +44,8 @@ public class OpenRepositoryVersionAction extends AnAction {
     Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES);
     e.getPresentation().setEnabled(project != null && changes != null &&
                                    (! CommittedChangesBrowserUseCase.IN_AIR.equals(e.getDataContext().getData(CommittedChangesBrowserUseCase.CONTEXT_NAME))) &&
-                                   hasValidChanges(changes));
+                                   hasValidChanges(changes) &&
+                                   ModalityState.NON_MODAL.equals(ModalityState.current()));
   }
 
   private static boolean hasValidChanges(final Change[] changes) {

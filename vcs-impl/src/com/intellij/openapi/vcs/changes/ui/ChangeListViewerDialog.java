@@ -102,7 +102,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     myConvertor = convertor;
   }
 
-  protected JComponent createCenterPanel() {
+  public JComponent createCenterPanel() {
     final JPanel mainPanel = new JPanel();
     mainPanel.setLayout(new BorderLayout());
     myChangesBrowser = new RepositoryChangesBrowser(myProject, Collections.singletonList(myChangeList),

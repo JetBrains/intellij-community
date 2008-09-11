@@ -128,7 +128,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     return false;
   }
 
-  public ColumnInfo[] getRevisionColumns() {
+  public ColumnInfo[] getRevisionColumns(final VcsHistorySession session) {
     return new ColumnInfo[]{
       STATE, TAG, BRANCHES
     };

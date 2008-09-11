@@ -678,7 +678,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   }
 
   @SuppressWarnings({"ConstantConditions"})
-  private static class MyRootNode extends MyNode {
+  protected static class MyRootNode extends MyNode {
     public MyRootNode() {
       super(new NamedConfigurable(false, null) {
         public void setDisplayName(String name) {

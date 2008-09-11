@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -397,8 +398,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }); 
   }
 
-  private static class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
-    private final DateFormat myDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+  public static class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
+    private final static DateFormat myDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
     private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
     private final IssueLinkRenderer myRenderer;
     private final List<CommittedChangeListDecorator> myDecorators;
@@ -408,6 +409,30 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       myDecorators = decorators;
     }
 
+    public static String getDateOfChangeList(final Date date) {
+      return myDateFormat.format(date);
+    }
+
+    public static Pair<String, Boolean> getDescriptionOfChangeList(final String text) {
+      String description = text;
+      int pos = description.indexOf("\n");
+      if (pos >= 0) {
+        description = description.substring(0, pos).trim();
+        return new Pair<String, Boolean>(description, Boolean.TRUE);
+      }
+      return new Pair<String, Boolean>(description, Boolean.FALSE);
+    }
+
+    public static String truncateDescription(final String initDescription, final FontMetrics fontMetrics, int maxWidth) {
+      String description = initDescription;
+      int descWidth = fontMetrics.stringWidth(description);
+      while(description.length() > 0 && (descWidth > maxWidth)) {
+        description = trimLastWord(description);
+        descWidth = fontMetrics.stringWidth(description + " ");
+      }
+      return description;
+    }
+
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
       if (node.getUserObject() instanceof CommittedChangeList) {
@@ -415,19 +440,15 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
         final Container parent = tree.getParent();
         int parentWidth = parent == null ? 100 : parent.getWidth() - 44;
-        String date = ", " + myDateFormat.format(changeList.getCommitDate());
+        String date = ", " + getDateOfChangeList(changeList.getCommitDate());
         final FontMetrics fontMetrics = tree.getFontMetrics(tree.getFont());
         final FontMetrics boldMetrics = tree.getFontMetrics(tree.getFont().deriveFont(Font.BOLD));
         int size = fontMetrics.stringWidth(date);
         size += boldMetrics.stringWidth(changeList.getCommitterName());
 
-        boolean truncated = false;
-        String description = changeList.getName().trim();
-        int pos = description.indexOf("\n");
-        if (pos >= 0) {
-          description = description.substring(0, pos).trim();
-          truncated = true;
-        }
+        final Pair<String, Boolean> descriptionInfo = getDescriptionOfChangeList(changeList.getName().trim());
+        boolean truncated = descriptionInfo.getSecond().booleanValue();
+        String description = descriptionInfo.getFirst();
 
         for (CommittedChangeListDecorator decorator : myDecorators) {
           final Icon icon = decorator.decorate(changeList);
@@ -458,10 +479,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         else {
           final String moreMarker = VcsBundle.message("changes.browser.details.marker");
           int moreWidth = fontMetrics.stringWidth(moreMarker);
-          while(description.length() > 0 && descWidth + moreWidth > descMaxWidth) {
-            description = trimLastWord(description);
-            descWidth = fontMetrics.stringWidth(description + " ");
-          }
+          description = truncateDescription(description, fontMetrics, (descMaxWidth - moreWidth));
           myRenderer.appendTextWithLinks(description);
           append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
           append(moreMarker, LINK_ATTRIBUTES, MORE_TAG);

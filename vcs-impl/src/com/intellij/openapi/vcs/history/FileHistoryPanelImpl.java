@@ -239,7 +239,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     myHistorySession = session;
     myFilePath = filePath;
 
-    COLUMNS = createColumnList(project, provider);
+    COLUMNS = createColumnList(project, provider, session);
 
     myComments = new JEditorPane(UIUtil.HTML_MIME, "");
     myComments.setPreferredSize(new Dimension(150, 100));
@@ -364,8 +364,8 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     myComments.setTransferHandler(newHandler);
   }
 
-  private static DualViewColumnInfo[] createColumnList(Project project, VcsHistoryProvider provider) {
-    ColumnInfo[] additionalColunms = provider.getRevisionColumns();
+  private static DualViewColumnInfo[] createColumnList(Project project, VcsHistoryProvider provider, final VcsHistorySession session) {
+    ColumnInfo[] additionalColunms = provider.getRevisionColumns(session);
     ArrayList<DualViewColumnInfo> columns = new ArrayList<DualViewColumnInfo>();
     if (provider.isDateOmittable()) {
       columns.addAll(Arrays.asList(REVISION, AUTHOR));

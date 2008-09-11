@@ -20,14 +20,14 @@ public class TableLinkMouseListener extends MouseAdapter implements MouseMotionL
   public void mouseClicked(final MouseEvent e) {
     if (e.getButton() == 1 && !e.isPopupTrigger()) {
       Object tag = getTagAt(e);
-      if (tag != null) {
+      if ((tag != null) && (! Object.class.getName().equals(tag.getClass().getName()))) {
         BrowserUtil.launchBrowser(tag.toString());
       }
     }
   }
 
   @Nullable
-  private Object getTagAt(final MouseEvent e) {
+  protected Object getTagAt(final MouseEvent e) {
     // TODO[yole]: don't update renderer on every event, like it's done in TreeLinkMouseListener
     Object tag = null;
     JTable table = (JTable)e.getSource();

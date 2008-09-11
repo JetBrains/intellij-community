@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface VcsHistoryProvider {
 
-  ColumnInfo[] getRevisionColumns();
+  ColumnInfo[] getRevisionColumns(final VcsHistorySession session);
 
   AnAction[] getAdditionalActions(final FileHistoryPanel panel);
 

@@ -111,7 +111,7 @@ public class VcsHistoryDialog extends DialogWrapper {
     myFile = file;
     String helpId = vcsHistoryProvider.getHelpId();
     myHelpId = helpId != null ? helpId : "reference.dialogs.vcs.selection.history";
-    myList = new TableView(new ListTableModel(createColumns(vcsHistoryProvider.getRevisionColumns())));
+    myList = new TableView(new ListTableModel(createColumns(vcsHistoryProvider.getRevisionColumns(session))));
     ((SortableColumnModel)myList.getModel()).setSortable(false);
 
     myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myProject);

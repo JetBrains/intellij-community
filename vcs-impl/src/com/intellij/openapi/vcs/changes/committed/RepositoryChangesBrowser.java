@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -86,7 +87,8 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
       super.update(event);
       event.getPresentation().setIcon(myEditSourceIcon);
       event.getPresentation().setText("Edit Source");
-      if (CommittedChangesBrowserUseCase.IN_AIR.equals(event.getDataContext().getData(CommittedChangesBrowserUseCase.CONTEXT_NAME))) {
+      if ((! ModalityState.NON_MODAL.equals(ModalityState.current())) ||
+          CommittedChangesBrowserUseCase.IN_AIR.equals(event.getDataContext().getData(CommittedChangesBrowserUseCase.CONTEXT_NAME))) {
         event.getPresentation().setEnabled(false);
       }
     }
