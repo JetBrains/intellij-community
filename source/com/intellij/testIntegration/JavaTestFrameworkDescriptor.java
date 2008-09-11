@@ -1,11 +1,10 @@
-package com.intellij.testIntegration.createTest;
+package com.intellij.testIntegration;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.module.Module;
-import com.intellij.testIntegration.TestFrameworkDescriptor;
 
 public abstract class JavaTestFrameworkDescriptor implements TestFrameworkDescriptor {
   public boolean isLibraryAttached(Module m) {
