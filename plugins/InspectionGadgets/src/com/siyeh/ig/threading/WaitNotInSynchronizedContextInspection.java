@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,34 +16,46 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.SynchronizationUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class WaitNotInSynchronizedContextInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "WaitWhileNotSynced";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "wait.not.in.synchronized.context.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
+        final String text;
+        if (infos.length > 0) {
+            final PsiElement element = (PsiElement)infos[0];
+            text = element.getText();
+        } else {
+            text = "this";
+        }
         return InspectionGadgetsBundle.message(
-                "wait.not.in.synchronized.context.problem.descriptor");
+                "wait.not.in.synchronized.context.problem.descriptor", text);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new WaitNotInSynchronizedContextVisitor();
     }
@@ -65,28 +77,75 @@ public class WaitNotInSynchronizedContextInspection
             if (method == null) {
                 return;
             }
-            final PsiParameterList parameterList = method.getParameterList();
-            final int numParams = parameterList.getParametersCount();
-            if (numParams > 2) {
+            final PsiClass aClass = method.getContainingClass();
+            final String qualifiedName = aClass.getQualifiedName();
+            if (!qualifiedName.equals("java.lang.Object")) {
                 return;
             }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if (numParams > 0) {
-                final PsiType parameterType = parameters[0].getType();
-                if (!parameterType.equals(PsiType.LONG)) {
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (qualifier == null ||
+                    qualifier instanceof PsiThisExpression ||
+                    qualifier instanceof PsiSuperExpression) {
+                if (isSynchronizedOnThis(expression)) {
                     return;
                 }
-            }
-            if (numParams > 1) {
-                final PsiType parameterType = parameters[1].getType();
-                if (!parameterType.equals(PsiType.INT)) {
+                registerError(expression);
+            } else if (qualifier instanceof PsiReferenceExpression){
+                final PsiReferenceExpression referenceExpression =
+                        (PsiReferenceExpression)qualifier;
+                final PsiElement target = referenceExpression.resolve();
+                if (isSynchronizedOn(expression, target)) {
                     return;
                 }
+                registerError(expression, qualifier);
             }
-            if (SynchronizationUtil.isInSynchronizedContext(expression)) {
-                return;
+        }
+
+        private static boolean isSynchronizedOn(@NotNull PsiElement element,
+                                                @Nullable PsiElement target) {
+            if (target == null) {
+                return false;
             }
-            registerMethodCallError(expression);
+            final PsiElement context =
+                    PsiTreeUtil.getParentOfType(element,
+                            PsiSynchronizedStatement.class);
+            if (context == null) {
+                return false;
+            }
+            final PsiSynchronizedStatement synchronizedStatement =
+                    (PsiSynchronizedStatement)context;
+            final PsiExpression lockExpression =
+                    synchronizedStatement.getLockExpression();
+            if (!(lockExpression instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)lockExpression;
+            final PsiElement lockTarget = referenceExpression.resolve();
+            return target.equals(lockTarget) ||
+                    isSynchronizedOn(synchronizedStatement, target);
+        }
+
+        private static boolean isSynchronizedOnThis(
+                @NotNull PsiElement element) {
+            final PsiElement context =
+                    PsiTreeUtil.getParentOfType(element, PsiMethod.class,
+                            PsiSynchronizedStatement.class);
+            if (context instanceof PsiSynchronizedStatement) {
+                final PsiSynchronizedStatement synchronizedStatement =
+                        (PsiSynchronizedStatement)context;
+                final PsiExpression lockExpression =
+                        synchronizedStatement.getLockExpression();
+                return lockExpression instanceof PsiThisExpression ||
+                        isSynchronizedOnThis(synchronizedStatement);
+            } else if (context instanceof PsiMethod) {
+                final PsiMethod method = (PsiMethod)context;
+                if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
