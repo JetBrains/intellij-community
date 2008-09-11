@@ -2,10 +2,11 @@ package com.intellij.testIntegration;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
-public interface CreateTestProvider {
-  ExtensionPointName<CreateTestProvider> EXTENSION_NAME = ExtensionPointName.create("com.intellij.codeInsight.createTestProvider");
+public interface TestFrameworkDescriptor {
+  ExtensionPointName<TestFrameworkDescriptor> EXTENSION_NAME = ExtensionPointName.create("com.intellij.testFrameworkDescriptor");
 
   String getName();
 
@@ -24,4 +25,6 @@ public interface CreateTestProvider {
 
   @Nullable
   String getTestAnnotation();
+
+  boolean isTestClass(PsiElement element);
 }

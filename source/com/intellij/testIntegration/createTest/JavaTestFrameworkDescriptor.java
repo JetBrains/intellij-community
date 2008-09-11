@@ -2,11 +2,12 @@ package com.intellij.testIntegration.createTest;
 
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.openapi.module.Module;
-import com.intellij.testIntegration.CreateTestProvider;
+import com.intellij.testIntegration.TestFrameworkDescriptor;
 
-public abstract class CreateTestBaseProvider implements CreateTestProvider {
+public abstract class JavaTestFrameworkDescriptor implements TestFrameworkDescriptor {
   public boolean isLibraryAttached(Module m) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(m);
     PsiClass c = JavaPsiFacade.getInstance(m.getProject()).findClass(getMarkerClassFQName(), scope);
@@ -14,4 +15,10 @@ public abstract class CreateTestBaseProvider implements CreateTestProvider {
   }
 
   protected abstract String getMarkerClassFQName();
+
+ public boolean isTestClass(PsiElement element) {
+   return element instanceof PsiClass && isTestClass((PsiClass)element);
+ }
+
+ public abstract boolean isTestClass(PsiClass clazz);
 }

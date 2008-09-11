@@ -1,7 +1,6 @@
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.CommonBundle;
-import com.intellij.testIntegration.CreateTestProvider;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.ide.util.*;
@@ -9,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.extensions.Extensions;
@@ -29,6 +29,8 @@ import com.intellij.refactoring.ui.MemberSelectionTable;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.testIntegration.TestFrameworkDescriptor;
+import com.intellij.testIntegration.TestIntergationUtils;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -41,9 +43,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
 public class CreateTestDialog extends DialogWrapper {
   private static final String RECENTS_KEY = "CreateTestDialog.RecentsKey";
@@ -55,7 +57,7 @@ public class CreateTestDialog extends DialogWrapper {
   private Module myTargetModule;
 
   private PsiDirectory myTargetDirectory;
-  private CreateTestProvider mySelectedTestProvider;
+  private TestFrameworkDescriptor mySelectedTestDescriptor;
 
   private List<JRadioButton> myLibraryButtons = new ArrayList<JRadioButton>();
   private JTextField myTargetClassNameField;
@@ -95,18 +97,18 @@ public class CreateTestDialog extends DialogWrapper {
   private void initControls(PsiClass targetClass, PsiPackage targetPackage) {
     ButtonGroup group = new ButtonGroup();
     String defaultLibrary = getDefaultLibraryName();
-    for (final CreateTestProvider p : Extensions.getExtensions(CreateTestProvider.EXTENSION_NAME)) {
-      final JRadioButton b = new JRadioButton(p.getName());
+    for (final TestFrameworkDescriptor descriptor : Extensions.getExtensions(TestFrameworkDescriptor.EXTENSION_NAME)) {
+      final JRadioButton b = new JRadioButton(descriptor.getName());
       myLibraryButtons.add(b);
       group.add(b);
 
-      if (p.getName().equals(defaultLibrary)) {
+      if (descriptor.getName().equals(defaultLibrary)) {
         myDefaultLibraryButton = b;
       }
 
       b.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          if (b.isSelected()) onLibrarySelected(p);
+          if (b.isSelected()) onLibrarySelected(descriptor);
         }
       });
     }
@@ -116,7 +118,7 @@ public class CreateTestDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            OrderEntryFix.addJarToRoots(mySelectedTestProvider.getLibraryPath(), myTargetModule);
+            OrderEntryFix.addJarToRoots(mySelectedTestDescriptor.getLibraryPath(), myTargetModule);
           }
         });
         myFixLibraryPanel.setVisible(false);
@@ -163,14 +165,14 @@ public class CreateTestDialog extends DialogWrapper {
     updateMethodsTable();
   }
 
-  private void onLibrarySelected(CreateTestProvider p) {
-    String text = CodeInsightBundle.message("intention.create.test.dialog.library.not.found", p.getName());
+  private void onLibrarySelected(TestFrameworkDescriptor descriptor) {
+    String text = CodeInsightBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
     myFixLibraryLabel.setText(text);
-    myFixLibraryPanel.setVisible(!p.isLibraryAttached(myTargetModule));
+    myFixLibraryPanel.setVisible(!descriptor.isLibraryAttached(myTargetModule));
 
-    String superClass = p.getDefaultSuperClass();
+    String superClass = descriptor.getDefaultSuperClass();
     mySuperClassField.setText(superClass == null ? "" : superClass);
-    mySelectedTestProvider = p;
+    mySelectedTestDescriptor = descriptor;
   }
 
   private void setPreferredSize(JTextField field) {
@@ -181,22 +183,8 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private void updateMethodsTable() {
-    List<MemberInfo> methods = new ArrayList<MemberInfo>();
-
-    PsiClass c = myTargetClass;
-    do {
-      MemberInfo.extractClassMembers(c, methods, new MemberInfo.Filter() {
-        public boolean includeMember(PsiMember member) {
-          if (!(member instanceof PsiMethod)) return false;
-          PsiModifierList list = member.getModifierList();
-          return list.hasModifierProperty(PsiModifier.PUBLIC);
-        }
-      }, false);
-      c = c.getSuperClass();
-    }
-    while (c != null
-           && c.getSuperClass() != null // not the Object
-           && myShowInheritedMethodsBox.isSelected());
+    List<MemberInfo> methods = TestIntergationUtils.extractClassMethods(
+        myTargetClass, myShowInheritedMethodsBox.isSelected());
 
     Set<PsiMember> selectedMethods = new HashSet<PsiMember>();
     for (MemberInfo each : myMethodsTable.getSelectedMemberInfos()) {
@@ -222,7 +210,7 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private void saveDefaultLibraryName() {
-    getProperties().setValue(DEFAULT_LIBRARY_NAME_PROPERTY, mySelectedTestProvider.getName());
+    getProperties().setValue(DEFAULT_LIBRARY_NAME_PROPERTY, mySelectedTestDescriptor.getName());
   }
 
   private void restoreShowInheritedMembersStatus() {
@@ -365,6 +353,7 @@ public class CreateTestDialog extends DialogWrapper {
   private static Insets insets(int top) {
     return insets(top, 0);
   }
+
   private static Insets insets(int top, int bottom) {
     return new Insets(top, 8, bottom, 8);
   }
@@ -395,34 +384,25 @@ public class CreateTestDialog extends DialogWrapper {
     return myGenerateBeforeBox.isSelected();
   }
 
-  public CreateTestProvider getSelectedTestProvider() {
-    return mySelectedTestProvider;
+  public TestFrameworkDescriptor getSelectedTestDescriptor() {
+    return mySelectedTestDescriptor;
   }
 
   protected void doOKAction() {
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, myTargetPackageField.getText());
 
-    String errorString = new WriteCommandAction<String>(myProject, CodeInsightBundle.message("create.directory.command")) {
-      protected void run(Result<String> result) throws Throwable {
-        try {
-          myTargetDirectory = selectTargetDirectory();
-          if (myTargetDirectory == null) {
-            result.setResult("");
-            return;
-          }
-          result.setResult(RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName()));
-        }
-        catch (IncorrectOperationException e) {
-          result.setResult(e.getMessage());
-        }
-      }
-    }.execute().getResultObject();
+    String errorMessage = null;
+    try {
+      myTargetDirectory = selectTargetDirectory();
+      if (myTargetDirectory == null) return;
+      errorMessage = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName());
+    }
+    catch (IncorrectOperationException e) {
+      errorMessage = e.getMessage();
+    }
 
-    if (errorString != null) {
-      if (errorString.length() != 0) {
-        Messages.showMessageDialog(myProject, errorString, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-      }
-      return;
+    if (errorMessage != null) {
+      Messages.showMessageDialog(myProject, errorMessage, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
     }
 
     saveDefaultLibraryName();
@@ -431,23 +411,31 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private PsiDirectory selectTargetDirectory() throws IncorrectOperationException {
-    VirtualFile[] roots = ModuleRootManager.getInstance(myTargetModule).getSourceRoots();
-    if (roots.length == 0) return null;
+    final String packageName = getPackageName();
+    final PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(myProject), packageName);
 
-    String packageName = getPackageName();
-    PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(myProject), packageName);
+    final VirtualFile selectedRoot = new ReadAction<VirtualFile>() {
+      protected void run(Result<VirtualFile> result) throws Throwable {
+        VirtualFile[] roots = ModuleRootManager.getInstance(myTargetModule).getSourceRoots();
+        if (roots.length == 0) return;
 
-    VirtualFile selectedRoot;
-    if (roots.length == 1) {
-      selectedRoot = roots[0];
-    }
-    else {
-      PsiDirectory defaultDir = chooseDefaultDirectory(packageName);
-      selectedRoot = MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir);
-      if (selectedRoot == null) return null;
-    }
+        if (roots.length == 1) {
+          result.setResult(roots[0]);
+        }
+        else {
+          PsiDirectory defaultDir = chooseDefaultDirectory(packageName);
+          result.setResult(MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir));
+        }
+      }
+    }.execute().getResultObject();
 
-    return RefactoringUtil.createPackageDirectoryInSourceRoot(targetPackage, selectedRoot);
+    if (selectedRoot == null) return null;
+
+    return new WriteCommandAction<PsiDirectory>(myProject, CodeInsightBundle.message("create.directory.command")) {
+      protected void run(Result<PsiDirectory> result) throws Throwable {
+        result.setResult(RefactoringUtil.createPackageDirectoryInSourceRoot(targetPackage, selectedRoot));
+      }
+    }.execute().getResultObject();
   }
 
   private PsiDirectory chooseDefaultDirectory(String packageName) {

@@ -146,7 +146,7 @@ public class GenerateMembersUtil {
     editor.getSelectionModel().removeSelection();
   }
 
-  static PsiElement insert(PsiClass aClass, PsiMember member, PsiElement anchor, boolean before) throws IncorrectOperationException {
+  public static PsiElement insert(PsiClass aClass, PsiMember member, PsiElement anchor, boolean before) throws IncorrectOperationException {
     if (member instanceof PsiMethod) {
       final PsiParameter[] parameters = ((PsiMethod)member).getParameterList().getParameters();
       final boolean generateFinals = CodeStyleSettingsManager.getSettings(aClass.getProject()).GENERATE_FINAL_PARAMETERS;

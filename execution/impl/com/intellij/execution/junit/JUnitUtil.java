@@ -95,6 +95,10 @@ public class JUnitUtil {
     return false;
   }
 
+  public static boolean isJUnit3TestClass(final PsiClass clazz) {
+    return isTestCaseInheritor(clazz);
+  }
+
   public static boolean isJUnit4TestClass(final PsiClass psiClass) {
     return isJUnit4TestClass(psiClass, true,null);
   }

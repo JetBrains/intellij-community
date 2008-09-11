@@ -12,7 +12,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,15 +20,7 @@ import java.util.regex.Pattern;
 
 public class JavaTestFinder implements TestFinder {
   public PsiClass findSourceElement(PsiElement element) {
-    PsiClass result = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
-    if (result == null) return null;
-
-    do {
-      PsiClass nextParent = PsiTreeUtil.getParentOfType(result, PsiClass.class, true);
-      if (nextParent == null) return result;
-      result = nextParent;
-    }
-    while (true);
+    return TestIntergationUtils.findOuterClass(element);
   }
 
   @NotNull
@@ -164,7 +155,6 @@ public class JavaTestFinder implements TestFinder {
   }
 
   public boolean isTest(PsiElement element) {
-    PsiClass klass = findSourceElement(element);
-    return klass != null && TestUtil.isTestClass(klass);
+    return TestIntergationUtils.isTest(element);
   }
 }

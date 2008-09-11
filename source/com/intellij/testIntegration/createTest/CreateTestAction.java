@@ -4,24 +4,24 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.testIntegration.CreateTestProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.testIntegration.TestFrameworkDescriptor;
+import com.intellij.testIntegration.TestIntergationUtils;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +97,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
               PsiClass targetClass = JavaDirectoryService.getInstance().createClass(d.getTargetDirectory(), d.getClassName());
               addSuperClass(targetClass, project, d.getSuperClassName());
               addTestMethods(targetClass,
-                             d.getSelectedTestProvider(),
+                             d.getSelectedTestDescriptor(),
                              d.getSelectedMethods(),
                              d.shouldGeneratedBefore(),
                              d.shouldGeneratedAfter());
@@ -145,36 +145,22 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   }
 
   private void addTestMethods(PsiClass targetClass,
-                              CreateTestProvider provider,
+                              TestFrameworkDescriptor descriptor,
                               MemberInfo[] methods,
                               boolean generateBefore,
                               boolean generateAfter) throws IncorrectOperationException {
-    if (generateBefore) addMethod(targetClass, "setUp", provider.getSetUpAnnotation());
-    if (generateAfter) addMethod(targetClass, "tearDown", provider.getTearDownAnnotation());
+    if (generateBefore) addMethod(targetClass, "setUp", descriptor.getSetUpAnnotation());
+    if (generateAfter) addMethod(targetClass, "tearDown", descriptor.getTearDownAnnotation());
 
     for (MemberInfo m : methods) {
       addMethod(targetClass,
                 "test" + StringUtil.capitalize(m.getMember().getName()),
-                provider.getTestAnnotation());
+                descriptor.getTestAnnotation());
     }
   }
 
   private void addMethod(PsiClass targetClass, String name, String annotation) throws IncorrectOperationException {
-    PsiElementFactory f = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory();
-    PsiMethod test = f.createMethod(name, PsiType.VOID);
-    test.getBody().add(f.createCommentFromText("// Add your code here", test));
-
-    if (annotation != null) {
-      PsiAnnotation a = f.createAnnotationFromText("@" + annotation, test);
-      PsiModifierList modifiers = test.getModifierList();
-      PsiElement first = modifiers.getFirstChild();
-      if (first == null) modifiers.add(a);
-      else modifiers.addBefore(a, first);
-
-      JavaCodeStyleManager.getInstance(targetClass.getProject()).shortenClassReferences(modifiers);
-    }
-
-    targetClass.add(test);
+    targetClass.add(TestIntergationUtils.createMethod(targetClass, name, annotation));
   }
 
   public boolean startInWriteAction() {
