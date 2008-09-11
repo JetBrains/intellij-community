@@ -55,7 +55,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
   static class MyElementProcessor implements PsiElementProcessor {
     private boolean myHasMissingImplementations;
     private boolean myHasExistingImplementations;
-    private PsiMethod myMethod;
+    private final PsiMethod myMethod;
 
     MyElementProcessor(final PsiMethod method) {
       myMethod = method;

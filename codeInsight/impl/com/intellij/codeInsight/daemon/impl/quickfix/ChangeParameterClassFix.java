@@ -20,8 +20,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -72,7 +72,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
                     return new PsiMethodMember(s);
                   }
                 });
-              OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor1, myClass, members, false, false);
+              OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor1, myClass, members, false);
             }
           });
       }

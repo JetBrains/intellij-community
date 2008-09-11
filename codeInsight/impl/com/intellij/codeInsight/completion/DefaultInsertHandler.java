@@ -486,8 +486,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
                 public void run() {
                   try{
-                    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
-                    List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false, styleSettings.INSERT_OVERRIDE_ANNOTATION);
+                    List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false);
                     List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
                     List<PsiGenerationInfo<PsiMethod>> resultMembers = GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
                     GenerateMembersUtil.positionCaret(myEditor, resultMembers.get(0).getPsiMember(), true);

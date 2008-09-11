@@ -188,7 +188,18 @@ public class OverrideImplementUtil {
     final PsiClass containingClass = method.getContainingClass();
     PsiSubstitutor substitutor = aClass.isInheritor(containingClass, true) ?
                                  TypeConversionUtil.getSuperClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY) : PsiSubstitutor.EMPTY;
-    return overrideOrImplementMethod(aClass, method, substitutor, toCopyJavaDoc, false);
+    return overrideOrImplementMethod(aClass, method, substitutor, toCopyJavaDoc, true);
+  }
+
+  private static boolean isInsertOverride(PsiMethod method, PsiMethod superMethod) {
+    if (!CodeStyleSettingsManager.getSettings(method.getProject()).INSERT_OVERRIDE_ANNOTATION || !PsiUtil.isLanguageLevel5OrHigher(method)) {
+      return false;
+    }
+    if (PsiUtil.isLanguageLevel6OrHigher(method)) return true;
+    PsiClass aClass = method.getContainingClass();
+    if (aClass.isInterface()) return true;
+    PsiClass superClass = superMethod.getContainingClass();
+    return !superClass.isInterface();
   }
 
   @NotNull
@@ -196,7 +207,7 @@ public class OverrideImplementUtil {
                                                        PsiMethod method,
                                                        PsiSubstitutor substitutor,
                                                        boolean toCopyJavaDoc,
-                                                       boolean insertAtOverride) throws IncorrectOperationException {
+                                                       boolean insertAtOverrideIfPossible) throws IncorrectOperationException {
     if (!method.isValid() || !substitutor.isValid()) return Collections.emptyList();
 
     List<PsiMethod> results = new ArrayList<PsiMethod>();
@@ -234,7 +245,7 @@ public class OverrideImplementUtil {
         }
       }
 
-      if (insertAtOverride && !method.isConstructor()) {
+      if (insertAtOverrideIfPossible && isInsertOverride(result, method) && !method.isConstructor()) {
         annotate(result, "java.lang.Override");
       }
 
@@ -310,11 +321,11 @@ public class OverrideImplementUtil {
   public static List<PsiMethod> overrideOrImplementMethodCandidates(PsiClass aClass,
                                                                     Collection<CandidateInfo> candidates,
                                                                     boolean toCopyJavaDoc,
-                                                                    boolean toInsertAtOverride) throws IncorrectOperationException {
+                                                                    boolean insertOverrideWherePossible) throws IncorrectOperationException {
     List<PsiMethod> result = new ArrayList<PsiMethod>();
     for (CandidateInfo candidateInfo : candidates) {
       result.addAll(overrideOrImplementMethod(aClass, (PsiMethod)candidateInfo.getElement(), candidateInfo.getSubstitutor(),
-                                              toCopyJavaDoc, toInsertAtOverride));
+                                              toCopyJavaDoc, insertOverrideWherePossible));
     }
     return result;
   }
@@ -455,7 +466,7 @@ public class OverrideImplementUtil {
     final JComponent preferredFocusedComponent = chooser.getPreferredFocusedComponent();
     final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
 
-    final @NonNls String s = toImplement ? "OverrideMethods" : "ImplementMethods";
+    @NonNls final String s = toImplement ? "OverrideMethods" : "ImplementMethods";
     final Shortcut[] shortcuts = keymap.getShortcuts(s);
 
     if (shortcuts.length > 0 && shortcuts[0] instanceof KeyboardShortcut) {
@@ -486,7 +497,7 @@ public class OverrideImplementUtil {
                                                             PsiClass aClass,
                                                             Collection<PsiMethodMember> candidates,
                                                             boolean copyJavadoc,
-                                                            boolean insertAtOverride) {
+                                                            boolean insertOverrideWherePossible) {
     try{
       int offset = editor.getCaretModel().getOffset();
       if (aClass.getLBrace() == null) {
@@ -500,7 +511,7 @@ public class OverrideImplementUtil {
         resultMembers = new ArrayList<PsiGenerationInfo<PsiMethod>>();
         for (PsiMethodMember candidate : candidates) {
           Collection<PsiMethod> prototypes = overrideOrImplementMethod(aClass, candidate.getElement(), candidate.getSubstitutor(),
-                                                             copyJavadoc, insertAtOverride);
+                                                             copyJavadoc, insertOverrideWherePossible);
           for (PsiMethod prototype : prototypes) {
             PsiElement anchor = getDefaultAnchorToOverrideOrImplement(aClass, candidate.getElement(), candidate.getSubstitutor());
             PsiElement result = GenerateMembersUtil.insert(aClass, prototype, anchor, true);
@@ -509,7 +520,7 @@ public class OverrideImplementUtil {
         }
       }
       else{
-        List<PsiGenerationInfo<PsiMethod>> prototypes = overrideOrImplementMethods(aClass, candidates, copyJavadoc, insertAtOverride);
+        List<PsiGenerationInfo<PsiMethod>> prototypes = overrideOrImplementMethods(aClass, candidates, copyJavadoc, insertOverrideWherePossible);
         resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
       }
 
@@ -592,5 +603,16 @@ public class OverrideImplementUtil {
     }
 
     return PsiSubstitutor.EMPTY;
+  }
+
+  public static void overrideOrImplementMethodsInRightPlace(Editor editor1, PsiClass aClass, Collection<PsiMethodMember> members, boolean copyJavadoc) {
+    boolean insert = CodeStyleSettingsManager.getSettings(aClass.getProject()).INSERT_OVERRIDE_ANNOTATION;
+    overrideOrImplementMethodsInRightPlace(editor1, aClass, members, copyJavadoc, insert);
+  }
+
+  public static List<PsiMethod> overrideOrImplementMethodCandidates(PsiClass aClass, Collection<CandidateInfo> candidatesToImplement,
+                                                                    boolean copyJavadoc) throws IncorrectOperationException {
+    boolean insert = CodeStyleSettingsManager.getSettings(aClass.getProject()).INSERT_OVERRIDE_ANNOTATION;
+    return overrideOrImplementMethodCandidates(aClass, candidatesToImplement, copyJavadoc, insert);
   }
 }

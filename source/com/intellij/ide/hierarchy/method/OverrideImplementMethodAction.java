@@ -42,8 +42,8 @@ abstract class OverrideImplementMethodAction extends AnAction {
               final MethodHierarchyNodeDescriptor[] selectedDescriptors = methodHierarchyBrowser.getSelectedDescriptors();
               if (selectedDescriptors.length > 0) {
                 final List<VirtualFile> files = new ArrayList<VirtualFile>(selectedDescriptors.length);
-                for (int i = 0; i < selectedDescriptors.length; i++) {
-                  final PsiFile containingFile = selectedDescriptors[i].getPsiClass().getContainingFile();
+                for (MethodHierarchyNodeDescriptor selectedDescriptor1 : selectedDescriptors) {
+                  final PsiFile containingFile = selectedDescriptor1.getPsiClass().getContainingFile();
                   if (containingFile != null) {
                     final VirtualFile vFile = containingFile.getVirtualFile();
                     if (vFile != null) {
@@ -53,8 +53,8 @@ abstract class OverrideImplementMethodAction extends AnAction {
                 }
                 final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files.toArray(new VirtualFile[files.size()]));
                 if (!status.hasReadonlyFiles()) {
-                  for (int i = 0; i < selectedDescriptors.length; i++) {
-                    OverrideImplementUtil.overrideOrImplement(selectedDescriptors[i].getPsiClass(), methodHierarchyBrowser.getBaseMethod());
+                  for (MethodHierarchyNodeDescriptor selectedDescriptor : selectedDescriptors) {
+                    OverrideImplementUtil.overrideOrImplement(selectedDescriptor.getPsiClass(), methodHierarchyBrowser.getBaseMethod());
                   }
                   ToolWindowManager.getInstance(project).activateEditorComponent();
                 }

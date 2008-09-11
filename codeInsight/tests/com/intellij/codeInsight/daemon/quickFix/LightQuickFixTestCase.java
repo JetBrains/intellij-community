@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NonNls;
+import org.intellij.lang.annotations.RegExp;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -37,7 +38,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return parseActionHint(file, contents);
   }
 
-  protected void doTestFor(final String testName) {
+  private void doTestFor(final String testName) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -82,7 +83,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return parseActionHint(file, contents, " \"([^\"]*)\" \"(\\S*)\".*");
   }
 
-  public static Pair<String, Boolean> parseActionHint(final PsiFile file, String contents, String actionPattern) {
+  public static Pair<String, Boolean> parseActionHint(final PsiFile file, String contents, @NonNls @RegExp String actionPattern) {
     PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(file);
 
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(hostFile.getLanguage());
