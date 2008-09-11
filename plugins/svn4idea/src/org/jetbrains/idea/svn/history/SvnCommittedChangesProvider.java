@@ -241,20 +241,11 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     private final DecoratorManager myManager;
     private final ChangeListFilteringStrategy myStrategy;
     private boolean myIsSelected;
-    private final Project myProject;
-    private final RepositoryLocation myLocation;
     private final static String ourKey = "MERGE_PANEL";
-    private boolean myOneDotFive;
-    private long myOneDotFiveUpdateTime;
-    private final static int ourStep = 600000;
 
-    public ShowHideMergePanel(final Project project, final DecoratorManager manager, final ChangeListFilteringStrategy strategy,
-                              final RepositoryLocation location) {
-      myProject = project;
+    public ShowHideMergePanel(final DecoratorManager manager, final ChangeListFilteringStrategy strategy) {
       myManager = manager;
       myStrategy = strategy;
-      myLocation = location;
-      myOneDotFiveUpdateTime = 0;
     }
 
     @Override
@@ -264,19 +255,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       presentation.setIcon(IconLoader.getIcon("/icons/ShowIntegratedFrom.png"));
       presentation.setText(SvnBundle.message("committed.changes.action.enable.merge.highlighting"));
       presentation.setDescription(SvnBundle.message("committed.changes.action.enable.merge.highlighting.description.text"));
-
-      if (! myIsSelected) {
-        updateOneDotFiveFlag();
-        presentation.setEnabled(myOneDotFive);
-      }
-    }
-
-    private void updateOneDotFiveFlag() {
-      final long time = System.currentTimeMillis();
-      if (time > (myOneDotFiveUpdateTime + ourStep)) {
-        myOneDotFiveUpdateTime = time;
-        myOneDotFive = SvnUtil.isOneDotFiveAvailable(myProject, myLocation);
-      }
     }
 
     public boolean isSelected(final AnActionEvent e) {
@@ -303,7 +281,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     popup.add(rootsAndBranches.getUndoIntegrateAction());
     popup.add(new ConfigureBranchesAction());
 
-    final ShowHideMergePanel action = new ShowHideMergePanel(myProject, manager, rootsAndBranches.getStrategy(), location);
+    final ShowHideMergePanel action = new ShowHideMergePanel(manager, rootsAndBranches.getStrategy());
 
     return new VcsCommittedViewAuxiliary(Collections.<AnAction>singletonList(popup), new Runnable() {
       public void run() {

@@ -5,9 +5,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.IconLoader;
@@ -197,7 +198,18 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
           public void run() {
             if (myPanelWrapper != null) {
               myPanelWrapper.removeAll();
-              myPanelWrapper.add(mainPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+              if (myMergePanels.isEmpty()) {
+                final JPanel emptyPanel = new JPanel(new GridBagLayout());
+                final GridBagConstraints gb =
+                  new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 5, 0, 5), 0, 0);
+                final JLabel label = new JLabel("No Subversion 1.5 working copies\nof 1.5 repositories in the project");
+                label.setUI(new MultiLineLabelUI());
+                emptyPanel.add(label, gb);
+                gb.fill = GridBagConstraints.HORIZONTAL;
+                myPanelWrapper.add(emptyPanel, gb);
+              } else {
+                myPanelWrapper.add(mainPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+              }
               myPanelWrapper.repaint();
             } else {
               myPanel = mainPanel;
