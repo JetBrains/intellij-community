@@ -81,9 +81,9 @@ public class FormatterTest extends SimpleGroovyFileSetTestCase {
 
   protected void setUp() {
     super.setUp();
-    mySettings.CLASS_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
-    mySettings.METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
-    mySettings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    myTempSettings.CLASS_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    myTempSettings.METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    myTempSettings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
   }
 
   public static Test suite() {
