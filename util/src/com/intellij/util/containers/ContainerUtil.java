@@ -514,4 +514,7 @@ public class ContainerUtil {
     return list;
   }
 
+  public static <T> List<T> dropTail(List<T> items) {
+    return items.subList(0, items.size()-1);
+  }
 }
