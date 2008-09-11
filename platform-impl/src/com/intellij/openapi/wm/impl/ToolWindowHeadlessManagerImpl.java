@@ -53,7 +53,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public boolean isVisible() {
       return false;
     }
-
     
 
     public void show(@Nullable Runnable runnable) {
@@ -69,6 +68,14 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setAnchor(ToolWindowAnchor anchor, @Nullable Runnable runnable) {
     }
 
+    public boolean isSideTool() {
+      return false;
+    }
+
+    public void setSideTool(final boolean isSideTool, @Nullable final Runnable runnable) {
+
+    }
+
     public boolean isAutoHide() {
       return false;
     }
@@ -82,8 +89,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public boolean isToHideOnEmptyContent() {
       return false;
     }
-
-
 
     public ToolWindowType getType() {
       return ToolWindowType.SLIDING;
@@ -196,6 +201,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor) {
+    return HEADLESS_WINDOW;
+  }
+
+  public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor, final boolean sideTool) {
     return HEADLESS_WINDOW;
   }
 

@@ -96,6 +96,7 @@ public final class InternalDecorator extends JPanel {
   private final HideSideAction myHideSideAction;
   private final ToggleDockModeAction myToggleDockModeAction;
   private final ToggleFloatingModeAction myToggleFloatingModeAction;
+  private final ToggleSideModeAction myToggleSideModeAction;
   /**
    * Catches all event from tool window and modifies decorator's appearance.
    */
@@ -105,6 +106,7 @@ public final class InternalDecorator extends JPanel {
   @NonNls protected static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
   @NonNls protected static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
   @NonNls protected static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
+  @NonNls protected static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
   @NonNls protected static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls protected static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = "HideSideWindows";
   private MyTitleButton myHideSideButton;
@@ -120,6 +122,7 @@ public final class InternalDecorator extends JPanel {
     myTitleTabs = toolWindow.getContentUI().getTabComponent();
 
     myToggleFloatingModeAction = new ToggleFloatingModeAction();
+    myToggleSideModeAction = new ToggleSideModeAction();
     myFloatingDockSeparator = new Separator();
     myFloatingDockSeparator.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
     myToggleDockModeAction = new ToggleDockModeAction();
@@ -344,6 +347,13 @@ public final class InternalDecorator extends JPanel {
     }
   }
 
+  private void fireSideStatusChanged(boolean isSide) {
+    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
+    for (int i = 0; i < listeners.length; i++) {
+      listeners[i].sideStatusChanged(this, isSide);
+    }
+  }
+
   private void init() {
     enableEvents(ComponentEvent.COMPONENT_EVENT_MASK);
     // Compose title bar
@@ -414,6 +424,7 @@ public final class InternalDecorator extends JPanel {
       group.add(myToggleAutoHideModeAction);
       group.add(myToggleDockModeAction);
       group.add(myToggleFloatingModeAction);
+      group.add(myToggleSideModeAction);
     }
     else if (myInfo.isFloating()) {
       group.add(myToggleAutoHideModeAction);
@@ -611,6 +622,25 @@ public final class InternalDecorator extends JPanel {
       else {
         fireTypeChanged(ToolWindowType.FLOATING);
       }
+    }
+  }
+
+  private final class ToggleSideModeAction extends ToggleAction {
+    public ToggleSideModeAction() {
+      copyFrom(ActionManager.getInstance().getAction(TOGGLE_SIDE_MODE_ACTION_ID));
+    }
+
+    public final boolean isSelected(final AnActionEvent event) {
+      return myInfo.isSideTool();
+    }
+
+    public final void setSelected(final AnActionEvent event, final boolean flag) {
+      fireSideStatusChanged(flag);
+    }                                
+
+    @Override
+    public void update(final AnActionEvent e) {
+      super.update(e);
     }
   }
 

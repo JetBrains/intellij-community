@@ -439,6 +439,15 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       while (!mySideStack.isEmpty(info.getAnchor())) {
         mySideStack.pop(info.getAnchor());
       }
+
+      final String[] all = getToolWindowIds();
+      for (String eachId : all) {
+        final WindowInfoImpl eachInfo = getInfo(eachId);
+        if (eachInfo.isVisible() && eachInfo.getAnchor() == info.getAnchor()) {
+          deactivateToolWindowImpl(eachId, true, commandList);
+        }
+      }
+
       activateEditorComponentImpl(commandList, true);
     } else {
 
@@ -513,7 +522,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (id.equals(info.getId())) {
           continue;
         }
-        if (info.isVisible() && info.getType() == toBeShownInfo.getType() && info.getAnchor() == toBeShownInfo.getAnchor()) {
+        if (info.isVisible() && info.getType() == toBeShownInfo.getType() && info.getAnchor() == toBeShownInfo.getAnchor() && info.isSideTool() == toBeShownInfo.isSideTool()) {
           // hide and deactivate tool window
           info.setVisible(false);
           appendRemoveDecoratorCmd(info.getId(), false, commandsList);
@@ -540,21 +549,33 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        @NotNull final JComponent component,
                                        @NotNull final ToolWindowAnchor anchor) {
-    return registerToolWindow(id, component, anchor, false);
+    return registerToolWindow(id, component, anchor, false, false);
   }
 
-  public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor) {
-    return registerToolWindow(id, null, anchor, canCloseContent);
+  public ToolWindow registerToolWindow(@NotNull final String id,
+                                       final boolean canCloseContent,
+                                       @NotNull final ToolWindowAnchor anchor) {
+    return registerToolWindow(id, null, anchor, false, canCloseContent);
   }
+
+  public ToolWindow registerToolWindow(@NotNull final String id,
+                                       final boolean canCloseContent, 
+                                       @NotNull final ToolWindowAnchor anchor,
+                                       final boolean sideTool) {
+    return registerToolWindow(id, null, anchor, sideTool, canCloseContent);
+  }
+
+
+
 
   public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
                                        final Disposable parentDisposable) {
-    return registerDisposable(id, parentDisposable, registerToolWindow(id, null, anchor, canCloseContent));
+    return registerDisposable(id, parentDisposable, registerToolWindow(id, null, anchor, false, canCloseContent));
   }
 
   private ToolWindow registerToolWindow(@NotNull final String id,
                                        @Nullable final JComponent component,
-                                       @NotNull final ToolWindowAnchor anchor, boolean canCloseContent) {
+                                       @NotNull final ToolWindowAnchor anchor, boolean sideTool, boolean canCloseContent) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
@@ -563,7 +584,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       throw new IllegalArgumentException("window with id=\"" + id + "\" is already registered");
     }
 
-    final WindowInfoImpl info = myLayout.register(id, anchor);
+    final WindowInfoImpl info = myLayout.register(id, anchor, sideTool);
     final boolean wasActive = info.isActive();
     final boolean wasVisible = info.isVisible();
     info.setActive(false);
@@ -813,6 +834,48 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         appendRequestFocusInToolWindowCmd(id, commandsList, true);
       }
     }
+  }
+
+  boolean isSideTool(String id) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    checkId(id);
+    return getInfo(id).isSideTool();
+  }
+
+  void setSideTool(String id, boolean isSide) {
+    final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
+    setSideToolImpl(id, isSide, commandList);
+    execute(commandList);
+  }
+
+  void setSideToolAndAnchor(String id, ToolWindowAnchor anchor, int order, boolean isSide) {
+    final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
+    setToolWindowAnchor(id, anchor, order);
+    setSideToolImpl(id, isSide, commandList);
+    execute(commandList);
+  }
+
+  private void setSideToolImpl(final String id, final boolean isSide, final ArrayList<FinalizableCommand> commandList) {
+    checkId(id);
+    final WindowInfoImpl info = getInfo(id);
+    if (isSide == info.isSideTool()) {
+      return;
+    }
+
+    myLayout.setSideTool(id, isSide);
+
+    boolean wasActive = info.isActive();
+    if (wasActive) {
+      deactivateToolWindowImpl(id, true, commandList);
+    }
+    final WindowInfoImpl[] infos = myLayout.getInfos();
+    for (WindowInfoImpl info1 : infos) {
+      appendApplyWindowInfoCmd(info1, commandList);
+    }
+    if (wasActive) {
+      activateToolWindowImpl(id, commandList, true, true);
+    }
+    commandList.add(myToolWindowsPane.createUpdateButtonPositionCmd(id, myWindowManager.getCommandProcessor()));
   }
 
   ToolWindowType getToolWindowInternalType(final String id) {
@@ -1319,9 +1382,17 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       else { // docked and sliding windows
         if (ToolWindowAnchor.TOP == info.getAnchor() || ToolWindowAnchor.BOTTOM == info.getAnchor()) {
           info.setWeight((float)source.getHeight() / (float)myToolWindowsPane.getMyLayeredPane().getHeight());
+          float newSideWeight = (float)source.getWidth() / (float)myToolWindowsPane.getMyLayeredPane().getWidth();
+          if (newSideWeight < 1.0f) {
+            info.setSideWeight(newSideWeight);
+          }
         }
         else {
           info.setWeight((float)source.getWidth() / (float)myToolWindowsPane.getMyLayeredPane().getWidth());
+          float newSideWeight = (float)source.getHeight() / (float)myToolWindowsPane.getMyLayeredPane().getHeight();
+          if (newSideWeight < 1.0f) {
+            info.setSideWeight(newSideWeight);
+          }
         }
       }
     }
@@ -1333,8 +1404,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     public void typeChanged(final InternalDecorator source, final ToolWindowType type) {
       setToolWindowType(source.getToolWindow().getId(), type);
     }
-  }
 
+    public void sideStatusChanged(final InternalDecorator source, final boolean isSideTool) {
+      setSideTool(source.getToolWindow().getId(), isSideTool);
+    }
+  }
 
   private void updateComponentTreeUI() {
     ApplicationManager.getApplication().assertIsDispatchThread();

@@ -70,6 +70,10 @@ public interface ToolWindow {
    */
   void setAnchor(ToolWindowAnchor anchor, @Nullable Runnable runnable);
 
+  boolean isSideTool();
+
+  void setSideTool(boolean isSideTool, @Nullable Runnable runnable);
+
   /**
    * @exception IllegalStateException if tool window isn't installed.
    */

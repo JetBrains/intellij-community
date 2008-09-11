@@ -23,6 +23,8 @@ public interface WindowInfo {
 
   Rectangle getFloatingBounds();
 
+  boolean isSideTool();
+
   ToolWindowType getType();
 
   boolean isActive();

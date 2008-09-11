@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -147,13 +148,19 @@ final class ToolWindowsPane extends JPanel{
   ){
     final WindowInfoImpl copiedInfo=info.copy();
     final String id=copiedInfo.getId();
-    //
+
     myDecorator2Info.put(decorator,copiedInfo);
-    myId2Decorator.put(id,decorator);
-    //
+    myId2Decorator.put(id,decorator);    
+    
     if(info.isDocked()){
-      return new AddDockedComponentCmd(decorator,info,dirtyMode,finishCallBack);
-    }else if(info.isSliding()){
+      WindowInfoImpl sideInfo = getDockedInfoAt(info.getAnchor(), !info.isSideTool());
+      if (sideInfo == null) {
+        return new AddDockedComponentCmd(decorator,info,dirtyMode,finishCallBack);
+      }
+      else {
+        return new AddAndSplitDockedComponentCmd(decorator, info, dirtyMode, finishCallBack);
+      }
+    } else if(info.isSliding()) {
       return new AddSlidingComponentCmd(decorator,info,dirtyMode,finishCallBack);
     }else{
       throw new IllegalArgumentException("Unknown window type: "+info.getType());
@@ -181,12 +188,19 @@ final class ToolWindowsPane extends JPanel{
   final FinalizableCommand createRemoveDecoratorCmd(final String id, final boolean dirtyMode, final Runnable finishCallBack){
     final Component decorator=getDecoratorById(id);
     final WindowInfoImpl info=getDecoratorInfoById(id);
-    //
+
     myDecorator2Info.remove(decorator);
     myId2Decorator.remove(id);
-    //
+
+    WindowInfoImpl sideInfo = getDockedInfoAt(info.getAnchor(), !info.isSideTool());
+
     if(info.isDocked()){
-      return new RemoveDockedComponentCmd(info,dirtyMode,finishCallBack);
+      if (sideInfo == null) {
+        return new RemoveDockedComponentCmd(info,dirtyMode,finishCallBack);
+      }
+      else {
+        return new RemoveSplitAndDockedComponentCmd(info, sideInfo, dirtyMode, finishCallBack);
+      }
     }else if(info.isSliding()){
       return new RemoveSlidingComponentCmd(decorator,info,dirtyMode,finishCallBack);
     }else{
@@ -200,6 +214,10 @@ final class ToolWindowsPane extends JPanel{
    */
   final FinalizableCommand createSetEditorComponentCmd(final JComponent component,final Runnable finishCallBack){
     return new SetEditorComponentCmd(component,finishCallBack);
+  }
+
+  final FinalizableCommand createUpdateButtonPositionCmd(String id, final Runnable finishCallback) {
+    return new UpdateButtonPositionCmd(id, finishCallback);
   }
 
   final JComponent getMyLayeredPane(){
@@ -249,6 +267,35 @@ final class ToolWindowsPane extends JPanel{
     }else{
       LOG.error("unknown anchor: "+anchor);
     }
+  }
+
+  private JComponent getComponentAt(ToolWindowAnchor anchor) {
+    if (ToolWindowAnchor.TOP == anchor) {
+      return myVerticalSplitter.getFirstComponent();
+    }
+    else if (ToolWindowAnchor.LEFT == anchor) {
+      return myHorizontalSplitter.getFirstComponent();
+    }
+    else if (ToolWindowAnchor.BOTTOM == anchor){
+      return myVerticalSplitter.getLastComponent();
+    }
+    else if (ToolWindowAnchor.RIGHT == anchor){
+      return myHorizontalSplitter.getLastComponent();
+    }
+    else {
+      LOG.error("unknown anchor: " + anchor);
+      return null;
+    }
+  }
+
+  private WindowInfoImpl getDockedInfoAt(ToolWindowAnchor anchor, boolean side) {
+    for (WindowInfoImpl info : myDecorator2Info.values()) {
+      if (info.isVisible() && info.isDocked() && info.getAnchor() == anchor && side == info.isSideTool()) {
+        return info;
+      }
+    }
+
+    return null;
   }
 
   private void setDocumentComponent(final JComponent component){
@@ -303,8 +350,7 @@ final class ToolWindowsPane extends JPanel{
 
     public final void run(){
       try{
-        final float weight=myInfo.getWeight()<=.0f? WindowInfoImpl.DEFAULT_WEIGHT:myInfo.getWeight();
-        float newWeight=weight;
+        float newWeight = myInfo.getWeight()<=.0f? WindowInfoImpl.DEFAULT_WEIGHT:myInfo.getWeight();
         if(newWeight>=1.0f){
           newWeight=1- WindowInfoImpl.DEFAULT_WEIGHT;
         }
@@ -317,6 +363,57 @@ final class ToolWindowsPane extends JPanel{
       }finally{
         finish();
       }
+    }
+  }
+
+  private final class AddAndSplitDockedComponentCmd extends FinalizableCommand {
+    private final JComponent myNewComponent;
+    private final WindowInfoImpl myInfo;
+    private final boolean myDirtyMode;
+
+    private AddAndSplitDockedComponentCmd(final JComponent newComponent,
+                                    final WindowInfoImpl info, final boolean dirtyMode, final Runnable finishCallBack) {
+      super(finishCallBack);
+      myNewComponent = newComponent;
+      myInfo = info;
+      myDirtyMode = dirtyMode;
+    }
+
+    public void run() {
+      try {
+        float newWeight;
+        final ToolWindowAnchor anchor = myInfo.getAnchor();
+        Splitter splitter = new Splitter(!myInfo.getAnchor().isHorizontal());
+        InternalDecorator oldComponent = (InternalDecorator) getComponentAt(myInfo.getAnchor());
+        if (myInfo.isSideTool()) {
+          splitter.setFirstComponent(oldComponent);
+          splitter.setSecondComponent(myNewComponent);
+          splitter.setProportion(normalizeWeigh(oldComponent.getWindowInfo().getSideWeight()));
+          newWeight = normalizeWeigh(oldComponent.getWindowInfo().getWeight());
+        }
+        else {
+          splitter.setFirstComponent(myNewComponent);
+          splitter.setSecondComponent(oldComponent);
+          splitter.setProportion(normalizeWeigh(myInfo.getSideWeight()));
+          newWeight = normalizeWeigh(myInfo.getWeight());
+        }
+        setComponent(splitter, anchor, newWeight);
+
+        if(!myDirtyMode){
+          myLayeredPane.validate();
+          myLayeredPane.repaint();
+        }
+      } finally {
+        finish();
+      }
+    }
+
+    private float normalizeWeigh(final float weight) {
+      float newWeight= weight <= .0f ? WindowInfoImpl.DEFAULT_WEIGHT : weight;
+      if (newWeight >= 1.0f) {
+        newWeight= 1- WindowInfoImpl.DEFAULT_WEIGHT;
+      }
+      return newWeight;
     }
   }
 
@@ -476,6 +573,41 @@ final class ToolWindowsPane extends JPanel{
     }
   }
 
+  private final class RemoveSplitAndDockedComponentCmd extends FinalizableCommand {
+    private WindowInfoImpl myInfo;
+    private WindowInfoImpl mySideInfo;
+    private boolean myDirtyMode;
+
+    private RemoveSplitAndDockedComponentCmd(final WindowInfoImpl info, final WindowInfoImpl sideInfo, boolean dirtyMode, final Runnable finishCallBack) {
+      super(finishCallBack);
+      myInfo = info;
+      mySideInfo = sideInfo;
+      myDirtyMode = dirtyMode;
+    }
+
+    public void run() {
+      try {
+        Splitter splitter = (Splitter) getComponentAt(myInfo.getAnchor());
+
+        if (myInfo.isSideTool()) {
+          InternalDecorator component = (InternalDecorator)splitter.getFirstComponent();
+          setComponent(component, myInfo.getAnchor(), component.getWindowInfo().getWeight());
+        }
+        else {
+          InternalDecorator component = (InternalDecorator) splitter.getSecondComponent();
+          setComponent(component, myInfo.getAnchor(), component.getWindowInfo().getWeight());
+        }
+        if(!myDirtyMode){
+          myLayeredPane.validate();
+          myLayeredPane.repaint();
+        }
+      } finally {
+        finish();
+      }
+    }
+  }
+
+
   private final class RemoveSlidingComponentCmd extends FinalizableCommand{
     private final Component myComponent;
     private final WindowInfoImpl myInfo;
@@ -555,6 +687,41 @@ final class ToolWindowsPane extends JPanel{
         myLayeredPane.validate();
         myLayeredPane.repaint();
       }finally{
+        finish();
+      }
+    }
+  }
+
+  private final class UpdateButtonPositionCmd extends FinalizableCommand {
+    private String myId;
+
+    private UpdateButtonPositionCmd(String id, final Runnable finishCallBack) {
+      super(finishCallBack);
+      myId = id;
+
+    }
+
+    public void run() {
+      try {
+        WindowInfoImpl info = getButtonById(myId).getWindowInfo();
+        ToolWindowAnchor anchor = info.getAnchor();
+
+        if (ToolWindowAnchor.TOP == anchor){
+          myTopStripe.revalidate();
+        }
+        else if (ToolWindowAnchor.LEFT == anchor){
+          myLeftStripe.revalidate();
+        }
+        else if (ToolWindowAnchor.BOTTOM == anchor) {
+          myBottomStripe.revalidate();
+        }
+        else if (ToolWindowAnchor.RIGHT == anchor) {
+          myRightStripe.revalidate();
+        }
+        else {
+          LOG.error("unknown anchor: " + anchor);
+        }
+      } finally {
         finish();
       }
     }

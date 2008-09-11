@@ -24,4 +24,6 @@ interface InternalDecoratorListener extends EventListener{
 
   public void typeChanged(InternalDecorator source,ToolWindowType type);
 
+  public void sideStatusChanged(InternalDecorator source,boolean isSideTool);
+
 }

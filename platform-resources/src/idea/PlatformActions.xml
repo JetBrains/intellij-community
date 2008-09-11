@@ -218,6 +218,7 @@
         <action id="TogglePinnedMode" class="com.intellij.ide.actions.TogglePinnedModeAction"/>
         <action id="ToggleDockMode" class="com.intellij.ide.actions.ToggleDockModeAction"/>
         <action id="ToggleFloatingMode" class="com.intellij.ide.actions.ToggleFloatingModeAction"/>
+        <action id="ToggleSideMode" class="com.intellij.ide.actions.ToggleSideModeAction"/>
         <separator/>
         <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
         <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>

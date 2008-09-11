@@ -89,6 +89,10 @@ final class StripeButtonUI extends MetalToggleButtonUI{
     final ButtonModel model=button.getModel();
 
     final Color background = button.getBackground();
+
+    boolean toFill = button.isSelected() || !button.getWindowInfo().isSideTool();
+    boolean toBorder = button.isSelected() || !button.getWindowInfo().isSideTool();
+
     if (model.isArmed() && model.isPressed() || model.isSelected()) {
       final Graphics2D g2d = (Graphics2D) g;
       final GradientPaint paint;
@@ -99,16 +103,26 @@ final class StripeButtonUI extends MetalToggleButtonUI{
         paint = new GradientPaint(0, 0, background.darker(), button.getWidth(), 0, background.brighter());
       }
       g2d.setPaint(paint);
-      g2d.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
 
-      g.setColor(Color.black);
-      g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
+      if (toFill) {
+        g2d.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
+      }
+
+      if (toBorder) {
+        g.setColor(Color.black);
+        g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
+      }
     }
     else {
-      g.setColor(background);
-      g.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
-      g.setColor(Color.GRAY);
-      g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
+      if (toFill) {
+        g.setColor(background);
+        g.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
+      }
+
+      if (toBorder) {
+        g.setColor(Color.GRAY);
+        g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
+      }
     }
 
     if (model.isRollover()) {
@@ -125,8 +139,10 @@ final class StripeButtonUI extends MetalToggleButtonUI{
         g2d.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
       }
 
-      g.setColor(Color.darkGray);
-      g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
+      if (toBorder) {
+        g.setColor(Color.darkGray);
+        g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
+      }
     }
 
     AffineTransform tr=null;

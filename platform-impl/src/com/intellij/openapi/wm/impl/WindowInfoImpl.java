@@ -24,6 +24,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
    * Default window weight.
    */
   static final float DEFAULT_WEIGHT=.33f;
+  static final float DEFAULT_SIDE_WEIGHT = 0.5f;
 
   private boolean myActive;
   private ToolWindowAnchor myAnchor;
@@ -38,6 +39,8 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   private ToolWindowType myType;
   private boolean myVisible;
   private float myWeight;
+  private float mySideWeight;
+  private boolean mySideTool;
   /**
    * Defines order of tool window button inside the stripe.
    * The default value is <code>-1</code>.
@@ -51,11 +54,14 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   @NonNls protected static final String TYPE_ATTR = "type";
   @NonNls protected static final String VISIBLE_ATTR = "visible";
   @NonNls protected static final String WEIGHT_ATTR = "weight";
+  @NonNls protected static final String SIDE_WEIGHT_ATTR = "sideWeight";
   @NonNls protected static final String ORDER_ATTR = "order";
   @NonNls protected static final String X_ATTR = "x";
   @NonNls protected static final String Y_ATTR = "y";
   @NonNls protected static final String WIDTH_ATTR = "width";
   @NonNls protected static final String HEIGHT_ATTR = "height";
+  @NonNls protected static final String SIDE_TOOL_ATTR = "side_tool";
+
 
   private boolean myWasRead;
 
@@ -71,7 +77,9 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     setType(ToolWindowType.DOCKED);
     myVisible=false;
     myWeight=DEFAULT_WEIGHT;
+    mySideWeight = DEFAULT_SIDE_WEIGHT;
     myOrder=-1;
+    mySideTool=false;
   }
 
   /**
@@ -106,7 +114,9 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     myInternalType=info.myInternalType;
     myVisible=info.myVisible;
     myWeight=info.myWeight;
+    mySideWeight = info.mySideWeight;
     myOrder=info.myOrder;
+    mySideTool=info.mySideTool;
   }
 
   /**
@@ -158,6 +168,10 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     return myWeight;
   }
 
+  float getSideWeight() {
+    return mySideWeight;
+  }
+
   public int getOrder(){
     return myOrder;
   }
@@ -188,6 +202,14 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
 
   boolean isVisible(){
     return myVisible;
+  }
+
+  public boolean isSideTool() {
+    return mySideTool;
+  }
+
+  public void setSideTool(final boolean sideTool) {
+    mySideTool=sideTool;
   }
 
   private static ToolWindowType parseToolWindowType(final String text){
@@ -238,6 +260,12 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
       myWeight=Float.parseFloat(element.getAttributeValue(WEIGHT_ATTR));
     }catch(NumberFormatException ignored){}
     try{
+      String value = element.getAttributeValue(SIDE_WEIGHT_ATTR);
+      if (value != null) {
+        mySideWeight=Float.parseFloat(value);
+      }      
+    }catch(NumberFormatException ignored){}
+    try{
       myOrder=Integer.valueOf(element.getAttributeValue(ORDER_ATTR)).intValue();
     }catch(NumberFormatException ignored){}
     try{
@@ -248,6 +276,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
         Integer.parseInt(element.getAttributeValue(HEIGHT_ATTR))
       );
     }catch(NumberFormatException ignored){}
+    mySideTool=Boolean.parseBoolean(element.getAttributeValue(SIDE_TOOL_ATTR));
   }
 
   /**
@@ -292,6 +321,16 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     myWeight=weight;
   }
 
+  void setSideWeight(float weight){
+    if(weight < .0f){
+      weight = .0f;
+    }
+    else if (weight > 1.0f){
+      weight = 1.0f;
+    }
+    mySideWeight = weight;
+  }
+
   public void writeExternal(final Element element){
     element.setAttribute(ID_ATTR,myId);
     element.setAttribute(ACTIVE_ATTR,myActive?Boolean.TRUE.toString():Boolean.FALSE.toString());
@@ -301,7 +340,9 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     element.setAttribute(TYPE_ATTR,myType.toString());
     element.setAttribute(VISIBLE_ATTR,myVisible?Boolean.TRUE.toString():Boolean.FALSE.toString());
     element.setAttribute(WEIGHT_ATTR,Float.toString(myWeight));
+    element.setAttribute(SIDE_WEIGHT_ATTR, Float.toString(mySideWeight));
     element.setAttribute(ORDER_ATTR,Integer.toString(myOrder));
+    element.setAttribute(SIDE_TOOL_ATTR, Boolean.toString(mySideTool));
     if(myFloatingBounds!=null){
       element.setAttribute(X_ATTR,Integer.toString(myFloatingBounds.x));
       element.setAttribute(Y_ATTR,Integer.toString(myFloatingBounds.y));
@@ -325,7 +366,9 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
       myType!=info.myType||
       myVisible!=info.myVisible||
       myWeight!=info.myWeight||
-      myOrder!=info.myOrder
+      mySideWeight != info.mySideWeight ||
+      myOrder!=info.myOrder ||
+      mySideTool != info.mySideTool
     ){
       return false;
     }else{
@@ -348,9 +391,11 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     buffer.append("myOrder=").append(myOrder).append("; ");
     buffer.append("myAutoHide=").append(myAutoHide).append("; ");
     buffer.append("myWeight=").append(myWeight).append("; ");
+    buffer.append("mySideWeight=").append(mySideWeight).append("; ");    
     buffer.append("myType=").append(myType).append("; ");
     buffer.append("myInternalType=").append(myInternalType).append("; ");
-    buffer.append("myFloatingBounds=").append(myFloatingBounds);
+    buffer.append("myFloatingBounds=").append(myFloatingBounds).append("; ");
+    buffer.append("mySideTool=").append(mySideTool);
     buffer.append(']');
     return buffer.toString();
   }

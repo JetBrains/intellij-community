@@ -11,9 +11,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Eugene Belyaev
@@ -79,6 +78,10 @@ final class Stripe extends JPanel{
     revalidate();
   }
 
+  public List<StripeButton> getButtons() {
+    return Collections.unmodifiableList(myButtons);
+  }
+
   public void invalidate() {
     myPrefSize = null;
     super.invalidate();
@@ -91,6 +94,10 @@ final class Stripe extends JPanel{
   }
 
   private LayoutData recomputeBounds(boolean setBounds, Dimension toFitWith) {
+    return recomputeBounds(setBounds, toFitWith, false);
+  }
+
+  private LayoutData recomputeBounds(boolean setBounds, Dimension toFitWith, boolean noDrop) {
     final LayoutData data = new LayoutData();
     data.eachY = 0;
     data.size = new Dimension();
@@ -106,7 +113,7 @@ final class Stripe extends JPanel{
     data.fitSize = toFitWith != null ? toFitWith : new Dimension();
 
     final Rectangle stripeSensetiveRec = new Rectangle(-DROP_DISTANCE_SENSIVITY, -DROP_DISTANCE_SENSIVITY, getWidth() + DROP_DISTANCE_SENSIVITY * 2, getHeight() + DROP_DISTANCE_SENSIVITY * 2);
-    boolean processDrop = isDroppingButton() && stripeSensetiveRec.intersects(myDropRectangle);
+    boolean processDrop = isDroppingButton() && stripeSensetiveRec.intersects(myDropRectangle) && !noDrop;
 
     if (toFitWith == null) {
       for (StripeButton eachButton : myButtons) {
@@ -117,28 +124,76 @@ final class Stripe extends JPanel{
       }
     }
 
+    int gap = 0;
+    if (toFitWith != null) {
+      LayoutData layoutData = recomputeBounds(false, null, true);
+      if (data.horizontal) {
+        gap = toFitWith.width - layoutData.size.width - data.eachX;
+      }
+      else {
+        gap = toFitWith.height - layoutData.size.height - data.eachY;
+      }
+
+      if (processDrop) {
+        if (data.horizontal) {
+          gap -= myDropRectangle.width + data.gap;
+        }
+        else {
+          gap -= myDropRectangle.height + data.gap;
+        }
+      }
+      gap = Math.max(gap, 0);
+    }
+
     int insertOrder = -1;
-    for (StripeButton eachButton : myButtons) {
+    boolean sidesStarted = false;
+
+    for (StripeButton eachButton : getButtonsToLayOut()) {
       insertOrder = eachButton.getDecorator().getWindowInfo().getOrder();
-      if (!isConsideredInLayout(eachButton)) continue;
       final Dimension eachSize = eachButton.getPreferredSize();
-      if (processDrop && data.dragInsertPosition == -1) {
+
+      if (!sidesStarted && eachButton.getWindowInfo().isSideTool()) {
+        if (processDrop) {
+          tryDroppingOnGap(data, gap, eachButton.getWindowInfo().getOrder());
+        }
+        if (data.horizontal) {
+          data.eachX += gap;
+          data.size.width += gap;
+        } else {
+          data.eachY += gap;
+          data.size.height += gap;
+        }
+        sidesStarted = true;
+      }
+
+      if (processDrop && !data.dragTargetChoosen) {
         if (data.horizontal) {
           int distance = myDropRectangle.x - data.eachX;
           if (distance < eachSize.width / 2 || (myDropRectangle.x + myDropRectangle.width) < eachSize.width / 2) {
             layoutButton(data, myDragButtonImage, false);
             data.dragInsertPosition = insertOrder;
+            data.dragToSide = sidesStarted;
+            data.dragTargetChoosen = true;
           }
-        } else {
+        }
+        else {
           int distance = myDropRectangle.y - data.eachY;
           if (distance < eachSize.height / 2 || (myDropRectangle.y + myDropRectangle.height) < eachSize.height / 2) {
             layoutButton(data, myDragButtonImage, false);
             data.dragInsertPosition = insertOrder;
+            data.dragToSide = sidesStarted;
+            data.dragTargetChoosen = true;
           }
         }
       }
+
       layoutButton(data, eachButton, setBounds);
     }
+
+    if (!sidesStarted && processDrop) {
+      tryDroppingOnGap(data, gap, -1);
+    }
+
 
     if (isDroppingButton()) {
       final Dimension dragSize = myDragButton.getPreferredSize();
@@ -151,7 +206,67 @@ final class Stripe extends JPanel{
       }
     }
 
+    if (processDrop && !data.dragTargetChoosen) {
+      data.dragInsertPosition = -1;
+      data.dragToSide = true;
+      data.dragTargetChoosen = true;
+    }
+
     return data;
+  }
+
+  private void tryDroppingOnGap(final LayoutData data, final int gap, final int insertOrder) {
+    if (data.dragTargetChoosen) return;
+
+    int nonSideDistance;
+    int sideDistance;
+    if (data.horizontal) {
+      nonSideDistance = myDropRectangle.x - data.eachX;
+      sideDistance = data.eachX + gap - myDropRectangle.x;
+    }
+    else {
+      nonSideDistance = myDropRectangle.y - data.eachY;
+      sideDistance = data.eachY + gap - myDropRectangle.y;
+    }
+    nonSideDistance = Math.max(0, nonSideDistance);
+
+    if (sideDistance > 0) {
+      if (nonSideDistance > sideDistance) {
+        data.dragInsertPosition = insertOrder;
+        data.dragToSide = true;
+        data.dragTargetChoosen = true;
+      }
+      else {
+        data.dragInsertPosition = -1;
+        data.dragToSide = false;
+        data.dragTargetChoosen = true;
+      }
+
+      layoutButton(data, myDragButtonImage, false);
+    }
+  }
+
+  private List<StripeButton> getButtonsToLayOut() {
+    List<StripeButton> result = new ArrayList<StripeButton>();
+
+    List<StripeButton> tools = new ArrayList<StripeButton>();
+    List<StripeButton> sideTools = new ArrayList<StripeButton>();
+
+    for (StripeButton b : myButtons) {
+      if (!isConsideredInLayout(b)) continue;
+
+      if (b.getWindowInfo().isSideTool()) {
+        sideTools.add(b);
+      }
+      else {
+        tools.add(b);
+      }
+    }
+
+    result.addAll(tools);
+    result.addAll(sideTools);
+
+    return result;
   }
 
 
@@ -197,8 +312,11 @@ final class Stripe extends JPanel{
     Dimension size;
     Dimension fitSize;
     boolean horizontal;
-    int dragInsertPosition;
     int processedComponents;
+
+    boolean dragTargetChoosen;
+    boolean dragToSide;
+    int dragInsertPosition;
   }
 
   private boolean isHorizontal() {
@@ -243,13 +361,13 @@ final class Stripe extends JPanel{
 
     final WindowInfoImpl info = myDragButton.getDecorator().getWindowInfo();
     myFinishingDrop = true;
-    myManager.setToolWindowAnchor(info.getId(), ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition);
+    myManager.setSideToolAndAnchor(info.getId(), ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition, myLastLayoutData.dragToSide);
+
     myManager.invokeLater(new Runnable() {
       public void run() {
         resetDrop();
       }
     });
-
   }
 
   public void resetDrop() {
