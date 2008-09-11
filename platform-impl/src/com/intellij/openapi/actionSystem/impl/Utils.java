@@ -115,7 +115,7 @@ public class Utils{
         continue;
       }
 
-      LOG.assertTrue(anAction != null);
+      LOG.assertTrue(anAction != null, "Null action found in group " + group);
 
       if (anAction instanceof ActionGroup) {
         ActionGroup childGroup = (ActionGroup)anAction;
