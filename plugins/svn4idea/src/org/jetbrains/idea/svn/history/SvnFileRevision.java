@@ -34,7 +34,9 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class SvnFileRevision implements VcsFileRevision {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.SvnFileRevision");
@@ -49,6 +51,7 @@ public class SvnFileRevision implements VcsFileRevision {
   private SVNRevision myPegRevision;
   private SVNRevision myRevision;
   private String myCopyFromPath;
+  private final List<SvnFileRevision> myMergeSources;
 
   public SvnFileRevision(SvnVcs vcs,
                          SVNRevision pegRevision,
@@ -67,6 +70,7 @@ public class SvnFileRevision implements VcsFileRevision {
     myCopyFromPath = copyFromPath;
     myVCS = vcs;
     myURL = url;
+    myMergeSources = new ArrayList<SvnFileRevision>();
   }
 
   public SvnFileRevision(SvnVcs vcs,
@@ -84,6 +88,7 @@ public class SvnFileRevision implements VcsFileRevision {
     myCopyFromPath = copyFromPath;
     myVCS = vcs;
     myURL = url;
+    myMergeSources = new ArrayList<SvnFileRevision>();
   }
 
   public String getURL() {
@@ -113,6 +118,14 @@ public class SvnFileRevision implements VcsFileRevision {
 
   public String getCommitMessage() {
     return myCommitMessage;
+  }
+
+  public void addMergeSource(final SvnFileRevision source) {
+    myMergeSources.add(source);
+  }
+
+  public List<SvnFileRevision> getMergeSources() {
+    return myMergeSources;
   }
 
   public void loadContent() throws VcsException {

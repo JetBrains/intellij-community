@@ -93,7 +93,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
   }
 
   @Nullable
-  private static SvnChangeList loadRevisions(final Project project, final SvnFileRevision svnRevision, final VirtualFile file) {
+  public static SvnChangeList loadRevisions(final Project project, final SvnFileRevision svnRevision, @Nullable final VirtualFile file) {
     final Ref<SvnChangeList> result = new Ref<SvnChangeList>();
     final SvnRevisionNumber number = ((SvnRevisionNumber)svnRevision.getRevisionNumber());
 
@@ -108,7 +108,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
 
       final SVNLogClient client = vcs.createLogClient();
       final SVNURL repositoryUrl;
-      if (file.isInLocalFileSystem()) {
+      if ((file != null) && file.isInLocalFileSystem()) {
         final SvnFileUrlMapping urlMapping = vcs.getSvnFileUrlMapping();
         final SvnFileUrlMapping.RootUrlInfo wcRoot = urlMapping.getWcRootForFilePath(new File(file.getPath())).getSecond();
         if (wcRoot == null) {

@@ -423,10 +423,8 @@ public class SvnVcs extends AbstractVcs {
   }
 
   public VcsHistoryProvider getVcsHistoryProvider() {
-    if (mySvnHistoryProvider == null) {
-      mySvnHistoryProvider = new SvnHistoryProvider(this);
-    }
-    return mySvnHistoryProvider;
+    // no heavy state, but it would be useful to have place to keep state in -> do not reuse instance
+    return new SvnHistoryProvider(this);
   }
 
   public VcsHistoryProvider getVcsBlockHistoryProvider() {

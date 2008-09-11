@@ -371,7 +371,6 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       return Collections.emptyList();
     }
     final SvnFileUrlMapping urlMapping = vcs.getSvnFileUrlMapping();
-    final SvnBranchConfigurationManager manager = SvnBranchConfigurationManager.getInstance(myProject);
     final List<WCInfo> wcInfoList = vcs.getAllWcInfos();
 
     final List<WCInfoWithBranches> result = new ArrayList<WCInfoWithBranches>();
