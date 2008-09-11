@@ -1,6 +1,6 @@
 package com.theoryinpractice.testng;
 
-import com.intellij.testIntegration.createTest.JavaTestFrameworkDescriptor;
+import com.intellij.testIntegration.JavaTestFrameworkDescriptor;
 import com.intellij.util.PathUtil;
 import com.intellij.psi.PsiClass;
 import com.theoryinpractice.testng.util.TestNGUtil;
