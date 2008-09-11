@@ -386,6 +386,10 @@ public class TestNGUtil implements TestFramework
   }
 
   public boolean isTestKlass(PsiClass psiClass) {
+    return isTestNGClass(psiClass);
+  }
+
+  public static boolean isTestNGClass(PsiClass psiClass) {
     return hasTest(psiClass, true, false);
   }
 

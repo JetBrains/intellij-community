@@ -15,7 +15,7 @@
         <intentionAction>
           <className>com.theoryinpractice.testng.intention.TestNGOrderEntryFix</className>
         </intentionAction>
-        <codeInsight.createTestProvider implementation="com.theoryinpractice.testng.CreateTestNGTestProvider"/>
+        <testFrameworkDescriptor implementation="com.theoryinpractice.testng.TestNGFrameworkDescriptor"/>
       <overrideImplementsAnnotationsHandler implementation="com.theoryinpractice.testng.intention.OverrideImplementsTestNGAnnotationsHandler"/>
     </extensions>
 

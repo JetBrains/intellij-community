@@ -1,10 +1,12 @@
 package com.theoryinpractice.testng;
 
-import com.intellij.testIntegration.createTest.CreateTestBaseProvider;
+import com.intellij.testIntegration.createTest.JavaTestFrameworkDescriptor;
 import com.intellij.util.PathUtil;
+import com.intellij.psi.PsiClass;
+import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class CreateTestNGTestProvider extends CreateTestBaseProvider {
+public class TestNGFrameworkDescriptor extends JavaTestFrameworkDescriptor {
   public String getName() {
     return "TestNG";
   }
@@ -40,5 +42,9 @@ public class CreateTestNGTestProvider extends CreateTestBaseProvider {
   @Nullable
   public String getTestAnnotation() {
     return "org.testng.annotations.Test";
+  }
+
+  public boolean isTestClass(PsiClass clazz) {
+    return TestNGUtil.isTestNGClass(clazz);
   }
 }
