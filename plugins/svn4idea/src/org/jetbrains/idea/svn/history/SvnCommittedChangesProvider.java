@@ -244,6 +244,9 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     private final Project myProject;
     private final RepositoryLocation myLocation;
     private final static String ourKey = "MERGE_PANEL";
+    private boolean myOneDotFive;
+    private long myOneDotFiveUpdateTime;
+    private final static int ourStep = 600000;
 
     public ShowHideMergePanel(final Project project, final DecoratorManager manager, final ChangeListFilteringStrategy strategy,
                               final RepositoryLocation location) {
@@ -251,6 +254,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       myManager = manager;
       myStrategy = strategy;
       myLocation = location;
+      myOneDotFiveUpdateTime = 0;
     }
 
     @Override
@@ -260,7 +264,19 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       presentation.setIcon(IconLoader.getIcon("/icons/ShowIntegratedFrom.png"));
       presentation.setText(SvnBundle.message("committed.changes.action.enable.merge.highlighting"));
       presentation.setDescription(SvnBundle.message("committed.changes.action.enable.merge.highlighting.description.text"));
-      presentation.setEnabled(SvnUtil.isOneDotFiveAvailable(myProject, myLocation));
+
+      if (! myIsSelected) {
+        updateOneDotFiveFlag();
+        presentation.setEnabled(myOneDotFive);
+      }
+    }
+
+    private void updateOneDotFiveFlag() {
+      final long time = System.currentTimeMillis();
+      if (time > (myOneDotFiveUpdateTime + ourStep)) {
+        myOneDotFiveUpdateTime = time;
+        myOneDotFive = SvnUtil.isOneDotFiveAvailable(myProject, myLocation);
+      }
     }
 
     public boolean isSelected(final AnActionEvent e) {
