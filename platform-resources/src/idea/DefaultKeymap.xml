@@ -234,6 +234,9 @@
     <action id="FileStructurePopup">
       <keyboard-shortcut first-keystroke="control F12"/>
     </action>
+    <action id="ShowFilePath">
+      <keyboard-shortcut first-keystroke="control alt F12"/>
+    </action>
     <action id="EditorUnindentSelection">
       <keyboard-shortcut first-keystroke="shift TAB"/>
     </action>

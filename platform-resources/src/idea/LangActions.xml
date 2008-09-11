@@ -124,6 +124,7 @@
         <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
         <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
         <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>
+        <action id="ShowFilePath" class="com.intellij.ide.actions.ShowFilePathAction"/>
       </group>
       <separator/>
 

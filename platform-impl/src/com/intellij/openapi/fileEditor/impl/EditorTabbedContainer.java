@@ -1,5 +1,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -12,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -83,6 +85,12 @@ final class EditorTabbedContainer implements Disposable {
       public void mouseClicked(final MouseEvent e) {
         if (UIUtil.isActionClick(e) && (e.getClickCount() % 2) == 0) {
           ActionUtil.execute("HideAllWindows", e, null, ActionPlaces.UNKNOWN, 0);
+        } else if (UIUtil.isActionClick(e) && (e.isMetaDown() || (!SystemInfo.isMac && e.isControlDown()))) {
+          final TabInfo info = myTabs.findInfo(e);
+          if (info != null && info.getObject() != null) {
+            final VirtualFile vFile = (VirtualFile)info.getObject();
+            ShowFilePathAction.show(vFile, e);
+          }
         }
       }
     }).getPresentation().setUiDecorator(new UiDecorator() {
