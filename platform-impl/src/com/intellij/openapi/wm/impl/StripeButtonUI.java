@@ -90,8 +90,8 @@ final class StripeButtonUI extends MetalToggleButtonUI{
 
     final Color background = button.getBackground();
 
-    boolean toFill = button.isSelected() || !button.getWindowInfo().isSideTool();
-    boolean toBorder = button.isSelected() || !button.getWindowInfo().isSideTool();
+    boolean toFill = button.isSelected() || !button.getWindowInfo().isSplit();
+    boolean toBorder = button.isSelected() || !button.getWindowInfo().isSplit();
 
     if (model.isArmed() && model.isPressed() || model.isSelected()) {
       final Graphics2D g2d = (Graphics2D) g;

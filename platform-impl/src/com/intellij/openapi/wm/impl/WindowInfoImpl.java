@@ -40,7 +40,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   private boolean myVisible;
   private float myWeight;
   private float mySideWeight;
-  private boolean mySideTool;
+  private boolean mySplitMode;
   /**
    * Defines order of tool window button inside the stripe.
    * The default value is <code>-1</code>.
@@ -79,7 +79,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     myWeight=DEFAULT_WEIGHT;
     mySideWeight = DEFAULT_SIDE_WEIGHT;
     myOrder=-1;
-    mySideTool=false;
+    mySplitMode =false;
   }
 
   /**
@@ -116,7 +116,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     myWeight=info.myWeight;
     mySideWeight = info.mySideWeight;
     myOrder=info.myOrder;
-    mySideTool=info.mySideTool;
+    mySplitMode =info.mySplitMode;
   }
 
   /**
@@ -204,12 +204,12 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     return myVisible;
   }
 
-  public boolean isSideTool() {
-    return mySideTool;
+  public boolean isSplit() {
+    return mySplitMode;
   }
 
-  public void setSideTool(final boolean sideTool) {
-    mySideTool=sideTool;
+  public void setSplit(final boolean sideTool) {
+    mySplitMode =sideTool;
   }
 
   private static ToolWindowType parseToolWindowType(final String text){
@@ -276,7 +276,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
         Integer.parseInt(element.getAttributeValue(HEIGHT_ATTR))
       );
     }catch(NumberFormatException ignored){}
-    mySideTool=Boolean.parseBoolean(element.getAttributeValue(SIDE_TOOL_ATTR));
+    mySplitMode =Boolean.parseBoolean(element.getAttributeValue(SIDE_TOOL_ATTR));
   }
 
   /**
@@ -342,7 +342,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     element.setAttribute(WEIGHT_ATTR,Float.toString(myWeight));
     element.setAttribute(SIDE_WEIGHT_ATTR, Float.toString(mySideWeight));
     element.setAttribute(ORDER_ATTR,Integer.toString(myOrder));
-    element.setAttribute(SIDE_TOOL_ATTR, Boolean.toString(mySideTool));
+    element.setAttribute(SIDE_TOOL_ATTR, Boolean.toString(mySplitMode));
     if(myFloatingBounds!=null){
       element.setAttribute(X_ATTR,Integer.toString(myFloatingBounds.x));
       element.setAttribute(Y_ATTR,Integer.toString(myFloatingBounds.y));
@@ -368,7 +368,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
       myWeight!=info.myWeight||
       mySideWeight != info.mySideWeight ||
       myOrder!=info.myOrder ||
-      mySideTool != info.mySideTool
+      mySplitMode != info.mySplitMode
     ){
       return false;
     }else{
@@ -395,7 +395,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     buffer.append("myType=").append(myType).append("; ");
     buffer.append("myInternalType=").append(myInternalType).append("; ");
     buffer.append("myFloatingBounds=").append(myFloatingBounds).append("; ");
-    buffer.append("mySideTool=").append(mySideTool);
+    buffer.append("mySplitMode=").append(mySplitMode);
     buffer.append(']');
     return buffer.toString();
   }

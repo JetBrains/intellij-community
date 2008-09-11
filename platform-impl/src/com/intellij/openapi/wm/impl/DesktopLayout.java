@@ -92,7 +92,7 @@ public final class DesktopLayout implements JDOMExternalizable {
    * @param anchor the default tool window anchor.
    * @return
    */
-  final WindowInfoImpl register(final String id, final ToolWindowAnchor anchor, final boolean sideTool) {
+  final WindowInfoImpl register(final String id, final ToolWindowAnchor anchor, final boolean splitMode) {
     WindowInfoImpl info = myUnregisteredId2Info.get(id);
     if (info != null) { // tool window has been already registered some time
       myUnregisteredId2Info.remove(id);
@@ -100,7 +100,7 @@ public final class DesktopLayout implements JDOMExternalizable {
     else { // tool window is being registered first time
       info = new WindowInfoImpl(id);
       info.setAnchor(anchor);
-      info.setSideTool(sideTool);
+      info.setSplit(splitMode);
     }
     myRegisteredId2Info.put(id, info);
     // invalidate caches
@@ -262,9 +262,9 @@ public final class DesktopLayout implements JDOMExternalizable {
     }
   }
 
-  final void setSideTool(final String id, boolean isSideTool) {
+  final void setSplitMode(final String id, boolean split) {
     final WindowInfoImpl info = getInfo(id, true);
-    info.setSideTool(isSideTool);
+    info.setSplit(split);
   }
 
   public final void readExternal(final org.jdom.Element layoutElement) {

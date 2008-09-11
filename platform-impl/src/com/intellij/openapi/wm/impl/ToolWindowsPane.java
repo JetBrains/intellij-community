@@ -153,7 +153,7 @@ final class ToolWindowsPane extends JPanel{
     myId2Decorator.put(id,decorator);    
     
     if(info.isDocked()){
-      WindowInfoImpl sideInfo = getDockedInfoAt(info.getAnchor(), !info.isSideTool());
+      WindowInfoImpl sideInfo = getDockedInfoAt(info.getAnchor(), !info.isSplit());
       if (sideInfo == null) {
         return new AddDockedComponentCmd(decorator,info,dirtyMode,finishCallBack);
       }
@@ -192,7 +192,7 @@ final class ToolWindowsPane extends JPanel{
     myDecorator2Info.remove(decorator);
     myId2Decorator.remove(id);
 
-    WindowInfoImpl sideInfo = getDockedInfoAt(info.getAnchor(), !info.isSideTool());
+    WindowInfoImpl sideInfo = getDockedInfoAt(info.getAnchor(), !info.isSplit());
 
     if(info.isDocked()){
       if (sideInfo == null) {
@@ -290,7 +290,7 @@ final class ToolWindowsPane extends JPanel{
 
   private WindowInfoImpl getDockedInfoAt(ToolWindowAnchor anchor, boolean side) {
     for (WindowInfoImpl info : myDecorator2Info.values()) {
-      if (info.isVisible() && info.isDocked() && info.getAnchor() == anchor && side == info.isSideTool()) {
+      if (info.isVisible() && info.isDocked() && info.getAnchor() == anchor && side == info.isSplit()) {
         return info;
       }
     }
@@ -385,7 +385,7 @@ final class ToolWindowsPane extends JPanel{
         final ToolWindowAnchor anchor = myInfo.getAnchor();
         Splitter splitter = new Splitter(!myInfo.getAnchor().isHorizontal());
         InternalDecorator oldComponent = (InternalDecorator) getComponentAt(myInfo.getAnchor());
-        if (myInfo.isSideTool()) {
+        if (myInfo.isSplit()) {
           splitter.setFirstComponent(oldComponent);
           splitter.setSecondComponent(myNewComponent);
           splitter.setProportion(normalizeWeigh(oldComponent.getWindowInfo().getSideWeight()));
@@ -589,7 +589,7 @@ final class ToolWindowsPane extends JPanel{
       try {
         Splitter splitter = (Splitter) getComponentAt(myInfo.getAnchor());
 
-        if (myInfo.isSideTool()) {
+        if (myInfo.isSplit()) {
           InternalDecorator component = (InternalDecorator)splitter.getFirstComponent();
           setComponent(component, myInfo.getAnchor(), component.getWindowInfo().getWeight());
         }

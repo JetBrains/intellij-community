@@ -70,9 +70,15 @@ public interface ToolWindow {
    */
   void setAnchor(ToolWindowAnchor anchor, @Nullable Runnable runnable);
 
-  boolean isSideTool();
+  /**
+   * @exception IllegalStateException if tool window isn't installed.
+   */
+  boolean isSplitMode();
 
-  void setSideTool(boolean isSideTool, @Nullable Runnable runnable);
+  /**
+   * @exception IllegalStateException if tool window isn't installed.
+   */
+  void setSplitMode(boolean split, @Nullable Runnable runnable);
 
   /**
    * @exception IllegalStateException if tool window isn't installed.

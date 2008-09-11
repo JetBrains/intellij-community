@@ -152,7 +152,7 @@ final class Stripe extends JPanel{
       insertOrder = eachButton.getDecorator().getWindowInfo().getOrder();
       final Dimension eachSize = eachButton.getPreferredSize();
 
-      if (!sidesStarted && eachButton.getWindowInfo().isSideTool()) {
+      if (!sidesStarted && eachButton.getWindowInfo().isSplit()) {
         if (processDrop) {
           tryDroppingOnGap(data, gap, eachButton.getWindowInfo().getOrder());
         }
@@ -255,7 +255,7 @@ final class Stripe extends JPanel{
     for (StripeButton b : myButtons) {
       if (!isConsideredInLayout(b)) continue;
 
-      if (b.getWindowInfo().isSideTool()) {
+      if (b.getWindowInfo().isSplit()) {
         sideTools.add(b);
       }
       else {

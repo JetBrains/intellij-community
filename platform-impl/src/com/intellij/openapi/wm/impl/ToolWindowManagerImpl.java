@@ -522,7 +522,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (id.equals(info.getId())) {
           continue;
         }
-        if (info.isVisible() && info.getType() == toBeShownInfo.getType() && info.getAnchor() == toBeShownInfo.getAnchor() && info.isSideTool() == toBeShownInfo.isSideTool()) {
+        if (info.isVisible() && info.getType() == toBeShownInfo.getType() && info.getAnchor() == toBeShownInfo.getAnchor() && info.isSplit() == toBeShownInfo.isSplit()) {
           // hide and deactivate tool window
           info.setVisible(false);
           appendRemoveDecoratorCmd(info.getId(), false, commandsList);
@@ -836,33 +836,33 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
   }
 
-  boolean isSideTool(String id) {
+  boolean isSplitMode(String id) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
-    return getInfo(id).isSideTool();
+    return getInfo(id).isSplit();
   }
 
   void setSideTool(String id, boolean isSide) {
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
-    setSideToolImpl(id, isSide, commandList);
+    setSplitModeImpl(id, isSide, commandList);
     execute(commandList);
   }
 
   void setSideToolAndAnchor(String id, ToolWindowAnchor anchor, int order, boolean isSide) {
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
     setToolWindowAnchor(id, anchor, order);
-    setSideToolImpl(id, isSide, commandList);
+    setSplitModeImpl(id, isSide, commandList);
     execute(commandList);
   }
 
-  private void setSideToolImpl(final String id, final boolean isSide, final ArrayList<FinalizableCommand> commandList) {
+  private void setSplitModeImpl(final String id, final boolean isSplit, final ArrayList<FinalizableCommand> commandList) {
     checkId(id);
     final WindowInfoImpl info = getInfo(id);
-    if (isSide == info.isSideTool()) {
+    if (isSplit == info.isSplit()) {
       return;
     }
 
-    myLayout.setSideTool(id, isSide);
+    myLayout.setSplitMode(id, isSplit);
 
     boolean wasActive = info.isActive();
     if (wasActive) {

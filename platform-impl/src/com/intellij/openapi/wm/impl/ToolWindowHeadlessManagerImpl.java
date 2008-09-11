@@ -68,11 +68,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setAnchor(ToolWindowAnchor anchor, @Nullable Runnable runnable) {
     }
 
-    public boolean isSideTool() {
+    public boolean isSplitMode() {
       return false;
     }
 
-    public void setSideTool(final boolean isSideTool, @Nullable final Runnable runnable) {
+    public void setSplitMode(final boolean isSideTool, @Nullable final Runnable runnable) {
 
     }
 

@@ -631,7 +631,7 @@ public final class InternalDecorator extends JPanel {
     }
 
     public final boolean isSelected(final AnActionEvent event) {
-      return myInfo.isSideTool();
+      return myInfo.isSplit();
     }
 
     public final void setSelected(final AnActionEvent event, final boolean flag) {

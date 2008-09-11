@@ -20,7 +20,7 @@ public class ToggleSideModeAction extends ToggleAction{
     if(id==null){
       return false;
     }
-    return windowManager.getToolWindow(id).isSideTool();
+    return windowManager.getToolWindow(id).isSplitMode();
   }
 
   public void setSelected(AnActionEvent event,boolean flag){
@@ -35,7 +35,7 @@ public class ToggleSideModeAction extends ToggleAction{
 
     ToolWindowManagerEx mgr=ToolWindowManagerEx.getInstanceEx(project);
     ToolWindowEx toolWindow=(ToolWindowEx)mgr.getToolWindow(id);
-    toolWindow.setSideTool(flag, null);
+    toolWindow.setSplitMode(flag, null);
   }
 
   public void update(AnActionEvent event){
