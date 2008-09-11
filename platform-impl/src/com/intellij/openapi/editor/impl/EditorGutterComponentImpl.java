@@ -1130,6 +1130,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     final ActionManager actionManager = ActionManager.getInstance();
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
       DefaultActionGroup actionGroup = new DefaultActionGroup(EditorBundle.message("editor.annotations.action.group.name"), true);
+      actionGroup.add(new CloseAnnotationsAction());
       final java.util.List<AnAction> addActions = new ArrayList<AnAction>();
       for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
         final java.util.List<AnAction> list = gutterProvider.getPopupActions(myEditor);
@@ -1144,7 +1145,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       for (AnAction addAction : addActions) {
         actionGroup.add(addAction);
       }
-      actionGroup.add(new CloseAnnotationsAction());
       JPopupMenu menu = actionManager.createActionPopupMenu("", actionGroup).getComponent();
       menu.show(this, e.getX(), e.getY());
     }
