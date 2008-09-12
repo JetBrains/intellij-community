@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.ui.TreeWithEmptyText;
 import org.jetbrains.annotations.Nullable;
@@ -32,8 +33,16 @@ public class TreeLinkMouseListener extends MouseAdapter implements MouseMotionLi
   }
 
   protected void handleTagClick(final Object tag) {
-    if (tag != null) {
-      BrowserUtil.launchBrowser(tag.toString());
+    if (tag instanceof Runnable) {
+      ((Runnable) tag).run();
+    }
+  }
+
+  protected void showTooltip(final JTree tree, final MouseEvent e, final HaveTooltip launcher) {
+    final String text = tree.getToolTipText(e);
+    final String newText = launcher == null ? null : launcher.getTooltip();
+    if (! Comparing.equal(text, newText)) {
+      tree.setToolTipText(newText);
     }
   }
 
@@ -41,6 +50,7 @@ public class TreeLinkMouseListener extends MouseAdapter implements MouseMotionLi
   private Object getTagAt(final MouseEvent e) {
     JTree tree = (JTree) e.getSource();
     Object tag = null;
+    HaveTooltip haveTooltip = null;
     final TreePath path = tree.getPathForLocation(e.getX(), e.getY());
     if (path != null) {
       final Rectangle rectangle = tree.getPathBounds(path);
@@ -53,8 +63,12 @@ public class TreeLinkMouseListener extends MouseAdapter implements MouseMotionLi
       int i = myRenderer.findFragmentAt(dx);
       if (i >= 0) {
         tag = myRenderer.getFragmentTag(i);
+        if (treeNode instanceof HaveTooltip) {
+          haveTooltip = (HaveTooltip) treeNode;
+        }
       }
     }
+    showTooltip(tree, e, haveTooltip);
     return tag;
   }
 
@@ -76,5 +90,21 @@ public class TreeLinkMouseListener extends MouseAdapter implements MouseMotionLi
   public void install(final JTree tree) {
     tree.addMouseListener(this);
     tree.addMouseMotionListener(this);
+  }
+
+  public static class BrowserLauncher implements Runnable {
+    private final String myUrl;
+
+    public BrowserLauncher(final String url) {
+      myUrl = url;
+    }
+
+    public void run() {
+      BrowserUtil.launchBrowser(myUrl);
+    }
+  }
+
+  public interface HaveTooltip {
+    String getTooltip();
   }
 }

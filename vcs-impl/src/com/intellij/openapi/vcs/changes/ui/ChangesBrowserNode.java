@@ -70,7 +70,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
       return new ChangesBrowserIgnoredFilesNode(userObject);
     }
     if (userObject == LOCKED_FOLDERS_TAG) {
-      return new ChangesBrowserLockedFoldersNode(userObject);
+      return new ChangesBrowserLockedFoldersNode(project, userObject);
     }
     return new ChangesBrowserNode(userObject);
   }
@@ -160,18 +160,23 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     appendCount(renderer);
   }
 
-  protected void appendCount(final ColoredTreeCellRenderer renderer) {
+  protected String getCountText() {
     int count = getCount();
     int dirCount = getDirectoryCount();
     if (dirCount == 0) {
-      renderer.append(" " + VcsBundle.message("changes.nodetitle.changecount", count), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+      return " " + VcsBundle.message("changes.nodetitle.changecount", count);
     }
     else if (count == 0 && dirCount > 0) {
-      renderer.append(" " + VcsBundle.message("changes.nodetitle.directory.changecount", dirCount), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+      return " " + VcsBundle.message("changes.nodetitle.directory.changecount", dirCount);
     }
     else {
-      renderer.append(" " + VcsBundle.message("changes.nodetitle.directory.file.changecount", dirCount, count), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+      return " " + VcsBundle.message("changes.nodetitle.directory.file.changecount", dirCount, count);
     }
+  }
+
+  protected void appendCount(final ColoredTreeCellRenderer renderer) {
+    final String countText = getCountText();
+    renderer.append(countText, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
   }
 
   public String toString() {

@@ -18,6 +18,9 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
+
+import java.util.List;
 
 /**
  * The provider of change information (from the point of view of VCS).
@@ -48,4 +51,10 @@ public interface ChangeProvider {
    * @return true if document modification should mark the scope as dirty, false otherwise
    */
   boolean isModifiedDocumentTrackingRequired();
+
+  /**
+   * performs working copy "cleanup"
+   * @param files - locked directories
+   */
+  void doCleanup(final List<VirtualFile> files);
 }

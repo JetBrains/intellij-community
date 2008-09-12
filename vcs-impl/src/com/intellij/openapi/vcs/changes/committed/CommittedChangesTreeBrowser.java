@@ -107,17 +107,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       }
     });
 
-    final TreeLinkMouseListener linkMouseListener = new TreeLinkMouseListener(new CommittedChangeListRenderer(project, myDecorators)) {
-      @Override
-      protected void handleTagClick(final Object tag) {
-        if (tag == MORE_TAG) {
-          ChangeListDetailsAction.showDetailsPopup(project, (CommittedChangeList) myLastHitNode.getUserObject());
-        }
-        else {
-          super.handleTagClick(tag);
-        }
-      }
-    };
+    final TreeLinkMouseListener linkMouseListener = new TreeLinkMouseListener(new CommittedChangeListRenderer(project, myDecorators));
     linkMouseListener.install(myChangesTree);
 
     myLeftPanel = new JPanel(new BorderLayout());
@@ -403,8 +393,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
     private final IssueLinkRenderer myRenderer;
     private final List<CommittedChangeListDecorator> myDecorators;
+    private final Project myProject;
 
     public CommittedChangeListRenderer(final Project project, final List<CommittedChangeListDecorator> decorators) {
+      myProject = project;
       myRenderer = new IssueLinkRenderer(project, this);
       myDecorators = decorators;
     }
@@ -482,7 +474,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
           description = truncateDescription(description, fontMetrics, (descMaxWidth - moreWidth));
           myRenderer.appendTextWithLinks(description);
           append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          append(moreMarker, LINK_ATTRIBUTES, MORE_TAG);
+          append(moreMarker, LINK_ATTRIBUTES, new MoreLauncher(myProject, changeList));
           appendAlign(parentWidth - size);
         }
 
@@ -504,6 +496,20 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     public Dimension getPreferredSize() {
       return new Dimension(2000, super.getPreferredSize().height);
+    }
+  }
+
+  private static class MoreLauncher implements Runnable {
+    private final Project myProject;
+    private final CommittedChangeList myList;
+
+    private MoreLauncher(final Project project, final CommittedChangeList list) {
+      myProject = project;
+      myList = list;
+    }
+
+    public void run() {
+      ChangeListDetailsAction.showDetailsPopup(myProject, myList);
     }
   }
 

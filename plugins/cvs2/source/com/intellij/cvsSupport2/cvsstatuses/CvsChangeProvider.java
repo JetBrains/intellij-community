@@ -46,6 +46,7 @@ import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author max
@@ -96,6 +97,9 @@ public class CvsChangeProvider implements ChangeProvider {
 
   public boolean isModifiedDocumentTrackingRequired() {
     return true;
+  }
+
+  public void doCleanup(final List<VirtualFile> files) {
   }
 
   private void processEntriesIn(@NotNull VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively) {
