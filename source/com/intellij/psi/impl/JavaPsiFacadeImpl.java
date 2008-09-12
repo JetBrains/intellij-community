@@ -402,7 +402,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   }
 
   private static class JavaCodeBlockModificationListener implements PsiTreeChangePreprocessor {
-    private PsiModificationTrackerImpl myModificationTracker;
+    private final PsiModificationTrackerImpl myModificationTracker;
 
     private JavaCodeBlockModificationListener(final PsiModificationTrackerImpl modificationTracker) {
       myModificationTracker = modificationTracker;
@@ -418,31 +418,32 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
             break; // May be caused by fake PSI event from PomTransaction. A real event will anyway follow.
           }
 
-        case PsiManagerImpl.CHILDREN_CHANGED :
+          //noinspection fallthrough
+        case PsiManagerImpl.CHILDREN_CHANGED:
           changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
-        break;
+          break;
 
         case PsiManagerImpl.BEFORE_CHILD_ADDITION:
         case PsiManagerImpl.BEFORE_CHILD_REMOVAL:
-        case PsiManagerImpl.CHILD_ADDED :
-        case PsiManagerImpl.CHILD_REMOVED :
+        case PsiManagerImpl.CHILD_ADDED:
+        case PsiManagerImpl.CHILD_REMOVED:
           changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
-        break;
+          break;
 
         case PsiManagerImpl.BEFORE_PROPERTY_CHANGE:
-        case PsiManagerImpl.PROPERTY_CHANGED :
+        case PsiManagerImpl.PROPERTY_CHANGED:
           changedInsideCodeBlock = false;
-        break;
+          break;
 
         case PsiManagerImpl.BEFORE_CHILD_REPLACEMENT:
-        case PsiManagerImpl.CHILD_REPLACED :
+        case PsiManagerImpl.CHILD_REPLACED:
           changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
-        break;
+          break;
 
         case PsiManagerImpl.BEFORE_CHILD_MOVEMENT:
-        case PsiManagerImpl.CHILD_MOVED :
+        case PsiManagerImpl.CHILD_MOVED:
           changedInsideCodeBlock = isInsideCodeBlock(event.getOldParent()) && isInsideCodeBlock(event.getNewParent());
-        break;
+          break;
 
         default:
           LOG.error("Unknown code:" + event.getCode());

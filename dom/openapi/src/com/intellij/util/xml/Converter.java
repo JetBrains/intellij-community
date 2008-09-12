@@ -30,8 +30,10 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class Converter<T> {
-  public abstract @Nullable T fromString(@Nullable @NonNls String s, final ConvertContext context);
-  public abstract @Nullable String toString(@Nullable T t, final ConvertContext context);
+  @Nullable
+  public abstract T fromString(@Nullable @NonNls String s, final ConvertContext context);
+  @Nullable
+  public abstract String toString(@Nullable T t, final ConvertContext context);
 
   /**
    * @param s string value that couldn't be resolved

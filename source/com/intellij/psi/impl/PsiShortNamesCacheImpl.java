@@ -45,7 +45,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   public PsiClass[] getClassesByName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
     final Collection<PsiClass> classes = JavaShortClassNameIndex.getInstance().get(name, myManager.getProject(), scope);
 
-    if (classes.size() == 0) return PsiClass.EMPTY_ARRAY;
+    if (classes.isEmpty()) return PsiClass.EMPTY_ARRAY;
     ArrayList<PsiClass> list = new ArrayList<PsiClass>(classes.size());
 
     OuterLoop:
@@ -91,7 +91,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   public PsiMethod[] getMethodsByName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
     final Collection<PsiMethod> methods =
         StubIndex.getInstance().get(JavaMethodNameIndex.KEY, name, myManager.getProject(), scope);
-    if (methods.size() == 0) return PsiMethod.EMPTY_ARRAY;
+    if (methods.isEmpty()) return PsiMethod.EMPTY_ARRAY;
 
     List<PsiMethod> list = filterMembers(methods, scope);
     return list.toArray(new PsiMethod[list.size()]);

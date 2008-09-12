@@ -21,7 +21,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.JavaPsiFacadeImpl;
+import com.intellij.psi.impl.PsiElementBase;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.migration.PsiMigrationImpl;
 import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.scope.ElementClassHint;
@@ -38,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
@@ -386,7 +388,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   @NotNull
-  private PsiClass[] findClassByName(String name, GlobalSearchScope scope) {
+  private PsiClass[] findClassesByName(String name, GlobalSearchScope scope) {
     final String qName = getQualifiedName();
     final String classQName = qName.length() > 0 ? qName + "." + name : name;
     return JavaPsiFacade.getInstance(myManager.getProject()).findClasses(classQName, scope);
@@ -411,30 +413,17 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     ElementClassHint classHint = processor.getHint(ElementClassHint.class);
 
     if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
-      boolean isPlacePhysical = place.isPhysical();
       NameHint nameHint = processor.getHint(NameHint.class);
       if (nameHint != null) {
-        final PsiClass[] classes = findClassByName(nameHint.getName(state), scope);
-        for (PsiClass aClass : classes) {
-          if (!isPlacePhysical || JavaPsiFacade.getInstance(getProject()).getResolveHelper().isAccessible(aClass, place, null)) {
-            if (!processor.execute(aClass, state)) return false;
-          }
-        }
+        final PsiClass[] classes = findClassesByName(nameHint.getName(state), scope);
+        if (!processClasses(processor, state, place, classes)) return false;
       }
       else {
         PsiClass[] classes = getClasses(scope);
-        for (PsiClass aClass : classes) {
-          if (!isPlacePhysical || JavaPsiFacade.getInstance(getProject()).getResolveHelper().isAccessible(aClass, place, null)) {
-            if (!processor.execute(aClass, state)) {
-              return false;
-            }
-          }
-        }
+        if (!processClasses(processor, state, place, classes)) return false;
         final PsiMigrationImpl migration = getFacade().getCurrentMigration();
         if (migration != null) {
-          final Iterator<PsiClass> migrationClasses = migration.getMigrationClasses(getQualifiedName());
-          while (migrationClasses.hasNext()) {
-            PsiClass psiClass = migrationClasses.next();
+          for (PsiClass psiClass : migration.getMigrationClasses(getQualifiedName())) {
             if (!processor.execute(psiClass, state)) {
               return false;
             }
@@ -464,14 +453,23 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
         }
         final PsiMigrationImpl migration = getFacade().getCurrentMigration();
         if (migration != null) {
-          final Iterator<PsiPackage> migrationClasses = migration.getMigrationPackages(getQualifiedName());
-          while (migrationClasses.hasNext()) {
-            PsiPackage psiPackage = migrationClasses.next();
-            if (!processor.execute(psiPackage, state)) {
+          for (PsiPackage aPackage : migration.getMigrationPackages(getQualifiedName())) {
+            if (!processor.execute(aPackage, state)) {
               return false;
             }
           }
         }
+      }
+    }
+    return true;
+  }
+
+  private boolean processClasses(PsiScopeProcessor processor, ResolveState state, PsiElement place, PsiClass[] classes) {
+    boolean placePhysical = place.isPhysical();
+
+    for (PsiClass aClass : classes) {
+      if (!placePhysical || JavaPsiFacade.getInstance(getProject()).getResolveHelper().isAccessible(aClass, place, null)) {
+        if (!processor.execute(aClass, state)) return false;
       }
     }
     return true;

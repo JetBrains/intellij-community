@@ -10,7 +10,6 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -101,14 +100,14 @@ public class PsiMigrationImpl implements PsiMigration {
     return psiPackages;
   }
 
-  public Iterator<PsiClass> getMigrationClasses(String packageName) {
+  public List<PsiClass> getMigrationClasses(String packageName) {
     assertValid();
-    return getClassesList(packageName).iterator();
+    return getClassesList(packageName);
   }
 
-  public Iterator<PsiPackage> getMigrationPackages(String packageName) {
+  public List<PsiPackage> getMigrationPackages(String packageName) {
     assertValid();
-    return getSubpackagesList(packageName).iterator();
+    return getSubpackagesList(packageName);
   }
 
   public PsiClass getMigrationClass(String qualifiedName) {
@@ -122,10 +121,9 @@ public class PsiMigrationImpl implements PsiMigration {
   }
 
 
-  private String parentPackageName(String qualifiedName) {
+  private static String parentPackageName(String qualifiedName) {
     final int lastDotIndex = qualifiedName.lastIndexOf('.');
-    final String packageName = lastDotIndex >= 0 ? qualifiedName.substring(0, lastDotIndex) : "";
-    return packageName;
+    return lastDotIndex >= 0 ? qualifiedName.substring(0, lastDotIndex) : "";
   }
 
   PsiManagerImpl getManager() {

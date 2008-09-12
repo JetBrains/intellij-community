@@ -106,9 +106,9 @@ public class JavaFileManagerImpl implements JavaFileManager {
     return new PsiPackageImpl(myManager, packageName);
   }
 
-  public PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
+  public PsiClass[] findClasses(@NotNull String qName, @NotNull final GlobalSearchScope scope) {
     final Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
-    if (classes.size() == 0) return PsiClass.EMPTY_ARRAY;
+    if (classes.isEmpty()) return PsiClass.EMPTY_ARRAY;
     List<PsiClass> result = new ArrayList<PsiClass>(classes.size());
     for (PsiClass aClass : classes) {
       final String qualifiedName = aClass.getQualifiedName();
@@ -119,6 +119,11 @@ public class JavaFileManagerImpl implements JavaFileManager {
 
       result.add(aClass);
     }
+    Collections.sort(result, new Comparator<PsiClass>() {
+      public int compare(PsiClass o1, PsiClass o2) {
+        return scope.compare(o2.getContainingFile().getVirtualFile(), o1.getContainingFile().getVirtualFile());
+      }
+    });
     return result.toArray(new PsiClass[result.size()]);
   }
 
@@ -137,7 +142,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
     if ("java.lang.Object".equals(qName)) { // optimization
       PsiClass cached = myCachedObjectClassMap.get(scope);
       if (cached == null) {
-        cached = _findClass(qName, scope);
+        cached = findClassInIndex(qName, scope);
         if (cached != null) {
           cached = myCachedObjectClassMap.cacheOrGet(scope, cached);
         }
@@ -146,7 +151,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
       return cached;
     }
 
-    return _findClass(qName, scope);
+    return findClassInIndex(qName, scope);
   }
 
   @Nullable
@@ -163,8 +168,8 @@ public class JavaFileManagerImpl implements JavaFileManager {
 
   @Nullable
   private PsiClass _findClassWithoutRepository(String qName) {
-    VirtualFile[] sourcePath = myProjectRootManager.getFilesFromAllModules(OrderRootType.SOURCES).clone();
-    VirtualFile[] classPath = myProjectRootManager.getFilesFromAllModules(OrderRootType.CLASSES).clone();
+    VirtualFile[] sourcePath = myProjectRootManager.getFilesFromAllModules(OrderRootType.SOURCES);
+    VirtualFile[] classPath = myProjectRootManager.getFilesFromAllModules(OrderRootType.CLASSES);
 
     int index = 0;
     while (index < qName.length()) {
@@ -255,7 +260,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
   }
 
   @Nullable
-  private PsiClass _findClass(String qName, GlobalSearchScope scope) {
+  private PsiClass findClassInIndex(String qName, GlobalSearchScope scope) {
     VirtualFile bestFile = null;
     PsiClass bestClass = null;
 
@@ -319,5 +324,5 @@ public class JavaFileManagerImpl implements JavaFileManager {
       myNontrivialPackagePrefixes = names;
     }
     return myNontrivialPackagePrefixes;
-  }  
+  }
 }
