@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -254,6 +255,10 @@ public class SvnChangeProvider implements ChangeProvider {
 
   public boolean isModifiedDocumentTrackingRequired() {
     return true;
+  }
+
+  public void doCleanup(final List<VirtualFile> files) {
+    new CleanupWorker(files.toArray(new VirtualFile[files.size()]), myVcs.getProject(), "action.Subversion.cleanup.progress.title").execute();
   }
 
   private void processFile(FilePath path, final SvnChangeProviderContext context,
