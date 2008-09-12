@@ -183,6 +183,8 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
       ((ItemSelectable)component).removeItemListener(myItemListener);
     } else if (component instanceof JTree) {
       ((JTree)component).getModel().removeTreeModelListener(myTreeModelListener);
+    } else if (component instanceof DocumentBasedComponent) {
+      ((DocumentBasedComponent)component).getDocument().removeDocumentListener(myIdeaDocumentListener);
     }
 
     if (component instanceof JTable) {
