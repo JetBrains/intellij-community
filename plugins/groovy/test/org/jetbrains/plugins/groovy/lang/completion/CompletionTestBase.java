@@ -89,6 +89,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
       }
 
     } finally {
+      CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX = true;
       myFileEditorManager.closeFile(virtualFile);
       myEditor = null;
     }
