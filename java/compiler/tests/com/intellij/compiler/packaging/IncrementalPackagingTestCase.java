@@ -224,7 +224,7 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
                                                                               "/out" + myCount + "/exploded", "/out" + myCount + "/my.jar");
       myCount++;
       final MockBuildParticipant participant = new MockBuildParticipant(configuration, inner.myBuildRecipe);
-      add(new CompoundBuildInstructionImpl(null, participant, relativeOutput));
+      add(new CompoundBuildInstructionImpl(participant, relativeOutput));
       return inner;
     }
 

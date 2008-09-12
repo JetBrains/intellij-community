@@ -91,6 +91,24 @@ public class ProcessingItemsBuilderTest extends IncrementalPackagingTestCase {
     );
   }
 
+  public void testExternalInnerJar() throws Exception {
+    doTest(start()
+      .copy("a.class", "/a.class")
+      .inner("../dep.jar", false, false, false)
+        .copy("b.class", "/b.class")
+        .up()
+    );
+  }
+
+  public void testExternalInnerJarWithLib() throws Exception {
+    doTest(start()
+      .copy("a.class", "/a.class")
+      .inner("../dep.jar", false, false, false)
+         .copy("a.jar", "../a.jar")
+         .copy("b.class", "/b.class")
+         .up());
+  }
+
   public void testJarDirToWarAndEar() throws Exception {
     doTest(true, true, false, start()
       .inner("w.war", true, true, false)
@@ -118,6 +136,10 @@ public class ProcessingItemsBuilderTest extends IncrementalPackagingTestCase {
   private File getExpectedFile(final String expectedFileName) {
     return new File(PathManagerEx.getTestDataPath(), "compiler" + File.separator + "packaging" +
                                                      File.separator + expectedFileName);
+  }
+
+  private void doTest(BuildRecipeInfo info) throws IOException {
+    doTest(new MockBuildConfiguration(true, true, true, "/outExp/exploded", "/outJar/my.jar"), info);
   }
 
   private void doTest(final boolean explodedEnabled, final boolean jarEnabled, final boolean buildExternalDependencies,
