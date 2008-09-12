@@ -7,11 +7,11 @@ package com.intellij.compiler.impl.packagingCompiler;
 import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.deployment.DeploymentUtilImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PathUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -74,10 +74,14 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
       List<String> classpath = DeploymentUtilImpl.getExternalDependenciesClasspath(instructions);
       if (!classpath.isEmpty()) {
         String outputRoot = DeploymentUtilImpl.getOrCreateExplodedDir(myBuildParticipant);
-        String fullOutputPath = DeploymentUtil.concatPaths(outputRoot, myOutputPaths.peek(), JarFile.MANIFEST_NAME);
+        String fullOutputPath = getCanonicalConcat(outputRoot, myOutputPaths.peek(), JarFile.MANIFEST_NAME);
         myContext.addManifestFile(new ManifestFileInfo(fullOutputPath, classpath));
       }
     }
+  }
+
+  private static String getCanonicalConcat(final String... paths) {
+    return getCanonicalPath(DeploymentUtil.concatPaths(paths));
   }
 
   public boolean visitFileCopyInstruction(final FileCopyInstruction instruction) throws Exception {
@@ -90,8 +94,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
     String outputRelativePath = instruction.getOutputRelativePath();
     if (myBuildConfiguration.willBuildExploded()) {
       String outputRoot = DeploymentUtilImpl.getOrCreateExplodedDir(myBuildParticipant);
-      String fullOutputPath = DeploymentUtil.concatPaths(outputRoot, output, outputRelativePath);
-      fullOutputPath = getCanonicalPath(fullOutputPath);
+      String fullOutputPath = getCanonicalConcat(outputRoot, output, outputRelativePath);
 
       checkRecursiveCopying(sourceFile, fullOutputPath);
       addItemsToExplodedRecursively(sourceFile, fullOutputPath, fileFilter);
@@ -105,8 +108,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
                                  nestedJar.myDestination, nestedJar.myJarInfo, nestedJar.myAddJarContent, fileFilter);
       }
       else {
-        String fullOutputPath = DeploymentUtil.concatPaths(myBuildConfiguration.getJarPath(), outputRelativePath);
-        fullOutputPath = getCanonicalPath(fullOutputPath);
+        String fullOutputPath = getCanonicalConcat(myBuildConfiguration.getJarPath(), outputRelativePath);
         checkRecursiveCopying(sourceFile, fullOutputPath);
         addItemsToExplodedRecursively(sourceFile, fullOutputPath, fileFilter);
       }
@@ -168,8 +170,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
 
     if (myBuildConfiguration.willBuildExploded()) {
       String outputRoot = DeploymentUtilImpl.getOrCreateExplodedDir(myBuildParticipant);
-      String jarPath = DeploymentUtil.concatPaths(outputRoot, myOutputPaths.peek(), instruction.getOutputRelativePath());
-      jarPath = getCanonicalPath(jarPath);
+      String jarPath = getCanonicalConcat(outputRoot, myOutputPaths.peek(), instruction.getOutputRelativePath());
 
       checkRecursiveCopying(sourceFile, jarPath);
       addItemsToJar(sourceFile, createExplodedDestination(jarPath), fileFilter);
@@ -184,8 +185,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
         addItemsToJar(sourceFile, destination, fileFilter);
       }
       else {
-        String jarPath = DeploymentUtil.concatPaths(myBuildConfiguration.getJarPath(), instruction.getOutputRelativePath());
-        jarPath = getCanonicalPath(jarPath);
+        String jarPath = getCanonicalConcat(myBuildConfiguration.getJarPath(), instruction.getOutputRelativePath());
         checkRecursiveCopying(sourceFile, jarPath);
         addItemsToJar(sourceFile, createExplodedDestination(jarPath), fileFilter);
       }
@@ -263,16 +263,30 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
     String outputPath = DeploymentUtil.appendToPath(myOutputPaths.peek(), instruction.getOutputRelativePath());
     myOutputPaths.push(outputPath);
     BuildRecipe childInstructions = instruction.getChildInstructions(myContext.getCompileContext());
+    NestedJarInfo oldNestedJar = null;
     if (myNestedJars != null) {
-      DestinationInfo jarDestination = new JarDestinationInfo(instruction.getOutputRelativePath(), myNestedJars.peek().myJarInfo,
-                                                              myNestedJars.peek().myDestination);
-      myNestedJars.push(myContext.createNestedJarInfo(jarDestination, instruction.getBuildProperties(), childInstructions));
+      DestinationInfo destinationInfo;
+      if (instruction.isExternalDependencyInstruction()) {
+        oldNestedJar = myNestedJars.pop();
+      }
+      if (!myNestedJars.isEmpty()) {
+        NestedJarInfo nestedJar = myNestedJars.peek();
+        destinationInfo = new JarDestinationInfo(trimParentPrefix(instruction.getOutputRelativePath()), nestedJar.myJarInfo, nestedJar.myDestination);
+      }
+      else {
+        String jarPath = getCanonicalConcat(myBuildConfiguration.getJarPath(), instruction.getOutputRelativePath());
+        destinationInfo = createExplodedDestination(jarPath);
+      }
+      myNestedJars.push(myContext.createNestedJarInfo(destinationInfo, instruction.getBuildProperties(), childInstructions));
     }
 
     buildItems(childInstructions);
 
     if (myNestedJars != null) {
       myNestedJars.pop();
+      if (oldNestedJar != null) {
+        myNestedJars.push(oldNestedJar);
+      }
     }
     myOutputPaths.pop();
 

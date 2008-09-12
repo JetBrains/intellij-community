@@ -127,7 +127,7 @@ public abstract class PackagingEditorPolicy {
   }
 
   private List<Library> getLibrariesToAdd(final PackagingEditor editor) {
-    List<Library> libraries = getSuitableLibraries(editor);
+    List<Library> libraries = new ArrayList<Library>(getSuitableLibraries(editor));
     Set<Library> addedLibraries = new HashSet<Library>();
     for (ContainerElement element : getModifiedElements(editor)) {
       if (element instanceof LibraryLink) {
@@ -139,7 +139,7 @@ public abstract class PackagingEditorPolicy {
   }
 
   private List<Module> getModulesToAdd(final PackagingEditor editor) {
-    List<Module> moduleList = getSuitableModules(editor);
+    List<Module> moduleList = new ArrayList<Module>(getSuitableModules(editor));
     Set<Module> addedModules = new HashSet<Module>();
     for (ContainerElement element : getModifiedElements(editor)) {
       if (element instanceof ModuleLink) {

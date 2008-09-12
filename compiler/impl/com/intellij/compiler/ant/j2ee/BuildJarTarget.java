@@ -137,6 +137,22 @@ public class BuildJarTarget extends Target {
         add(DefaultExplodedAndJarBuildGenerator.generateJarTag(instruction, pathToCreateJar, moduleBaseDir, parameters.getGenerationOptions()));
         return true;
       }
+
+      @Override
+      public boolean visitCompoundBuildInstruction(final CompoundBuildInstruction instruction) throws Exception {
+        if (!instruction.isExternalDependencyInstruction()) return true;
+        String outputPath = DeploymentUtil.appendToPath(BuildProperties.propertyRef(parameters.getJarPathParameter()), instruction.getOutputRelativePath());
+        if (instruction.getBuildProperties().isJarEnabled()) {
+          String jarPath = BuildProperties.propertyRef(parameters.getCompoundBuildInstructionNaming().getJarPathProperty(instruction));
+          add(new Copy(jarPath, outputPath));
+        }
+        else {
+          AntCall call = new AntCall(parameters.getCompoundBuildInstructionNaming().getBuildJarTargetName(instruction));
+          call.add(new Param(parameters.getJarPathParameter(), outputPath));
+          add(call);
+        }
+        return true;
+      }
     }, false);
   }
 

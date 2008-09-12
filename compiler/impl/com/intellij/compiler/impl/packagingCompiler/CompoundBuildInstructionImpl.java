@@ -27,15 +27,12 @@ public class CompoundBuildInstructionImpl extends BuildInstructionBase implement
 
   private final BuildConfiguration myBuildConfiguration;
   private final BuildParticipant myBuildParticipant;
-  private final BuildRecipe myBuildRecipe;
   @NonNls private static final String TMP_FILE_SUFFIX = ".tmp";
 
-  public CompoundBuildInstructionImpl(@Nullable BuildRecipe buildRecipe, BuildParticipant buildParticipant, String outputRelativePath) {
+  public CompoundBuildInstructionImpl(BuildParticipant buildParticipant, String outputRelativePath) {
     super(outputRelativePath, buildParticipant.getModule());
-    myBuildRecipe = buildRecipe;
     myBuildConfiguration = buildParticipant.getBuildConfiguration();
     myBuildParticipant = buildParticipant;
-    LOG.assertTrue(!isExternalDependencyInstruction());
   }
 
   public BuildParticipant getBuildParticipant() {
@@ -160,9 +157,6 @@ public class CompoundBuildInstructionImpl extends BuildInstructionBase implement
   }
 
   public BuildRecipe getChildInstructions(CompileContext context) {
-    if (myBuildRecipe != null) {
-      return myBuildRecipe;
-    }
     return myBuildParticipant.getBuildInstructions(context);
   }
 

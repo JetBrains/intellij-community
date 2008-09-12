@@ -256,7 +256,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
   }
 
-  private static String getRelativePathForManifestLinking(String relativePath) {
+  public static String getRelativePathForManifestLinking(String relativePath) {
     if (!StringUtil.startsWithChar(relativePath, '/')) relativePath = '/' + relativePath;
     relativePath = ".." + relativePath;
     return relativePath;
@@ -403,10 +403,20 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     }
   }
 
+  public void addModuleOutputJarToParent(@NotNull BuildRecipe instructions,
+                                         @NotNull Module module,
+                                         @NotNull String relativePath,
+                                         @NotNull CompileContext context,
+                                         String linkContainerDescription,
+                                         @Nullable PackagingFileFilter fileFilter) {
+    String path = getRelativePathForManifestLinking(relativePath);
+    addJarJavaModuleOutput(instructions, module, path, context, linkContainerDescription, fileFilter);
+  }
+
   private static void addJarJavaModuleOutput(BuildRecipe instructions,
                                              Module module,
                                              String relativePath,
-                                             CompileContext context, final String linkContainerDescription, PackagingFileFilter fileFilter) {
+                                             CompileContext context, final String linkContainerDescription, @Nullable PackagingFileFilter fileFilter) {
     final String[] sourceUrls = getSourceRootUrlsInReadAction(module);
     if (sourceUrls.length > 0) {
       final File outputPath = getModuleOutputPath(module);

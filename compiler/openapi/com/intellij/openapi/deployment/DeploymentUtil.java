@@ -203,4 +203,10 @@ public abstract class DeploymentUtil {
 
   public abstract void checkConfigFile(final ConfigFile descriptor, final CompileContext compileContext, final Module module);
 
+  public abstract void addModuleOutputJarToParent(@NotNull BuildRecipe instructions,
+                                         @NotNull Module module,
+                                         @NotNull String relativePath,
+                                         @NotNull CompileContext context,
+                                         String linkContainerDescription,
+                                         @Nullable PackagingFileFilter fileFilter);
 }
