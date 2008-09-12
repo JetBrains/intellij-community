@@ -81,7 +81,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
       return;
     }
 
-    if (!JavaPsiFacade.getInstance(component.getProject()).getNameHelper().isIdentifier(value)) {
+    if (value.length() > 0 && !JavaPsiFacade.getInstance(component.getProject()).getNameHelper().isIdentifier(value)) {
       throw new Exception("Value '" + value + "' is not a valid identifier");
     }
 
