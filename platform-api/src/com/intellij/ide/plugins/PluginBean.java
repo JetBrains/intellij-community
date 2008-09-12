@@ -42,7 +42,7 @@ public class PluginBean extends ComponentManagerConfig {
   public Element[] extensionPoints;
 
   @Tag("actions")
-  public Element actions;
+  public Element[] actions;
                                      
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)

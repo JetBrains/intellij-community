@@ -20,8 +20,10 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * @author max
@@ -49,7 +51,8 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
 
   String getCategory();
 
-  Element getActionsDescriptionElement();
+  @Nullable
+  List<Element> getActionsDescriptionElements();
 
   @NotNull
   ComponentConfig[] getAppComponents();

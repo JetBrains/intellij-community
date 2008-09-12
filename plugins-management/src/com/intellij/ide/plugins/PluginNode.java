@@ -252,7 +252,7 @@ public class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Nullable
-  public Element getActionsDescriptionElement() {
+  public List<Element> getActionsDescriptionElements() {
     return null;
   }
 

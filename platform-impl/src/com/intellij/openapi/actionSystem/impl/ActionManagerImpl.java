@@ -163,9 +163,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     final IdeaPluginDescriptor[] plugins = app.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
       if (PluginManager.shouldSkipPlugin(plugin)) continue;
-      final Element e = plugin.getActionsDescriptionElement();
-      if (e != null) {
-        processActionsElement(e, plugin.getPluginClassLoader(), plugin.getPluginId());
+      final List<Element> elementList = plugin.getActionsDescriptionElements();
+      if (elementList != null) {
+        for (Element e : elementList) {
+          processActionsChildElement(plugin.getPluginClassLoader(), plugin.getPluginId(), e);
+        }
       }
     }
   }
@@ -779,26 +781,30 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     synchronized (myLock) {
       for (final Object o : element.getChildren()) {
         Element child = (Element)o;
-        String name = child.getName();
-        if (ACTION_ELEMENT_NAME.equals(name)) {
-          AnAction action = processActionElement(child, loader, pluginId);
-          if (action != null) {
-            assertActionIsGroupOrStub(action);
-          }
-        }
-        else if (GROUP_ELEMENT_NAME.equals(name)) {
-          processGroupElement(child, loader, pluginId);
-        }
-        else if (SEPARATOR_ELEMENT_NAME.equals(name)) {
-          processSeparatorNode(null, child, pluginId);
-        }
-        else if (REFERENCE_ELEMENT_NAME.equals(name)) {
-          processReferenceNode(child, pluginId);
-        }
-        else {
-          reportActionError(pluginId, "unexpected name of element \"" + name + "\n");
-        }
+        processActionsChildElement(loader, pluginId, child);
       }
+    }
+  }
+
+  private void processActionsChildElement(final ClassLoader loader, final PluginId pluginId, final Element child) {
+    String name = child.getName();
+    if (ACTION_ELEMENT_NAME.equals(name)) {
+      AnAction action = processActionElement(child, loader, pluginId);
+      if (action != null) {
+        assertActionIsGroupOrStub(action);
+      }
+    }
+    else if (GROUP_ELEMENT_NAME.equals(name)) {
+      processGroupElement(child, loader, pluginId);
+    }
+    else if (SEPARATOR_ELEMENT_NAME.equals(name)) {
+      processSeparatorNode(null, child, pluginId);
+    }
+    else if (REFERENCE_ELEMENT_NAME.equals(name)) {
+      processReferenceNode(child, pluginId);
+    }
+    else {
+      reportActionError(pluginId, "unexpected name of element \"" + name + "\n");
     }
   }
 

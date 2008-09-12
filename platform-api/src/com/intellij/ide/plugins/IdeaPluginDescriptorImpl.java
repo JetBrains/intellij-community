@@ -49,7 +49,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private PluginId[] myOptionalDependencies = PluginId.EMPTY_ARRAY;
   private Map<PluginId, String> myOptionalConfigs;
   private Map<PluginId, IdeaPluginDescriptorImpl> myOptionalDescriptors;
-  @Nullable private Element myActionsElement = null;
+  @Nullable private List<Element> myActionsElements;
   private ComponentConfig[] myAppComponents = null;
   private ComponentConfig[] myProjectComponents = null;
   private ComponentConfig[] myModuleComponents = null;
@@ -180,14 +180,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myProjectComponents == null) myProjectComponents = ComponentConfig.EMPTY_ARRAY;
     if (myModuleComponents == null) myModuleComponents = ComponentConfig.EMPTY_ARRAY;
 
-    if (pluginBean.extensions != null) {
-      myExtensions = new ArrayList<Element>();
-      for (Element extensionsRoot : pluginBean.extensions) {
-        for (final Object o : extensionsRoot.getChildren()) {
-          myExtensions.add((Element)o);
-        }
-      }
-    }
+    myExtensions = copyElements(pluginBean.extensions);
+    myExtensionsPoints = copyElements(pluginBean.extensionPoints);
+    myActionsElements = copyElements(pluginBean.actions);
 
     if (pluginBean.extensionPoints != null) {
       myExtensionsPoints = new ArrayList<Element>();
@@ -198,11 +193,23 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
 
-    myActionsElement = pluginBean.actions;
-
     if (pluginBean.modules != null) {
       myModules = pluginBean.modules;
     }
+  }
+
+  @Nullable
+  private static List<Element> copyElements(final Element[] elements) {
+    if (elements != null) {
+      List<Element> result = new ArrayList<Element>();
+      for (Element extensionsRoot : elements) {
+        for (final Object o : extensionsRoot.getChildren()) {
+          result.add((Element)o);
+        }
+      }
+      return result;
+    }
+    return null;
   }
 
   private static String loadDescription(final String descriptionChildText, @Nullable final ResourceBundle bundle, final PluginId id) {
@@ -304,8 +311,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
-  public Element getActionsDescriptionElement() {
-    return myActionsElement;
+  @Nullable
+  public List<Element> getActionsDescriptionElements() {
+    return myActionsElements;
   }
 
   @NotNull
@@ -514,15 +522,18 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   void mergeOptionalConfig(final IdeaPluginDescriptorImpl descriptor) {
     if (myExtensions == null) {
       myExtensions = descriptor.myExtensions;
-    } else if (descriptor.myExtensions != null) {
+    }
+    else if (descriptor.myExtensions != null) {
       myExtensions.addAll(descriptor.myExtensions);
     }
-    if (myActionsElement == null) {
-      myActionsElement = descriptor.myActionsElement;
-    } else if (descriptor.myActionsElement != null) {
-      List children = descriptor.myActionsElement.removeContent();
-      myActionsElement.addContent(children);
+
+    if (myActionsElements == null) {
+      myActionsElements = descriptor.myActionsElements;
     }
+    else if (descriptor.myActionsElements != null) {
+      myActionsElements.addAll(descriptor.myActionsElements);
+    }
+
     myAppComponents = mergeComponents(myAppComponents, descriptor.myAppComponents);
     myProjectComponents = mergeComponents(myProjectComponents, descriptor.myProjectComponents);
     myModuleComponents = mergeComponents(myModuleComponents, descriptor.myModuleComponents);
