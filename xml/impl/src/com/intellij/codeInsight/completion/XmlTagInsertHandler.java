@@ -163,24 +163,27 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
     XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(tag);
     StringBuilder indirectRequiredAttrs = null;
     final XmlExtension extension = XmlExtension.getExtension((XmlFile)tag.getContainingFile());
-    for (XmlAttributeDescriptor attributeDecl : attributes) {
-      String attributeName = attributeDecl.getName(tag);
+    if (WebEditorOptions.getInstance().isAutomaticallyInsertRequiredAttributes()) {
+      for (XmlAttributeDescriptor attributeDecl : attributes) {
+        String attributeName = attributeDecl.getName(tag);
 
-      if (attributeDecl.isRequired() && tag.getAttributeValue(attributeName) == null) {
-        if (!notRequiredAttributes.contains(attributeName)) {
-          if (!extension.isIndirectSyntax(attributeDecl)) {
-            template.addTextSegment(" " + attributeName + "=\"");
-            Expression expression = new MacroCallNode(MacroFactory.createMacro("complete"));
-            template.addVariable(attributeName, expression, expression, true);
-            template.addTextSegment("\"");
-          } else {
-            if (indirectRequiredAttrs == null) indirectRequiredAttrs = new StringBuilder();
-            indirectRequiredAttrs.append("\n<jsp:attribute name=\"").append(attributeName).append("\"></jsp:attribute>\n");
+        if (attributeDecl.isRequired() && tag.getAttributeValue(attributeName) == null) {
+          if (!notRequiredAttributes.contains(attributeName)) {
+            if (!extension.isIndirectSyntax(attributeDecl)) {
+              template.addTextSegment(" " + attributeName + "=\"");
+              Expression expression = new MacroCallNode(MacroFactory.createMacro("complete"));
+              template.addVariable(attributeName, expression, expression, true);
+              template.addTextSegment("\"");
+            }
+            else {
+              if (indirectRequiredAttrs == null) indirectRequiredAttrs = new StringBuilder();
+              indirectRequiredAttrs.append("\n<jsp:attribute name=\"").append(attributeName).append("\"></jsp:attribute>\n");
+            }
           }
         }
-      }
-      else if (attributeDecl.isFixed() && attributeDecl.getDefaultValue() != null && !htmlCode) {
-        template.addTextSegment(" " + attributeName + "=\"" + attributeDecl.getDefaultValue() + "\"");
+        else if (attributeDecl.isFixed() && attributeDecl.getDefaultValue() != null && !htmlCode) {
+          template.addTextSegment(" " + attributeName + "=\"" + attributeDecl.getDefaultValue() + "\"");
+        }
       }
     }
 
@@ -213,7 +216,8 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
     else if (completionChar == '/') {
       template.addTextSegment("/>");
     } else if (completionChar == ' ' && template.getSegmentsCount() == 0) {
-      if (attributes.length > 0 || isTagFromHtml(tag) && !HtmlUtil.isTagWithoutAttributes(tag.getName())) {
+      if (WebEditorOptions.getInstance().isAutomaticallyStartAttribute() &&
+          (attributes.length > 0 || isTagFromHtml(tag) && !HtmlUtil.isTagWithoutAttributes(tag.getName()))) {
         template.addTextSegment(" ");
         final MacroCallNode completeAttrExpr = new MacroCallNode(MacroFactory.createMacro("complete"));
         template.addVariable("attrComplete", completeAttrExpr, completeAttrExpr, true);

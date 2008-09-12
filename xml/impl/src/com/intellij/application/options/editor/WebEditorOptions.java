@@ -25,6 +25,8 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myBreadcrumbsEnabled = true;
   private boolean myShowCssColorPreviewInGutter = true;
   private boolean myAutomaticallyInsertClosingTag = true;
+  private boolean myAutomaticallyInsertRequiredAttributes = true;
+  private boolean myAutomaticallyStartAttribute = true;
 
   public static WebEditorOptions getInstance() {
     return ServiceManager.getService(WebEditorOptions.class);
@@ -52,6 +54,22 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public void setAutomaticallyInsertClosingTag(final boolean automaticallyInsertClosingTag) {
     myAutomaticallyInsertClosingTag = automaticallyInsertClosingTag;
+  }
+
+  public boolean isAutomaticallyInsertRequiredAttributes() {
+    return myAutomaticallyInsertRequiredAttributes;
+  }
+
+  public void setAutomaticallyInsertRequiredAttributes(final boolean automaticallyInsertRequiredAttributes) {
+    myAutomaticallyInsertRequiredAttributes = automaticallyInsertRequiredAttributes;
+  }
+
+  public boolean isAutomaticallyStartAttribute() {
+    return myAutomaticallyStartAttribute;
+  }
+
+  public void setAutomaticallyStartAttribute(final boolean automaticallyStartAttribute) {
+    myAutomaticallyStartAttribute = automaticallyStartAttribute;
   }
 
   @NotNull

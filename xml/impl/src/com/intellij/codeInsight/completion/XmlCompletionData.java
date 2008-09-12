@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.html.HTMLLanguage;
@@ -170,8 +170,12 @@ public class XmlCompletionData extends CompletionData {
         else {
           document.insertString(caretOffset, "=\"\"");
         }
-      }
 
+        if ('=' == context.getCompletionChar()) {
+          context.setAddCompletionChar(false); // IDEA-19449
+        }
+      }
+      
       editor.getCaretModel().moveToOffset(caretOffset + 2);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();

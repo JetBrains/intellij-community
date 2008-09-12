@@ -13,6 +13,8 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
   private JPanel myWholePanel;
   private JCheckBox myShowCSSColorPreviewCheckBox;
   private JCheckBox myAutomaticallyInsertClosingTagCheckBox;
+  private JCheckBox myAutomaticallyInsertRequiredAttributesCheckBox;
+  private JCheckBox myAutomaticallyStartAttributeAfterCheckBox;
 
   public String getDisplayName() {
     return XmlBundle.message("web.editor.configuration.title");
@@ -33,7 +35,9 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
   public boolean isModified() {
     final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
     return xmlEditorOptions.isBreadcrumbsEnabled() != myShowBreadcrumbsCheckBox.isSelected() || xmlEditorOptions.isShowCssColorPreviewInGutter() != myShowCSSColorPreviewCheckBox.isSelected()
-        || xmlEditorOptions.isAutomaticallyInsertClosingTag() != myAutomaticallyInsertClosingTagCheckBox.isSelected();
+        || xmlEditorOptions.isAutomaticallyInsertClosingTag() != myAutomaticallyInsertClosingTagCheckBox.isSelected()
+        || xmlEditorOptions.isAutomaticallyInsertRequiredAttributes() != myAutomaticallyInsertRequiredAttributesCheckBox.isSelected()
+        || xmlEditorOptions.isAutomaticallyStartAttribute() != myAutomaticallyStartAttributeAfterCheckBox.isSelected();
   }
 
   public void apply() throws ConfigurationException {
@@ -41,6 +45,8 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     xmlEditorOptions.setBreadcrumbsEnabled(myShowBreadcrumbsCheckBox.isSelected());
     xmlEditorOptions.setShowCssColorPreviewInGutter(myShowCSSColorPreviewCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyInsertClosingTag(myAutomaticallyInsertClosingTagCheckBox.isSelected());
+    xmlEditorOptions.setAutomaticallyInsertRequiredAttributes(myAutomaticallyInsertRequiredAttributesCheckBox.isSelected());
+    xmlEditorOptions.setAutomaticallyStartAttribute(myAutomaticallyStartAttributeAfterCheckBox.isSelected());
   }
 
   public void reset() {
@@ -48,6 +54,8 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     myShowBreadcrumbsCheckBox.setSelected(xmlEditorOptions.isBreadcrumbsEnabled());
     myShowCSSColorPreviewCheckBox.setSelected(xmlEditorOptions.isShowCssColorPreviewInGutter());
     myAutomaticallyInsertClosingTagCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertClosingTag());
+    myAutomaticallyInsertRequiredAttributesCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertRequiredAttributes());
+    myAutomaticallyStartAttributeAfterCheckBox.setSelected(xmlEditorOptions.isAutomaticallyStartAttribute());
   }
 
   public void disposeUIResources() {
