@@ -246,14 +246,13 @@ public class FileReferenceSet {
     final PsiElement context = file.getContext();
     if (context != null) file = context.getContainingFile();
     
-    final Project project = file.getProject();
-    final FileContextProvider contextProvider = FileContextProvider.getProvider(file);
-    if (contextProvider != null) {
-      final Collection<PsiFileSystemItem> folders = contextProvider.getContextFolders(file);
-      if (!folders.isEmpty()) {
-        return folders;
-      }
-      if (useIncludingFileAsContext()) {
+    if (useIncludingFileAsContext()) {
+      final FileContextProvider contextProvider = FileContextProvider.getProvider(file);
+      if (contextProvider != null) {
+        final Collection<PsiFileSystemItem> folders = contextProvider.getContextFolders(file);
+        if (!folders.isEmpty()) {
+          return folders;
+        }
         final PsiFile contextFile = contextProvider.getContextFile(file);
         if (contextFile != null) {
           return Collections.<PsiFileSystemItem>singleton(contextFile.getParent());
@@ -262,13 +261,15 @@ public class FileReferenceSet {
     }
 
     VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null && file.getOriginalFile() != null) {
-      virtualFile = file.getOriginalFile().getVirtualFile();
+    final PsiFile originalFile = file.getOriginalFile();
+    if (virtualFile == null && originalFile != null) {
+      virtualFile = originalFile.getVirtualFile();
     }
 
     if (virtualFile != null) {
       final FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
       final ArrayList<PsiFileSystemItem> list = new ArrayList<PsiFileSystemItem>();
+      final Project project = file.getProject();
       for (FileReferenceHelper helper : helpers) {
         if (helper.isMine(project, virtualFile)) {
           list.addAll(helper.getContexts(project, virtualFile));  
