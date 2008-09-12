@@ -335,6 +335,14 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       return displayList.toArray(new SimpleNode[displayList.size()]);
     }
 
+    void display(DisplayList list) {
+      if (isVisible()) {
+        super.display(list);
+      } else {
+        displayChildren(list);
+      }
+    }
+
     protected abstract void displayChildren(DisplayList displayList);
   }
 
@@ -537,16 +545,6 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
     public VirtualFile getFile() {
       return myProjectModel.getFile();
-    }
-
-    protected void display(DisplayList displayList) {
-      displayList.insert(this);
-      if (!modulePomsNode.isVisible()) {
-        modulePomsNode.displayChildren(displayList);
-      }
-      if (!nonModulePomsNode.isVisible()) {
-        nonModulePomsNode.displayChildren(displayList);
-      }
     }
 
     protected void displayChildren(DisplayList displayList) {
@@ -928,15 +926,6 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       return !isMinimalView();
     }
 
-    void display(final DisplayList list) {
-      if (isVisible()) {
-        super.display(list);
-      }
-      else {
-        displayChildren(list);
-      }
-    }
-
     protected void displayChildren(DisplayList displayList) {
       displayList.add(goalNodes);
     }
@@ -1126,15 +1115,6 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
     boolean isVisible() {
       return !pluginNodes.isEmpty() && !isMinimalView();
-    }
-
-    void display(final DisplayList list) {
-      if (isVisible()) {
-        super.display(list);
-      }
-      else {
-        displayChildren(list);
-      }
     }
 
     protected void displayChildren(DisplayList displayList) {
