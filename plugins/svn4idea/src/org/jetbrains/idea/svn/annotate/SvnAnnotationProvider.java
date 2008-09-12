@@ -71,8 +71,9 @@ public class SvnAnnotationProvider implements AnnotationProvider {
           if (progress != null) {
             progress.setText(SvnBundle.message("progress.text.computing.annotation", file.getName()));
           }
+          // ignore mime type=true : IDEA-19562 
           client.doAnnotate(ioFile, SVNRevision.UNDEFINED,
-                            SVNRevision.create(0), endRevision, new ISVNAnnotateHandler() {
+                            SVNRevision.create(0), endRevision, true, new ISVNAnnotateHandler() {
             public void handleLine(Date date, long revision, String author, String line) {
               result.appendLineInfo(date, revision, author, line);
             }
