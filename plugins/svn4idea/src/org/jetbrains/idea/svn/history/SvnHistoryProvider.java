@@ -77,6 +77,10 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     return null;
   }
 
+  public boolean supportsHistoryForDirectories() {
+    return true;
+  }
+
   public ColumnInfo[] getRevisionColumns(final VcsHistorySession session) {
     if (((MyHistorySession) session).isSupports15()) {
       return new ColumnInfo[] {new CopyFromColumnInfo(), new MergeSourceColumnInfo((MyHistorySession) session)};
@@ -201,7 +205,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
 
     final boolean supports15 = SvnUtil.checkRepositoryVersion15(myVcs, root);
     supports15Ref.set(supports15);
-    client.doLog(new File[]{new File(file.getIOFile().getAbsolutePath())}, SVNRevision.HEAD, SVNRevision.create(1), SVNRevision.create(1),
+    client.doLog(new File[]{new File(file.getIOFile().getAbsolutePath())}, SVNRevision.HEAD, SVNRevision.create(1), SVNRevision.UNDEFINED,
                  false, true, supports15, 0, null,
                  new MyLogEntryHandler(url, pegRevision, relativeUrl, result));
   }
