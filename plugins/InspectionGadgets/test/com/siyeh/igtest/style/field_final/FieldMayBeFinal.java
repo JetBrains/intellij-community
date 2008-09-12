@@ -1,5 +1,5 @@
 package com.siyeh.igtest.style.field_final;
-
+import java.awt.*; import java.awt.event.KeyEvent;
 public class FieldMayBeFinal {
 
     private static String string;
@@ -71,4 +71,13 @@ public class FieldMayBeFinal {
         }
 
     }
+
+    private static boolean flag = true;
+
+    private static final KeyEventPostProcessor processor = new KeyEventPostProcessor() {
+        public boolean postProcessKeyEvent(KeyEvent event) {
+            flag = event.isAltDown();
+            return false;
+        }
+    };
 }

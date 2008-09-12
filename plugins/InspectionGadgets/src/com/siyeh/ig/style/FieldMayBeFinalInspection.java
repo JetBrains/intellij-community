@@ -104,6 +104,9 @@ public class FieldMayBeFinalInspection extends BaseInspection {
             }
             final PsiMethod[] methods = aClass.getMethods();
             for (PsiMethod method : methods) {
+                if (method.hasModifierProperty(PsiModifier.STATIC)) {
+                    continue;
+                }
                 if (method.isConstructor() && !assignedInInitializer) {
                     if (!VariableAccessUtils.variableIsAssigned(field, method,
                             false)) {
@@ -163,6 +166,14 @@ public class FieldMayBeFinalInspection extends BaseInspection {
             for (PsiMethod method : methods) {
                 if (VariableAccessUtils.variableIsAssigned(field, method,
                         false)) {
+                    return false;
+                }
+            }
+            final PsiElement[] children = aClass.getChildren();
+            final ClassVisitor visitor = new ClassVisitor(field);
+            for (PsiElement child : children) {
+                child.accept(visitor);
+                if (visitor.isVariableAssignedInClass()) {
                     return false;
                 }
             }
