@@ -147,13 +147,11 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     myFileFactory = PsiFileFactory.getInstance(project);
     solver.registerFileHighlightFilter(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile file) {
-        final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-          public @Nullable PsiFile compute() {
-            return psiManager.findFile(file);
+        return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          public Boolean compute() {
+            return isDomFile(psiManager.findFile(file));
           }
-        });
-
-        return isDomFile(psiFile);
+        }).booleanValue();
       }
     }, project);
 
