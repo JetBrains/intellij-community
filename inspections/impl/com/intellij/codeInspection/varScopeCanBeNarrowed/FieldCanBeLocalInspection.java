@@ -2,6 +2,7 @@ package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -194,7 +195,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   }
 
   private static class MyQuickFix implements LocalQuickFix {
-    private PsiField myField;
+    private final PsiField myField;
 
     public MyQuickFix(final PsiField field) {
       myField = field;
@@ -213,6 +214,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       Set<PsiReference> refsSet = new HashSet<PsiReference>(refs);
       PsiCodeBlock anchorBlock = findAnchorBlock(refs);
       if (anchorBlock == null) return; //was assert, but need to fix the case when obsolete inspection highlighting is left
+      if (!CodeInsightUtil.preparePsiElementsForWrite(anchorBlock)) return;
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       final String propertyName = styleManager.variableNameToPropertyName(myField.getName(), VariableKind.FIELD);
