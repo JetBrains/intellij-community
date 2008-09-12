@@ -305,8 +305,9 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public void setCurrentStackFrame(@NotNull final XStackFrame frame) {
-    if (mySuspendContext == null || myCurrentStackFrame == frame) return;
+    if (mySuspendContext == null) return;
 
+    boolean frameChanged = myCurrentStackFrame != frame;
     myCurrentStackFrame = frame;
     XSourcePosition position = frame.getSourcePosition();
     if (position != null) {
@@ -314,7 +315,10 @@ public class XDebugSessionImpl implements XDebugSession {
       boolean isTopFrame = activeExecutionStack != null && activeExecutionStack.getTopFrame() == frame;
       myDebuggerManager.updateExecutionPosition(this, position, !isTopFrame);
     }
-    myDispatcher.getMulticaster().stackFrameChanged();
+
+    if (frameChanged) {
+      myDispatcher.getMulticaster().stackFrameChanged();
+    }
   }
 
   public void updateBreakpointPresentation(@NotNull final XLineBreakpoint<?> breakpoint, @Nullable final Icon icon, @Nullable final String errorMessage) {

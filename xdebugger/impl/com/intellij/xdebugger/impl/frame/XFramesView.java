@@ -16,6 +16,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,7 +45,21 @@ public class XFramesView extends XDebugViewBase {
     myMainPanel.add(myThreadComboBox, BorderLayout.NORTH);
 
     myFramesList = new XDebuggerFramesList();
-    myFramesList.addListSelectionListener(new MyListSelectionListener());
+    myFramesList.addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(final ListSelectionEvent e) {
+        if (e.getValueIsAdjusting()) return;
+        processFrameSelection();
+      }
+    });
+    myFramesList.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(final MouseEvent e) {
+        int i = myFramesList.locationToIndex(e.getPoint());
+        if (i != -1 && myFramesList.isSelectedIndex(i)) {
+          processFrameSelection();
+        }
+      }
+    });
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
     rebuildView(SessionEvent.RESUMED);
   }
@@ -114,6 +130,13 @@ public class XFramesView extends XDebugViewBase {
     return myMainPanel;
   }
 
+  private void processFrameSelection() {
+    if (!myListenersEnabled) return;
+    Object selected = myFramesList.getSelectedValue();
+    if (selected instanceof XStackFrame) {
+      onFrameSelected((XStackFrame)selected);
+    }
+  }
 
   private class MyItemListener implements ItemListener {
     public void itemStateChanged(final ItemEvent e) {
@@ -124,17 +147,6 @@ public class XFramesView extends XDebugViewBase {
         if (item instanceof XExecutionStack) {
           updateFrames((XExecutionStack)item);
         }
-      }
-    }
-  }
-
-  private class MyListSelectionListener implements ListSelectionListener {
-    public void valueChanged(final ListSelectionEvent e) {
-      if (!myListenersEnabled || e.getValueIsAdjusting()) return;
-
-      Object selected = myFramesList.getSelectedValue();
-      if (selected instanceof XStackFrame) {
-        onFrameSelected((XStackFrame)selected);
       }
     }
   }
