@@ -305,6 +305,13 @@ final class Stripe extends JPanel{
     repaint();
   }
 
+  public StripeButton getButtonFor(final String toolWindowId) {
+    for (StripeButton each : myButtons) {
+      if (each.getWindowInfo().getId().equals(toolWindowId)) return each;
+    }
+    return null;
+  }
+
   private static class LayoutData {
     int eachX;
     int eachY;
@@ -339,7 +346,7 @@ final class Stripe extends JPanel{
     }
   }
 
-  private void updateState(){
+  void updateState(){
     final int size=myButtons.size();
     for(int i=0;i<size;i++){
       myButtons.get(i).updateState();

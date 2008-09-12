@@ -69,21 +69,25 @@ public class ScreenUtil {
     int screenY = aRectangle.y;
     Rectangle screen = getScreenRectangle(screenX, screenY);
 
-    if (aRectangle.getMaxX() > screen.getMaxX()) {
-      aRectangle.x = (int) screen.getMaxX() - aRectangle.width;
+    moveToFit(aRectangle, screen);
+  }
+
+  public static void moveToFit(final Rectangle rectangle, final Rectangle container) {
+    if (rectangle.getMaxX() > container.getMaxX()) {
+      rectangle.x = (int) container.getMaxX() - rectangle.width;
     }
 
 
-    if (aRectangle.getMinX() < screen.getMinX()) {
-      aRectangle.x = (int) screen.getMinX();
+    if (rectangle.getMinX() < container.getMinX()) {
+      rectangle.x = (int) container.getMinX();
     }
 
-    if (aRectangle.getMaxY() > screen.getMaxY()) {
-      aRectangle.y = (int) screen.getMaxY() - aRectangle.height;
+    if (rectangle.getMaxY() > container.getMaxY()) {
+      rectangle.y = (int) container.getMaxY() - rectangle.height;
     }
 
-    if (aRectangle.getMinY() < screen.getMinY()) {
-      aRectangle.y = (int) screen.getMinY();
+    if (rectangle.getMinY() < container.getMinY()) {
+      rectangle.y = (int) container.getMinY();
     }
   }
 

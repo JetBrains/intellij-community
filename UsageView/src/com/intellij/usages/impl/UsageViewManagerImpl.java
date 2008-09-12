@@ -15,7 +15,6 @@
  */
 package com.intellij.usages.impl;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.find.SearchInBackgroundOption;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -34,6 +33,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -308,7 +308,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                 Messages.showMessageDialog(myProject, message, UsageViewBundle.message("dialog.title.information"), Messages.getInformationIcon());
               }
               else {
-                HintManager.getInstance().showErrorHint(editor, message);
+                ToolWindowManager.getInstance(myProject).showInfoPopup(ToolWindowId.FIND, IconLoader.getIcon("/actions/find.png"), message);
               }
             }
             else {

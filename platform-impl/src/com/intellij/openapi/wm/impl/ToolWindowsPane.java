@@ -56,9 +56,12 @@ final class ToolWindowsPane extends JPanel{
   private ArrayList<Stripe> myStipes = new ArrayList<Stripe>();
 
   private final MyUISettingsListenerImpl myUISettingsListener;
+  private ToolWindowManagerImpl myManager;
 
   ToolWindowsPane(final IdeFrameImpl frame, ToolWindowManagerImpl manager){
     super(new BorderLayout());
+
+    myManager = manager;
 
     setOpaque(false);
     myFrame=frame;
@@ -308,6 +311,21 @@ final class ToolWindowsPane extends JPanel{
     myRightStripe.setVisible(visible);
     myTopStripe.setVisible(visible);
     myBottomStripe.setVisible(visible);
+  }
+
+  Stripe getStripeFor(String id) {
+    final ToolWindowAnchor anchor = myManager.getToolWindow(id).getAnchor();
+    if (ToolWindowAnchor.TOP == anchor) {
+      return myTopStripe;
+    } else if (ToolWindowAnchor.BOTTOM == anchor) {
+      return myBottomStripe;
+    } else if (ToolWindowAnchor.LEFT == anchor) {
+      return myLeftStripe;
+    } else if (ToolWindowAnchor.RIGHT == anchor) {
+      return myRightStripe;
+    }
+
+    throw new IllegalArgumentException("Anchor=" + anchor);
   }
 
   Stripe getStripeFor(final Rectangle screenRec, Stripe preferred) {

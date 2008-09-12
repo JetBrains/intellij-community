@@ -136,6 +136,9 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
   };
 
+  public void showInfoPopup(final String toolWindowId, final Icon icon, final String text) {
+  }
+
   @NonNls private static final ContentManager MOCK_CONTENT_MANAGER = new ContentManager() {
     public void addContent(@NotNull final Content content) { }
     public void addContent(@NotNull final Content content, final Object constraints) { }

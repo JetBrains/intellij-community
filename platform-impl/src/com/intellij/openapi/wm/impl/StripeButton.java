@@ -243,14 +243,15 @@ public final class StripeButton extends JToggleButton implements ActionListener 
   }
 
   void updateState() {
-    final boolean available = myDecorator.getToolWindow().isAvailable();
+    final ToolWindowImpl window = myDecorator.getToolWindow();
+    final boolean toShow = window.isAvailable() || window.isPlaceholderMode();
     if (UISettings.getInstance().ALWAYS_SHOW_WINDOW_BUTTONS) {
       setVisible(true);
     }
     else {
-      setVisible(available);
+      setVisible(toShow);
     }
-    setEnabled(available);
+    setEnabled(toShow && !window.isPlaceholderMode());
   }
 
   private final class MyPopupHandler extends PopupHandler {

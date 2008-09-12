@@ -56,8 +56,8 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
     UIUtil.removeQuaquaVisualMarginsIn(this);
 
     myAnimator = new Animator(myName, icons.length, cycleLength, true, interCycleGap, maxRepeatCount) {
-      public void paintNow(final int frame) {
-        myCurrentIconIndex = frame;
+      public void paintNow(final float frame, final float totalFrames, final float cycle) {
+        myCurrentIconIndex = (int)frame;
         paintImmediately(0, 0, getWidth(), getHeight());
       }
 

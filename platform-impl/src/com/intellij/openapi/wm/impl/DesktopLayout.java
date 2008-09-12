@@ -1,10 +1,10 @@
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.util.ArrayUtil;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 

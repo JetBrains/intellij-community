@@ -87,6 +87,7 @@ public abstract class Animator implements Disposable {
             else {
               repaint = false;
               suspend();
+              onAnimationMaxCycleReached();
             }
           }
         }
@@ -96,7 +97,7 @@ public abstract class Animator implements Disposable {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               myQueuedFrames--;
-              paintNow(myCurrentFrame);
+              paintNow(myCurrentFrame, (float)myTotalFrames, (float)myCycleLength);
             }
           });
         }
@@ -120,7 +121,7 @@ public abstract class Animator implements Disposable {
     myTimer.setTakeInitialDelay(take);
   }
 
-  public abstract void paintNow(int frame);
+  public abstract void paintNow(float frame, final float totalFrames, final float cycle);
 
   public void dispose() {
     myTimer.dispose();

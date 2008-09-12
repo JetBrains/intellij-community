@@ -97,4 +97,6 @@ public abstract class ToolWindowManager {
    */
   public abstract IdeFocusManager getFocusManager();
 
+  public abstract void showInfoPopup(String toolWindowId, final Icon icon, final String text);
+
 }

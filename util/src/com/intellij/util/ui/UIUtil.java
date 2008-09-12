@@ -872,5 +872,21 @@ public class UIUtil {
   public static boolean isPrimitive(Component c) {
     return c instanceof JPanel || c instanceof JLayeredPane;
   }
+
+  public static Point getCenterPoint(Dimension container, Dimension child) {
+    return getCenterPoint(new Rectangle(new Point(), container), child);
+  }
+
+  public static Point getCenterPoint(Rectangle container, Dimension child) {
+    Point result = new Point();
+
+    Point containerLocation = container.getLocation();
+    Dimension containerSize = container.getSize();
+
+    result.x = containerLocation.x + (containerSize.width / 2 - child.width / 2);
+    result.y = containerLocation.y + (containerSize.height / 2 - child.height / 2);
+
+    return result;
+  }
 }
 

@@ -37,6 +37,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private InternalDecorator myDecorator;
 
   private boolean myHideOnEmptyContent = false;
+  private boolean myPlaceholderMode;
 
   ToolWindowImpl(final ToolWindowManagerImpl toolWindowManager, final String id, boolean canCloseContent, @Nullable final JComponent component) {
     myToolWindowManager = toolWindowManager;
@@ -278,5 +279,13 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public boolean isDisposed() {
     return myContentManager.isDisposed();
+  }
+
+  public boolean isPlaceholderMode() {
+    return myPlaceholderMode;
+  }
+
+  public void setPlaceholderMode(final boolean placeholderMode) {
+    myPlaceholderMode = placeholderMode;
   }
 }

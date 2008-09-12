@@ -262,7 +262,7 @@ public class AbstractPopup implements JBPopup, Disposable {
     Point containerScreenPoint = component.getVisibleRect().getLocation();
     SwingUtilities.convertPointToScreen(containerScreenPoint, aContainer);
 
-    return getCenterPoint(new Rectangle(containerScreenPoint, component.getVisibleRect().getSize()), content.getPreferredSize());
+    return UIUtil.getCenterPoint(new Rectangle(containerScreenPoint, component.getVisibleRect().getSize()), content.getPreferredSize());
   }
 
   public void showCenteredInCurrentWindow(@NotNull Project project) {
@@ -288,18 +288,6 @@ public class AbstractPopup implements JBPopup, Disposable {
 
   public void showUnderneathOf(@NotNull Component aComponent) {
     show(new RelativePoint(aComponent, new Point(0, aComponent.getHeight())));
-  }
-
-  private static Point getCenterPoint(Rectangle aContainerRec, Dimension aPopupSize) {
-    Point result = new Point();
-
-    Point containerLocation = aContainerRec.getLocation();
-    Dimension containerSize = aContainerRec.getSize();
-
-    result.x = containerLocation.x + (containerSize.width / 2 - aPopupSize.width / 2);
-    result.y = containerLocation.y + (containerSize.height / 2 - aPopupSize.height / 2);
-
-    return result;
   }
 
   public void show(@NotNull RelativePoint aPoint) {
