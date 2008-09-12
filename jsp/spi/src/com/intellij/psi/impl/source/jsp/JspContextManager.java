@@ -39,10 +39,10 @@ public abstract class JspContextManager {
     do {
       recursionPreventer.add(rootContext);
       JspFile context = getContextFile(rootContext);
-      if (context == null) break;
+      if (context == null || recursionPreventer.contains(context)) break;
       rootContext = context;
     }
-    while (!recursionPreventer.contains(rootContext));
+    while (true);
 
     return rootContext;
   }
