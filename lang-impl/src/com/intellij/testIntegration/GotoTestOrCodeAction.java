@@ -33,12 +33,18 @@ public class GotoTestOrCodeAction extends BaseCodeInsightAction {
     PsiElement element = GotoTestOrCodeHandler.getSelectedElement(editor, psiFile);
     Presentation p = event.getPresentation();
 
-    if (TestFinderHelper.isTest(element)) {
-      p.setText(ActionsBundle.message("action.GotoTestSubject.text"));
-      p.setDescription(ActionsBundle.message("action.GotoTestSubject.description"));
-    } else {
-      p.setText(ActionsBundle.message("action.GotoTest.text"));
-      p.setDescription(ActionsBundle.message("action.GotoTest.description"));
+    if (element == null) {
+      p.setEnabled(false);
+    }
+    else {
+      p.setEnabled(true);
+      if (TestFinderHelper.isTest(element)) {
+        p.setText(ActionsBundle.message("action.GotoTestSubject.text"));
+        p.setDescription(ActionsBundle.message("action.GotoTestSubject.description"));
+      } else {
+        p.setText(ActionsBundle.message("action.GotoTest.text"));
+        p.setDescription(ActionsBundle.message("action.GotoTest.description"));
+      }
     }
   }
 }

@@ -32,6 +32,7 @@ public class TestFinderHelper {
   }
 
   public static boolean isTest(PsiElement element) {
+    if (element == null) return false;
     for (TestFinder each : getFinders()) {
       if (each.isTest(element)) return true;
     }
