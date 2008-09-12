@@ -19,6 +19,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public abstract class FileDocumentManagerAdapter implements FileDocumentManagerListener{
+  public void beforeAllDocumentsSaving() {
+  }
+
   public void beforeDocumentSaving(Document document) {
   }
 

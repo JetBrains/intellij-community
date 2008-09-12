@@ -171,6 +171,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   public void saveAllDocuments() {
+    myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).beforeAllDocumentsSaving();
+
     if (myUnsavedDocuments.isEmpty()) return;
 
     HashSet<Document> failedToSave = new HashSet<Document>();

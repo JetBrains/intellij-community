@@ -22,6 +22,15 @@ import java.util.EventListener;
 
 public interface FileDocumentManagerListener extends EventListener {
   /**
+   * Fired before processing FileDocumentManager.saveAllDocuments(). Can be used by plugins
+   * which need to perform additional save operations when documents, rather than settings,
+   * are saved.
+   *
+   * @since 8.0
+   */
+  void beforeAllDocumentsSaving();
+
+  /**
    * NOTE: Vetoing facility is deprecated in this listener implement {@link com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoListener} instead.
    */
   void beforeDocumentSaving(Document document);
