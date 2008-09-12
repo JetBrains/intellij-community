@@ -15,14 +15,15 @@
  */
 package com.siyeh.ipp.comment;
 
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.TreeUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 class CommentOnLineWithSourcePredicate implements PsiElementPredicate{
 
@@ -37,7 +38,11 @@ class CommentOnLineWithSourcePredicate implements PsiElementPredicate{
         if(element instanceof PsiDocComment){
             return false;
         }
+
         final PsiComment comment = (PsiComment) element;
+        if (comment instanceof PsiLanguageInjectionHost && containsInjectedPsi((PsiLanguageInjectionHost)comment)) {
+           return false;
+        }
         final IElementType type = comment.getTokenType();
         if(!JavaTokenType.C_STYLE_COMMENT.equals(type) &&
                 !JavaTokenType.END_OF_LINE_COMMENT.equals(type)){
@@ -59,5 +64,15 @@ class CommentOnLineWithSourcePredicate implements PsiElementPredicate{
         final String nextSiblingText = nextSibling.getText();
         return nextSiblingText.indexOf((int) '\n') < 0 &&
                 nextSiblingText.indexOf((int) '\r') < 0;
+    }
+
+    private static boolean containsInjectedPsi(final PsiLanguageInjectionHost injectionHost) {
+        final Ref<Boolean> containsInjected = Ref.create(false);
+        injectionHost.processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+            public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
+              containsInjected.set(true);
+            }
+        });
+        return containsInjected.get();
     }
 }
