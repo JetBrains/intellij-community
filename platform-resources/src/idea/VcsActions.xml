@@ -80,6 +80,8 @@
       <action id="ChangesView.Diff" class="com.intellij.openapi.vcs.changes.actions.ShowDiffAction"
               icon="/actions/diff.png"/>
     </group>
+    
+    <group id="AlienCommitChangesDialog.AdditionalActions"/>
 
     <group id="ChangesViewPopupMenu">
       <reference ref="ChangesView.Commit"/>

@@ -140,7 +140,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     else if (key == VcsDataKeys.CHANGE_LISTS) {
       sink.put(VcsDataKeys.CHANGE_LISTS, getSelectedChangeLists());
     }
-    else if (key == PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
+    else if (key == VcsDataKeys.CHANGE_LEAD_SELECTION) {
+      final Change highestSelection = myViewer.getHighestLeadSelection();
+      sink.put(VcsDataKeys.CHANGE_LEAD_SELECTION, (highestSelection == null) ? new Change[]{} : new Change[] {highestSelection});
+    }    else if (key == PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
       sink.put(PlatformDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
     }
     else if (key == PlatformDataKeys.NAVIGATABLE_ARRAY) {

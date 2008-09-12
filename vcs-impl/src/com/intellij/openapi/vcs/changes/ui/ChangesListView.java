@@ -136,6 +136,9 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     if (key == VcsDataKeys.CHANGES) {
       sink.put(VcsDataKeys.CHANGES, getSelectedChanges());
     }
+    else if (key == VcsDataKeys.CHANGE_LEAD_SELECTION) {
+      sink.put(VcsDataKeys.CHANGE_LEAD_SELECTION, getLeadSelection());
+    }
     else if (key == VcsDataKeys.CHANGE_LISTS) {
       sink.put(VcsDataKeys.CHANGE_LISTS, getSelectedChangeLists());
     }
@@ -247,6 +250,22 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     files.addAll(getSelectedVirtualFiles(null));
 
     return files.toArray(new VirtualFile[files.size()]);
+  }
+
+  private Change[] getLeadSelection() {
+    final Set<Change> changes = new LinkedHashSet<Change>();
+
+    final TreePath[] paths = getSelectionPaths();
+    if (paths == null) return new Change[0];
+
+    for (TreePath path : paths) {
+      ChangesBrowserNode node = (ChangesBrowserNode) path.getLastPathComponent();
+      if (node instanceof ChangesBrowserChangeNode) {
+        changes.add(((ChangesBrowserChangeNode) node).getUserObject());
+      }
+    }
+
+    return changes.toArray(new Change[changes.size()]);
   }
 
   @NotNull

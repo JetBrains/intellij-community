@@ -54,7 +54,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     myShowingAllChangeLists = changeLists.equals(ChangeListManager.getInstance(project).getChangeLists());
     ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
 
-    myExtender = new Extender(this);
+    myExtender = new Extender(project, this);
   }
 
   @Override
@@ -254,9 +254,11 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   }
 
   private static class Extender implements ChangesBrowserExtender {
+    private final Project myProject;
     private final MultipleChangeListBrowser myBrowser;
 
-    private Extender(final MultipleChangeListBrowser browser) {
+    private Extender(final Project project, final MultipleChangeListBrowser browser) {
+      myProject = project;
       myBrowser = browser;
     }
 
@@ -268,6 +270,13 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
 
       myBrowser.addToolbarAction(ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar"));
       myBrowser.addToolbarActions(CommitMessage.getToolbarActions());
+
+      final List<AnAction> actions = AdditionalLocalChangeActionsInstaller.calculateActions(myProject, myBrowser.getAllChanges());
+      if (actions != null) {
+        for (AnAction action : actions) {
+          myBrowser.addToolbarAction(action);
+        }
+      }
     }
 
     public void addSelectedListChangeListener(final SelectedListChangeListener listener) {
