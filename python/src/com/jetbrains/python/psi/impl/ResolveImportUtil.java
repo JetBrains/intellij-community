@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -9,7 +8,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.*;
@@ -355,11 +357,13 @@ public class ResolveImportUtil {
           if (mod != null) {
             final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();
             PyResolveUtil.treeCrawlUp(processor, mod, true);
+            /*
             for (LookupElement le : processor.getResult()) {
               if (le.getObject() instanceof PsiNamedElement) variants.add(le);
               else variants.add(le.toString()); // NOTE: a rather silly way to handle assignment targets
             }
-            return variants.toArray(new Object[variants.size()]);
+            */
+            return processor.getResult();
           }
         }
       }

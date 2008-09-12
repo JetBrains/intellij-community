@@ -1,9 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
-import com.jetbrains.python.psi.PyStarImportElement;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.lang.ASTNode;

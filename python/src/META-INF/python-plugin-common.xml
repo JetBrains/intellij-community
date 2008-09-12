@@ -34,6 +34,7 @@
     <colorSettingsPage implementation="com.jetbrains.python.PythonColorsPage"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyWordSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyStatementSelectionHandler"/>
+    <completion.contributor implementation="com.jetbrains.python.codeInsight.PyKeywordCompletionContributor"/>
 
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyFunctionNameIndex"/>
@@ -77,4 +78,15 @@
     <pyClassInheritorsSearch implementation="com.jetbrains.python.psi.search.PyClassInheritorsSearchExecutor"/>
     <pyOverridingMethodsSearch implementation="com.jetbrains.python.psi.search.PyOverridingMethodsSearchExecutor"/>
   </extensions>
+  <!--
+  <actions>
+    <action 
+      id="Devmode.DumpPsi" 
+      class="com.jetbrains.python.devmode.DumpPsiToClipboardAction" 
+      text="Dump PSI to clipboard"
+    >
+      <add-to-group group-id="EditMenu" anchor="before" relative-to-action="Undo"/>
+    </action>
+  </actions>
+  -->            
 </idea-plugin>
