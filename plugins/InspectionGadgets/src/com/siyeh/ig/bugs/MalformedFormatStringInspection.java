@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,14 @@ import java.util.Set;
 
 public class MalformedFormatStringInspection extends BaseInspection{
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "malformed.format.string.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         final String value = (String)infos[0];
@@ -59,10 +61,12 @@ public class MalformedFormatStringInspection extends BaseInspection{
                 "malformed.format.string.problem.descriptor.arguments.do.not.match.type");
     }
 
+    @Override
     public boolean isEnabledByDefault(){
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new MalformedFormatStringVisitor();
     }
@@ -92,34 +96,35 @@ public class MalformedFormatStringInspection extends BaseInspection{
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            final PsiExpressionList argList = expression.getArgumentList();
-            final PsiExpression[] args = argList.getExpressions();
-            if(args.length == 0){
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if(arguments.length == 0){
                 return;
             }
-            final PsiExpression firstArg = args[0];
-            final PsiType type = firstArg.getType();
+            final PsiExpression firstArgument = arguments[0];
+            final PsiType type = firstArgument.getType();
             if(type == null){
                 return;
             }
             final int formatArgPosition;
             if("java.util.Locale".equals(type.getCanonicalText())
-                    && args.length > 1){
+                    && arguments.length > 1){
                 formatArgPosition = 1;
             } else{
                 formatArgPosition = 0;
             }
-            final PsiExpression formatArg = args[formatArgPosition];
-            if(!TypeUtils.expressionHasType("java.lang.String", formatArg)){
+            final PsiExpression formatArgument = arguments[formatArgPosition];
+            if(!TypeUtils.expressionHasType("java.lang.String",
+                    formatArgument)){
                 return;
             }
-            if(!PsiUtil.isConstantExpression(formatArg)){
+            if(!PsiUtil.isConstantExpression(formatArgument)){
                 return;
             }
-            final PsiType formatType = formatArg.getType();
+            final PsiType formatType = formatArgument.getType();
             final String value =
-                    (String) ConstantExpressionUtil.computeCastTo(formatArg,
-                            formatType);
+                    (String) ConstantExpressionUtil.computeCastTo(
+                            formatArgument, formatType);
             if(value == null){
                 return;
             }
@@ -130,20 +135,21 @@ public class MalformedFormatStringInspection extends BaseInspection{
             try{
                 validators = FormatDecode.decode(value);
             } catch(Exception ignore){
-                registerError(formatArg, value);
+                registerError(formatArgument, value);
                 return;
             }
-            final int numArgs = args.length - (formatArgPosition + 1);
+            final int numArgs = arguments.length - (formatArgPosition + 1);
             if(validators.length != numArgs){
-                registerError(formatArg, value, Integer.valueOf(numArgs));
+                registerError(formatArgument, value, Integer.valueOf(numArgs));
                 return;
             }
             for(int i = 0; i < validators.length; i++){
                 final Validator validator = validators[i];
                 final PsiType argType =
-                        args[i + formatArgPosition + 1].getType();
+                        arguments[i + formatArgPosition + 1].getType();
                 if(!validator.valid(argType)){
-                    registerError(formatArg, value, Integer.valueOf(numArgs));
+                    registerError(formatArgument, value,
+                            Integer.valueOf(numArgs));
                     return;
                 }
             }
