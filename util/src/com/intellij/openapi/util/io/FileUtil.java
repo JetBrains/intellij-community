@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.StringBuilderSpinAllocator;
+import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -632,6 +633,7 @@ public class FileUtil {
     }
   }
 
+  @RegExp
   public static String convertAntToRegexp(String antPattern) {
     return convertAntToRegexp(antPattern, true);
   }
@@ -644,88 +646,81 @@ public class FileUtil {
    * Paths containing windows-style backslashes must be converted before matching against the resulting regexp
    * @see com.intellij.openapi.util.io.FileUtil#toSystemIndependentName
    */
+  @RegExp
   public static String convertAntToRegexp(String antPattern, boolean ignoreStartingSlash) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      int asteriskCount = 0;
-      boolean recursive = true;
-      final int start = ignoreStartingSlash && (antPattern.startsWith("/") || antPattern.startsWith("\\")) ? 1 : 0;
-      for (int idx = start; idx < antPattern.length(); idx++) {
-        final char ch = antPattern.charAt(idx);
-        
-        if (ch == '*') {
-          asteriskCount++;
-          continue;
-        }
+    final StringBuilder builder = new StringBuilder(antPattern.length());
+    int asteriskCount = 0;
+    boolean recursive = true;
+    final int start = ignoreStartingSlash && (antPattern.startsWith("/") || antPattern.startsWith("\\")) ? 1 : 0;
+    for (int idx = start; idx < antPattern.length(); idx++) {
+      final char ch = antPattern.charAt(idx);
 
-        final boolean foundRecursivePattern = recursive && asteriskCount == 2 && (ch == '/' || ch == '\\');
-        final boolean asterisksFound = asteriskCount > 0;
-        
-        asteriskCount = 0;
-        recursive = ch == '/' || ch == '\\';
-        
-        if (foundRecursivePattern) {
-          builder.append("(?:[^/]+/)*?");
-          continue;
-        }
-        
-        if (asterisksFound){
-          builder.append("[^/]*?");
-        }
-                
-        if (ch == '[' || ch == ']' || ch == '^' || ch == '$' || ch == '.' || ch == '{' || ch == '}' || ch == '+' || ch == '|') {
-          // quote regexp-specific symbols
-          builder.append('\\').append(ch);
-          continue;
-        }
-        if (ch == '?') {
-          builder.append("[^/]{1}");
-          continue;
-        }
-        if (ch == '\\') {
-          builder.append('/');
-          continue;
-        }
-        builder.append(ch);
+      if (ch == '*') {
+        asteriskCount++;
+        continue;
       }
 
-      // handle ant shorthand: mypackage/test/ is interpreted as if it were mypackage/test/**
-      final boolean isTrailingSlash =  builder.length() > 0 && builder.charAt(builder.length() - 1) == '/';
-      if (asteriskCount == 0 && isTrailingSlash || recursive && asteriskCount == 2) {
-        if (isTrailingSlash) {
-          builder.setLength(builder.length() - 1);
-        }
-        if (builder.length() == 0) {
-          builder.append(".*");
-        }
-        else {
-          builder.append("(?:$|/.+)");
-        }
+      final boolean foundRecursivePattern = recursive && asteriskCount == 2 && (ch == '/' || ch == '\\');
+      final boolean asterisksFound = asteriskCount > 0;
+
+      asteriskCount = 0;
+      recursive = ch == '/' || ch == '\\';
+
+      if (foundRecursivePattern) {
+        builder.append("(?:[^/]+/)*?");
+        continue;
       }
-      else if (asteriskCount > 0) {
+
+      if (asterisksFound){
         builder.append("[^/]*?");
       }
-      return builder.toString();
+
+      if (ch == '[' || ch == ']' || ch == '^' || ch == '$' || ch == '.' || ch == '{' || ch == '}' || ch == '+' || ch == '|') {
+        // quote regexp-specific symbols
+        builder.append('\\').append(ch);
+        continue;
+      }
+      if (ch == '?') {
+        builder.append("[^/]{1}");
+        continue;
+      }
+      if (ch == '\\') {
+        builder.append('/');
+        continue;
+      }
+      builder.append(ch);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
+
+    // handle ant shorthand: mypackage/test/ is interpreted as if it were mypackage/test/**
+    final boolean isTrailingSlash =  builder.length() > 0 && builder.charAt(builder.length() - 1) == '/';
+    if (asteriskCount == 0 && isTrailingSlash || recursive && asteriskCount == 2) {
+      if (isTrailingSlash) {
+        builder.setLength(builder.length() - 1);
+      }
+      if (builder.length() == 0) {
+        builder.append(".*");
+      }
+      else {
+        builder.append("(?:$|/.+)");
+      }
     }
+    else if (asteriskCount > 0) {
+      builder.append("[^/]*?");
+    }
+    return builder.toString();
   }
 
-  public static boolean moveDirWithContent( File fromDir, File toDir ) {
-    if( !toDir.exists() )
-        return fromDir.renameTo( toDir );
+  public static boolean moveDirWithContent(File fromDir, File toDir) {
+    if (!toDir.exists()) return fromDir.renameTo(toDir);
 
     File[] files = fromDir.listFiles();
-    if( files == null )
-        return false;
+    if (files == null) return false;
 
     boolean success = true;
 
-    for( File fromFile : files )
-    {
-      File toFile = new File( toDir, fromFile.getName() );
-      success = success && fromFile.renameTo( toFile );
+    for (File fromFile : files) {
+      File toFile = new File(toDir, fromFile.getName());
+      success = success && fromFile.renameTo(toFile);
     }
     fromDir.delete();
 
