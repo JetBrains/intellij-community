@@ -1128,6 +1128,15 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       return !pluginNodes.isEmpty() && !isMinimalView();
     }
 
+    void display(final DisplayList list) {
+      if (isVisible()) {
+        super.display(list);
+      }
+      else {
+        displayChildren(list);
+      }
+    }
+
     protected void displayChildren(DisplayList displayList) {
       displayList.add(pluginNodes);
     }
