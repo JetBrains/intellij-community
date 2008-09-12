@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.SmartList;
+import org.intellij.lang.annotations.RegExp;
 import org.intellij.plugins.intelliLang.util.StringMatcher;
 import org.jaxen.JaxenException;
 import org.jaxen.XPath;
@@ -82,7 +83,7 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
     return myValuePattern;
   }
 
-  public void setValuePattern(@Nullable String pattern) {
+  public void setValuePattern(@RegExp @Nullable String pattern) {
     try {
       if (pattern != null && pattern.length() > 0) {
         myValuePattern = pattern;
