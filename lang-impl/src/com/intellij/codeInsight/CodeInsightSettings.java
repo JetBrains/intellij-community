@@ -21,10 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.List;
 
-/**
- *
- */
-@SuppressWarnings({"deprecation"})
 public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, ExportableApplicationComponent {
   @NonNls private static final String EXCLUDED_PACKAGE = "EXCLUDED_PACKAGE";
   @NonNls private static final String ATTRIBUTE_NAME = "NAME";
@@ -54,9 +50,9 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
   }
 
   @Nullable
-  public Object clone() {
+  public CodeInsightSettings clone() {
     try {
-      return super.clone();
+      return (CodeInsightSettings)super.clone();
     }
     catch (CloneNotSupportedException e) {
       return null;

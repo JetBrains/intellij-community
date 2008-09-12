@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class CodeStyleManagerImpl extends CodeStyleManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl");
-  private Project myProject;
+  private final Project myProject;
   @NonNls private static final String DUMMY_IDENTIFIER = "xxx";
 
   public CodeStyleManagerImpl(Project project) {
@@ -319,7 +319,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   public void adjustLineIndent(@NotNull PsiFile file, TextRange rangeToAdjust) throws IncorrectOperationException {
-    final Language fileLanguage = file.getLanguage();
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
     if (builder != null) {
       final CodeStyleSettings settings = getSettings();

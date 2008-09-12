@@ -40,12 +40,10 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   @NonNls private static final String CODESTYLES_DIRECTORY = "codestyles";
 
   private final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> mySchemesManager;
-  private final SchemeProcessor<CodeStyleSchemeImpl> myProcessor;
   private static final String FILE_SPEC = "$ROOT_CONFIG$/" + CODESTYLES_DIRECTORY;
 
   public CodeStyleSchemesImpl(SchemesManagerFactory schemesManagerFactory) {
-
-    myProcessor = new SchemeProcessor<CodeStyleSchemeImpl>() {
+    SchemeProcessor<CodeStyleSchemeImpl> processor = new SchemeProcessor<CodeStyleSchemeImpl>() {
       public CodeStyleSchemeImpl readScheme(final Document schemeContent) throws IOException, JDOMException, InvalidDataException {
         return CodeStyleSchemeImpl.readScheme(schemeContent);
       }
@@ -69,13 +67,14 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
       }
 
       public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
-        
+
       }
     };
 
-    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, myProcessor, RoamingType.PER_USER);
+    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, processor, RoamingType.PER_USER);
   }
 
+  @NotNull
   public String getComponentName() {
     return "CodeStyleSchemes";
   }
