@@ -58,7 +58,7 @@ public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix, Inte
   }
 
   public boolean startInWriteAction() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return true;
   }
 
   private void doFix(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {
