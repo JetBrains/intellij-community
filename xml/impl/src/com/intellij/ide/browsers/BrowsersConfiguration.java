@@ -43,27 +43,31 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
   private static final Icon FIREFOX_ICON = IconLoader.getIcon("/xml/browsers/firefox16.png");
   private static final Icon EXPLORER_ICON = IconLoader.getIcon("/xml/browsers/explorer16.png");
   private static final Icon OPERA_ICON = IconLoader.getIcon("/xml/browsers/opera16.png");
+  private static final Icon CHROME_ICON = IconLoader.getIcon("/xml/browsers/chrome16.png");
   private WebBrowsersPanel mySettingsPanel;
 
   private Map<BrowserFamily, Pair<String, Boolean>> myBrowserToPathMap = new HashMap<BrowserFamily, Pair<String, Boolean>>();
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static enum BrowserFamily {
-    EXPLORER(XmlBundle.message("browsers.explorer"), "iexplore", null, null),
-    SAFARI(XmlBundle.message("browsers.safari"), "safari", "safari", "Safari"),
-    OPERA(XmlBundle.message("browsers.opera"), "opera", "opera", "Opera"),
-    FIREFOX(XmlBundle.message("browsers.firefox"), "firefox", "firefox", "Firefox");
+    EXPLORER(XmlBundle.message("browsers.explorer"), "iexplore", null, null, EXPLORER_ICON),
+    SAFARI(XmlBundle.message("browsers.safari"), "safari", "safari", "Safari", SAFARI_ICON),
+    OPERA(XmlBundle.message("browsers.opera"), "opera", "opera", "Opera", OPERA_ICON),
+    FIREFOX(XmlBundle.message("browsers.firefox"), "firefox", "firefox", "Firefox", FIREFOX_ICON),
+    CHROME(XmlBundle.message("browsers.chrome"), "chrome", null, null, CHROME_ICON);
 
     private String myName;
     private String myWindowsPath;
     private String myLinuxPath;
     private String myMacPath;
+    private Icon myIcon;
 
-    BrowserFamily(final String name, final String windowsPath, final String linuxPath, final String macPath) {
+    BrowserFamily(final String name, final String windowsPath, final String linuxPath, final String macPath, final Icon icon) {
       myName = name;
       myWindowsPath = windowsPath;
       myLinuxPath = linuxPath;
       myMacPath = macPath;
+      myIcon = icon;
     }
 
     @Nullable
@@ -83,6 +87,10 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
 
     public String getName() {
       return myName;
+    }
+
+    public Icon getIcon() {
+      return myIcon;
     }
   }
 
@@ -113,11 +121,15 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
     }
   }
 
-  private void suggestBrowserPath(@NotNull final BrowserFamily browserFamily) {
-    if (!myBrowserToPathMap.containsKey(browserFamily)) {
+  private Pair<String, Boolean> suggestBrowserPath(@NotNull final BrowserFamily browserFamily) {
+    Pair<String, Boolean> result = myBrowserToPathMap.get(browserFamily);
+    if (result == null) {
       final String path = browserFamily.getExecutionPath();
-      myBrowserToPathMap.put(browserFamily, new Pair<String, Boolean>(path == null ? "" : path, path != null));
+      result = new Pair<String, Boolean>(path == null ? "" : path, path != null);
+      myBrowserToPathMap.put(browserFamily, result);
     }
+
+    return result;
   }
 
   public static BrowsersConfiguration getInstance() {
@@ -130,12 +142,6 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
   }
 
   public void initComponent() {
-    if (myBrowserToPathMap.size() == 0) {
-      for (BrowserFamily browserFamily : BrowserFamily.values()) {
-        suggestBrowserPath(browserFamily);
-      }
-    }
-
     installBrowserActions();
   }
 
@@ -189,7 +195,7 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private void _launchBrowser(final BrowserFamily family, @NotNull final String url) {
-    final Pair<String, Boolean> pair = myBrowserToPathMap.get(family);
+    final Pair<String, Boolean> pair = suggestBrowserPath(family);
     if (pair != null) {
       final String path = pair.first;
       if (path != null && path.length() > 0) {
@@ -240,6 +246,7 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
     installBrowserAction(BrowserFamily.FIREFOX);
     installBrowserAction(BrowserFamily.EXPLORER);
     installBrowserAction(BrowserFamily.SAFARI);
+    installBrowserAction(BrowserFamily.CHROME);
     installBrowserAction(BrowserFamily.OPERA);
   }
 
@@ -301,7 +308,7 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
 
         @Override
         public void update(final AnActionEvent e) {
-          boolean visible = myBrowserToPathMap.get(family).second.booleanValue();
+          boolean visible = suggestBrowserPath(family).second.booleanValue();
           if (visible) {
             visible = false;
             final PsiFile file = getFile(e.getDataContext());
@@ -331,16 +338,6 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
   }
 
   private static Icon getBrowserIcon(final BrowserFamily family) {
-    switch (family) {
-      case EXPLORER:
-        return EXPLORER_ICON;
-      case FIREFOX:
-        return FIREFOX_ICON;
-      case OPERA:
-        return OPERA_ICON;
-      case SAFARI:
-        return SAFARI_ICON;
-    }
-    return null;
+    return family.getIcon();
   }
 }

@@ -42,6 +42,7 @@ public class WebBrowsersPanel extends JPanel {
     createIndividualSettings(BrowsersConfiguration.BrowserFamily.FIREFOX, mySettingsPanel);
     createIndividualSettings(BrowsersConfiguration.BrowserFamily.EXPLORER, mySettingsPanel);
     createIndividualSettings(BrowsersConfiguration.BrowserFamily.SAFARI, mySettingsPanel);
+    createIndividualSettings(BrowsersConfiguration.BrowserFamily.CHROME, mySettingsPanel);
     createIndividualSettings(BrowsersConfiguration.BrowserFamily.OPERA, mySettingsPanel);
   }
 
