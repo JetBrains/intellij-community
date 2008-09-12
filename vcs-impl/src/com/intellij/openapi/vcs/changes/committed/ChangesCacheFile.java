@@ -5,9 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.update.FileGroup;
@@ -670,11 +668,13 @@ public class ChangesCacheFile {
     private Set<FilePath> myCreatedFiles;
     private Map<Long, IndexEntry> myIndexEntryCache = new HashMap<Long, IndexEntry>();
     private Map<Long, CommittedChangeList> myPreviousChangeListsCache = new HashMap<Long, CommittedChangeList>();
+    private List<LocalChangeList> myChangeLists;
 
     public boolean invoke() throws VcsException, IOException {
       if (myProject.isDisposed()) {
         return false;
       }
+      myChangeLists = ChangeListManager.getInstance(myProject).getChangeLists();
       final DiffProvider diffProvider = myVcs.getDiffProvider();
       if (diffProvider == null) return false;
       final Collection<FilePath> incomingFiles = myChangesProvider.getIncomingFiles(myLocation);
@@ -763,6 +763,10 @@ public class ChangesCacheFile {
           if (myChangesProvider.isChangeLocallyAvailable(afterRevision.getFile(), null, afterRevision.getRevisionNumber(), changeList)) {
             return true;
           }
+          if (fileMarkedForDeletion(localPath)) {
+            LOG.info("File marked for deletion and not committed jet.");
+            return true;
+          }
           if (wasSubsequentlyDeleted(afterRevision.getFile(), changeListData.indexOffset)) {
             return true;
           }
@@ -796,6 +800,21 @@ public class ChangesCacheFile {
             return true;
           }
           LOG.info("File exists locally and no 'create' change found for it");
+        }
+      }
+      return false;
+    }
+
+    private boolean fileMarkedForDeletion(final FilePath localPath) {
+      for (LocalChangeList list : myChangeLists) {
+        final Collection<Change> changes = list.getChanges();
+        for (Change change : changes) {
+          if (change.getBeforeRevision() != null && change.getBeforeRevision().getFile() != null &&
+              change.getBeforeRevision().getFile().getPath().equals(localPath.getPath())) {
+            if (FileStatus.DELETED.equals(change.getFileStatus()) || change.isMoved() || change.isRenamed()) {
+              return true;
+            }
+          }
         }
       }
       return false;
