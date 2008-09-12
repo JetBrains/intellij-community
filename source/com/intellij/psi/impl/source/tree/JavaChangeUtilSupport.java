@@ -207,6 +207,9 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
 
   private static CompositeElement createReference(PsiManager manager, String text, CharTable table, boolean generatedFlag) {
     final CompositeElement element = Parsing.parseJavaCodeReferenceText(manager, text, table);
+    if (element == null) {
+      throw new IllegalArgumentException("Failed to create reference element from text '" + text + "'");
+    }
     if(generatedFlag) element.acceptTree(new GeneratedMarkerVisitor());
     return element;
   }
