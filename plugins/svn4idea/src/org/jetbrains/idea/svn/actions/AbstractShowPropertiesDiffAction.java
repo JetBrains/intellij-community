@@ -6,8 +6,9 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -47,11 +48,11 @@ abstract class AbstractShowPropertiesDiffAction extends AnAction {
     final Change[] changes = e.getData(getChangesKey());
 
     final Presentation presentation = e.getPresentation();
-    presentation.setVisible(true);
+    presentation.setVisible(VcsDataKeys.CHANGES.getData(dataContext) != null);
     presentation.setEnabled(enabled(project, changes));
   }
 
-  private static boolean enabled(final Project project, final Change[] changes) {
+  private boolean enabled(final Project project, final Change[] changes) {
     final boolean noChange = (project == null) || (changes == null) || (changes.length != 1);
     if (noChange) {
       return false;
@@ -63,13 +64,17 @@ abstract class AbstractShowPropertiesDiffAction extends AnAction {
         return false;
       }
 
-      final VirtualFile virtualFile = ChangesUtil.getFilePath(change).getVirtualFile();
-      if (virtualFile == null) {
-        return false;
-      }
-      final AbstractVcs vcs = ChangesUtil.getVcsForFile(virtualFile, project);
-      return (vcs != null) && SvnVcs.VCS_NAME.equals(vcs.getName());
+      return checkVcs(project, change);
     }
+  }
+
+  protected boolean checkVcs(final Project project, final Change change) {
+    final VirtualFile virtualFile = ChangesUtil.getFilePath(change).getVirtualFile();
+    if (virtualFile == null) {
+      return false;
+    }
+    final AbstractVcs vcs = ChangesUtil.getVcsForFile(virtualFile, project);
+    return (vcs != null) && SvnVcs.VCS_NAME.equals(vcs.getName());
   }
 
   public void actionPerformed(final AnActionEvent e) {

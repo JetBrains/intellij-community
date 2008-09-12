@@ -32,6 +32,7 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -59,6 +60,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
@@ -809,5 +811,10 @@ public class SvnVcs extends AbstractVcs {
       myMergeProvider = new SvnMergeProvider(myProject);
     }
     return myMergeProvider;
+  }
+
+  @Override
+  public List<AnAction> getAdditionalActionsForLocalChange() {
+    return Arrays.<AnAction>asList(new ShowPropertiesDiffWithLocalAction());
   }
 }

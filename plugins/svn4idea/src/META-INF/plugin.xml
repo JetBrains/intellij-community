@@ -41,6 +41,10 @@
       <add-to-group group-id="RepositoryChangesBrowserToolbar" anchor="last"/>
     </action>
 
+    <action id="AlienPropertiesLocalDiff" class="org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAlienAction" popup="true">
+      <add-to-group group-id="AlienCommitChangesDialog.AdditionalActions" anchor="last"/>
+    </action>
+
     <group id="SubversionGroup">
       <action id="Subversion.Share" class="org.jetbrains.idea.svn.actions.ShareProjectAction"/>
       <separator/>
