@@ -27,7 +27,10 @@ public class AdditionalLocalChangeActionsInstaller {
     }
     final List<AnAction> result = new ArrayList<AnAction>(1);
     for (AbstractVcs vcs : map.values()) {
-      result.addAll(vcs.getAdditionalActionsForLocalChange());
+      final List<AnAction> actions = vcs.getAdditionalActionsForLocalChange();
+      if (actions != null) {
+        result.addAll(actions);
+      }
     }
     return result;
   }
