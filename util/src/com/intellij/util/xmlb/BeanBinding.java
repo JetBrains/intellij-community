@@ -73,6 +73,12 @@ class BeanBinding implements Binding {
   public Object serialize(Object o, Object context) {
     Element element = new Element(myTagName);
 
+    serializeInto(o, element);
+
+    return element;
+  }
+
+  public void serializeInto(final Object o, final Element element) {
     for (Binding binding : myPropertyBindingsList) {
       Accessor accessor = myPropertyBindings.get(binding);
       if (!filter.accepts(accessor, o)) continue;
@@ -102,8 +108,6 @@ class BeanBinding implements Binding {
         }
       }
     }
-
-    return element;
   }
 
 
