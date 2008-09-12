@@ -86,7 +86,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     private final boolean myCheckInheritance;
     private final boolean myIncludeAnonymous;
 
-    public SearchParameters(final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
+    public SearchParameters(@NotNull final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
       myClass = aClass;
       myScope = scope;
       myCheckDeep = checkDeep;
@@ -94,6 +94,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       myIncludeAnonymous = includeAnonymous;
     }
 
+    @NotNull
     public PsiClass getClassToProcess() {
       return myClass;
     }
@@ -117,19 +118,19 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
   private ClassInheritorsSearch() {}
 
-  public static Query<PsiClass> search(final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
+  public static Query<PsiClass> search(@NotNull final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope, checkDeep, checkInheritance, includeAnonymous));
   }
 
-  public static Query<PsiClass> search(final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
+  public static Query<PsiClass> search(@NotNull final PsiClass aClass, SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
     return search(aClass, scope, checkDeep, checkInheritance, true);
   }
 
-  public static Query<PsiClass> search(final PsiClass aClass, SearchScope scope, final boolean checkDeep) {
+  public static Query<PsiClass> search(@NotNull final PsiClass aClass, SearchScope scope, final boolean checkDeep) {
     return search(aClass, scope, checkDeep, true);
   }
 
-  public static Query<PsiClass> search(final PsiClass aClass, final boolean checkDeep) {
+  public static Query<PsiClass> search(@NotNull final PsiClass aClass, final boolean checkDeep) {
     return search(aClass, aClass.getUseScope(), checkDeep);
   }
 

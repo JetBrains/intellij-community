@@ -736,10 +736,12 @@ public class CreateFromUsageUtils {
       final PsiMember member = members[i];
       if (!member.hasModifierProperty(PsiModifier.PRIVATE) && member.hasModifierProperty(PsiModifier.STATIC) == staticAccess) {
         final PsiClass containingClass = member.getContainingClass();
-        for(PsiClass clazz: ClassInheritorsSearch.search(containingClass, descendantsSearchScope, true, true, false).findAll()) {
-          possibleClassNames.add(clazz.getQualifiedName());
+        if (containingClass != null) {
+          for(PsiClass clazz: ClassInheritorsSearch.search(containingClass, descendantsSearchScope, true, true, false).findAll()) {
+            possibleClassNames.add(clazz.getQualifiedName());
+          }
+          possibleClassNames.add(containingClass.getQualifiedName());
         }
-        possibleClassNames.add(containingClass.getQualifiedName());
       }
       members[i] = null;
     }

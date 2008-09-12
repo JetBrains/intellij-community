@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Represents a member of a Java class (for example, a field or a method).
  */
@@ -29,5 +31,6 @@ public interface PsiMember extends PsiModifierListOwner, NavigatablePsiElement {
    *
    * @return the containing class.
    */
+  @Nullable
   PsiClass getContainingClass();
 }
