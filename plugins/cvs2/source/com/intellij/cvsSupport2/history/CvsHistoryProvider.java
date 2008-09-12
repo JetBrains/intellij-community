@@ -231,6 +231,10 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     return new MyHistoryAsTreeProvider();
   }
 
+  public boolean supportsHistoryForDirectories() {
+    return false;
+  }
+
   private static class MyHistoryAsTreeProvider implements HistoryAsTreeProvider {
     public List<TreeItem<VcsFileRevision>> createTreeOn(List<VcsFileRevision> allRevisions) {
       List<VcsFileRevision> sortedRevisions = sortRevisions(allRevisions);

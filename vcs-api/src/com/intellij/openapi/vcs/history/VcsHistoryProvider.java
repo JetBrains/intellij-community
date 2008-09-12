@@ -52,4 +52,6 @@ public interface VcsHistoryProvider {
   //return null if your revisions cannot be tree
   @Nullable
   HistoryAsTreeProvider getTreeHistoryProvider();
+
+  boolean supportsHistoryForDirectories();
 }
