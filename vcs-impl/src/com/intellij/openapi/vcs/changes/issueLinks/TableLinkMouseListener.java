@@ -20,6 +20,11 @@ public class TableLinkMouseListener extends MouseAdapter implements MouseMotionL
   public void mouseClicked(final MouseEvent e) {
     if (e.getButton() == 1 && !e.isPopupTrigger()) {
       Object tag = getTagAt(e);
+      // todo refactor more
+      if (tag instanceof Runnable) {
+        ((Runnable) tag).run();
+        return;
+      }
       if ((tag != null) && (! Object.class.getName().equals(tag.getClass().getName()))) {
         BrowserUtil.launchBrowser(tag.toString());
       }
