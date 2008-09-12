@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class ResourceFilteringCompiler implements ClassPostProcessingCompiler {
@@ -36,8 +35,14 @@ public class ResourceFilteringCompiler implements ClassPostProcessingCompiler {
       MavenProjectModel mavenProject = mavenProjectManager.findProject(eachModule);
       if (mavenProject == null) continue;
 
-      List<VirtualFile> outputDirs = Arrays.asList(context.getModuleOutputDirectory(eachModule),
-                                                   context.getModuleOutputDirectoryForTests(eachModule));
+      VirtualFile outputDir = context.getModuleOutputDirectory(eachModule);
+      VirtualFile testOutputDir = context.getModuleOutputDirectoryForTests(eachModule);
+
+      List<VirtualFile> outputDirs = new ArrayList<VirtualFile>();
+      if (outputDir != null) outputDirs.add(outputDir);
+      if (testOutputDir != null) outputDirs.add(testOutputDir);
+      
+      if (outputDirs.isEmpty()) continue;
 
       for (VirtualFile eachSourceRoot : context.getSourceRoots(eachModule)) {
         collectProcessingItems(eachModule,
