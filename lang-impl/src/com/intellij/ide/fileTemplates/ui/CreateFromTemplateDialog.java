@@ -29,7 +29,8 @@ public class CreateFromTemplateDialog extends DialogWrapper {
   @NotNull private final FileTemplate myTemplate;
   private Properties myDefaultProperties;
 
-  public CreateFromTemplateDialog(@NotNull Project project, @NotNull PsiDirectory directory, @NotNull FileTemplate template) {
+  public CreateFromTemplateDialog(@NotNull Project project, @NotNull PsiDirectory directory, @NotNull FileTemplate template,
+                                  @Nullable final String defaultFileName) {
     super(project, true);
     myDirectory = directory;
     myProject = project;
@@ -48,7 +49,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     }
 
     if (unsetAttributes != null) {
-      myAttrPanel = new CreateFromTemplatePanel(unsetAttributes, !myTemplate.isJavaClassTemplate());
+      myAttrPanel = new CreateFromTemplatePanel(unsetAttributes, !myTemplate.isJavaClassTemplate(), defaultFileName);
       myAttrComponent = myAttrPanel.getComponent();
       init();
     }

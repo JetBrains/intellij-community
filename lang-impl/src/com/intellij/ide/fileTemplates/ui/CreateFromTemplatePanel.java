@@ -29,16 +29,19 @@ public class CreateFromTemplatePanel{
 
   private int myHorisontalMargin = -1;
   private int myVerticalMargin = -1;
-  private boolean mustEnterName;
+  private boolean myMustEnterName;
+  private String myDefaultFileName;
 
-  public CreateFromTemplatePanel(final String[] unsetAttributes, final boolean mustEnterName){
-    this.mustEnterName = mustEnterName;
+  public CreateFromTemplatePanel(final String[] unsetAttributes, final boolean mustEnterName,
+                                 @Nullable final String defaultFilename){
+    myMustEnterName = mustEnterName;
     myUnsetAttributes = unsetAttributes;
+    myDefaultFileName = defaultFilename;
     Arrays.sort(myUnsetAttributes);
   }
 
   public boolean hasSomethingToAsk() {
-    return mustEnterName || myUnsetAttributes.length != 0;
+    return myMustEnterName || myUnsetAttributes.length != 0;
   }
 
   public JComponent getComponent() {
@@ -54,7 +57,7 @@ public class CreateFromTemplatePanel{
 
       myScrollPanel.setBorder(null);
       int attrCount = myUnsetAttributes.length;
-      if (mustEnterName && !Arrays.asList(myUnsetAttributes).contains(FileTemplate.ATTRIBUTE_NAME)) {
+      if (myMustEnterName && !Arrays.asList(myUnsetAttributes).contains(FileTemplate.ATTRIBUTE_NAME)) {
         attrCount++;
       }
       Insets insets = (attrCount > 1) ? new Insets(2, 2, 2, 2) : new Insets(0, 0, 0, 0);
@@ -98,10 +101,13 @@ public class CreateFromTemplatePanel{
   private void updateShown() {
     Insets insets = new Insets(2, 2, 2, 2);
     myAttrPanel.add(Box.createHorizontalStrut(200), new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0, 0));
-    if(mustEnterName || Arrays.asList(myUnsetAttributes).contains(FileTemplate.ATTRIBUTE_NAME)){
+    if(myMustEnterName || Arrays.asList(myUnsetAttributes).contains(FileTemplate.ATTRIBUTE_NAME)){
       final JLabel filenameLabel = new JLabel(IdeBundle.message("label.file.name"));
       myAttrPanel.add(filenameLabel, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, insets, 0, 0));
       myFilenameField = new JTextField();
+      if (myDefaultFileName != null) {
+        myFilenameField.setText(myDefaultFileName);
+      }
       myAttrPanel.add(myFilenameField, new GridBagConstraints(0, 2, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, insets, 0, 0));
     }
 
