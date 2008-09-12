@@ -7,6 +7,7 @@ import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -205,7 +206,9 @@ public class TypedHandler implements TypedActionHandler {
     final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
     if (definition != null) {
       final TokenSet stringLiteralElements = definition.getStringLiteralElements();
-      final IElementType elementType = element.getNode().getElementType();
+      final ASTNode node = element.getNode();
+      if (node == null) return false;
+      final IElementType elementType = node.getElementType();
       if (stringLiteralElements.contains(elementType)) {
         return true;
       }
