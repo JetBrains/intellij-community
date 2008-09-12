@@ -24,10 +24,10 @@ public class MavenIndicesManagerTest extends MavenImportingTestCase {
   }
 
   public void testEnsuringLocalRepositoryIndex() throws Exception {
-    File dir1 = myIndicesFixture.getRepositoryFixture().getTestData("dir/foo");
-    File dir2 = myIndicesFixture.getRepositoryFixture().getTestData("dir\\foo");
-    File dir3 = myIndicesFixture.getRepositoryFixture().getTestData("dir\\foo\\");
-    File dir4 = myIndicesFixture.getRepositoryFixture().getTestData("dir/bar");
+    File dir1 = myIndicesFixture.getRepositoryHelper().getTestData("dir/foo");
+    File dir2 = myIndicesFixture.getRepositoryHelper().getTestData("dir\\foo");
+    File dir3 = myIndicesFixture.getRepositoryHelper().getTestData("dir\\foo\\");
+    File dir4 = myIndicesFixture.getRepositoryHelper().getTestData("dir/bar");
 
     List<MavenIndex> indices1 = myIndicesFixture.getIndicesManager().ensureIndicesExist(dir1, Collections.<String>emptySet());
     assertEquals(1, indices1.size());
@@ -41,7 +41,7 @@ public class MavenIndicesManagerTest extends MavenImportingTestCase {
   }
 
   public void testEnsuringRemoteRepositoryIndex() throws Exception {
-    File local = myIndicesFixture.getRepositoryFixture().getTestData("dir");
+    File local = myIndicesFixture.getRepositoryHelper().getTestData("dir");
     String remote1 = "http://foo/bar";
     String remote2 = "  http://foo\\bar\\\\  ";
     String remote3 = "http://foo\\bar\\baz";

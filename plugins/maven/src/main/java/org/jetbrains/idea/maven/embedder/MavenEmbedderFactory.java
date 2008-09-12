@@ -116,7 +116,7 @@ public class MavenEmbedderFactory {
 
     final File userSettingsFile = resolveUserSettingsFile(userSettings);
     if (userSettingsFile != null) {
-      final String fromUserSettings = MavenEmbedderFactory.getRepositoryFromSettings(userSettingsFile);
+      final String fromUserSettings = getRepositoryFromSettings(userSettingsFile);
       if (!StringUtil.isEmpty(fromUserSettings)) {
         return new File(fromUserSettings);
       }
@@ -124,7 +124,7 @@ public class MavenEmbedderFactory {
 
     final File globalSettingsFile = resolveGlobalSettingsFile(mavenHome);
     if (globalSettingsFile != null) {
-      final String fromGlobalSettings = MavenEmbedderFactory.getRepositoryFromSettings(globalSettingsFile);
+      final String fromGlobalSettings = getRepositoryFromSettings(globalSettingsFile);
       if (!StringUtil.isEmpty(fromGlobalSettings)) {
         return new File(fromGlobalSettings);
       }

@@ -12,7 +12,7 @@ public class MavenIndicesTestFixture {
   private String myLocalRepoDir;
   private String[] myExtraRepoDirs;
 
-  private MavenCustomRepositoryTestFixture myRepositoryFixture;
+  private MavenCustomRepositoryHelper myRepositoryHelper;
   private MavenProjectIndicesManager myIndicesManager;
 
   public MavenIndicesTestFixture(File dir, Project project) {
@@ -27,14 +27,13 @@ public class MavenIndicesTestFixture {
   }
 
   public void setUp() throws Exception {
-    myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir, ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
-    myRepositoryFixture.setUp();
+    myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
 
     for (String each : myExtraRepoDirs) {
-      myRepositoryFixture.copy(each, myLocalRepoDir);
+      myRepositoryHelper.copy(each, myLocalRepoDir);
     }
 
-    MavenCore.getInstance(myProject).getState().setLocalRepository(myRepositoryFixture.getTestDataPath(myLocalRepoDir));
+    MavenCore.getInstance(myProject).getState().setLocalRepository(myRepositoryHelper.getTestDataPath(myLocalRepoDir));
 
     getIndicesManager().setTestIndexDir(new File(myDir, "MavenIndices"));
     myIndicesManager = MavenProjectIndicesManager.getInstance(myProject);
@@ -53,7 +52,7 @@ public class MavenIndicesTestFixture {
     return myIndicesManager;
   }
 
-  public MavenCustomRepositoryTestFixture getRepositoryFixture() {
-    return myRepositoryFixture;
+  public MavenCustomRepositoryHelper getRepositoryHelper() {
+    return myRepositoryHelper;
   }
 }

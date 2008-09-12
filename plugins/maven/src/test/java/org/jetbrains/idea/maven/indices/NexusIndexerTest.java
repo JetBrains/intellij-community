@@ -25,7 +25,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class NexusIndexerTest extends MavenTestCase {
-  private MavenCustomRepositoryTestFixture myRepositoryFixture;
+  private MavenCustomRepositoryHelper myRepositoryHelper;
   private MavenEmbedder myEmbedder;
   private NexusIndexer myIndexer;
   private IndexUpdater myUpdater;
@@ -34,8 +34,7 @@ public class NexusIndexerTest extends MavenTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir, "local1_index", "local1", "remote");
-    myRepositoryFixture.setUp();
+    myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, "local1_index", "local1", "remote");
 
     myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings()).getEmbedder();
 
@@ -56,24 +55,23 @@ public class NexusIndexerTest extends MavenTestCase {
       myIndexer.removeIndexingContext(c, false);
     }
     myEmbedder.stop();
-    myRepositoryFixture.tearDown();
     super.tearDown();
   }
 
   public void testSeraching() throws Exception {
-    addContext("local1", new File(myRepositoryFixture.getTestDataPath("local1_index")), null, null);
+    addContext("local1", new File(myRepositoryHelper.getTestDataPath("local1_index")), null, null);
     assertSearchWorks();
   }
 
   public void testUpdatingLocal() throws Exception {
-    IndexingContext c = addContext("local1", myIndexDir, new File(myRepositoryFixture.getTestDataPath("local1")), null);
+    IndexingContext c = addContext("local1", myIndexDir, new File(myRepositoryHelper.getTestDataPath("local1")), null);
     myIndexer.scan(c, new NullScanningListener());
 
     assertSearchWorks();
   }
 
   public void testDownloading() throws Exception {
-    IndexingContext c = addContext("remote", myIndexDir, null, "file:///" + myRepositoryFixture.getTestDataPath("remote"));
+    IndexingContext c = addContext("remote", myIndexDir, null, "file:///" + myRepositoryHelper.getTestDataPath("remote"));
     myUpdater.fetchAndUpdateIndex(c, new NullTransferListener());
 
     assertSearchWorks();

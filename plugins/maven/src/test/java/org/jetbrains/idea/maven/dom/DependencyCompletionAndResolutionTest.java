@@ -365,7 +365,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     PsiReference ref = getReferenceAtCaret(myProjectPom);
     assertNotNull(ref);
 
-    String filePath = myIndicesFixture.getRepositoryFixture().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
+    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
     VirtualFile f = LocalFileSystem.getInstance().findFileByPath(filePath);
     assertEquals(getPsiFile(f), ref.resolve());
   }
@@ -387,7 +387,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     PsiReference ref = getReferenceAtCaret(myProjectPom);
     assertNotNull(ref);
 
-    String filePath = myIndicesFixture.getRepositoryFixture().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
+    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
     VirtualFile f = LocalFileSystem.getInstance().findFileByPath(filePath);
     assertEquals(getPsiFile(f), ref.resolve());
   }
@@ -442,7 +442,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testResolvingSystemScopeDependencies() throws Throwable {
-    String libPath = myIndicesFixture.getRepositoryFixture().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
+    String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
 
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -466,7 +466,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testResolvingSystemScopeDependenciesWithProperties() throws Throwable {
-    String libPath = myIndicesFixture.getRepositoryFixture().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
+    String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
 
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -494,7 +494,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   public void testResolvingSystemScopeDependenciesFromSystemPath() throws Throwable {
-    String libPath = myIndicesFixture.getRepositoryFixture().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
+    String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
 
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -534,7 +534,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     IntentionAction action = getIntentionAtCaret("Choose File");
     assertNotNull(action);
 
-    String libPath = myIndicesFixture.getRepositoryFixture().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
+    String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
     VirtualFile libFile = LocalFileSystem.getInstance().findFileByPath(libPath);
 
     TestFileChooserFactory factory = new TestFileChooserFactory();

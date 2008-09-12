@@ -1,19 +1,18 @@
 package org.jetbrains.idea.maven;
 
-import org.jetbrains.idea.maven.indices.MavenCustomRepositoryTestFixture;
+import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 
 import java.io.File;
 
 public class ArtifactsDownloadingTest extends MavenImportingTestCase {
-  MavenCustomRepositoryTestFixture myRepositoryFixture;
+  MavenCustomRepositoryHelper myRepositoryHelper;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir, "plugins", "local1");
-    myRepositoryFixture.setUp();
-    myRepositoryFixture.copy("plugins", "local1");
-    setRepositoryPath(myRepositoryFixture.getTestDataPath("local1"));
+    myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, "plugins", "local1");
+    myRepositoryHelper.copy("plugins", "local1");
+    setRepositoryPath(myRepositoryHelper.getTestDataPath("local1"));
   }
 
   public void testJavadocsAndSources() throws Exception {

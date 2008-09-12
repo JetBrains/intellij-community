@@ -2,7 +2,7 @@ package org.jetbrains.idea.maven;
 
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
-import org.jetbrains.idea.maven.indices.MavenCustomRepositoryTestFixture;
+import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -539,10 +539,9 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   public void testDoNotReportResolvedPlugins() throws Exception {
-    MavenCustomRepositoryTestFixture fixture = new MavenCustomRepositoryTestFixture(myDir, "plugins");
-    fixture.setUp();
+    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins");
 
-    setRepositoryPath(fixture.getTestDataPath("plugins"));
+    setRepositoryPath(helper.getTestDataPath("plugins"));
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

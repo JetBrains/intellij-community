@@ -14,12 +14,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MavenIndicesStressTest extends MavenTestCase implements MavenIndex.IndexListener {
   public void test1() throws Exception {
-    MavenCustomRepositoryTestFixture fixture;
+    MavenCustomRepositoryHelper helper;
 
-    fixture = new MavenCustomRepositoryTestFixture(myDir, "plugins", "local1", "local2");
-    fixture.setUp();
-    fixture.copy("plugins", "local1");
-    fixture.copy("local2", "local1");
+    helper = new MavenCustomRepositoryHelper(myDir, "plugins", "local1", "local2");
+    helper.copy("plugins", "local1");
+    helper.copy("local2", "local1");
     //setRepositoryPath(fixture.getTestDataPath("local1"));
 
     MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings()).getEmbedder();
@@ -74,13 +73,12 @@ public abstract class MavenIndicesStressTest extends MavenTestCase implements Ma
   }
 
   public void test2() throws Exception {
-    MavenCustomRepositoryTestFixture fixture;
+    MavenCustomRepositoryHelper helper;
 
-    fixture = new MavenCustomRepositoryTestFixture(myDir, "plugins", "local1", "local2");
-    fixture.setUp();
-    fixture.copy("plugins", "local1");
-    fixture.copy("local2", "local1");
-    setRepositoryPath(fixture.getTestDataPath("local1"));
+    helper = new MavenCustomRepositoryHelper(myDir, "plugins", "local1", "local2");
+    helper.copy("plugins", "local1");
+    helper.copy("local2", "local1");
+    setRepositoryPath(helper.getTestDataPath("local1"));
 
     MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings()).getEmbedder();
     File indicesDir = new File(myDir, "indices");

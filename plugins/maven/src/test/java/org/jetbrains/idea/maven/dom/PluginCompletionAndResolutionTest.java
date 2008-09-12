@@ -92,7 +92,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
     assertNotNull(ref);
 
     String pluginPath = "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.pom";
-    String filePath = myIndicesFixture.getRepositoryFixture().getTestDataPath(pluginPath);
+    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = LocalFileSystem.getInstance().findFileByPath(filePath);
     assertEquals(getPsiFile(f), ref.resolve());
   }
@@ -207,7 +207,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
 
     String pluginPath =
         "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
-    String filePath = myIndicesFixture.getRepositoryFixture().getTestDataPath(pluginPath);
+    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
 
     PsiElement resolved = ref.resolve();
@@ -241,7 +241,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
 
     String pluginPath =
         "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
-    String filePath = myIndicesFixture.getRepositoryFixture().getTestDataPath(pluginPath);
+    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
 
     PsiElement resolved = ref.resolve();
@@ -321,7 +321,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
 
     String pluginPath =
         "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
-    String filePath = myIndicesFixture.getRepositoryFixture().getTestDataPath(pluginPath);
+    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
 
     PsiElement resolved = ref.resolve();

@@ -9,25 +9,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MavenPluginInfoReaderTest extends MavenTestCase {
-  private MavenCustomRepositoryTestFixture myRepositoryFixture;
+  private MavenCustomRepositoryHelper myRepositoryHelper;
   private MavenPluginInfo p;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myRepositoryFixture = new MavenCustomRepositoryTestFixture(myDir, "plugins");
-    myRepositoryFixture.setUp();
+    myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, "plugins");
 
-    setRepositoryPath(myRepositoryFixture.getTestDataPath("plugins"));
+    setRepositoryPath(myRepositoryHelper.getTestDataPath("plugins"));
 
     MavenId id = new MavenId("org.apache.maven.plugins", "maven-compiler-plugin", "2.0.2");
     p = MavenArtifactUtil.readPluginInfo(getRepositoryFile(), id);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    myRepositoryFixture.tearDown();
-    super.tearDown();
   }
 
   public void testLoadingPluginInfo() throws Exception {

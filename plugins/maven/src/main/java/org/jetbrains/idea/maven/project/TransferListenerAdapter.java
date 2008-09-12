@@ -1,8 +1,8 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.wagon.Wagon;
 import org.apache.maven.wagon.events.TransferEvent;
@@ -21,6 +21,9 @@ public class TransferListenerAdapter implements TransferListener {
   private long mySize;
   private long myProgress;
 
+  //private static long total;
+  //private long started;
+
   public TransferListenerAdapter() {
     myIndicator = getProgressIndicator();
   }
@@ -35,6 +38,8 @@ public class TransferListenerAdapter implements TransferListener {
     myIndicator.setText2(ProjectBundle.message("maven.transfer.start",
                                                event.getWagon().getRepository().getName(),
                                                event.getResource().getName()));
+    //System.out.print("Downloading " + event.getResource().getName() + "...");
+    //started = System.currentTimeMillis();
   }
 
   public void transferStarted(TransferEvent event) {
@@ -66,7 +71,25 @@ public class TransferListenerAdapter implements TransferListener {
     addArtifactToIndex(event);
     myIndicator.checkCanceled();
     myIndicator.setText2("");
+    //updateTiming(true);
   }
+
+  public void transferError(TransferEvent event) {
+    myIndicator.checkCanceled();
+    myIndicator.setText2("");
+    //updateTiming(false);
+  }
+
+  public void debug(String s) {
+    myIndicator.checkCanceled();
+  }
+
+  //private void updateTiming(boolean ok) {
+  //  long finished = System.currentTimeMillis();
+  //  long time = finished - started;
+  //  total += time;
+  //  System.out.println((ok ? "OK: " : "ERROR: ") + time + " (" + total+  ")");
+  //}
 
   private void addArtifactToIndex(TransferEvent event) {
     if (getArtifactParts(event).size() < 3) return;
@@ -101,14 +124,5 @@ public class TransferListenerAdapter implements TransferListener {
 
   private List<String> getArtifactParts(TransferEvent event) {
     return StringUtil.split(event.getResource().getName(), "/");
-  }
-
-  public void transferError(TransferEvent event) {
-    myIndicator.checkCanceled();
-    myIndicator.setText2("");
-  }
-
-  public void debug(String s) {
-    myIndicator.checkCanceled();
   }
 }

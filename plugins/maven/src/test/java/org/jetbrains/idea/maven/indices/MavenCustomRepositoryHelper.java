@@ -6,25 +6,20 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.io.IOException;
 
-public class MavenCustomRepositoryTestFixture {
+public class MavenCustomRepositoryHelper {
   private File myTempDir;
   private File myWorkingData;
   private String[] mySubFolders;
 
-  public MavenCustomRepositoryTestFixture(File tempDir, String... subFolders) {
+  public MavenCustomRepositoryHelper(File tempDir, String... subFolders) throws IOException {
     myTempDir = tempDir;
     mySubFolders = subFolders;
-  }
 
-  public void setUp() throws Exception {
     myWorkingData = new File(myTempDir, "testData");
 
     for (String each : mySubFolders) {
       FileUtil.copyDir(new File(getOriginalTestDataPath(), each), new File(myWorkingData, each));
     }
-  }
-
-  public void tearDown() throws Exception {
   }
 
   private String getOriginalTestDataPath() {

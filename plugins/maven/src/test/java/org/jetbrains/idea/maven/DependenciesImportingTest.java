@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.indices.MavenCustomRepositoryTestFixture;
+import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 
 import java.io.File;
@@ -831,7 +831,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   public void testResolvingFromRepositoriesIfSeveral() throws Exception {
-    MavenCustomRepositoryTestFixture fixture = new MavenCustomRepositoryTestFixture(myDir, "local1");
+    MavenCustomRepositoryHelper fixture = new MavenCustomRepositoryHelper(myDir, "local1");
     setRepositoryPath(fixture.getTestDataPath("local1"));
     removeFromLocalRepository("junit");
 
