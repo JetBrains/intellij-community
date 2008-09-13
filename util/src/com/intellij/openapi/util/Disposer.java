@@ -47,6 +47,13 @@ public class Disposer {
   private Disposer() {
   }
 
+  public static Disposable newDisposable() {
+    return new Disposable() {
+      public void dispose() {
+      }
+    };
+  }
+
   private static final Map<String, Disposable> ourKeyDisposables = new ConcurrentWeakHashMap<String, Disposable>();
 
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) {
