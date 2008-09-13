@@ -64,8 +64,10 @@
           <component id="42a95" class="javax.swing.JTextArea" binding="myCommitMessage">
             <constraints/>
             <properties>
+              <lineWrap value="true"/>
               <rows value="10"/>
               <text value=""/>
+              <wrapStyleWord value="true"/>
             </properties>
           </component>
         </children>

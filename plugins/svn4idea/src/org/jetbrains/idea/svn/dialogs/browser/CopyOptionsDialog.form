@@ -37,7 +37,7 @@
       <component id="437a6" class="org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent" binding="myBrowser" custom-create="true">
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="3" indent="0" use-parent-layout="false"/>
-          <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.5"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.5"/>
         </constraints>
         <properties/>
       </component>
@@ -95,8 +95,11 @@
           <component id="2a8b0" class="javax.swing.JTextArea" binding="myCommitMessage">
             <constraints/>
             <properties>
+              <columns value="25"/>
+              <lineWrap value="true"/>
               <rows value="5"/>
               <text value=""/>
+              <wrapStyleWord value="true"/>
             </properties>
           </component>
         </children>

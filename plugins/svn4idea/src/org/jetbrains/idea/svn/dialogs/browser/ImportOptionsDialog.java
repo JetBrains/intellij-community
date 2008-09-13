@@ -133,6 +133,8 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     gc.fill = GridBagConstraints.BOTH;
 
     myCommitMessage = new JTextArea(10, 0);
+    myCommitMessage.setWrapStyleWord(true);
+    myCommitMessage.setLineWrap(true);
     panel.add(new JScrollPane(myCommitMessage), gc);
 
     gc.gridy += 1;

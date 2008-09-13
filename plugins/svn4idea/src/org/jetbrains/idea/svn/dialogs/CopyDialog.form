@@ -29,7 +29,9 @@
             <constraints/>
             <properties>
               <columns value="25"/>
-              <rows value="7"/>
+              <lineWrap value="true"/>
+              <rows value="4"/>
+              <wrapStyleWord value="true"/>
             </properties>
           </component>
         </children>

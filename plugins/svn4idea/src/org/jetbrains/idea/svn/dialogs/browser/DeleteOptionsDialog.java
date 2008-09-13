@@ -11,7 +11,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 
 public class DeleteOptionsDialog extends DialogWrapper {
@@ -61,6 +60,8 @@ public class DeleteOptionsDialog extends DialogWrapper {
     gc.fill = GridBagConstraints.BOTH;
 
     myCommitMessage = new JTextArea(10, 0);
+    myCommitMessage.setWrapStyleWord(true);
+    myCommitMessage.setLineWrap(true);
     panel.add(new JScrollPane(myCommitMessage), gc);
 
     gc.gridy += 1;
