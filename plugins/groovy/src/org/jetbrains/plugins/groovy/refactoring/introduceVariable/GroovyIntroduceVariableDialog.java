@@ -182,7 +182,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper {
 
   private void setUpNameComboBox(String[] possibleNames) {
 
-    final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, GroovyFileType.GROOVY_FILE_TYPE);
+    final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, GroovyFileType.GROOVY_FILE_TYPE, myNameComboBox);
 
     myNameComboBox.setEditor(comboEditor);
     myNameComboBox.setRenderer(new EditorComboBoxRenderer(comboEditor));
