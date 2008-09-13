@@ -24,6 +24,7 @@ import java.util.Collection;
  */
 public interface ChangeListListener extends EventListener {
   void changeListAdded(ChangeList list);
+  void changesRemoved(Collection<Change> changes, ChangeList fromList);
   void changeListRemoved(ChangeList list);
   void changeListChanged(ChangeList list);
   void changeListRenamed(ChangeList list, String oldName);

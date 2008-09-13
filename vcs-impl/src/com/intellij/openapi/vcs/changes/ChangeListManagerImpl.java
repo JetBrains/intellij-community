@@ -35,10 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -833,6 +830,45 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     myListeners.getMulticaster().changesMoved(changes, realList, myDefaultChangelist);
     myListeners.getMulticaster().changeListRemoved(realList);
+  }
+
+  @NotNull
+  public Runnable prepareForChangeDeletion(final Collection<Change> changes) {
+    final Map<String, LocalChangeList> lists = new HashMap<String, LocalChangeList>();
+    final Map<String, List<Change>> map = new HashMap<String, List<Change>>();
+    synchronized (myChangeLists) {
+      for (Change change : changes) {
+        LocalChangeList changeList = getChangeList(change);
+        if (changeList == null) {
+          changeList = myDefaultChangelist;
+        }
+        List<Change> list = map.get(changeList.getName());
+        if (list == null) {
+          list = new ArrayList<Change>();
+          map.put(changeList.getName(), list);
+          lists.put(changeList.getName(), changeList);
+        }
+        list.add(change);
+      }
+    }
+    return new Runnable() {
+      public void run() {
+        final ChangeListListener multicaster = myListeners.getMulticaster();
+        synchronized (myChangeLists) {
+          for (Map.Entry<String, List<Change>> entry : map.entrySet()) {
+            final List<Change> changes = entry.getValue();
+            for (Iterator<Change> iterator = changes.iterator(); iterator.hasNext();) {
+              final Change change = iterator.next();
+              if (getChangeList(change) != null) {
+                // was not actually rolled back
+                iterator.remove();
+              }
+            }
+            multicaster.changesRemoved(changes, lists.get(entry.getKey()));
+          }
+        }
+      }
+    };
   }
 
   public void setDefaultChangeList(@NotNull LocalChangeList list) {

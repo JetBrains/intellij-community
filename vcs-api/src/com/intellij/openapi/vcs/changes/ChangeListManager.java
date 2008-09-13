@@ -56,6 +56,9 @@ public abstract class ChangeListManager {
 
   public abstract LocalChangeList getChangeList(Change change);
 
+  @NotNull
+  public abstract Runnable prepareForChangeDeletion(final Collection<Change> changes);
+
   @Nullable
   public abstract Change getChange(VirtualFile file);
 

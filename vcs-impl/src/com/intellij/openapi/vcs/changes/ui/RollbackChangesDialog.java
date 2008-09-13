@@ -137,6 +137,14 @@ public class RollbackChangesDialog extends DialogWrapper {
     final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
     final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
 
+    final ChangeListManager changeListManager = ChangeListManagerImpl.getInstance(project);
+    final Runnable notifier = changeListManager.prepareForChangeDeletion(changes);
+    final Runnable afterRefresh = new Runnable() {
+      public void run() {
+        changeListManager.invokeAfterUpdate(notifier, false, true, "Refresh change lists after update");
+      }
+    };
+
     Runnable rollbackAction = new Runnable() {
       public void run() {
         ChangesUtil.processChangesByVcs(project, changes, new ChangesUtil.PerVcsProcessor<Change>() {
@@ -163,8 +171,9 @@ public class RollbackChangesDialog extends DialogWrapper {
         });
 
         if (!refreshSynchronously) {
-          doRefresh(project, pathsToRefresh, true);
+          doRefresh(project, pathsToRefresh, true, afterRefresh);
         }
+
         AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, VcsBundle.message("changes.action.rollback.text"));
       }
     };
@@ -179,13 +188,14 @@ public class RollbackChangesDialog extends DialogWrapper {
     if (refreshSynchronously) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          doRefresh(project, pathsToRefresh, false);
+          doRefresh(project, pathsToRefresh, false, afterRefresh);
         }
       });
     }
   }
 
-  private static void doRefresh(final Project project, final List<FilePath> pathsToRefresh, final boolean asynchronous) {
+  private static void doRefresh(final Project project, final List<FilePath> pathsToRefresh, final boolean asynchronous,
+                                final Runnable runAfter) {
     final LocalHistoryAction action = LocalHistory.startAction(project, VcsBundle.message("changes.action.rollback.text"));
     RefreshSession session = RefreshQueue.getInstance().createSession(asynchronous, true, new Runnable() {
       public void run() {
@@ -199,6 +209,7 @@ public class RollbackChangesDialog extends DialogWrapper {
               VcsDirtyScopeManager.getInstance(project).fileDirty(path);
             }
           }
+          runAfter.run();
         }
       }
     });

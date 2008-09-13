@@ -48,4 +48,7 @@ public class ChangeListAdapter implements ChangeListListener {
 
   public void changeListUpdateDone() {
   }
+
+  public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
+  }
 }
