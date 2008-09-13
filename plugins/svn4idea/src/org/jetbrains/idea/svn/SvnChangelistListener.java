@@ -30,11 +30,23 @@ public class SvnChangelistListener implements ChangeListListener {
     // SVN change list exists only when there are any files in it  
   }
 
-  public void changeListRemoved(final ChangeList list) {
-    final File[] files = getPathsFromChanges(list.getChanges());
-    if (files.length > 0) {
+  public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
+    final List<String> paths = getPathsFromChanges(changes);
+    for (String path : paths) {
       try {
-        myClient.doRemoveFromChangelist(files, SVNDepth.EMPTY, null);
+        myClient.doRemoveFromChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, null);
+      }
+      catch (SVNException e) {
+        LOG.info(e);
+      }
+    }
+  }
+
+  public void changeListRemoved(final ChangeList list) {
+    final List<String> paths = getPathsFromChanges(list.getChanges());
+    for (String path : paths) {
+      try {
+        myClient.doRemoveFromChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, null);
       }
       catch (SVNException e) {
         LOG.info(e);
@@ -47,17 +59,23 @@ public class SvnChangelistListener implements ChangeListListener {
     return ((vcs != null) && (SvnVcs.VCS_NAME.equals(vcs.getName())));
   }
 
-  private File[] getPathsFromChanges(final Collection<Change> changes) {
-    final List<File> paths = new ArrayList<File>();
+  private List<String> getPathsFromChanges(final Collection<Change> changes) {
+    final List<String> paths = new ArrayList<String>();
     for (Change change : changes) {
       if ((change.getBeforeRevision() != null) && (isUnderSvn(change.getBeforeRevision().getFile()))) {
-        paths.add(change.getBeforeRevision().getFile().getIOFile());
+        final String path = change.getBeforeRevision().getFile().getIOFile().getAbsolutePath();
+        if (! paths.contains(path)) {
+          paths.add(path);
+        }
       }
       if ((change.getAfterRevision() != null) && (isUnderSvn(change.getAfterRevision().getFile()))) {
-        paths.add(change.getAfterRevision().getFile().getIOFile());
+        final String path = change.getAfterRevision().getFile().getIOFile().getAbsolutePath();
+        if (! paths.contains(path)) {
+          paths.add(path);
+        }
       }
     }
-    return paths.toArray(new File[paths.size()]);
+    return paths;
   }
 
   public void changeListChanged(final ChangeList list) {
@@ -65,10 +83,10 @@ public class SvnChangelistListener implements ChangeListListener {
 
   public void changeListRenamed(final ChangeList list, final String oldName) {
     if (! ((LocalChangeList) list).isDefault()) {
-      final File[] files = getPathsFromChanges(list.getChanges());
-      if (files.length > 0) {
+      final List<String> paths = getPathsFromChanges(list.getChanges());
+      for (String path : paths) {
         try {
-          myClient.doAddToChangelist(files, SVNDepth.EMPTY, list.getName(), null);
+          myClient.doAddToChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, list.getName(), null);
         }
         catch (SVNException e) {
           LOG.info(e);
@@ -81,11 +99,14 @@ public class SvnChangelistListener implements ChangeListListener {
   }
 
   public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
+    if (fromList.getName().equals(toList.getName())) {
+      return;
+    }
     final String[] fromLists = ((LocalChangeList) fromList).isDefault() ? null : new String[] {fromList.getName()};
-    final File[] files = getPathsFromChanges(changes);
-    if (files.length > 0) {
+    final List<String> paths = getPathsFromChanges(changes);
+    for (final String path : paths) {
       try {
-        myClient.doAddToChangelist(files, SVNDepth.EMPTY, toList.getName(), fromLists);
+        myClient.doAddToChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, toList.getName(), fromLists);
       }
       catch (SVNException e) {
         LOG.info(e);
