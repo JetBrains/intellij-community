@@ -251,27 +251,30 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return ResolveImportUtil.suggestImportVariants(this);
     }
 
-    // include our own names
+    //// include our own names
+    //final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();
+    //PyResolveUtil.treeCrawlUp(processor, this); // names from here
+    //// scan all "import *" and include names provided by them
+    //PyResolveUtil.CollectProcessor<PyStarImportElement> collect_proc;
+    //collect_proc = new PyResolveUtil.CollectProcessor<PyStarImportElement>(PyStarImportElement.class);
+    //PyResolveUtil.treeCrawlUp(collect_proc, this);
+    //List<PyStarImportElement> stars = collect_proc.getResult();
+    //for (PyStarImportElement star_elt : stars) {
+    //  final PyFromImportStatement from_import_stmt = (PyFromImportStatement)star_elt.getParent();
+    //  if (from_import_stmt != null) {
+    //    final PyReferenceExpression import_src = from_import_stmt.getImportSource();
+    //    if (import_src != null) {
+    //      processor.setNotice(" | " + import_src.getName());
+    //      PyResolveUtil.treeCrawlUp(processor, import_src.resolve()); // names from that module
+    //    }
+    //  }
+    //}
+    //// include builtin names
+    //processor.setNotice(" | __builtin__");
+    //PyResolveUtil.treeCrawlUp(processor, PyBuiltinCache.getInstance(getProject()).getBuiltinsFile(), true); // names from __builtin__
+
     final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();
-    PyResolveUtil.treeCrawlUp(processor, this); // names from here
-    // scan all "import *" and include names provided by them
-    PyResolveUtil.CollectProcessor<PyStarImportElement> collect_proc;
-    collect_proc = new PyResolveUtil.CollectProcessor<PyStarImportElement>(PyStarImportElement.class);
-    PyResolveUtil.treeCrawlUp(collect_proc, this);
-    List<PyStarImportElement> stars = collect_proc.getResult();
-    for (PyStarImportElement star_elt : stars) {
-      final PyFromImportStatement from_import_stmt = (PyFromImportStatement)star_elt.getParent();
-      if (from_import_stmt != null) {
-        final PyReferenceExpression import_src = from_import_stmt.getImportSource();
-        if (import_src != null) {
-          processor.setNotice(" | " + import_src.getName());
-          PyResolveUtil.treeCrawlUp(processor, import_src.resolve()); // names from that module
-        }
-      }
-    }
-    // include builtin names
-    processor.setNotice(" | __builtin__");
-    PyResolveUtil.treeCrawlUp(processor, PyBuiltinCache.getInstance(getProject()).getBuiltinsFile(), true); // names from __builtin__
+    PyResolveUtil.treeCrawlUp(processor, this);
     return processor.getResult();
   }
 
