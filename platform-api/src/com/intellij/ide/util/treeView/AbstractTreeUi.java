@@ -369,7 +369,7 @@ class AbstractTreeUi {
     DefaultMutableTreeNode node = null;
     for (final Object pathElement : path) {
       node = node == null ? getFirstNode(pathElement) : findNodeForChildElement(node, pathElement);
-      if (node != null) {
+      if (node != null && node != path[path.length-1]) {
         expand(node);
       }
     }
