@@ -1,7 +1,7 @@
 package org.jetbrains.idea.svn.config;
 
 import org.jetbrains.idea.svn.SvnApplicationSettings;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.jetbrains.idea.svn.SvnAuthenticationManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,7 +23,7 @@ public class RepositoryUrlFilter implements PatternsListener {
     final List<String> result = new ArrayList<String>();
 
     for (String url : urls) {
-      if ((! DefaultSVNOptions.matches(exceptions, url)) && (DefaultSVNOptions.matches(patterns, url))) {
+      if (SvnAuthenticationManager.checkHostGroup(url, patterns, exceptions)) {
         result.add(url);
       }
     }

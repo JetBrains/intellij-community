@@ -264,6 +264,31 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
       }
       return globalProps;
   }
+
+  public static boolean checkHostGroup(final String url, final String patterns, final String exceptions) {
+    final SVNURL svnurl;
+    try {
+      svnurl = SVNURL.parseURIEncoded(url);
+    }
+    catch (SVNException e) {
+      return false;
+    }
+    
+    final String host = svnurl.getHost();
+    return matches(patterns, host) && (! matches(exceptions, host));
+  }
+
+  private static boolean matches(final String pattern, final String host) {
+    final StringTokenizer tokenizer = new StringTokenizer(pattern, ",");
+    while(tokenizer.hasMoreTokens()) {
+      String token = tokenizer.nextToken();
+      if (DefaultSVNOptions.matches(token, host)) {
+          return true;
+      }
+    }
+    return false;
+  }
+
   // taken from default manager as is
   private static String getGroupName(Map groups, String host) {
       for (Iterator names = groups.keySet().iterator(); names.hasNext();) {
