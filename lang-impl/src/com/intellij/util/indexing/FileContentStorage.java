@@ -106,17 +106,19 @@ public class FileContentStorage {
 
   @Nullable
   public synchronized byte[] remove(VirtualFile file) {
-    final int fileId = Math.abs(FileBasedIndex.getFileId(file));
+    final int fileId = FileBasedIndex.getFileId(file);
     synchronized (myLock) {
       try {
-        final byte[] bytes = myCache.get(fileId);
-        myKeyBeingRemoved = fileId;
-        final boolean wasStoredInCache = myCache.remove(fileId);
-        return wasStoredInCache? bytes : null;
+        return myFileIds.contains(fileId)? myCache.get(fileId) : null;
       }
       finally {
-        myFileIds.remove(fileId);
-        myKeyBeingRemoved = -1;
+        if (myFileIds.remove(fileId)) {
+          myKeyBeingRemoved = fileId;
+          if (!myCache.remove(fileId)) {
+            FileUtil.delete(getDataFile(fileId));
+          }
+          myKeyBeingRemoved = -1;
+        }
       }
     }
   }

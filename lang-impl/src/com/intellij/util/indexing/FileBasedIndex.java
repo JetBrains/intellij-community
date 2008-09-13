@@ -780,7 +780,7 @@ public class FileBasedIndex implements ApplicationComponent {
     index.update(inputId, currentFC, oldFC);
     if (file.isValid()) {
       if (currentFC != null) {
-        IndexingStamp.update(file, indexId, perFilePerIndexVersion(indexId, file));
+        IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
       }
       else {
         // mark the file as unindexed
@@ -1110,28 +1110,17 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private boolean shouldUpdateIndex(final VirtualFile file, final ID<?, ?> indexId) {
     return getInputFilter(indexId).acceptInput(file) &&
-           (isMock(file) || IndexingStamp.isFileIndexed(file, indexId, perFilePerIndexVersion(indexId, file)));
+           (isMock(file) || IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
   }
 
-  private long perFilePerIndexVersion(final ID<?, ?> indexId, final VirtualFile file) {
-    final FileBasedIndexExtension<?, ?> extension = myExtentions.get(indexId);
-
-    int perFileVersion = extension instanceof CustomImplementationFileBasedIndexExtension
-                         ? ((CustomImplementationFileBasedIndexExtension)extension).perFileVersion(file)
-                         : 0;
-
-    return IndexInfrastructure.getIndexCreationStamp(indexId) ^ perFileVersion;
+  private boolean shouldIndexFile(final VirtualFile file, final ID<?, ?> indexId) {
+    return getInputFilter(indexId).acceptInput(file) &&
+           (isMock(file) || !IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
   }
 
   private static boolean isMock(final VirtualFile file) {
     return !(file instanceof NewVirtualFile);
   }
-
-  private boolean shouldIndexFile(final VirtualFile file, final ID<?, ?> indexId) {
-    return getInputFilter(indexId).acceptInput(file) &&
-           (isMock(file) || !IndexingStamp.isFileIndexed(file, indexId, perFilePerIndexVersion(indexId, file)));
-  }
-
 
   public CollectingContentIterator createContentIterator() {
     return new UnindexedFilesFinder(myIndices.keySet());

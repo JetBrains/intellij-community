@@ -10,6 +10,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -40,7 +41,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
-  private static final int VERSION = 10;
+  private static final int VERSION = 11;
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     public void save(final DataOutput out, final SerializedStubTree v) throws IOException {
       byte[] value = v.getBytes();
@@ -169,27 +170,30 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
   }
 
   public int getVersion() {
-    return VERSION;
+    return getCumulativeVersion();
   }
 
-  public int perFileVersion(final VirtualFile file) {
-    final FileType fileType = file.getFileType();
-    if (fileType instanceof LanguageFileType) {
-      Language l = ((LanguageFileType)fileType).getLanguage();
-      ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
-      if (parserDefinition != null) {
-        final IFileElementType type = parserDefinition.getFileNodeType();
-        if (type instanceof IStubFileElementType) {
-          return ((IStubFileElementType)type).getStubVersion();
+  private static int getCumulativeVersion() {
+    int version = VERSION;
+    for (final FileType fileType : FileTypeManager.getInstance().getRegisteredFileTypes()) {
+      if (fileType instanceof LanguageFileType) {
+        Language l = ((LanguageFileType)fileType).getLanguage();
+        ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
+        if (parserDefinition != null) {
+          final IFileElementType type = parserDefinition.getFileNodeType();
+          if (type instanceof IStubFileElementType) {
+            version ^= ((IStubFileElementType)type).getStubVersion();
+          }
+        }
+      }
+      else if (fileType.isBinary()) {
+        final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
+        if (builder != null ) {
+          version ^= builder.getStubVersion();
         }
       }
     }
-    else if (fileType.isBinary()) {
-      final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
-      if (builder != null ) return builder.getStubVersion();
-    }
-
-    return 0;
+    return version;
   }
 
   public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(final FileBasedIndex owner, IndexStorage<Integer, SerializedStubTree> storage) {
