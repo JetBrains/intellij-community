@@ -34,10 +34,6 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
       super(project, fileType);
     }
 
-    public Document getDocument() {
-      return (Document)super.getItem();
-    }
-
     public Object getItem() {
       Document document = (Document)super.getItem();
       return createItem(document, getProject());
