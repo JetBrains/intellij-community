@@ -10,8 +10,6 @@ package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -38,9 +35,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 
 public class IntroduceParameterHandler extends IntroduceHandlerBase implements RefactoringActionHandler {
@@ -194,15 +189,12 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
 
       NameSuggestionsGenerator nameSuggestionsGenerator = new NameSuggestionsGenerator() {
         public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-          return JavaCodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, propName, expr, type);
+          final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
+          final SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, propName, expr, type);
+          final String[] strings = JavaCompletionUtil.completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, info);
+          return new SuggestedNameInfo.Delegate(strings, info);
         }
 
-        public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {
-          LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
-          LookupItemPreferencePolicy policy =
-            JavaCompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.PARAMETER);
-          return new Pair<LookupItemPreferencePolicy, Set<LookupItem>>(policy, set);
-        }
       };
       new IntroduceParameterDialog(myProject, classMemberRefs, occurences.length, localVar, expr, nameSuggestionsGenerator,
                                    typeSelectorManager, methodToSearchFor, method, parametersToRemove, mustBeFinal).show();

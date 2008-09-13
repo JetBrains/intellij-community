@@ -99,13 +99,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
   }
 
   private void registerItself() {
-    if (ourCurrentCompletion != null) {
-      final StringWriter writer = new StringWriter();
-      ourTrace.printStackTrace(new PrintWriter(writer));
-      throw new RuntimeException("SHe's not dead yet!\nthis=" + this + "\ncurrent=" + ourCurrentCompletion + "\ntrace=" + writer.toString());
-    }
+    final CompletionProgressIndicator oldCompletion = ourCurrentCompletion;
+    final Throwable oldTrace = ourTrace;
     ourCurrentCompletion = this;
     ourTrace = new Throwable();
+    if (oldCompletion != null) {
+      final StringWriter writer = new StringWriter();
+      oldTrace.printStackTrace(new PrintWriter(writer));
+      throw new RuntimeException("SHe's not dead yet!\nthis=" + this + "\ncurrent=" + oldCompletion + "\ntrace=" + writer.toString());
+    }
   }
 
   public void liveAfterDeath(LightweightHint hint) {
@@ -198,9 +200,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
   }
 
   private void cleanup() {
-    assert ourCurrentCompletion == this;
+    final boolean wasThis = ourCurrentCompletion == this;
     ourCurrentCompletion = null;
     myHint = null;
+    assert wasThis;
   }
 
   public void stop() {

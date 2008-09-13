@@ -2,14 +2,11 @@ package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TestUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -30,8 +27,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 class IntroduceFieldDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceFieldDialog");
@@ -262,7 +257,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     panel.add(myNameField.getComponent(), gbConstraints);
     namePrompt.setLabelFor(myNameField.getFocusableComponent());
 
-    myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField, createGenerator(), myProject);
+    myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField, createGenerator());
     myNameSuggestionsManager.setLabelsFor(type, namePrompt);
 
     return panel;
@@ -483,15 +478,11 @@ class IntroduceFieldDialog extends DialogWrapper {
                                                                        VariableKind.LOCAL_VARIABLE
           );
         }
-        return myCodeStyleManager.suggestVariableName(variableKind, propertyName, myInitializerExpression, type);
+        final SuggestedNameInfo nameInfo = myCodeStyleManager.suggestVariableName(variableKind, propertyName, myInitializerExpression, type);
+        final String[] strings = JavaCompletionUtil.completeVariableNameForRefactoring(myCodeStyleManager, type, VariableKind.LOCAL_VARIABLE, nameInfo);
+                return new SuggestedNameInfo.Delegate(strings, nameInfo);
       }
 
-      public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {
-        LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
-        VariableKind kind = myWillBeDeclaredStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
-        LookupItemPreferencePolicy policy = JavaCompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, kind);
-        return new Pair<LookupItemPreferencePolicy, Set<LookupItem>> (policy, set);
-      }
     };
   }
 

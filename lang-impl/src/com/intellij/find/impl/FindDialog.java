@@ -187,7 +187,7 @@ final class FindDialog extends DialogWrapper {
   }
 
   private void revealWhitespaces(ComboBox comboBox) {
-    ComboBoxEditor comboBoxEditor = new RevealingSpaceComboboxEditor(myProject);
+    ComboBoxEditor comboBoxEditor = new RevealingSpaceComboboxEditor(myProject, comboBox);
     comboBox.setEditor(comboBoxEditor);
     comboBox.setRenderer(new EditorComboBoxRenderer(comboBoxEditor));
   }

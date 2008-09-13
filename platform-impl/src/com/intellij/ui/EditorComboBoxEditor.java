@@ -45,6 +45,10 @@ public class EditorComboBoxEditor implements ComboBoxEditor{
   }
 
   public Object getItem() {
+    return getDocument();
+  }
+
+  protected Document getDocument() {
     return myTextField.getDocument();
   }
 

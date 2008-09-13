@@ -226,7 +226,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myParameterNameField.addDataChangedListener(myParameterNameChangedListener);
 
     myNameSuggestionsManager =
-            new NameSuggestionsManager(myTypeSelector, myParameterNameField, myNameSuggestionsGenerator, myProject);
+            new NameSuggestionsManager(myTypeSelector, myParameterNameField, myNameSuggestionsGenerator);
     myNameSuggestionsManager.setLabelsFor(type, nameLabel);
 
     gbConstraints.gridx = 0;

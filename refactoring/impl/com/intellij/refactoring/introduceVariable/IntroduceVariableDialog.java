@@ -1,12 +1,9 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
@@ -15,8 +12,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
@@ -25,8 +22,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariableSettings {
   private Project myProject;
@@ -162,15 +157,11 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
               public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
                 final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
                 final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, myExpression, type);
-                return codeStyleManager.suggestUniqueVariableName(nameInfo, myExpression, true);
+                final String[] strings = JavaCompletionUtil.completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, nameInfo);
+                final SuggestedNameInfo.Delegate delegate = new SuggestedNameInfo.Delegate(strings, nameInfo);
+                return codeStyleManager.suggestUniqueVariableName(delegate, myExpression, true);
               }
-
-              public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {
-                LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
-                LookupItemPreferencePolicy policy = JavaCompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.LOCAL_VARIABLE);
-                return new Pair<LookupItemPreferencePolicy, Set<LookupItem>> (policy, set);
-              }
-            }, myProject);
+            });
     myNameSuggestionsManager.setLabelsFor(type, namePrompt);
 
     return panel;
@@ -213,7 +204,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
     myCbFinalState = createFinals == null ?
                      CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_LOCALS :
-                     createFinals;
+                     createFinals.booleanValue();
 
     gbConstraints.insets = new Insets(0, 0, 0, 0);
     gbConstraints.gridy++;

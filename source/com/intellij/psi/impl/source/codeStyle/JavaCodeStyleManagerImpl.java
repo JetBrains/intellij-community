@@ -232,18 +232,14 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     final PsiType _type = type;
     return new SuggestedNameInfo(namesArray) {
       public void nameChoosen(String name) {
-        if (_propertyName != null || _type != null) {
-          if( _type != null && !_type.isValid() )
-          {
-            return;
-          }
+        if (_propertyName != null || _type != null && _type.isValid()) {
           JavaStatisticsManager.incVariableNameUseCount(name, kind, _propertyName, _type);
         }
       }
     };
   }
 
-  private void addNamesFromStatistics(Set<String> names, VariableKind variableKind, String propertyName, PsiType type) {
+  private static void addNamesFromStatistics(Set<String> names, VariableKind variableKind, String propertyName, PsiType type) {
     String[] allNames = JavaStatisticsManager.getAllVariableNamesUsed(variableKind, propertyName, type);
 
     int maxFrequency = 0;

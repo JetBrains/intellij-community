@@ -188,7 +188,7 @@ public class NameSuggestionsField extends JPanel {
   }
 
   private void setupComboBox(final ComboBox combobox, FileType fileType) {
-    final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, fileType);
+    final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, fileType, combobox);
 
     combobox.setEditor(comboEditor);
     combobox.setRenderer(new EditorComboBoxRenderer(comboEditor));

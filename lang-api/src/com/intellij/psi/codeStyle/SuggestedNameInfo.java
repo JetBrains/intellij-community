@@ -41,4 +41,19 @@ public abstract class SuggestedNameInfo {
    * @param name the accepted suggestion.
    */
   public abstract void nameChoosen(String name);
+
+
+  public static class Delegate extends SuggestedNameInfo {
+    SuggestedNameInfo myDelegate;
+
+    public Delegate(final String[] names, final SuggestedNameInfo delegate) {
+      super(names);
+      myDelegate = delegate;
+    }
+
+    public void nameChoosen(final String name) {
+      myDelegate.nameChoosen(name);
+    }
+  }
+
 }

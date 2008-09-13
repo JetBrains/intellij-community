@@ -8,7 +8,6 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.project.Project;
@@ -234,18 +233,35 @@ public class JavaCompletionUtil {
     }
   }
 
-  public static LookupItemPreferencePolicy completeVariableNameForRefactoring(Project project, Set<LookupItem> set, String prefix, PsiType varType, VariableKind varKind) {
-    return completeVariableNameForRefactoring(project, set, new CamelHumpMatcher(prefix), varType, varKind);
+  public static void completeVariableNameForRefactoring(Project project, Set<LookupItem> set, String prefix, PsiType varType, VariableKind varKind) {
+    completeVariableNameForRefactoring(project, set, new CamelHumpMatcher(prefix), varType, varKind);
   }
 
-  public static LookupItemPreferencePolicy completeVariableNameForRefactoring(Project project, Set<LookupItem> set, PrefixMatcher matcher, PsiType varType, VariableKind varKind) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
+  public static void completeVariableNameForRefactoring(Project project, Set<LookupItem> set, PrefixMatcher matcher, PsiType varType, VariableKind varKind) {
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(varKind, null, null, varType);
-    final String[] suggestedNames = suggestedNameInfo.names;
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNames, matcher), suggestedNameInfo);
+    final String[] strings = completeVariableNameForRefactoring(codeStyleManager, matcher, varType, varKind, suggestedNameInfo);
+    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, strings, matcher), suggestedNameInfo);
+  }
 
-    if (set.isEmpty() && PsiType.VOID != varType) {
+  public static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager, final PsiType varType,
+                                                               final VariableKind varKind,
+                                                               SuggestedNameInfo suggestedNameInfo) {
+    return completeVariableNameForRefactoring(codeStyleManager, new CamelHumpMatcher(""), varType, varKind, suggestedNameInfo);
+  }
+
+  public static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager, final PrefixMatcher matcher, final PsiType varType,
+                                                               final VariableKind varKind,
+                                                               SuggestedNameInfo suggestedNameInfo) {
+    Set<String> result = new LinkedHashSet<String>();
+    final String[] suggestedNames = suggestedNameInfo.names;
+    for (final String suggestedName : suggestedNames) {
+      if (matcher.prefixMatches(suggestedName)) {
+        result.add(suggestedName);
+      }
+    }
+
+    if (result.isEmpty() && PsiType.VOID != varType) {
       // use suggested names as suffixes
       final String requiredSuffix = codeStyleManager.getSuffixByVariableKind(varKind);
       final String prefix = matcher.getPrefix();
@@ -256,17 +272,14 @@ public class JavaCompletionUtil {
         }
       }
 
-      suggestedNameInfo = new SuggestedNameInfo(getOverlappedNameVersions(prefix, suggestedNames, requiredSuffix)) {
-        public void nameChoosen(String name) {
-        }
-      };
+      result.addAll(Arrays.asList(getOverlappedNameVersions(prefix, suggestedNames, requiredSuffix)));
 
-      tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, matcher), suggestedNameInfo);
+
     }
-    return new NamePreferencePolicy(suggestedNameInfo);
+    return result.toArray(new String[result.size()]);
   }
 
-  public static void tunePreferencePolicy(final List<LookupItem> list, final SuggestedNameInfo suggestedNameInfo) {
+  private static void tunePreferencePolicy(final List<LookupItem> list, final SuggestedNameInfo suggestedNameInfo) {
     final InsertHandler insertHandler = new InsertHandler() {
       public void handleInsert(final InsertionContext context, final LookupElement item) {
         suggestedNameInfo.nameChoosen(item.getLookupString());

@@ -2,8 +2,6 @@ package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -15,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -240,16 +237,13 @@ class IntroduceConstantDialog extends DialogWrapper {
     final NameSuggestionsManager nameSuggestionsManager =
       new NameSuggestionsManager(myTypeSelector, myNameField, new NameSuggestionsGenerator() {
         public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-          return myCodeStyleManager.suggestVariableName(VariableKind.STATIC_FINAL_FIELD, propertyName, myInitializerExpression, type);
+          final SuggestedNameInfo nameInfo =
+              myCodeStyleManager.suggestVariableName(VariableKind.STATIC_FINAL_FIELD, propertyName, myInitializerExpression, type);
+          final String[] strings = JavaCompletionUtil.completeVariableNameForRefactoring(myCodeStyleManager, type, VariableKind.LOCAL_VARIABLE, nameInfo);
+          return new SuggestedNameInfo.Delegate(strings, nameInfo);
         }
 
-        public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {
-          LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
-          LookupItemPreferencePolicy policy =
-            JavaCompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.STATIC_FINAL_FIELD);
-          return new Pair<LookupItemPreferencePolicy, Set<LookupItem>>(policy, set);
-        }
-      }, myProject);
+      });
 
     nameSuggestionsManager.setLabelsFor(myTypeLabel, myNameSuggestionLabel);
     //////////

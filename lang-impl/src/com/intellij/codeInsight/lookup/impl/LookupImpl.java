@@ -613,6 +613,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       if (afterCaret.length() == 0) return false;
     }
 
+    EditorModificationUtil.deleteSelectedText(myEditor);
     int offset = myEditor.getCaretModel().getOffset();
     if (beforeCaret != null) { // correct case, expand camel-humps
       final int start = offset - presentPrefix.length();
