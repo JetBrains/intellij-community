@@ -24,25 +24,32 @@ import org.jetbrains.annotations.NotNull;
 
 public class HibernateResourceInspection extends ResourceInspection {
 
+    @Override
     @NotNull
     public String getID(){
         return "HibernateResourceOpenedButNotSafelyClosed";
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "hibernate.resource.opened.not.closed.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
-        final PsiType type = (PsiType)infos[0];
+        final PsiExpression expression = (PsiExpression) infos[0];
+        final PsiType type = expression.getType();
+        assert type != null;
+        final String text = type.getPresentableText();
         return InspectionGadgetsBundle.message(
                 "hibernate.resource.opened.not.closed.problem.descriptor",
-                type.getPresentableText());
+                text);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new HibernateResourceVisitor();
     }
