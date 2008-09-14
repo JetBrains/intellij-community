@@ -335,7 +335,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     location.y += myEditor.getLineHeight();
     JComponent editorComponent = myEditor.getComponent();
     JComponent internalComponent = myEditor.getContentComponent();
-    JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+    final JRootPane rootPane = editorComponent.getRootPane();
+    LOG.assertTrue(rootPane != null, myItems);
+    JLayeredPane layeredPane = rootPane.getLayeredPane();
     Point layeredPanePoint=SwingUtilities.convertPoint(internalComponent,location, layeredPane);
     layeredPanePoint.x -= myCellRenderer.getIconIndent();
     if (dim.width > layeredPane.getWidth()){
