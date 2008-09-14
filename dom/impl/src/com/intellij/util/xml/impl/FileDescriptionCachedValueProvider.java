@@ -22,7 +22,6 @@ import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -59,29 +58,20 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
   public final DomFileElementImpl<T> getFileElement() {
     if (myComputed) return myLastResult;
 
-    final XmlFileHeader rootTagName = getRootTag();
-    try {
-      _computeFileElement(false, rootTagName, null);
-    }
-    finally {
-      myXmlFile.putUserData(DomManagerImpl.CACHED_FILE_ELEMENT, myLastResult);
-      myComputed = true;
-    }
+    _computeFileElement(false, getRootTag(), null);
+    myXmlFile.putUserData(DomManagerImpl.CACHED_FILE_ELEMENT, myLastResult);
+    myComputed = true;
     return myLastResult;
   }
 
-  private List<DomEvent> _computeFileElement(final boolean fireEvents, final XmlFileHeader rootTagName, @Nullable StringBuilder sb) {
-    final DomFileElementImpl<T> lastResult = myLastResult;
+  private void _computeFileElement(final boolean fireEvents, final XmlFileHeader rootTagName, @Nullable StringBuilder sb) {
     if (sb != null) {
       sb.append(rootTagName).append("\n");
     }
 
     if (!myXmlFile.isValid()) {
       myLastResult = null;
-      if (fireEvents && lastResult != null) {
-        return Arrays.<DomEvent>asList(new ElementUndefinedEvent(lastResult));
-      }
-      return Collections.emptyList();
+      return;
     }
     if (sb != null) {
       sb.append("File is valid\n");
@@ -102,7 +92,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
 
     if (description == null) {
       myLastResult = null;
-      return events;
+      return;
     }
 
     final Class<T> rootElementClass = description.getRootElementClass();
@@ -117,7 +107,6 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
     if (fireEvents) {
       events.add(new ElementDefinedEvent(myLastResult));
     }
-    return events;
   }
 
   @Nullable
