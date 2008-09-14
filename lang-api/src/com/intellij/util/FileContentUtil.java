@@ -95,6 +95,6 @@ public class FileContentUtil {
         documentManager.saveDocument(document);
       }
     }
-    events.add(new VFilePropertyChangeEvent(null, virtualFile, VirtualFile.PROP_NAME, virtualFile.getName(), virtualFile.getName(), false));
+    events.add(new VFilePropertyChangeEvent("FileContentUtil.saveOrReload", virtualFile, VirtualFile.PROP_NAME, virtualFile.getName(), virtualFile.getName(), false));
   }
 }

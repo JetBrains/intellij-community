@@ -76,6 +76,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.*;
@@ -374,7 +375,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       protected void run() throws Throwable {
         PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
         assert element != null: "element not found in file " + myFile.getName() + " at caret position, offset " + myEditor.getCaretModel().getOffset();
-        new RenameProcessor(myProjectFixture.getProject(), element, newName, false, false).run();
+        final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myEditor);
+        new RenameProcessor(myProjectFixture.getProject(), substitution, newName, false, false).run();
         checkResultByFile(fileAfter, myFile, false);
       }
     }.execute().throwException();
@@ -607,10 +609,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void checkResultByFile(final String expectedFile) throws Throwable {
+    checkResultByFile(expectedFile, false);
+  }
+
+  public void checkResultByFile(final String expectedFile, final boolean ignoreWhitespaces) throws Throwable {
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
       protected void run() throws Throwable {
-        checkResultByFile(expectedFile, myFile, false);
+        checkResultByFile(expectedFile, myFile, ignoreWhitespaces);
       }
     }.execute().throwException();
   }
@@ -917,7 +923,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return list;
   }
 
-  private String getTestDataPath() {
+  public String getTestDataPath() {
     return myTestDataPath;
   }
 
@@ -1023,31 +1029,30 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private void checkResultByFile(@NonNls String expectedFile,
                                  @NotNull PsiFile originalFile,
                                  boolean stripTrailingSpaces) throws IOException {
-    final LogicalPosition position = myEditor.getCaretModel().getLogicalPosition();
-    EditorUtil.fillVirtualSpaceUntil(myEditor, position.column, position.line);
+    if (!stripTrailingSpaces) {
+      final LogicalPosition position = myEditor.getCaretModel().getLogicalPosition();
+      EditorUtil.fillVirtualSpaceUntil(myEditor, position.column, position.line);
+    }
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     checkResult(expectedFile, stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromFile(getTestDataPath() + "/" + expectedFile, getProject()), originalFile.getText());
   }
 
   private void checkResult(final String expectedFile,
                            final boolean stripTrailingSpaces,
-                           final SelectionAndCaretMarkupLoader markupLoader,
+                           final SelectionAndCaretMarkupLoader loader,
                            String actualText) {
     Project project = myProjectFixture.getProject();
 
     project.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     if (stripTrailingSpaces) {
-      ((DocumentEx)myEditor.getDocument()).stripTrailingSpaces(false);
+      actualText = stripTrailingSpaces(actualText);
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    SelectionAndCaretMarkupLoader loader = markupLoader;
     String newFileText1 = loader.newFileText;
     if (stripTrailingSpaces) {
-      Document document1 = EditorFactory.getInstance().createDocument(loader.newFileText);
-      ((DocumentEx)document1).stripTrailingSpaces(false);
-      newFileText1 = document1.getText();
+      newFileText1 = stripTrailingSpaces(newFileText1);
     }
 
     actualText = StringUtil.convertLineSeparators(actualText, "\n");
@@ -1085,6 +1090,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     else {
       TestCase.assertTrue("has no selection", !myEditor.getSelectionModel().hasSelection());
     }
+  }
+
+  private static String stripTrailingSpaces(String actualText) {
+    final Document document = EditorFactory.getInstance().createDocument(actualText);
+    ((DocumentEx)document).stripTrailingSpaces(false);
+    actualText = document.getText();
+    return actualText;
   }
 
 }

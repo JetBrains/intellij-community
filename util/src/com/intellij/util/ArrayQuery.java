@@ -28,7 +28,7 @@ import java.util.Iterator;
 public class ArrayQuery<T> implements Query<T> {
   private T[] myArray;
 
-  public ArrayQuery(final T[] array) {
+  public ArrayQuery(final T... array) {
     myArray = array;
   }
 

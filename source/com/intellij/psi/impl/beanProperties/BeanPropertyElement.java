@@ -27,7 +27,7 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
   private PsiMethod myMethod;
   private final String myName;
 
-  BeanPropertyElement(final PsiMethod method, final String name) {
+  public BeanPropertyElement(final PsiMethod method, final String name) {
     myMethod = method;
     myName = name;
   }

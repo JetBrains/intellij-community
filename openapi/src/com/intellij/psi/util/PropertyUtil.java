@@ -40,8 +40,12 @@ public class PropertyUtil {
   private PropertyUtil() {
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isSimplePropertyGetter(PsiMethod method) {
+    return hasGetterName(method) && method.getParameterList().getParametersCount() == 0;
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean hasGetterName(final PsiMethod method) {
     if (method == null) return false;
 
     if (method.isConstructor()) return false;
@@ -61,8 +65,7 @@ public class PropertyUtil {
     else {
       return false;
     }
-
-    return method.getParameterList().getParametersCount() == 0;
+    return true;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -95,6 +98,7 @@ public class PropertyUtil {
     }
   }
 
+  @NotNull
   public static String getPropertyNameByGetter(PsiMethod getterMethod) {
     @NonNls String methodName = getterMethod.getName();
     return methodName.startsWith("get") ?
@@ -102,6 +106,7 @@ public class PropertyUtil {
            StringUtil.decapitalize(methodName.substring(2));
   }
 
+  @NotNull
   public static String getPropertyNameBySetter(PsiMethod setterMethod) {
     String methodName = setterMethod.getName();
     return Introspector.decapitalize(methodName.substring(3));

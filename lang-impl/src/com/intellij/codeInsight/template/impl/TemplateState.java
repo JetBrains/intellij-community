@@ -311,7 +311,7 @@ public class TemplateState implements Disposable {
           IntArrayList indices = initEmptyVariables();
           mySegments.setSegmentsGreedy(false);
           for(TemplateOptionalProcessor processor: Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
-            processor.processText(myProject, myTemplate, myDocument, myTemplateRange);
+            processor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
           }
           mySegments.setSegmentsGreedy(true);
           restoreEmptyVariables(indices);
@@ -830,7 +830,7 @@ public class TemplateState implements Disposable {
     if (file != null) {
       CodeStyleManager style = CodeStyleManager.getInstance(myProject);
       for(TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
-        optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange);
+        optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
       }
       if (myTemplate.isToReformat()) {
         try {

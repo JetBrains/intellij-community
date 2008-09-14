@@ -67,6 +67,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   void setTestDataPath(@NonNls String dataPath);
 
+  String getTestDataPath();
+
   String getTempDirPath();
 
   TempDirTestFixture getTempDirFixture();
@@ -197,6 +199,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @throws Throwable any exception.
    */
   void checkResultByFile(@NonNls String expectedFile) throws Throwable;
+  
+  void checkResultByFile(@NonNls String expectedFile, boolean ignoreWhitespaces) throws Throwable;
 
   /**
    * Compares two files.

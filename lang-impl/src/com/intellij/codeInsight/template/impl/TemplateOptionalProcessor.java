@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nls;
 public interface TemplateOptionalProcessor {
   ExtensionPointName<TemplateOptionalProcessor> EP_NAME = ExtensionPointName.create("com.intellij.liveTemplateOptionalProcessor");
 
-  void processText(final Project project, final Template template, final Document document, final RangeMarker templateRange);
+  void processText(final Project project, final Template template, final Document document, final RangeMarker templateRange, final Editor editor);
   @Nls
   String getOptionName();
 

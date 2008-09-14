@@ -13,7 +13,6 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 
@@ -26,6 +25,9 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
     SearchScope searchScope = p.getScope();
     PsiManager psiManager = PsiManager.getInstance(method.getProject());
     final boolean isStrictSignatureSearch = p.isStrictSignatureSearch();
+
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return true;
 
     if (method.isConstructor()) {
       final ConstructorReferencesSearchHelper helper = new ConstructorReferencesSearchHelper(psiManager);
@@ -64,50 +66,7 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
       }
     });
 
-    final TextOccurenceProcessor processor1 = new TextOccurenceProcessor() {
-      public boolean execute(PsiElement element, int offsetInElement) {
-        final PsiClass aClass = method.getContainingClass();
-        if (aClass == null) return true;
-        final PsiReference[] refs = element.getReferences();
-        for (PsiReference ref : refs) {
-          if (ref.getRangeInElement().contains(offsetInElement)) {
-            for (PsiMethod method : methods) {
-              if (ref instanceof ResolvingHint && !((ResolvingHint)ref).canResolveTo(method)) {
-                return true;
-              }
-              if (ref.isReferenceTo(method)) {
-                return consumer.process(ref);
-              }
-              PsiElement refElement = ref.resolve();
-
-              if (refElement instanceof PsiMethod) {
-                PsiMethod refMethod = (PsiMethod)refElement;
-                PsiClass refMethodClass = refMethod.getContainingClass();
-                if (refMethodClass == null) continue;
-
-                if (!refMethod.hasModifierProperty(PsiModifier.STATIC)) {
-                  PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(aClass, refMethodClass, PsiSubstitutor.EMPTY);
-                  if (substitutor != null) {
-                    if (refMethod.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(substitutor))) {
-                      if (!consumer.process(ref)) return false;
-                    }
-                  }
-                }
-
-                if (!isStrictSignatureSearch) {
-                  PsiManager manager = method.getManager();
-                  if (manager.areElementsEquivalent(refMethodClass, aClass)) {
-                    if (!consumer.process(ref)) return false;
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        return true;
-      }
-    };
+    final TextOccurenceProcessor processor1 = new MethodTextOccurenceProcessor(consumer, aClass, isStrictSignatureSearch, methods);
 
     searchScope = searchScope.intersectWith(accessScope);
 
@@ -163,4 +122,5 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
       }
     });
   }
+
 }
