@@ -55,10 +55,6 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     myVirtualFile = psiElement.getContainingFile().getVirtualFile();
     myProject = psiElement.getProject();
 
-    installBaseLanguageListener();
-  }
-
-  private void installBaseLanguageListener() {
     myPsiTreeChangeAdapter = new PsiTreeChangeAdapter() {
       public void childAdded(PsiTreeChangeEvent event) {
         childrenChanged(event);
@@ -86,7 +82,10 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
             if (!myVirtualFile.isValid()) return;
             ApplicationManager.getApplication().runReadAction(new Runnable(){
               public void run() {
-                Language baseLanguage = getViewProvider().getTemplateDataLanguage();
+                final TemplateLanguageFileViewProvider provider = getViewProvider();
+                if (provider == null) return;
+
+                Language baseLanguage = provider.getTemplateDataLanguage();
                 if (baseLanguage == myTemplateDataLanguage) {
                   updateBaseLanguageView();
                 }
@@ -102,13 +101,16 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
         }, 300, ModalityState.NON_MODAL);
       }
     };
-    myTemplateDataLanguage = getViewProvider().getTemplateDataLanguage();
+    final TemplateLanguageFileViewProvider provider = getViewProvider();
+    assert provider != null;
+    myTemplateDataLanguage = provider.getTemplateDataLanguage();
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
   }
 
   @Nullable
   private TemplateLanguageFileViewProvider getViewProvider() {
-    return (TemplateLanguageFileViewProvider)PsiManager.getInstance(myProject).findViewProvider(myVirtualFile);
+    final FileViewProvider provider = PsiManager.getInstance(myProject).findViewProvider(myVirtualFile);
+    return provider instanceof TemplateLanguageFileViewProvider ? (TemplateLanguageFileViewProvider)provider : null;
   }
 
   private void updateBaseLanguageView() {
@@ -172,8 +174,8 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
       myBaseLanguageViewDescriptorIndex = viewDescriptors.size() - 1;
     }
 
-    for (final Language language : getViewProvider().getLanguages()) {
-      if (language != dataLanguage && language != getViewProvider().getBaseLanguage()) {
+    for (final Language language : provider.getLanguages()) {
+      if (language != dataLanguage && language != provider.getBaseLanguage()) {
         ContainerUtil.addIfNotNull(createBaseLanguageStructureView(fileEditor, language), viewDescriptors);
       }
     }
