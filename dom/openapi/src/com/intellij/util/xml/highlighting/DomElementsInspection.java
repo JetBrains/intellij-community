@@ -21,6 +21,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -44,6 +45,7 @@ import java.util.Set;
  * @see com.intellij.util.xml.highlighting.BasicDomElementsInspection
  */
 public abstract class DomElementsInspection<T extends DomElement> extends XmlSuppressableInspectionTool {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementsInspection");
 
   private final Set<Class<? extends T>> myDomClasses;
 
@@ -76,7 +78,11 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
     final XmlElement xmlElement = element.getXmlElement();
     if (xmlElement instanceof XmlTag) {
       for (final DomElement child : DomUtil.getDefinedChildren(element, true, true)) {
-        if (child.getXmlElement().isPhysical()) {
+        final XmlElement element1 = child.getXmlElement();
+        if (element1 == null) {
+          LOG.assertTrue(false, "child=" + child + "; parent=" + element);
+        }
+        if (element1.isPhysical()) {
           visitor.consume(child);
         }
       }
