@@ -1,11 +1,16 @@
 package com.intellij.jar;
 
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.deployment.PackagingConfiguration;
+import com.intellij.openapi.deployment.DeploymentUtil;
+import com.intellij.openapi.deployment.ModuleLink;
+import com.intellij.openapi.deployment.PackagingMethod;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -16,6 +21,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.packaging.PackagingEditor;
+import com.intellij.openapi.roots.ui.configuration.packaging.PackagingEditorImpl;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -29,8 +37,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.peer.PeerFactory;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.GuiUtils;
@@ -91,7 +99,7 @@ public class BuildJarDialog extends DialogWrapper {
   private void updateWarning() {
     for (Map.Entry<Module, SettingsEditor> entry : mySettings.entrySet()) {
       try {
-        final BuildJarDialog.SettingsEditor editor = entry.getValue();
+        final SettingsEditor editor = entry.getValue();
         if (editor.myModule == myCurrentModule) {
           editor.saveUI();
         }
@@ -164,7 +172,7 @@ public class BuildJarDialog extends DialogWrapper {
         myCurrentModule = selectedModule;
         if (selectedModule != null) {
           BuildJarSettings buildJarSettings = BuildJarSettings.getInstance(selectedModule);
-          BuildJarDialog.SettingsEditor settingsEditor = mySettings.get(selectedModule);
+          SettingsEditor settingsEditor = mySettings.get(selectedModule);
           if (settingsEditor == null) {
             settingsEditor = new SettingsEditor(selectedModule, buildJarSettings);
             mySettings.put(selectedModule, settingsEditor);
@@ -172,6 +180,7 @@ public class BuildJarDialog extends DialogWrapper {
           settingsEditor.refreshControls();
           boolean isBuildJar = myElementsChooser.getMarkedElements().contains(selectedModule);
           GuiUtils.enableChildren(myModuleSettingsPanel, isBuildJar);
+          settingsEditor.rebuildTree();
           TitledBorder titledBorder = (TitledBorder)myModuleSettingsPanel.getBorder();
           titledBorder.setTitle(IdeBundle.message("jar.build.module.0.jar.settings", selectedModule.getName()));
           myModuleSettingsPanel.repaint();
@@ -181,8 +190,22 @@ public class BuildJarDialog extends DialogWrapper {
     myElementsChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<Module>() {
       public void elementMarkChanged(final Module element, final boolean isMarked) {
         GuiUtils.enableChildren(myModuleSettingsPanel, isMarked);
+        SettingsEditor settingsEditor = mySettings.get(element);
         if (isMarked) {
           setDefaultJarPath();
+          if (settingsEditor != null) {
+            PackagingConfiguration configuration = settingsEditor.getEditor().getModifiedConfiguration();
+            if (configuration.getElements().length == 0) {
+              ModuleLink moduleLink = DeploymentUtil.getInstance().createModuleLink(element, element);
+              moduleLink.setPackagingMethod(PackagingMethod.COPY_FILES);
+              moduleLink.setURI("/");
+              configuration.addOrReplaceElement(moduleLink);
+            }
+          }
+        }
+
+        if (settingsEditor != null) {
+          settingsEditor.rebuildTree();
         }
       }
     });
@@ -259,7 +282,7 @@ public class BuildJarDialog extends DialogWrapper {
         result = result.uniteWith(scope);
       }
     }
-    return result;
+    return result != null ? result : GlobalSearchScope.allScope(myProject);
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -319,7 +342,7 @@ public class BuildJarDialog extends DialogWrapper {
     private final Module myModule;
     private final BuildJarSettings myBuildJarSettings;
     private final BuildJarSettings myModifiedBuildJarSettings;
-    private PackagingSettingsEditor myEditor;
+    private PackagingEditor myEditor;
 
     public SettingsEditor(Module module, BuildJarSettings buildJarSettings) {
       myModule = module;
@@ -328,13 +351,21 @@ public class BuildJarDialog extends DialogWrapper {
       myModifiedBuildJarSettings = new BuildJarSettings(module);
       copySettings(buildJarSettings, myModifiedBuildJarSettings);
 
-      myEditor = new PackagingSettingsEditor(module, myModifiedBuildJarSettings.getPackagingConfiguration());
+      DefaultModulesProvider modulesProvider = new DefaultModulesProvider(myProject);
+      PackagingConfiguration originalConfiguration = myBuildJarSettings.getPackagingConfiguration();
+      PackagingConfiguration modifiedConfiguration = myModifiedBuildJarSettings.getPackagingConfiguration();
+      JarPackagingEditorPolicy editorPolicy = new JarPackagingEditorPolicy(module);
+      JarPackagingTreeBuilder treeBuilder = new JarPackagingTreeBuilder(module);
+      myEditor = new PackagingEditorImpl(originalConfiguration, modifiedConfiguration, modulesProvider, DefaultFacetsProvider.INSTANCE,
+                                         editorPolicy, treeBuilder, false);
+      myEditor.reset();
+      myEditor.createMainComponent();
     }
 
     private void refreshControls() {
       myEditorPanel.removeAll();
       myEditorPanel.setLayout(new BorderLayout());
-      myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
+      myEditorPanel.add(myEditor.getMainPanel(), BorderLayout.CENTER);
       myEditorPanel.revalidate();
 
       myJarPath.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(myModifiedBuildJarSettings.getJarUrl())));
@@ -342,12 +373,18 @@ public class BuildJarDialog extends DialogWrapper {
     }
 
     public void dispose() {
-      myEditor.disposeUIResources();
     }
 
     public void apply() {
-      myEditor.apply();
       copySettings(myModifiedBuildJarSettings, myBuildJarSettings);
+    }
+
+    public void rebuildTree() {
+      getEditor().rebuildTree();
+    }
+
+    public PackagingEditor getEditor() {
+      return myEditor;
     }
 
     public void saveUI() {

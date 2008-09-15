@@ -77,7 +77,7 @@ public class PackagingEditorImpl implements PackagingEditor {
   public PackagingEditorImpl(final PackagingConfiguration originalConfiguration,
                              final PackagingConfiguration modifiedConfiguration,
                              final ModulesProvider modulesProvider, final FacetsProvider facetsProvider, final PackagingEditorPolicy policy,
-                             final PackagingTreeBuilder builder) {
+                             final PackagingTreeBuilder builder, final boolean showIncludedCheckboxVisible) {
     myOriginalConfiguration = originalConfiguration;
     myModifiedConfiguration = modifiedConfiguration;
     myModulesProvider = modulesProvider;
@@ -114,6 +114,7 @@ public class PackagingEditorImpl implements PackagingEditor {
     };
     myShowIncludedCheckBox.addActionListener(actionListener);
     myShowLibraryFilesCheckBox.addActionListener(actionListener);
+    myShowIncludedCheckBox.setVisible(showIncludedCheckboxVisible);
   }
 
   public void removeSelectedElements() {
@@ -476,6 +477,7 @@ public class PackagingEditorImpl implements PackagingEditor {
                                       final boolean hasFocus) {
       PackagingTreeNode node = (PackagingTreeNode)value;
       node.render(this);
+      setEnabled(tree.isEnabled());
     }
   }
 

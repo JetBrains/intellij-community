@@ -4,13 +4,14 @@ import com.intellij.openapi.deployment.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.roots.ui.configuration.packaging.PackagingEditorPolicy;
-import com.intellij.openapi.roots.ui.configuration.packaging.PackagingEditor;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.packaging.PackagingEditor;
+import com.intellij.openapi.roots.ui.configuration.packaging.PackagingEditorPolicy;
+import com.intellij.openapi.roots.ui.configuration.packaging.PackagingEditorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -82,10 +83,12 @@ public class JarPackagingEditorPolicy extends PackagingEditorPolicy {
   }
 
   protected List<Module> getSuitableModules(final PackagingEditor packagingEditor) {
-    return Collections.emptyList();
+    List<Module> moduleList = PackagingEditorUtil.getModulesFromDependentOrderEntries(ModuleRootManager.getInstance(getModule()));
+    moduleList.add(getModule());
+    return moduleList;
   }
 
   protected List<Library> getSuitableLibraries(final PackagingEditor packagingEditor) {
-    return Collections.emptyList();
+    return PackagingEditorUtil.getLibrariesFromDependentOrderEntries(ModuleRootManager.getInstance(getModule()));
   }
 }

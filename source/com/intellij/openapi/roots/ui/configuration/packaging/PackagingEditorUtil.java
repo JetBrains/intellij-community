@@ -2,8 +2,9 @@ package com.intellij.openapi.roots.ui.configuration.packaging;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleLibraryTable;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -14,6 +15,10 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author nik
@@ -124,5 +129,33 @@ public class PackagingEditorUtil {
     else {
       return ProjectBundle.message("library.empty.item");
     }
+  }
+
+  public static List<Module> getModulesFromDependentOrderEntries(final @NotNull ModuleRootModel rootModel) {
+    List<Module> moduleList = new ArrayList<Module>();
+    Collection<OrderEntry> orderEntries = OrderEntryUtil.getDependentOrderEntries(rootModel);
+    for (OrderEntry orderEntry : orderEntries) {
+      if (orderEntry instanceof ModuleOrderEntry) {
+        Module module = ((ModuleOrderEntry)orderEntry).getModule();
+        if (module != null) {
+          moduleList.add(module);
+        }
+      }
+    }
+
+    return moduleList;
+  }
+
+  public static List<Library> getLibrariesFromDependentOrderEntries(final @NotNull ModuleRootModel rootModel) {
+    List<Library> libraries = new ArrayList<Library>();
+    for (OrderEntry orderEntry : OrderEntryUtil.getDependentOrderEntries(rootModel)) {
+      if (orderEntry instanceof LibraryOrderEntry) {
+        Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
+        if (library != null) {
+          libraries.add(library);
+        }
+      }
+    }
+    return libraries;
   }
 }
