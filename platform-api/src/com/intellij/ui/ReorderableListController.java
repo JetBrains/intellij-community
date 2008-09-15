@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -50,6 +51,12 @@ public abstract class ReorderableListController <T> {
 
   public AddActionDescription addAddAction(final String actionName, final Factory<T> creator, final boolean createShortcut) {
     final AddActionDescription description = new AddActionDescription(actionName, creator, createShortcut);
+    addActionDescription(description);
+    return description;
+  }
+
+  public AddMultipleActionDescription addAddMultipleAction(final String actionName, final Factory<Collection<T>> creator, final boolean createShortcut) {
+    final AddMultipleActionDescription description = new AddMultipleActionDescription(actionName, creator, createShortcut);
     addActionDescription(description);
     return description;
   }
@@ -236,25 +243,22 @@ public abstract class ReorderableListController <T> {
     }
   }
 
-  public class AddActionDescription extends CustomActionDescription<T> {
+  public abstract class AddActionDescriptionBase<V> extends CustomActionDescription<V> {
     private final String myActionDescription;
-    private final Factory<T> myAddHandler;
+    private final Factory<V> myAddHandler;
     private final boolean myCreateShortcut;
     private Icon myIcon = IconLoader.getIcon("/general/add.png");
 
-    public AddActionDescription(final String actionDescription, final Factory<T> addHandler, final boolean createShortcut) {
+    public AddActionDescriptionBase(final String actionDescription, final Factory<V> addHandler, final boolean createShortcut) {
       myActionDescription = actionDescription;
       myAddHandler = addHandler;
       myCreateShortcut = createShortcut;
     }
 
     public BaseAction createAction(final JComponent component) {
-      final ActionBehaviour<T> behaviour = new ActionBehaviour<T>() {
-        public T performAction(final AnActionEvent e) {
-          final T newElement = myAddHandler.create();
-          if (newElement == null) return null;
-          handleNewElement(newElement);
-          return newElement;
+      final ActionBehaviour<V> behaviour = new ActionBehaviour<V>() {
+        public V performAction(final AnActionEvent e) {
+          return addInternal(myAddHandler.create());
         }
 
         public void updateAction(final AnActionEvent e) {}
@@ -266,6 +270,9 @@ public abstract class ReorderableListController <T> {
       return action;
     }
 
+    @Nullable
+    protected abstract V addInternal(final V v);
+
     public Icon getActionIcon() {
       return myIcon;
     }
@@ -276,6 +283,34 @@ public abstract class ReorderableListController <T> {
 
     public void setIcon(final Icon icon) {
       myIcon = icon;
+    }
+  }
+
+  public class AddActionDescription extends AddActionDescriptionBase<T> {
+    public AddActionDescription(final String actionDescription, final Factory<T> addHandler, final boolean createShortcut) {
+      super(actionDescription, addHandler, createShortcut);
+    }
+
+    protected T addInternal(final T t) {
+      if (t != null) {
+        handleNewElement(t);
+      }
+      return t;
+    }
+  }
+
+  public class AddMultipleActionDescription extends AddActionDescriptionBase<Collection<T>> {
+    public AddMultipleActionDescription(final String actionDescription, final Factory<Collection<T>> addHandler, final boolean createShortcut) {
+      super(actionDescription, addHandler, createShortcut);
+    }
+
+    protected Collection<T> addInternal(final Collection<T> t) {
+      if (t != null) {
+        for (T element : t) {
+          handleNewElement(element);
+        }
+      }
+      return t;
     }
   }
 
