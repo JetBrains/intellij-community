@@ -1,7 +1,7 @@
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.*;
-import com.intellij.execution.ui.layout.actions.CloseViewAction;
+import com.intellij.execution.ui.layout.actions.MinimizeViewAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -481,7 +481,7 @@ public class GridCellImpl implements GridCell, Disposable {
   }
 
   public void minimize(MouseEvent e) {
-    if (!CloseViewAction.isEnabled(myContext, getContents(), ViewContext.CELL_TOOLBAR_PLACE)) return;
+    if (!MinimizeViewAction.isEnabled(myContext, getContents(), ViewContext.CELL_TOOLBAR_PLACE)) return;
 
     TabInfo tabInfo = myTabs.findInfo(e);
     if (tabInfo != null) {
