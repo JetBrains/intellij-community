@@ -50,7 +50,7 @@ public class XmlNamespaceIndex extends XmlIndex<String>{
         if (ns != null) {
           map.put(ns, "");
         }
-        map.put(inputData.getFile().getUrl(), ns);
+        map.put(inputData.getFile().getUrl(), ns == null ? "" : ns);
         return map;
       }
     };
