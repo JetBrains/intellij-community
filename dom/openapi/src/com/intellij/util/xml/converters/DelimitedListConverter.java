@@ -23,12 +23,15 @@
 package com.intellij.util.xml.converters;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.CustomReferenceConverter;
 import com.intellij.util.xml.GenericDomValue;
@@ -74,7 +77,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     if (list != null) {
       for (Iterator<T> i = variants.iterator(); i.hasNext();) {
         final T variant = i.next();
-        for (T existing: list) {
+        for (T existing : list) {
           if (existing.equals(variant)) {
             i.remove();
             break;
@@ -139,10 +142,12 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
 
   @NotNull
   protected PsiReference createPsiReference(final PsiElement element,
-                                            int start, int end,
+                                            int start,
+                                            int end,
                                             final ConvertContext context,
-                                            final GenericDomValue<List<T>> genericDomValue, final boolean delimitersOnly) {
-    
+                                            final GenericDomValue<List<T>> genericDomValue,
+                                            final boolean delimitersOnly) {
+
     return new MyPsiReference(element, new TextRange(start, end), context, genericDomValue, delimitersOnly);
   }
 
@@ -151,13 +156,19 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     protected final GenericDomValue<List<T>> myGenericDomValue;
     private final boolean myDelimitersOnly;
 
-    public MyPsiReference(final PsiElement element, final TextRange range, final ConvertContext context,
+    public MyPsiReference(final PsiElement element,
+                          final TextRange range,
+                          final ConvertContext context,
                           final GenericDomValue<List<T>> genericDomValue,
                           final boolean delimitersOnly) {
       this(element, range, context, genericDomValue, true, delimitersOnly);
     }
 
-    public MyPsiReference(final PsiElement element, final TextRange range, final ConvertContext context, final GenericDomValue<List<T>> genericDomValue, boolean soft,
+    public MyPsiReference(final PsiElement element,
+                          final TextRange range,
+                          final ConvertContext context,
+                          final GenericDomValue<List<T>> genericDomValue,
+                          boolean soft,
                           final boolean delimitersOnly) {
       super(element, range, soft);
       myContext = context;
@@ -178,8 +189,66 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
       return getReferenceVariants(myContext, myGenericDomValue);
     }
 
+    @Override
+    public PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {
+      final Ref<IncorrectOperationException> ref = new Ref<IncorrectOperationException>();
+      PsiElement element = referenceHandleElementRename(this, newElementName, new Function<String, PsiElement>() {
+        public PsiElement fun(final String s) {
+          try {
+            return MyPsiReference.super.handleElementRename(s);
+          }
+          catch (IncorrectOperationException e) {
+            ref.set(e);
+          }
+          return null;
+        }
+      });
+      if (!ref.isNull()) {
+         throw ref.get();
+      }
+
+      return element;
+    }
+
+    @Override
+    public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
+      final Ref<IncorrectOperationException> ref = new Ref<IncorrectOperationException>();
+      PsiElement bindElement =  referenceBindToElement(this, element, new Function<PsiElement, PsiElement>() {
+        public PsiElement fun(final PsiElement s) {
+          try {
+            return MyPsiReference.super.bindToElement(s);
+          }
+          catch (IncorrectOperationException e) {
+            ref.set(e);
+          }
+          return null;
+        }
+      });
+      if (!ref.isNull()) {
+         throw ref.get();
+      }
+
+      return bindElement;
+    }
+
+
     public String getUnresolvedMessagePattern() {
       return getUnresolvedMessage(getValue());
     }
   }
+
+  protected PsiElement referenceBindToElement(final PsiReference psiReference, final PsiElement element,
+                                              final Function<PsiElement, PsiElement> superBindToElementFunction)
+      throws IncorrectOperationException {
+    return superBindToElementFunction.fun(element);
+  }
+
+  protected PsiElement referenceHandleElementRename(final PsiReference psiReference,
+                                                    final String newName,
+                                                    final Function<String, PsiElement> superHandleElementRename)
+      throws IncorrectOperationException {
+
+    return superHandleElementRename.fun(newName);
+  }
+
 }
