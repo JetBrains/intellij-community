@@ -4,6 +4,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -63,6 +64,7 @@ import com.intellij.util.indexing.IndexableFileSet;
 import com.intellij.util.messages.MessageBusConnection;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jdom.Element;
 
 import javax.swing.*;
 import java.io.File;
@@ -97,6 +99,8 @@ import java.util.Map;
 
   private final Map<String, LocalInspectionTool> myAvailableTools = new HashMap<String, LocalInspectionTool>();
   private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new HashMap<String, LocalInspectionToolWrapper>();
+  private static CodeStyleSettings ourOldCodeStyleSettings;
+  private static CodeInsightSettings ourOldCodeInsightSettings;
 
   /**
    * @return Project to be used in tests for example for project components retrieval.
@@ -329,6 +333,10 @@ import java.util.Map;
 
     assertFalse(getPsiManager().isDisposed());
 
+    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+    ourOldCodeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+    ourOldCodeInsightSettings = CodeInsightSettings.getInstance().clone();
+
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
   }
 
@@ -363,8 +371,12 @@ import java.util.Map;
     LookupManager.getInstance(ourProject).hideActiveLookup();
 
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(null);
     assertNotNull("Application components damaged", ProjectManager.getInstance());
+
+    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+    assertEquals("Code style settings damaged", ourOldCodeStyleSettings, CodeStyleSettingsManager.getSettings(getProject()));
+    assertTrue("Code insight settings damaged", checkSettingsEqual(ourOldCodeInsightSettings, CodeInsightSettings.getInstance()));
+
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
@@ -410,6 +422,16 @@ import java.util.Map;
       }
       fail("Unreleased editors: " + allEditors.length);
     }
+  }
+
+  private static boolean checkSettingsEqual(CodeInsightSettings oldCodeInsightSettings, CodeInsightSettings settings) throws WriteExternalException {
+    Element newS = new Element("temp");
+    settings.writeExternal(newS);
+
+    Element oldS = new Element("temp");
+    oldCodeInsightSettings.writeExternal(oldS);
+
+    return JDOMUtil.areElementsEqual(newS, oldS);
   }
 
   public final void runBare() throws Throwable {
