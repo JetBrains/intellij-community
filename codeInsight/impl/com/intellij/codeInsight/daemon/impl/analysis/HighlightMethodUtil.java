@@ -99,8 +99,9 @@ public class HighlightMethodUtil {
     if (aClass == null) return null;
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
-      PsiType superReturnType = superMethodSignature.getSubstitutor().substitute(superMethod.getReturnType());
-      if (superMethodSignature.isRaw()) superReturnType = TypeConversionUtil.erasure(superReturnType);
+      PsiType declaredReturnType = superMethod.getReturnType();
+      PsiType superReturnType = superMethodSignature.getSubstitutor().substitute(declaredReturnType);
+      if (superMethodSignature.isRaw()) superReturnType = TypeConversionUtil.erasure(declaredReturnType);
       if (returnType == null || superReturnType == null || method == superMethod) continue;
       PsiClass superClass = superMethod.getContainingClass();
       if (superClass == null) continue;
@@ -124,8 +125,7 @@ public class HighlightMethodUtil {
     if (superReturnType == null) return null;
     PsiType substitutedSuperReturnType;
     final boolean isJdk15 = PsiUtil.isLanguageLevel5OrHigher(method);
-    if (isJdk15 &&
-        !superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
+    if (isJdk15 && !superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
       PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature,
                                                                                                   superMethodSignature);
       substitutedSuperReturnType = unifyingSubstitutor == null

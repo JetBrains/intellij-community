@@ -1060,11 +1060,11 @@ public class TypeConversionUtil {
     return type.accept(new PsiTypeVisitor<PsiType>() {
       public PsiType visitClassType(PsiClassType classType) {
         final PsiClass aClass = classType.resolve();
-        if (!(aClass instanceof PsiTypeParameter)) {
-          return classType.rawType();
+        if (aClass instanceof PsiTypeParameter) {
+          return typeParameterErasure((PsiTypeParameter)aClass, beforeSubstitutor);
         }
         else {
-          return typeParameterErasure((PsiTypeParameter)aClass, beforeSubstitutor);
+          return classType.rawType();
         }
       }
 

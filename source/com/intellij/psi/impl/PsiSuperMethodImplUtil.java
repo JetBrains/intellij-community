@@ -224,18 +224,17 @@ public class PsiSuperMethodImplUtil {
   private static PsiSubstitutor obtainFinalSubstitutor(PsiClass superClass,
                                                        PsiSubstitutor superSubstitutor,
                                                        PsiSubstitutor derivedSubstitutor) {
-    Iterator<PsiTypeParameter> superTypeParams = PsiUtil.typeParametersIterator(superClass);
-    if (!superTypeParams.hasNext()) return PsiSubstitutor.EMPTY;
-
-    final Map<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
-    while (superTypeParams.hasNext()) {
-      PsiTypeParameter typeParameter = superTypeParams.next();
+    Map<PsiTypeParameter, PsiType> map = null;
+    for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(superClass)) {
       PsiType type = superSubstitutor.substitute(typeParameter);
       final PsiType t = derivedSubstitutor.substitute(type);
+      if (map == null) {
+        map = new HashMap<PsiTypeParameter, PsiType>();
+      }
       map.put(typeParameter, t);
     }
 
-    return JavaPsiFacade.getInstance(superClass.getProject()).getElementFactory().createSubstitutor(map);
+    return map == null ? PsiSubstitutor.EMPTY : JavaPsiFacade.getInstance(superClass.getProject()).getElementFactory().createSubstitutor(map);
   }
 
   public static Collection<HierarchicalMethodSignature> getVisibleSignatures(PsiClass aClass) {

@@ -154,11 +154,11 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       if (aClass == null) return classType;
       if (aClass instanceof PsiTypeParameter) {
         final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
-        if (!mySubstitutionMap.containsKey(typeParameter)) {
-          return classType;
+        if (mySubstitutionMap.containsKey(typeParameter)) {
+          return substituteTypeParameter(typeParameter);
         }
         else {
-          return substituteTypeParameter(typeParameter);
+          return classType;
         }
       }
       final Map<PsiTypeParameter, PsiType> hashMap = new HashMap<PsiTypeParameter, PsiType>(2);
