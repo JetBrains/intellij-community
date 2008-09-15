@@ -4,6 +4,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
@@ -16,10 +17,10 @@ import java.awt.*;
  */
 final class ActionPopupMenuImpl implements ActionPopupMenu {
 
-  private MyMenu myMenu;
+  private final MyMenu myMenu;
   private ActionManagerImpl myManager;
 
-  public ActionPopupMenuImpl(String place, ActionGroup group, ActionManagerImpl actionManager) {
+  public ActionPopupMenuImpl(String place, @NotNull ActionGroup group, ActionManagerImpl actionManager) {
     myManager = actionManager;
     myMenu = new MyMenu(place, group);
   }
@@ -30,11 +31,11 @@ final class ActionPopupMenuImpl implements ActionPopupMenu {
 
   private class MyMenu extends JPopupMenu {
     private String myPlace;
-    private ActionGroup myGroup;
+    private final ActionGroup myGroup;
     private DataContext myContext;
     private PresentationFactory myPresentationFactory;
 
-    public MyMenu(String place, ActionGroup group) {
+    public MyMenu(String place, @NotNull ActionGroup group) {
       myPlace = place;
       myGroup = group;
       myPresentationFactory = new PresentationFactory();

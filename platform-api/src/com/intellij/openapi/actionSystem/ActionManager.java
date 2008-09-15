@@ -50,7 +50,7 @@ public abstract class ActionManager implements ApplicationComponent {
    *
    * @return An instance of <code>ActionPopupMenu</code>
    */
-  public abstract ActionPopupMenu createActionPopupMenu(@NonNls String place, ActionGroup group);
+  public abstract ActionPopupMenu createActionPopupMenu(@NonNls String place, @NotNull ActionGroup group);
 
   /**
    * Factory method that creates an <code>ActionToolbar</code> from the

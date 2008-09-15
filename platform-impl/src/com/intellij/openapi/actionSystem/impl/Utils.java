@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ public class Utils{
    * @param actionManager
    * @param list this list contains expanded actions.
    */
-  public static void expandActionGroup(ActionGroup group,
+  public static void expandActionGroup(@NotNull ActionGroup group,
                                        ArrayList<AnAction> list,
                                        PresentationFactory presentationFactory,
                                        DataContext context,
@@ -150,7 +151,7 @@ public class Utils{
   }
 
 
-  public static void fillMenu(ActionGroup group,JComponent component, PresentationFactory presentationFactory, DataContext context, String place){
+  public static void fillMenu(@NotNull ActionGroup group,JComponent component, PresentationFactory presentationFactory, DataContext context, String place){
     ArrayList<AnAction> list = new ArrayList<AnAction>();
     expandActionGroup(group, list, presentationFactory, context, place, ActionManager.getInstance());
 

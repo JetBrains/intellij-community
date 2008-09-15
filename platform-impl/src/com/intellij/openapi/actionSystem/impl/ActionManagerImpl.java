@@ -138,7 +138,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     myTimer.removeTimerListener(listener);
   }
 
-  public ActionPopupMenu createActionPopupMenu(String place, ActionGroup group) {
+  public ActionPopupMenu createActionPopupMenu(String place, @NotNull ActionGroup group) {
     return new ActionPopupMenuImpl(place, group, this);
   }
 
