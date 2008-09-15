@@ -205,6 +205,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       else if (element instanceof PsiImportList && unusedImportEnabled) {
         final PsiImportStatementBase[] imports = ((PsiImportList)element).getAllImportStatements();
         for (PsiImportStatementBase statement : imports) {
+          ProgressManager.getInstance().checkCanceled();
           final HighlightInfo highlightInfo = processImport(statement);
           if (highlightInfo != null) array.add(highlightInfo);
         }
@@ -279,6 +280,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private boolean isImplicitUsage(final PsiElement element) {
     for(ImplicitUsageProvider provider: myImplicitUsageProviders) {
+      ProgressManager.getInstance().checkCanceled();
       if (provider.isImplicitUsage(element)) {
         return true;
       }
@@ -289,6 +291,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private boolean isImplicitRead(final PsiVariable element) {
     for(ImplicitUsageProvider provider: myImplicitUsageProviders) {
+      ProgressManager.getInstance().checkCanceled();
       if (provider.isImplicitRead(element)) {
         return true;
       }
@@ -298,6 +301,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private boolean isImplicitWrite(final PsiVariable element) {
     for(ImplicitUsageProvider provider: myImplicitUsageProviders) {
+      ProgressManager.getInstance().checkCanceled();
       if (provider.isImplicitWrite(element)) {
         return true;
       }
@@ -413,34 +417,33 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   @Nullable
   private HighlightInfo processMethod(final PsiMethod method, final UnusedSymbolLocalInspection unusedSymbolInspection) {
-    if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
-      final boolean isSetter = PropertyUtil.isSimplePropertySetter(method);
-      final boolean isInjected = UnusedSymbolLocalInspection.isInjected(method, unusedSymbolInspection);
-      if (!myRefCountHolder.isReferenced(method)) {
-        if (isInjected || HighlightMethodUtil.isSerializationRelatedMethod(method) ||
-            isIntentionalPrivateConstructor(method) ||
-            isImplicitUsage(method)
-        ) {
-          return null;
-        }
-        String pattern = method.isConstructor() ? JavaErrorMessages.message("private.constructor.is.not.used") : JavaErrorMessages.message("private.method.is.not.used");
-        String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY);
-        String message = MessageFormat.format(pattern, symbolName);
-        PsiIdentifier identifier = method.getNameIdentifier();
-        final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(method), HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
-        if (isSetter) {
-          SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(method, new Processor<String>() {
-            public boolean process(final String annoName) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, unusedSymbolInspection.createQuickFix(annoName, method));
-              return true;
-            }
-          });
-        }
-        return highlightInfo;
-      }
+    if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      return null;
     }
-    return null;
+    if (myRefCountHolder.isReferenced(method)) {
+      return null;
+    }
+    if (UnusedSymbolLocalInspection.isInjected(method, unusedSymbolInspection) ||
+        HighlightMethodUtil.isSerializationRelatedMethod(method) ||
+        isIntentionalPrivateConstructor(method) ||
+        isImplicitUsage(method)) {
+      return null;
+    }
+    String pattern = method.isConstructor() ? JavaErrorMessages.message("private.constructor.is.not.used") : JavaErrorMessages.message("private.method.is.not.used");
+    String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY);
+    String message = MessageFormat.format(pattern, symbolName);
+    PsiIdentifier identifier = method.getNameIdentifier();
+    final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
+    QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(method), HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
+    if (PropertyUtil.isSimplePropertySetter(method)) {
+      SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(method, new Processor<String>() {
+        public boolean process(final String annoName) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, unusedSymbolInspection.createQuickFix(annoName, method));
+          return true;
+        }
+      });
+    }
+    return highlightInfo;
   }
 
   @Nullable
