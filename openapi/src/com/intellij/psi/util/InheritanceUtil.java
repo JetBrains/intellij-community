@@ -17,8 +17,12 @@ package com.intellij.psi.util;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.Processor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 public class InheritanceUtil {
   /**
@@ -42,5 +46,26 @@ public class InheritanceUtil {
    */
   public static boolean isCorrectDescendant(@Nullable PsiClass aClass, @Nullable PsiClass baseClass, boolean checkDeep) {
     return isInheritorOrSelf(aClass, baseClass, checkDeep);
+  }
+
+  public static boolean processSupers(@Nullable PsiClass aClass, boolean includeSelf, Processor<PsiClass> superProcessor) {
+    if (aClass == null) return true;
+
+    if (includeSelf && !superProcessor.process(aClass)) return false;
+
+    return processSupers(aClass, superProcessor, new THashSet<PsiClass>());
+  }
+
+  private static boolean processSupers(@NotNull PsiClass aClass, Processor<PsiClass> superProcessor, Set<PsiClass> visited) {
+    if (!visited.add(aClass)) return true;
+
+    for (final PsiClass intf : aClass.getInterfaces()) {
+      if (!superProcessor.process(intf) || !processSupers(intf, superProcessor, visited)) return false;
+    }
+    final PsiClass superClass = aClass.getSuperClass();
+    if (superClass != null) {
+      if (!superProcessor.process(superClass) || !processSupers(superClass, superProcessor, visited)) return false;
+    }
+    return true;
   }
 }
