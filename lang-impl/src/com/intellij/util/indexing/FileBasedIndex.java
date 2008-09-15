@@ -935,6 +935,7 @@ public class FileBasedIndex implements ApplicationComponent {
             synchronized (myFutureInvalidations) {
               final FutureTask<?> future = (FutureTask<?>)myInvalidationService.submit(new Runnable() {
                 public void run() {
+                  Throwable unexpectedError = null;
                   for (ID<?, ?> indexId : affectedIndices) {
                     try {
                       updateSingleIndex(indexId, file, null, fc);
@@ -943,8 +944,16 @@ public class FileBasedIndex implements ApplicationComponent {
                       LOG.info(e);
                       requestRebuild(indexId);
                     }
+                    catch (Throwable e) {
+                      if (unexpectedError == null) {
+                        unexpectedError = e;
+                      }
+                    }
                   }
                   IndexingStamp.flushCache();
+                  if (unexpectedError != null) {
+                    LOG.error(unexpectedError);
+                  }
                 }
               });
               myFutureInvalidations.offer(future);
