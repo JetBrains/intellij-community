@@ -12,6 +12,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -74,6 +75,11 @@ public abstract class ResourceBundleManager {
 
   @Nullable
   public PropertyCreationHandler getPropertyCreationHandler() {
+    return null;
+  }
+
+  @Nullable
+  public String suggestPropertyKey(final @NotNull String value) {
     return null;
   }
 

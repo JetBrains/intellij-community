@@ -287,47 +287,50 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
 
   protected String suggestPropertyKey(String value) {
     // suggest property key not existing in this file
-    final StringBuilder result = new StringBuilder();
-    boolean insertDotBeforeNextWord = false;
-    for (int i = 0; i < value.length(); i++) {
-      final char c = value.charAt(i);
-      if (Character.isLetterOrDigit(c)) {
-        if (insertDotBeforeNextWord) {
-          result.append('.');
+    String key = myResourceBundleManager.suggestPropertyKey(value);
+    if (key == null) {
+      final StringBuilder result = new StringBuilder();
+      boolean insertDotBeforeNextWord = false;
+      for (int i = 0; i < value.length(); i++) {
+        final char c = value.charAt(i);
+        if (Character.isLetterOrDigit(c)) {
+          if (insertDotBeforeNextWord) {
+            result.append('.');
+          }
+          result.append(Character.toLowerCase(c));
+          insertDotBeforeNextWord = false;
         }
-        result.append(Character.toLowerCase(c));
-        insertDotBeforeNextWord = false;
-      }
-      else if (c == '&') {   //do not insert dot if there is letter after the amp
-        if (insertDotBeforeNextWord) continue;
-        if (i == value.length() - 1) {
-          continue;
-        }
-        if (Character.isLetter(value.charAt(i + 1))) {
-          continue;
-        }
-        insertDotBeforeNextWord = true;
-      }
-      else {
-        if (result.length() > 0) {
+        else if (c == '&') {   //do not insert dot if there is letter after the amp
+          if (insertDotBeforeNextWord) continue;
+          if (i == value.length() - 1) {
+            continue;
+          }
+          if (Character.isLetter(value.charAt(i + 1))) {
+            continue;
+          }
           insertDotBeforeNextWord = true;
         }
+        else {
+          if (result.length() > 0) {
+            insertDotBeforeNextWord = true;
+          }
+        }
       }
+      key = result.toString();
     }
-    value = result.toString();
 
     PropertiesFile propertiesFile = getPropertiesFile();
     if (propertiesFile != null) {
-      if (propertiesFile.findPropertyByKey(value) == null) return value;
+      if (propertiesFile.findPropertyByKey(key) == null) return key;
 
       int suffix = 1;
-      while (propertiesFile.findPropertyByKey(value + suffix) != null) {
+      while (propertiesFile.findPropertyByKey(key + suffix) != null) {
         suffix++;
       }
-      return value + suffix;
+      return key + suffix;
     }
     else {
-      return value;
+      return key;
     }
   }
 
