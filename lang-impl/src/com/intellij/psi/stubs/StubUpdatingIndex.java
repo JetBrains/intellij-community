@@ -182,14 +182,14 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
         if (parserDefinition != null) {
           final IFileElementType type = parserDefinition.getFileNodeType();
           if (type instanceof IStubFileElementType) {
-            version ^= ((IStubFileElementType)type).getStubVersion();
+            version += ((IStubFileElementType)type).getStubVersion();
           }
         }
       }
       else if (fileType.isBinary()) {
         final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
         if (builder != null ) {
-          version ^= builder.getStubVersion();
+          version += builder.getStubVersion();
         }
       }
     }
