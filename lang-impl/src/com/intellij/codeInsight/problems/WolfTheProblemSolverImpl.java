@@ -15,6 +15,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -214,10 +215,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   }
 
-  public void startCheckingIfVincentSolvedProblemsYet(final ProgressIndicator progress, ProgressableTextEditorHighlightingPass progressablePass) throws ProcessCanceledException{
+  public void startCheckingIfVincentSolvedProblemsYet(final ProgressIndicator progress, ProgressableTextEditorHighlightingPass pass) throws ProcessCanceledException{
     if (!myProject.isOpen()) return;
 
-    progressablePass.setProgressLimit(myCheckingQueue.size());
+    pass.setProgressLimit(myCheckingQueue.size());
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     String oldInfo = null;
     try {
@@ -230,7 +231,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         if (!virtualFile.isValid() || orderVincentToCleanTheCar(virtualFile, progress)) {
           doRemove(virtualFile);
         }
-        progressablePass.advanceProgress(1);
+        pass.advanceProgress(1);
       }
     }
     finally {
@@ -266,7 +267,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     if (document == null) return false;
 
     try {
-      GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), true) {
+      GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false) {
         protected HighlightInfoHolder createInfoHolder() {
           return new HighlightInfoHolder(psiFile, HighlightInfoFilter.EMPTY_ARRAY) {
             public boolean add(HighlightInfo info) {
@@ -384,6 +385,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     if (virtualFile == null) return false;
 
     for (final Condition<VirtualFile> filter : myFilters) {
+      ProgressManager.getInstance().checkCanceled();
       if (filter.value(virtualFile)) {
         return true;
       }
