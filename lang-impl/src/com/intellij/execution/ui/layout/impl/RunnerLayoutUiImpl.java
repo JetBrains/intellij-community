@@ -220,6 +220,11 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     return this;
   }
 
+  public LayoutViewOptions setToDisposeRemoveContent(boolean toDispose) {
+    myContentUI.setToDisposeRemovedContent(toDispose);
+    return this;
+  }
+
   @NotNull
   public LayoutViewOptions setMoveToGridActionEnabled(final boolean enabled) {
     myContentUI.setMovetoGridActionEnabled(enabled);

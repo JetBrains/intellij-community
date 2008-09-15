@@ -151,6 +151,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     Content watches = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchPanel, XDebuggerBundle.message("debugger.session.tab.watches.title"),
                                          XDebuggerUIConstants.WATCHES_TAB_ICON, null);
+    watches.setCloseable(false);
     watches.setAlertIcon(breakpointAlert);
     final DefaultActionGroup watchesGroup = new DefaultActionGroup();
     addAction(watchesGroup, DebuggerActions.NEW_WATCH);
@@ -162,6 +163,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, myFramesPanel, XDebuggerBundle.message("debugger.session.tab.frames.title"),
                                                XDebuggerUIConstants.FRAMES_TAB_ICON, null);
+    framesContent.setCloseable(false);
     framesContent.setAlertIcon(breakpointAlert);
 
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
@@ -178,6 +180,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     myVariablesPanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
     Content vars = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, myVariablesPanel, XDebuggerBundle.message("debugger.session.tab.variables.title"),
                                       XDebuggerUIConstants.VARIABLES_TAB_ICON, null);
+    vars.setCloseable(false);
     vars.setAlertIcon(breakpointAlert);
     final DefaultActionGroup varsGroup = new DefaultActionGroup();
     addAction(varsGroup, DebuggerActions.EVALUATE_EXPRESSION);
@@ -229,6 +232,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
                                          XDebuggerBundle.message("debugger.session.tab.console.content.name"),
                                          XDebuggerUIConstants.CONSOLE_TAB_ICON, myConsole.getPreferredFocusableComponent());
 
+    console.setCloseable(false);
     attachNotificationTo(console);
 
     final DefaultActionGroup consoleActions = new DefaultActionGroup();

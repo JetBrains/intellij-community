@@ -56,4 +56,6 @@ public interface ViewContext extends Disposable {
   boolean isMinimizeActionEnabled();
 
   boolean isMoveToGridActionEnabled();
+
+  boolean isToDisposeRemovedContent();
 }

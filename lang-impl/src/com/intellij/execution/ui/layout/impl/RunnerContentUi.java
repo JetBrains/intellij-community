@@ -80,6 +80,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private ActionGroup myAdditonalFocusActions;
 
   private ActionCallback myInitialized = new ActionCallback();
+  private boolean myToDisposeRemovedContent = true;
 
   public RunnerContentUi(Project project,
                          RunnerLayoutUi ui,
@@ -670,6 +671,13 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return null;
   }
 
+  public void setToDisposeRemovedContent(final boolean toDispose) {
+    myToDisposeRemovedContent = toDispose;
+  }
+
+  public boolean isToDisposeRemovedContent() {
+    return myToDisposeRemovedContent;
+  }
 
   private class MyComponent extends Wrapper.FocusHolder implements DataProvider {
 
