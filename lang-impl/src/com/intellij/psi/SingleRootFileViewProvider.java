@@ -45,13 +45,13 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SingleRootFileViewProvider extends UserDataHolderBase implements FileViewProvider {
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
   private final PsiManager myManager;
-  private VirtualFile myVirtualFile;
+  private volatile VirtualFile myVirtualFile;
   private final boolean myEventSystemEnabled;
-  private boolean myPhysical;
+  private volatile boolean myPhysical;
   private final AtomicReference<PsiFile> myPsiFile = new AtomicReference<PsiFile>();
   private volatile Content myContent;
   private volatile SoftReference<Document> myDocument;
-  private Language myBaseLanguage;
+  private volatile Language myBaseLanguage;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
     this(manager, file, true);
