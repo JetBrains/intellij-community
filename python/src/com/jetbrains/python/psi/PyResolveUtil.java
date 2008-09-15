@@ -18,6 +18,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -256,6 +257,37 @@ public class PyResolveUtil {
     return path;
   }
 
+  public static class CollectProcessor<T extends PsiElement> implements PsiScopeProcessor {
+
+    Class<T>[] my_collectables;
+    List<T> my_result;
+
+    public CollectProcessor(Class<T>... collectables) {
+      my_collectables = collectables;
+      my_result = new ArrayList<T>();
+    }
+
+    public boolean execute(final PsiElement element, final ResolveState state) {
+      for (Class<T> cls : my_collectables) {
+        if (cls.isInstance(element)) {
+          my_result.add((T)element);
+        }
+      }
+      return false;
+    }
+
+    public <T> T getHint(final Class<T> hintClass) {
+      return null;
+    }
+
+    public void handleEvent(final Event event, final Object associated) {
+    }
+
+    public List<T> getResult() {
+      return my_result;
+    }
+  }
+
   public static class ResolveProcessor implements PyScopeProcessor {
     private String myName;
     private PsiElement myResult = null;
@@ -342,6 +374,8 @@ public class PyResolveUtil {
     public void handleEvent(Event event, Object associated) {
     }
 
+
+    // NOTE: unused now
     /**
      * Looks at an element and says if looking at it worthy.
      * Used to break circular attempts to resolve names imported into __init__.py inside it again.
@@ -398,6 +432,23 @@ public class PyResolveUtil {
   public static class VariantsProcessor implements PsiScopeProcessor {
     private Map<String, LookupElement> myVariants = new HashMap<String, LookupElement>();
 
+    protected String my_notice;
+
+    public void setNotice(@Nullable String notice) {
+      my_notice = notice;
+    }
+
+    protected void setupItem(LookupItem item) {
+      if (my_notice != null) {
+        setItemNotice(item, my_notice);
+      }
+    }
+
+    protected void setItemNotice(final LookupItem item, String notice) {
+      item.setAttribute(item.TAIL_TEXT_ATTR, notice);
+      item.setAttribute(item.TAIL_TEXT_SMALL_ATTR, "");
+    }
+
     public LookupElement[] getResult() {
       final Collection<LookupElement> variants = myVariants.values();
       return variants.toArray(new LookupElement[variants.size()]);
@@ -413,14 +464,18 @@ public class PyResolveUtil {
         final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
         final String name = psiNamedElement.getName();
         if (!myVariants.containsKey(name)) {
-          myVariants.put(name, LookupElementFactory.getInstance().createLookupElement(psiNamedElement));
+          final LookupItem lookup_item = (LookupItem)LookupElementFactory.getInstance().createLookupElement(psiNamedElement);
+          setupItem(lookup_item);
+          myVariants.put(name, lookup_item);
         }
       }
       else if (element instanceof PyReferenceExpression) {
         PyReferenceExpression expr = (PyReferenceExpression)element;
         String referencedName = expr.getReferencedName();
         if (referencedName != null && !myVariants.containsKey(referencedName)) {
-          myVariants.put(referencedName, LookupElementFactory.getInstance().createLookupElement(element, referencedName));
+          final LookupItem lookup_item = (LookupItem)LookupElementFactory.getInstance().createLookupElement(element, referencedName);
+          setupItem(lookup_item);
+          myVariants.put(referencedName, lookup_item);
         }
       }
       else if (element instanceof NameDefiner) {
@@ -429,7 +484,19 @@ public class PyResolveUtil {
           if (expr != null) { // NOTE: maybe rather have SingleIterables skip nulls outright?
             String referencedName = expr.getName();
             if (referencedName != null && !myVariants.containsKey(referencedName)) {
-              myVariants.put(referencedName, LookupElementFactory.getInstance().createLookupElement(element, referencedName));
+              final LookupItem lookup_item = (LookupItem)LookupElementFactory.getInstance().createLookupElement(referencedName);
+              setupItem(lookup_item);
+              if (definer instanceof PyImportElement) { // set notice to imported module name if needed 
+                PsiElement maybe_from_import = definer.getParent();
+                if (maybe_from_import instanceof PyFromImportStatement) {
+                  final PyFromImportStatement from_import = (PyFromImportStatement)maybe_from_import;
+                  PyReferenceExpression src = from_import.getImportSource();
+                  if (src != null) {
+                    setItemNotice(lookup_item, " | " + src.getName());
+                  }
+                }
+              }
+              myVariants.put(referencedName, lookup_item);
             }
           }
         }
