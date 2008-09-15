@@ -293,6 +293,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     if (isEmpty) {
       LookupItem<String> item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"));
       item.setPrefixMatcher(new CamelHumpMatcher(""));
+      if (!myCalculating) {
+        final int maxWidth = myCellRenderer.updateMaximumWidth(item);
+        myList.setFixedCellWidth(Math.max(maxWidth, myList.getFixedCellWidth()));
+      }
+
       model.addElement(item);
       allItems.add(item);
     }
