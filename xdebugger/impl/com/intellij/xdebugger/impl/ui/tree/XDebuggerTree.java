@@ -12,13 +12,17 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author nik
@@ -42,6 +46,23 @@ public class XDebuggerTree extends Tree implements DataProvider {
     setCellRenderer(new XDebuggerTreeRenderer());
     setRootVisible(false);
     setShowsRootHandles(true);
+    addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(final MouseEvent e) {
+        if (e.getClickCount() == 2) {
+          MessageTreeNode[] treeNodes = getSelectedNodes(MessageTreeNode.class, null);
+          if (treeNodes.length == 1) {
+            MessageTreeNode node = treeNodes[0];
+            if (node.isEllipsis()) {
+              TreeNode parent = node.getParent();
+              if (parent instanceof XValueContainerNode) {
+                ((XValueContainerNode)parent).startComputingChildren();
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   public void addTreeListener(@NotNull XDebuggerTreeListener listener) {

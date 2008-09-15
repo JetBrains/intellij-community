@@ -17,6 +17,13 @@ public interface XCompositeNode extends Obsolescent {
   void addChildren(List<XValue> children, final boolean last);
 
   /**
+   * Add an ellipsis node ("...") indicating that the node has too many children. If user double-click on that node
+   * {@link XValueContainer#computeChildren(XCompositeNode)} method will be called again to add next children.
+   * @param remaining number of remaining children or <code>-1</code> if unknown
+   */
+  void tooManyChildren(int remaining);
+
+  /**
    * Indicates that an error occurs
    * @param errorMessage message desribing the error
    */

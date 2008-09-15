@@ -1,6 +1,7 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
@@ -15,9 +16,17 @@ import java.util.List;
  * @author nik
  */
 public class MessageTreeNode extends XDebuggerTreeNode {
+  private boolean myEllipsis;
+
   private MessageTreeNode(XDebuggerTree tree, final XDebuggerTreeNode parent, final String message, final SimpleTextAttributes attributes,
                           @Nullable Icon icon) {
+    this(tree, parent, message, attributes, icon, false);
+  }
+
+  private MessageTreeNode(XDebuggerTree tree, final XDebuggerTreeNode parent, final String message, final SimpleTextAttributes attributes, @Nullable Icon icon,
+                          final boolean ellipsis) {
     super(tree, parent, true);
+    myEllipsis = ellipsis;
     setIcon(icon);
     myText.append(message, attributes);
   }
@@ -26,8 +35,17 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     return Collections.emptyList();
   }
 
+  public boolean isEllipsis() {
+    return myEllipsis;
+  }
+
   public List<? extends XDebuggerTreeNode> getLoadedChildren() {
     return null;
+  }
+
+  public static MessageTreeNode createEllipsisNode(XDebuggerTree tree, XDebuggerTreeNode parent, final int remaining) {
+    String message = remaining == -1 ? "..." : XDebuggerBundle.message("node.text.ellipsis.0.more.nodes.double.click.to.show", remaining);
+    return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.REGULAR_ATTRIBUTES, null, true);
   }
 
   public static MessageTreeNode createMessageNode(XDebuggerTree tree, XDebuggerTreeNode parent, String message, @Nullable Icon icon) {

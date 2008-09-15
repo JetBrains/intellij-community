@@ -32,7 +32,10 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
   private void loadChildren() {
     if (myValueChildren != null || myMessageChildren != null) return;
+    startComputingChildren();
+  }
 
+  public void startComputingChildren() {
     myCachedAllChildren = null;
     myMessageChildren = Collections.singletonList(createLoadingMessageNode());
     myValueContainer.computeChildren(this);
@@ -60,6 +63,14 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
         myCachedAllChildren = null;
         fireNodeChildrenChanged();
         myTree.childrenLoaded(XValueContainerNode.this, newChildren, last);
+      }
+    });
+  }
+
+  public void tooManyChildren(final int remaining) {
+    DebuggerUIUtil.invokeLater(new Runnable() {
+      public void run() {
+        setMessageNode(MessageTreeNode.createEllipsisNode(myTree, XValueContainerNode.this, remaining));
       }
     });
   }
