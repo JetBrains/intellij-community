@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,7 +62,7 @@ public abstract class PopupHandler extends MouseAdapter {
     installPopupHandler(component, group, place, ActionManager.getInstance());
   }
 
-  public static MouseListener installPopupHandler(JComponent component, final ActionGroup group, final String place, final ActionManager actionManager) {
+  public static MouseListener installPopupHandler(JComponent component, @NotNull final ActionGroup group, final String place, final ActionManager actionManager) {
     if (ApplicationManager.getApplication() == null) return new MouseAdapter(){};
     PopupHandler popupHandler = new PopupHandler() {
       public void invokePopup(Component comp, int x, int y) {
@@ -73,7 +74,7 @@ public abstract class PopupHandler extends MouseAdapter {
     return popupHandler;
   }
 
-  public static MouseListener installFollowingSelectionTreePopup(final JTree tree, final ActionGroup group, final String place, final ActionManager actionManager){
+  public static MouseListener installFollowingSelectionTreePopup(final JTree tree, @NotNull final ActionGroup group, final String place, final ActionManager actionManager){
     if (ApplicationManager.getApplication() == null) return new MouseAdapter(){};
     PopupHandler handler = new PopupHandler() {
       public void invokePopup(Component comp, int x, int y) {
