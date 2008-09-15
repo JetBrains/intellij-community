@@ -14,13 +14,12 @@
   ~ limitations under the License.
   -->
 
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
   <name>JUnit</name>
   <description>Provides possibility to run JUnit 3.x and 4.x tests and view their results</description>
   <version>1.0</version>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
-  <extensions xmlns="com.intellij">
+  <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationProducer implementation="com.intellij.execution.junit.AllInPackageConfigurationProducer"/>
     <configurationProducer implementation="com.intellij.execution.junit.TestClassConfigurationProducer"/>
