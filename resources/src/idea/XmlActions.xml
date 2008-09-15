@@ -14,7 +14,6 @@
       <add-to-group group-id="ProjectViewPopupMenuRefactoringGroup" anchor="last"/>
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>
       <add-to-group group-id="CommanderPopupMenu" anchor="last"/>
-      <add-to-group group-id="Vcs.FileViewPopup" anchor="last"/>
     </reference>
 
     <action id="DomElementsTreeView.GotoDomElementDeclarationAction"

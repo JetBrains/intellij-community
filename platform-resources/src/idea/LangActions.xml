@@ -666,5 +666,12 @@
       <add-to-group group-id="VersionControlsGroup" anchor="first"/>
       <add-to-group group-id="VcsGroups" anchor="first"/>
     </group>
+
+    <group id="TestTreePopupMenu">
+      <reference ref="RunContextGroup"/>
+      <separator/>
+      <reference ref="EditSource"/>
+      <reference ref="ViewSource"/>
+    </group>
   </actions>
 </component>

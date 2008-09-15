@@ -480,31 +480,6 @@
       <reference ref="ExternalToolsGroup"/>
     </group>
 
-    <group id="Vcs.FileViewPopup">
-      <reference ref="CutCopyPasteGroup"/>
-      <reference ref="EditSource"/>
-      <separator/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="TypeHierarchy"/>
-      <reference ref="ReformatCode"/>
-      <reference ref="OptimizeImports"/>
-      <reference ref="$Delete"/>
-      <separator/>
-      <reference ref="VcsGroup"/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-    </group>
-
-    <group id="TestTreePopupMenu">
-      <reference ref="RunContextGroup"/>
-      <separator/>
-      <reference ref="EditSource"/>
-      <reference ref="ViewSource"/>
-    </group>
-
     <group id="TestStatisticsTablePopupMenu">
       <reference ref="RunContextGroup"/>
       <separator/>
