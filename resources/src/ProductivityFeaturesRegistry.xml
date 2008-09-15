@@ -223,13 +223,6 @@
       min-usage-count="10"
       first-show="2"
       successive-show="4"/>
-    <feature
-      id="editing.incremental.search"
-      tip-file="IncrementalSearch.html"
-      min-usage-count="13"
-      first-show="2"
-      successive-show="6"
-    />
   </group>
 
   <group id="codeassists">
