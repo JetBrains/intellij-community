@@ -114,7 +114,7 @@ public interface RegExpTT {
     TokenSet SIMPLE_CLASSES = TokenSet.create(DOT, CHAR_CLASS);
 
     // caret is just a character in classes after the first position: [a^] matches "a" or "^"
-    TokenSet CHARACTERS2 = TokenSet.orSet(CHARACTERS, SIMPLE_CLASSES, TokenSet.create(CARET));
+    TokenSet CHARACTERS2 = TokenSet.orSet(CHARACTERS, SIMPLE_CLASSES, TokenSet.create(CARET, LBRACE));
 
     TokenSet QUANTIFIERS = TokenSet.create(QUEST, PLUS, STAR, LBRACE);
 

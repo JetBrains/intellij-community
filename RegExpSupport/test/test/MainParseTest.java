@@ -57,11 +57,13 @@ public class MainParseTest extends BaseParseTestcase {
         int i = 0;
         for (Element element : list) {
             final String name;
-            final String s = ((Element)element.getParent()).getName();
+            final Element parent = (Element)element.getParent();
+            final String s = parent.getName();
+            final String t = parent.getAttribute("id") == null ? "" : parent.getAttribute("id").getValue() + "-";
             if (!"tests".equals(s)) {
-                name = s + "/test-" + ++i + ".regexp";
+                name = s + "/test-" + t + ++i + ".regexp";
             } else {
-                name = "test-" + ++i + ".regexp";
+                name = "test-" + t + ++i + ".regexp";
             }
             final Result result = Result.valueOf((String)XPath.selectSingleNode(element, "string(expected)"));
             final boolean warn = !"false".equals(element.getAttributeValue("warning"));
@@ -143,6 +145,10 @@ public class MainParseTest extends BaseParseTestcase {
 
     public void testRegressions() throws Exception {
         doTest("regressions/");
+    }
+
+    public void testBugs() throws Exception {
+        doTest("bug/");
     }
 
     public void testFromXML() throws Exception {

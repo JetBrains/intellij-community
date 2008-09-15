@@ -941,4 +941,27 @@
       <expected>OK</expected>
     </test>
   </real-life>
+
+  <bug id="IDEADEV-29851">
+    <test>
+      <pattern>[{][\w\.]*[}]</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>[a-z0-9!\#$%&amp;'*+/=?^_`{|}~-]+</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>[\{]</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>{</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test>
+      <pattern>\{</pattern>
+      <expected>OK</expected>
+    </test>
+  </bug>
 </tests>

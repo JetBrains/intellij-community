@@ -56,6 +56,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
 %xstate EMBRACED
 %xstate CLASS1
 %state CLASS2
+%state PROP
 %xstate OPTIONS
 %xstate COMMENT
 
@@ -131,7 +132,7 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE}  "-"                 { return RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {META}              { return RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {CLASS}             { return RegExpTT.CHAR_CLASS;    }
-{ESCAPE}  {PROP}              { return RegExpTT.PROPERTY;      }
+{ESCAPE}  {PROP}              { yypushstate(PROP); return RegExpTT.PROPERTY;      }
 
 {ESCAPE}  {BOUNDARY}          { return yystate() != CLASS2 ? RegExpTT.BOUNDARY : RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {CONTROL}           { return RegExpTT.ESC_CTRL_CHARACTER; }
@@ -140,9 +141,14 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE}  {ANY}               { return RegExpTT.REDUNDANT_ESCAPE; }
 {ESCAPE}                      { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 
+<PROP> {
+  {LBRACE}                    { yypopstate(); yypushstate(EMBRACED); return RegExpTT.LBRACE; }
+  {ANY}                       { yypopstate(); yypushback(1); }
+}
+
 /* "{" \d+(,\d*)? "}" */
 /* "}" outside counted closure is treated as regular character */
-{LBRACE}              { yypushstate(EMBRACED); return RegExpTT.LBRACE; }
+{LBRACE}              { if (yystate() != CLASS2) yypushstate(EMBRACED); return RegExpTT.LBRACE; }
 
 <EMBRACED> {
   [:letter:]+         { return RegExpTT.NAME;   }
