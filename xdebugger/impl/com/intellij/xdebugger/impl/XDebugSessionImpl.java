@@ -52,6 +52,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private ExecutionEnvironment myEnvironment;
   private ProgramRunner myRunner;
   private boolean myStopped;
+  private boolean myPauseActionSupported;
 
   public XDebugSessionImpl(final @NotNull ExecutionEnvironment env, final @NotNull ProgramRunner runner, XDebuggerManagerImpl debuggerManager) {
     this(env, runner, debuggerManager, env.getRunProfile().getName());
@@ -75,6 +76,14 @@ public class XDebugSessionImpl implements XDebugSession {
   public RunContentDescriptor getRunContentDescriptor() {
     LOG.assertTrue(mySessionTab != null, "Call init() first!");
     return mySessionTab.getRunContentDescriptor();
+  }
+
+  public void setPauseActionSupported(final boolean isSupported) {
+    myPauseActionSupported = isSupported;
+  }
+
+  public boolean isPauseActionSupported() {
+    return myPauseActionSupported;
   }
 
   @NotNull

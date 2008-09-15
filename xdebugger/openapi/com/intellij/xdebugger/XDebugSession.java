@@ -100,4 +100,6 @@ public interface XDebugSession {
 
   @NotNull
   RunContentDescriptor getRunContentDescriptor();
+
+  void setPauseActionSupported(boolean isSupported);
 }

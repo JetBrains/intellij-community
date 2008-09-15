@@ -66,7 +66,8 @@ public abstract class XDebugProcess {
    * Interrupt debugging process and call {@link XDebugSession#positionReached(com.intellij.xdebugger.frame.XSuspendContext)}
    * when next line in current method/function is reached 
    */
-  public abstract void startPausing();
+  public void startPausing() {
+  }
 
   /**
    * Resume execution and call {@link XDebugSession#positionReached(com.intellij.xdebugger.frame.XSuspendContext)}

@@ -2,6 +2,7 @@ package com.intellij.xdebugger.impl.actions.handlers;
 
 import org.jetbrains.annotations.NotNull;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.openapi.actionSystem.DataContext;
 
 /**
@@ -13,6 +14,6 @@ public class XDebuggerPauseActionHandler extends XDebuggerActionHandler {
   }
 
   protected boolean isEnabled(@NotNull final XDebugSession session, final DataContext dataContext) {
-    return !session.isPaused();
+    return ((XDebugSessionImpl)session).isPauseActionSupported() && !session.isPaused();
   }
 }
