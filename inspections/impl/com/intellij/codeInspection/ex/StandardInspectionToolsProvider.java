@@ -1,9 +1,8 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.LossyEncodingInspection;
-import com.intellij.codeInspection.testOnly.TestOnlyInspection;
+import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
@@ -17,7 +16,6 @@ import com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteral
 import com.intellij.codeInspection.duplicateThrows.DuplicateThrowsInspection;
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode;
-import com.intellij.codeInspection.htmlInspections.*;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.codeInspection.i18n.InconsistentResourceBundleInspection;
 import com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection;
@@ -34,6 +32,7 @@ import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspecti
 import com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.codeInspection.suspiciousNameCombination.SuspiciousNameCombinationInspection;
+import com.intellij.codeInspection.testOnly.TestOnlyInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection;
 import com.intellij.codeInspection.unneededThrows.RedundantThrows;
@@ -48,7 +47,6 @@ import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspection;
 import com.intellij.lang.properties.UnusedMessageFormatParameterInspection;
 import com.intellij.lang.properties.UnusedPropertyInspection;
-import com.intellij.xml.util.*;
 
 /**
  * @author max
@@ -95,18 +93,10 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
       DuplicateStringLiteralInspection.class,
       DuplicatePropertyInspection.class,
       UnusedMessageFormatParameterInspection.class,
-      CheckImageSizeInspection.class,
-      CheckTagEmptyBodyInspection.class,
-      CheckDtdReferencesInspection.class,
-      CheckEmptyScriptTagInspection.class,
-      CheckValidXmlInScriptBodyInspection.class,
-      CheckXmlFileWithXercesValidatorInspection.class,
-      XmlDuplicatedIdInspection.class,
       WrongPackageStatementInspection.class,
       SillyAssignmentInspection.class,
       RedundantThrowsDeclaration.class,
       AccessStaticViaInstance.class,
-      RequiredAttributesInspection.class,
       DefaultFileTemplateUsageInspection.class,
       UnnecessaryModuleDependencyInspection.class,
       RedundantSuppressInspection.class,
@@ -116,13 +106,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
       SuspiciousNameCombinationInspection.class,
       DuplicateThrowsInspection.class,
       InconsistentResourceBundleInspection.class,
-      LossyEncodingInspection.class,
-
-      // html
-      HtmlExtraClosingTagInspection.class,
-      XmlWrongRootElementInspection.class,
-      HtmlUnknownTagInspection.class,
-      HtmlUnknownAttributeInspection.class
+      LossyEncodingInspection.class
     };
   }
 }

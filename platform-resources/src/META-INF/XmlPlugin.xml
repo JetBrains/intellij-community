@@ -236,6 +236,8 @@
     <lang.smartEnterProcessor language="XHTML" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
 
     <iconProvider implementation="com.intellij.xml.util.XmlIconProvider"/>
+
+    <inspectionToolProvider implementation="com.intellij.codeInspection.htmlInspections.XmlInspectionToolProvider"/>
   </extensions>
   
 </idea-plugin>
