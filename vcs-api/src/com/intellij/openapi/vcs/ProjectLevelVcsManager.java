@@ -20,6 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +44,23 @@ public abstract class ProjectLevelVcsManager {
    */
   public static ProjectLevelVcsManager getInstance(Project project) {
     return project.getComponent(ProjectLevelVcsManager.class);
+  }
+
+  /**
+   * Gets the instance of the component if the project wasn't disposed. If the project was
+   * disposed, throws ProcessCanceledException. Should only be used for calling from background
+   * threads (for example, committed changes refresh thread).
+   *
+   * @param project the project for which the component instance should be retrieved.
+   * @return component instance
+   */
+  public static ProjectLevelVcsManager getInstanceChecked(final Project project) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<ProjectLevelVcsManager>() {
+      public ProjectLevelVcsManager compute() {
+        if (project.isDisposed()) throw new ProcessCanceledException();
+        return getInstance(project);
+      }
+    });
   }
 
   /**

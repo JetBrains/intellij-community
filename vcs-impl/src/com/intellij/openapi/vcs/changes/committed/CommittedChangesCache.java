@@ -185,6 +185,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("committed.changes.refresh.progress")) {
       private final LinkedHashSet<CommittedChangeList> myResult = new LinkedHashSet<CommittedChangeList>();
       private final List<VcsException> myExceptions = new ArrayList<VcsException>();
+      private boolean myDisposed = false;
 
       public void run(@NotNull final ProgressIndicator indicator) {
         final VcsRoot[] vcsRoots = myVcsManager.getAllVcsRoots();
@@ -198,6 +199,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           catch (VcsException e) {
             myExceptions.add(e);
           }
+          catch(ProcessCanceledException e) {
+            myDisposed = true;
+          }
         }
       }
 
@@ -208,7 +212,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         if (myExceptions.size() > 0) {
           errorConsumer.consume(myExceptions);
         }
-        else {
+        else if (!myDisposed) {
           consumer.consume(new ArrayList<CommittedChangeList>(myResult));
         }
       }
