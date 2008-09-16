@@ -1,9 +1,10 @@
 package com.intellij.ide.actions;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,9 +15,8 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ide.DataManager;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,7 +40,11 @@ public class ShowFilePathAction extends AnAction {
   }
 
   public static boolean isSupported() {
-    return SystemInfo.isWindows || SystemInfo.isMac;
+    return isJava6() || SystemInfo.isMac;
+  }
+
+  private static boolean isJava6() {
+    return System.getProperty("java.version").startsWith("1.6");
   }
 
   public void actionPerformed(final AnActionEvent e) {
@@ -70,7 +74,7 @@ public class ShowFilePathAction extends AnAction {
     while (eachParent != null) {
       final int index = files.size() == 0 ? 0 : files.size();
       files.add(index, eachParent);
-      fileUrls.add(index, eachParent.getPresentableUrl());
+      fileUrls.add(index, getPresentableUrl(eachParent));
       eachParent = eachParent.getParent();
     }
 
@@ -99,6 +103,14 @@ public class ShowFilePathAction extends AnAction {
     });
   }
 
+  private static String getPresentableUrl(final VirtualFile eachParent) {
+    String url = eachParent.getPresentableUrl();
+    if (eachParent.getParent() == null && SystemInfo.isWindows) {
+      url += "\\";
+    }
+    return url;
+  }
+
   interface ShowAction {
     void show(ListPopup popup);
   }
@@ -115,9 +127,9 @@ public class ShowFilePathAction extends AnAction {
       public PopupStep onChosen(final VirtualFile selectedValue, final boolean finalChoice) {
         final Ref<File> open = new Ref<File>();
         final Ref<File> toSelect = new Ref<File>();
-        final File selectedIoFile = new File(selectedValue.getPresentableUrl());
+        final File selectedIoFile = new File(getPresentableUrl(selectedValue));
         if (files.indexOf(selectedValue) == 0 && files.size() > 1) {
-          open.set(new File(files.get(1).getPresentableUrl()));
+          open.set(new File(getPresentableUrl(files.get(1))));
           toSelect.set(selectedIoFile);
         } else {
           open.set(selectedIoFile);
@@ -136,29 +148,33 @@ public class ShowFilePathAction extends AnAction {
   }
 
   private static void open(final File ioFile, File toSelect) {
-    String cmd;
-    String path;
     if (SystemInfo.isMac) {
-      cmd = "open";
-      path = ioFile.getAbsolutePath();
-    } else if (SystemInfo.isWindows) {
-      cmd = "start";
-      path = ioFile.getAbsolutePath();
+      String cmd = "open";
+      String path = ioFile.getAbsolutePath();
+      try {
+        File parent = ioFile.getParentFile();
+        if (parent != null) {
+          Runtime.getRuntime().exec(cmd + " " + path, new String[0], parent);
+        } else {
+          Runtime.getRuntime().exec(cmd + " " + path);
+        }
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+      }
+
+    } else if (isJava6()) {
+      try {
+        final Object desktopObject = Class.forName("java.awt.Desktop").getMethod("getDesktop").invoke(null);
+        desktopObject.getClass().getMethod("open", File.class).invoke(desktopObject, ioFile);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     } else {
-      return;
+      throw new UnsupportedOperationException();
     }
 
-    try {
-      File parent = ioFile.getParentFile();
-      if (parent != null) {
-        Runtime.getRuntime().exec(cmd + " " + path, new String[0], parent);
-      } else {
-        Runtime.getRuntime().exec(cmd + " " + path);
-      }
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
   }
 
   private VirtualFile getFile(final AnActionEvent e) {
