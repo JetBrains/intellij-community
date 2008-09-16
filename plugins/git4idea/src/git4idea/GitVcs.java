@@ -203,6 +203,7 @@ public class GitVcs extends AbstractVcs implements Disposable {
     super.activate();
     activationDisposable = new Disposable() {
       public void dispose() {
+        // TODO what should be done here?
       }
     };
 
