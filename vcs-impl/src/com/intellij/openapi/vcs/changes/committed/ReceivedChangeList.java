@@ -61,4 +61,9 @@ public class ReceivedChangeList extends CommittedChangeListImpl {
     }
     return changeList;
   }
+
+  @Override
+  public String toString() {
+    return myBaseList.toString();
+  }
 }
