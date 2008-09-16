@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.find.SearchInBackgroundOption;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -32,8 +33,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -119,7 +120,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       @Nullable
       public NotificationInfo getNotificationInfo() {
         String notification = usageView.get() != null ? usageView.get().getUsagesCount() + " Usage(s) Found" : "No Usages Found";
-        return new NotificationInfo("Find Usages",  "Find Usages Finished", notification);
+        return new NotificationInfo("Find Usages", "Find Usages Finished", notification);
       }
     };
     ProgressManager.getInstance().run(task);
@@ -304,11 +305,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
             if (notFoundActions == null || notFoundActions.isEmpty()) {
               Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
-              if (editor == null) {
-                Messages.showMessageDialog(myProject, message, UsageViewBundle.message("dialog.title.information"), Messages.getInformationIcon());
-              }
-              else {
-                ToolWindowManager.getInstance(myProject).showInfoPopup(ToolWindowId.FIND, IconLoader.getIcon("/actions/find.png"), message);
+              ToolWindowManager.getInstance(myProject).showInfoPopup(ToolWindowId.FIND, IconLoader.getIcon("/actions/find.png"), message);
+              if (editor != null) {
+                HintManager.getInstance().showErrorHint(editor, message);
               }
             }
             else {
