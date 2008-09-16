@@ -34,6 +34,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
@@ -880,5 +881,17 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
 
     return null;
+  }
+
+  public void updateAddedFile() throws IncorrectOperationException {
+    ChangeUtil.encodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(this));
+    PsiUtil.updatePackageStatement(this);
+    ChangeUtil.decodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(this));
+  }
+
+  public void prepareMovedFile() {
+  }
+
+  public void updateMovedFile() throws IncorrectOperationException {
   }
 }

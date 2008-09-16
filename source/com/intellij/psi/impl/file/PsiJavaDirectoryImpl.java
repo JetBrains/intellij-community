@@ -1,25 +1,21 @@
 package com.intellij.psi.impl.file;
 
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.ChangeUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.ProjectViewPane;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
@@ -31,9 +27,7 @@ public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
 
   protected void updateAddedFile(final PsiFile copyPsi) throws IncorrectOperationException {
     if (copyPsi instanceof PsiFileImpl) {
-      ChangeUtil.encodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi));
-      PsiUtil.updatePackageStatement(copyPsi);
-      ChangeUtil.decodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi));
+      ((PsiFileImpl)copyPsi).updateAddedFile();
     }
   }
 

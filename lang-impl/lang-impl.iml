@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="lvcs-openapi" />
+    <orderEntry type="module" module-name="openapi" />
   </component>
 </module>
 
