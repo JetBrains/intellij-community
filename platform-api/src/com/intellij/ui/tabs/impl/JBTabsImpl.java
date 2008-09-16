@@ -1784,7 +1784,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @NotNull
-  public JBTabs setActiveTabFillIn(@Nullable final Color color) {
+  public JBTabsPresentation setActiveTabFillIn(@Nullable final Color color) {
     myActiveTabFillIn = color;
     revalidateAndRepaint(false);
     return this;

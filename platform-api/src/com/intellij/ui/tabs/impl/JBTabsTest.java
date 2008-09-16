@@ -141,7 +141,7 @@ public class JBTabsTest {
     final JCheckBox fill = new JCheckBox("Tab fill in", true);
     fill.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        tabs.setActiveTabFillIn(fill.isSelected() ? Color.white : null);
+        tabs.getPresentation().setActiveTabFillIn(fill.isSelected() ? Color.white : null);
       }
     });
     south.add(fill);
@@ -170,7 +170,7 @@ public class JBTabsTest {
 
     //tabs.getComponent().setBorder(new EmptyBorder(5, 5, 5, 5));
     tabs.setPaintBorder(1, -1, -1, -1);
-    tabs.setActiveTabFillIn(Color.white);
+    tabs.getPresentation().setActiveTabFillIn(Color.white);
     tabs.setGhostsAlwaysVisible(true);
 
     tabs.setBorder(new EmptyBorder(10, 10, 10, 10));

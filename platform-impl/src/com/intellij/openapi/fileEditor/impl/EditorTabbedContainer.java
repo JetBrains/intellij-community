@@ -3,10 +3,10 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -99,7 +99,11 @@ final class EditorTabbedContainer implements Disposable {
       public UiDecoration getDecoration() {
         return new UiDecoration(null, new Insets(1, 6, 1, 6));
       }
-    }).setGhostsAlwaysVisible(true).getJBTabs().addListener(new TabsListener() {
+    })
+        .setGhostsAlwaysVisible(true)
+        .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground())
+        .setPaintFocus(false)
+        .getJBTabs().addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
         final FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
         final FileEditor oldEditor = editorManager.getSelectedEditor((VirtualFile)oldSelection.getObject());
@@ -112,7 +116,7 @@ final class EditorTabbedContainer implements Disposable {
           newEditor.selectNotify();
         }
       }
-    }).setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+    });
 
     updateTabBorder();
 

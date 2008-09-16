@@ -60,4 +60,7 @@ public interface JBTabsPresentation {
   @NotNull
   JBTabs getJBTabs();
 
+  @NotNull
+  JBTabsPresentation setActiveTabFillIn(@Nullable Color color);
+
 }
