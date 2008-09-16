@@ -416,6 +416,10 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
     return ourRevisionPattern;
   }
 
+  public static String staticRevisionPattern() {
+    return ourRevisionPattern;
+  }
+
   @Override
   public boolean isVersionedDirectory(final VirtualFile dir) {
     final VirtualFile child = dir.findChild("CVS");

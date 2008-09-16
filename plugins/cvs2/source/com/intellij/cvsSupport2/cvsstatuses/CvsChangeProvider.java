@@ -287,12 +287,12 @@ public class CvsChangeProvider implements ChangeProvider {
     if (status == FileStatus.NOT_CHANGED) {
       if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
         builder.processChange(
-          new Change(createRemote((CvsRevisionNumber) number, filePath.getVirtualFile()), CurrentContentRevision.create(filePath), FileStatus.MODIFIED));
+          new Change(createCvsRevision(filePath, number, isBinary), CurrentContentRevision.create(filePath), FileStatus.MODIFIED));
       }
       return;
     }
     if (status == FileStatus.MODIFIED || status == FileStatus.MERGE || status == FileStatus.MERGED_WITH_CONFLICTS) {
-      builder.processChange(new Change(createRemote((CvsRevisionNumber) number, filePath.getVirtualFile()),
+      builder.processChange(new Change(createCvsRevision(filePath, number, isBinary),
           CurrentContentRevision.create(filePath), status));
     }
     else if (status == FileStatus.ADDED) {
@@ -337,24 +337,41 @@ public class CvsChangeProvider implements ChangeProvider {
 
   @Nullable
   public byte[] getLastUpToDateContentFor(@NotNull final VirtualFile f) {
+    Entry entry = myEntriesManager.getEntryFor(f.getParent(), f.getName());
+    if (entry != null && entry.isResultOfMerge()) {
+      // try created by VCS during merge
+      byte[] content = CvsUtil.getStoredContentForFile(f, entry.getRevision());
+      if (content != null) {
+        return content;
+      }
+      // try cached by IDEA in CVS dir
+      return CvsUtil.getCachedStoredContent(f, entry.getRevision());
+    }
     final long upToDateTimestamp = getUpToDateTimeForFile(f);
     FileRevisionTimestampComparator c = new FileRevisionTimestampComparator() {
       public boolean isSuitable(long revisionTimestamp) {
         return CvsStatusProvider.timeStampsAreEqual(upToDateTimestamp, revisionTimestamp);
       }
     };
-    return LocalHistory.getByteContent(myVcs.getProject(), f, c);
+    byte[] localHistoryContent = LocalHistory.getByteContent(myVcs.getProject(), f, c);
+    if (localHistoryContent == null) {
+      if (entry != null && CvsUtil.haveCachedContent(f, entry.getRevision())) {
+        return CvsUtil.getCachedStoredContent(f, entry.getRevision());
+      }
+    }
+    return localHistoryContent;
   }
 
   public long getUpToDateTimeForFile(@NotNull VirtualFile vFile) {
     Entry entry = myEntriesManager.getEntryFor(vFile.getParent(), vFile.getName());
     if (entry == null) return -1;
-    if (entry.isResultOfMerge()) {
+    // retrieve of any file version in time is not correct since update/merge was applie3d to already modified file
+    /*if (entry.isResultOfMerge()) {
       long resultForMerge = CvsUtil.getUpToDateDateForFile(vFile);
       if (resultForMerge > 0) {
         return resultForMerge;
       }
-    }
+    }*/
 
     Date lastModified = entry.getLastModified();
     if (lastModified == null) return -1;
@@ -474,8 +491,15 @@ public class CvsChangeProvider implements ChangeProvider {
         result = getLastUpToDateContentFor(virtualFile);
       }
       if (result == null) {
+        String createVersionFile = null;
         final GetFileContentOperation operation;
         if (virtualFile != null) {
+          // todo maybe refactor where data lives
+          Entry entry = myEntriesManager.getEntryFor(virtualFile.getParent(), virtualFile.getName());
+          if (entry != null && entry.isResultOfMerge()) {
+            createVersionFile = entry.getRevision();
+          }
+          
           operation = GetFileContentOperation.createForFile(virtualFile, SimpleRevision.createForTheSameVersionOf(virtualFile));
         }
         else {
@@ -484,6 +508,11 @@ public class CvsChangeProvider implements ChangeProvider {
         if (operation.getRoot().isOffline()) return null;
         CvsVcs2.executeQuietOperation(CvsBundle.message("operation.name.get.file.content"), operation, myVcs.getProject());
         result = operation.tryGetFileBytes();
+
+        if (result != null && createVersionFile != null) {
+          // cache in CVS area to reduce remote requests number (old revisions are deleted)
+          CvsUtil.storeContentForRevision(virtualFile, createVersionFile, result);
+        }
       }
       return result;
     }

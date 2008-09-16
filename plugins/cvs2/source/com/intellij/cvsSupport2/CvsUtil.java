@@ -27,10 +27,12 @@ import org.netbeans.lib.cvsclient.admin.Entry;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * author: lesya
@@ -52,6 +54,7 @@ public class CvsUtil {
   @NonNls public static final String CVS = "CVS";
   @NonNls public static final String ENTRIES = "Entries";
   @NonNls private static final String CONFLICTS = "Conflicts";
+  @NonNls private static final String BASE_REVISIONS_DIR = "BaseRevisions";
   @NonNls public static final String STICKY_DATE_PREFIX = "D";
   @NonNls private static final String TEMPLATE = "Template";
   @NonNls public static final String STICKY_BRANCH_TAG_PREFIX = "T";
@@ -416,7 +419,72 @@ public class CvsUtil {
     }
   }
 
-  public static byte[]  getStoredContentForFile(VirtualFile file) {
+  public static boolean haveCachedContent(final VirtualFile file, final String revision) {
+    final File storedRevisionFile = createFromRevisionAndPath(file, revision);
+    return (storedRevisionFile != null) && storedRevisionFile.isFile();
+  }
+
+  @Nullable
+  private static File createFromRevisionAndPath(final VirtualFile file, final String revision) {
+    File ioFile = CvsVfsUtil.getFileFor(file);
+    final File parent = new File(getAdminDir(ioFile.getParentFile()), BASE_REVISIONS_DIR);
+    if (! parent.exists()) {
+      if (! parent.mkdirs()) {
+        return null;
+      }
+    } else if (parent.isFile()) {
+      return null;
+    }
+    return new File(parent, ".#" + ioFile.getName() + "." + revision);
+  }
+
+  @Nullable
+  public static byte[] getCachedStoredContent(final VirtualFile file, final String revision) {
+    try {
+      File storedRevisionFile = createFromRevisionAndPath(file, revision);
+      if ((storedRevisionFile == null) || (! storedRevisionFile.isFile())) return null;
+      return FileUtil.loadFileBytes(storedRevisionFile);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  public static void storeContentForRevision(final VirtualFile file, final String revision, final byte[] bytes) {
+    File storedRevisionFile = createFromRevisionAndPath(file, revision);
+    if (storedRevisionFile == null) {
+      return;
+    }
+    // already exists
+    if (storedRevisionFile.isFile()) return;
+    try {
+      FileUtil.writeToFile(storedRevisionFile, bytes);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    deleteAllOtherRevisions(file, storedRevisionFile.getName());
+  }
+
+  private static void deleteAllOtherRevisions(final VirtualFile file, final String storedFilename) {
+    File ioFile = new File(file.getPath());
+    final Pattern pattern = Pattern.compile("\\\u002E#" + ioFile.getName().replace(".", "\\\u002E") + "\u002E" +
+      CvsVcs2.staticRevisionPattern());
+    final File dir = new File(getAdminDir(ioFile.getParentFile()), BASE_REVISIONS_DIR);
+    File[] files = dir.listFiles(new FilenameFilter() {
+      public boolean accept(final File dir, final String name) {
+        return (!storedFilename.equals(name)) && pattern.matcher(name).matches();
+      }
+    });
+    if (files != null) {
+      for (File oldFile : files) {
+        oldFile.delete();
+      }
+    }
+  }
+
+  public static byte[] getStoredContentForFile(VirtualFile file) {
     File ioFile = CvsVfsUtil.getFileFor(file);
     try {
       File storedRevisionFile = new File(ioFile.getParentFile(), ".#" + ioFile.getName() + "." + getAllRevisionsForFile(file).get(0));
