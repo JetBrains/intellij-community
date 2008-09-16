@@ -16,6 +16,7 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ArrayList;
 
 /**
  * @author nik
@@ -34,9 +35,12 @@ public class PackagingElementPropertiesComponent {
   private PackagingEditorPolicy.AdditionalPropertiesConfigurable myAdditionalPropertiesConfigurable;
   private PackagingElementsToEditInfo myElementsInfo;
   private Map<ContainerElement,String> myPathTails;
+  private PackagingEditorListener myListener;
 
-  private PackagingElementPropertiesComponent(PackagingElementsToEditInfo elementsInfo, PackagingEditorPolicy editorPolicy) {
+  private PackagingElementPropertiesComponent(PackagingElementsToEditInfo elementsInfo, PackagingEditorPolicy editorPolicy,
+                                              final @Nullable PackagingEditorListener listener) {
     myElementsInfo = elementsInfo;
+    myListener = listener;
     myElementNameLabel.setText(elementsInfo.getElementText());
     myEditorPolicy = editorPolicy;
     if (elementsInfo.getAllowedPackagingMethods().length > 1 && elementsInfo.getPackagingMethod() != null) {
@@ -108,6 +112,7 @@ public class PackagingElementPropertiesComponent {
 
   public void applyChanges() {
     PackagingMethod packagingMethod = getSelectedMethod();
+    List<ContainerElement> changedElements = new ArrayList<ContainerElement>();
     if (packagingMethod != null && myElementsInfo.getPackagingMethod() != null) {
       for (ContainerElement element : myElementsInfo.getElements()) {
         element.setPackagingMethod(packagingMethod);
@@ -139,6 +144,11 @@ public class PackagingElementPropertiesComponent {
     if (myAdditionalPropertiesConfigurable != null && myElementsInfo.getElements().size() == 1) {
       myAdditionalPropertiesConfigurable.applyTo(myElementsInfo.getElements().get(0));
     }
+    if (myListener != null) {
+      for (ContainerElement changedElement : changedElements) {
+        myListener.packagingMethodChanged(changedElement);
+      }
+    }
   }
 
   @Nullable
@@ -158,14 +168,17 @@ public class PackagingElementPropertiesComponent {
   }
 
   @Nullable
-  public static PackagingElementPropertiesComponent createPropertiesComponent(PackagingElementsToEditInfo elementsToEdit, PackagingEditorPolicy editorPolicy) {
+  public static PackagingElementPropertiesComponent createPropertiesComponent(PackagingElementsToEditInfo elementsToEdit,
+                                                                              PackagingEditorPolicy editorPolicy,
+                                                                              final PackagingEditorListener listener) {
     if (!isEnabled(elementsToEdit)) return null;
 
-    return new PackagingElementPropertiesComponent(elementsToEdit, editorPolicy);
+    return new PackagingElementPropertiesComponent(elementsToEdit, editorPolicy, listener);
   }
 
-  public static boolean showDialog(final PackagingElementsToEditInfo elementsToEdit, JPanel component, PackagingEditorPolicy policy) {
-    PackagingElementPropertiesComponent propertiesComponent = createPropertiesComponent(elementsToEdit, policy);
+  public static boolean showDialog(final PackagingElementsToEditInfo elementsToEdit, JPanel component, PackagingEditorPolicy policy,
+                                   final PackagingEditorListener listener) {
+    PackagingElementPropertiesComponent propertiesComponent = createPropertiesComponent(elementsToEdit, policy, listener);
     if (propertiesComponent == null) {
       return false;
     }

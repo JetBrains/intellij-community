@@ -43,4 +43,8 @@ public interface PackagingEditor {
   void selectElement(@NotNull ContainerElement toSelect, final boolean requestFocus);
 
   void processNewOrderEntries(final Set<OrderEntry> newEntries);
+
+  void addListener(@NotNull PackagingEditorListener listener);
+
+  void removeListener(@NotNull PackagingEditorListener listener);
 }

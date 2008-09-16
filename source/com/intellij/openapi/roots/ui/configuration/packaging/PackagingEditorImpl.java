@@ -23,6 +23,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -73,6 +74,7 @@ public class PackagingEditorImpl implements PackagingEditor {
   private PackagingArtifact myRootArtifact;
   private Project myProject;
   private PackagingTreeParameters myTreeParameters;
+  private EventDispatcher<PackagingEditorListener> myDispatcher = EventDispatcher.create(PackagingEditorListener.class);
 
   public PackagingEditorImpl(final PackagingConfiguration originalConfiguration,
                              final PackagingConfiguration modifiedConfiguration,
@@ -162,7 +164,7 @@ public class PackagingEditorImpl implements PackagingEditor {
 
   private void editElement(final @NotNull PackagingElementsToEditInfo elementsToEdit) {
     saveData();
-    boolean ok = PackagingElementPropertiesComponent.showDialog(elementsToEdit, myMainPanel, myPolicy);
+    boolean ok = PackagingElementPropertiesComponent.showDialog(elementsToEdit, myMainPanel, myPolicy, myDispatcher.getMulticaster());
     if (ok) {
       rebuildTree();
       selectElements(elementsToEdit.getElements());
@@ -178,7 +180,7 @@ public class PackagingEditorImpl implements PackagingEditor {
     PackagingElementsToEditInfo elementsInfo = selectedElements.getElementsToEdit(myPolicy);
     if (elementsInfo == null) return null;
 
-    return PackagingElementPropertiesComponent.createPropertiesComponent(elementsInfo, myPolicy);
+    return PackagingElementPropertiesComponent.createPropertiesComponent(elementsInfo, myPolicy, null);
   }
 
   private void selectElements(final List<ContainerElement> elements) {
@@ -218,6 +220,14 @@ public class PackagingEditorImpl implements PackagingEditor {
       }
     }
     myPolicy.processNewLibraries(this, libraries);
+  }
+
+  public void addListener(@NotNull final PackagingEditorListener listener) {
+    myDispatcher.addListener(listener);
+  }
+
+  public void removeListener(@NotNull final PackagingEditorListener listener) {
+    myDispatcher.removeListener(listener);
   }
 
   @TestOnly
