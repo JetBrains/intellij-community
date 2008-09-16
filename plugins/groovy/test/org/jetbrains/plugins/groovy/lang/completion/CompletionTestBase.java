@@ -187,7 +187,6 @@ public abstract class CompletionTestBase extends ActionTestCase {
   }
 
   public String transform(String testName, String[] data) throws Exception {
-    setSettings();
     String fileText = data[0];
     final PsiFile psiFile = createFile(fileText);
     String result = processFile(psiFile);
