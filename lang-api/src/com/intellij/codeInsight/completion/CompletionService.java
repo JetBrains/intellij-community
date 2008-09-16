@@ -26,6 +26,10 @@ public abstract class CompletionService {
     return ServiceManager.getService(CompletionService.class);
   }
 
+  public abstract boolean isAdvertisementTextSet();
+
+  public abstract void setAdvertisementText(@Nullable String text);
+
   public <Params extends CompletionParameters, T extends AbstractCompletionContributor<Params>> boolean getVariantsFromContributors(
       ExtensionPointName<T> contributorsEP,
       Params parameters, @Nullable T from, Consumer<LookupElement> consumer) {

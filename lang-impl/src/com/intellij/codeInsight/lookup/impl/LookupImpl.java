@@ -74,6 +74,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final AsyncProcessIcon myProcessIcon;
   private final Comparator<? super LookupElement> myComparator;
   private volatile boolean myCalculating;
+  private final JLabel myAdComponent;
 
   public LookupImpl(Project project,
                     Editor editor,
@@ -126,8 +127,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       addItem(item);
     }
 
-    updateList();
-    
     myList.setFocusable(false);
 
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -141,20 +140,21 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     JPanel bottomPanel = new JPanel(new BorderLayout());
 
     bottomPanel.add(myProcessIcon, BorderLayout.EAST);
-    final JComponent adComponent = HintUtil.createAdComponent(bottomText);
-    if (StringUtil.isNotEmpty(bottomText)) {
-      adComponent.setPreferredSize(new Dimension(adComponent.getPreferredSize().width, myProcessIcon.getPreferredSize().height));
-    }
-    bottomPanel.add(adComponent, BorderLayout.CENTER);
+    myAdComponent = HintUtil.createAdComponent(null);
+    bottomPanel.add(myAdComponent, BorderLayout.CENTER);
     getComponent().add(bottomPanel, BorderLayout.SOUTH);
     getComponent().setBorder(new BegPopupMenuBorder());
 
-
+    updateList();
     selectMostPreferableItem();
   }
 
   public AsyncProcessIcon getProcessIcon() {
     return myProcessIcon;
+  }
+
+  public boolean isCalculating() {
+    return myCalculating;
   }
 
   public void setCalculating(final boolean calculating) {
@@ -225,6 +225,15 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public synchronized LookupElement[] getItems(){
     return myItems.toArray(new LookupElement[myItems.size()]);
   }
+
+  public void setAdvertisementText(@Nullable String text) {
+    myAdComponent.setText(text);
+  }
+
+  public String getAdvertisementText() {
+    return myAdComponent.getText();
+  }
+
 
   public String getAdditionalPrefix() {
     return myAdditionalPrefix;
@@ -304,6 +313,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myList.setFixedCellHeight(myCellRenderer.getListCellRendererComponent(myList, myList.getModel().getElementAt(0), 0, false, false).getPreferredSize().height);
 
     myList.setVisibleRowCount(Math.min(myList.getModel().getSize(), CodeInsightSettings.getInstance().LOOKUP_HEIGHT));
+
+    if (StringUtil.isNotEmpty(myAdComponent.getText())) {
+      myAdComponent.setPreferredSize(new Dimension(myAdComponent.getPreferredSize().width, myProcessIcon.getPreferredSize().height));
+    }
 
     if (!isEmpty) {
       if (oldSelected != null) {

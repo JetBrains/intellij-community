@@ -26,12 +26,18 @@ public abstract class CompletionContributor extends AbstractCompletionContributo
   private final MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> myMap =
       new MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>>();
 
-  public final void extend(CompletionType type, final ElementPattern<? extends PsiElement> place, CompletionProvider<CompletionParameters> provider) {
+  public final void extend(@Nullable CompletionType type, final ElementPattern<? extends PsiElement> place, CompletionProvider<CompletionParameters> provider) {
     myMap.putValue(type, new Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>(place, provider));
   }
 
   public boolean fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(parameters.getCompletionType())) {
+      final ProcessingContext context = new ProcessingContext();
+      if (isPatternSuitable(pair.first, parameters, context)) {
+        if (!pair.second.addCompletionVariants(parameters, context, result)) return false;
+      }
+    }
+    for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(null)) {
       final ProcessingContext context = new ProcessingContext();
       if (isPatternSuitable(pair.first, parameters, context)) {
         if (!pair.second.addCompletionVariants(parameters, context, result)) return false;

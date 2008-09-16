@@ -106,7 +106,7 @@ public class HintUtil {
     return UIUtil.getLabelFont().deriveFont(Font.BOLD);
   }
 
-  public static JComponent createAdComponent(final String bottomText) {
+  public static JLabel createAdComponent(final String bottomText) {
     JLabel label = new JLabel();
     label.setText(bottomText);
     label.setFont(label.getFont().deriveFont((float)(label.getFont().getSize() - 2)));
