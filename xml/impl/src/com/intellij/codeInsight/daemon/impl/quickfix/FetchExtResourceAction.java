@@ -247,6 +247,8 @@ public class FetchExtResourceAction extends BaseExtResourceAction {
                     break;
                   }
 
+                  if (resourcePath == null) break;
+
                   virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(resourcePath.replace(File.separatorChar, '/'));
                   downloadedResources.add(resourcePath);
 
