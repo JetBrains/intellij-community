@@ -26,7 +26,8 @@ public abstract class CompletionService {
     return ServiceManager.getService(CompletionService.class);
   }
 
-  public abstract boolean isAdvertisementTextSet();
+  @Nullable
+  public abstract String getAdvertisementText();
 
   public abstract void setAdvertisementText(@Nullable String text);
 

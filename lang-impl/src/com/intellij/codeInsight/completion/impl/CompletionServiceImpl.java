@@ -6,7 +6,6 @@ package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -17,9 +16,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class CompletionServiceImpl extends CompletionService{
   @Override
-  public boolean isAdvertisementTextSet() {
+  public String getAdvertisementText() {
     final CompletionProgressIndicator completion = CompletionProgressIndicator.getCurrentCompletion();
-    return completion == null || StringUtil.isNotEmpty(completion.getLookup().getAdvertisementText());
+    return completion == null ? null : completion.getLookup().getAdvertisementText();
   }
 
   public void setAdvertisementText(@Nullable final String text) {

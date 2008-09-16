@@ -16,6 +16,7 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,6 +70,20 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   public Self withFirstNonWhitespaceChild(@NotNull final ElementPattern<? extends PsiElement> pattern) {
     return withChildren(collection(PsiElement.class).filter(not(psiElement().whitespace()), collection(PsiElement.class).first(pattern)));
+  }
+
+  public Self withReference(final Class<? extends PsiReference> referenceClass) {
+    return with(new PatternCondition<T>("withReference") {
+      @Override
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+        for (final PsiReference reference : t.getReferences()) {
+          if (ReflectionCache.isInstance(reference, referenceClass)) {
+            return true;
+          }
+        }
+        return false;
+      }
+    });
   }
 
   public Self inFile(@NotNull final ElementPattern<? extends PsiFile> filePattern) {
