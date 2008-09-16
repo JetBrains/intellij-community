@@ -2,8 +2,8 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -33,12 +34,12 @@ public class LookupItemUtil{
   }
 
   @Nullable
-  public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object) {
+  public static LookupItem addLookupItem(Collection<LookupItem> set, @NotNull Object object) {
     return addLookupItem(set, object, new CamelHumpMatcher(""));
   }
 
   @Nullable
-  public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, PrefixMatcher matcher) {
+  public static LookupItem addLookupItem(Collection<LookupItem> set, @NotNull Object object, PrefixMatcher matcher) {
     if (object instanceof PsiType) {
       PsiType psiType = (PsiType)object;
       for (final LookupItem lookupItem : set) {

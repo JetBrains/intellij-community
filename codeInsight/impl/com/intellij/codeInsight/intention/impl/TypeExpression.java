@@ -12,31 +12,29 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.SmartTypePointer;
 import com.intellij.psi.SmartTypePointerManager;
-import com.intellij.psi.util.PsiUtil;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 public class TypeExpression extends Expression {
-  private final LookupItem[] myItems;
-  private final SmartTypePointer myDefaultType;
+  private final Set<SmartTypePointer> myItems;
 
   public TypeExpression(final Project project, PsiType[] types) {
-    final Set<LookupItem> set = new LinkedHashSet<LookupItem>();
-    for (PsiType type : types) {
-      LookupItemUtil.addLookupItem(set, type);
+    final SmartTypePointerManager manager = SmartTypePointerManager.getInstance(project);
+    myItems = new LinkedHashSet<SmartTypePointer>();
+    for (final PsiType type : types) {
+      myItems.add(manager.createSmartTypePointer(type));
     }
-
-    myItems = set.toArray(new LookupItem[set.size()]);
-    final PsiType psiType = PsiUtil.convertAnonymousToBaseType(types[0]);
-    myDefaultType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(psiType);
-
   }
 
   public Result calculateResult(ExpressionContext context) {
     final Project project = context.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final PsiType type = myDefaultType.getType();
+    if (myItems.isEmpty()) return null;
+
+    final PsiType type = myItems.iterator().next().getType();
     return type == null? null : new PsiTypeResult(type, project);
   }
 
@@ -45,9 +43,17 @@ public class TypeExpression extends Expression {
   }
 
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
-    if (myItems.length <= 1) return null;
+    if (myItems.size() <= 1) return null;
     PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
-    return myItems;
+    
+    List<LookupItem> result = new ArrayList<LookupItem>(myItems.size());
+    for (final SmartTypePointer item : myItems) {
+      final PsiType type = item.getType();
+      if (type != null) {
+        LookupItemUtil.addLookupItem(result, type);
+      }
+    }
+    return result.toArray(new LookupItem[result.size()]);
   }
 
 }
