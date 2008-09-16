@@ -33,7 +33,7 @@ public class ClassUtils {
 
     /** @noinspection StaticCollection*/
     private static final Set<String> immutableTypes =
-            new HashSet<String>(14);
+            new HashSet<String>(19);
 
     /** @noinspection StaticCollection*/
     private static final Set<PsiType> primitiveNumericTypes =
@@ -71,6 +71,11 @@ public class ClassUtils {
         immutableTypes.add("java.math.BigDecimal");
         immutableTypes.add("java.math.BigInteger");
         immutableTypes.add("java.math.MathContext");
+        immutableTypes.add("java.nio.channels.FileLock");
+        immutableTypes.add("java.nio.charset.Charset");
+        immutableTypes.add("java.io.File");
+        immutableTypes.add("java.net.URI");
+        immutableTypes.add("java.util.regex.Pattern");
     }
 
     private ClassUtils() {
