@@ -11,16 +11,24 @@ import org.jetbrains.plugins.ruby.testing.sm.runner.SMTestProxy;
 /**
  * @author Roman Chernyatchik
  */
-public class RTestUnitResultsFormTest extends BaseSMTRunnerTestCase {
+public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
   private SMTestRunnerResultsForm myResultsViewer;
   private SMTestProxy myTestsRootNode;
+  private TestConsoleProperties myConsoleProperties;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final TestConsoleProperties consoleProperties = createConsoleProperties();
-    myResultsViewer = (SMTestRunnerResultsForm)createResultsViewer(consoleProperties);
+
+    myConsoleProperties = createConsoleProperties();
+    myResultsViewer = (SMTestRunnerResultsForm)createResultsViewer(myConsoleProperties);
     myTestsRootNode = myResultsViewer.getTestsRootNode();
+
+    TestConsoleProperties.HIDE_PASSED_TESTS.set(myConsoleProperties, false);
+    TestConsoleProperties.OPEN_FAILURE_LINE.set(myConsoleProperties, false);
+    TestConsoleProperties.SCROLL_TO_SOURCE.set(myConsoleProperties, false);
+    TestConsoleProperties.SELECT_FIRST_DEFECT.set(myConsoleProperties, false);
+    TestConsoleProperties.TRACK_RUNNING_TEST.set(myConsoleProperties, false);
   }
 
   @Override

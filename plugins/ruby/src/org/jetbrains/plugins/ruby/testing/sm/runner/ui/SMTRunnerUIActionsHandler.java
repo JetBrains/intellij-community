@@ -39,8 +39,6 @@ public class SMTRunnerUIActionsHandler implements TestResultsViewer.EventsListen
   public void onTestingFinished(final TestResultsViewer sender) {
     // select first defect at the end (my be TRACK_RUNNING_TEST was enabled and affects on the fly selection)
     final SMTestProxy testsRootNode = sender.getTestsRootNode();
-
-    final AbstractTestProxy testProxy;
     if (TestConsoleProperties.SELECT_FIRST_DEFECT.value(myConsoleProperties)) {
       final AbstractTestProxy firstDefect =
           Filter.DEFECTIVE_LEAF.detectIn(testsRootNode.getAllTests());

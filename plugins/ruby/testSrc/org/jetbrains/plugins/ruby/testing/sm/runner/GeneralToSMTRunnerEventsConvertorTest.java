@@ -14,20 +14,27 @@ import java.util.List;
 /**
  * @author Roman Chernyatchik
  */
-public class GeneralToRTestUnitEventsConvertorTest extends BaseSMTRunnerTestCase {
+public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase {
   private SMTRunnerConsoleView myConsole;
   private GeneralToSMTRunnerEventsConvertor myEventsProcessor;
   private TreeModel myTreeModel;
   private SMTestRunnerResultsForm myResultsViewer;
+  private TestConsoleProperties myConsoleProperties;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    final TestConsoleProperties consoleProperties = createConsoleProperties();
-    myResultsViewer = (SMTestRunnerResultsForm)createResultsViewer(consoleProperties);
+    myConsoleProperties = createConsoleProperties();
+    TestConsoleProperties.HIDE_PASSED_TESTS.set(myConsoleProperties, false);
+    TestConsoleProperties.OPEN_FAILURE_LINE.set(myConsoleProperties, false);
+    TestConsoleProperties.SCROLL_TO_SOURCE.set(myConsoleProperties, false);
+    TestConsoleProperties.SELECT_FIRST_DEFECT.set(myConsoleProperties, false);
+    TestConsoleProperties.TRACK_RUNNING_TEST.set(myConsoleProperties, false);
 
-    myConsole = new SMTRunnerConsoleView(consoleProperties, myResultsViewer);
+    myResultsViewer = (SMTestRunnerResultsForm)createResultsViewer(myConsoleProperties);
+
+    myConsole = new SMTRunnerConsoleView(myConsoleProperties, myResultsViewer);
     myEventsProcessor = new GeneralToSMTRunnerEventsConvertor(myResultsViewer.getTestsRootNode());
     myEventsProcessor.addEventsListener(myResultsViewer);
     myTreeModel = myResultsViewer.getTreeView().getModel();
@@ -301,6 +308,34 @@ public class GeneralToRTestUnitEventsConvertorTest extends BaseSMTRunnerTestCase
     assertEquals("suite2", children.get(1).getName());
     assertEquals(0, children.get(1).getChildren().size());
   }
+
+  //public void testRuby_1767() throws InterruptedException {
+  //  TestConsoleProperties.HIDE_PASSED_TESTS.set(myConsoleProperties, true);
+  //
+  //  myEventsProcessor.onSuiteStarted("suite");
+  //  myResultsViewer.performUpdate();
+  //
+  //  myEventsProcessor.onTestStarted("test_failed");
+  //  myResultsViewer.performUpdate();
+  //  myEventsProcessor.onTestFailure("test_failed", "", "", false);
+  //  myResultsViewer.performUpdate();
+  //  myEventsProcessor.onTestFinished("test_failed", 10);
+  //  myResultsViewer.performUpdate();
+  //
+  //  myEventsProcessor.onTestStarted("test");
+  //  myResultsViewer.performUpdate();
+  //  assertEquals(2, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
+  //
+  //  myEventsProcessor.onTestFinished("test", 10);
+  //  assertEquals(2, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
+  //
+  //  myEventsProcessor.onSuiteFinished("suite");
+  //  myEventsProcessor.onFinishTesting();
+  //
+  //  //TODO[romeo]: investigate why test doesn't work...
+  //  assertEquals(1, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
+  //}
+
 
   private void onTestStarted(final String testName) {
     myEventsProcessor.onTestStarted(testName);

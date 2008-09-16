@@ -273,7 +273,7 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
 
 
     myAnimator.stopMovie();
-    myTreeView.repaint();
+    myTreeBuilder.performUpdate();
 
     LvcsHelper.addLabel(this);
 

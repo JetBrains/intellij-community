@@ -1,12 +1,10 @@
 package org.jetbrains.plugins.ruby.testing.sm.runner.ui.statistics;
 
 import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.execution.testframework.Filter;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTestProxy;
-import org.jetbrains.plugins.ruby.testing.sm.runner.states.TestStateInfo;
+import org.jetbrains.plugins.ruby.testing.sm.runner.ProxyFilters;
 import org.jetbrains.plugins.ruby.testing.sm.runner.ui.TestsPresentationUtil;
 
 import javax.swing.*;
@@ -18,24 +16,6 @@ import java.util.Comparator;
 */
 public class ColumnResults extends BaseColumn implements Comparator<SMTestProxy> {
   @NonNls private static final String UNDERFINED = "<underfined>";
-
-  private static final Filter FILTER_PASSED = new Filter() {
-    public boolean shouldAccept(final AbstractTestProxy test) {
-      return ((SMTestProxy)test).getMagnitudeInfo() == TestStateInfo.Magnitude.PASSED_INDEX;
-    }
-  };
-
-  private static final Filter FILTER_ERRORS = new Filter() {
-    public boolean shouldAccept(final AbstractTestProxy test) {
-      return ((SMTestProxy)test).getMagnitudeInfo() == TestStateInfo.Magnitude.ERROR_INDEX;
-    }
-  };
-
-  private static final Filter FILTER_FAILURES = new Filter() {
-    public boolean shouldAccept(final AbstractTestProxy test) {
-      return ((SMTestProxy)test).getMagnitudeInfo() == TestStateInfo.Magnitude.FAILED_INDEX;
-    }
-  };
 
   public ColumnResults() {
     super(RBundle.message("sm.test.runner.ui.tabs.statistics.columns.results.title"));
@@ -87,8 +67,8 @@ public class ColumnResults extends BaseColumn implements Comparator<SMTestProxy>
   private int compareSuites(final SMTestProxy suite1,
                             final SMTestProxy suite2) {
     // Compare errors
-    final int errors1 = suite1.getChildren(FILTER_ERRORS).size();
-    final int errors2 = suite2.getChildren(FILTER_ERRORS).size();
+    final int errors1 = suite1.getChildren(ProxyFilters.FILTER_ERRORS).size();
+    final int errors2 = suite2.getChildren(ProxyFilters.FILTER_ERRORS).size();
     final int errorsComparison = compareInt(errors1, errors2);
     // If not equal return it
     if (errorsComparison != 0) {
@@ -96,8 +76,8 @@ public class ColumnResults extends BaseColumn implements Comparator<SMTestProxy>
     }
 
     // Compare failures
-    final int failures1 = suite1.getChildren(FILTER_FAILURES).size();
-    final int failures2 = suite2.getChildren(FILTER_FAILURES).size();
+    final int failures1 = suite1.getChildren(ProxyFilters.FILTER_FAILURES).size();
+    final int failures2 = suite2.getChildren(ProxyFilters.FILTER_FAILURES).size();
     final int failuresComparison = compareInt(failures1, failures2);
     // If not equal return it
     if (failuresComparison != 0) {
@@ -105,8 +85,8 @@ public class ColumnResults extends BaseColumn implements Comparator<SMTestProxy>
     }
 
     // otherwise check passed count
-    final int passed1 = suite1.getChildren(FILTER_PASSED).size();
-    final int passed2 = suite2.getChildren(FILTER_PASSED).size();
+    final int passed1 = suite1.getChildren(ProxyFilters.FILTER_PASSED).size();
+    final int passed2 = suite2.getChildren(ProxyFilters.FILTER_PASSED).size();
 
     return compareInt(passed1, passed2);
   }
