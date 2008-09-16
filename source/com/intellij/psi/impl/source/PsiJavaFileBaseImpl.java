@@ -31,6 +31,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
@@ -466,5 +467,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
 
     return defaultLanguageLevel;
+  }
+
+  @Override
+  protected void updateDirectoryInformation() throws IncorrectOperationException {
+    PsiUtil.updatePackageStatement(this);
   }
 }
