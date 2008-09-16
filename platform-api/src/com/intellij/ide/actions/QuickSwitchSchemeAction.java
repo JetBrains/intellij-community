@@ -50,7 +50,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction {
       .createActionGroupPopup(e.getPresentation().getText(),
                               group,
                               e.getDataContext(),
-                              JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                              JBPopupFactory.ActionSelectionAid.NUMBERING,
                               true);
 
     popup.showCenteredInCurrentWindow(e.getData(PlatformDataKeys.PROJECT));

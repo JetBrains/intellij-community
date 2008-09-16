@@ -40,7 +40,7 @@ public abstract class WelcomePopupAction extends AnAction {
       .createActionGroupPopup(getCaption(),
                               group,
                               context,
-                              JBPopupFactory.ActionSelectionAid.NUMBERING,
+                              JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING,
                               true);
 
 

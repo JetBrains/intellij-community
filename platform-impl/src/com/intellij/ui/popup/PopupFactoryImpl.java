@@ -88,6 +88,19 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           final ActionGroup actionGroup,
                                           DataContext dataContext,
                                           boolean showNumbers,
+                                          boolean useAlphaAsNumbers,
+                                          boolean showDisabledActions,
+                                          boolean honorActionMnemonics,
+                                          final Runnable disposeCallback,
+                                          final int maxRowCount) {
+    return createActionGroupPopup(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
+                                  maxRowCount, null);
+  }
+
+  public ListPopup createActionGroupPopup(final String title,
+                                          final ActionGroup actionGroup,
+                                          DataContext dataContext,
+                                          boolean showNumbers,
                                           boolean showDisabledActions,
                                           boolean honorActionMnemonics,
                                           final Runnable disposeCallback,
@@ -100,6 +113,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           final ActionGroup actionGroup,
                                           DataContext dataContext,
                                           boolean showNumbers,
+                                          boolean useAlphaAsNumbers,
                                           boolean showDisabledActions,
                                           boolean honorActionMnemonics,
                                           final Runnable disposeCallback,
@@ -108,7 +122,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     LOG.assertTrue(component != null);
 
-    final ActionStepBuilder builder = new ActionStepBuilder(dataContext, showNumbers, showDisabledActions, honorActionMnemonics);
+    final ActionStepBuilder builder = new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
     builder.buildGroup(actionGroup);
     final List<ActionItem> items = builder.getItems();
 
@@ -151,6 +165,18 @@ public class PopupFactoryImpl extends JBPopupFactory {
     });
     return popup;
   }
+  public ListPopup createActionGroupPopup(final String title,
+                                          final ActionGroup actionGroup,
+                                          DataContext dataContext,
+                                          boolean showNumbers,
+                                          boolean showDisabledActions,
+                                          boolean honorActionMnemonics,
+                                          final Runnable disposeCallback,
+                                          final int maxRowCount,
+                                          final Condition<AnAction> preselectActionCondition) {
+    return createActionGroupPopup(title, actionGroup, dataContext, showNumbers, true, showDisabledActions, honorActionMnemonics,
+                                  disposeCallback, maxRowCount, preselectActionCondition);
+  }
 
   public ListPopup createActionGroupPopup(String title,
                                           ActionGroup actionGroup,
@@ -158,7 +184,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           ActionSelectionAid selectionAidMethod,
                                           boolean showDisabledActions) {
     return createActionGroupPopup(title, actionGroup, dataContext,
-                                  selectionAidMethod == ActionSelectionAid.NUMBERING,
+                                  selectionAidMethod == ActionSelectionAid.NUMBERING || selectionAidMethod == ActionSelectionAid.ALPHA_NUMBERING,
+                                  selectionAidMethod == ActionSelectionAid.ALPHA_NUMBERING,
                                   showDisabledActions,
                                   selectionAidMethod == ActionSelectionAid.MNEMONICS,
                                   null, -1);
@@ -172,7 +199,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           Runnable disposeCallback,
                                           int maxRowCount) {
     return createActionGroupPopup(title, actionGroup, dataContext,
-                                  selectionAidMethod == ActionSelectionAid.NUMBERING,
+                                  selectionAidMethod == ActionSelectionAid.NUMBERING || selectionAidMethod == ActionSelectionAid.ALPHA_NUMBERING,
+                                  selectionAidMethod == ActionSelectionAid.ALPHA_NUMBERING,
                                   showDisabledActions,
                                   selectionAidMethod == ActionSelectionAid.MNEMONICS,
                                   disposeCallback,
@@ -189,15 +217,22 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics, 0, false);
   }
 
-  public ListPopupStep createActionsStep(ActionGroup actionGroup, DataContext dataContext, boolean showNumbers, boolean showDisabledActions,
+  public ListPopupStep createActionsStep(ActionGroup actionGroup, DataContext dataContext, boolean showNumbers, boolean useAlphaAsNumbers, boolean showDisabledActions,
                                          String title, Component component, boolean honorActionMnemonics, int defaultOptionIndex,
                                          final boolean autoSelectionEnabled) {
-    final ActionStepBuilder builder = new ActionStepBuilder(dataContext, showNumbers, showDisabledActions, honorActionMnemonics);
+    final ActionStepBuilder builder = new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
     builder.buildGroup(actionGroup);
     final List<ActionItem> items = builder.getItems();
 
     return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), defaultOptionIndex,
                                autoSelectionEnabled);
+  }
+
+  public ListPopupStep createActionsStep(ActionGroup actionGroup, DataContext dataContext, boolean showNumbers, boolean showDisabledActions,
+                                         String title, Component component, boolean honorActionMnemonics, int defaultOptionIndex,
+                                         final boolean autoSelectionEnabled) {
+    return createActionsStep(actionGroup, dataContext, showNumbers, true, showDisabledActions, title, component, honorActionMnemonics,
+                             defaultOptionIndex, autoSelectionEnabled);
   }
 
   private static boolean itemsHaveMnemonics(final List<ActionItem> items) {
@@ -458,7 +493,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     public boolean isSpeedSearchEnabled() {
-      return !myEnableMnemonics;
+      return true;
     }
 
     public boolean isAutoSelectionEnabled() {
@@ -478,6 +513,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final List<ActionItem> myListModel;
     private final DataContext myDataContext;
     private final boolean myShowNumbers;
+    private final boolean myUseAlphaAsNumbers;
     private final boolean myShowDisabled;
     private final HashMap<AnAction, Presentation> myAction2presentation;
     private int myCurrentNumber;
@@ -487,8 +523,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     public ActionStepBuilder(final DataContext dataContext,
                              final boolean showNumbers,
+                             final boolean useAlphaAsNumbers,
                              final boolean showDisabled,
                              final boolean honorActionMnemonics) {
+      myUseAlphaAsNumbers = useAlphaAsNumbers;
       myListModel = new ArrayList<ActionItem>();
       myDataContext = dataContext;
       myShowNumbers = showNumbers;
@@ -569,7 +607,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
           else if (myCurrentNumber == 9) {
             text = "&" + 0 + ". " + text;
           }
-          else {
+          else if (myUseAlphaAsNumbers) {
             text = "&" + (char)('A' + myCurrentNumber - 10) + ". " + text;
           }
           myCurrentNumber++;

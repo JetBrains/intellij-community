@@ -28,7 +28,7 @@ public class SurroundPopupAction extends AbstractGuiEditorAction {
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     final ListPopup groupPopup = JBPopupFactory.getInstance()
       .createActionGroupPopup(UIDesignerBundle.message("surround.with.popup.title"), myActionGroup, e.getDataContext(),
-                              JBPopupFactory.ActionSelectionAid.NUMBERING, true);
+                              JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true);
 
     final JComponent component = (JComponent)e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     if (component instanceof ComponentTree) {

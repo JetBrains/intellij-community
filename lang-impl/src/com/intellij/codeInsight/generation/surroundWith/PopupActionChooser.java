@@ -39,7 +39,7 @@ public class PopupActionChooser {
         createActionGroupPopup(myTitle,
                                applicable,
                                context,
-                               JBPopupFactory.ActionSelectionAid.NUMBERING,
+                               JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING,
                                false);
       popup.showInBestPositionFor(editor);
     }

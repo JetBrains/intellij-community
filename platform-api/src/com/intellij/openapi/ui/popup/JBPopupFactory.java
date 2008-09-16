@@ -113,6 +113,11 @@ public abstract class JBPopupFactory {
     NUMBERING,
 
     /**
+     * Same as numbering, but will allow A-Z 'numbers' when out of 0-9 range.
+     */
+    ALPHA_NUMBERING,
+
+    /**
      * The actions in a popup can be selected by typing part of the action's text.
      */
     SPEEDSEARCH,

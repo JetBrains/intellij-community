@@ -56,10 +56,6 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     myParent = (WizardPopup) aParent;
     myStep = aStep;
 
-    if (myStep.isSpeedSearchEnabled() && myStep.isMnemonicsNavigationEnabled()) {
-      throw new IllegalArgumentException("Cannot have both options enabled at the same time: speed search and mnemonics navigation");
-    }
-
     mySpeedSearch.setEnabled(myStep.isSpeedSearchEnabled());
 
     final JComponent content = createContent();
