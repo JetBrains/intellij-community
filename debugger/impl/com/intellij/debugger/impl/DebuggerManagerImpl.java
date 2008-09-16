@@ -209,7 +209,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       // so we shouldn't add the listener to avoid calling stop() twice
       processHandler.addProcessListener(new ProcessAdapter() {
         public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
+          if (!willBeDestroyed || ApplicationManager.getApplication().isUnitTestMode()) {
             final DebugProcessImpl debugProcess = getDebugProcess(event.getProcessHandler());
             if (debugProcess != null) {
               // if current thread is a "debugger manager thread", stop will execute synchronously
