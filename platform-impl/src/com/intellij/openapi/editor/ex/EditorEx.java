@@ -70,7 +70,7 @@ public interface EditorEx extends Editor {
 
   void stopOptimizedScrolling();
 
-  void setCaretVisible(boolean b);
+  boolean setCaretVisible(boolean b);
 
   void addFocusListener(FocusChangeListener listener);
 

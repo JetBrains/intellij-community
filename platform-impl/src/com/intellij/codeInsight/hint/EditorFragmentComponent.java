@@ -64,9 +64,11 @@ public class EditorFragmentComponent extends JPanel {
 
     textGraphics.translate(0, -y1);
     textGraphics.setClip(0, y1, textWidth, y2 - y1);
-    editor.setCaretVisible(false);
+    final boolean wasVisible = editor.setCaretVisible(false);
     editor.getContentComponent().paint(textGraphics);
-    editor.setCaretVisible(true);
+    if (wasVisible) {
+      editor.setCaretVisible(true);
+    }
 
     if (!showFolding) {
       foldingModel.setFoldingEnabled(isFoldingEnabled);

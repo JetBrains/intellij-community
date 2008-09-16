@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -754,7 +753,7 @@ public class LineStatusTracker {
 
     if (range.getType() != Range.INSERTED) {
       DocumentEx doc = (DocumentEx)myUpToDateDocument;
-      EditorImpl uEditor = new EditorImpl(doc, true, myProject);
+      EditorEx uEditor = (EditorEx)EditorFactory.getInstance().createViewer(doc, myProject);
       EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, getFileName());
       uEditor.setHighlighter(highlighter);
 
@@ -762,6 +761,7 @@ public class LineStatusTracker {
         EditorFragmentComponent.createEditorFragmentComponent(uEditor, range.getUOffset1(), range.getUOffset2(), false, false);
 
       component.add(editorFragmentComponent, BorderLayout.CENTER);
+      EditorFactory.getInstance().releaseEditor(uEditor);
     }
 
     LightweightHint lightweightHint = new LightweightHint(component);

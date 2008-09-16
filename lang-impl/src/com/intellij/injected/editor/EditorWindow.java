@@ -438,8 +438,8 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     return myDelegate.getMouseEventArea(e);
   }
 
-  public void setCaretVisible(final boolean b) {
-    myDelegate.setCaretVisible(b);
+  public boolean setCaretVisible(final boolean b) {
+    return myDelegate.setCaretVisible(b);
   }
 
   public void addFocusListener(final FocusChangeListener listener) {

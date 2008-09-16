@@ -1,7 +1,10 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
-import com.intellij.codeInsight.hint.*;
+import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
+import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.TooltipController;
+import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
@@ -2798,13 +2801,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  public void setCaretVisible(boolean b) {
+  public boolean setCaretVisible(boolean b) {
+    boolean old = myCaretCursor.isActive();
     if (b) {
       myCaretCursor.activate();
     }
     else {
       myCaretCursor.passivate();
     }
+    return old;
   }
 
   public void addFocusListener(FocusChangeListener listener) {
@@ -2851,7 +2856,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private int myWidth;
 
     @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-    private boolean isVisible = true;
+    private boolean isVisible = false;
     private long myStartTime = 0;
 
     private CaretCursor() {
@@ -2866,6 +2871,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         ourCaretBlinkingCommand.setBlinkCaret(blink);
         ourCaretBlinkingCommand.setBlinkPeriod(blinkPeriod);
         isVisible = true;
+      }
+    }
+
+    public boolean isActive() {
+      synchronized (ourCaretBlinkingCommand) {
+        return isVisible;
       }
     }
 
