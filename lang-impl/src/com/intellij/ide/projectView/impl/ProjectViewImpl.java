@@ -715,6 +715,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         if (file != null) {
           title = file.getVirtualFile().getPresentableUrl();
         }
+        else if (element instanceof PsiDirectory) {
+          title = PsiDirectoryFactory.getInstance(myProject).getQualifiedName((PsiDirectory) element, true);
+        }
         else {
           title = element.toString();
         }
