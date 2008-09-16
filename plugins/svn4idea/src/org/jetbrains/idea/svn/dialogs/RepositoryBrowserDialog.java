@@ -97,11 +97,18 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   private AnAction copyUrlAction;
   private AnAction mkDirAction;
 
+  private final boolean myShowFiles;
+
   @NonNls private static final String PLACE_TOOLBAR = "RepositoryBrowser.Toolbar";
   @NonNls private static final String PLACE_MENU = "RepositoryBrowser.Menu";
 
   public RepositoryBrowserDialog(Project project) {
+    this(project, true);
+  }
+
+  public RepositoryBrowserDialog(Project project, final boolean showFiles) {
     super(project, true);
+    myShowFiles = showFiles;
     myProject = project;
     myVCS = SvnVcs.getInstance(project);
     setTitle("SVN Repository Browser");
@@ -255,7 +262,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         //
       }
     }
-    getRepositoryBrowser().setRepositoryURLs(svnURLs.toArray(new SVNURL[svnURLs.size()]));
+    getRepositoryBrowser().setRepositoryURLs(svnURLs.toArray(new SVNURL[svnURLs.size()]), myShowFiles);
     getRepositoryBrowser().getRepositoryTree().addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         showPopup(e);
@@ -957,16 +964,27 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       return;
     }
     SVNURL url = selectedNode.getURL();
+    SVNDirEntry dirEntry = selectedNode.getSVNDirEntry();
+    if (dirEntry == null) {
+      return;
+    }
     File dir = selectFile("Destination directory", "Select checkout destination directory");
     if (dir == null) {
       return;
     }
 
+    final String relativePath;
+    if (dirEntry.getRepositoryRoot() != null) {
+      relativePath = SVNPathUtil.getRelativePath(dirEntry.getRepositoryRoot().toString(), url.toString());
+    } else {
+      relativePath = dirEntry.getRelativePath();
+    }
+
     Project p = myProject;
-    CheckoutOptionsDialog dialog = new CheckoutOptionsDialog(p, url, dir, SvnUtil.getVirtualFile(dir.getAbsolutePath()));
+    CheckoutOptionsDialog dialog = new CheckoutOptionsDialog(p, url, dir, SvnUtil.getVirtualFile(dir.getAbsolutePath()), relativePath);
     dialog.show();
     dir = dialog.getTarget();
-    if (dialog.isOK()) {
+    if (dialog.isOK() && dir != null) {
       final SVNRevision revision;
         try {
           revision =  dialog.getRevision();

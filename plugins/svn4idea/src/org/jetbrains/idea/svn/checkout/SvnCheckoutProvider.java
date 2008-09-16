@@ -55,6 +55,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                                 final SVNDepth depth, final boolean ignoreExternals, @Nullable final Listener listener) {
     final Ref<Boolean> checkoutSuccessful = new Ref<Boolean>();
 
+    if (! target.exists()) {
+      target.mkdirs();
+    }
     final SVNException[] exception = new SVNException[1];
     @NonNls String fileURL = "file://" + target.getAbsolutePath().replace(File.separatorChar, '/');
     final VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(fileURL);

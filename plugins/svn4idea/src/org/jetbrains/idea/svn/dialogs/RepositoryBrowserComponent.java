@@ -71,8 +71,8 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     return myRepositoryTree;
   }
 
-  public void setRepositoryURLs(SVNURL[] urls) {
-    RepositoryTreeModel model = new RepositoryTreeModel(myVCS, true, this);
+  public void setRepositoryURLs(SVNURL[] urls, final boolean showFiles) {
+    RepositoryTreeModel model = new RepositoryTreeModel(myVCS, showFiles, this);
     model.setRoots(urls);
     Disposer.register(this, model);
     myRepositoryTree.setModel(model);

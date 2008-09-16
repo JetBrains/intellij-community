@@ -26,7 +26,7 @@ public class CheckoutDialog extends RepositoryBrowserDialog {
   private final CheckoutProvider.Listener myListener;
 
   public CheckoutDialog(Project project, final CheckoutProvider.Listener listener) {
-    super(project);
+    super(project, false);
     myListener = listener;
   }
 
