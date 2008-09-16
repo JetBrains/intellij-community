@@ -1,3 +1,15 @@
+== version 1.2.0-rc2
+
++ SASL: incorrect output buffer size might result in failed commits, fixed.
++ Possible NPE on copy operation fixed.
+
+== version 1.2.0-rc1
+
++ Javadoc updated
++ SASL authentication support bugfixes
++ Bug in keyword expansion code fixed
++ Other bugfixes
+
 == version 1.2.0-beta5
 
 + SASL authentication support improved

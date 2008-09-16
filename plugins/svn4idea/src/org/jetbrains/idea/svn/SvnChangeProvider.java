@@ -6,7 +6,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -88,8 +87,7 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   private String changeListNameFromStatus(final SVNStatus status) {
-    final Pair<String,SvnFileUrlMapping.RootUrlInfo> infoPair = myMapping.getWcRootForFilePath(status.getFile());
-    if (infoPair != null && WorkingCopyFormat.ONE_DOT_FIVE.equals(infoPair.getSecond().getFormat())) {
+    if (WorkingCopyFormat.ONE_DOT_FIVE.getFormat() == status.getWorkingCopyFormat()) {
       if (SVNNodeKind.FILE.equals(status.getKind())) {
         final String clName = status.getChangelistName();
         return (clName == null) ? myClManager.getDefaultChangeList().getName() : clName;
