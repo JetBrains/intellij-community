@@ -21,6 +21,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -456,7 +458,21 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
           append(partialMarker, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           descMaxWidth -= boldMetrics.stringWidth(partialMarker);
         }
+
         int descWidth = fontMetrics.stringWidth(description);
+
+        int numberWidth = 0;
+        final AbstractVcs vcs = changeList.getVcs();
+        if (vcs != null) {
+          final CachingCommittedChangesProvider provider = vcs.getCachingCommittedChangesProvider();
+          if (provider != null && provider.getChangelistTitle() != null) {
+            String number = "#" + changeList.getNumber() + "  ";
+            numberWidth = fontMetrics.stringWidth(number);
+            descWidth += numberWidth;
+            append(number, SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
+        }
+
         if (description.length() == 0 && !truncated) {
           append(VcsBundle.message("committed.changes.empty.comment"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           appendAlign(parentWidth - size);
@@ -471,8 +487,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         else {
           final String moreMarker = VcsBundle.message("changes.browser.details.marker");
           int moreWidth = fontMetrics.stringWidth(moreMarker);
-          description = truncateDescription(description, fontMetrics, (descMaxWidth - moreWidth));
+          description = truncateDescription(description, fontMetrics, (descMaxWidth - moreWidth - numberWidth));
           myRenderer.appendTextWithLinks(description);
+          // we don't have place for changelist number in this case
           append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
           append(moreMarker, LINK_ATTRIBUTES, new MoreLauncher(myProject, changeList));
           appendAlign(parentWidth - size);
@@ -483,6 +500,13 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       }
       else if (node.getUserObject() != null) {
         append(node.getUserObject().toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      }
+    }
+
+    private void appendDescriptionAndNumber(final String description, final String number) {
+      myRenderer.appendTextWithLinks(description);
+      if (number != null) {
+        append(number, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
     }
 
