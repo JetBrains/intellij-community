@@ -271,7 +271,15 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           ThrowSearchUtil.Root root = options.getUserData(ThrowSearchUtil.THROW_SEARCH_ROOT_KEY);
-          ThrowSearchUtil.addThrowUsages(processor, root, options);
+          if (root == null) {
+            final ThrowSearchUtil.Root[] roots = ThrowSearchUtil.getSearchRoots(element);
+            if (roots != null && roots.length > 0) {
+              root = roots [0];
+            }
+          }
+          if (root != null) {
+            ThrowSearchUtil.addThrowUsages(processor, root, options);
+          }
         }
       });
     }
@@ -319,7 +327,9 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         }
     }
 
-    if (options.isSearchForTextOccurences && options.searchScope instanceof GlobalSearchScope) {
+    if (!ThrowSearchUtil.isSearchable(element) && 
+        options.isSearchForTextOccurences &&
+        options.searchScope instanceof GlobalSearchScope) {
       String stringToSearch = getStringToSearch(element);
       if (stringToSearch != null) {
         final TextRange elementTextRange = ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {

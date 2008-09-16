@@ -25,7 +25,11 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
     findMethodOptions.isIncludeSubpackages = false;
     findMethodOptions.isSearchForTextOccurences = false;
     final FindUsagesOptions findPackageOptions = FindUsagesHandler.createFindUsagesOptions(project);
+
     final FindUsagesOptions findThrowOptions = FindUsagesHandler.createFindUsagesOptions(project);
+    findThrowOptions.isSearchForTextOccurences = false;
+    findThrowOptions.isThrowUsages = true;
+
     final FindUsagesOptions findVariableOptions = FindUsagesHandler.createFindUsagesOptions(project);
     findVariableOptions.isCheckDeepInheritance = false;
     findVariableOptions.isIncludeSubpackages = false;

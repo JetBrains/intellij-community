@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -117,7 +118,8 @@ public class ThrowSearchUtil {
     return exn instanceof PsiNewExpression;
   }
 
-  public static Root [] getSearchRoots (final PsiElement element) {
+  @Nullable
+  public static Root[] getSearchRoots (final PsiElement element) {
     if (element instanceof PsiThrowStatement) {
       final PsiThrowStatement aThrow = (PsiThrowStatement) element;
       final PsiExpression exn = aThrow.getException();
