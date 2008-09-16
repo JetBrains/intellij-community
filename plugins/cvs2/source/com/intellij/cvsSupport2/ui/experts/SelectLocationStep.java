@@ -39,7 +39,7 @@ public abstract class SelectLocationStep extends WizardStep {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       public boolean isFileVisible(final VirtualFile file, final boolean showHiddenFiles) {
         if (!super.isFileVisible(file, showHiddenFiles)) return false;
-        if (!showHiddenFiles && project != null && ProjectRootManager.getInstance(project).getFileIndex().isIgnored(file)) {
+        if (!showHiddenFiles && project != null && (! project.isDefault()) && ProjectRootManager.getInstance(project).getFileIndex().isIgnored(file)) {
           return false;
         }
         return true;

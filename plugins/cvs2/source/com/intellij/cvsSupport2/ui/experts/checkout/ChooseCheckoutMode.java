@@ -4,15 +4,17 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsBrowser.CvsFile;
 import com.intellij.cvsSupport2.ui.ChangeKeywordSubstitutionPanel;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.cvsSupport2.ui.experts.WizardStep;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vcs.checkout.CheckoutStrategy;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -20,8 +22,6 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.File;
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya

@@ -1,4 +1,4 @@
-package com.intellij.cvsSupport2.ui.experts.checkout;
+package com.intellij.openapi.vcs.checkout;
 
 import java.io.File;
 
