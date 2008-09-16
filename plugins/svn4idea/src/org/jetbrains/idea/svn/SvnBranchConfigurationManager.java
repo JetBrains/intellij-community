@@ -16,11 +16,14 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,6 +61,23 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
 
   public static SvnBranchConfigurationManager getInstance(Project project) {
     return ServiceManager.getService(project, SvnBranchConfigurationManager.class);
+  }
+
+  /**
+   * Gets the instance of the component if the project wasn't disposed. If the project was
+   * disposed, throws ProcessCanceledException. Should only be used for calling from background
+   * threads (for example, committed changes refresh thread).
+   *
+   * @param project the project for which the component instance should be retrieved.
+   * @return component instance
+   */
+  public static SvnBranchConfigurationManager getInstanceChecked(final Project project) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<SvnBranchConfigurationManager>() {
+      public SvnBranchConfigurationManager compute() {
+        if (project.isDisposed()) throw new ProcessCanceledException();
+        return getInstance(project);
+      }
+    });
   }
 
   public static class ConfigurationBean {
