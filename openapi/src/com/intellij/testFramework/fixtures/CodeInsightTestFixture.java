@@ -29,6 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -247,7 +248,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   void testRename(String fileAfter, String newName) throws Throwable;
 
-  PsiReference[] testFindUsages(@NonNls String... fileNames) throws Throwable;
+  Collection<UsageInfo> testFindUsages(@NonNls String... fileNames) throws Throwable;
 
   void moveFile(@NonNls String filePath, @NonNls String to, final String... additionalFiles) throws Throwable;
 

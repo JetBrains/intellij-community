@@ -27,6 +27,9 @@ import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
+import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.ide.DataManager;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.Disposable;
@@ -72,7 +75,6 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -80,15 +82,12 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.*;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.find.findUsages.FindUsagesManager;
-import com.intellij.find.findUsages.FindUsagesHandler;
-import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.usageView.UsageInfo;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
@@ -413,7 +412,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return JavaPsiFacade.getInstance(getProject());
   }
 
-  public PsiReference[] testFindUsages(@NonNls final String... fileNames) throws Throwable {
+  public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) throws Throwable {
     configureByFiles(fileNames);
     PsiElement referenceTo = TargetElementUtilBase
       .findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
@@ -424,9 +423,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
     final FindUsagesOptions options = new FindUsagesOptions(project);
+    options.isUsages = true;
     assert handler != null : "Cannot find handler for: " + referenceTo;
     handler.processElementUsages(referenceTo, processor, options);
-    return ReferencesSearch.search(referenceTo, GlobalSearchScope.projectScope(project), false).toArray(PsiReference.EMPTY_ARRAY);
+    return processor.getResults();
   }
 
   public void moveFile(@NonNls final String filePath, @NonNls final String to, final String... additionalFiles) throws Throwable {
