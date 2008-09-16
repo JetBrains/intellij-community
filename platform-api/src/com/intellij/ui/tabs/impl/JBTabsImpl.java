@@ -108,6 +108,7 @@ public class JBTabsImpl extends JComponent
   boolean myGhostsAlwaysVisible = false;
   private boolean myDisposed;
   private boolean myToDrawBorderIfTabsHidden = true;
+  private Color myActiveTabFillIn;
 
 
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
@@ -915,7 +916,7 @@ public class JBTabsImpl extends JComponent
 
     comp.setBounds(insets.left + xAddin + border.left, yComp + border.top,
                    getWidth() - insets.left - insets.right - xAddin - border.left - border.right,
-                   getHeight() - insets.bottom - yComp - border.top - border.bottom - 1);
+                   getHeight() - insets.bottom - yComp - border.top - border.bottom);
   }
 
 
@@ -1100,7 +1101,7 @@ public class JBTabsImpl extends JComponent
 
 
     final GeneralPath path = new GeneralPath();
-    final int bottomY = (int)selectedTabBounds.getMaxY() + 1;
+    int bottomY = (int)selectedTabBounds.getMaxY() + 1;
     final int topY = selectedTabBounds.y;
     int leftX = selectedTabBounds.x;
 
@@ -1148,16 +1149,33 @@ public class JBTabsImpl extends JComponent
     final Color from;
     final Color to;
     final int alpha;
+    int paintTopY = topY;
+    int paintBottomY = bottomY;
     final boolean paintFocused = myPaintFocus && (myFocused || myActivePopup != null);
+    Color bgPreFill = null;
     if (paintFocused) {
-      from = UIUtil.getFocusedFillColor();
-      to = UIUtil.getFocusedFillColor();
+      if (getActiveTabFillIn() == null) {
+        from = UIUtil.getFocusedFillColor();
+        to = UIUtil.getFocusedFillColor();
+      } else {
+        bgPreFill = getActiveTabFillIn();
+        alpha = 255;
+        paintBottomY = topY + getArcSize() - 2;
+        from = UIUtil.toAlpha(UIUtil.getFocusedFillColor(), alpha);
+        to = UIUtil.toAlpha(getActiveTabFillIn(), alpha);
+      }
     }
     else {
       if (isPaintFocus()) {
-        alpha = 150;
-        from = UIUtil.toAlpha(UIUtil.getPanelBackgound().brighter(), alpha);
-        to = UIUtil.toAlpha(UIUtil.getPanelBackgound(), alpha);
+        if (getActiveTabFillIn() == null) {
+          alpha = 150;
+          from = UIUtil.toAlpha(UIUtil.getPanelBackgound().brighter(), alpha);
+          to = UIUtil.toAlpha(UIUtil.getPanelBackgound(), alpha);
+        } else {
+          alpha = 255;
+          from = UIUtil.toAlpha(getActiveTabFillIn(), alpha);
+          to = UIUtil.toAlpha(getActiveTabFillIn(), alpha);
+        }
       }
       else {
         alpha = 255;
@@ -1166,10 +1184,12 @@ public class JBTabsImpl extends JComponent
       }
     }
 
-
-    g2d.setPaint(new GradientPaint(selectedTabBounds.x, topY, from, selectedTabBounds.x, bottomY, to));
-
     if (!isHideTabs()) {
+      if (bgPreFill != null) {
+        g2d.setColor(bgPreFill);
+        g2d.fill(fillPath);
+      }
+      g2d.setPaint(new GradientPaint(selectedTabBounds.x, paintTopY, from, selectedTabBounds.x, paintBottomY, to));
       g2d.fill(fillPath);
     }
 
@@ -1311,7 +1331,6 @@ public class JBTabsImpl extends JComponent
     int bottomY = y + myBorderSize.top - 2;
     int middleY = topY + (bottomY - topY) / 2;
 
-
     if (myBorderSize.top > 0) {
       if (isHideTabs()) {
         if (isToDrawBorderIfTabsHidden()) {
@@ -1323,7 +1342,7 @@ public class JBTabsImpl extends JComponent
         g2d.setColor(borderColor);
         g2d.drawLine(x, y - 1, x + width - 1, y - 1);
       }
-      else {
+      else if (getActiveTabFillIn() == null) {
         if (myBorderSize.top > 1) {
           g2d.setColor(Color.white);
           g2d.fillRect(x, topY, width, bottomY - topY);
@@ -1762,6 +1781,18 @@ public class JBTabsImpl extends JComponent
   public JBTabsPresentation setAdjustBorders(final boolean adjust) {
     myAdjustBorders = adjust;
     return this;
+  }
+
+  @NotNull
+  public JBTabs setActiveTabFillIn(@Nullable final Color color) {
+    myActiveTabFillIn = color;
+    revalidateAndRepaint(false);
+    return this;
+  }
+
+  @Nullable
+  public Color getActiveTabFillIn() {
+    return myActiveTabFillIn;
   }
 
   public JBTabsPresentation setFocusCycle(final boolean root) {

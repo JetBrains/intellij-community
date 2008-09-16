@@ -145,7 +145,7 @@ public class TableLayout extends TabLayout {
             .setBounds(insets.left + 1, eachY + 1, selectedToolbar.getPreferredSize().width, myTabs.getHeight() - eachY - insets.bottom - 2);
       }
 
-      myTabs.layoutComp(xAddin, eachY + 3, myTabs.getSelectedInfo().getComponent());
+      myTabs.layoutComp(xAddin, eachY + 2, myTabs.getSelectedInfo().getComponent());
     }
 
     myLastTableLayout = data;

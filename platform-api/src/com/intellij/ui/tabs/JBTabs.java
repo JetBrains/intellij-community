@@ -86,5 +86,8 @@ public interface JBTabs {
   int getIndexOf(@Nullable final TabInfo tabInfo);
 
   void sortTabs(Comparator<TabInfo> comparator);
+
+  @NotNull
+  JBTabs setActiveTabFillIn(@Nullable Color color);
   
 }

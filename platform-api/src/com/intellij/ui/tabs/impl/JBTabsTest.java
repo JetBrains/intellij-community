@@ -103,7 +103,8 @@ public class JBTabsTest {
     })).setText("Tree1").setActions(new DefaultActionGroup(), null)
         .setIcon(IconLoader.getIcon("/debugger/frame.png"));
 
-    final TabInfo toAnimate1 = new TabInfo(new JTree());
+    final JTree component = new JTree();
+    final TabInfo toAnimate1 = new TabInfo(component);
     //toAnimate1.setIcon(IconLoader.getIcon("/debugger/console.png"));
     final JCheckBox attract1 = new JCheckBox("Attract 1");
     attract1.addActionListener(new ActionListener() {
@@ -137,6 +138,14 @@ public class JBTabsTest {
     });
     south.add(block);
 
+    final JCheckBox fill = new JCheckBox("Tab fill in", true);
+    fill.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        tabs.setActiveTabFillIn(fill.isSelected() ? Color.white : null);
+      }
+    });
+    south.add(fill);
+
 
     final JButton refire = new JButton("Re-fire attraction");
     refire.addActionListener(new ActionListener() {
@@ -160,7 +169,9 @@ public class JBTabsTest {
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
 
     //tabs.getComponent().setBorder(new EmptyBorder(5, 5, 5, 5));
-    tabs.setPaintBorder(10, -1, -1, -1);
+    tabs.setPaintBorder(1, -1, -1, -1);
+    tabs.setActiveTabFillIn(Color.white);
+    tabs.setGhostsAlwaysVisible(true);
 
     tabs.setBorder(new EmptyBorder(10, 10, 10, 10));
 
@@ -173,7 +184,7 @@ public class JBTabsTest {
 
     tabs.setStealthTabMode(true);
 
-    frame.setBounds(200, 200, 800, 400);
+    frame.setBounds(1400, 200, 1000, 600);
     frame.show();
 
 

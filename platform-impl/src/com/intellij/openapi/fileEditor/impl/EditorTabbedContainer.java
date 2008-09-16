@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -111,7 +112,7 @@ final class EditorTabbedContainer implements Disposable {
           newEditor.selectNotify();
         }
       }
-    });
+    }).setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
 
     updateTabBorder();
 

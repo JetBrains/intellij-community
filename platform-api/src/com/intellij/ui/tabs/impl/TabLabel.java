@@ -41,6 +41,8 @@ public class TabLabel extends JPanel {
     setOpaque(false);
     setLayout(new BorderLayout(myLabel.getIconTextGap() * 2, 0));
 
+
+
     myLabelPlaceholder.setOpaque(false);
     add(myLabelPlaceholder, BorderLayout.CENTER);
 
