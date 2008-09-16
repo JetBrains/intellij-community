@@ -255,6 +255,8 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
    * @return
    */
   public void onTestingStarted() {
+    myAnimator.setCurrentTestCase(myTestsRootNode);
+    
     // Status line
     myProgressLine.setColor(ColorProgressBar.GREEN);
 
