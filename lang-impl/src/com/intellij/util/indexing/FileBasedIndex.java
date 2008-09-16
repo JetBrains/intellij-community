@@ -778,15 +778,19 @@ public class FileBasedIndex implements ApplicationComponent {
     assert index != null;
     
     index.update(inputId, currentFC, oldFC);
-    if (file.isValid()) {
-      if (currentFC != null) {
-        IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        if (file.isValid()) {
+          if (currentFC != null) {
+            IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
+          }
+          else {
+            // mark the file as unindexed
+            IndexingStamp.update(file, indexId, -1L);
+          }
+        }
       }
-      else {
-        // mark the file as unindexed
-        IndexingStamp.update(file, indexId, -1L);
-      }
-    }
+    });
   }
 
   public static int getFileId(final VirtualFile file) {
