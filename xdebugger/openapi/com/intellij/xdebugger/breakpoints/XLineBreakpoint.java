@@ -27,6 +27,8 @@ public interface XLineBreakpoint<P extends XBreakpointProperties> extends XBreak
 
   String getFileUrl();
 
+  String getPresentableFilePath();
+
   @NotNull
   XLineBreakpointType<P> getType();
 }

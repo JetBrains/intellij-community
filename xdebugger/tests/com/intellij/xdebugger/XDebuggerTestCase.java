@@ -50,10 +50,6 @@ public abstract class XDebuggerTestCase extends LiteFixture {
     public MyBreakpointProperties createProperties() {
       return new MyBreakpointProperties();
     }
-
-    public String getDisplayText(final XLineBreakpoint<MyBreakpointProperties> breakpoint) {
-      return "";
-    }
   }
 
   public static class MySimpleBreakpointType extends XBreakpointType<XBreakpoint<MyBreakpointProperties>,MyBreakpointProperties> {

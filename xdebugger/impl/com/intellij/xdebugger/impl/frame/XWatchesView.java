@@ -1,6 +1,8 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -20,6 +22,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
+import java.awt.event.KeyEvent;
 
 /**
  * @author nik
@@ -34,6 +37,11 @@ public class XWatchesView extends XDebugViewBase {
     super(session, parentDisposable);
     myTreePanel = new XDebuggerTreePanel(session, session.getDebugProcess().getEditorsProvider(), null,
                                          XDebuggerActions.WATCHES_TREE_POPUP_GROUP);
+    ActionManager actionManager = ActionManager.getInstance();
+    CustomShortcutSet insertShortcut = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0));
+    actionManager.getAction(XDebuggerActions.XNEW_WATCH).registerCustomShortcutSet(insertShortcut, getMainPanel());
+    CustomShortcutSet deleteShortcut = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
+    actionManager.getAction(XDebuggerActions.XREMOVE_WATCH).registerCustomShortcutSet(deleteShortcut, getMainPanel());
     myWatchExpressions.addAll(Arrays.asList(sessionData.getWatchExpressions()));
   }
 

@@ -19,6 +19,7 @@ package com.intellij.xdebugger.breakpoints;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -48,7 +49,9 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
 
   public abstract P createBreakpointProperties(@NotNull VirtualFile file, int line);
 
-  public abstract String getDisplayText(final XLineBreakpoint<P> breakpoint);
+  public String getDisplayText(final XLineBreakpoint<P> breakpoint) {
+    return XDebuggerBundle.message("xbreakpoint.default.display.text", breakpoint.getLine() + 1, breakpoint.getPresentableFilePath());
+  }
 
   @NotNull  
   public Icon getDisabledDependentIcon() {

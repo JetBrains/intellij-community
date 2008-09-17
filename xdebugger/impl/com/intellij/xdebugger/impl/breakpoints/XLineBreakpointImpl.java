@@ -11,6 +11,9 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.*;
@@ -130,6 +133,14 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   public String getFileUrl() {
     return myState.getFileUrl();
+  }
+
+  public String getPresentableFilePath() {
+    String url = getFileUrl();
+    if (url != null && LocalFileSystem.PROTOCOL.equals(VirtualFileManager.extractProtocol(url))) {
+      return FileUtil.toSystemDependentName(VfsUtil.urlToPath(url));
+    }
+    return url != null ? url : "";
   }
 
   @Nullable
