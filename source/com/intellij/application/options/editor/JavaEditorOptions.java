@@ -17,7 +17,6 @@ public class JavaEditorOptions implements EditorOptionsProvider {
   private static final String INSERT_IMPORTS_NONE = ApplicationBundle.message("combobox.insert.imports.none");
 
 
-  private JCheckBox myCbInsertJavadocStubOnEnter;
   private JComboBox mySmartPasteCombo;
   private JCheckBox myCbRenameLocalVariablesInplace;
   private JCheckBox myCbShowImportPopup;
@@ -47,7 +46,6 @@ public class JavaEditorOptions implements EditorOptionsProvider {
         mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_ASK);
         break;
     }
-    myCbInsertJavadocStubOnEnter.setSelected(codeInsightSettings.JAVADOC_STUB_ON_ENTER);
 
     // Refactoring
     myCbRenameLocalVariablesInplace.setSelected(editorSettings.isVariableInplaceRenameEnabled());
@@ -64,7 +62,6 @@ public class JavaEditorOptions implements EditorOptionsProvider {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
 
-    codeInsightSettings.JAVADOC_STUB_ON_ENTER = myCbInsertJavadocStubOnEnter.isSelected();
     editorSettings.setVariableInplaceRenameEnabled(myCbRenameLocalVariablesInplace.isSelected());
     codeInsightSettings.ADD_IMPORTS_ON_PASTE = getSmartPasteValue();
     daemonSettings.setImportHintEnabled(myCbShowImportPopup.isSelected());
@@ -79,9 +76,7 @@ public class JavaEditorOptions implements EditorOptionsProvider {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
 
-    boolean isModified = isModified(myCbInsertJavadocStubOnEnter, codeInsightSettings.JAVADOC_STUB_ON_ENTER);
-    // Refactoring
-    isModified |= isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());
+    boolean isModified = isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());
 
     isModified |= isModified(myCbShowImportPopup, daemonSettings.isImportHintEnabled());
     

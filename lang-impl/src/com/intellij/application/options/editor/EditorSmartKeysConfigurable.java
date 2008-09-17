@@ -1,20 +1,25 @@
 package com.intellij.application.options.editor;
 
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageCommenters;
+import com.intellij.lang.Commenter;
+import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.CompositeConfigurable;
-import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
-import java.awt.*;
+import java.util.Collection;
 
 /**
  * @author yole
@@ -34,6 +39,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
   private JPanel myRootPanel;
   private JPanel myAddonPanel;
   private JCheckBox myCbInsertPairCurlyBraceOnEnter;
+  private JCheckBox myCbInsertJavadocStubOnEnter;
 
   private static final String NO_REFORMAT = ApplicationBundle.message("combobox.paste.reformat.none");
   private static final String INDENT_BLOCK = ApplicationBundle.message("combobox.paste.reformat.indent.block");
@@ -45,6 +51,22 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     myReformatOnPasteCombo.addItem(INDENT_BLOCK);
     myReformatOnPasteCombo.addItem(INDENT_EACH_LINE);
     myReformatOnPasteCombo.addItem(REFORMAT_BLOCK);
+
+    myCbInsertJavadocStubOnEnter.setVisible(hasAnyDocAwareCommenters());
+  }
+
+  private static boolean hasAnyDocAwareCommenters() {
+    final Collection<Language> languages = Language.getRegisteredLanguages();
+    for (Language language : languages) {
+      final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
+      if (commenter instanceof CodeDocumentationAwareCommenter) {
+        final CodeDocumentationAwareCommenter docCommenter = (CodeDocumentationAwareCommenter)commenter;
+        if (docCommenter.getDocumentationCommentLinePrefix() != null) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   protected List<UnnamedConfigurable> createConfigurables() {
@@ -101,6 +123,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
 
     myCbSmartIndentOnEnter.setSelected(codeInsightSettings.SMART_INDENT_ON_ENTER);
     myCbInsertPairCurlyBraceOnEnter.setSelected(codeInsightSettings.INSERT_BRACE_ON_ENTER);
+    myCbInsertJavadocStubOnEnter.setSelected(codeInsightSettings.JAVADOC_STUB_ON_ENTER);
 
     myCbInsertPairBracket.setSelected(codeInsightSettings.AUTOINSERT_PAIR_BRACKET);
     myCbInsertPairQuote.setSelected(codeInsightSettings.AUTOINSERT_PAIR_QUOTE);
@@ -118,6 +141,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     codeInsightSettings.SMART_END_ACTION = myCbSmartEnd.isSelected();
     codeInsightSettings.SMART_INDENT_ON_ENTER = myCbSmartIndentOnEnter.isSelected();
     codeInsightSettings.INSERT_BRACE_ON_ENTER = myCbInsertPairCurlyBraceOnEnter.isSelected();
+    codeInsightSettings.JAVADOC_STUB_ON_ENTER = myCbInsertJavadocStubOnEnter.isSelected();
     codeInsightSettings.AUTOINSERT_PAIR_BRACKET = myCbInsertPairBracket.isSelected();
     codeInsightSettings.AUTOINSERT_PAIR_QUOTE = myCbInsertPairQuote.isSelected();
     editorSettings.setCamelWords(myCbCamelWords.isSelected());
@@ -138,6 +162,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
 
     isModified |= isModified(myCbSmartIndentOnEnter, codeInsightSettings.SMART_INDENT_ON_ENTER);
     isModified |= isModified(myCbInsertPairCurlyBraceOnEnter, codeInsightSettings.INSERT_BRACE_ON_ENTER);
+    isModified |= isModified(myCbInsertJavadocStubOnEnter, codeInsightSettings.JAVADOC_STUB_ON_ENTER);
 
     isModified |= isModified(myCbInsertPairBracket, codeInsightSettings.AUTOINSERT_PAIR_BRACKET);
     isModified |= isModified(myCbInsertPairQuote, codeInsightSettings.AUTOINSERT_PAIR_QUOTE);
