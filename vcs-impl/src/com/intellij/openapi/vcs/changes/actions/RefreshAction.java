@@ -24,7 +24,10 @@ public class RefreshAction extends AnAction {
     FileDocumentManager.getInstance().saveAllDocuments();
     VirtualFileManager.getInstance().refresh(true, new Runnable() {
       public void run() {
-        VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
+        // already called in EDT or under write action
+        if (! project.isDisposed()) {
+          VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
+        }
       }
     });
   }
