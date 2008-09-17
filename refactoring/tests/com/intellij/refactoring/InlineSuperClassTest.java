@@ -45,7 +45,6 @@ public class InlineSuperClassTest extends MultiFileTestCase {
       });
     }
     catch (RuntimeException e) {
-      e.printStackTrace();
       if (fail) {
         return;
       }
