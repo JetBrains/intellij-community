@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -32,6 +33,7 @@ import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
@@ -125,13 +127,15 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
                   final PsiElement qualifier = getQualifier(reference.getElement());
                   if (!OBJECT_METHOD_PATTERN.accepts(object) || allowGetClass(object, parameters)) {
                     if (!stringType.equals(itemType)) {
-                      addChainedCallVariants(element, originalFile, tailType, getReferenceFilter(element, true, true).first, prefix, substitutor, qualifier, result);
+                      addChainedCallVariants(element, originalFile, tailType, getReferenceFilter(element, true, true).first, prefix, substitutor, qualifier, result, parameters);
                     }
                   }
 
                   addArraysAsListConversions(element, prefix, itemType, parameters, result, qualifier);
 
                   addToArrayConversions(element, object, prefix, itemType, parameters, result, qualifier);
+
+                  addArrayMemberAccessors(element, prefix, itemType, qualifier, parameters, result, (PsiModifierListOwner)object);
                 }
                 catch (IncorrectOperationException e) {
                 }
@@ -142,6 +146,43 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
       }
     });
     return true;
+  }
+
+  private static void addArrayMemberAccessors(final PsiElement element, final String prefix, final PsiType itemType,
+                                              final PsiElement qualifier,
+                                              final JavaSmartCompletionParameters parameters, final CompletionResultSet result, PsiModifierListOwner object)
+      throws IncorrectOperationException {
+    if (itemType instanceof PsiArrayType && parameters.getExpectedType().isAssignableFrom(((PsiArrayType)itemType).getComponentType())) {
+      final PsiExpression conversion =
+          JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createExpressionFromText(
+              getQualifierText(qualifier) + prefix + "[0]", element);
+      final LookupItem item = LookupItemUtil.objectToLookupItem(conversion);
+
+      @NonNls final String presentable = prefix + "[...]";
+      item.setLookupString(prefix);
+      item.setPresentableText(presentable);
+      item.addLookupStrings(prefix);
+      item.setIcon(object.getIcon(Iconable.ICON_FLAG_VISIBILITY));
+      item.setInsertHandler(new SimpleInsertHandler<LookupElement>() {
+        public int handleInsert(final Editor editor,
+                                int startOffset,
+                                final LookupElement item,
+                                final LookupElement[] allItems,
+                                final TailType tailType,
+                                final char completionChar) throws IncorrectOperationException {
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_ARRAY_MEMBER);
+
+          final Document document = editor.getDocument();
+          final int tailOffset = startOffset + item.getLookupString().length();
+          final String callSpace = getSpace(CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_WITHIN_BRACKETS);
+          final String access = "[" + callSpace + callSpace + "]";
+          document.insertString(tailOffset, access);
+          editor.getCaretModel().moveToOffset(tailOffset + 1 + callSpace.length());
+          return tailOffset + access.length();
+        }
+      });
+      result.addElement(item);
+    }
   }
 
   private static boolean allowGetClass(final Object object, final JavaSmartCompletionParameters parameters) {
@@ -282,7 +323,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
   private static void addChainedCallVariants(final PsiElement element, final PsiFile originalFile, final TailType tailType,
                                              final ElementFilter qualifierFilter, final String prefix, final PsiSubstitutor substitutor,
                                              final PsiElement qualifier,
-                                             final CompletionResultSet result) throws IncorrectOperationException {
+                                             final CompletionResultSet result, JavaSmartCompletionParameters parameters) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
     final PsiExpression ref = elementFactory.createExpressionFromText(getQualifierText(qualifier) + prefix + ".xxx", element);
     String beautifulPrefix = prefix.endsWith(" )") ? prefix.substring(0, prefix.length() - 2) + ")" : prefix;
@@ -297,6 +338,17 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
         if (OBJECT_METHOD_PATTERN.accepts(method) &&
             !(OBJECT_METHOD_PATTERN.accepts(parentMethod) && parentMethod != null && method.getName().equals(parentMethod.getName()))) {
           continue;
+        }
+
+        final PsiType type = method.getReturnType();
+        if (type instanceof PsiClassType) {
+          final PsiClassType classType = (PsiClassType)type;
+          final PsiClass psiClass = classType.resolve();
+          if (psiClass instanceof PsiTypeParameter && method.getTypeParameterList() == psiClass.getParent()) {
+            final PsiTypeParameter typeParameter = (PsiTypeParameter)psiClass;
+            if (typeParameter.getExtendsListTypes().length == 0) continue;
+            if (!parameters.getExpectedType().isAssignableFrom(TypeConversionUtil.typeParameterErasure(typeParameter))) continue;
+          }
         }
 
         final QualifiedMethodLookupItem newItem = new QualifiedMethodLookupItem(method, beautifulPrefix);
