@@ -4,6 +4,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.cls.ClsFormatException;
@@ -27,6 +28,6 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   }
 
   public int getStubVersion() {
-    return 0;
+    return JavaFileElementType.STUB_VERSION;
   }
 }

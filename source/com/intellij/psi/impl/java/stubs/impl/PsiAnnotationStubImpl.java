@@ -13,26 +13,21 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
-import com.intellij.util.io.StringRef;
 
 public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements PsiAnnotationStub {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl");
 
-  private final StringRef myText;
+  private final String myText;
   private PatchedSoftReference<CompositeElement> myParsedFromRepository;
 
 
   public PsiAnnotationStubImpl(final StubElement parent, final String text) {
-    this(parent, StringRef.fromString(text));
-  }
-
-  public PsiAnnotationStubImpl(final StubElement parent, final StringRef text) {
     super(parent, JavaStubElementTypes.ANNOTATION);
     myText = text;
   }
 
   public String getText() {
-    return StringRef.toString(myText);
+    return myText;
   }
 
   public CompositeElement getTreeElement() {

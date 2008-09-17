@@ -14,7 +14,6 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.io.PersistentStringEnumerator;
 
 import java.io.IOException;
 
@@ -42,12 +41,12 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
 
   public void serialize(final PsiAnnotationStub stub, final StubOutputStream dataStream)
       throws IOException {
-    dataStream.writeName(stub.getText());
+    dataStream.writeUTFFast(stub.getText());
   }
 
   public PsiAnnotationStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
       throws IOException {
-    return new PsiAnnotationStubImpl(parentStub, dataStream.readName());
+    return new PsiAnnotationStubImpl(parentStub, dataStream.readUTFFast());
   }
 
   public void indexStub(final PsiAnnotationStub stub, final IndexSink sink) {

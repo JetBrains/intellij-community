@@ -18,23 +18,27 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StringRef;
 
 import java.io.IOException;
 
 public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
+  public static final int STUB_VERSION = 1;
+
   public JavaFileElementType() {
     super("java.FILE", StdLanguages.JAVA);
   }
 
   public StubBuilder getBuilder() {
     return new JavaFileStubBuilder();
+  }
+
+  public int getStubVersion() {
+    return STUB_VERSION;
   }
 
   public ASTNode parseContents(ASTNode chameleon) {

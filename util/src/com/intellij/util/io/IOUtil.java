@@ -15,13 +15,20 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.UTFDataFormatException;
 
 public class IOUtil {
   private static final int STRING_HEADER_SIZE = 1;
   private static final int STRING_LENGTH_THRESHOLD = 255;
+
+  @NonNls private static final String LONGER_THAN_64K_MARKER = "LONGER_THAN_64K";
+
+  private IOUtil() {}
 
   public static String readString(DataInput stream) throws IOException {
     int length = stream.readInt();
@@ -80,22 +87,34 @@ public class IOUtil {
     }
     else {
       storage.writeByte((byte)0xFF);
-      storage.writeUTF(value);
+
+      try {
+        storage.writeUTF(value);
+      }
+      catch (UTFDataFormatException e) {
+        storage.writeUTF(LONGER_THAN_64K_MARKER);
+        writeString(value, storage);
+      }
     }
   }
 
   public static String readUTFFast(final byte[] buffer, final DataInput storage) throws IOException {
-    final int len = 0xFF & (int)storage.readByte();
+    int len = 0xFF & (int)storage.readByte();
     if (len == 0xFF) {
-      return storage.readUTF();
+      String result = storage.readUTF();
+      if (LONGER_THAN_64K_MARKER.equals(result)) {
+        return readString(storage);
+      }
+
+      return result;
     }
 
     final char[] chars = new char[len];
-    final byte[] buf = buffer;
-    storage.readFully(buf, 0, len);
+    storage.readFully(buffer, 0, len);
     for (int i = 0; i < len; i++) {
-      chars[i] = (char)buf[i];
+      chars[i] = (char)buffer[i];
     }
+
     return new String(chars);
   }
 
