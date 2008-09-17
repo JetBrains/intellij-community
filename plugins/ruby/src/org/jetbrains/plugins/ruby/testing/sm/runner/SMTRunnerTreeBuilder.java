@@ -4,6 +4,7 @@ import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import org.jetbrains.annotations.NotNull;
@@ -38,8 +39,19 @@ public class SMTRunnerTreeBuilder extends AbstractTestTreeBuilder {
 
 
   protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
-    //TODO[romeo] move to base class
-    return nodeDescriptor.getElement() == getTreeStructure().getRootElement();
+    final AbstractTreeStructure treeStructure = getTreeStructure();
+    final Object rootElement = treeStructure.getRootElement();
+    final Object nodeElement = nodeDescriptor.getElement();
+
+    if (nodeElement == rootElement) {
+      return true;
+    }
+
+    if (((SMTestProxy)nodeElement).getParent() == nodeElement 
+        && ((SMTestProxy)nodeElement).getChildren().size() == 1){
+
+    }
+    return false;
   }
 
   protected boolean isAlwaysShowPlus(final NodeDescriptor descriptor) {
@@ -63,5 +75,5 @@ public class SMTRunnerTreeBuilder extends AbstractTestTreeBuilder {
    */
   public void performUpdate() {
     getUpdater().performUpdate();
-  }
+  }  
 }
