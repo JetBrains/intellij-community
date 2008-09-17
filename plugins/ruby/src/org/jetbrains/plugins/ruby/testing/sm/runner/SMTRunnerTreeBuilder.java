@@ -47,9 +47,9 @@ public class SMTRunnerTreeBuilder extends AbstractTestTreeBuilder {
       return true;
     }
 
-    if (((SMTestProxy)nodeElement).getParent() == nodeElement 
-        && ((SMTestProxy)nodeElement).getChildren().size() == 1){
-
+    if (((SMTestProxy)nodeElement).getParent() == rootElement
+        && ((SMTestProxy)rootElement).getChildren().size() == 1){
+      return true;
     }
     return false;
   }
