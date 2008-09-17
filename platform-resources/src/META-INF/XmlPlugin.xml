@@ -238,6 +238,8 @@
     <iconProvider implementation="com.intellij.xml.util.XmlIconProvider"/>
 
     <inspectionToolProvider implementation="com.intellij.codeInspection.htmlInspections.XmlInspectionToolProvider"/>
+
+    <codeFoldingOptionsProvider implementation="com.intellij.application.options.editor.XmlCodeFoldingOptionsProvider"/>
   </extensions>
   
 </idea-plugin>
