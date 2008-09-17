@@ -4,6 +4,7 @@ import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.Marker;
 import org.jetbrains.plugins.ruby.testing.sm.runner.BaseSMTRunnerTestCase;
 import org.jetbrains.plugins.ruby.testing.sm.runner.GeneralToSMTRunnerEventsConvertor;
@@ -142,7 +143,8 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     final Ref<Boolean> focusRequestedRef = new Ref<Boolean>();
 
     myResultsViewer.addChangeSelectionListener(new TestProxySelectionChangedListener() {
-      public void onChangeSelection(@Nullable final SMTestProxy selectedTestProxy, final boolean requestFocus) {
+      public void onChangeSelection(@Nullable final SMTestProxy selectedTestProxy, @NotNull final Object sender,
+                                    final boolean requestFocus) {
         onSelectedHappend.set();
         proxyRef.set(selectedTestProxy);
         focusRequestedRef.set(requestFocus);

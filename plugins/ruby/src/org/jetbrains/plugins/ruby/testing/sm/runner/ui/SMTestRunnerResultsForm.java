@@ -14,6 +14,7 @@ import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
@@ -21,19 +22,24 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
-import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsListener;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.support.UIUtil;
+import org.jetbrains.plugins.ruby.testing.sm.runner.SMTRunnerEventsListener;
+import org.jetbrains.plugins.ruby.testing.sm.runner.SMTRunnerTreeBuilder;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTRunnerTreeStructure;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTestProxy;
-import org.jetbrains.plugins.ruby.testing.sm.runner.SMTRunnerTreeBuilder;
-import org.jetbrains.plugins.ruby.testing.sm.runner.*;
 import org.jetbrains.plugins.ruby.utils.IdeaInternalUtil;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
@@ -64,7 +70,7 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
 
   private final TestsProgressAnimator myAnimator;
   private final SMTRunnerToolbarPanel myToolbar;
-  private TabbedPaneWrapper myTabbedPane;
+  private JBTabs myTabs;
 
   /**
    * Fake parent suite for all tests and suites
@@ -74,6 +80,7 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
   private final TestConsoleProperties myConsoleProperties;
 
   private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
+  private Map<LogConsole, TabsListener> myLogToListenerMap = new HashMap<LogConsole, TabsListener>();
   private final List<EventsListener> myEventListeners = new ArrayList<EventsListener>();
   private final List<TestProxySelectionChangedListener> myChangeSelectionListeners = new ArrayList<TestProxySelectionChangedListener>();
   private final List<FormSelectionListener> myFormSelectionListeners = new ArrayList<FormSelectionListener>();
@@ -114,13 +121,20 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     myTestsRootNode = new SMTestProxy("[root]", true);
 
     //Adds tabs view component
-    myTabbedPane = new TabbedPaneWrapper();
+    myTabs = new JBTabsImpl(project,
+                            ActionManager.getInstance(),
+                            IdeFocusManager.getInstance(myProject),
+                            this);
+    //TODO: popup menu
+    //myTabs.setPopupGroup(, ViewContext.CELL_POPUP_PLACE);
     myTabbedPaneConatiner.setLayout(new BorderLayout());
-    myTabbedPaneConatiner.add(myTabbedPane.getComponent());
+    myTabbedPaneConatiner.add(myTabs.getComponent());
 
     // Setup tests tree
     myTreeView.setLargeModel(true);
     myTreeView.attachToModel(this);
+    //TODO: popup menu
+    //myTreeView.set
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(project, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
     myAnimator = new MyAnimator(myTreeBuilder);
@@ -163,10 +177,18 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     return myContentPane;
   }
 
-  public void addTab(@NotNull final String tabTitle,
+  public void addTab(@NotNull final String tabTitle, @Nullable final String tooltip,
                      @Nullable final Icon icon,
                      @NotNull final JComponent component) {
-    myTabbedPane.addTab(tabTitle, icon, component, null);
+    final TabInfo tabInfo = new TabInfo(component);
+    //TODO
+    tabInfo.setTooltipText("tooltip: " + tabTitle);
+
+    //tabInfo.setTooltipText(tooltip);
+    tabInfo.setText(tabTitle);
+    tabInfo.setIcon(icon);
+
+    myTabs.addTab(tabInfo);
   }
 
   public void addTestsProxySelectionListener(final TestProxyTreeSelectionListener listener) {
@@ -193,7 +215,8 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
                                           new File(path),
                                           skippedContent, name, true) {
       public boolean isActive() {
-        return myTabbedPane.getSelectedComponent() == this;
+        final TabInfo info = myTabs.getSelectedInfo();
+        return info != null && info.getComponent() == this;
       }
     };
 
@@ -201,19 +224,20 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
       log.attachStopLogConsoleTrackingListener(myRunProcess);
     }
     addAdditionalTabComponent(log, path);
-    myTabbedPane.addChangeListener(log);
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        myTabbedPane.removeChangeListener(log);
+    final TabsListener listener = new TabsListener() {
+      public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
+        log.stateChanged(new ChangeEvent(myTabs));
       }
-    });
+    };
+    myTabs.addListener(listener);
+    myLogToListenerMap.put(log, listener);
   }
 
 
   public void addAdditionalTabComponent(@NotNull final AdditionalTabComponent tabComponent,
                                         @NotNull final String id) {
-    myAdditionalComponents.put(tabComponent, myTabbedPane.getTabCount());
-    myTabbedPane.addTab(tabComponent.getTabTitle(), null, tabComponent.getComponent(), tabComponent.getTooltip());
+    myAdditionalComponents.put(tabComponent, myTabs.getTabCount());
+    addTab(tabComponent.getTabTitle(), tabComponent.getTooltip(), null, tabComponent.getComponent());
     Disposer.register(this, new Disposable() {
       public void dispose() {
         removeAdditionalTabComponent(tabComponent);
@@ -221,6 +245,9 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     });
   }
 
+  public JBTabs getTabs() {
+    return myTabs;
+  }
 
   public void initLogFilesManager() {
     myLogFilesManager.registerFileMatcher(myRunConfiguration);
@@ -228,24 +255,35 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
   }
 
   public void removeLogConsole(@NotNull final String path) {
-    LogConsole componentToRemove = null;
+    LogConsole logConsoleToRemove = null;
     for (AdditionalTabComponent tabComponent : myAdditionalComponents.keySet()) {
       if (tabComponent instanceof LogConsole) {
         final LogConsole console = (LogConsole)tabComponent;
         if (Comparing.strEqual(console.getPath(), path)) {
-          componentToRemove = console;
+          logConsoleToRemove = console;
           break;
         }
       }
     }
-    if (componentToRemove != null) {
-      myTabbedPane.removeChangeListener(componentToRemove);
-      removeAdditionalTabComponent(componentToRemove);
+    if (logConsoleToRemove != null) {
+      myTabs.removeListener(myLogToListenerMap.get(logConsoleToRemove));
+      myLogToListenerMap.remove(logConsoleToRemove);
+
+      removeAdditionalTabComponent(logConsoleToRemove);
     }
   }
 
-  public void removeAdditionalTabComponent(AdditionalTabComponent component) {
-    myTabbedPane.removeTabAt(myAdditionalComponents.get(component).intValue());
+  public void removeAdditionalTabComponent(final AdditionalTabComponent component) {
+
+    TabInfo tabInfoFoComponent = null;
+    final List<TabInfo> tabs = myTabs.getTabs();
+    for (TabInfo tab : tabs) {
+      if (tab.getComponent() == component) {
+        tabInfoFoComponent = tab;
+        break;
+      }
+    }
+    myTabs.removeTab(tabInfoFoComponent);
     myAdditionalComponents.remove(component);
     Disposer.dispose(component);
   }
@@ -536,7 +574,7 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
 
   private void fireOnSelectionChanged(final SMTestProxy selectedTestProxy) {
     for (TestProxySelectionChangedListener listener : myChangeSelectionListeners) {
-      listener.onChangeSelection(selectedTestProxy, true);
+      listener.onChangeSelection(selectedTestProxy, this, true);
     }
   }
 
@@ -554,15 +592,16 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
    */
   public TestProxySelectionChangedListener createOnChangeSelectionListener() {
     return new TestProxySelectionChangedListener() {
-      public void onChangeSelection(@Nullable final SMTestProxy selectedTestProxy,
-                             final boolean requestFocus) {
+      public void onChangeSelection(@Nullable final SMTestProxy selectedTestProxy, @NotNull final Object sender,
+                                    final boolean requestFocus) {
         UIUtil.addToInvokeLater(new Runnable() {
           public void run() {
-            selectAndNotify(selectedTestProxy);
+            selectWithoutNotify(selectedTestProxy);
 
             // Request focus if necessary
             if (requestFocus) {
-              myTreeView.requestFocusInWindow();
+              //myTreeView.requestFocusInWindow();
+              IdeFocusManager.getInstance(myProject).requestFocus(myTreeView, true);
             }
           }
         });

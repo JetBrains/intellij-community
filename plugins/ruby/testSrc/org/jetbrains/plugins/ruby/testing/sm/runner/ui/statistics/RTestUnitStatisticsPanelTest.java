@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ruby.testing.sm.runner.ui.statistics;
 
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.Marker;
 import org.jetbrains.plugins.ruby.testing.sm.runner.BaseSMTRunnerTestCase;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTRunnerEventsListener;
@@ -26,7 +27,7 @@ public class RTestUnitStatisticsPanelTest extends BaseSMTRunnerTestCase {
 
     myRootSuite = createSuiteProxy("root");
 
-    myStatisticsPanel = new StatisticsPanel();
+    myStatisticsPanel = new StatisticsPanel(getProject());
     mySelectionListener = myStatisticsPanel.createSelectionListener();
     myTestEventsListener = myStatisticsPanel.createTestEventsListener();
   }
@@ -141,7 +142,8 @@ public class RTestUnitStatisticsPanelTest extends BaseSMTRunnerTestCase {
     final Ref<Boolean> focusRequestedRef = new Ref<Boolean>();
 
     myStatisticsPanel.addChangeSelectionListener(new TestProxySelectionChangedListener() {
-      public void onChangeSelection(@Nullable final SMTestProxy selectedTestProxy, final boolean requestFocus) {
+      public void onChangeSelection(@Nullable final SMTestProxy selectedTestProxy, @NotNull final Object sender,
+                                    final boolean requestFocus) {
         onSelectedHappend.set();
         proxyRef.set(selectedTestProxy);
         focusRequestedRef.set(requestFocus);

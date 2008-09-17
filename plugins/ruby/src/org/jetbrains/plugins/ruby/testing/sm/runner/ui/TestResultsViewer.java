@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ruby.testing.sm.runner.ui;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.Disposable;
+import com.intellij.ui.tabs.JBTabs;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTestProxy;
 
@@ -15,10 +16,11 @@ public interface TestResultsViewer extends Disposable {
   /**
    * Add tab to viwer
    * @param name Tab name
+   * @param tooltip
    * @param icon
    * @param contentPane Tab content pane
    */
-  void addTab(final String name, @Nullable final Icon icon, final JComponent contentPane);
+  void addTab(final String name, @Nullable final String tooltip, @Nullable final Icon icon, final JComponent contentPane);
 
   /**
    * Subscribe on test proxy selection events
@@ -55,6 +57,8 @@ public interface TestResultsViewer extends Disposable {
   void selectAndNotify(@Nullable final AbstractTestProxy proxy);
 
   void addEventsListener(final EventsListener listener);
+
+  JBTabs getTabs();
 
   interface EventsListener {
     void onTestNodeAdded(final TestResultsViewer sender, final SMTestProxy test);

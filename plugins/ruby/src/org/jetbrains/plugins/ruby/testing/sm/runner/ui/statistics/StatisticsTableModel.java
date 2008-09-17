@@ -44,13 +44,14 @@ public class StatisticsTableModel extends ListTableModel<SMTestProxy> {
         // If new suite differs from old suite we should reload table
         if (myCurrentSuite != newCurrentSuite) {
           myCurrentSuite = newCurrentSuite;
-          UIUtil.addToInvokeLater(new Runnable() {
-            public void run() {
-              updateModel();
-            }
-          });
         }
-       }
+        // update model to show new items in it
+        UIUtil.addToInvokeLater(new Runnable() {
+          public void run() {
+            updateModel();
+          }
+        });
+      }
     };
   }
 

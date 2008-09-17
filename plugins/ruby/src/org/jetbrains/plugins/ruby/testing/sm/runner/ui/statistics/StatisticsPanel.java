@@ -1,16 +1,21 @@
 package org.jetbrains.plugins.ruby.testing.sm.runner.ui.statistics;
 
 import com.intellij.execution.testframework.TestsUIUtil;
-import com.intellij.ui.table.TableView;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.table.TableView;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.TabInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.support.UIUtil;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTRunnerEventsAdapter;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTRunnerEventsListener;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTestProxy;
-import org.jetbrains.plugins.ruby.testing.sm.runner.ui.TestProxySelectionChangedListener;
 import org.jetbrains.plugins.ruby.testing.sm.runner.ui.SMTestRunnerResultsForm;
+import org.jetbrains.plugins.ruby.testing.sm.runner.ui.TestProxySelectionChangedListener;
+import org.jetbrains.plugins.ruby.testing.sm.runner.ui.TestResultsViewer;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -32,8 +37,10 @@ public class StatisticsPanel extends JPanel {
 
   private StatisticsTableModel myTableModel;
   private final List<TestProxySelectionChangedListener> myChangeSelectionListeners = new ArrayList<TestProxySelectionChangedListener>();
+  private Project myProject;
 
-  public StatisticsPanel() {
+  public StatisticsPanel(final Project project) {
+    myProject = project;
     myTableModel = new StatisticsTableModel();
     myStatisticsTableView.setModel(myTableModel);
 
@@ -241,7 +248,7 @@ public class StatisticsPanel extends JPanel {
 
   private void fireOnSelectionChanged(final SMTestProxy selectedTestProxy) {
     for (TestProxySelectionChangedListener listener : myChangeSelectionListeners) {
-      listener.onChangeSelection(selectedTestProxy, true);
+      listener.onChangeSelection(selectedTestProxy, this, true);
     }
   }
 
@@ -265,12 +272,22 @@ public class StatisticsPanel extends JPanel {
     final SMTestRunnerResultsForm.FormSelectionListener selectionListener = createSelectionListener();
 
     return new TestProxySelectionChangedListener() {
-      public void onChangeSelection(@Nullable final SMTestProxy selectedTestProxy, final boolean requestFocus) {
+      public void onChangeSelection(@Nullable final SMTestProxy selectedTestProxy,
+                                    @NotNull final Object sender,
+                                    final boolean requestFocus) {
         if (requestFocus) {
           selectionListener.onSelectedRequest(selectedTestProxy);
           UIUtil.addToInvokeLater(new Runnable() {
             public void run() {
-              myStatisticsTableView.requestFocusInWindow();
+              final JBTabs myTabs = ((TestResultsViewer)sender).getTabs();
+              final List<TabInfo> tabs = myTabs.getTabs();
+              for (TabInfo tab : tabs) {
+                if (tab.getComponent() == StatisticsPanel.this) {
+                  myTabs.select(tab, true);
+                  break;
+                }
+              }
+              IdeFocusManager.getInstance(myProject).requestFocus(myStatisticsTableView, true);
             }
           });
         }

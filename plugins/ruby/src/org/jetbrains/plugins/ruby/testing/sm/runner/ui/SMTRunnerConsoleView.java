@@ -31,7 +31,8 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
     myResultsViewer = resultsViewer;
 
     // Console
-    myResultsViewer.addTab(ExecutionBundle.message("output.tab.title"), OUTPUT_TAB_ICON,
+    myResultsViewer.addTab(ExecutionBundle.message("output.tab.title"), null,
+                           OUTPUT_TAB_ICON,
                            getConsole().getComponent());
     myResultsViewer.addTestsProxySelectionListener(new TestProxyTreeSelectionListener() {
       public void onSelected(@Nullable final PrintableTestProxy selectedTestProxy) {

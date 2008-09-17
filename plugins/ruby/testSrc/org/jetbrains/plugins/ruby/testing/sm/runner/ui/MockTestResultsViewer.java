@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ruby.testing.sm.runner.ui;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.ui.tabs.JBTabs;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTestProxy;
 
@@ -21,7 +22,7 @@ public class MockTestResultsViewer implements TestResultsViewer {
     myRootSuite = suite;
   }
 
-  public void addTab(final String name, final Icon icon, final JComponent contentPane) {}
+  public void addTab(final String name, @Nullable final String tooltip, final Icon icon, final JComponent contentPane) {}
 
   public void addTestsProxySelectionListener(final TestProxyTreeSelectionListener listener) {}
 
@@ -41,6 +42,9 @@ public class MockTestResultsViewer implements TestResultsViewer {
   public void selectAndNotify(@Nullable final AbstractTestProxy proxy) {}
 
   public void addEventsListener(final EventsListener listener) {}
+
+  public JBTabs getTabs() { return null; }
+
 
   public void dispose() {
     myProperties.dispose();
