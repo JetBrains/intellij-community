@@ -309,32 +309,31 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     assertEquals(0, children.get(1).getChildren().size());
   }
 
-  //public void testRuby_1767() throws InterruptedException {
-  //  TestConsoleProperties.HIDE_PASSED_TESTS.set(myConsoleProperties, true);
-  //
-  //  myEventsProcessor.onSuiteStarted("suite");
-  //  myResultsViewer.performUpdate();
-  //
-  //  myEventsProcessor.onTestStarted("test_failed");
-  //  myResultsViewer.performUpdate();
-  //  myEventsProcessor.onTestFailure("test_failed", "", "", false);
-  //  myResultsViewer.performUpdate();
-  //  myEventsProcessor.onTestFinished("test_failed", 10);
-  //  myResultsViewer.performUpdate();
-  //
-  //  myEventsProcessor.onTestStarted("test");
-  //  myResultsViewer.performUpdate();
-  //  assertEquals(2, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
-  //
-  //  myEventsProcessor.onTestFinished("test", 10);
-  //  assertEquals(2, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
-  //
-  //  myEventsProcessor.onSuiteFinished("suite");
-  //  myEventsProcessor.onFinishTesting();
-  //
-  //  //TODO[romeo]: investigate why test doesn't work...
-  //  assertEquals(1, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
-  //}
+  public void testRuby_1767() throws InterruptedException {
+    TestConsoleProperties.HIDE_PASSED_TESTS.set(myConsoleProperties, true);
+
+    myEventsProcessor.onSuiteStarted("suite");
+    myResultsViewer.performUpdate();
+
+    myEventsProcessor.onTestStarted("test_failed");
+    myResultsViewer.performUpdate();
+    myEventsProcessor.onTestFailure("test_failed", "", "", false);
+    myResultsViewer.performUpdate();
+    myEventsProcessor.onTestFinished("test_failed", 10);
+    myResultsViewer.performUpdate();
+
+    myEventsProcessor.onTestStarted("test");
+    myResultsViewer.performUpdate();
+    assertEquals(2, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
+
+    myEventsProcessor.onTestFinished("test", 10);
+    assertEquals(2, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
+
+    myEventsProcessor.onSuiteFinished("suite");
+    myEventsProcessor.onFinishTesting();
+
+    assertEquals(1, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
+  }
 
 
   private void onTestStarted(final String testName) {
