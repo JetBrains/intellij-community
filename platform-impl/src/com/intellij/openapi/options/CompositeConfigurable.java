@@ -1,9 +1,5 @@
 package com.intellij.openapi.options;
 
-import com.intellij.ui.TabbedPaneWrapper;
-
-import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 /*
@@ -11,24 +7,23 @@ import java.util.List;
  * Use is subject to license terms.
  */
 
-public abstract class CompositeConfigurable extends BaseConfigurable {
-  private List<Configurable> myConfigurables;
-  private TabbedPaneWrapper myTabbedPane;
+public abstract class CompositeConfigurable<T extends UnnamedConfigurable> extends BaseConfigurable {
+  private List<T> myConfigurables;
 
   public void reset() {
-    for (Configurable configurable : getConfigurables()) {
+    for (T configurable : getConfigurables()) {
       configurable.reset();
     }
   }
 
   public void apply() throws ConfigurationException {
-    for (Configurable configurable : getConfigurables()) {
+    for (T configurable : getConfigurables()) {
       configurable.apply();
     }
   }
 
   public boolean isModified() {
-    for (Configurable configurable : getConfigurables()) {
+    for (T configurable : getConfigurables()) {
       if (configurable.isModified()) {
         return true;
       }
@@ -36,29 +31,18 @@ public abstract class CompositeConfigurable extends BaseConfigurable {
     return false;
   }
 
-  public JComponent createComponent() {
-    myTabbedPane = new TabbedPaneWrapper();
-    for (Configurable configurable : getConfigurables()) {
-      myTabbedPane.addTab(configurable.getDisplayName(), configurable.getIcon(), configurable.createComponent(), null);
-    }
-    final JComponent component = myTabbedPane.getComponent();
-    component.setPreferredSize(new Dimension(500, 400));
-    return component;
-  }
-
   public void disposeUIResources() {
-    myTabbedPane = null;
     if (myConfigurables != null) {
-      for (final Configurable myConfigurable : myConfigurables) {
+      for (final T myConfigurable : myConfigurables) {
         myConfigurable.disposeUIResources();
       }
       myConfigurables = null;
     }
   }
 
-  protected abstract List<Configurable> createConfigurables();
+  protected abstract List<T> createConfigurables();
 
-  public List<Configurable> getConfigurables() {
+  public List<T> getConfigurables() {
     if (myConfigurables == null) {
       myConfigurables = createConfigurables();
     }

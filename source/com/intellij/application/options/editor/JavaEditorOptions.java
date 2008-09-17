@@ -17,10 +17,8 @@ public class JavaEditorOptions implements EditorOptionsProvider {
   private static final String INSERT_IMPORTS_NONE = ApplicationBundle.message("combobox.insert.imports.none");
 
 
-  private JCheckBox myCbInsertPairCurlyBraceOnEnter;
   private JCheckBox myCbInsertScriptletEndOnEnter;
   private JCheckBox myCbInsertJavadocStubOnEnter;
-  private JCheckBox myCbShowMethodSeparators;
   private JComboBox mySmartPasteCombo;
   private JCheckBox myCbRenameLocalVariablesInplace;
   private JCheckBox myCbShowImportPopup;
@@ -37,7 +35,6 @@ public class JavaEditorOptions implements EditorOptionsProvider {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
 
-    myCbShowMethodSeparators.setSelected(daemonSettings.SHOW_METHOD_SEPARATORS);
     switch (codeInsightSettings.ADD_IMPORTS_ON_PASTE) {
       case CodeInsightSettings.YES:
         mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_ALWAYS);
@@ -51,7 +48,6 @@ public class JavaEditorOptions implements EditorOptionsProvider {
         mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_ASK);
         break;
     }
-    myCbInsertPairCurlyBraceOnEnter.setSelected(codeInsightSettings.INSERT_BRACE_ON_ENTER);
     myCbInsertScriptletEndOnEnter.setSelected(codeInsightSettings.INSERT_SCRIPTLET_END_ON_ENTER);
     myCbInsertJavadocStubOnEnter.setSelected(codeInsightSettings.JAVADOC_STUB_ON_ENTER);
 
@@ -70,9 +66,6 @@ public class JavaEditorOptions implements EditorOptionsProvider {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
 
-    daemonSettings.SHOW_METHOD_SEPARATORS = myCbShowMethodSeparators.isSelected();
-
-    codeInsightSettings.INSERT_BRACE_ON_ENTER = myCbInsertPairCurlyBraceOnEnter.isSelected();
     codeInsightSettings.INSERT_SCRIPTLET_END_ON_ENTER = myCbInsertScriptletEndOnEnter.isSelected();
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = myCbInsertJavadocStubOnEnter.isSelected();
     editorSettings.setVariableInplaceRenameEnabled(myCbRenameLocalVariablesInplace.isSelected());
@@ -89,9 +82,7 @@ public class JavaEditorOptions implements EditorOptionsProvider {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
 
-    boolean isModified = isModified(myCbShowMethodSeparators, daemonSettings.SHOW_METHOD_SEPARATORS);
-    isModified |= isModified(myCbInsertPairCurlyBraceOnEnter, codeInsightSettings.INSERT_BRACE_ON_ENTER);
-    isModified |= isModified(myCbInsertScriptletEndOnEnter, codeInsightSettings.INSERT_SCRIPTLET_END_ON_ENTER);
+    boolean isModified = isModified(myCbInsertScriptletEndOnEnter, codeInsightSettings.INSERT_SCRIPTLET_END_ON_ENTER);
     isModified |= isModified(myCbInsertJavadocStubOnEnter, codeInsightSettings.JAVADOC_STUB_ON_ENTER);
     // Refactoring
     isModified |= isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());

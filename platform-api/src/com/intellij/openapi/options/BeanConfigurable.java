@@ -1,11 +1,13 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,11 +57,22 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
         return field.get(instance);
       }
       catch (NoSuchFieldException e) {
-        throw new RuntimeException(e);
+        try {
+          final Method method = instance.getClass().getMethod(getterName());
+          return method.invoke(instance);
+        }
+        catch (Exception e1) {
+          throw new RuntimeException(e1);
+        }
       }
       catch (IllegalAccessException e) {
         throw new RuntimeException(e);
       }
+    }
+
+    @NonNls
+    protected String getterName() {
+      return "get" + StringUtil.capitalize(myFieldName);
     }
 
     void setBeanValue(Object instance, Object value) {
@@ -68,7 +81,13 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
         field.set(instance, value);
       }
       catch (NoSuchFieldException e) {
-        throw new RuntimeException(e);
+        try {
+          final Method method = instance.getClass().getMethod("set" + StringUtil.capitalize(myFieldName));
+          method.invoke(instance, value);
+        }
+        catch (Exception e1) {
+          throw new RuntimeException(e1);
+        }
       }
       catch (IllegalAccessException e) {
         throw new RuntimeException(e);
@@ -94,6 +113,11 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
 
     void setComponentValue(final Object instance) {
       getComponent().setSelected(((Boolean) instance).booleanValue());
+    }
+
+    @Override
+    protected String getterName() {
+      return "is" + StringUtil.capitalize(myFieldName);
     }
   }
 

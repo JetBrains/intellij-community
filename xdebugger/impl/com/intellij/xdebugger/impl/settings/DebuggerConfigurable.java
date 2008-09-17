@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
@@ -17,13 +17,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Eugene Belyaev & Eugene Zhuravlev
  */
-public class DebuggerConfigurable extends CompositeConfigurable implements SearchableConfigurable {
+public class DebuggerConfigurable extends TabbedConfigurable implements SearchableConfigurable {
   public Icon getIcon() {
     return IconLoader.getIcon("/general/configurableDebugger.png");
   }

@@ -333,4 +333,7 @@
   <extensionPoint name="callHierarchyProvider" interface="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="methodHierarchyProvider" interface="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="typeHierarchyProvider" interface="com.intellij.lang.LanguageExtensionPoint"/>
+
+  <extensionPoint name="editorAppearanceConfigurable" interface="com.intellij.openapi.options.UnnamedConfigurable"/>
+  <extensionPoint name="editorSmartKeysConfigurable" interface="com.intellij.openapi.options.UnnamedConfigurable"/>
 </extensionPoints>

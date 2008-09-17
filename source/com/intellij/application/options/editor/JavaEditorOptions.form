@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.application.options.editor.JavaEditorOptions">
   <grid id="27dc6" binding="myWholePanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="20" y="20" width="227" height="260"/>
+      <xy x="20" y="20" width="310" height="260"/>
     </constraints>
     <properties/>
     <border type="empty">
@@ -11,7 +11,7 @@
     <children>
       <vspacer id="84f9">
         <constraints>
-          <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="1.0"/>
         </constraints>
       </vspacer>
@@ -32,18 +32,9 @@
         <properties/>
         <border type="etched" title-resource-bundle="messages/ApplicationBundle" title-key="label.smart.enter"/>
         <children>
-          <component id="d8072" class="javax.swing.JCheckBox" binding="myCbInsertPairCurlyBraceOnEnter">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="0.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ApplicationBundle" key="checkbox.insert.pair.curly.brace"/>
-            </properties>
-          </component>
           <component id="248a" class="javax.swing.JCheckBox" binding="myCbInsertScriptletEndOnEnter">
             <constraints>
-              <grid row="1" column="2" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
@@ -52,7 +43,7 @@
           </component>
           <component id="19208" class="javax.swing.JCheckBox" binding="myCbInsertJavadocStubOnEnter">
             <constraints>
-              <grid row="2" column="2" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
@@ -61,18 +52,9 @@
           </component>
         </children>
       </grid>
-      <component id="dd552" class="javax.swing.JCheckBox" binding="myCbShowMethodSeparators">
-        <constraints>
-          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-          <gridbag top="5" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.method.separators"/>
-        </properties>
-      </component>
       <component id="c86a1" class="javax.swing.JCheckBox" binding="myCbRenameLocalVariablesInplace">
         <constraints>
-          <grid row="7" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="6" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
           <gridbag top="20" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>

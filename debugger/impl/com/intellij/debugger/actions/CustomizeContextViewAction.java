@@ -2,7 +2,6 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.settings.BaseRenderersConfigurable;
-import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.UserRenderersConfigurable;
 import com.intellij.debugger.ui.impl.FrameDebuggerTree;
@@ -10,8 +9,10 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 
@@ -28,7 +29,7 @@ public class CustomizeContextViewAction extends DebuggerAction{
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
 
-    final CompositeConfigurable configurable = new CompositeConfigurable() {
+    final CompositeConfigurable configurable = new TabbedConfigurable() {
       protected List<Configurable> createConfigurables() {
         ArrayList<Configurable> array = new ArrayList<Configurable>();
         array.add(new BaseRenderersConfigurable(project));
