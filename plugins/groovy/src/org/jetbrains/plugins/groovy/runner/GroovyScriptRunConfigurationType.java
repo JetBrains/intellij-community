@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.project.Project;
@@ -122,4 +123,9 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
     if (!(file instanceof GroovyFile)) return null;
     return ((GroovyFile) file).getScriptClass();
   }
+
+  public static GroovyScriptRunConfigurationType getInstance() {
+    return ConfigurationTypeUtil.findConfigurationType(GroovyScriptRunConfigurationType.class);
+  }
+
 }
