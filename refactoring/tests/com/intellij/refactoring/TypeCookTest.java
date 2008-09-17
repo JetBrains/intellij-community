@@ -19,6 +19,7 @@ import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.io.FileNotFoundException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -697,17 +698,17 @@ public class TypeCookTest extends MultiFileTestCase {
 
     final ReductionSystem commonSystem = b.build(aClass);
 
-    System.out.println("System built:\n" + commonSystem);
+    //System.out.println("System built:\n" + commonSystem);
 
-    final com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem[] systems = commonSystem.isolate();
+    final ReductionSystem[] systems = commonSystem.isolate();
 
-    System.out.println("Systems isolated:\n" + commonSystem);
+    //System.out.println("Systems isolated:\n" + commonSystem);
 
-    com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem system = null;
+    ReductionSystem system = null;
 
     for (ReductionSystem s : systems) {
       if (s != null && system == null) {
-        System.out.println(s);
+        //System.out.println(s);
         system = s;
       }
     }
@@ -723,38 +724,18 @@ public class TypeCookTest extends MultiFileTestCase {
     }
 
     String itemRepr = system != null ? system.dumpString() : commonSystem.dumpString();// d.resultString();
-    String itemName = className + ".items";
+    doStuff(rootDir, itemRepr, className + ".items");
+    itemRepr = system != null ? system.dumpResult(binding) : commonSystem.dumpString(); //d.resultString();
+
+    doStuff(rootDir, itemRepr, className + ".1.items");
+  }
+
+  private void doStuff(String rootDir, String itemRepr, String itemName) throws FileNotFoundException {
     String patternName = PathManagerEx.getTestDataPath() + getTestRoot() + getTestName(true) + "/after/" + itemName;
 
     File patternFile = new File(patternName);
 
-    if (!patternFile.exists()) {
-      PrintWriter writer = new PrintWriter(new FileOutputStream(patternFile));
-      writer.print(itemRepr);
-      writer.close();
-
-      System.out.println("Pattern not found, file " + patternName + " created.");
-
-      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(patternFile);
-    }
-
-    File graFile = new File(FileUtil.getTempDirectory() + File.separator + rootDir + File.separator + itemName);
-
-    PrintWriter writer = new PrintWriter(new FileOutputStream(graFile));
-
-    writer.print(itemRepr);
-
-    writer.close();
-
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(graFile);
-
-    itemRepr = system != null ? system.dumpResult(binding) : commonSystem.dumpString(); //d.resultString();
-
-    itemName = className + ".1.items";
-    patternName = PathManagerEx.getTestDataPath() + getTestRoot() + getTestName(true) + "/after/" + itemName;
-
-    patternFile = new File(patternName);
-
+    PrintWriter writer;
     if (!patternFile.exists()) {
       writer = new PrintWriter(new FileOutputStream(patternFile));
       writer.print(itemRepr);
@@ -765,7 +746,7 @@ public class TypeCookTest extends MultiFileTestCase {
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(patternFile);
     }
 
-    graFile = new File(FileUtil.getTempDirectory() + File.separator + rootDir + File.separator + itemName);
+    File graFile = new File(FileUtil.getTempDirectory() + File.separator + rootDir + File.separator + itemName);
 
     writer = new PrintWriter(new FileOutputStream(graFile));
 
