@@ -32,8 +32,10 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import org.jdom.Attribute;
@@ -91,6 +93,15 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public static SvnConfiguration getInstance(Project project) {
     return project.getComponent(SvnConfiguration.class);
+  }
+
+  public static SvnConfiguration getInstanceSafe(final Project project) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<SvnConfiguration>() {
+      public SvnConfiguration compute() {
+        if (project.isDisposed()) throw new ProcessCanceledException();
+        return project.getComponent(SvnConfiguration.class);
+      }
+    });
   }
 
   public SvnConfiguration(final Project project) {

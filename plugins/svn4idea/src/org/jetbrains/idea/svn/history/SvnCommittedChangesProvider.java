@@ -116,9 +116,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   public List<SvnChangeList> getCommittedChanges(ChangeBrowserSettings settings, final RepositoryLocation location, final int maxCount) throws VcsException {
     final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
     final ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
-    if (myProject.isDisposed()) {
-      return result;
-    }
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) {
       progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
