@@ -44,6 +44,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
@@ -289,6 +290,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return ApplicationManager.getApplication().runReadAction(new Computable<AbstractVcs>() {
       @Nullable
       public AbstractVcs compute() {
+        if (myProject.isDisposed()) throw new ProcessCanceledException();
         VirtualFile vFile = ChangesUtil.findValidParent(file);
         if (vFile != null) {
           return getVcsFor(vFile);
