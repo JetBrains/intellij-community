@@ -37,6 +37,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -190,7 +191,13 @@ public class SvnVcs extends AbstractVcs {
       final MessageBusConnection messageBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
       messageBusConnection.subscribe(ChangeListManagerImpl.LISTS_LOADED, new LocalChangeListsLoadedListener() {
         public void processLoadedLists(final List<LocalChangeList> lists) {
-          processChangeLists(lists);
+          try {
+            processChangeLists(lists);
+            supportOptions.upgradeToChangeListsSynchronized();
+          }
+          catch (ProcessCanceledException e) {
+            //
+          }
           messageBusConnection.disconnect();
         }
       });
@@ -199,15 +206,21 @@ public class SvnVcs extends AbstractVcs {
 
   public void processChangeLists(final List<LocalChangeList> lists) {
     final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    final SVNChangelistClient client = createChangelistClient();
-    for (LocalChangeList list : lists) {
-      if (! list.isDefault()) {
-        final Collection<Change> changes = list.getChanges();
-        for (Change change : changes) {
-          correctListForRevision(plVcsManager, change.getBeforeRevision(), client, list.getName());
-          correctListForRevision(plVcsManager, change.getAfterRevision(), client, list.getName());
+    plVcsManager.startBackgroundVcsOperation();
+    try {
+      final SVNChangelistClient client = createChangelistClient();
+      for (LocalChangeList list : lists) {
+        if (! list.isDefault()) {
+          final Collection<Change> changes = list.getChanges();
+          for (Change change : changes) {
+            correctListForRevision(plVcsManager, change.getBeforeRevision(), client, list.getName());
+            correctListForRevision(plVcsManager, change.getAfterRevision(), client, list.getName());
+          }
         }
       }
+    }
+    finally {
+      plVcsManager.stopBackgroundVcsOperation();
     }
   }
 

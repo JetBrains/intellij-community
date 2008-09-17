@@ -88,7 +88,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     public Long myVersion;
   }
 
-  public static class SvnSupportOptions {
+  public class SvnSupportOptions {
     private final Long myVersion;
 
     public SvnSupportOptions(final Long version) {
@@ -105,11 +105,18 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     public boolean changeListsSynchronized() {
       return (myVersion != null) && (CHANGELIST_SUPPORT <= myVersion);
     }
+
+    public void upgradeToChangeListsSynchronized() {
+      myConfigurationBean.myVersion = CHANGELIST_SUPPORT;
+    }
   }
 
   public SvnSupportOptions getSupportOptions() {
     final SvnSupportOptions supportOptions = new SvnSupportOptions(myConfigurationBean.myVersion);
-    myConfigurationBean.myVersion = SvnSupportOptions.CHANGELIST_SUPPORT;
+    // will be set to SvnSupportOptions.CHANGELIST_SUPPORT after sync
+    if (myConfigurationBean.myVersion == null || myConfigurationBean.myVersion.longValue() < SvnSupportOptions.CHANGELIST_SUPPORT) {
+      myConfigurationBean.myVersion = SvnSupportOptions.UPGRADE_TO_15_VERSION_ASKED;
+    }
     return supportOptions;
   }
 
@@ -202,7 +209,10 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   }
 
   public ConfigurationBean getState() {
-    myConfigurationBean.myVersion = SvnSupportOptions.CHANGELIST_SUPPORT;
+    // will be set to SvnSupportOptions.CHANGELIST_SUPPORT after sync
+    if (myConfigurationBean.myVersion == null || myConfigurationBean.myVersion.longValue() < SvnSupportOptions.CHANGELIST_SUPPORT) {
+      myConfigurationBean.myVersion = SvnSupportOptions.UPGRADE_TO_15_VERSION_ASKED;
+    }
     return myConfigurationBean;
   }
 
