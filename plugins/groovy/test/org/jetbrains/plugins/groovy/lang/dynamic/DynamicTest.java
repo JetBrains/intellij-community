@@ -139,8 +139,7 @@ public class DynamicTest extends GroovyFileSetTestCase {
 
   protected void tearDown() {
     try {
-      final CodeStyleSettingsManager manager = CodeStyleSettingsManager.getInstance(myProject);
-      manager.dropTemporarySettings();
+      CodeStyleSettingsManager.getInstance(myProject).dropTemporarySettings();
       myCodeInsightFixture.tearDown();
       myCodeInsightFixture = null;
       myFixture.tearDown();
