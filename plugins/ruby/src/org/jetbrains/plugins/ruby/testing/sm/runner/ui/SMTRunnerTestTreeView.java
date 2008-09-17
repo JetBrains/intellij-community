@@ -15,6 +15,8 @@ import javax.swing.tree.TreePath;
  * @author: Roman Chernyatchik
  */
 public class SMTRunnerTestTreeView extends TestTreeView {
+  @Nullable private TestResultsViewer myResultsViewer;
+
   protected TreeCellRenderer getRenderer(final TestConsoleProperties properties) {
     return new TestTreeRenderer(properties);
   }
@@ -35,5 +37,14 @@ public class SMTRunnerTestTreeView extends TestTreeView {
     }
 
     return null;
+  }
+
+  public void setTestResultsViewer(final TestResultsViewer resultsViewer) {
+    myResultsViewer = resultsViewer;
+  }
+
+  @Nullable
+  public TestResultsViewer getResultsViewer() {
+    return myResultsViewer;
   }
 }

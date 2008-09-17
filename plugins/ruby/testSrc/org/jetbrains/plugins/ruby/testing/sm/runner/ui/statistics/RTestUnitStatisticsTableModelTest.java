@@ -3,7 +3,6 @@ package org.jetbrains.plugins.ruby.testing.sm.runner.ui.statistics;
 import com.intellij.util.ui.SortableColumnModel;
 import org.jetbrains.plugins.ruby.testing.sm.runner.BaseSMTRunnerTestCase;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTestProxy;
-import org.jetbrains.plugins.ruby.testing.sm.runner.ui.SMTestRunnerResultsForm;
 
 import java.util.List;
 
@@ -12,7 +11,6 @@ import java.util.List;
  */
 public class RTestUnitStatisticsTableModelTest extends BaseSMTRunnerTestCase {
   private StatisticsTableModel myStatisticsTableModel;
-  private SMTestRunnerResultsForm.FormSelectionListener mySelectionListener;
   private SMTestProxy myRootSuite;
 
   @Override
@@ -20,13 +18,12 @@ public class RTestUnitStatisticsTableModelTest extends BaseSMTRunnerTestCase {
     super.setUp();
 
     myStatisticsTableModel = new StatisticsTableModel();
-    mySelectionListener = myStatisticsTableModel.createSelectionListener();
 
     myRootSuite = createSuiteProxy("root");
   }
 
   public void testOnSelected_Null() {
-    mySelectionListener.onSelectedRequest(null);
+    myStatisticsTableModel.updateModelOnProxySelected(null);
 
     assertEmpty(getItems());
   }
@@ -34,7 +31,7 @@ public class RTestUnitStatisticsTableModelTest extends BaseSMTRunnerTestCase {
   public void testOnSelected_Test() {
     final SMTestProxy test1 = createTestProxy("test1", myRootSuite);
     final SMTestProxy test2 = createTestProxy("test2", myRootSuite);
-    mySelectionListener.onSelectedRequest(test1);
+    myStatisticsTableModel.updateModelOnProxySelected(test1);
 
     assertSameElements(getItems(), myRootSuite, test1, test2);
   }
@@ -46,13 +43,13 @@ public class RTestUnitStatisticsTableModelTest extends BaseSMTRunnerTestCase {
 
     final SMTestProxy suite2 = createSuiteProxy("suite2", myRootSuite);
 
-    mySelectionListener.onSelectedRequest(suite1);
+    myStatisticsTableModel.updateModelOnProxySelected(suite1);
     assertSameElements(getItems(), suite1, test1, test2);
 
-    mySelectionListener.onSelectedRequest(suite2);
+    myStatisticsTableModel.updateModelOnProxySelected(suite2);
     assertSameElements(getItems(), suite2);
 
-    mySelectionListener.onSelectedRequest(myRootSuite);
+    myStatisticsTableModel.updateModelOnProxySelected(myRootSuite);
     assertSameElements(getItems(), myRootSuite, suite1, suite2);
   }
 
@@ -62,7 +59,7 @@ public class RTestUnitStatisticsTableModelTest extends BaseSMTRunnerTestCase {
     final SMTestProxy firstTest = createTestProxy("A_test", myRootSuite);
     final SMTestProxy lastTest = createTestProxy("Z_test", myRootSuite);
 
-    mySelectionListener.onSelectedRequest(myRootSuite);
+    myStatisticsTableModel.updateModelOnProxySelected(myRootSuite);
     assertOrderedEquals(getItems(), myRootSuite, firstTest, firstSuite, lastSuite, lastTest);
 
     //sort with another sort type
@@ -92,7 +89,7 @@ public class RTestUnitStatisticsTableModelTest extends BaseSMTRunnerTestCase {
     final SMTestProxy lastTest = createTestProxy("Z_test", myRootSuite);
     lastTest.setDuration(100);
 
-    mySelectionListener.onSelectedRequest(myRootSuite);
+    myStatisticsTableModel.updateModelOnProxySelected(myRootSuite);
     //assertOrderedEquals(getItems(), myRootSuite, firstTest, firstSuite, lastSuite, lastTest);
 
     //sort with another sort type
@@ -145,7 +142,7 @@ public class RTestUnitStatisticsTableModelTest extends BaseSMTRunnerTestCase {
     doFailTest(failedTest1);
     doErrorTest(errorTest1);
 
-    mySelectionListener.onSelectedRequest(rootSuite);
+    myStatisticsTableModel.updateModelOnProxySelected(rootSuite);
 
     //sort with another sort type
     myStatisticsTableModel.sortByColumn(0, SortableColumnModel.SORT_ASCENDING);

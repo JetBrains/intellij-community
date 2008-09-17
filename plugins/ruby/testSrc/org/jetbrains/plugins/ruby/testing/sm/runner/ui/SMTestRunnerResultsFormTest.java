@@ -142,7 +142,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     final Ref<SMTestProxy> proxyRef = new Ref<SMTestProxy>();
     final Ref<Boolean> focusRequestedRef = new Ref<Boolean>();
 
-    myResultsViewer.addChangeSelectionListener(new TestProxySelectionChangedListener() {
+    myResultsViewer.setShowStatisticForProxyHandler(new TestProxySelectionChangedListener() {
       public void onChangeSelection(@Nullable final SMTestProxy selectedTestProxy, @NotNull final Object sender,
                                     final boolean requestFocus) {
         onSelectedHappend.set();
@@ -158,7 +158,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
 
     //On test
     myResultsViewer.selectAndNotify(test);
-    myResultsViewer.createChangeSelectionAction().run();
+    myResultsViewer.showStatisticsForSelectedProxy();
     assertTrue(onSelectedHappend.isSet());
     assertEquals(test, proxyRef.get());
     assertTrue(focusRequestedRef.get());
@@ -170,7 +170,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     focusRequestedRef.set(null);
 
     myResultsViewer.selectAndNotify(suite);
-    myResultsViewer.createChangeSelectionAction().run();
+    myResultsViewer.showStatisticsForSelectedProxy();
     assertTrue(onSelectedHappend.isSet());
     assertEquals(suite, proxyRef.get());
     assertTrue(focusRequestedRef.get());

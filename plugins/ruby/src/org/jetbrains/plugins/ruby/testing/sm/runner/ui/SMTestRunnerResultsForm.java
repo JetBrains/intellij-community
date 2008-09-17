@@ -82,8 +82,9 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
   private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
   private Map<LogConsole, TabsListener> myLogToListenerMap = new HashMap<LogConsole, TabsListener>();
   private final List<EventsListener> myEventListeners = new ArrayList<EventsListener>();
-  private final List<TestProxySelectionChangedListener> myChangeSelectionListeners = new ArrayList<TestProxySelectionChangedListener>();
-  private final List<FormSelectionListener> myFormSelectionListeners = new ArrayList<FormSelectionListener>();
+  private final List<TestProxySelectionChangedListener> myTestsTreeSelectionListeners = new ArrayList<TestProxySelectionChangedListener>();
+
+  private TestProxySelectionChangedListener myShowStatisticForProxyHandler;
 
   // Manages console tabs for runConfigurations's log files
   private final LogFilesManager myLogFilesManager;
@@ -133,8 +134,8 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     // Setup tests tree
     myTreeView.setLargeModel(true);
     myTreeView.attachToModel(this);
-    //TODO: popup menu
-    //myTreeView.set
+    myTreeView.setTestResultsViewer(this);
+
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(project, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
     myAnimator = new MyAnimator(myTreeBuilder);
@@ -145,8 +146,12 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
 
     // Fire selection changed and move focus on SHIFT+ENTER
     final KeyStroke shiftEnterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
-    UIUtil.registerAsAction(shiftEnterKey, "change-selection-on-test-proxy",
-                            createChangeSelectionAction(),
+    UIUtil.registerAsAction(shiftEnterKey, "show-statistics-for-test-proxy",
+                            new Runnable() {
+                              public void run() {
+                                showStatisticsForSelectedProxy();
+                              }
+                            },
                             myTreeView);
   }
 
@@ -156,10 +161,10 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
 
   /**
    * Is used for navigation from tree view to other UI components
-   * @param listener
+   * @param handler
    */
-  public void addChangeSelectionListener(final TestProxySelectionChangedListener listener) {
-    myChangeSelectionListeners.add(listener);
+  public void setShowStatisticForProxyHandler(final TestProxySelectionChangedListener handler) {
+    myShowStatisticForProxyHandler = handler;
   }
 
   public void attachToProcess(final ProcessHandler processHandler) {
@@ -181,10 +186,7 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
                      @Nullable final Icon icon,
                      @NotNull final JComponent component) {
     final TabInfo tabInfo = new TabInfo(component);
-    //TODO
-    tabInfo.setTooltipText("tooltip: " + tabTitle);
-
-    //tabInfo.setTooltipText(tooltip);
+    tabInfo.setTooltipText(tooltip);
     tabInfo.setText(tabTitle);
     tabInfo.setIcon(icon);
 
@@ -205,8 +207,8 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     });
   }
 
-  public void addFormSelectionRequestedListener(final FormSelectionListener l)  {
-    myFormSelectionListeners.add(l);
+  public void addTestTreeSelectionRequestedListener(final TestProxySelectionChangedListener l)  {
+    myTestsTreeSelectionListeners.add(l);
   }
 
   public void addLogConsole(@NotNull final String name, @NotNull final String path,
@@ -426,12 +428,6 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     fireOnSelectedRequest((SMTestProxy)testProxy);
   }
 
-  private void fireOnSelectedRequest(final SMTestProxy selectedTestProxy) {
-    for (FormSelectionListener formSelectionListener : myFormSelectionListeners) {
-      formSelectionListener.onSelectedRequest(selectedTestProxy);
-    }
-  }
-
   public void addEventsListener(final EventsListener listener) {
     myEventListeners.add(listener);
   }
@@ -440,9 +436,9 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     for (ModelListener listener : myListeners) {
       listener.onDispose();
     }
-    myChangeSelectionListeners.clear();
+    myShowStatisticForProxyHandler = null;
     myEventListeners.clear();
-    myFormSelectionListeners.clear();
+    myTestsTreeSelectionListeners.clear();
 
     myAnimator.dispose();
     myToolbar.dispose();
@@ -450,19 +446,11 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     myLogFilesManager.unregisterFileMatcher();
   }
 
-  private void selectWithoutNotify(final AbstractTestProxy testProxy) {
-    if (testProxy == null) {
-      return;
+  public void showStatisticsForSelectedProxy() {
+    final AbstractTestProxy selectedProxy = myTreeView.getSelectedTest();
+    if (selectedProxy instanceof SMTestProxy && myShowStatisticForProxyHandler != null) {
+      myShowStatisticForProxyHandler.onChangeSelection((SMTestProxy)selectedProxy, this, true);
     }
-
-    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
-      public void run() {
-        //TODO remove manual update!
-        myTreeBuilder.performUpdate();
-        
-        myTreeBuilder.select(testProxy, null);
-      }
-    }, ModalityState.NON_MODAL);
   }
 
   protected int getTestsCurrentCount() {
@@ -479,21 +467,6 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
 
   protected long getEndTime() {
     return myEndTime;
-  }
-
-  /**
-   * Fire about selction changed. Is used fo navigatin from tree view to it's listener
-   * @return Runnable action
-   */
-  protected Runnable createChangeSelectionAction() {
-    return new Runnable() {
-      public void run() {
-        final AbstractTestProxy selectedProxy = myTreeView.getSelectedTest();
-        if (selectedProxy instanceof SMTestProxy) {
-          fireOnSelectionChanged((SMTestProxy)selectedProxy);
-        }
-      }
-    };
   }
 
   private void _addTestOrSuite(@NotNull final SMTestProxy newTestOrSuite) {
@@ -529,6 +502,27 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     for (EventsListener eventListener : myEventListeners) {
       eventListener.onTestingFinished(this);
     }
+  }
+
+  private void fireOnSelectedRequest(final SMTestProxy selectedTestProxy) {
+    for (TestProxySelectionChangedListener selectionListener : myTestsTreeSelectionListeners) {
+      selectionListener.onChangeSelection(selectedTestProxy, this, false);
+    }
+  }
+
+  private void selectWithoutNotify(final AbstractTestProxy testProxy) {
+    if (testProxy == null) {
+      return;
+    }
+
+    IdeaInternalUtil.runInEventDispatchThread(new Runnable() {
+      public void run() {
+        //TODO remove manual update!
+        myTreeBuilder.performUpdate();
+
+        myTreeBuilder.select(testProxy, null);
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   private void makeSplitterSettingsExternalizable(final JSplitPane splitPane) {
@@ -572,12 +566,6 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
                                                                        myTestsFailuresCount));
   }
 
-  private void fireOnSelectionChanged(final SMTestProxy selectedTestProxy) {
-    for (TestProxySelectionChangedListener listener : myChangeSelectionListeners) {
-      listener.onChangeSelection(selectedTestProxy, this, true);
-    }
-  }
-
   /**
    * for java unit tests
    */
@@ -614,16 +602,5 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     public MyAnimator(final AbstractTestTreeBuilder builder) {
       init(builder);
     }
-  }
-
-  public interface FormSelectionListener {
-
-    /**
-     * When some class asked form to select element.
-     * E.g. before running test Form selected root element, or
-     * after testing finished UI action asked to select first failedtest
-     * @param selectedTestProxy
-     */
-    void onSelectedRequest(@Nullable final SMTestProxy selectedTestProxy);
   }
 }

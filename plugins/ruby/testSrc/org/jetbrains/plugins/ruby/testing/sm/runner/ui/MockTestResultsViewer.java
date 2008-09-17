@@ -49,4 +49,8 @@ public class MockTestResultsViewer implements TestResultsViewer {
   public void dispose() {
     myProperties.dispose();
   }
+
+  public void setShowStatisticForProxyHandler(final TestProxySelectionChangedListener handler) {}
+
+  public void showStatisticsForSelectedProxy() {}
 }

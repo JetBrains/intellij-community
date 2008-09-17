@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.support.UIUtil;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTestProxy;
-import org.jetbrains.plugins.ruby.testing.sm.runner.ui.SMTestRunnerResultsForm;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -36,26 +35,21 @@ public class StatisticsTableModel extends ListTableModel<SMTestProxy> {
     super(new ColumnTest(), new ColumnDuration(), new ColumnResults());
   }
 
-  public SMTestRunnerResultsForm.FormSelectionListener createSelectionListener() {
-    return new SMTestRunnerResultsForm.FormSelectionListener() {
-      public void onSelectedRequest(@Nullable final SMTestProxy proxy) {
-
-        final SMTestProxy newCurrentSuite = getCurrentSuiteFor(proxy);
-        // If new suite differs from old suite we should reload table
-        if (myCurrentSuite != newCurrentSuite) {
-          myCurrentSuite = newCurrentSuite;
-        }
-        // update model to show new items in it
-        UIUtil.addToInvokeLater(new Runnable() {
-          public void run() {
-            updateModel();
-          }
-        });
+  public void updateModelOnProxySelected(final SMTestProxy proxy) {
+    final SMTestProxy newCurrentSuite = getCurrentSuiteFor(proxy);
+    // If new suite differs from old suite we should reload table
+    if (myCurrentSuite != newCurrentSuite) {
+      myCurrentSuite = newCurrentSuite;
+    }
+    // update model to show new items in it
+    UIUtil.addToInvokeLater(new Runnable() {
+      public void run() {
+        updateModel();
       }
-    };
+    });
   }
 
-   @Nullable
+  @Nullable
    public SMTestProxy getTestAt(final int rowIndex) {
     if (rowIndex < 0 || rowIndex > getItems().size()) {
       return null;

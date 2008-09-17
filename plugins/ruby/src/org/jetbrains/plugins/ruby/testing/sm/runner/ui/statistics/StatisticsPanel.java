@@ -13,7 +13,6 @@ import org.jetbrains.plugins.ruby.support.UIUtil;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTRunnerEventsAdapter;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTRunnerEventsListener;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTestProxy;
-import org.jetbrains.plugins.ruby.testing.sm.runner.ui.SMTestRunnerResultsForm;
 import org.jetbrains.plugins.ruby.testing.sm.runner.ui.TestProxySelectionChangedListener;
 import org.jetbrains.plugins.ruby.testing.sm.runner.ui.TestResultsViewer;
 
@@ -67,29 +66,12 @@ public class StatisticsPanel extends JPanel {
                             myStatisticsTableView);
   }
 
-  public JPanel getContentPane() {
-    return myContentPane;
+  public void addChangeSelectionListener(final TestProxySelectionChangedListener listener) {
+    myChangeSelectionListeners.add(listener);
   }
 
-  /**
-   * Show and selects suite in table by event
-   * @return
-   */
-  public SMTestRunnerResultsForm.FormSelectionListener createSelectionListener() {
-    final SMTestRunnerResultsForm.FormSelectionListener modelSelectionListener =
-        myTableModel.createSelectionListener();
-
-    return new SMTestRunnerResultsForm.FormSelectionListener() {
-      public void onSelectedRequest(@Nullable final SMTestProxy selectedTestProxy) {
-        // Send event to model
-        modelSelectionListener.onSelectedRequest(selectedTestProxy);
-
-        // Now we want to select proxy in table (if it is possible)
-        if (selectedTestProxy != null) {
-          findAndSelectInTable(selectedTestProxy);
-        }
-      }
-    };
+  public JPanel getContentPane() {
+    return myContentPane;
   }
 
   public SMTRunnerEventsListener createTestEventsListener() {
@@ -144,8 +126,43 @@ public class StatisticsPanel extends JPanel {
     };
   }
 
-  public void addChangeSelectionListener(final TestProxySelectionChangedListener listener) {
-    myChangeSelectionListeners.add(listener);
+  /**
+   * On event change selection and probably requests focus. Is used when we want
+   * navigate from other component to this
+   * @return Listener
+   */
+  public TestProxySelectionChangedListener createSelectMeListener() {
+    return new TestProxySelectionChangedListener() {
+      public void onChangeSelection(@Nullable final SMTestProxy selectedTestProxy,
+                                    @NotNull final Object sender,
+                                    final boolean requestFocus) {
+        selectProxy(selectedTestProxy, sender, requestFocus);
+      }
+    };
+  }
+
+  public void selectProxy(@Nullable final SMTestProxy selectedTestProxy,
+                          @NotNull final Object sender,
+                          final boolean requestFocus) {
+    UIUtil.addToInvokeLater(new Runnable() {
+      public void run() {
+        // Select tab if focus was requested
+        if (requestFocus) {
+          final JBTabs myTabs = ((TestResultsViewer)sender).getTabs();
+          final List<TabInfo> tabs = myTabs.getTabs();
+          for (TabInfo tab : tabs) {
+            if (tab.getComponent() == getContentPane()) {
+              myTabs.select(tab, true);
+              break;
+            }
+          }
+          IdeFocusManager.getInstance(myProject).requestFocus(myStatisticsTableView, true);
+        }
+
+        // Select proxy in table
+        selectProxy(selectedTestProxy);
+      }
+    });
   }
 
   protected Runnable createChangeSelectionAction() {
@@ -164,8 +181,6 @@ public class StatisticsPanel extends JPanel {
   }
 
   protected Runnable createGotoSuiteOrParentAction() {
-    final SMTestRunnerResultsForm.FormSelectionListener selectionListener = createSelectionListener();
-
     // Expand selected or go to parent
     return new Runnable() {
       public void run() {
@@ -182,19 +197,28 @@ public class StatisticsPanel extends JPanel {
           final SMTestProxy parentSuite = selectedProxy.getParent();
           if (parentSuite != null) {
             // go to parent and current suit in it
-            showInTableAndSelectRow(parentSuite, selectionListener, selectedProxy);
+            showInTableAndSelectRow(parentSuite, selectedProxy);
           }
         } else {
           // if selected element is suite - we should expand it
           if (selectedProxy.isSuite()) {
             // expand and select first (Total) row
-            showInTableAndSelectRow(selectedProxy, selectionListener, selectedProxy);
+            showInTableAndSelectRow(selectedProxy, selectedProxy);
           }
         }
       }
     };
   }
 
+  protected void selectProxy(@Nullable final SMTestProxy selectedTestProxy) {
+    // Send event to model
+    myTableModel.updateModelOnProxySelected(selectedTestProxy);
+
+    // Now we want to select proxy in table (if it is possible)
+    if (selectedTestProxy != null) {
+      findAndSelectInTable(selectedTestProxy);
+    }
+  }
   /**
    * Selects row in table
    * @param rowIndex Row's index
@@ -213,7 +237,6 @@ public class StatisticsPanel extends JPanel {
 
   /**
    * Selects row in table
-   * @param rowIndex Row's index
    */
   protected void selectRowOf(final SMTestProxy proxy) {
     UIUtil.addToInvokeLater(new Runnable() {
@@ -256,42 +279,8 @@ public class StatisticsPanel extends JPanel {
     myStatisticsTableView = new TableView<SMTestProxy>();
   }
 
-  private void showInTableAndSelectRow(final SMTestProxy suite,
-                                            final SMTestRunnerResultsForm.FormSelectionListener selectionListener,
-                                            final SMTestProxy suiteProxy) {
-    selectionListener.onSelectedRequest(suite);
+  private void showInTableAndSelectRow(final SMTestProxy suite, final SMTestProxy suiteProxy) {
+    selectProxy(suite);
     selectRowOf(suiteProxy);
-  }
-
-  /**
-   * On event change selection and probably requests focus. Is used when we want
-   * navigate from other component to this
-   * @return Listener
-   */
-  public TestProxySelectionChangedListener createOnChangeSelectionListener() {
-    final SMTestRunnerResultsForm.FormSelectionListener selectionListener = createSelectionListener();
-
-    return new TestProxySelectionChangedListener() {
-      public void onChangeSelection(@Nullable final SMTestProxy selectedTestProxy,
-                                    @NotNull final Object sender,
-                                    final boolean requestFocus) {
-        if (requestFocus) {
-          selectionListener.onSelectedRequest(selectedTestProxy);
-          UIUtil.addToInvokeLater(new Runnable() {
-            public void run() {
-              final JBTabs myTabs = ((TestResultsViewer)sender).getTabs();
-              final List<TabInfo> tabs = myTabs.getTabs();
-              for (TabInfo tab : tabs) {
-                if (tab.getComponent() == StatisticsPanel.this) {
-                  myTabs.select(tab, true);
-                  break;
-                }
-              }
-              IdeFocusManager.getInstance(myProject).requestFocus(myStatisticsTableView, true);
-            }
-          });
-        }
-      }
-    };
   }
 }

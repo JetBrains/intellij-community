@@ -60,6 +60,13 @@ public interface TestResultsViewer extends Disposable {
 
   JBTabs getTabs();
 
+  void setShowStatisticForProxyHandler(final TestProxySelectionChangedListener handler);
+
+  /**
+   * If handler for statistics was set this method will execute it
+   */
+  void showStatisticsForSelectedProxy();
+
   interface EventsListener {
     void onTestNodeAdded(final TestResultsViewer sender, final SMTestProxy test);
     void onTestingFinished(final TestResultsViewer sender);
