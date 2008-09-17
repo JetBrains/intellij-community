@@ -194,7 +194,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
         // if wasn't processed
         if (myFailedTestsSet.contains(testProxy)) {
           // dublicate message
-          LOG.warn("Dublicate failure for test [" + fullTestName  + "]: msg = " + localizedMessage + ", stacktrace = " + stackTrace);
+          LOG.warn("Duplicate failure for test [" + fullTestName  + "]: msg = " + localizedMessage + ", stacktrace = " + stackTrace);
           return;
         }
 
