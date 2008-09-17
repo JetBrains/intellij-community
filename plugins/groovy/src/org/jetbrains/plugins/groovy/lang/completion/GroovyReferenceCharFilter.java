@@ -15,11 +15,22 @@ public class GroovyReferenceCharFilter extends CharFilter {
 
     if (Character.isJavaIdentifierPart(c) || c == '\'') {
       return Result.ADD_TO_PREFIX;
-    }
-    else if (c == '\n' || c == '\t') {
+    } else if (c == '\n' || c == '\t') {
       return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     }
-    return Result.HIDE_LOOKUP;
+    switch (c) {
+      case '.':
+      case ',':
+      case ';':
+      case '=':
+      case ' ':
+      case ':':
+      case '(':
+        return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+
+      default:
+        return Result.HIDE_LOOKUP;
+    }
   }
 
 }
