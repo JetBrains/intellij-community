@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -50,8 +51,15 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
 
   public String getPresentableRelativePath(final ContentRevision fromRevision, final ContentRevision toRevision) {
     // need to use parent path because the old file is already not there
-    final VirtualFile oldFile = fromRevision.getFile().getParentPath().getVirtualFile();
-    final VirtualFile newFile = toRevision.getFile().getParentPath().getVirtualFile();
+    FilePath fromPath = fromRevision.getFile();
+    FilePath toPath = toRevision.getFile();
+
+    if (fromPath == null || toPath == null || (fromPath.getParentPath() == null) || (toPath.getParentPath() == null)) {
+      return null;
+    }
+
+    final VirtualFile oldFile = fromPath.getParentPath().getVirtualFile();
+    final VirtualFile newFile = toPath.getParentPath().getVirtualFile();
     if (oldFile != null && newFile != null) {
       Module oldModule = ModuleUtil.findModuleForFile(oldFile, myProject);
       Module newModule = ModuleUtil.findModuleForFile(newFile, myProject);
@@ -59,8 +67,11 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
         return getPresentableRelativePathFor(oldFile);
       }
     }
+    if (toPath.getIOFile() == null || fromPath.getIOFile() == null) {
+      return null;
+    }
     final RelativePathCalculator calculator =
-      new RelativePathCalculator(toRevision.getFile().getIOFile().getAbsolutePath(), fromRevision.getFile().getIOFile().getAbsolutePath());
+      new RelativePathCalculator(toPath.getIOFile().getAbsolutePath(), fromPath.getIOFile().getAbsolutePath());
     calculator.execute();
     final String result = calculator.getResult();
     return (result == null) ? null : result.replace("/", File.separator);
