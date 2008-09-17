@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.introduceparameterobject.IntroduceParameterObjectProcessor;
 
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   private void doTest(final boolean delegate, final boolean createInner) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass("Test");
+        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
 
         assertNotNull("Class Test not found", aClass);
 
@@ -85,7 +86,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   private void doTestExistingClass(final String existingClassName, final String existingClassPackage) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass("Test");
+        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
         assertNotNull("Class Test not found", aClass);
 
         final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
@@ -105,11 +106,16 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   public void testIntegerIncremental() throws Exception {
+    checkExceptionThrown("Integer", "java.lang", "Cannot perform the refactoring.\n" +
+                                                 "Selected class is not compatible with chosen parameters");
+  }
+
+  private void checkExceptionThrown(String existingClassName, String existingClassPackage, String exceptionMessage) throws Exception {
     try {
-      doTestExistingClass("Integer", "java.lang");
+      doTestExistingClass(existingClassName, existingClassPackage);
     }
-    catch (Exception e) {
-      e.printStackTrace();
+    catch (RuntimeException e) {
+      assertEquals(exceptionMessage, e.getMessage());
       return;
     }
     fail("Conflict was not found");
@@ -121,13 +127,6 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   public void testWrongBean() throws Exception {
-    try {
-      doTestExistingClass("Param", "");
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-      return;
-    }
-    fail("Conflict was not found");
+    checkExceptionThrown("Param", "", "Cannot perform the refactoring.\n" + "Selected class is not compatible with chosen parameters");
   }
 }
