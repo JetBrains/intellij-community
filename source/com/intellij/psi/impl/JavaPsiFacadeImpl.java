@@ -75,8 +75,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     myElementFactory = new PsiElementFactoryImpl(psiManager);
 
     List<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
-    elementFinders.addAll(Arrays.asList(myProject.getComponents(PsiElementFinder.class)));
     elementFinders.add(new PsiElementFinderImpl());
+    elementFinders.addAll(Arrays.asList(myProject.getComponents(PsiElementFinder.class)));
     myElementFinders = elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);
 
     myPackagePrefixIndex = new PackagePrefixIndex(myProject);
