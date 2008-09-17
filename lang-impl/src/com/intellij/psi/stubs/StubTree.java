@@ -80,7 +80,7 @@ public class StubTree {
       final List<SerializedStubTree> datas = FileBasedIndex.getInstance().getValues(StubUpdatingIndex.INDEX_ID, id, VirtualFileFilter.ALL);
       final int size = datas.size();
 
-      assert size == 1 || size == 0 : size;
+      assert size == 1 || size == 0 : vFile.getPresentableUrl() + " has " + size + " stub versions. Should only have one. id=" + id;
       
       if (size == 1) {
         StubElement stub = datas.get(0).getStub();
