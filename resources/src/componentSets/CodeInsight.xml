@@ -1,11 +1,4 @@
 <components>
-  <application-components>
-    <component>
-      <interface-class>com.intellij.codeInsight.folding.CodeFoldingSettings</interface-class>
-      <implementation-class>com.intellij.codeInsight.folding.impl.CodeFoldingSettingsImpl</implementation-class>
-    </component>
-  </application-components>
-
   <project-components>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.PostHighlightingPassFactory</implementation-class>

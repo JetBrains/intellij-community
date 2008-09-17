@@ -16,14 +16,12 @@
 
 package com.intellij.codeInsight.folding;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.components.ServiceManager;
 
-public abstract class CodeFoldingSettings implements ApplicationComponent {
+public abstract class JavaCodeFoldingSettings {
 
-  public static CodeFoldingSettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(CodeFoldingSettings.class);
+  public static JavaCodeFoldingSettings getInstance() {
+    return ServiceManager.getService(JavaCodeFoldingSettings.class);
   }
 
   public abstract boolean isCollapseImports();
@@ -49,15 +47,4 @@ public abstract class CodeFoldingSettings implements ApplicationComponent {
 
   public abstract boolean isCollapseAnnotations();
   public abstract void setCollapseAnnotations(boolean value);
-
-  @NotNull
-  public String getComponentName() {
-    return "CodeFoldingSettings";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
-
 }

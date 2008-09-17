@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.codeInsight.folding.CodeFoldingSettings;
+import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -142,7 +142,7 @@ public class JavaFoldingBuilder implements FoldingBuilder {
 
   public boolean isCollapsedByDefault(final ASTNode node) {
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
-    CodeFoldingSettings settings = CodeFoldingSettings.getInstance();
+    JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
     if (element instanceof PsiImportList) {
       return settings.isCollapseImports();
     }

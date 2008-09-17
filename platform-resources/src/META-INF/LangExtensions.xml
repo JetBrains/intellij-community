@@ -75,6 +75,9 @@
   <applicationService serviceInterface="com.intellij.openapi.paths.PathReferenceManager"
                       serviceImplementation="com.intellij.openapi.paths.PathReferenceManagerImpl"/>
 
+  <applicationService serviceInterface="com.intellij.codeInsight.folding.CodeFoldingSettings"
+                      serviceImplementation="com.intellij.codeInsight.folding.CodeFoldingSettings"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"

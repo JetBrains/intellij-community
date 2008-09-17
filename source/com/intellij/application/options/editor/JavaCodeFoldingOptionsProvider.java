@@ -4,7 +4,7 @@
  */
 package com.intellij.application.options.editor;
 
-import com.intellij.codeInsight.folding.CodeFoldingSettings;
+import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.openapi.options.ConfigurationException;
 
 import javax.swing.*;
@@ -25,7 +25,7 @@ public class JavaCodeFoldingOptionsProvider implements CodeFoldingOptionsProvide
   }
 
   public boolean isModified() {
-    CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
+    JavaCodeFoldingSettings codeFoldingSettings = JavaCodeFoldingSettings.getInstance();
     boolean isModified = isModified(myCbCollapseAccessors, codeFoldingSettings.isCollapseAccessors());
         isModified |= isModified(myCbCollapseImports, codeFoldingSettings.isCollapseImports());
         isModified |= isModified(myCbCollapseJavadocComments, codeFoldingSettings.isCollapseJavadocs());
@@ -42,7 +42,7 @@ public class JavaCodeFoldingOptionsProvider implements CodeFoldingOptionsProvide
   }
 
   public void apply() throws ConfigurationException {
-    CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
+    JavaCodeFoldingSettings codeFoldingSettings = JavaCodeFoldingSettings.getInstance();
     codeFoldingSettings.setCollapseImports( myCbCollapseImports.isSelected() );
     codeFoldingSettings.setCollapseJavadocs( myCbCollapseJavadocComments.isSelected() );
     codeFoldingSettings.setCollapseMethods( myCbCollapseMethodBodies.isSelected() );
@@ -54,7 +54,7 @@ public class JavaCodeFoldingOptionsProvider implements CodeFoldingOptionsProvide
   }
 
   public void reset() {
-    CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
+    JavaCodeFoldingSettings codeFoldingSettings = JavaCodeFoldingSettings.getInstance();
     myCbCollapseAccessors.setSelected(codeFoldingSettings.isCollapseAccessors());
         myCbCollapseImports.setSelected(codeFoldingSettings.isCollapseImports());
         myCbCollapseJavadocComments.setSelected(codeFoldingSettings.isCollapseJavadocs());

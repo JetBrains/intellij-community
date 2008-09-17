@@ -1,34 +1,42 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.ide.IdeBundle;
-import org.jdom.Element;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ExportableComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements NamedJDOMExternalizable, ExportableApplicationComponent {
+@State(
+  name="CodeFoldingSettings",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$APP_CONFIG$/editor.codeinsight.xml"
+    )}
+)
+public class JavaCodeFoldingSettingsImpl extends JavaCodeFoldingSettings implements PersistentStateComponent<JavaCodeFoldingSettingsImpl>,
+                                                                                    ExportableComponent {
   public boolean isCollapseImports() {
-    return COLLAPSE_IMPORTS;
+    return CodeFoldingSettings.getInstance().COLLAPSE_IMPORTS;
   }
 
   public void setCollapseImports(boolean value) {
-    COLLAPSE_IMPORTS = value;
+    CodeFoldingSettings.getInstance().COLLAPSE_IMPORTS = value;
   }
 
   public boolean isCollapseMethods() {
-    return COLLAPSE_METHODS;
+    return CodeFoldingSettings.getInstance().COLLAPSE_METHODS;
   }
 
   public void setCollapseMethods(boolean value) {
-    COLLAPSE_METHODS = value;
+    CodeFoldingSettings.getInstance().COLLAPSE_METHODS = value;
   }
 
   public boolean isCollapseAccessors() {
@@ -48,19 +56,19 @@ public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements Name
   }
 
   public boolean isCollapseJavadocs() {
-    return COLLAPSE_JAVADOCS;
+    return CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS;
   }
 
   public void setCollapseJavadocs(boolean value) {
-    COLLAPSE_JAVADOCS = value;
+    CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS = value;
   }
 
   public boolean isCollapseFileHeader() {
-    return COLLAPSE_FILE_HEADER;
+    return CodeFoldingSettings.getInstance().COLLAPSE_FILE_HEADER;
   }
 
   public void setCollapseFileHeader(boolean value) {
-    COLLAPSE_FILE_HEADER = value;
+    CodeFoldingSettings.getInstance().COLLAPSE_FILE_HEADER = value;
   }
 
   public boolean isCollapseAnonymousClasses() {
@@ -80,22 +88,14 @@ public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements Name
     COLLAPSE_ANNOTATIONS = value;
   }
 
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_IMPORTS = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_METHODS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ACCESSORS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_INNER_CLASSES = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_JAVADOCS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_FILE_HEADER = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ANONYMOUS_CLASSES = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ANNOTATIONS = false;
 
-  public String getExternalFileName() {
-    return CodeInsightSettings.EXTERNAL_FILE_NAME;
-  }
-
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
+    return new File[]{PathManager.getOptionsFile("editor.codeinsight")};
   }
 
   @NotNull
@@ -103,11 +103,11 @@ public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements Name
     return IdeBundle.message("code.folding.settings");
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
+  public JavaCodeFoldingSettingsImpl getState() {
+    return this;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+  public void loadState(final JavaCodeFoldingSettingsImpl state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 }
