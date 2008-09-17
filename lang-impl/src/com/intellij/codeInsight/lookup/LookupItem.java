@@ -293,6 +293,14 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   }
 
   @NotNull
+  @Override
+  public MutableLookupElement<T> setTailText(final String text, final boolean grayed) {
+    setAttribute(TAIL_TEXT_ATTR, text);
+    setAttribute(TAIL_TEXT_SMALL_ATTR, Boolean.TRUE);
+    return this;
+  }
+
+  @NotNull
   public LookupItem<T> setCaseSensitive(final boolean caseSensitive) {
     setAttribute(CASE_INSENSITIVE, !caseSensitive);
     return this;
