@@ -26,7 +26,7 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
@@ -204,7 +204,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
             settingsButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     final TemplatesPanel ui = new TemplatesPanel();
-                    Configurable composite = new CompositeConfigurable() {
+                    Configurable composite = new TabbedConfigurable() {
                         protected List<Configurable> createConfigurables() {
                             List<Configurable> res = new ArrayList<Configurable>();
                             res.add(new GenerateToStringConfigurable());
