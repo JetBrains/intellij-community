@@ -103,6 +103,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private final EventDispatcher<AntConfigurationListener> myEventDispatcher = EventDispatcher.create(AntConfigurationListener.class);
   private final AntWorkspaceConfiguration myAntWorkspaceConfiguration;
   private final StartupManager myStartupManager;
+  private boolean myInitializing;
   private volatile long myModificationCount = 0;
 
   public AntConfigurationImpl(final Project project, final AntWorkspaceConfiguration antWorkspaceConfiguration, final DaemonCodeAnalyzer daemon) {
@@ -643,6 +644,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private List<ExecutionEvent> getEventsByClass(Class eventClass) {
+    if (!myInitializing) ensureInitialized();
     final List<ExecutionEvent> list = new ArrayList<ExecutionEvent>();
     synchronized (myEventToTargetMap) {
       for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
@@ -689,6 +691,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               try {
+                myInitializing = true;
                 // first, remove existing files
                 final AntBuildFile[] currentFiles = getBuildFiles();
                 for (AntBuildFile file : currentFiles) {
@@ -745,6 +748,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
               }
               finally {
                 updateRegisteredActions();
+                myInitializing = false;
                 myIsInitialized = Boolean.TRUE;
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   public void run() {
