@@ -8,7 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.wrapreturnvalue.WrapReturnValueProcessor;
+import org.jetbrains.annotations.NonNls;
 
 public class WrapReturnValueTest extends MultiFileTestCase{
   protected String getTestRoot() {
@@ -16,19 +18,18 @@ public class WrapReturnValueTest extends MultiFileTestCase{
   }
 
   private void doTest(final boolean existing) throws Exception {
-    doTest(existing, false);
+    doTest(existing, null);
   }
 
-  private void doTest(final boolean existing, final boolean fail) throws Exception {
-    doTest(existing, fail, false);
+  private void doTest(final boolean existing, @NonNls String exceptionMessage) throws Exception {
+    doTest(existing, exceptionMessage, false);
   }
 
-
-  private void doTest(final boolean existing, boolean fail, final boolean createInnerClass) throws Exception {
+  private void doTest(final boolean existing, String exceptionMessage, final boolean createInnerClass) throws Exception {
     try {
       doTest(new PerformAction() {
         public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-          PsiClass aClass = myJavaFacade.findClass("Test");
+          PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
 
           assertNotNull("Class Test not found", aClass);
 
@@ -36,9 +37,9 @@ public class WrapReturnValueTest extends MultiFileTestCase{
 
 
 
-          final String wrapperClassName = "Wrapper";
+          @NonNls final String wrapperClassName = "Wrapper";
 
-          final PsiClass wrapperClass = myJavaFacade.findClass(wrapperClassName);
+          final PsiClass wrapperClass = myJavaFacade.findClass(wrapperClassName, GlobalSearchScope.projectScope(getProject()));
 
           assertTrue(!existing || wrapperClass != null);
           final PsiField delegateField = existing ? wrapperClass.findFieldByName("myField", false) : null;
@@ -51,13 +52,13 @@ public class WrapReturnValueTest extends MultiFileTestCase{
       });
     }
     catch (RuntimeException e) {
-      if (fail) {
-        e.printStackTrace();
+      if (exceptionMessage != null) {
+        assertEquals(exceptionMessage, e.getMessage());
         return;
       }
-      if (!fail) throw e;
+      throw e;
     }
-    if (fail) {
+    if (exceptionMessage != null) {
       fail("Conflict was not found");
     }
   }
@@ -71,7 +72,7 @@ public class WrapReturnValueTest extends MultiFileTestCase{
   }
 
   public void testInconsistentWrapper() throws Exception {
-    doTest(true, true);
+    doTest(true, "Existing class does not have getter for selected field");
   }
 
   public void testWrapper() throws Exception {
@@ -83,14 +84,14 @@ public class WrapReturnValueTest extends MultiFileTestCase{
   }
 
   public void testNoConstructor() throws Exception {
-    doTest(true, true);
+    doTest(true, "Existing class does not have appropriate constructor");
   }
 
   public void testInnerClass() throws Exception {
-    doTest(false, false, true);
+    doTest(false, null, true);
   }
 
   public void testHierarchy() throws Exception {
-    doTest(false, false, true);
+    doTest(false, null, true);
   }
 }
