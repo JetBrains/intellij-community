@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.util.Date;
@@ -38,8 +37,6 @@ public class DefaultPatchBaseVersionProvider {
   private final String myVersionId;
   private final Pattern myRevisionPattern;
 
-  @NonNls private static final String ourRevisionStart = "\\(revision (";
-  @NonNls private static final String ourRevisionEnd = ")\\)";
   private AbstractVcs myVcs;
 
   public DefaultPatchBaseVersionProvider(final Project project, final VirtualFile file, final String versionId) {
@@ -50,7 +47,7 @@ public class DefaultPatchBaseVersionProvider {
     if (myVcs != null) {
       final String vcsPattern = myVcs.getRevisionPattern();
       if (vcsPattern != null) {
-        myRevisionPattern = Pattern.compile(ourRevisionStart + vcsPattern + ourRevisionEnd);
+        myRevisionPattern = Pattern.compile("\\(revision (" + vcsPattern + ")\\)");
         return;
       }
     }

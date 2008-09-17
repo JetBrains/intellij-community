@@ -17,8 +17,10 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,10 +28,10 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   private final VirtualFile myVirtualFile;
@@ -85,13 +87,22 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     }
     return enabled;
   }
+
+  private static final Key<Pair<Charset, Long>> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET");
   public static Charset encodingFromContent(Project project, VirtualFile virtualFile) {
     FileType fileType = virtualFile.getFileType();
     if (fileType instanceof LanguageFileType) {
       Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       if (document == null) return null;
-      String text = document.getText();
-      Charset charset = ((LanguageFileType)fileType).extractCharsetFromFileContent(project, virtualFile, text);
+      Pair<Charset, Long> cachedCharset = document.getUserData(CACHED_CHARSET_FROM_CONTENT);
+      Charset charset;
+      if (cachedCharset == null || cachedCharset.getSecond() != document.getModificationStamp()) {
+        charset = ((LanguageFileType)fileType).extractCharsetFromFileContent(project, virtualFile, document.getText());
+        document.putUserData(CACHED_CHARSET_FROM_CONTENT, Pair.create(charset, document.getModificationStamp()));
+      }
+      else {
+        charset = cachedCharset.getFirst();
+      }
       if (charset != null) {
         return charset;
       }
