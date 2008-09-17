@@ -36,16 +36,13 @@ public class StatisticsPanel extends JPanel {
   public StatisticsPanel() {
     myTableModel = new StatisticsTableModel();
     myStatisticsTableView.setModel(myTableModel);
+
+    final Runnable gotoSuiteOrParentAction = createGotoSuiteOrParentAction();
     myStatisticsTableView.addMouseListener(new MouseAdapter(){
       @Override
       public void mouseClicked(final MouseEvent e) {
         if (e.getClickCount() == 2) {
-          final Collection<SMTestProxy> proxies = myStatisticsTableView.getSelection();
-          if (proxies.isEmpty()) {
-            return;
-          }
-
-          fireOnSelectionChanged(proxies.iterator().next());
+          gotoSuiteOrParentAction.run();
         }
       }
     });
@@ -59,7 +56,7 @@ public class StatisticsPanel extends JPanel {
     // Expand selected or go to parent on ENTER
     final KeyStroke enterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
     UIUtil.registerAsAction(enterKey, "go-to-selected-suite-or-parent",
-                            createGotoSuiteOrParentAction(),
+                            gotoSuiteOrParentAction,
                             myStatisticsTableView);
   }
 
