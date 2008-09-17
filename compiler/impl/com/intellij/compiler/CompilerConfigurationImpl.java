@@ -21,6 +21,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -62,7 +63,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   public int DEPLOY_AFTER_MAKE = Options.SHOW_DIALOG;
 
-  private final Collection<BackendCompiler> registeredCompilers = new ArrayList<BackendCompiler>();
+  private final Collection<BackendCompiler> myRegisteredCompilers = new ArrayList<BackendCompiler>();
   private BackendCompiler JAVAC_EXTERNAL_BACKEND;
   private BackendCompiler JAVAC_EMBEDDED_BACKEND;
   private final Perl5Matcher myPatternMatcher = new Perl5Matcher();
@@ -171,28 +172,34 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   private void createCompilers() {
     JAVAC_EXTERNAL_BACKEND = new JavacCompiler(myProject);
-    registeredCompilers.add(JAVAC_EXTERNAL_BACKEND);
+    myRegisteredCompilers.add(JAVAC_EXTERNAL_BACKEND);
     JAVAC_EMBEDDED_BACKEND = new JavacEmbeddedCompiler(myProject);
-    //registeredCompilers.add(JAVAC_EMBEDDED_BACKEND);
+    //myRegisteredCompilers.add(JAVAC_EMBEDDED_BACKEND);
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       final BackendCompiler JIKES_BACKEND = new JikesCompiler(myProject);
-      registeredCompilers.add(JIKES_BACKEND);
+      myRegisteredCompilers.add(JIKES_BACKEND);
 
       final EclipseCompiler eclipse = new EclipseCompiler(myProject);
       if (eclipse.isInitialized()) {
-        registeredCompilers.add(eclipse);
+        myRegisteredCompilers.add(eclipse);
       }
       //try {
       //  final EclipseEmbeddedCompiler eclipseEmbedded = new EclipseEmbeddedCompiler(myProject);
-      //  registeredCompilers.add(eclipseEmbedded);
+      //  myRegisteredCompilers.add(eclipseEmbedded);
       //}
       //catch (NoClassDefFoundError e) {
       //  // eclipse jar must be not in the classpath
       //}
     }
+
+    for (BackendCompilerFactory factory : Extensions.getExtensions(BackendCompilerFactory.EP_NAME, myProject)) {
+      final BackendCompiler compiler = factory.create(myProject);
+      myRegisteredCompilers.add(compiler);
+    }
+
     myDefaultJavaCompiler = JAVAC_EXTERNAL_BACKEND;
-    for (BackendCompiler compiler : registeredCompilers) {
+    for (BackendCompiler compiler : myRegisteredCompilers) {
       if (compiler.getId().equals(DEFAULT_COMPILER)) {
         myDefaultJavaCompiler = compiler;
         break;
@@ -202,7 +209,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public Collection<BackendCompiler> getRegisteredJavaCompilers() {
-    return registeredCompilers;
+    return myRegisteredCompilers;
   }
 
   public String[] getResourceFilePatterns() {
