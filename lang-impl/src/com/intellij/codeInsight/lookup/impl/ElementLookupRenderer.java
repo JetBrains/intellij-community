@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 /**
  * @author yole
  */
+@Deprecated
 public interface ElementLookupRenderer<T> {
   ExtensionPointName<ElementLookupRenderer> EP_NAME = ExtensionPointName.create("com.intellij.elementLookupRenderer");
 
