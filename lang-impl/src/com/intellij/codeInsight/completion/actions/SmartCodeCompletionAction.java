@@ -3,7 +3,8 @@ package com.intellij.codeInsight.completion.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
-import com.intellij.codeInsight.completion.SmartCodeCompletionHandler;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
@@ -27,7 +28,7 @@ public class SmartCodeCompletionAction extends BaseCodeInsightAction implements 
     return new CodeInsightActionHandler() {
       public void invoke(Project project, Editor editor, PsiFile file) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_SMARTTYPE_GENERAL);
-        new SmartCodeCompletionHandler().invoke(project, editor, file);
+        new CodeCompletionHandlerBase(CompletionType.SMART).invoke(project, editor, file);
       }
 
       public boolean startInWriteAction() {

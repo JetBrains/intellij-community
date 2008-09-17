@@ -1,6 +1,11 @@
 package com.intellij.codeInsight.completion;
 
-public class DotAutoLookupHandler extends CodeCompletionHandler{
+public class DotAutoLookupHandler extends CodeCompletionHandlerBase{
+
+  public DotAutoLookupHandler() {
+    super(CompletionType.BASIC);
+  }
+
   protected boolean isAutocompleteOnInvocation() {
     return false;
   }

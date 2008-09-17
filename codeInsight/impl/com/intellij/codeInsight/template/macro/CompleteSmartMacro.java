@@ -9,12 +9,6 @@ public class CompleteSmartMacro extends BaseCompleteMacro {
   }
 
   CodeInsightActionHandler getCompletionHandler() {
-    return new SmartCodeCompletionHandler() {
-      @Override
-      protected void handleEmptyLookup(final CompletionContext context, final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
-        super.handleEmptyLookup(context, parameters, indicator);
-      }
-
-    };
+    return new CodeCompletionHandlerBase(CompletionType.SMART);
   }
 }

@@ -164,7 +164,8 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     if (completionChar == '#') {
       context.setLaterRunnable(new Runnable() {
         public void run() {
-           new CodeCompletionHandler().invoke(myProject, myEditor, myFile);
+           new CodeCompletionHandlerBase(CompletionType.BASIC) {
+           }.invoke(myProject, myEditor, myFile);
         }
       });
     }

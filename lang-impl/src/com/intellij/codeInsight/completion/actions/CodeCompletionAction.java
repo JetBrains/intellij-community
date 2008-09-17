@@ -3,8 +3,9 @@ package com.intellij.codeInsight.completion.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.codeInsight.completion.CodeCompletionHandler;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -24,7 +25,7 @@ public class CodeCompletionAction extends BaseCodeInsightAction implements HintM
   }
 
   public CodeInsightActionHandler getHandler() {
-    return new CodeCompletionHandler();
+    return new CodeCompletionHandlerBase(CompletionType.BASIC);
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {

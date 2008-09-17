@@ -12,7 +12,11 @@ import com.intellij.xml.util.XmlUtil;
 /**
  *
  */
-public class XmlAutoLookupHandler extends CodeCompletionHandler {
+public class XmlAutoLookupHandler extends CodeCompletionHandlerBase {
+  public XmlAutoLookupHandler() {
+    super(CompletionType.BASIC);
+  }
+
   protected boolean isAutocompleteOnInvocation() {
     return false;
   }

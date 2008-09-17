@@ -8,7 +8,11 @@ import com.intellij.openapi.editor.Editor;
 /**
  *
  */
-public class JavadocAutoLookupHandler extends CodeCompletionHandler{
+public class JavadocAutoLookupHandler extends CodeCompletionHandlerBase {
+  public JavadocAutoLookupHandler() {
+    super(CompletionType.BASIC);
+  }
+
   protected boolean isAutocompleteOnInvocation() {
     return false;
   }

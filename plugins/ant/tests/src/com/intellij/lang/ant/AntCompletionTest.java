@@ -1,6 +1,7 @@
 package com.intellij.lang.ant;
 
-import com.intellij.codeInsight.completion.CodeCompletionHandler;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -185,7 +186,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
   }
 
   private void performNormalCompletion() {
-    new CodeCompletionHandler().invoke(getProject(), getEditor(), AntSupport.getAntFile(myFile));
+    new CodeCompletionHandlerBase(CompletionType.BASIC).invoke(getProject(), getEditor(), AntSupport.getAntFile(myFile));
   }
 
   private void select(char completionChar, LookupElement item) {

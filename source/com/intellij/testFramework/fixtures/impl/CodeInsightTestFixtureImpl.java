@@ -427,7 +427,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assert handler != null : "Cannot find handler for: " + referenceTo;
     final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements(), PsiElement.class);
     for (PsiElement psiElement : psiElements) {
-      handler.processElementUsages(psiElement, processor, options);      
+      handler.processElementUsages(psiElement, processor, options);
     }
     return processor.getResults();
   }
@@ -530,54 +530,27 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myEmptyLookup = false;
     new WriteCommandAction(getProject()) {
       protected void run(Result result) throws Throwable {
-        final CodeInsightActionHandler handler;
-        switch (type) {
-          case BASIC:
-            handler = new CodeCompletionHandler() {
-              protected PsiFile createFileCopy(final PsiFile file) {
-                final PsiFile copy = super.createFileCopy(file);
-                if (myFileContext != null) {
-                  final PsiElement contextCopy = myFileContext.copy();
-                  final PsiFile containingFile = contextCopy.getContainingFile();
-                  if (containingFile instanceof PsiFileImpl) {
-                    ((PsiFileImpl)containingFile).setOriginalFile(myFileContext.getContainingFile());
-                  }
-                  setContext(copy, contextCopy);
-                }
-                return copy;
+        final CodeInsightActionHandler handler = new CodeCompletionHandlerBase(type) {
+          protected PsiFile createFileCopy(final PsiFile file) {
+            final PsiFile copy = super.createFileCopy(file);
+            if (myFileContext != null) {
+              final PsiElement contextCopy = myFileContext.copy();
+              final PsiFile containingFile = contextCopy.getContainingFile();
+              if (containingFile instanceof PsiFileImpl) {
+                ((PsiFileImpl)containingFile).setOriginalFile(myFileContext.getContainingFile());
               }
+              setContext(copy, contextCopy);
+            }
+            return copy;
+          }
 
-              protected void handleEmptyLookup(final CompletionContext context,
-                                               final CompletionParameters parameters,
-                                               final CompletionProgressIndicator indicator) {
-                myEmptyLookup = true;
-                super.handleEmptyLookup(context, parameters, indicator);
-              }
-            };
-            break;
-          case SMART:
-            handler = new SmartCodeCompletionHandler() {
-
-              protected void handleEmptyLookup(final CompletionContext context,
-                                               final CompletionParameters parameters,
-                                               final CompletionProgressIndicator indicator) {
-                myEmptyLookup = true;
-                super.handleEmptyLookup(context, parameters, indicator);
-              }
-            };
-            break;
-          case CLASS_NAME:
-          default:
-            handler = new ClassNameCompletionHandler() {
-
-              protected void handleEmptyLookup(final CompletionContext context,
-                                               final CompletionParameters parameters,
-                                               final CompletionProgressIndicator indicator) {
-                myEmptyLookup = true;
-                super.handleEmptyLookup(context, parameters, indicator);
-              }
-            };
-        }
+          @Override
+          protected void completionFinished(final int offset1, final int offset2, final CompletionContext context, final CompletionProgressIndicator indicator,
+                                            final LookupElement[] items) {
+            myEmptyLookup = items.length == 0;
+            super.completionFinished(offset1, offset2, context, indicator, items);
+          }
+        };
         Editor editor = getCompletionEditor();
         handler.invoke(getProject(), editor, PsiUtilBase.getPsiFileInEditor(editor, getProject()));
       }

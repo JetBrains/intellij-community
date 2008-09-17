@@ -31,8 +31,6 @@ public interface Lookup extends UserDataHolder{
   Rectangle getCurrentItemBounds();
   boolean isPositionedAboveCaret();
 
-  boolean fillInCommonPrefix(boolean toCompleteUniqueName);
-
   @Nullable
   PsiElement getPsiElement();
 

@@ -2,10 +2,7 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.completion.CodeCompletionHandler;
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.LookupData;
-import com.intellij.codeInsight.completion.ClassNameCompletionHandler;
+import com.intellij.codeInsight.completion.*;
 
 public class ClassNameCompleteMacro extends BaseCompleteMacro {
   public ClassNameCompleteMacro() {
@@ -13,12 +10,12 @@ public class ClassNameCompleteMacro extends BaseCompleteMacro {
   }
 
   CodeInsightActionHandler getCompletionHandler() {
-    ClassNameCompletionHandler classNameCompletionHandler = new ClassNameCompletionHandler() {
-      protected void handleEmptyLookup(CompletionContext context, LookupData lookupData) {
+
+    return new CodeCompletionHandlerBase(CompletionType.CLASS_NAME) {
+      @Override
+      protected void handleEmptyLookup(final CompletionContext context, final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
         // noithing
       }
     };
-
-    return classNameCompletionHandler;
   }
 }

@@ -20,7 +20,9 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.PrintWriter;
@@ -49,11 +51,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
     }
   };
   private LightweightHint myHint;
+  private Semaphore myFreezeSemaphore;
 
-  public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, String adText, CodeCompletionHandlerBase handler, final CompletionContext contextCopy, final CompletionContext contextOriginal) {
+  public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, String adText, CodeCompletionHandlerBase handler, final CompletionContext contextCopy, final CompletionContext contextOriginal, Semaphore freezeSemaphore) {
     myEditor = editor;
     myParameters = parameters;
     myHandler = handler;
+    myFreezeSemaphore = freezeSemaphore;
 
     myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, new LookupItem[0], "", new CompletionPreferencePolicy(
         parameters), adText);
@@ -70,7 +74,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
         CodeCompletionHandlerBase.selectLookupItem(item, CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS ||
                                                          (item instanceof LookupItem &&
                                                           ((LookupItem)item).getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null),
-                                                   event.getCompletionChar(), contextOriginal, new LookupData(myLookup.getItems()));
+                                                   event.getCompletionChar(), contextOriginal, myLookup.getItems());
       }
 
       public void lookupCanceled(final LookupEvent event) {
@@ -81,17 +85,18 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
     myLookup.setCalculating(true);
 
     myQueue = new MergingUpdateQueue("completion lookup progress", 2000, true, myEditor.getContentComponent());
-    myQueue.queue(new Update("initialShow") {
-        public void run() {
-          final AsyncProcessIcon processIcon = getShownLookup().getProcessIcon();
-          processIcon.setVisible(true);
-          processIcon.resume();
-          updateLookup();
-        }
-      });
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     registerItself();
+  }
+
+  public void showLookup() {
+    if (myLookup.isCalculating()) {
+      final AsyncProcessIcon processIcon = myLookup.getProcessIcon();
+      processIcon.setVisible(true);
+      processIcon.resume();
+    }
+    updateLookup();
   }
 
   public CompletionParameters getParameters() {
@@ -126,17 +131,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
     return myHandler;
   }
 
-  public LookupImpl getShownLookup() {
-    updateLookup();
-    return myLookup;
-  }
-
   public LookupImpl getLookup() {
     return myLookup;
   }
 
   private void updateLookup() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    myFreezeSemaphore.up();
     myLookup.updateList();
     if (!myInitialized) {
       myInitialized = true;
@@ -154,6 +155,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
     return myCount;
   }
 
+  @Nullable
   public static CompletionProgressIndicator getCurrentCompletion() {
     return ourCurrentCompletion;
   }
@@ -233,10 +235,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
     }
   }
 
-  public boolean fillInCommonPrefix() {
+  public boolean fillInCommonPrefix(final boolean explicit) {
     return new WriteCommandAction<Boolean>(myEditor.getProject()) {
       protected void run(Result<Boolean> result) throws Throwable {
-        result.setResult(myLookup.fillInCommonPrefix(true));
+        result.setResult(myLookup.fillInCommonPrefix(explicit));
       }
     }.execute().getResultObject().booleanValue();
   }
