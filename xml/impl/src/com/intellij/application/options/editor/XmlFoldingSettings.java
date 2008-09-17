@@ -16,24 +16,27 @@
 
 package com.intellij.application.options.editor;
 
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.components.*;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.xml.XmlBundle;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class XmlFoldingSettings implements NamedJDOMExternalizable, ExportableApplicationComponent {
+
+@State(
+  name="XmlFoldingSettings",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$APP_CONFIG$/editor.codeinsight.xml"
+    )}
+)
+public class XmlFoldingSettings implements PersistentStateComponent<XmlFoldingSettings>, ExportableComponent {
 
   public static XmlFoldingSettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(XmlFoldingSettings.class);
+    return ServiceManager.getService(XmlFoldingSettings.class);
   }
 
   public boolean isCollapseXmlTags() {
@@ -47,34 +50,20 @@ public class XmlFoldingSettings implements NamedJDOMExternalizable, ExportableAp
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_XML_TAGS = false;
 
   @NotNull
-  public String getComponentName() {
-    return "XmlFoldingSettings";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
-  public String getExternalFileName() {
-    return CodeInsightSettings.EXTERNAL_FILE_NAME;
-  }
-
-  @NotNull
   public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
+    return new File[]{PathManager.getOptionsFile("editor.codeinsight")};
   }
 
   @NotNull
   public String getPresentableName() {
     return XmlBundle.message("xml.folding.settings");
+  }
+
+  public XmlFoldingSettings getState() {
+    return this;
+  }
+
+  public void loadState(final XmlFoldingSettings state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 }

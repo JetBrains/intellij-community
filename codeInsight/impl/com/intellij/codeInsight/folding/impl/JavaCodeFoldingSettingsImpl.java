@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 @State(
-  name="CodeFoldingSettings",
+  name="JavaCodeFoldingSettings",
   storages= {
     @Storage(
       id="other",

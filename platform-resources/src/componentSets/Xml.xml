@@ -4,9 +4,6 @@
       <implementation-class>com.intellij.xml.util.XmlApplicationComponent</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.application.options.editor.XmlFoldingSettings</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.javaee.ExternalResourceManager</interface-class>
       <implementation-class>com.intellij.javaee.ExternalResourceManagerImpl</implementation-class>
     </component>
