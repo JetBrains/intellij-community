@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>UnnecessaryInterfaceModifierInspection.java</file>
+    <line>3</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary interface modifier</problem_class>
+    <description>Modifier &lt;code&gt;abstract&lt;/code&gt; is redundant for interfaces #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryInterfaceModifierInspection.java</file>
+    <line>4</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary interface modifier</problem_class>
+    <description>Modifiers &lt;code&gt;public&lt;/code&gt; are redundant for interface fields #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryInterfaceModifierInspection.java</file>
+    <line>4</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary interface modifier</problem_class>
+    <description>Modifiers &lt;code&gt;static&lt;/code&gt; are redundant for interface fields #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryInterfaceModifierInspection.java</file>
+    <line>4</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary interface modifier</problem_class>
+    <description>Modifiers &lt;code&gt;final&lt;/code&gt; are redundant for interface fields #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryInterfaceModifierInspection.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary interface modifier</problem_class>
+    <description>Modifiers &lt;code&gt;public&lt;/code&gt; are redundant for interface methods #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryInterfaceModifierInspection.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary interface modifier</problem_class>
+    <description>Modifiers &lt;code&gt;abstract&lt;/code&gt; are redundant for interface methods #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryInterfaceModifierInspection.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary interface modifier</problem_class>
+    <description>Modifier &lt;code&gt;static&lt;/code&gt; is redundant for interfaces #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryInterfaceModifierInspection.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary interface modifier</problem_class>
+    <description>Modifier &lt;code&gt;public&lt;/code&gt; is redundant for interfaces #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryInterfaceModifierInspection.java</file>
+    <line>16</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary interface modifier</problem_class>
+    <description>Modifier &lt;code&gt;static&lt;/code&gt; is redundant for interfaces #loc</description>
+  </problem>
+  
+</problems>

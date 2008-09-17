@@ -33,8 +33,9 @@ import java.util.Set;
 public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
 
     private static final Set<String> INTERFACE_REDUNDANT_MODIFIERS =
-            new HashSet<String>(Arrays.asList(PsiModifier.ABSTRACT));
-    private static final Set<String> CLASS_REDUNDANT_MODIFIERS =
+            new HashSet<String>(Arrays.asList(PsiModifier.ABSTRACT,
+                    PsiModifier.STATIC));
+    private static final Set<String> INNER_CLASS_REDUNDANT_MODIFIERS =
             new HashSet<String>(Arrays.asList(PsiModifier.PUBLIC,
                     PsiModifier.STATIC));
     private static final Set<String> FIELD_REDUNDANT_MODIFIERS =
@@ -44,16 +45,17 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
             new HashSet<String>(Arrays.asList(PsiModifier.PUBLIC,
                     PsiModifier.ABSTRACT));
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.interface.modifier.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final PsiModifierList modifierList = (PsiModifierList)infos[1];
-        assert modifierList != null;
         final PsiElement parent = modifierList.getParent();
         if (parent instanceof PsiClass) {
             return InspectionGadgetsBundle.message(
@@ -77,10 +79,12 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnnecessaryInterfaceModifierVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryInterfaceModifersFix((PsiElement) infos[0]);
     }
@@ -91,7 +95,6 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
         private final String m_name;
 
         private UnnecessaryInterfaceModifersFix(PsiElement fieldModifiers) {
-            super();
             m_name = InspectionGadgetsBundle.message(
                     "smth.unnecessary.remove.quickfix",
                     fieldModifiers.getText());
@@ -102,6 +105,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
             return m_name;
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -135,16 +139,15 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
             extends BaseInspectionVisitor {
 
         @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (aClass.isInterface()) {
-                final PsiModifierList modifiers = aClass.getModifierList();
-                checkForRedundantModifiers(modifiers,
-                        INTERFACE_REDUNDANT_MODIFIERS);
-            }
             final PsiClass parent = ClassUtils.getContainingClass(aClass);
             if (parent != null && parent.isInterface()) {
                 final PsiModifierList modifiers = aClass.getModifierList();
                 checkForRedundantModifiers(modifiers,
-                        CLASS_REDUNDANT_MODIFIERS);
+                        INNER_CLASS_REDUNDANT_MODIFIERS);
+            } else if (aClass.isInterface()) {
+                final PsiModifierList modifiers = aClass.getModifierList();
+                checkForRedundantModifiers(modifiers,
+                        INTERFACE_REDUNDANT_MODIFIERS);
             }
         }
 
