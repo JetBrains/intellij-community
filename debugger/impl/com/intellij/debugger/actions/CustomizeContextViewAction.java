@@ -2,7 +2,7 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.settings.BaseRenderersConfigurable;
-import com.intellij.xdebugger.impl.settings.CompositeConfigurable;
+import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.UserRenderersConfigurable;
 import com.intellij.debugger.ui.impl.FrameDebuggerTree;

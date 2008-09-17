@@ -1,8 +1,5 @@
-package com.intellij.xdebugger.impl.settings;
+package com.intellij.openapi.options;
 
-import com.intellij.openapi.options.BaseConfigurable;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.ui.TabbedPaneWrapper;
 
 import javax.swing.*;
@@ -61,7 +58,7 @@ public abstract class CompositeConfigurable extends BaseConfigurable {
 
   protected abstract List<Configurable> createConfigurables();
 
-  private List<Configurable> getConfigurables() {
+  public List<Configurable> getConfigurables() {
     if (myConfigurables == null) {
       myConfigurables = createConfigurables();
     }
