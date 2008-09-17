@@ -935,12 +935,20 @@ public class StringUtil {
     }
     if (fileSize < 0x100000) {
       long kbytes = fileSize * 100 / 1024;
-      final String kbs = kbytes / 100 + "." + kbytes % 100;
+      final String kbs = kbytes / 100 + "." + formatMinor(kbytes % 100);
       return CommonBundle.message("file.size.format.kbytes", kbs);
     }
     long mbytes = fileSize * 100 / 1024 / 1024;
-    final String size = mbytes / 100 + "." + mbytes % 100;
+    final String size = mbytes / 100 + "." + formatMinor(mbytes % 100);
     return CommonBundle.message("file.size.format.mbytes", size);
+  }
+
+  @NotNull
+  private static String formatMinor(long number) {
+    if (number > 0L && number <= 9L) {
+      return "0" + number;
+    }
+    return String.valueOf(number);
   }
 
   /**
