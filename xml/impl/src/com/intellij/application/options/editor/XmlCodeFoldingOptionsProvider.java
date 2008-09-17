@@ -5,33 +5,11 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.BeanConfigurable;
 
-import javax.swing.*;
-
-public class XmlCodeFoldingOptionsProvider implements CodeFoldingOptionsProvider{
-  private JCheckBox myCbCollapseXMLTags = new JCheckBox(ApplicationBundle.message("checkbox.collapse.xml.tags"));
-
-  public JComponent createComponent() {
-    return myCbCollapseXMLTags;
-  }
-
-  public boolean isModified() {
-    XmlFoldingSettings codeFoldingSettings = XmlFoldingSettings.getInstance();
-    return codeFoldingSettings.isCollapseXmlTags() != myCbCollapseXMLTags.isSelected();
-  }
-
-  public void apply() throws ConfigurationException {
-    XmlFoldingSettings codeFoldingSettings = XmlFoldingSettings.getInstance();
-    codeFoldingSettings.setCollapseXmlTags(myCbCollapseXMLTags.isSelected());
-  }
-
-  public void reset() {
-    XmlFoldingSettings codeFoldingSettings = XmlFoldingSettings.getInstance();
-    myCbCollapseXMLTags.setSelected(codeFoldingSettings.isCollapseXmlTags());
-  }
-
-  public void disposeUIResources() {
-    myCbCollapseXMLTags = null;
+public class XmlCodeFoldingOptionsProvider extends BeanConfigurable<XmlFoldingSettings> implements CodeFoldingOptionsProvider {
+  public XmlCodeFoldingOptionsProvider() {
+    super(XmlFoldingSettings.getInstance());
+    checkBox("COLLAPSE_XML_TAGS", ApplicationBundle.message("checkbox.collapse.xml.tags"));
   }
 }
