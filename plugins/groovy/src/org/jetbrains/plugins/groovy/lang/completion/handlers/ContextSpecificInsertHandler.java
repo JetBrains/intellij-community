@@ -26,7 +26,7 @@ public interface ContextSpecificInsertHandler {
   boolean isAcceptable(InsertionContext context, int startOffset, LookupElement item);
 
   /**
-   * Handler can be executed ONLY if {@link #isAcceptable(com.intellij.codeInsight.completion.InsertionContext,int,com.intellij.codeInsight.completion.LookupData,com.intellij.codeInsight.lookup.LookupItem,boolean,char)}
+   * Handler can be executed ONLY if {@link #isAcceptable(com.intellij.codeInsight.completion.InsertionContext, int, com.intellij.codeInsight.lookup.LookupElement)}
    * returns true.
    */
   void handleInsert(InsertionContext context, int startOffset, LookupElement item);
