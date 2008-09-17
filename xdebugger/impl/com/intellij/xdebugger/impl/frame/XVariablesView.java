@@ -1,16 +1,17 @@
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
+import com.intellij.ide.dnd.DnDManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
+import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,6 +29,7 @@ public class XVariablesView extends XDebugViewBase {
     super(session, parentDisposable);
     XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
     myDebuggerTreePanel = new XDebuggerTreePanel(session, editorsProvider, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP);
+    DnDManager.getInstance().registerSource(myDebuggerTreePanel, myDebuggerTreePanel.getTree());
   }
 
   protected void rebuildView(final SessionEvent event) {
@@ -60,5 +62,11 @@ public class XVariablesView extends XDebugViewBase {
 
   public JComponent getPanel() {
     return myDebuggerTreePanel.getMainPanel();
+  }
+
+  @Override
+  public void dispose() {
+    DnDManager.getInstance().unregisterSource(myDebuggerTreePanel, myDebuggerTreePanel.getTree());
+    super.dispose();
   }
 }

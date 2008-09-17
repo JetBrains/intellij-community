@@ -1,12 +1,20 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
+import com.intellij.ide.dnd.DnDAction;
+import com.intellij.ide.dnd.DnDDragStartBean;
+import com.intellij.ide.dnd.DnDSource;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.util.ui.Tree;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +25,7 @@ import java.awt.event.KeyEvent;
 /**
  * @author nik
  */
-public class XDebuggerTreePanel {
+public class XDebuggerTreePanel implements DnDSource {
   private XDebuggerTree myTree;
   private JPanel myMainPanel;
   private PopupHandler myPopupHandler;
@@ -55,5 +63,35 @@ public class XDebuggerTreePanel {
 
   public JPanel getMainPanel() {
     return myMainPanel;
+  }
+
+  public boolean canStartDragging(final DnDAction action, final Point dragOrigin) {
+    return getNodesToDrag().length > 0;
+  }
+
+  private XValueNodeImpl[] getNodesToDrag() {
+    return myTree.getSelectedNodes(XValueNodeImpl.class, new Tree.NodeFilter<XValueNodeImpl>() {
+      public boolean accept(final XValueNodeImpl node) {
+        return node.getValueContainer().getEvaluationExpression() != null;
+      }
+    });
+  }
+
+  public DnDDragStartBean startDragging(final DnDAction action, final Point dragOrigin) {
+    return new DnDDragStartBean(getNodesToDrag());
+  }
+
+  public Pair<Image, Point> createDraggedImage(final DnDAction action, final Point dragOrigin) {
+    XValueNodeImpl[] nodes = getNodesToDrag();
+    if (nodes.length == 1) {
+      return DnDAwareTree.getDragImage(myTree, nodes[0].getPath(), dragOrigin);
+    }
+    return DnDAwareTree.getDragImage(myTree, XDebuggerBundle.message("xdebugger.drag.text.0.elements", nodes.length), dragOrigin);
+  }
+
+  public void dragDropEnd() {
+  }
+
+  public void dropActionChanged(final int gestureModifiers) {
   }
 }

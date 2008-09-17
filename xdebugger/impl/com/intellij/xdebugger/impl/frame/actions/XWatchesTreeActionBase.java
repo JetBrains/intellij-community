@@ -2,18 +2,19 @@ package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreePath;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nik
  */
 public abstract class XWatchesTreeActionBase extends AnAction {
-  protected static List<WatchNode> getSelectedWatches(final XDebuggerTree tree) {
+  protected static List<WatchNode> getSelectedWatches(final @NotNull XDebuggerTree tree) {
     ArrayList<WatchNode> list = new ArrayList<WatchNode>();
     TreePath[] selectionPaths = tree.getSelectionPaths();
     if (selectionPaths != null) {

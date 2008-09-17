@@ -111,4 +111,6 @@ public abstract class XDebuggerTreeNode implements TreeNode {
 
   @Nullable
   public abstract List<? extends XDebuggerTreeNode> getLoadedChildren();
+
+  public abstract void clearChildren();
 }

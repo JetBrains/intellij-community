@@ -1,33 +1,33 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.Tree;
-import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author nik
  */
-public class XDebuggerTree extends Tree implements DataProvider {
+public class XDebuggerTree extends DnDAwareTree implements DataProvider {
   private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
   private DefaultTreeModel myTreeModel;
   private final Project myProject;
@@ -120,9 +120,8 @@ public class XDebuggerTree extends Tree implements DataProvider {
 
   public void rebuildAndRestore(final XDebuggerTreeState treeState) {
     Object rootNode = myTreeModel.getRoot();
-    if (rootNode instanceof XValueContainerNode<?>) {
-      XValueContainerNode<?> root = (XValueContainerNode<?>)rootNode;
-      root.clearChildren();
+    if (rootNode instanceof XDebuggerTreeNode) {
+      ((XDebuggerTreeNode)rootNode).clearChildren();
       treeState.restoreState(this);
       repaint();
     }

@@ -1,12 +1,14 @@
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -15,11 +17,13 @@ import javax.swing.*;
  */
 public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final WatchesRootNode myRootNode;
+  @Nullable private final WatchNode myOldNode;
 
-  public WatchInplaceEditor(WatchesRootNode rootNode, final XDebuggerTreeNode node, @NonNls final String historyId) {
+  public WatchInplaceEditor(WatchesRootNode rootNode, final XDebuggerTreeNode node, @NonNls final String historyId, final @Nullable WatchNode oldNode) {
     super(node, historyId);
     myRootNode = rootNode;
-    myExpressionEditor.setText("");
+    myOldNode = oldNode;
+    myExpressionEditor.setText(oldNode != null ? oldNode.getExpression() : "");
   }
 
   protected JComponent createInplaceEditorComponent() {
@@ -28,17 +32,24 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
 
   public void cancelEditing() {
     super.cancelEditing();
-    myRootNode.removeChildNode(getNode());
+    int index = myRootNode.removeChildNode(getNode());
+    if (myOldNode != null) {
+      getWatchesView().addWatchExpression(myOldNode.getExpression(), index);
+    }
   }
 
   public void doOKAction() {
     String expression = myExpressionEditor.getText();
     myExpressionEditor.saveTextInHistory();
     super.doOKAction();
-    myRootNode.removeChildNode(getNode());
+    int index = myRootNode.removeChildNode(getNode());
     if (!StringUtil.isEmpty(expression)) {
-      XDebugSessionTab tab = ((XDebugSessionImpl)myRootNode.getTree().getSession()).getSessionTab();
-      tab.getWatchesView().addWatchExpression(expression);
+      getWatchesView().addWatchExpression(expression, index);
     }
+  }
+
+  private XWatchesView getWatchesView() {
+    XDebugSessionTab tab = ((XDebugSessionImpl)myRootNode.getTree().getSession()).getSessionTab();
+    return tab.getWatchesView();
   }
 }

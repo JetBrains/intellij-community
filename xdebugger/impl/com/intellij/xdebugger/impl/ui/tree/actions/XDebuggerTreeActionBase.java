@@ -38,7 +38,7 @@ public abstract class XDebuggerTreeActionBase extends AnAction {
   }
 
   @Nullable
-  private static XValueNodeImpl getSelectedNode(final DataContext dataContext) {
+  protected static XValueNodeImpl getSelectedNode(final DataContext dataContext) {
     XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
     if (tree == null) return null;
 

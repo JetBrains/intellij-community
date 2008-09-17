@@ -20,7 +20,7 @@ public class XAddToWatchesAction extends XDebuggerTreeActionBase {
     XDebugSessionTab sessionTab = ((XDebugSessionImpl)session).getSessionTab();
     String expression = node.getValueContainer().getEvaluationExpression();
     if (expression != null) {
-      sessionTab.getWatchesView().addWatchExpression(expression);
+      sessionTab.getWatchesView().addWatchExpression(expression, -1);
     }
   }
 }

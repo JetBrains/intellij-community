@@ -43,6 +43,10 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     return null;
   }
 
+  @Override
+  public void clearChildren() {
+  }
+
   public static MessageTreeNode createEllipsisNode(XDebuggerTree tree, XDebuggerTreeNode parent, final int remaining) {
     String message = remaining == -1 ? "..." : XDebuggerBundle.message("node.text.ellipsis.0.more.nodes.double.click.to.show", remaining);
     return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.REGULAR_ATTRIBUTES, null, true);
