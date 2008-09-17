@@ -6,6 +6,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -778,15 +779,19 @@ public class FileBasedIndex implements ApplicationComponent {
     assert index != null;
     
     index.update(inputId, currentFC, oldFC);
-    if (file.isValid()) {
-      if (currentFC != null) {
-        IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        if (file.isValid()) {
+          if (currentFC != null) {
+            IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
+          }
+          else {
+            // mark the file as unindexed
+            IndexingStamp.update(file, indexId, -1L);
+          }
+        }
       }
-      else {
-        // mark the file as unindexed
-        IndexingStamp.update(file, indexId, -1L);
-      }
-    }
+    });
   }
 
   public static int getFileId(final VirtualFile file) {
@@ -970,23 +975,27 @@ public class FileBasedIndex implements ApplicationComponent {
     }
 
     private void ensureAllInvalidateTasksCompleted() {
-      while (true) {
-        final FutureTask<?> future;
-        synchronized (myFutureInvalidations) {
-          future = myFutureInvalidations.poll();
+      ((ApplicationEx)ApplicationManager.getApplication()).writeLockSafeWait(new Runnable() {
+        public void run() {
+          while (true) {
+            final FutureTask<?> future;
+            synchronized (myFutureInvalidations) {
+              future = myFutureInvalidations.poll();
+            }
+            if (future == null) {
+              return;
+            }
+            future.run(); // force the task run if it is has not been run yet
+            try {
+              future.get();
+            }
+            catch (InterruptedException ignored) {
+            }
+            catch (ExecutionException ignored) {
+            }
+          }
         }
-        if (future == null) {
-          return;
-        }
-        future.run(); // force the task run if it is has not been run yet
-        try {
-          future.get();
-        }
-        catch (InterruptedException ignored) {
-        }
-        catch (ExecutionException ignored) {
-        }
-      }
+      });
     }
 
     private void iterateIndexableFiles(final VirtualFile file, final Processor<VirtualFile> processor) {
@@ -1037,7 +1046,11 @@ public class FileBasedIndex implements ApplicationComponent {
       }
       finally {
         myForceUpdateSemaphore.up();
-        myForceUpdateSemaphore.waitFor(); // possibly wait until another thread completes indexing
+        ((ApplicationEx)ApplicationManager.getApplication()).writeLockSafeWait(new Runnable() {
+          public void run() {
+            myForceUpdateSemaphore.waitFor(); // possibly wait until another thread completes indexing
+          }
+        });
       }
     }
 
@@ -1055,7 +1068,7 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     }
   }
-  
+
   private class UnindexedFilesFinder implements CollectingContentIterator {
     private final List<VirtualFile> myFiles = new ArrayList<VirtualFile>();
     private final Collection<ID<?, ?>> myIndexIds;

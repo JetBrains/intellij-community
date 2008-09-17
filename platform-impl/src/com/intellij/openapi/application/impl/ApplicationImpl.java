@@ -473,7 +473,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         }
       });
 
-      progress.startBlocking();
+      writeLockSafeWait(new Runnable() {
+        public void run() {
+          progress.startBlocking();
+        }
+      });
       LOG.assertTrue(threadStarted[0]);
       LOG.assertTrue(!progress.isRunning());
     }
@@ -942,5 +946,29 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public boolean isDisposeInProgress() {
     return myDisposeInProgress;
+  }
+
+  public void writeLockSafeWait(Runnable waitForImpl) {
+    int locksHeld = 0;
+    while (myActionsLock.isWriteLockAcquired(Thread.currentThread())) {
+      locksHeld++;
+      // release write lock to avoid deadlocks if the thread we wait for needs a read lock to complete
+      myActionsLock.writeLock().release();
+    }
+
+    try {
+      waitForImpl.run();
+    }
+    finally {
+      while (locksHeld-- > 0) {
+        // acquire the lock again
+        try {
+          myActionsLock.writeLock().acquire();
+        }
+        catch (InterruptedException e) {
+          LOG.error(e);
+        }
+      }
+    }
   }
 }
