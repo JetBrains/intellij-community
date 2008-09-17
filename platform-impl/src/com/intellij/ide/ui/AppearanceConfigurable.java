@@ -130,12 +130,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     update |= settings.SHOW_ICONS_IN_QUICK_NAVIGATION != myComponent.myHideIconsInQuickNavigation.isSelected();
     settings.SHOW_ICONS_IN_QUICK_NAVIGATION = myComponent.myHideIconsInQuickNavigation.isSelected();
 
-    boolean shouldRepaintUI = false;
-    if (settings.ANTIALIASING_IN_EDITOR != myComponent.myAntialiasingInEditorCheckBox.isSelected()) {
-      settings.ANTIALIASING_IN_EDITOR = myComponent.myAntialiasingInEditorCheckBox.isSelected();
-      update = shouldRepaintUI = true;
-    }
-
     if (!Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), lafManager.getCurrentLookAndFeel())) {
       update = shouldUpdateUI = true;
       lafManager.setCurrentLookAndFeel((UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem());
@@ -143,10 +137,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     if (shouldUpdateUI) {
       lafManager.updateUI();
-    }
-
-    if (shouldRepaintUI) {
-      lafManager.repaintUI();
     }
 
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
@@ -187,7 +177,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myCycleScrollingCheckBox.setSelected(settings.CYCLE_SCROLLING);
 
     myComponent.myHideIconsInQuickNavigation.setSelected(settings.SHOW_ICONS_IN_QUICK_NAVIGATION);
-    myComponent.myAntialiasingInEditorCheckBox.setSelected(settings.ANTIALIASING_IN_EDITOR);
     myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.MOVE_MOUSE_ON_DEFAULT_BUTTON);
     myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
     myComponent.myOverrideLAFFonts.setSelected(settings.OVERRIDE_NONIDEA_LAF_FONTS);
@@ -229,7 +218,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.SHOW_ICONS_IN_QUICK_NAVIGATION;
 
-    isModified |= myComponent.myAntialiasingInEditorCheckBox.isSelected() != settings.ANTIALIASING_IN_EDITOR;
     isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.MOVE_MOUSE_ON_DEFAULT_BUTTON;
     isModified |= !Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), LafManager.getInstance().getCurrentLookAndFeel());
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
@@ -296,7 +284,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JComboBox myLafComboBox;
     private JCheckBox myCycleScrollingCheckBox;
 
-    private JCheckBox myAntialiasingInEditorCheckBox;
     private JCheckBox myMoveMouseOnDefaultButtonCheckBox;
     private JCheckBox myEnableAlphaModeCheckBox;
     private JTextField myAlphaModeDelayTextField;
