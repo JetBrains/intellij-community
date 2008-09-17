@@ -416,7 +416,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public ActionGroup getPopupGroup() {
-    return myPopupGroup.get();
+    return myPopupGroup != null ? myPopupGroup.get() : null;
   }
 
   public String getPopupPlace() {
