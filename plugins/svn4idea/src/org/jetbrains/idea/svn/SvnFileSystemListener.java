@@ -51,6 +51,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.vcsUtil.ActionWithTempFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -102,10 +103,27 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   private List<AddedFileInfo> myAddedFiles = new ArrayList<AddedFileInfo>();
   private List<DeletedFileInfo> myDeletedFiles = new ArrayList<DeletedFileInfo>();
   private List<MovedFileInfo> myMovedFiles = new ArrayList<MovedFileInfo>();
+  private Map<Project, List<VcsException>> myMoveExceptions = new HashMap<Project, List<VcsException>>();
   private List<VirtualFile> myFilesToRefresh = new ArrayList<VirtualFile>();
   @Nullable private File myStorageForUndo;
   private List<Pair<File, File>> myUndoStorageContents = new ArrayList<Pair<File, File>>();
   private boolean myUndoingMove = false;
+
+  private void addToMoveExceptions(final Project project, final SVNException e) {
+    List<VcsException> exceptionList = myMoveExceptions.get(project);
+    if (exceptionList == null) {
+      exceptionList = new ArrayList<VcsException>();
+      myMoveExceptions.put(project, exceptionList);
+    }
+    VcsException vcsException;
+    if (SVNErrorCode.ENTRY_EXISTS.equals(e.getErrorMessage().getErrorCode())) {
+      vcsException = new VcsException(Arrays.asList("Target of move operation is already under version control.",
+                                                    "Subversion move had not been performed. ", e.getMessage()));
+    } else {
+      vcsException = new VcsException(e);
+    }
+    exceptionList.add(vcsException);
+  }
 
   @Nullable
   public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) throws IOException {
@@ -242,6 +260,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       dst.setLastModified(srcTime);
     }
     catch (SVNException e) {
+      addToMoveExceptions(vcs.getProject(), e);
       return false;
     }
     return true;
@@ -457,6 +476,9 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
 
   public void commandStarted(CommandEvent event) {
     myUndoingMove = false;
+    final Project project = event.getProject();
+    if (project == null) return;
+    myMoveExceptions.remove(project);
   }
 
   public void beforeCommandFinished(CommandEvent event) {
@@ -472,6 +494,12 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       processDeletedFiles(project);
     }
     processMovedFiles(project);
+
+    final List<VcsException> exceptionList = myMoveExceptions.get(project);
+    if ((exceptionList != null) && (! exceptionList.isEmpty())) {
+      AbstractVcsHelper.getInstance(project).showErrors(exceptionList, SvnBundle.message("move.files.errors.title"));
+    }
+
     if (myFilesToRefresh.size() > 0) {
       final List<VirtualFile> toRefresh = new ArrayList<VirtualFile>(myFilesToRefresh);
       final RefreshSession session = RefreshQueue.getInstance().createSession(true, true, new Runnable() {
