@@ -9,6 +9,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,10 +19,13 @@ import java.util.List;
  * @author peter
  */
 public abstract class DomAnchorImpl<T extends DomElement> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomAnchorImpl");
 
   public static <T extends DomElement> DomAnchorImpl<T> createAnchor(@NotNull T t) {
     final DomElement parent = t.getParent();
-    assert parent != null;
+    if (parent == null) {
+      LOG.assertTrue(false, "Parent null: " + t);
+    }
 
     if (parent instanceof DomFileElementImpl) {
       final DomFileElementImpl fileElement = (DomFileElementImpl)parent;
@@ -36,7 +40,9 @@ public abstract class DomAnchorImpl<T extends DomElement> {
     }
     
     final int index = description.getValues(parent).indexOf(t);
-    assert index >= 0;
+    if (index < 0) {
+      LOG.assertTrue(false, "Index<0: description=" + description + "\nparent=" + parent + "\nt=" + t);
+    }
     return new IndexedAnchor<T>(parentAnchor, description, index);
   }
 
