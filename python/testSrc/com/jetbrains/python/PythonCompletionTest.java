@@ -4,7 +4,8 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.completion.CodeCompletionHandler;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
@@ -13,7 +14,7 @@ public class PythonCompletionTest extends LightCodeInsightTestCase{
   private void doTest() throws Exception {
     final String testName = getTestName(true);
     configureByFile(testName + ".py");
-    new CodeCompletionHandler().invoke(getProject(), getEditor(), getFile());
+    new CodeCompletionHandlerBase(CompletionType.BASIC).invoke(getProject(), getEditor(), getFile());
     checkResultByFile(testName + ".after.py");
   }
 
