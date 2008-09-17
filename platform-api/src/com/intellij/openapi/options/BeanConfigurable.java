@@ -82,7 +82,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
       }
       catch (NoSuchFieldException e) {
         try {
-          final Method method = instance.getClass().getMethod("set" + StringUtil.capitalize(myFieldName));
+          final Method method = instance.getClass().getMethod("set" + StringUtil.capitalize(myFieldName), getValueClass());
           method.invoke(instance, value);
         }
         catch (Exception e1) {
@@ -93,6 +93,8 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
         throw new RuntimeException(e);
       }
     }
+
+    protected abstract Class getValueClass();
   }
 
   private static class CheckboxField extends BeanField<JCheckBox> {
@@ -118,6 +120,10 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
     @Override
     protected String getterName() {
       return "is" + StringUtil.capitalize(myFieldName);
+    }
+
+    protected Class getValueClass() {
+      return boolean.class;
     }
   }
 
