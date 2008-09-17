@@ -308,6 +308,10 @@ public class DebugUtil {
   public static void trackInvalidation(PsiElement element) {
     if (element == null) return;
     element.putUserData(TRACK_INVALIDATION, Boolean.TRUE);
+    final ASTNode node = element.getNode();
+    if (node != null) {
+      node.putUserData(TRACK_INVALIDATION, Boolean.TRUE);
+    }
     trackInvalidation(element.getParent());
   }
 }

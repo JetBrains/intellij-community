@@ -81,6 +81,13 @@ public abstract class PsiDocumentManager {
   public abstract void commitAllDocuments();
 
   /**
+   * If the document is committed, runs action synchronously, otherwise schedules to execute it right after it has been committed.
+   * @param document
+   * @param action
+   */
+  public abstract void performForCommittedDocument(@NotNull Document document, @NotNull Runnable action);
+
+  /**
    * Updates the PSI tree for the specified document.
    * Before a modified document is committed, accessing its PSI may return elements
    * corresponding to original (unmodified) state of the document.

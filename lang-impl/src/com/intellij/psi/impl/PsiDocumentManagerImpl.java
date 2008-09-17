@@ -29,6 +29,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<PsiFile> HARD_REF_TO_PSI = new Key<PsiFile>("HARD_REFERENCE_TO_PSI");
   private static final Key<Boolean> KEY_COMMITING = new Key<Boolean>("Commiting");
+  private static final Key<List<Runnable>> ACTION_AFTER_COMMIT = Key.create("ACTION_AFTER_COMMIT");
 
   private final Project myProject;
   private final PsiManager myPsiManager;
@@ -177,6 +179,22 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     //Statistics.commitTime += (time2 - time1);
   }
 
+  @Override
+  public void performForCommittedDocument(@NotNull final Document doc, @NotNull final Runnable action) {
+    final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
+    if (isUncommited(document)) {
+      synchronized (myListeners) {
+        List<Runnable> list = document.getUserData(ACTION_AFTER_COMMIT);
+        if (list == null) {
+          document.putUserData(ACTION_AFTER_COMMIT, list = new SmartList<Runnable>());
+        }
+        list.add(action);
+      }
+    } else {
+      action.run();
+    }
+  }
+
   public void commitDocument(final Document doc) {
     final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
     if (isUncommited(document)) {
@@ -214,6 +232,15 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         }
       }
     );
+    synchronized (myListeners) {
+      final List<Runnable> list = document.getUserData(ACTION_AFTER_COMMIT);
+      if (list != null) {
+        document.putUserData(ACTION_AFTER_COMMIT, null);
+        for (final Runnable runnable : list) {
+          runnable.run();
+        }
+      }
+    }
   }
 
   public void commitOtherFilesAssociatedWithDocument(final Document document, final PsiFile psiFile) {
