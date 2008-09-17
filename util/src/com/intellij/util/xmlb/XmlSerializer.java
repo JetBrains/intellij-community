@@ -108,8 +108,12 @@ public class XmlSerializer {
   }
 
   public static void serializeInto(final Object bean, final Element element) {
+    serializeInto(bean, element, null);
+  }
+
+  public static void serializeInto(final Object bean, final Element element, @Nullable SerializationFilter filter) {
     try {
-      XmlSerializerImpl serializer = new XmlSerializerImpl(TRUE_FILTER);
+      XmlSerializerImpl serializer = new XmlSerializerImpl(filter != null ? filter : TRUE_FILTER);
       final Binding binding = serializer.getBinding(bean.getClass());
       assert binding instanceof BeanBinding;
 
