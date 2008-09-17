@@ -2,6 +2,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.Patches;
+import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.ApplicationLoadListener;
 import com.intellij.ide.HackyRepaintManager;
 import com.intellij.ide.IdeEventQueue;
@@ -710,6 +711,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public void runWriteAction(final Runnable action) {
     assertCanRunWriteAction();
+
+    ActivityTracker.getInstance().inc();
     fireBeforeWriteActionStart(action);
 
     LOG.assertTrue(myActionsLock.isWriteLockAcquired(Thread.currentThread()) || !Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing writeAction");

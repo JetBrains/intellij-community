@@ -2,6 +2,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -10,7 +11,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.actionSystem.TimerListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -26,9 +26,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -1023,22 +1020,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     return myPrevPerformedActionId;
   }
 
-  private static boolean haveActiveFrames() {
-    final WindowManagerEx wmanager = WindowManagerEx.getInstanceEx();
-    if (wmanager == null) return false;
-    for (IdeFrame frame : wmanager.getAllFrames()) {
-      if (frame != null && ((IdeFrameImpl)frame).getState() != JFrame.ICONIFIED) return true;
-    }
-    return false;
-  }
-
   public Set<String> getActionIds(){
     return new HashSet<String>(myId2Action.keySet());
   }
 
-
   private class MyTimer extends Timer implements ActionListener {
     private final List<TimerListener> myTimerListeners = Collections.synchronizedList(new ArrayList<TimerListener>());
+    private int myLastTimePerformed;
 
     MyTimer() {
       super(TIMER_DELAY, null);
@@ -1058,7 +1046,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
 
     public void actionPerformed(ActionEvent e) {
-      if (myLastTimeEditorWasTypedIn + UPDATE_DELAY_AFTER_TYPING > System.currentTimeMillis() || !haveActiveFrames()) {
+      if (myLastTimeEditorWasTypedIn + UPDATE_DELAY_AFTER_TYPING > System.currentTimeMillis()) {
+        return;
+      }
+
+      final int lastEventCount = myLastTimePerformed;
+      myLastTimePerformed = ActivityTracker.getInstance().getCount();
+
+      if (myLastTimePerformed == lastEventCount) {
         return;
       }
 

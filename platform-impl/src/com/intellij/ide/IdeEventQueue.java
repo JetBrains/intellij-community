@@ -6,13 +6,13 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -397,6 +397,8 @@ public class IdeEventQueue extends EventQueue {
 
     // Process "idle" and "activity" listeners
     if (e instanceof KeyEvent || e instanceof MouseEvent) {
+      ActivityTracker.getInstance().inc();
+
       synchronized (myLock) {
         myIdleRequestsAlarm.cancelAllRequests();
         for (Runnable idleListener : myIdleListeners) {
