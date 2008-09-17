@@ -61,6 +61,9 @@ public class ColumnTest extends BaseColumn implements Comparator<SMTestProxy>{
       //Black bold for with caption "Total" for parent suite of items in statistics
       if (myProxy.isSuite() && isFirstLine(row)) {
         append(TOTAL_TITLE, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        if (myProxy.getParent() != null) {
+          append(" (" + myProxy.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
         return;
       }
       //Black, regular for other suites and tests
