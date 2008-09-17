@@ -1735,6 +1735,11 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
+  public JBTabs removeListener(@NotNull final TabsListener listener) {
+    myTabListeners.remove(listener);
+    return this;
+  }
+
   protected void onPopup(final TabInfo popupInfo) {
   }
 

@@ -69,6 +69,8 @@ public interface JBTabs {
 
   JBTabs addListener(@NotNull TabsListener listener);
 
+  JBTabs removeListener(@NotNull TabsListener listener);
+
   @NotNull
   JComponent getComponent();
 
