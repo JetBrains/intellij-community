@@ -17,7 +17,6 @@ public class JavaEditorOptions implements EditorOptionsProvider {
   private static final String INSERT_IMPORTS_NONE = ApplicationBundle.message("combobox.insert.imports.none");
 
 
-  private JCheckBox myCbInsertScriptletEndOnEnter;
   private JCheckBox myCbInsertJavadocStubOnEnter;
   private JComboBox mySmartPasteCombo;
   private JCheckBox myCbRenameLocalVariablesInplace;
@@ -48,7 +47,6 @@ public class JavaEditorOptions implements EditorOptionsProvider {
         mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_ASK);
         break;
     }
-    myCbInsertScriptletEndOnEnter.setSelected(codeInsightSettings.INSERT_SCRIPTLET_END_ON_ENTER);
     myCbInsertJavadocStubOnEnter.setSelected(codeInsightSettings.JAVADOC_STUB_ON_ENTER);
 
     // Refactoring
@@ -66,7 +64,6 @@ public class JavaEditorOptions implements EditorOptionsProvider {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
 
-    codeInsightSettings.INSERT_SCRIPTLET_END_ON_ENTER = myCbInsertScriptletEndOnEnter.isSelected();
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = myCbInsertJavadocStubOnEnter.isSelected();
     editorSettings.setVariableInplaceRenameEnabled(myCbRenameLocalVariablesInplace.isSelected());
     codeInsightSettings.ADD_IMPORTS_ON_PASTE = getSmartPasteValue();
@@ -82,8 +79,7 @@ public class JavaEditorOptions implements EditorOptionsProvider {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
 
-    boolean isModified = isModified(myCbInsertScriptletEndOnEnter, codeInsightSettings.INSERT_SCRIPTLET_END_ON_ENTER);
-    isModified |= isModified(myCbInsertJavadocStubOnEnter, codeInsightSettings.JAVADOC_STUB_ON_ENTER);
+    boolean isModified = isModified(myCbInsertJavadocStubOnEnter, codeInsightSettings.JAVADOC_STUB_ON_ENTER);
     // Refactoring
     isModified |= isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());
 

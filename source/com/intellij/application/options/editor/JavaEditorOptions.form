@@ -32,18 +32,9 @@
         <properties/>
         <border type="etched" title-resource-bundle="messages/ApplicationBundle" title-key="label.smart.enter"/>
         <children>
-          <component id="248a" class="javax.swing.JCheckBox" binding="myCbInsertScriptletEndOnEnter">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="0.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ApplicationBundle" key="checkbox.insert.pair.percent.gt.in.jsp"/>
-            </properties>
-          </component>
           <component id="19208" class="javax.swing.JCheckBox" binding="myCbInsertJavadocStubOnEnter">
             <constraints>
-              <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
