@@ -24,7 +24,7 @@ import java.util.Set;
 
 public class DummyHolderViewProvider extends UserDataHolderBase implements FileViewProvider{
   private DummyHolder myHolder;
-  private PsiManager myManager;
+  private final PsiManager myManager;
   private final long myModificationStamp;
   private final LightVirtualFile myLightVirtualFile = new LightVirtualFile("DummyHolder");
 
