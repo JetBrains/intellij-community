@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.descriptors.ConfigFile;
 import com.intellij.util.descriptors.CustomConfigFile;
+import com.intellij.util.descriptors.ConfigFileMetaData;
 
 import java.io.File;
 
@@ -58,10 +59,16 @@ public abstract class BuildParticipantBase extends BuildParticipant {
         for (ConfigFile descriptor : deploymentDescriptors) {
           VirtualFile virtualFile = descriptor.getVirtualFile();
           if (virtualFile != null) {
+            ConfigFileMetaData metaData = descriptor.getMetaData();
             final File file = VfsUtil.virtualToIoFile(virtualFile);
-            instructions.addFileCopyInstruction(file, false, myModule,
-                                                descriptor.getMetaData().getDirectoryPath() + "/" + virtualFile.getName(),
-                                                null);
+            final String fileName;
+            if (metaData.isFileNameFixed()) {
+              fileName = metaData.getFileName();
+            }
+            else {
+              fileName = virtualFile.getName();
+            }
+            instructions.addFileCopyInstruction(file, false, myModule, metaData.getDirectoryPath() + "/" + fileName, null);
           }
 
         }
