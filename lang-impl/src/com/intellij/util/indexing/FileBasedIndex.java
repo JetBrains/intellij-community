@@ -975,16 +975,18 @@ public class FileBasedIndex implements ApplicationComponent {
     }
 
     private void ensureAllInvalidateTasksCompleted() {
-      ((ApplicationEx)ApplicationManager.getApplication()).writeLockSafeWait(new Runnable() {
-        public void run() {
-          while (true) {
-            final FutureTask<?> future;
-            synchronized (myFutureInvalidations) {
-              future = myFutureInvalidations.poll();
-            }
-            if (future == null) {
-              return;
-            }
+      while (true) {
+        final FutureTask<?> future;
+        synchronized (myFutureInvalidations) {
+          future = myFutureInvalidations.poll();
+        }
+
+        if (future == null) {
+          return;
+        }
+
+        ((ApplicationEx)ApplicationManager.getApplication()).writeLockSafeWait(new Runnable() {
+          public void run() {
             future.run(); // force the task run if it is has not been run yet
             try {
               future.get();
@@ -994,8 +996,8 @@ public class FileBasedIndex implements ApplicationComponent {
             catch (ExecutionException ignored) {
             }
           }
-        }
-      });
+        });
+      }
     }
 
     private void iterateIndexableFiles(final VirtualFile file, final Processor<VirtualFile> processor) {
