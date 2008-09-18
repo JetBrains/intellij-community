@@ -6,7 +6,6 @@ package com.intellij.testFramework;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -38,7 +37,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected void tearDown() throws Exception {
     if (ApplicationManager.getApplication() != null) {
-      assertTrue("Code insight settings damaged", areSettingsEqual(new CodeInsightSettings(EditorActionManager.getInstance()), CodeInsightSettings.getInstance()));
+      assertTrue("Code insight settings damaged", areSettingsEqual(new CodeInsightSettings(null), CodeInsightSettings.getInstance()));
     }
     Disposer.dispose(myTestRootDisposable);
     super.tearDown();
