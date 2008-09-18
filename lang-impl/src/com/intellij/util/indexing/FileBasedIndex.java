@@ -985,9 +985,9 @@ public class FileBasedIndex implements ApplicationComponent {
           return;
         }
 
+        future.run(); // force the task run if it is has not been run yet
         ((ApplicationEx)ApplicationManager.getApplication()).writeLockSafeWait(new Runnable() {
           public void run() {
-            future.run(); // force the task run if it is has not been run yet
             try {
               future.get();
             }
