@@ -215,7 +215,8 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
     if (sourceFile.isDirectory()) {
       final VirtualFile[] children = sourceFile.getChildren();
       for (VirtualFile child : children) {
-        addItemsToJarRecursively(child, DeploymentUtil.appendToPath(pathInJar, child.getName()), jarDestination, jarInfo, addToJarContent, fileFilter);
+        String childPath = DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(pathInJar, child.getName()));
+        addItemsToJarRecursively(child, childPath, jarDestination, jarInfo, addToJarContent, fileFilter);
       }
     }
     else {

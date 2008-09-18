@@ -160,7 +160,7 @@ public class JarsBuilder {
       for (Pair<String, VirtualFile> pair : jar.getPackedFiles()) {
         File file = VfsUtil.virtualToIoFile(pair.getSecond());
         String relativePath = pair.getFirst();
-        if (!JarFile.MANIFEST_NAME.equals(relativePath)) {
+        if (!JarFile.MANIFEST_NAME.equalsIgnoreCase(relativePath)) {
           addFileToJar(jarOutputStream, file, relativePath, writtenPaths);
         }
       }
@@ -177,7 +177,7 @@ public class JarsBuilder {
 
   private static Manifest createManifest(final JarInfo jar) throws IOException {
     for (Pair<String, VirtualFile> pair : jar.getPackedFiles()) {
-      if (JarFile.MANIFEST_NAME.equals(pair.getFirst())) {
+      if (JarFile.MANIFEST_NAME.equalsIgnoreCase(pair.getFirst())) {
         return new Manifest(pair.getSecond().getInputStream());
       }
     }
