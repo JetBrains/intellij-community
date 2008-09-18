@@ -629,7 +629,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private static boolean showConfirmation() {
-    final ConfirmExitDialog confirmExitDialog = new ConfirmExitDialog();
+    boolean hasBgTasks = ProgressManager.getInstance().hasProgressIndicator();
+    final ConfirmExitDialog confirmExitDialog = new ConfirmExitDialog(hasBgTasks);
     if (confirmExitDialog.isToBeShown()) {
       confirmExitDialog.show();
       if (!confirmExitDialog.isOK()) {

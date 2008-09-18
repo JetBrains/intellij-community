@@ -9,7 +9,6 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
@@ -21,10 +20,12 @@ import java.awt.*;
  */
 public class ConfirmExitDialog extends OptionsDialog {
 
+  private boolean myHasTasks;
 
-  public ConfirmExitDialog() {
+  public ConfirmExitDialog(boolean hasBgTasks) {
     super(false);
     setTitle(ApplicationBundle.message("exit.confirm.title"));
+    myHasTasks = hasBgTasks;
     init();
   }
 
@@ -35,11 +36,7 @@ public class ConfirmExitDialog extends OptionsDialog {
   }
 
   protected boolean isToBeShown() {
-    return GeneralSettings.getInstance().isConfirmExit() || hasTasks();
-  }
-
-  private boolean hasTasks() {
-    return ProgressManager.getInstance().hasProgressIndicator();
+    return GeneralSettings.getInstance().isConfirmExit() || myHasTasks;
   }
 
   protected void setToBeShown(boolean value, boolean onOk) {
@@ -47,17 +44,17 @@ public class ConfirmExitDialog extends OptionsDialog {
   }
 
   protected boolean shouldSaveOptionsOnCancel() {
-    return !hasTasks();
+    return !myHasTasks;
   }
 
   protected boolean canBeHidden() {
-    return !hasTasks();
+    return !myHasTasks;
   }
 
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
 
-    final String message = ApplicationBundle.message(hasTasks() ? "exit.confirm.prompt.tasks": "exit.confirm.prompt", ApplicationNamesInfo.getInstance().getFullProductName());
+    final String message = ApplicationBundle.message(myHasTasks ? "exit.confirm.prompt.tasks": "exit.confirm.prompt", ApplicationNamesInfo.getInstance().getFullProductName());
 
     final JLabel label = new JLabel(message);
     label.setIconTextGap(10);
