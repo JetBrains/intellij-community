@@ -3,10 +3,10 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -151,7 +151,7 @@ final class EditorTabbedContainer implements Disposable {
     myTabs.getComponent().setBorder(new EmptyBorder(1, 0, 0, 0));
     final List<String> rightIds =
         ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).getIdsOn(ToolWindowAnchor.RIGHT);
-     myTabs.getPresentation().setPaintBorder(4, -1, rightIds.size() > 0 ? 1 : 0, -1);
+    myTabs.getPresentation().setPaintBorder(5, -1, rightIds.size() > 0 ? 1 : 0, -1);
   }
 
   public Component getComponent() {
