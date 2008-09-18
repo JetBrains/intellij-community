@@ -468,9 +468,4 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
     return defaultLanguageLevel;
   }
-
-  @Override
-  protected void updateDirectoryInformation() throws IncorrectOperationException {
-    PsiUtil.updatePackageStatement(this);
-  }
 }

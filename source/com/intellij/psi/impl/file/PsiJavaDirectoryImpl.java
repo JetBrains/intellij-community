@@ -14,7 +14,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,12 +22,6 @@ public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
 
   public PsiJavaDirectoryImpl(PsiManagerImpl manager, VirtualFile file) {
     super(manager, file);
-  }
-
-  protected void updateAddedFile(final PsiFile copyPsi) throws IncorrectOperationException {
-    if (copyPsi instanceof PsiFileImpl) {
-      ((PsiFileImpl)copyPsi).updateAddedFile();
-    }
   }
 
   public void checkCreateFile(@NotNull final String name) throws IncorrectOperationException {

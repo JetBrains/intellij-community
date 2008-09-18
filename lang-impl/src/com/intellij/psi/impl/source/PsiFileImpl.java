@@ -881,19 +881,4 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     return null;
   }
-
-  public void updateAddedFile() throws IncorrectOperationException {
-    ChangeUtil.encodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(this));
-    updateDirectoryInformation();
-    ChangeUtil.decodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(this));
-  }
-
-  protected void updateDirectoryInformation() throws IncorrectOperationException {
-  }
-
-  public void prepareMovedFile() {
-  }
-
-  public void updateMovedFile() throws IncorrectOperationException {
-  }
 }

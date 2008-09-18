@@ -9,7 +9,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
@@ -94,7 +93,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         }
         else if (element instanceof PsiFile) {
           final PsiFile movedFile = (PsiFile)element;
-          if (movedFile instanceof PsiFileImpl) ((PsiFileImpl)movedFile).prepareMovedFile();
+          MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile);
           FileReferenceContextUtil.encodeFileReferences(element);
 
           MoveFilesOrDirectoriesUtil.doMoveFile(movedFile, myNewParent);
@@ -121,7 +120,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
       // fix references in moved files to outer files
       for (PsiFile movedFile : movedFiles) {
-        if (movedFile instanceof PsiFileImpl) ((PsiFileImpl)movedFile).updateMovedFile();
+        MoveFileHandler.forElement(movedFile).updateMovedFile(movedFile);
         FileReferenceContextUtil.decodeFileReferences(movedFile);
       }
 

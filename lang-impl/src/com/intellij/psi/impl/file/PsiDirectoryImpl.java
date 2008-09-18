@@ -337,7 +337,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   }
 
-  protected void updateAddedFile(PsiFile copyPsi) throws IncorrectOperationException {
+  private void updateAddedFile(PsiFile copyPsi) throws IncorrectOperationException {
+    UpdateAddedFileProcessor.forElement(copyPsi).update(copyPsi);
   }
 
   public void checkCreateFile(@NotNull String name) throws IncorrectOperationException {
