@@ -48,7 +48,7 @@ public class InspectionProfileTest extends TestCase {
     profile.writeExternal(copy);
     StringWriter writer = new StringWriter();
     JDOMUtil.writeElement(copy, writer, "\n");
-    System.out.println(writer.getBuffer().toString());
+    //System.out.println(writer.getBuffer().toString());
     assertTrue(JDOMUtil.areElementsEqual(element, copy));
   }
 
@@ -62,7 +62,7 @@ public class InspectionProfileTest extends TestCase {
     profile.writeExternal(copy);
     StringWriter writer = new StringWriter();
     JDOMUtil.writeElement(copy, writer, "\n");
-    System.out.println(writer.getBuffer().toString());
+    //System.out.println(writer.getBuffer().toString());
     assertTrue(JDOMUtil.areElementsEqual(loadProfile(), copy));
   }
 

@@ -31,7 +31,7 @@ public class Alarm implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.Alarm");
 
   private boolean myDisposed;
-  private List<Request> myRequests = new ArrayList<Request>();
+  private final List<Request> myRequests = new ArrayList<Request>();
   private final ExecutorService myExecutorService;
 
   @NonNls private static final String ALARM_THREADS_POOL_NAME = "Alarm pool";
