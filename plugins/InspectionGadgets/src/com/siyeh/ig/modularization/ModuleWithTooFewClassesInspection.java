@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith
+ * Copyright 2006-2008 Dave Griffith, Bas Leijdekekrs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 public class ModuleWithTooFewClassesInspection extends BaseGlobalInspection {
@@ -37,11 +37,13 @@ public class ModuleWithTooFewClassesInspection extends BaseGlobalInspection {
     @SuppressWarnings({"PublicField"})
     public int limit = 10;
 
+    @Override
     @NotNull
     public String getGroupDisplayName() {
         return GroupNames.MODULARIZATION_GROUP_NAME;
     }
 
+    @Override
     @Nullable
     public CommonProblemDescriptor[] checkElement(
             RefEntity refEntity,
@@ -52,24 +54,29 @@ public class ModuleWithTooFewClassesInspection extends BaseGlobalInspection {
             return null;
         }
         final RefModule refModule = (RefModule) refEntity;
-        int numClasses = 0;
         final List<RefEntity> children = refModule.getChildren();
+        if (children == null) {
+            return null;
+        }
+        int numClasses = 0;
         for (RefEntity child : children) {
-            if(child instanceof RefClass) {
+            if (child instanceof RefClass) {
                 numClasses++;
             }
         }
-        if(numClasses >= limit || numClasses == 0) {
+        if (numClasses >= limit || numClasses == 0) {
             return null;
         }
         final String errorString = InspectionGadgetsBundle.message(
                 "module.with.too.few.classes.problem.descriptor",
-                refModule.getName(), numClasses, limit);
+                refModule.getName(), Integer.valueOf(numClasses),
+                Integer.valueOf(limit));
         return new CommonProblemDescriptor[]{
                 inspectionManager.createProblemDescriptor(errorString)
         };
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleIntegerFieldOptionsPanel(
                 InspectionGadgetsBundle.message(
