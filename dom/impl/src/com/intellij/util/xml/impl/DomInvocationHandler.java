@@ -384,9 +384,12 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @NotNull
   protected final Converter getScalarConverter(final JavaMethod method) {
+    final Converter converter;
     synchronized (myScalarConverters) {
-      return myScalarConverters.get(method);
+      converter = myScalarConverters.get(method);
     }
+    assert converter != null;
+    return converter;
   }
 
   public final T getChildDescription() {
