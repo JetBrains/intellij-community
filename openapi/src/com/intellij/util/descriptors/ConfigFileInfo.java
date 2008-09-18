@@ -22,11 +22,11 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class ConfigFileInfo {
-  private @NotNull final ConfigFileMetaData myMetaData;
-  private @NotNull final String myUrl;
+  @NotNull private final ConfigFileMetaData myMetaData;
+  @NotNull private final String myUrl;
 
 
-  public ConfigFileInfo(final @NotNull ConfigFileMetaData metaData, final @NotNull String url) {
+  public ConfigFileInfo(@NotNull final ConfigFileMetaData metaData, @NotNull final String url) {
     myMetaData = metaData;
     myUrl = url;
   }
