@@ -6,6 +6,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.fileTypes.ClassExtension;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,8 +14,12 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class ElementManipulators extends ClassExtension<ElementManipulator> {
+
   @NonNls public static final String EP_NAME = "com.intellij.lang.elementManipulator";
   public static final ElementManipulators INSTANCE = new ElementManipulators();
+
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.ElementManipulators");
 
   private ElementManipulators() {
     super(EP_NAME);
@@ -26,7 +31,7 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
 
   public static int getOffsetInElement(final PsiElement element) {
     final ElementManipulator<PsiElement> manipulator = getManipulator(element);
-    assert manipulator != null: element.getClass().getName();
+    LOG.assertTrue(manipulator != null, element.getClass().getName());
     return manipulator.getRangeInElement(element).getStartOffset();
   }
 
@@ -37,6 +42,9 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
   }
 
   public static String getValueText(final PsiElement element) {
-    return getValueTextRange(element).substring(element.getText());
+    final TextRange valueTextRange = getValueTextRange(element);
+    final String text = element.getText();
+    LOG.assertTrue(valueTextRange.getEndOffset() <= text.length(), "Wrong range for " + element + " text: " + text + " range " + valueTextRange);
+    return valueTextRange.substring(text);
   }
 }
