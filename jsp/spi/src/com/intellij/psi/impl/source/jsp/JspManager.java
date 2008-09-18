@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
@@ -25,7 +26,7 @@ import java.util.Set;
 /**
  * @author peter
  */
-public abstract class JspManager {
+public abstract class JspManager implements ProjectComponent {
 
   public static final Key<VirtualFile[]> DIRECTORIES_KEY = Key.create("TagDirOriginalDirs");
 

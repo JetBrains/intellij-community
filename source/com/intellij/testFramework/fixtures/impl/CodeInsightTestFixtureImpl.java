@@ -91,7 +91,6 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -308,6 +307,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }.execute().getResultObject();
   }
 
+  @NotNull
   public List<IntentionAction> getAvailableIntentions() {
     int offset = myEditor.getCaretModel().getOffset();
     return getAvailableIntentions(myProjectFixture.getProject(), doHighlighting(), offset, myEditor, myFile);
@@ -328,6 +328,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void testCompletion(final String[] filesBefore, final String fileAfter) throws Throwable {
+    assertInitialized();
     configureByFiles(filesBefore);
     final LookupElement[] items = complete(CompletionType.BASIC);
     if (items != null) {
@@ -336,16 +337,22 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     checkResultByFile(fileAfter);
   }
 
+  private void assertInitialized() {
+    Assert.assertNotNull("setUp() hasn't been called", myPsiManager);
+  }
+
   public void testCompletion(String fileBefore, String fileAfter, final String... additionalFiles) throws Throwable {
     testCompletion(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, fileBefore)), fileAfter);
   }
 
   public void testCompletionVariants(final String fileBefore, final String... expectedItems) throws Throwable {
+    assertInitialized();
     final List<String> result = getCompletionVariants(fileBefore);
     UsefulTestCase.assertSameElements(result, expectedItems);
   }
 
   public List<String> getCompletionVariants(final String fileBefore) throws Throwable {
+    assertInitialized();
     configureByFiles(fileBefore);
     final LookupElement[] items = complete(CompletionType.BASIC);
     Assert.assertNotNull("No lookup was shown, probably there was only one lookup element that was inserted automatically", items);
@@ -354,6 +361,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Nullable
   public List<String> getLookupElementStrings() {
+    assertInitialized();
     final LookupElement[] elements = getLookupElements();
     if (elements == null) return null;
 
@@ -365,11 +373,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void testRename(final String fileBefore, final String fileAfter, final String newName, final String... additionalFiles) throws Throwable {
+    assertInitialized();
     configureByFiles(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, fileBefore)));
     testRename(fileAfter, newName);
   }
 
   public void testRename(final String fileAfter, final String newName) throws Throwable {
+    assertInitialized();
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
       protected void run() throws Throwable {
         PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
@@ -382,6 +392,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void type(final char c) {
+    assertInitialized();
     EditorActionManager actionManager = EditorActionManager.getInstance();
     final DataContext dataContext = DataManager.getInstance().getDataContext();
     if (c == '\b') {
@@ -403,16 +414,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void performEditorAction(final String actionId) {
+    assertInitialized();
     final DataContext dataContext = DataManager.getInstance().getDataContext();
     EditorActionManager actionManager = EditorActionManager.getInstance();
     actionManager.getActionHandler(actionId).execute(getEditor(), dataContext);
   }
 
   public JavaPsiFacade getJavaFacade() {
+    assertInitialized();
     return JavaPsiFacade.getInstance(getProject());
   }
 
   public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) throws Throwable {
+    assertInitialized();
     configureByFiles(fileNames);
     PsiElement referenceTo = TargetElementUtilBase
       .findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
@@ -433,6 +447,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void moveFile(@NonNls final String filePath, @NonNls final String to, final String... additionalFiles) throws Throwable {
+    assertInitialized();
     final Project project = myProjectFixture.getProject();
     new WriteCommandAction.Simple(project) {
       protected void run() throws Throwable {
@@ -449,6 +464,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Nullable
   public GutterIconRenderer findGutter(final String filePath) throws Throwable {
+    assertInitialized();
     final Project project = myProjectFixture.getProject();
     final Ref<GutterIconRenderer> result = new Ref<GutterIconRenderer>();
     new WriteCommandAction.Simple(project) {
@@ -474,6 +490,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   public Collection<GutterIconRenderer> findAllGutters(final String filePath) throws Throwable {
+    assertInitialized();
     final Project project = myProjectFixture.getProject();
     final SortedMap<HighlightInfo, List<GutterIconRenderer>> result = new TreeMap<HighlightInfo, List<GutterIconRenderer>>(new Comparator<HighlightInfo>() {
       public int compare(final HighlightInfo o1, final HighlightInfo o2) {
@@ -503,16 +520,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public PsiClass addClass(@NotNull @NonNls final String classText) throws IOException {
+    assertInitialized();
     final PsiClass psiClass = ((HeavyIdeaTestFixture)myProjectFixture).addClass(getTempDirPath(), classText);
     myAddedClasses.add(psiClass.getContainingFile().getVirtualFile());
     return psiClass;
   }
 
   public PsiFile addFileToProject(@NonNls final String relativePath, @NonNls final String fileText) throws IOException {
+    assertInitialized();
     return ((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(getTempDirPath(), relativePath, fileText);
   }
 
   public <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> epName, final T extension) {
+    assertInitialized();
     final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(epName);
     extensionPoint.registerExtension(extension);
     disposeOnTearDown(new Disposable() {
@@ -527,6 +547,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public LookupElement[] complete(final CompletionType type) {
+    assertInitialized();
     myEmptyLookup = false;
     new WriteCommandAction(getProject()) {
       protected void run(Result result) throws Throwable {
@@ -589,6 +610,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void checkResultByFile(final String expectedFile, final boolean ignoreWhitespaces) throws Throwable {
+    assertInitialized();
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
       protected void run() throws Throwable {
@@ -598,6 +620,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void checkResultByFile(final String filePath, final String expectedFile, final boolean ignoreWhitespaces) throws Throwable {
+    assertInitialized();
 
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
@@ -672,6 +695,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void tearDown() throws Exception {
+    assertInitialized();
     if (SwingUtilities.isEventDispatchThread()) {
       LookupManager.getInstance(getProject()).hideActiveLookup();
     }
@@ -696,6 +720,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private int configureByFilesInner(@NonNls String... filePaths) throws IOException {
+    assertInitialized();
     myFile = null;
     myEditor = null;
     for (int i = filePaths.length - 1; i > 0; i--) {
@@ -705,6 +730,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void configureByFile(final String file) throws IOException {
+    assertInitialized();
     new WriteCommandAction.Simple(getProject()) {
       protected void run() throws Throwable {
         configureByFilesInner(file);
@@ -725,6 +751,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public PsiFile configureByText(final FileType fileType, @NonNls final String text) throws Throwable {
+    assertInitialized();
     final String extension = fileType.getDefaultExtension();
     final File tempFile = File.createTempFile("aaa", "." + extension, new File(getTempDirPath()));
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
@@ -739,6 +766,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public Document getDocument(final PsiFile file) {
+    assertInitialized();
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 
@@ -754,6 +782,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
    * @throws IOException
    */
   private int configureByFileInner(@NonNls String filePath) throws IOException {
+    assertInitialized();
     copyFileToProject(filePath);
     return configureFromTempProjectFile(filePath);
   }
@@ -771,6 +800,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private int configureInner(@NotNull final VirtualFile copy, final SelectionAndCaretMarkupLoader loader) {
+    assertInitialized();
     try {
       final OutputStream outputStream = copy.getOutputStream(null, 0, 0);
       outputStream.write(loader.newFileText.getBytes());
@@ -884,7 +914,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Collection<HighlightInfo> highlights2 = action2.getHighlights();
 
     Collection<HighlightInfo> highlights3 = null;
-    if (myAvailableTools.size() > 0) {
+    if (!myAvailableTools.isEmpty()) {
       LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(myFile, myEditor.getDocument(), 0, myFile.getTextLength());
       inspectionsPass.doCollectInformation(new MockProgressIndicator());
       highlights3 = inspectionsPass.getHighlights();
@@ -966,14 +996,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(new File(path)))), project);
     }
     static SelectionAndCaretMarkupLoader fromFile(VirtualFile file, Project project) throws IOException {
-      return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(new String(VfsUtil.loadText(file))), project);
+      return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(VfsUtil.loadText(file)), project);
     }
 
-    static SelectionAndCaretMarkupLoader fromText(String text, Project project) throws IOException {
+    static SelectionAndCaretMarkupLoader fromText(String text, Project project) {
       return new SelectionAndCaretMarkupLoader(text, project);
     }
 
-    private SelectionAndCaretMarkupLoader(String fileText, Project project) throws IOException {
+    private SelectionAndCaretMarkupLoader(String fileText, Project project) {
       final Document document = EditorFactory.getInstance().createDocument(fileText);
 
       int caretIndex = fileText.indexOf(CARET_MARKER);
@@ -1017,6 +1047,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                            final boolean stripTrailingSpaces,
                            final SelectionAndCaretMarkupLoader loader,
                            String actualText) {
+    assertInitialized();
     Project project = myProjectFixture.getProject();
 
     project.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
@@ -1034,14 +1065,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     actualText = StringUtil.convertLineSeparators(actualText, "\n");
 
     //noinspection HardCodedStringLiteral
-    TestCase.assertEquals( "Text mismatch in file " + expectedFile, newFileText1, actualText );
+    Assert.assertEquals("Text mismatch in file " + expectedFile, newFileText1, actualText);
 
     if (loader.caretMarker != null) {
       int caretLine = StringUtil.offsetToLineNumber(loader.newFileText, loader.caretMarker.getStartOffset());
       int caretCol = loader.caretMarker.getStartOffset() - StringUtil.lineColToOffset(loader.newFileText, caretLine, 0);
 
-      TestCase.assertEquals("caretLine", caretLine + 1, myEditor.getCaretModel().getLogicalPosition().line + 1);
-      TestCase.assertEquals("caretColumn", caretCol + 1, myEditor.getCaretModel().getLogicalPosition().column + 1);
+      Assert.assertEquals("caretLine", caretLine + 1, myEditor.getCaretModel().getLogicalPosition().line + 1);
+      Assert.assertEquals("caretColumn", caretCol + 1, myEditor.getCaretModel().getLogicalPosition().column + 1);
     }
 
     if (loader.selStartMarker != null && loader.selEndMarker != null) {
@@ -1051,20 +1082,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       int selEndLine = StringUtil.offsetToLineNumber(loader.newFileText, loader.selEndMarker.getEndOffset());
       int selEndCol = loader.selEndMarker.getEndOffset() - StringUtil.lineColToOffset(loader.newFileText, selEndLine, 0);
 
-      TestCase.assertEquals("selectionStartLine", selStartLine + 1,
-                            StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
+      Assert.assertEquals("selectionStartLine", selStartLine + 1,
+                          StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
 
-      TestCase.assertEquals("selectionStartCol", selStartCol + 1, myEditor.getSelectionModel().getSelectionStart() -
-                                                                  StringUtil.lineColToOffset(loader.newFileText, selStartLine, 0) + 1);
+      Assert.assertEquals("selectionStartCol", selStartCol + 1, myEditor.getSelectionModel().getSelectionStart() -
+                                                                StringUtil.lineColToOffset(loader.newFileText, selStartLine, 0) + 1);
 
-      TestCase.assertEquals("selectionEndLine", selEndLine + 1,
-                            StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
+      Assert.assertEquals("selectionEndLine", selEndLine + 1,
+                          StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
 
-      TestCase.assertEquals("selectionEndCol", selEndCol + 1,
-                            myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(loader.newFileText, selEndLine, 0) + 1);
+      Assert.assertEquals("selectionEndCol", selEndCol + 1,
+                          myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(loader.newFileText, selEndLine, 0) +
+                          1);
     }
     else {
-      TestCase.assertTrue("has no selection", !myEditor.getSelectionModel().hasSelection());
+      Assert.assertTrue("has no selection", !myEditor.getSelectionModel().hasSelection());
     }
   }
 

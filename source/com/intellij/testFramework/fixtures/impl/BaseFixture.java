@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
+import junit.framework.Assert;
 
 public class BaseFixture implements IdeaTestFixture {
   private Disposable myRootDisposable;
@@ -24,13 +25,8 @@ public class BaseFixture implements IdeaTestFixture {
   }
 
   public void tearDown() throws Exception {
-    if (myRootDisposable != null) {
-      Disposer.dispose(myRootDisposable);
-    }
-    resetAllFields();
-  }
-
-  private void resetAllFields() {
+    Assert.assertNotNull("setUp() has not been called", myRootDisposable);
+    Disposer.dispose(myRootDisposable);
     resetClassFields(getClass());
   }
 

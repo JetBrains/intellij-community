@@ -34,13 +34,14 @@ import com.intellij.psi.*;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
+import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -59,19 +60,55 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private final Set<File> myFilesToDelete = new HashSet<File>();
   private IdeaTestApplication myApplication;
   private final List<ModuleFixtureBuilder> myModuleFixtureBuilders = new ArrayList<ModuleFixtureBuilder>();
+  private boolean myDisposed;
 
   protected void addModuleFixtureBuilder(ModuleFixtureBuilder builder) {
     myModuleFixtureBuilders.add(builder);
   }
 
   public void setUp() throws Exception {
+    Assert.assertNull("setUp() already has been called", myProject);
     super.setUp();
 
     initApplication();
     setUpProject();
   }
 
-  protected void setUpProject() throws Exception {
+  public void tearDown() throws Exception {
+    Assert.assertFalse("tearDown() already has been called", myDisposed);
+    myDisposed = true;
+    Assert.assertNotNull("setUp() hasn't been called", myProject);
+    for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
+      moduleFixtureBuilder.getFixture().tearDown();
+    }
+
+    ProjectManagerEx.getInstanceEx().setCurrentTestProject(null);
+    ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flash posponed formatting if any.
+    FileDocumentManager.getInstance().saveAllDocuments();
+
+    IdeaTestCase.doPostponedFormatting(myProject);
+
+    Disposer.dispose(myProject);
+
+    for (final File fileToDelete : myFilesToDelete) {
+      delete(fileToDelete);
+    }
+
+    myApplication.setDataProvider(null);
+
+    EditorFactory editorFactory = EditorFactory.getInstance();
+    final Editor[] allEditors = editorFactory.getAllEditors();
+    ((EditorFactoryImpl)editorFactory).validateEditorsAreReleased(getProject());
+    for (Editor editor : allEditors) {
+      editorFactory.releaseEditor(editor);
+    }
+    assert 0 == editorFactory.getAllEditors().length : "There are unrealeased editors";
+
+    super.tearDown();
+  }
+
+
+  private void setUpProject() throws Exception {
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
 
     File projectFile = File.createTempFile(PROJECT_FILE_PREFIX, PROJECT_FILE_SUFFIX);
@@ -97,36 +134,9 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
   }
 
-
-  protected void initApplication() throws Exception {
+  private void initApplication() throws Exception {
     myApplication = IdeaTestApplication.getInstance();
     myApplication.setDataProvider(new MyDataProvider());
-  }
-
-  public void tearDown() throws Exception {
-    ProjectManagerEx.getInstanceEx().setCurrentTestProject(null);
-    ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flash posponed formatting if any.
-    FileDocumentManager.getInstance().saveAllDocuments();
-
-    IdeaTestCase.doPostponedFormatting(myProject);
-
-    Disposer.dispose(myProject);
-
-    for (final File fileToDelete : myFilesToDelete) {
-      delete(fileToDelete);
-    }
-
-    myApplication.setDataProvider(null);
-
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    final Editor[] allEditors = editorFactory.getAllEditors();
-    ((EditorFactoryImpl)editorFactory).validateEditorsAreReleased(getProject());
-    for (Editor editor : allEditors) {
-      editorFactory.releaseEditor(editor);
-    }
-    assert 0 == editorFactory.getAllEditors().length : "There are unrealeased editors";
-
-    super.tearDown();
   }
 
   public Project getProject() {

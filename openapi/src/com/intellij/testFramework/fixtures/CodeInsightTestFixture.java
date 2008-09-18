@@ -16,17 +16,15 @@
 
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
@@ -44,7 +42,7 @@ import java.util.List;
  *
  * @author Dmitry Avdeev
  */
-public interface CodeInsightTestFixture extends IdeaTestFixture {
+public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   @NonNls String CARET_MARKER = "<caret>";
   @NonNls String SELECTION_START_MARKER = "<selection>";
@@ -57,10 +55,6 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   @NonNls String INFO_MARKER = "info";
   @NonNls String END_LINE_HIGHLIGHT_MARKER = "EOLError";
   @NonNls String END_LINE_WARNING_MARKER = "EOLWarning";
-
-  Project getProject();
-
-  Module getModule();
 
   Editor getEditor();
   
@@ -82,7 +76,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   /**
    * Enables inspections for highlighting tests.
-   * Should be called BEFORE {@link #setUp()}.
+   * Should be called BEFORE {@link #setUp()}. And do not forget to call {@link #tearDown()}
    *
    * @param inspections inspections to be enabled in highliting tests.
    * @see #enableInspections(com.intellij.codeInspection.InspectionToolProvider[])
