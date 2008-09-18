@@ -423,7 +423,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       case '=': return TailType.EQ;
       case ' ': return TailType.SPACE;
       case ':': return TailType.CASE_COLON; //?
-      case '(': return TailTypes.SMART_LPARENTH;
+      case '(': return TailTypeEx.SMART_LPARENTH;
       case '\'': return TailType.QUOTE;
       case '<':
       case '>':

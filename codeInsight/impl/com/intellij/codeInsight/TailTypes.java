@@ -101,19 +101,5 @@ public class TailTypes {
     }
   };
 
-  public static final TailType SMART_LPARENTH = new TailType() {
-    public int processTail(final Editor editor, int tailOffset) {
-      tailOffset = insertChar(editor, tailOffset, '(');
-      return !CodeInsightSettings.getInstance().INSERT_SINGLE_PARENTH
-             ? moveCaret(editor, insertChar(editor, tailOffset, ')'), -1)
-             : tailOffset;
-    }
-
-    @NonNls
-    public String toString() {
-      return "SMART_LPARENTH";
-    }
-  };
-
   private TailTypes() {}
 }
