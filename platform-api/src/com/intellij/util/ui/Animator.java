@@ -27,7 +27,7 @@ public abstract class Animator implements Disposable {
   private int myCycleLength;
   private Timer myTimer;
 
-  private int myCurrentFrame = 0;
+  private int myCurrentFrame;
   private int myQueuedFrames = 0;
 
   private final boolean myRepeatable;
@@ -36,23 +36,37 @@ public abstract class Animator implements Disposable {
 
   private boolean myLastAnimated;
 
+  private boolean myForward = true;
+
   public Animator(final String name,
                   final int totalFrames,
                   final int cycleLength,
                   boolean repeatable,
                   final int interCycleGap,
                   final int maxRepeatCount) {
+
+    this(name, totalFrames, cycleLength, repeatable, interCycleGap, maxRepeatCount, true);
+  }
+
+  public Animator(final String name,
+                  final int totalFrames,
+                  final int cycleLength,
+                  boolean repeatable,
+                  final int interCycleGap,
+                  final int maxRepeatCount, boolean forward) {
     myName = name;
     myTotalFrames = totalFrames;
     myCycleLength = cycleLength;
     myRepeatable = repeatable;
+    myForward = forward;
+    myCurrentFrame = forward ? 0 : totalFrames;
 
     myTimer = new Timer(myName, myCycleLength / myTotalFrames) {
       protected void onTimer() throws InterruptedException {
         boolean repaint = true;
         if (!isAnimated()) {
           if (myLastAnimated) {
-            myCurrentFrame = 0;
+            myCurrentFrame = myForward ? 0 : myTotalFrames;
             myQueuedFrames = 0;
             myLastAnimated = false;
           }
@@ -65,10 +79,13 @@ public abstract class Animator implements Disposable {
 
           if (myQueuedFrames > myTotalFrames) return;
 
-          if (myCurrentFrame + 1 < myTotalFrames) {
+          boolean toNextFrame = myForward ? myCurrentFrame + 1 < myTotalFrames : myCurrentFrame - 1 >= 0;
+
+          if (toNextFrame && myForward) {
             myCurrentFrame++;
-          }
-          else {
+          } else if (toNextFrame && !myForward) {
+            myCurrentFrame--;
+          } else {
             if (myRepeatable) {
               if (maxRepeatCount == -1 || myRepeatCount < maxRepeatCount) {
                 myRepeatCount++;
@@ -81,19 +98,21 @@ public abstract class Animator implements Disposable {
                 repaint = false;
                 suspend();
                 myRepeatCount = 0;
-                onAnimationMaxCycleReached();
+                cycleEnd();
               }
             }
             else {
               repaint = false;
               suspend();
-              onAnimationMaxCycleReached();
+              cycleEnd();
             }
           }
         }
 
         if (repaint) {
           myQueuedFrames++;
+          // paint to EDT
+          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               myQueuedFrames--;
@@ -103,6 +122,21 @@ public abstract class Animator implements Disposable {
         }
       }
     };
+  }
+
+  @SuppressWarnings({"SSBasedInspection"})
+  // paint to EDT
+  private void cycleEnd() throws InterruptedException {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        try {
+          onAnimationMaxCycleReached();
+        }
+        catch (InterruptedException e) {
+          return;
+        }
+      }
+    });
   }
 
   protected void onAnimationMaxCycleReached() throws InterruptedException {
@@ -138,6 +172,10 @@ public abstract class Animator implements Disposable {
   public void reset() {
     myCurrentFrame = 0;
     myRepeatCount = 0;
+  }
+
+  public final boolean isForward() {
+    return myForward;
   }
 
   public boolean isDisposed() {

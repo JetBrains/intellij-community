@@ -15,7 +15,6 @@
  */
 package com.intellij.usages.impl;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.find.SearchInBackgroundOption;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -305,10 +304,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
             if (notFoundActions == null || notFoundActions.isEmpty()) {
               Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
-              ToolWindowManager.getInstance(myProject).showInfoPopup(ToolWindowId.FIND, IconLoader.getIcon("/actions/find.png"), message);
-              if (editor != null) {
-                HintManager.getInstance().showErrorHint(editor, message);
-              }
+              ToolWindowManager.getInstance(myProject).showInfoPopup(ToolWindowId.FIND, IconLoader.getIcon("/actions/find.png"), message, null);
             }
             else {
               List<String> titles = new ArrayList<String>(notFoundActions.size() + 1);

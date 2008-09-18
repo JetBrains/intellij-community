@@ -18,8 +18,10 @@ package com.intellij.openapi.wm;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkListener;
 
 public abstract class ToolWindowManager {
 
@@ -97,6 +99,6 @@ public abstract class ToolWindowManager {
    */
   public abstract IdeFocusManager getFocusManager();
 
-  public abstract void showInfoPopup(String toolWindowId, final Icon icon, final String text);
+  public abstract void showInfoPopup(@NotNull final String toolWindowId, @Nullable final Icon icon, @NotNull final String text, @Nullable HyperlinkListener listener);
 
 }

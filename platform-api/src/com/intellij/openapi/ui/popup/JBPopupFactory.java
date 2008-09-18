@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 
 /**
@@ -217,5 +218,10 @@ public abstract class JBPopupFactory {
   public abstract Point getCenterOf(JComponent container, JComponent content);
   
   public abstract JBPopup getChildPopup(@NotNull Component parent);
-  
+
+  public abstract BalloonBuilder createBalloonBuilder(@NotNull JComponent content);
+
+
+  public abstract BalloonBuilder createInformationBalloonBuilder(@NotNull String htmlContent, @Nullable Icon icon, @Nullable HyperlinkListener listener);
+
 }

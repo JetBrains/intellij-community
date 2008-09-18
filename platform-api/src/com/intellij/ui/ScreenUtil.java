@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.awt.*;
 
 /**
@@ -69,26 +71,35 @@ public class ScreenUtil {
     int screenY = aRectangle.y;
     Rectangle screen = getScreenRectangle(screenX, screenY);
 
-    moveToFit(aRectangle, screen);
+    moveToFit(aRectangle, screen, null);
   }
 
-  public static void moveToFit(final Rectangle rectangle, final Rectangle container) {
-    if (rectangle.getMaxX() > container.getMaxX()) {
-      rectangle.x = (int) container.getMaxX() - rectangle.width;
+  public static void moveToFit(final Rectangle rectangle, final Rectangle container, @Nullable Insets padding) {
+    Insets insets = padding != null ? padding : new Insets(0, 0, 0, 0);
+
+    Rectangle move = new Rectangle(rectangle.x - insets.left, rectangle.y - insets.top, rectangle.width + insets.left + insets.right, rectangle.height + insets.top + insets.bottom);
+
+    if (move.getMaxX() > container.getMaxX()) {
+      move.x = (int) container.getMaxX() - move.width;
     }
 
 
-    if (rectangle.getMinX() < container.getMinX()) {
-      rectangle.x = (int) container.getMinX();
+    if (move.getMinX() < container.getMinX()) {
+      move.x = (int) container.getMinX();
     }
 
-    if (rectangle.getMaxY() > container.getMaxY()) {
-      rectangle.y = (int) container.getMaxY() - rectangle.height;
+    if (move.getMaxY() > container.getMaxY()) {
+      move.y = (int) container.getMaxY() - move.height;
     }
 
-    if (rectangle.getMinY() < container.getMinY()) {
-      rectangle.y = (int) container.getMinY();
+    if (move.getMinY() < container.getMinY()) {
+      move.y = (int) container.getMinY();
     }
+
+    rectangle.x = move.x + insets.left;
+    rectangle.y = move.y + insets.right;
+    rectangle.width = move.width - insets.left - insets.right;
+    rectangle.height = move.height - insets.top - insets.bottom;
   }
 
   public static void fitToScreen(Rectangle r) {

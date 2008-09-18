@@ -10,19 +10,16 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.commands.*;
-import com.intellij.ui.Balloon;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -33,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.EventListenerList;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -781,7 +778,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return IdeFocusManager.getInstance(myProject);
   }
 
-  public void showInfoPopup(final String toolWindowId, final Icon icon, final String text) {
+  public void showInfoPopup(@NotNull final String toolWindowId, @Nullable final Icon icon, @NotNull final String text, @Nullable HyperlinkListener listener) {
     checkId(toolWindowId);
 
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
@@ -793,48 +790,36 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       stripe.repaint();
     }
 
-    final JLabel label = new JLabel(text);
-    label.setBorder(null);
-    final JPanel content = new NonOpaquePanel(new BorderLayout((int)(label.getIconTextGap() * 1.5), (int)(label.getIconTextGap() * 1.5)));
+    final StripeButton button = stripe.getButtonFor(toolWindowId);
 
-    content.add(label, BorderLayout.CENTER);
+    final ToolWindowAnchor anchor = getInfo(toolWindowId).getAnchor();
+    final Ref<Balloon.Position> position = Ref.create(Balloon.Position.below);
+    if (ToolWindowAnchor.TOP == anchor) {
+      position.set(Balloon.Position.below);
+    } else if (ToolWindowAnchor.BOTTOM == anchor) {
+      position.set(Balloon.Position.under);
+    } else if (ToolWindowAnchor.LEFT == anchor) {
+      position.set(Balloon.Position.atRight);
+    } else if (ToolWindowAnchor.RIGHT == anchor) {
+      position.set(Balloon.Position.atLeft);
+    }
 
-    final NonOpaquePanel north = new NonOpaquePanel(new BorderLayout());
-    north.add(new JLabel(icon), BorderLayout.NORTH);
-    content.add(north, BorderLayout.WEST);
-    
-
-    content.setBorder(new EmptyBorder(2, 4, 2, 4));
-
-    final Balloon balloon = new Balloon(content, Color.darkGray, new Color(186, 238, 186, 230)) {
-      protected void onHidden() {
+    final Balloon balloon = JBPopupFactory.getInstance().createInformationBalloonBuilder(text, icon, listener).createBalloon();
+    Disposer.register(balloon, new Disposable() {
+      public void dispose() {
         window.setPlaceholderMode(false);
         stripe.updateState();
         stripe.revalidate();
         stripe.repaint();
       }
-    };
+    });
 
-    final StripeButton button = stripe.getButtonFor(toolWindowId);
 
-    final ToolWindowAnchor anchor = getInfo(toolWindowId).getAnchor();
-    Balloon.Position position = Balloon.BELOW;
-    if (ToolWindowAnchor.TOP == anchor) {
-      position = Balloon.BELOW;
-    } else if (ToolWindowAnchor.BOTTOM == anchor) {
-      position = Balloon.UNDER;
-    } else if (ToolWindowAnchor.LEFT == anchor) {
-      position = Balloon.AT_RIGHT;
-    } else if (ToolWindowAnchor.RIGHT == anchor) {
-      position = Balloon.AT_LEFT;
-    }
-
-    final Balloon.Position position1 = position;
     final Runnable show = new Runnable() {
       public void run() {
         if (button.isShowing()) {
           final Point point = new Point(button.getBounds().width/2, button.getHeight()/2 - 2);
-          balloon.show(new RelativePoint(button, point), position1);
+          balloon.show(new RelativePoint(button, point), position.get());
         } else {
           final Rectangle bounds = myToolWindowsPane.getBounds();
           final Point target = UIUtil.getCenterPoint(bounds, new Dimension(1, 1));
@@ -848,8 +833,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
             target.x = bounds.width;
           }
 
-          balloon.setShowPointer(false);
-          balloon.show(new RelativePoint(myToolWindowsPane, target), position1);
+          balloon.show(new RelativePoint(myToolWindowsPane, target), position.get());
         }
       }
     };

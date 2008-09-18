@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
@@ -31,10 +32,14 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -642,6 +647,40 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
       return presentation;
     }
+  }
 
+  public BalloonBuilder createBalloonBuilder(@NotNull final JComponent content) {
+    return new BalloonPopupBuilderImpl(content);
+  }
+
+  public BalloonBuilder createInformationBalloonBuilder(@NotNull final String htmlContent,
+                                          @Nullable final Icon icon, @Nullable final HyperlinkListener listener) {
+
+
+    final JEditorPane text = new JEditorPane();
+    text.setEditorKit(new HTMLEditorKit());
+    if (listener != null) {
+      text.addHyperlinkListener(listener);
+    }
+    text.setText(UIUtil.toHtml(htmlContent));
+    final JLabel label = new JLabel(text.getText());
+    final Dimension size = label.getPreferredSize();
+    text.setEditable(false);
+    text.setOpaque(false);
+    text.setBorder(null);
+    text.setPreferredSize(size);
+
+
+    final JPanel content = new NonOpaquePanel(new BorderLayout((int)(label.getIconTextGap() * 1.5), (int)(label.getIconTextGap() * 1.5)));
+
+    content.add(label, BorderLayout.CENTER);
+
+    final NonOpaquePanel north = new NonOpaquePanel(new BorderLayout());
+    north.add(new JLabel(icon), BorderLayout.NORTH);
+    content.add(north, BorderLayout.WEST);
+
+    content.setBorder(new EmptyBorder(2, 4, 2, 4));
+
+    return createBalloonBuilder(content);
   }
 }

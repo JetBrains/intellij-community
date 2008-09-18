@@ -1,6 +1,9 @@
 package com.intellij.ui;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
@@ -10,13 +13,14 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 
-public class Balloon {
+public class BalloonImpl implements Disposable, Balloon {
 
   private MyComponent myComp;
   private JLayeredPane myLayeredPane;
@@ -26,9 +30,30 @@ public class Balloon {
   private Color myBorderColor;
   private Color myFillColor;
 
-  private final AWTEventListener myActiveityListener = new AWTEventListener() {
+  private Insets myContainerInsets = new Insets(4, 4, 4, 4);
+
+  private final AWTEventListener myAwtActivityListener = new AWTEventListener() {
     public void eventDispatched(final AWTEvent event) {
-      if (event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == KeyEvent.KEY_PRESSED) {
+      if (myHideOnMouse && (event.getID() == MouseEvent.MOUSE_PRESSED
+          || event.getID() == MouseEvent.MOUSE_RELEASED
+          || event.getID() == MouseEvent.MOUSE_CLICKED)) {
+        final MouseEvent me = (MouseEvent)event;
+        if (!me.getComponent().isShowing()) return;
+        if (SwingUtilities.isDescendingFrom(me.getComponent(), myComp) || me.getComponent() == myComp) return;
+
+
+        final Point mouseEventPoint = me.getPoint();
+        SwingUtilities.convertPointToScreen(mouseEventPoint, me.getComponent());
+
+        final Rectangle compRect = new Rectangle(myComp.getLocationOnScreen(), myComp.getSize());
+        if (compRect.contains(mouseEventPoint)) return;
+
+        hide();
+      }
+
+      if (myHideOnKey && (event.getID() == KeyEvent.KEY_PRESSED)) {
+        final KeyEvent ke = (KeyEvent)event;
+        if (SwingUtilities.isDescendingFrom(ke.getComponent(), myComp) || ke.getComponent() == myComp) return;
         hide();
       }
     }
@@ -39,18 +64,52 @@ public class Balloon {
     }
   };
   private Animator myAnimator;
-  private boolean myShowPointer = true;
+  private boolean myShowPointer;
 
-  public Balloon(JComponent content, Color borderColor, Color fillColor) {
-    myComp = new MyComponent(content);
+  private boolean myDisposed;
+  private JComponent myContent;
+  private boolean myHideOnMouse;
+  private boolean myHideOnKey;
+
+  public BalloonImpl(JComponent content,
+                     Color borderColor,
+                     Color fillColor,
+                     boolean hideOnMouse,
+                     boolean hideOnKey,
+                     boolean showPointer) {
     myBorderColor = borderColor;
     myFillColor = fillColor;
+    myContent = content;
+    myHideOnMouse = hideOnMouse;
+    myHideOnKey = hideOnKey;
+    myShowPointer = showPointer;
   }
 
-  public void show(RelativePoint target, Position position) {
+  public void show(final RelativePoint target, final Balloon.Position position) {
+    Position pos = BELOW;
+    switch (position) {
+      case atLeft:
+        pos = AT_LEFT;
+        break;
+      case atRight:
+        pos = AT_RIGHT;
+        break;
+      case below:
+        pos = BELOW;
+        break;
+      case under:
+        pos = UNDER;
+        break;
+    }
+
+    show(target, pos);
+  }
+
+  private void show(RelativePoint target, Position position) {
     if (isVisible()) return;
 
-    assert target.getComponent().isShowing();
+    assert !myDisposed : "Balloon is already disposed";
+    assert target.getComponent().isShowing() : "Target component is not showing: " + target;
 
     final Window window = SwingUtilities.getWindowAncestor(target.getComponent());
 
@@ -69,7 +128,10 @@ public class Balloon {
     myLayeredPane.addComponentListener(myComponentListener);
     myPosition = position;
 
-    myComp.setBorder(myPosition.createBorder(this));
+    myComp = new MyComponent(myContent, myLayeredPane, this);
+
+    final Border border = myShowPointer ? myPosition.createBorder(this) : new EmptyBorder(getNormalInset(), getNormalInset(), getNormalInset(), getNormalInset());
+    myComp.setBorder(border);
 
     myTargetPoint = target.getPoint(myLayeredPane);
 
@@ -78,30 +140,53 @@ public class Balloon {
 
     myLayeredPane.add(myComp, JLayeredPane.POPUP_LAYER);
 
+
     myPosition.updateLocation(this);
 
 
-    myAnimator = new Animator("Balloon", 10, 500, false, 0, 1) {
+    runAnimation(true, myLayeredPane);
+
+    myLayeredPane.revalidate();
+    myLayeredPane.repaint();
+
+    
+    Toolkit.getDefaultToolkit().addAWTEventListener(myAwtActivityListener, MouseEvent.MOUSE_EVENT_MASK | KeyEvent.KEY_EVENT_MASK);
+  }
+
+  private void runAnimation(boolean forward, final JLayeredPane layeredPane) {
+    if (myAnimator != null) {
+      Disposer.dispose(myAnimator);
+    }
+    myAnimator = new Animator("Balloon", 10, 500, false, 0, 1, forward) {
       public void paintNow(final float frame, final float totalFrames, final float cycle) {
-        if (!isVisible()) return;
+        if (myComp.getParent() == null) return;
         myComp.setAlpha(frame / totalFrames);
       }
 
       @Override
       protected void onAnimationMaxCycleReached() throws InterruptedException {
-        myComp.clear();
-        myComp.repaint();
-        myAnimator = null;
+        if (myComp.getParent() == null) return;
+
+        if (isForward()) {
+          myComp.clear();
+          myComp.repaint();
+        } else {
+          layeredPane.remove(myComp);
+          layeredPane.revalidate();
+          layeredPane.repaint();
+        }
         Disposer.dispose(this);
       }
+
+      @Override
+      public void dispose() {
+        super.dispose();
+        myAnimator = null;
+      }
     };
+
     myAnimator.setTakInitialDelay(false);
     myAnimator.resume();
-
-    myLayeredPane.revalidate();
-    myLayeredPane.repaint();
-
-    Toolkit.getDefaultToolkit().addAWTEventListener(myActiveityListener, MouseEvent.MOUSE_EVENT_MASK | KeyEvent.KEY_EVENT_MASK);
   }
 
 
@@ -126,23 +211,29 @@ public class Balloon {
   }
 
   public void hide() {
-    if (!isVisible()) return;
+    Disposer.dispose(this);
+  }
 
-    Toolkit.getDefaultToolkit().removeAWTEventListener(myActiveityListener);
-    myLayeredPane.removeComponentListener(myComponentListener);
+  public void dispose() {
+    if (myDisposed) return;
 
-    myLayeredPane.remove(myComp);
-    myComp.clear();
+    Disposer.dispose(this);
 
-    myLayeredPane.revalidate();
-    myLayeredPane.repaint();
+    myDisposed = true;
+
+    Toolkit.getDefaultToolkit().removeAWTEventListener(myAwtActivityListener);
+    if (myLayeredPane != null) {
+      myLayeredPane.removeComponentListener(myComponentListener);
+      runAnimation(false, myLayeredPane);
+    }
+
 
     myLayeredPane = null;
 
-    onHidden();
+    onDisposed();
   }
 
-  protected void onHidden() {
+  protected void onDisposed() {
 
   }
 
@@ -156,24 +247,25 @@ public class Balloon {
 
   public abstract static class Position {
 
-    abstract Border createBorder(final Balloon balloon);
+    abstract Border createBorder(final BalloonImpl balloon);
 
 
-    public void updateLocation(final Balloon balloon) {
+    public void updateLocation(final BalloonImpl balloon) {
       final Dimension size = balloon.myComp.getPreferredSize();
       balloon.myComp.setSize(size);
       final Dimension layeredPaneSize = balloon.myLayeredPane.getSize();
-      Point location = getLocation(layeredPaneSize, balloon.myTargetPoint, size);
+      Point location = balloon.myShowPointer ? getLocation(layeredPaneSize, balloon.myTargetPoint, size)
+                                             : new Point(balloon.myTargetPoint.x - size.width / 2, balloon.myTargetPoint.y - size.height / 2);
       final Rectangle bounds = new Rectangle(location.x, location.y, size.width, size.height);
 
-      ScreenUtil.moveToFit(bounds, new Rectangle(0, 0, layeredPaneSize.width, layeredPaneSize.height));
+      ScreenUtil.moveToFit(bounds, new Rectangle(0, 0, layeredPaneSize.width, layeredPaneSize.height), balloon.myContainerInsets);
 
       balloon.myComp.setBounds(bounds);
     }
 
     abstract Point getLocation(final Dimension containerSize, final Point targetPoint, final Dimension balloonSize);
 
-    void paintComponent(Balloon balloon, final JComponent c, final Graphics2D g, Point pointTarget) {
+    void paintComponent(BalloonImpl balloon, final JComponent c, final Graphics2D g, Point pointTarget) {
       final GraphicsConfig cfg = new GraphicsConfig(g);
       cfg.setAntialiasing(true);
 
@@ -183,12 +275,7 @@ public class Balloon {
       if (balloon.myShowPointer) {
         shape = getPointingShape(bounds, g, pointTarget, balloon);
       } else {
-        convertBoundsToContent(bounds, balloon);
-        bounds.width -= 2;
-        bounds.height -= 1;
-        bounds.x += 1;
-        bounds.y += 1;
-        shape = new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width, bounds.height, balloon.getArc(), balloon.getArc());
+        shape = new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width - 1, bounds.height - 1, balloon.getArc(), balloon.getArc());
       }
 
       g.setColor(balloon.myFillColor);
@@ -198,9 +285,7 @@ public class Balloon {
       cfg.restore();
     }
 
-    protected abstract void convertBoundsToContent(final Rectangle bounds, final Balloon balloon);
-
-    protected abstract Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final Balloon balloon);
+    protected abstract Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon);
 
   }
 
@@ -211,7 +296,7 @@ public class Balloon {
 
 
   private static class Below extends Position {
-    Border createBorder(final Balloon balloon) {
+    Border createBorder(final BalloonImpl balloon) {
       return new EmptyBorder(balloon.getPointerLength(), balloon.getNormalInset(), balloon.getNormalInset(), balloon.getNormalInset());
     }
 
@@ -220,12 +305,12 @@ public class Balloon {
       return new Point(center.x, targetPoint.y);
     }
 
-    protected void convertBoundsToContent(final Rectangle bounds, final Balloon balloon) {
+    protected void convertBoundsToContent(final Rectangle bounds, final BalloonImpl balloon) {
       bounds.y += balloon.getPointerLength();
-      bounds.height -= balloon.getPointerLength();
+      bounds.height -= balloon.getPointerLength() - 1;
     }
 
-    protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final Balloon balloon) {
+    protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingUtilities.TOP);
       shaper.line(balloon.getPointerWidth() / 2, balloon.getPointerLength()).toRightCurve().roundRightDown().toBottomCurve().roundLeftDown()
           .toLeftCurve().roundLeftUp().toTopCurve().roundUpRight()
@@ -235,7 +320,7 @@ public class Balloon {
       return shaper.getShape();
     }
 
-    protected Shape getShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final Balloon balloon) {
+    protected Shape getShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       bounds.y += balloon.getPointerLength();
       bounds.height += balloon.getPointerLength();
       return new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width, bounds.height, balloon.getArc(), balloon.getArc());
@@ -244,7 +329,7 @@ public class Balloon {
   }
 
   private static class Under extends Position {
-    Border createBorder(final Balloon balloon) {
+    Border createBorder(final BalloonImpl balloon) {
       return new EmptyBorder(balloon.getNormalInset(), balloon.getNormalInset(), balloon.getPointerLength(), balloon.getNormalInset());
     }
 
@@ -253,18 +338,18 @@ public class Balloon {
       return new Point(center.x, targetPoint.y - balloonSize.height);
     }
 
-    protected void convertBoundsToContent(final Rectangle bounds, final Balloon balloon) {
-      bounds.height -= balloon.getPointerLength();
+    protected void convertBoundsToContent(final Rectangle bounds, final BalloonImpl balloon) {
+      bounds.height -= balloon.getPointerLength() - 1;
     }
 
-    protected Shape getShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final Balloon balloon) {
+    protected Shape getShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       bounds.y -= balloon.getPointerLength();
       bounds.height -= balloon.getPointerLength();
       return new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width, bounds.height, balloon.getArc(), balloon.getArc());
     }
 
     @Override
-    protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final Balloon balloon) {
+    protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingUtilities.BOTTOM);
       shaper.line(-balloon.getPointerWidth() / 2, -balloon.getPointerLength() + 1);
       shaper.toLeftCurve().roundLeftUp().toTopCurve().roundUpRight().toRightCurve().roundRightDown().toBottomCurve().line(0, 2)
@@ -277,7 +362,7 @@ public class Balloon {
   }
 
   private static class AtRight extends Position {
-    Border createBorder(final Balloon balloon) {
+    Border createBorder(final BalloonImpl balloon) {
       return new EmptyBorder(balloon.getNormalInset(), balloon.getPointerLength(), balloon.getNormalInset(), balloon.getNormalInset());
     }
 
@@ -287,7 +372,7 @@ public class Balloon {
     }
 
     @Override
-    protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final Balloon balloon) {
+    protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingUtilities.LEFT);
       shaper.line(balloon.getPointerLength(), -balloon.getPointerWidth() / 2).toTopCurve().roundUpRight().toRightCurve().roundRightDown()
           .toBottomCurve().roundLeftDown().toLeftCurve().roundLeftUp()
@@ -296,12 +381,12 @@ public class Balloon {
       return shaper.getShape();
     }
 
-    protected void convertBoundsToContent(final Rectangle bounds, final Balloon balloon) {
+    protected void convertBoundsToContent(final Rectangle bounds, final BalloonImpl balloon) {
       bounds.x += balloon.getPointerLength();
       bounds.width -= balloon.getPointerLength();
     }
 
-    protected Shape getShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final Balloon balloon) {
+    protected Shape getShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       bounds.x += balloon.getPointerLength();
       bounds.width -= balloon.getPointerLength();
       return new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width, bounds.height, balloon.getArc(), balloon.getArc());
@@ -309,7 +394,7 @@ public class Balloon {
   }
 
   private static class AtLeft extends Position {
-    Border createBorder(final Balloon balloon) {
+    Border createBorder(final BalloonImpl balloon) {
       return new EmptyBorder(balloon.getNormalInset(), balloon.getNormalInset(), balloon.getNormalInset(), balloon.getPointerLength());
     }
 
@@ -318,12 +403,12 @@ public class Balloon {
       return new Point(targetPoint.x - balloonSize.width, center.y);
     }
 
-    protected void convertBoundsToContent(final Rectangle bounds, final Balloon balloon) {
+    protected void convertBoundsToContent(final Rectangle bounds, final BalloonImpl balloon) {
       bounds.width -= balloon.getPointerLength();
     }
 
     @Override
-    protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final Balloon balloon) {
+    protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingUtilities.RIGHT);
       shaper.line(-balloon.getPointerLength(), balloon.getPointerWidth() / 2);
       shaper.toBottomCurve().roundLeftDown().toLeftCurve().roundLeftUp().toTopCurve().roundUpRight().toRightCurve().roundRightDown()
@@ -331,20 +416,24 @@ public class Balloon {
       return shaper.getShape();
     }
 
-    protected Shape getShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final Balloon balloon) {
+    protected Shape getShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       bounds.width -= balloon.getPointerLength();
       return new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width, bounds.height, balloon.getArc(), balloon.getArc());
     }
   }
 
-  private class MyComponent extends JPanel {
+  private static class MyComponent extends JPanel {
 
     private BufferedImage myImage;
     private float myAlpha;
+    private JComponent myParent;
+    private BalloonImpl myBalloon;
 
-    private MyComponent(JComponent content) {
+    private MyComponent(JComponent content, JComponent parent, BalloonImpl balloon) {
       setOpaque(false);
       setLayout(new BorderLayout());
+      myParent = parent;
+      myBalloon = balloon;
 
       final Wrapper wrapper = new Wrapper(content);
       wrapper.setOpaque(false);
@@ -361,11 +450,11 @@ public class Balloon {
     @Override
     protected void paintComponent(final Graphics g) {
       super.paintComponent(g);
-      final Point pointTarget = SwingUtilities.convertPoint(myLayeredPane, myTargetPoint, this);
+      final Point pointTarget = SwingUtilities.convertPoint(myParent, myBalloon.myTargetPoint, this);
 
       if (myImage == null && myAlpha != -1) {
         myImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-        myPosition.paintComponent(Balloon.this, this, (Graphics2D)myImage.getGraphics(), pointTarget);
+        myBalloon.myPosition.paintComponent(myBalloon, this, (Graphics2D)myImage.getGraphics(), pointTarget);
       }
 
       if (myImage != null && myAlpha != -1) {
@@ -374,7 +463,7 @@ public class Balloon {
 
         g2d.drawImage(myImage, 0, 0, null);
       } else {
-        myPosition.paintComponent(Balloon.this, this, (Graphics2D)g, pointTarget);
+        myBalloon.myPosition.paintComponent(myBalloon, this, (Graphics2D)g, pointTarget);
       }
     }
 
@@ -389,9 +478,9 @@ public class Balloon {
 
     Rectangle myBounds;
     private int myTargetSide;
-    private Balloon myBalloon;
+    private BalloonImpl myBalloon;
 
-    public Shaper(Balloon balloon, Rectangle bounds, Point targetPoint, int targetSide) {
+    public Shaper(BalloonImpl balloon, Rectangle bounds, Point targetPoint, int targetSide) {
       myBalloon = balloon;
       myBounds = bounds;
       myTargetSide = targetSide;
@@ -483,28 +572,39 @@ public class Balloon {
 
     content.setBackground(Color.white);
 
-    final JLabel label = new JLabel("<html>Really cool balloon<br>Really fucking big</html>");
-    final Balloon balloon = new Balloon(label, Color.black, Color.pink);
-    balloon.setShowPointer(false);
+
+    final Ref<BalloonImpl> balloon = new Ref<BalloonImpl>();
 
     content.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(final MouseEvent e) {
-        if (balloon.isVisible()) {
-          balloon.hide();
+        if (balloon.get() != null && balloon.get().isVisible()) {
+          balloon.get().dispose();
         }
         else {
+          final JEditorPane pane = new JEditorPane();
+          pane.setEditorKit(new HTMLEditorKit());
+          pane.setText(UIUtil.toHtml("<html><body><center>Really cool balloon<br>Really fucking <a href=\\\"http://jetbrains.com\\\">big</a></center></body></html"));
+          final Dimension size = new JLabel(pane.getText()).getPreferredSize();
+          pane.setEditable(false);
+          pane.setOpaque(false);
+          pane.setBorder(null);
+          pane.setPreferredSize(size);
+
+          balloon.set(new BalloonImpl(pane, Color.black, Color.pink, true, true, true));
+          balloon.get().setShowPointer(true);
+
           if (e.isControlDown()) {
-            balloon.show(new RelativePoint(e), Balloon.UNDER);
+            balloon.get().show(new RelativePoint(e), BalloonImpl.UNDER);
           }
           else if (e.isAltDown()) {
-            balloon.show(new RelativePoint(e), Balloon.BELOW);
+            balloon.get().show(new RelativePoint(e), BalloonImpl.BELOW);
           }
           else if (e.isMetaDown()) {
-            balloon.show(new RelativePoint(e), Balloon.AT_LEFT);
+            balloon.get().show(new RelativePoint(e), BalloonImpl.AT_LEFT);
           }
           else {
-            balloon.show(new RelativePoint(e), Balloon.AT_RIGHT);
+            balloon.get().show(new RelativePoint(e), BalloonImpl.AT_RIGHT);
           }
         }
       }

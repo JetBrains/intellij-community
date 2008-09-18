@@ -35,6 +35,7 @@ import java.awt.event.*;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.lang.reflect.Field;
@@ -55,6 +56,7 @@ public class UIUtil {
   private static Color ACTIVE_COLOR = new Color(160, 186, 213);
   private static Color INACTIVE_COLOR = new Color(128, 128, 128);
   private static Color SEPARATOR_COLOR = INACTIVE_COLOR.brighter();
+  public static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
 
   private UIUtil() {
   }
@@ -887,6 +889,25 @@ public class UIUtil {
     result.y = containerLocation.y + (containerSize.height / 2 - child.height / 2);
 
     return result;
+  }
+
+  public static String toHtml(String html) {
+    return toHtml(html, 0); 
+  }
+
+  public static String toHtml(String html, final int hPadding) {
+    html = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
+    Font font = UIManager.getFont("Label.font");
+    String family = font != null ? font.getFamily() : "Tahoma";
+    int size = font != null ? font.getSize() : 11;
+    return "<html><style>body { font-family: "
+           + family + "; font-size: "
+           + size + ";} ul li {list-style-type:circle;}</style>"
+           + addPadding(html, hPadding) + "</html>";
+  }
+
+  public static String addPadding(final String html, int hPadding) {
+    return "<table border=0 hspace=" + hPadding + "><tr><td>" + html + "</td></tr></table>";
   }
 }
 

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
@@ -135,9 +136,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void activate(@Nullable final Runnable runnable, final boolean autoFocusContents) {
     }
   };
-
-  public void showInfoPopup(final String toolWindowId, final Icon icon, final String text) {
-  }
 
   @NonNls private static final ContentManager MOCK_CONTENT_MANAGER = new ContentManager() {
     public void addContent(@NotNull final Content content) { }
@@ -255,6 +253,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   public IdeFocusManager getFocusManager() {
     return IdeFocusManagerHeadless.INSTANCE;
+  }
+
+  @Override
+  public void showInfoPopup(@NotNull final String toolWindowId, @Nullable final Icon icon, @NotNull final String text, @Nullable final HyperlinkListener listener) {
   }
 
   public void addToolWindowManagerListener(ToolWindowManagerListener l) {
