@@ -1366,6 +1366,14 @@ public class JBTabsImpl extends JComponent
           g2d.setColor(borderColor);
           g2d.drawLine(x, y, x + width - 1, y);
         }
+      } else {
+        g2d.setColor(getActiveTabFillIn());
+        g2d.fillRect(x, topY, width, myBorderSize.top);
+        if (myBorderSize.top > 1) {
+          g2d.setColor(borderColor);
+          final int topLine = topY + myBorderSize.top - 2;
+          g2d.drawLine(x, topLine, x + width - 1, topLine);
+        }
       }
     }
 

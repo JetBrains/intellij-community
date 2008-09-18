@@ -9,6 +9,7 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 
 import javax.swing.*;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -157,6 +158,15 @@ public class JBTabsTest {
     south.add(refire);
 
 
+    final JEditorPane text = new JEditorPane();
+    text.setEditorKit(new HTMLEditorKit());
+    StringBuffer buffer = new StringBuffer();
+    for (int i = 0; i < 50; i ++) {
+      buffer.append("1234567890abcdefghijklmnopqrstv1234567890abcdefghijklmnopqrstv1234567890abcdefghijklmnopqrstv<br>");
+    }
+    text.setText(buffer.toString());
+
+    tabs.addTab(new TabInfo(new JScrollPane(text))).setText("Text text text");
     tabs.addTab(toAnimate1).append("Tree2", new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.black, Color.red));
     tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
     tabs.addTab(new TabInfo(new JTable())).setText("Table 2").setActions(new DefaultActionGroup(), null);
@@ -169,7 +179,7 @@ public class JBTabsTest {
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
 
     //tabs.getComponent().setBorder(new EmptyBorder(5, 5, 5, 5));
-    tabs.setPaintBorder(1, -1, -1, -1);
+    tabs.setPaintBorder(5, -1, -1, -1);
     tabs.getPresentation().setActiveTabFillIn(Color.white);
     tabs.setGhostsAlwaysVisible(true);
 
