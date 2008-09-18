@@ -34,7 +34,6 @@ package com.intellij.ide.highlighter;
 import com.intellij.lexer.JavaHighlightingLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.JavaHighlighterColors;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
@@ -92,9 +91,9 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
     ourMap1.put(JavaTokenType.FLOAT_LITERAL, SyntaxHighlighterColors.NUMBER);
     ourMap1.put(JavaTokenType.DOUBLE_LITERAL, SyntaxHighlighterColors.NUMBER);
     ourMap1.put(JavaTokenType.STRING_LITERAL, SyntaxHighlighterColors.STRING);
-    ourMap1.put(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, JavaHighlighterColors.JAVA_VALID_STRING_ESCAPE);
-    ourMap1.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, JavaHighlighterColors.JAVA_INVALID_STRING_ESCAPE);
-    ourMap1.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, JavaHighlighterColors.JAVA_INVALID_STRING_ESCAPE);
+    ourMap1.put(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, SyntaxHighlighterColors.VALID_STRING_ESCAPE);
+    ourMap1.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, SyntaxHighlighterColors.INVALID_STRING_ESCAPE);
+    ourMap1.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, SyntaxHighlighterColors.INVALID_STRING_ESCAPE);
     ourMap1.put(JavaTokenType.CHARACTER_LITERAL, SyntaxHighlighterColors.STRING);
 
     ourMap1.put(JavaTokenType.LPARENTH, SyntaxHighlighterColors.PARENTHS);
@@ -108,7 +107,7 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
 
     ourMap1.put(JavaTokenType.COMMA, SyntaxHighlighterColors.COMMA);
     ourMap1.put(JavaTokenType.DOT, SyntaxHighlighterColors.DOT);
-    ourMap1.put(JavaTokenType.SEMICOLON, JavaHighlighterColors.JAVA_SEMICOLON);
+    ourMap1.put(JavaTokenType.SEMICOLON, SyntaxHighlighterColors.JAVA_SEMICOLON);
 
     //ourMap1[JavaTokenType.BOOLEAN_LITERAL] = HighlighterColors.JAVA_KEYWORD;
     //ourMap1[JavaTokenType.NULL_LITERAL] = HighlighterColors.JAVA_KEYWORD;
@@ -118,7 +117,7 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
     ourMap1.put(JavaTokenType.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
 
     ourMap1.put(JavaDocTokenType.DOC_TAG_NAME, SyntaxHighlighterColors.DOC_COMMENT);
-    ourMap2.put(JavaDocTokenType.DOC_TAG_NAME, JavaHighlighterColors.JAVA_DOC_TAG);
+    ourMap2.put(JavaDocTokenType.DOC_TAG_NAME, SyntaxHighlighterColors.DOC_COMMENT_TAG);
 
     IElementType[] javaDocMarkup = new IElementType[]{XmlTokenType.XML_START_TAG_START,
                                         XmlTokenType.XML_END_TAG_START,
@@ -135,7 +134,7 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
 
     for (IElementType idx : javaDocMarkup) {
       ourMap1.put(idx, SyntaxHighlighterColors.DOC_COMMENT);
-      ourMap2.put(idx, JavaHighlighterColors.JAVA_DOC_MARKUP);
+      ourMap2.put(idx, SyntaxHighlighterColors.DOC_COMMENT_MARKUP);
     }
   }
 

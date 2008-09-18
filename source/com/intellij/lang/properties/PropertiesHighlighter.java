@@ -1,9 +1,8 @@
 package com.intellij.lang.properties;
 
-import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.editor.JavaHighlighterColors;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
@@ -49,11 +48,11 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
                                                      );
   public static final TextAttributesKey PROPERTIES_VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey(
                                                        "PROPERTIES.VALID_STRING_ESCAPE",
-                                                       JavaHighlighterColors.JAVA_VALID_STRING_ESCAPE.getDefaultAttributes()
+                                                       SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
                                                      );
   public static final TextAttributesKey PROPERTIES_INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey(
                                                        "PROPERTIES.INVALID_STRING_ESCAPE",
-                                                       JavaHighlighterColors.JAVA_INVALID_STRING_ESCAPE.getDefaultAttributes()
+                                                       SyntaxHighlighterColors.INVALID_STRING_ESCAPE.getDefaultAttributes()
                                                      );
 
   static {

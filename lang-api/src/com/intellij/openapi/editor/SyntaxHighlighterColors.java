@@ -18,5 +18,9 @@ public class SyntaxHighlighterColors {
   public static final TextAttributesKey BRACES = TextAttributesKey.createTextAttributesKey("JAVA_BRACES");
   public static final TextAttributesKey COMMA = TextAttributesKey.createTextAttributesKey("JAVA_COMMA");
   public static final TextAttributesKey DOT = TextAttributesKey.createTextAttributesKey("JAVA_DOT");
-  public static final TextAttributesKey JAVA_SEMICOLON = TextAttributesKey.createTextAttributesKey("JAVA_SEMICOLON");  
+  public static final TextAttributesKey JAVA_SEMICOLON = TextAttributesKey.createTextAttributesKey("JAVA_SEMICOLON");
+  public static final TextAttributesKey DOC_COMMENT_TAG = TextAttributesKey.createTextAttributesKey("JAVA_DOC_TAG");
+  public static final TextAttributesKey DOC_COMMENT_MARKUP = TextAttributesKey.createTextAttributesKey("JAVA_DOC_MARKUP");
+  public static final TextAttributesKey VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("JAVA_VALID_STRING_ESCAPE");
+  public static final TextAttributesKey INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("JAVA_INVALID_STRING_ESCAPE");
 }
