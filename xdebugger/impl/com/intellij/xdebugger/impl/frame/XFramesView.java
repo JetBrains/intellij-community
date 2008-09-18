@@ -74,7 +74,14 @@ public class XFramesView extends XDebugViewBase {
   }
 
   protected void rebuildView(final SessionEvent event) {
-    if (event == SessionEvent.FRAME_CHANGED || event == SessionEvent.BEFORE_RESUME) return;
+    if (event == SessionEvent.BEFORE_RESUME) return;
+    if (event == SessionEvent.FRAME_CHANGED) {
+      XStackFrame currentStackFrame = mySession.getCurrentStackFrame();
+      if (currentStackFrame != null) {
+        myFramesList.setSelectedValue(currentStackFrame, true);
+      }
+      return;
+    }
 
     myListenersEnabled = false;
     for (StackFramesListBuilder builder : myBuilders.values()) {
