@@ -19,7 +19,6 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
-import com.intellij.openapi.editor.JavaHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.project.Project;
@@ -41,7 +40,7 @@ class RegExpHighlighter extends SyntaxHighlighterBase {
     );
     static final TextAttributesKey INVALID_CHARACTER_ESCAPE = TextAttributesKey.createTextAttributesKey(
             "REGEXP.INVALID_STRING_ESCAPE",
-            JavaHighlighterColors.JAVA_INVALID_STRING_ESCAPE.getDefaultAttributes()
+            SyntaxHighlighterColors.INVALID_STRING_ESCAPE.getDefaultAttributes()
     );
     static final TextAttributesKey BAD_CHARACTER = TextAttributesKey.createTextAttributesKey(
             "REGEXP.BAD_CHARACTER",
@@ -49,7 +48,7 @@ class RegExpHighlighter extends SyntaxHighlighterBase {
     );
     static final TextAttributesKey REDUNDANT_ESCAPE = TextAttributesKey.createTextAttributesKey(
             "REGEXP.REDUNDANT_ESCAPE",
-            JavaHighlighterColors.JAVA_VALID_STRING_ESCAPE.getDefaultAttributes()
+            SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
     );
     static final TextAttributesKey PARENTHS = TextAttributesKey.createTextAttributesKey(
             "REGEXP.PARENTHS",
@@ -69,15 +68,15 @@ class RegExpHighlighter extends SyntaxHighlighterBase {
     );
     static final TextAttributesKey ESC_CHARACTER = TextAttributesKey.createTextAttributesKey(
             "REGEXP.ESC_CHARACTER",
-            JavaHighlighterColors.JAVA_VALID_STRING_ESCAPE.getDefaultAttributes()
+            SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
     );
     static final TextAttributesKey CHAR_CLASS = TextAttributesKey.createTextAttributesKey(
             "REGEXP.CHAR_CLASS",
-            JavaHighlighterColors.JAVA_VALID_STRING_ESCAPE.getDefaultAttributes()
+            SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
     );
     static final TextAttributesKey QUOTE_CHARACTER = TextAttributesKey.createTextAttributesKey(
             "REGEXP.QUOTE_CHARACTER",
-            JavaHighlighterColors.JAVA_VALID_STRING_ESCAPE.getDefaultAttributes()
+            SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
     );
     static final TextAttributesKey CTRL_CHARACTER = TextAttributesKey.createTextAttributesKey(
             "REGEXP.CTRL_CHARACTER",

@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.highlighter;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.JavaHighlighterColors;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -100,7 +99,7 @@ public class DefaultHighlighter {
       SyntaxHighlighterColors.DOC_COMMENT.getDefaultAttributes());
 
   public static TextAttributesKey DOC_COMMENT_TAG = TextAttributesKey.createTextAttributesKey(DOC_COMMENT_TAG_ID,
-      JavaHighlighterColors.JAVA_DOC_TAG.getDefaultAttributes());
+      SyntaxHighlighterColors.DOC_COMMENT_TAG.getDefaultAttributes());
 
   public static TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey(KEYWORD_ID,
       SyntaxHighlighterColors.KEYWORD.getDefaultAttributes());
@@ -115,7 +114,7 @@ public class DefaultHighlighter {
       SyntaxHighlighterColors.STRING.getDefaultAttributes());
 
   public static TextAttributesKey REGEXP = TextAttributesKey.createTextAttributesKey(REGEXP_ID,
-      JavaHighlighterColors.JAVA_VALID_STRING_ESCAPE.getDefaultAttributes());
+      SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes());
 
   public static TextAttributesKey BRACES = TextAttributesKey.createTextAttributesKey(BRACES_ID,
       SyntaxHighlighterColors.BRACKETS.getDefaultAttributes());
