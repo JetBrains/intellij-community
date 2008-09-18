@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -37,6 +38,7 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   private volatile long myModificationStamp = LocalTimeCounter.currentTime();
 
   public boolean isValid() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     return exists();
   }
 
