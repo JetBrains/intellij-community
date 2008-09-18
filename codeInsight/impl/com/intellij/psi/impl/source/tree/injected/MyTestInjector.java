@@ -80,12 +80,14 @@ public class MyTestInjector {
     assert b;
   }
 
-  private static Language findLanguageByID(@NonNls String name) {
+  private static Language findLanguageByID(@NonNls String id) {
     for (Language language : Language.getRegisteredLanguages()) {
-      if (language.getID().equals(name)) return language;
+      if (language == Language.ANY) continue;
+      if (language.getID().equals(id)) return language;
     }
     return null;
   }
+
   private static LanguageInjector injectVariousStuffEverywhere(PsiManager psiManager) {
     LanguageInjector myInjector = new LanguageInjector() {
       public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces placesToInject) {
@@ -194,8 +196,10 @@ public class MyTestInjector {
             String text = aClass.getInitializers()[0].getBody().getFirstBodyElement().getNextSibling().getText().substring(2);
             Language language = findLanguageByID(text);
 
-            TextRange textRange = new TextRange(1, host.getTextLength() - 1);
-            placesToInject.addPlace(language, textRange, "", "");
+            if (language != null) {
+              TextRange textRange = new TextRange(1, host.getTextLength() - 1);
+              placesToInject.addPlace(language, textRange, "", "");
+            }
           }
         }
       }
