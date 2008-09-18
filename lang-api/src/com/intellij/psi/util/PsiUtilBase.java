@@ -412,6 +412,7 @@ public class PsiUtilBase {
 
   @Nullable
   public static PsiFile getPsiFileInEditor(final Editor editor, final Project project) {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
 
@@ -433,10 +434,9 @@ public class PsiUtilBase {
   }
 
   public static Language evaluateLanguageInRange(final int start, final int end, final PsiFile file, Language lang) {
-    PsiElement elt;
     int curOffset = start;
     do {
-      elt = getElementAtOffset(file,curOffset);
+      PsiElement elt = getElementAtOffset(file, curOffset);
       if (elt == null) break;
       if (!(elt instanceof PsiWhiteSpace)) {
         if (!Comparing.equal(lang, findLanguageFromElement(elt,file))) {
@@ -449,11 +449,13 @@ public class PsiUtilBase {
         endOffset++;
       }
       curOffset = endOffset;
-    } while(curOffset < end);
+    }
+    while(curOffset < end);
     return narrowLanguage(lang, file.getLanguage());
   }
 
-  public static @Nullable PsiElement getElementAtOffset(@NotNull PsiFile file, int offset) {
+  @Nullable
+  public static PsiElement getElementAtOffset(@NotNull PsiFile file, int offset) {
     PsiElement elt = file.findElementAt(offset);
     if (elt == null && offset > 0) {
       elt = file.findElementAt(offset - 1);
@@ -491,7 +493,7 @@ public class PsiUtilBase {
     return (T) fileCopy;
   }
 
-  public static boolean ensureElementIsWritable(final @NotNull PsiElement element) {
+  public static boolean ensureElementIsWritable(@NotNull final PsiElement element) {
     return !ReadonlyStatusHandler.getInstance(element.getProject()).ensureFilesWritable(element.getContainingFile().getVirtualFile()).hasReadonlyFiles();
   }
 }

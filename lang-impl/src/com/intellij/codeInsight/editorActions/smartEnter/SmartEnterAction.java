@@ -73,7 +73,7 @@ public class SmartEnterAction extends EditorAction {
       boolean processed = false;
       if (language != null) {
         final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(language);
-        if (processors.size() > 0) {
+        if (!processors.isEmpty()) {
           for (SmartEnterProcessor processor : processors) {
             if (processor.process(project, editor, psiFile)) {
               processed = true;
