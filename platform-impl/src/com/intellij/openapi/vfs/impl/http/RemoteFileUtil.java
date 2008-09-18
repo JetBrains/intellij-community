@@ -16,7 +16,7 @@ public class RemoteFileUtil {
     if (contentType == null) return null;
 
     int end = contentType.indexOf(';');
-    String mimeType = end != -1 ? contentType.substring(0, end) : contentType;
+    String mimeType = end == -1 ? contentType : contentType.substring(0, end);
     if (mimeType.length() == 0) return null;
 
     for (Language language : Language.getRegisteredLanguages()) {
