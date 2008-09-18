@@ -25,19 +25,36 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import org.jetbrains.annotations.Nullable;
 
 public class ExcludeEntryDescription implements Disposable {
-  private final boolean myIsFile;
+
+  private boolean myIsFile;
   private boolean myIncludeSubdirectories;
-  private final VirtualFilePointer myFilePointer;
+  private String myUrl;
+  private VirtualFilePointer myFilePointer;
+
+  public ExcludeEntryDescription() {
+  }
 
   public ExcludeEntryDescription(String url, boolean includeSubdirectories, boolean isFile, Disposable parent) {
     myFilePointer = VirtualFilePointerManager.getInstance().create(url, parent, null);
     myIncludeSubdirectories = includeSubdirectories;
     myIsFile = isFile;
   }
+
   public ExcludeEntryDescription(VirtualFile virtualFile, boolean includeSubdirectories, boolean isFile, Disposable parent) {
     this(virtualFile.getUrl(), includeSubdirectories, isFile, parent);
+  }
+
+  public void init(final Disposable parent) {
+    if (myFilePointer == null) {
+      myFilePointer = VirtualFilePointerManager.getInstance().create(myUrl, parent, null);
+    }
+  }
+
+  public void setFile(final boolean isFile) {
+    myIsFile = isFile;
   }
 
   public ExcludeEntryDescription copy(Disposable parent) {
@@ -64,6 +81,7 @@ public class ExcludeEntryDescription implements Disposable {
     myIncludeSubdirectories = includeSubdirectories;
   }
 
+  @Nullable
   public VirtualFile getVirtualFile() {
     return myFilePointer.getFile();
   }
@@ -91,5 +109,9 @@ public class ExcludeEntryDescription implements Disposable {
   }
 
   public void dispose() {
+  }
+
+  public void setUrl(final String url) {
+    myUrl = url;
   }
 }

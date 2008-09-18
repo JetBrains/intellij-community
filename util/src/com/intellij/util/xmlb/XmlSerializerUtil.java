@@ -21,9 +21,9 @@ public class XmlSerializerUtil {
   }
 
   public static void copyBean(final Object from, final Object to) {
-    assert from.getClass().equals(to.getClass()) : "Beans of different classes specified";
+    assert from.getClass().isAssignableFrom(to.getClass()) : "Beans of different classes specified";
 
-    final Accessor[] accessors = BeanBinding.getAccessors(from.getClass());
+    final Accessor[] accessors = BeanBinding.getAccessors(to.getClass());
     for (Accessor accessor : accessors) {
       accessor.write(to, accessor.read(from));
     }

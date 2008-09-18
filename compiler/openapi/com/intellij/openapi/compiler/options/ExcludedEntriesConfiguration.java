@@ -17,28 +17,32 @@
 package com.intellij.openapi.compiler.options;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author nik
  */
-public class ExcludedEntriesConfiguration implements JDOMExternalizable, Disposable {
+public class ExcludedEntriesConfiguration implements PersistentStateComponent<ExcludedEntriesConfiguration>, JDOMExternalizable, Disposable {
   @NonNls private static final String FILE = "file";
   @NonNls private static final String DIRECTORY = "directory";
   @NonNls private static final String URL = "url";
   @NonNls private static final String INCLUDE_SUBDIRECTORIES = "includeSubdirectories";
-  private final List<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
+  private List<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
   private ExcludeEntryDescription[] myCachedDescriptions = null;
 
-  public ExcludedEntriesConfiguration() {
+  public void setExcludeEntryDescriptions(final ExcludeEntryDescription[] excludeEntryDescriptions) {
+    myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>(Arrays.asList(excludeEntryDescriptions));
   }
 
   public synchronized ExcludeEntryDescription[] getExcludeEntryDescriptions() {
@@ -123,5 +127,17 @@ public class ExcludedEntriesConfiguration implements JDOMExternalizable, Disposa
     for (ExcludeEntryDescription description : myExcludeEntryDescriptions) {
       Disposer.dispose(description);
     }
+  }
+
+  public ExcludedEntriesConfiguration getState() {
+    return this;
+  }
+
+  public void loadState(final ExcludedEntriesConfiguration state) {
+    XmlSerializerUtil.copyBean(state, this);
+    for (ExcludeEntryDescription description : myExcludeEntryDescriptions) {
+      description.init(this);
+    }
+    Disposer.dispose(state);
   }
 }
