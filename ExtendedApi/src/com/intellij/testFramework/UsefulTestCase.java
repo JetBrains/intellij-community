@@ -3,23 +3,23 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Application;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.codeInsight.CodeInsightSettings;
 import gnu.trove.THashSet;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
-import org.jetbrains.annotations.NonNls;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -36,19 +36,9 @@ public abstract class UsefulTestCase extends TestCase {
     }
   };
 
-  private static CodeInsightSettings ourOldCodeInsightSettings;
-
-  @Override
-  protected void runTest() throws Throwable {
-    Application application = ApplicationManager.getApplication();
-    CodeInsightSettings settings = application == null ? null : CodeInsightSettings.getInstance();
-    ourOldCodeInsightSettings = settings == null ? null : settings.clone();
-    super.runTest();
-  }
-
   protected void tearDown() throws Exception {
     if (ApplicationManager.getApplication() != null) {
-      assertTrue("Code insight settings damaged", areSettingsEqual(ourOldCodeInsightSettings, CodeInsightSettings.getInstance()));
+      assertTrue("Code insight settings damaged", areSettingsEqual(new CodeInsightSettings(EditorActionManager.getInstance()), CodeInsightSettings.getInstance()));
     }
     Disposer.dispose(myTestRootDisposable);
     super.tearDown();
