@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
@@ -531,6 +532,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (getTreeElementNoLock() != null) return null;
 
     final VirtualFile vFile = getVirtualFile();
+    if (!(vFile instanceof VirtualFileWithId)) return null;
+
     StubTree stubHolder = StubTree.readFromVFile(vFile);
     if (stubHolder == null) return null;
 
