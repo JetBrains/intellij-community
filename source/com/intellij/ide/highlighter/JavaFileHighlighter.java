@@ -43,7 +43,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,13 +71,7 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
     fillMap(ourMap1, JavaTokenType.OPERATION_BIT_SET, SyntaxHighlighterColors.OPERATION_SIGN);
     fillMap(ourMap1, JavaTokenType.OPERATION_BIT_SET, SyntaxHighlighterColors.OPERATION_SIGN);
 
-    IElementType[] javadoc = IElementType.enumerate(new IElementType.Predicate() {
-      public boolean matches(IElementType type) {
-        return type instanceof IJavaDocElementType;
-      }
-    });
-
-    for (IElementType type : javadoc) {
+    for (IElementType type : JavaDocTokenType.ALL_JAVADOC_TOKENS.getTypes()) {
       ourMap1.put(type, SyntaxHighlighterColors.DOC_COMMENT);
     }
 
