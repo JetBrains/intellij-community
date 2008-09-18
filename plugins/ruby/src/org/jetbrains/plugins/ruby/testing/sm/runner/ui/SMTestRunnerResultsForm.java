@@ -153,6 +153,12 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
                               }
                             },
                             myTreeView);
+    //TODO[romeo] improve
+    final ArrayList<Component> components = new ArrayList<Component>();
+    components.add(myTreeView);
+    components.add(myTabs.getComponent());
+    myContentPane.setFocusTraversalPolicy(new MyFocusTraversalPolicy(components));
+    myContentPane.setFocusCycleRoot(true);
   }
 
   public void addTestsTreeSelectionListener(final TreeSelectionListener listener) {
@@ -602,5 +608,36 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     public MyAnimator(final AbstractTestTreeBuilder builder) {
       init(builder);
     }
+  }
+
+ private static class MyFocusTraversalPolicy extends FocusTraversalPolicy {
+   final List<Component> myComponents;
+
+   private MyFocusTraversalPolicy(final List<Component> components) {
+     myComponents = components;
+   }
+
+   public Component getComponentAfter(final Container container, final Component component) {
+     return myComponents.get((myComponents.indexOf(component) + 1) % myComponents.size());
+   }
+
+   public Component getComponentBefore(final Container container, final Component component) {
+     final int prevIndex = myComponents.indexOf(component) - 1;
+     final int normalizedIndex = prevIndex < 0 ? myComponents.size() - 1 : prevIndex;
+
+     return myComponents.get(normalizedIndex);
+   }
+
+   public Component getFirstComponent(final Container container) {
+     return myComponents.get(0);
+   }
+
+   public Component getLastComponent(final Container container) {
+     return myComponents.get(myComponents.size() - 1);
+   }
+
+   public Component getDefaultComponent(final Container container) {
+     return getFirstComponent(container);
+   }
   }
 }
