@@ -219,6 +219,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
     if (myLastLayout != null && myLastLayout.layoutSize.equals(getSize()) && myLastLayout.contentCount == myManager.getContentCount()) {
       for (ContentTabLabel each : myTabs) {
+        if (!each.isValid()) break;
         if (each.myContent == selected && each.getBounds().width != 0) {
           data = myLastLayout;
           data.fullLayout = false;
