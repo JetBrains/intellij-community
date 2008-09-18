@@ -53,6 +53,7 @@ public abstract class ConvertContext {
   @NotNull
   public abstract XmlFile getFile();
 
+  @Nullable
   public abstract Module getModule();
   
   public abstract PsiManager getPsiManager();
