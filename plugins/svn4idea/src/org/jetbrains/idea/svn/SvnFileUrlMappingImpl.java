@@ -30,7 +30,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
   private final Map<String, RootUrlInfo> myFile2UrlMap;
   private final Map<String, Pair<String, VirtualFile>> myUrl2FileMap;
   private final Map<String, VirtualFile> myFileRootsMap;
-  private boolean myUserRootsDiffersFromReal;
+  private volatile boolean myUserRootsDiffersFromReal;
 
   SvnFileUrlMappingImpl(final Project project, final SvnVcs vcs) {
     myProject = project;
