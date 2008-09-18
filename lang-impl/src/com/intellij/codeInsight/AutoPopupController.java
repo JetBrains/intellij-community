@@ -116,9 +116,11 @@ public class AutoPopupController implements Disposable {
       final PsiFile file1 = file;
       final Runnable request = new Runnable(){
         public void run(){
-          documentManager.commitAllDocuments();
-          int lbraceOffset = editor.getCaretModel().getOffset() - 1;
-          new ShowParameterInfoHandler().invoke(myProject, editor, file1, lbraceOffset, highlightedMethod);
+          if (!editor.isDisposed()) {
+            documentManager.commitAllDocuments();
+            int lbraceOffset = editor.getCaretModel().getOffset() - 1;
+            new ShowParameterInfoHandler().invoke(myProject, editor, file1, lbraceOffset, highlightedMethod);
+          }
         }
       };
       // invoke later prevents cancelling request by keyPressed from the same action
