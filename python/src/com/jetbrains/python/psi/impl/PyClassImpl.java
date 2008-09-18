@@ -198,6 +198,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
 
     final List<PyTargetExpression> result = new ArrayList<PyTargetExpression>();
+    // NOTE: maybe treeCrawlUp would be more precise, but currently it works well enough to not care. 
     initMethod.getStatementList().accept(new PyRecursiveElementVisitor() {
       public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
         super.visitPyAssignmentStatement(node);
@@ -212,7 +213,6 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         }
       }
     });
-
     return result.toArray(new PyTargetExpression[result.size()]);
   }
 
@@ -222,7 +222,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
                                      PsiElement lastParent,
                                      @NotNull PsiElement place)
   {
-    /* */
+    /*
     for(PyFunction func: getMethods()) {
       if (func == lastParent) continue;
       if (!processor.execute(func, substitutor)) return false;
@@ -231,14 +231,19 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       if (expr == lastParent) continue;
       if (!processor.execute(expr, substitutor)) return false;
     }
+    */
+    // class level
+    final PsiElement the_psi = getNode().getPsi();
+    PyResolveUtil.treeCrawlUp(processor, true, the_psi, the_psi);
+    // instance level
     for(PyTargetExpression expr: getInstanceAttributes()) {
       if (expr == lastParent) continue;
       if (!processor.execute(expr, substitutor)) return false;
     }
+    //
     if (processor instanceof PyResolveUtil.VariantsProcessor) {
       return true;
     }
-    /**/
     return processor.execute(this, substitutor);
   }
 

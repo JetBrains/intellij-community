@@ -312,7 +312,7 @@ public class ResolveImportUtil {
         // look for name in the file:
         processor = new PyResolveUtil.ResolveProcessor(referencedName);
         //ret = PyResolveUtil.treeWalkUp(processor, parent, null, importRef);
-        ret = PyResolveUtil.treeCrawlUp(processor, parent, true);
+        ret = PyResolveUtil.treeCrawlUp(processor, true, parent);
         if (ret != null) return ret;
       }
       else { // the file was a fake __init__.py covering a reference to dir
@@ -332,7 +332,7 @@ public class ResolveImportUtil {
         if (initPy == containingFile) return ret; // don't dive into the file we're in
         if (initPy != null) {
           if (processor == null) processor = new PyResolveUtil.ResolveProcessor(referencedName); // should not normally happen 
-          return PyResolveUtil.treeCrawlUp(processor, initPy, true);//PyResolveUtil.treeWalkUp(processor, initPy, null, importRef);
+          return PyResolveUtil.treeCrawlUp(processor, true, initPy);//PyResolveUtil.treeWalkUp(processor, initPy, null, importRef);
         }
       }
     }
@@ -356,7 +356,7 @@ public class ResolveImportUtil {
           PsiElement mod = src.resolve();
           if (mod != null) {
             final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();
-            PyResolveUtil.treeCrawlUp(processor, mod, true);
+            PyResolveUtil.treeCrawlUp(processor, true, mod);
             /*
             for (LookupElement le : processor.getResult()) {
               if (le.getObject() instanceof PsiNamedElement) variants.add(le);

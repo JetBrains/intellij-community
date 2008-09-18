@@ -160,7 +160,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (ret == null) {
       // ...as a builtin symbol
       PyFile bfile = PyBuiltinCache.getInstance(this.getProject()).getBuiltinsFile();
-      ret = PyResolveUtil.treeCrawlUp(new PyResolveUtil.ResolveProcessor(referencedName), bfile, true); 
+      ret = PyResolveUtil.treeCrawlUp(new PyResolveUtil.ResolveProcessor(referencedName), true, bfile);
     }
     if (ret == null) {
       ret = PyResolveUtil.resolveOffContext(this);
@@ -271,7 +271,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
     // include builtin names
     processor.setNotice(" | __builtin__");
-    PyResolveUtil.treeCrawlUp(processor, PyBuiltinCache.getInstance(getProject()).getBuiltinsFile(), true); // names from __builtin__
+    PyResolveUtil.treeCrawlUp(processor, true, PyBuiltinCache.getInstance(getProject()).getBuiltinsFile()); // names from __builtin__
     return processor.getResult();
   }
 

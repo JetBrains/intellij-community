@@ -108,12 +108,13 @@ public class PyResolveUtil {
   /**
    * Crawls up the PSI tree, checking nodes as if crawling backwards through source lexemes.
    * @param processor a visitor that says when the crawl is done and collects info.
-   * @param elt element from which we start (not checked by processor); if null, the search immediately fails. 
+   * @param elt element from which we start (not checked by processor); if null, the search immediately fails.
+   * @param roof if not null, search continues only below the roof and including it.
    * @param fromunder if true, search not above elt, but from a [possibly imaginary] node right below elt; so elt gets analyzed, too.
    * @return first element that the processor accepted.
    */
   @Nullable
-  public static PsiElement treeCrawlUp(PsiScopeProcessor processor, PsiElement elt, boolean fromunder) {
+  public static PsiElement treeCrawlUp(PsiScopeProcessor processor, boolean fromunder, PsiElement elt, PsiElement roof) {
     if (elt == null) return null; // can't find anyway.
     PsiElement seeker = elt;
     PsiElement cap = getConcealingParent(elt);
@@ -130,7 +131,7 @@ public class PyResolveUtil {
       ) {
         seeker = getPrevNodeOf(seeker, NameDefiner.class);
       }
-      // maybe we're under a cap
+      // maybe we're under a cap?
       while (true) {
         PsiElement local_cap = getConcealingParent(seeker);
         if (local_cap == null) break; // seeker is in global context
@@ -138,14 +139,16 @@ public class PyResolveUtil {
         if ((cap != null) && PsiTreeUtil.isAncestor(local_cap, cap, true)) break; // seeker is in a context above elt's
         if (
             (local_cap != elt) && // elt isn't the cap of seeker itself
-            ((cap == null) || !PsiTreeUtil.isAncestor(local_cap, cap, true)) // elt's cap is not under local cap 
+            ((cap == null) || !PsiTreeUtil.isAncestor(local_cap, cap, true)) // elt's cap is not under local cap
         ) { // only look at local cap and above
           if (local_cap instanceof NameDefiner) seeker = local_cap;
           else seeker = getPrevNodeOf(local_cap, NameDefiner.class);
         }
         else break; // seeker is contextually under elt already
       }
-      // maybe we're capped by a class
+      // are we still under the roof?
+      if ((roof != null) && (seeker != null) && ! PsiTreeUtil.isAncestor(roof, seeker, false)) return null;
+      // maybe we're capped by a class?
       if (refersFromMethodToClass(cap, seeker)) continue;
       // check what we got
       if (seeker != null) {
@@ -172,7 +175,7 @@ public class PyResolveUtil {
       while (true) {
         cap = getConcealingParent(cap);
         if (cap == null) cap = refex.getContainingFile();
-        ret = treeCrawlUp(proc, cap, true);
+        ret = treeCrawlUp(proc, true, cap);
         if ((ret != null) && !PsiTreeUtil.isAncestor(our_cap, ret, true)) { // found something and it is below our cap
           // maybe we're in a method, and what we found is in its class context?
           if (! refersFromMethodToClass(our_cap, ret)) {
@@ -188,24 +191,35 @@ public class PyResolveUtil {
   /**
    * @param inner an element presumably inside a method within a class, or a method itself.
    * @param outer an element presumably in the class context.
-   * @return true if an outer element is in a class context, while the cap is a method or function inside it.
+   * @return true if an outer element is in a class context, while the inner is a method or function inside it.
    * @see com.jetbrains.python.psi.PyResolveUtil#getConcealingParent(com.intellij.psi.PsiElement)
    */
   protected static boolean refersFromMethodToClass(final PsiElement inner, final PsiElement outer) {
     return (
-      //(PsiTreeUtil.isAncestor(outer, cap, true)) && // just to make sure
       (getConcealingParent(outer) instanceof PyClass) && // outer is in a class context
-      (PsiTreeUtil.getParentOfType(inner, PyFunction.class, false) != null) // cap is a function or method within the class
+      (PsiTreeUtil.getParentOfType(inner, PyFunction.class, false) != null) // inner is a function or method within the class
     );
   }
 
   /**
+   * Crawls up the PSI tree, checking nodes as if crawling backwards through source lexemes.
+   * @param processor a visitor that says when the crawl is done and collects info.
+   * @param fromunder if true, search not above elt, but from a [possibly imaginary] node right below elt; so elt gets analyzed, too.
+   * @param elt element from which we start (not checked by processor); if null, the search immediately fails.
+   * @return first element that the processor accepted.
+   */
+  @Nullable
+  public static PsiElement treeCrawlUp(PsiScopeProcessor processor, boolean fromunder, PsiElement elt) {
+    return treeCrawlUp(processor, fromunder, elt, null);
+  }
+
+  /**
    * Returns treeCrawlUp(processor, elt, false). A convenience method.
-   * @see com.jetbrains.python.psi.PyResolveUtil#treeCrawlUp(PsiScopeProcessor, PsiElement, boolean)
+   * @see PyResolveUtil#treeCrawlUp(com.intellij.psi.scope.PsiScopeProcessor,boolean,com.intellij.psi.PsiElement)
    */
   @Nullable
   public static PsiElement treeCrawlUp(PsiScopeProcessor processor, PsiElement elt) {
-    return treeCrawlUp(processor, elt, false);
+    return treeCrawlUp(processor, false, elt);
   }
 
 
