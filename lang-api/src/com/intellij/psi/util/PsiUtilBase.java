@@ -412,7 +412,7 @@ public class PsiUtilBase {
 
   @Nullable
   public static PsiFile getPsiFileInEditor(final Editor editor, final Project project) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    //PsiDocumentManager.getInstance(project).commitAllDocuments();
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
 
