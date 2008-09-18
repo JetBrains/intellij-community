@@ -266,14 +266,15 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
           last = next;
           next = next.getNextSibling();
         }
-        while (first != last && (last instanceof PsiWhiteSpace || (last instanceof PsiJavaToken && ((PsiJavaToken) last).getTokenType() == JavaTokenType.RBRACE)))
+        while (first != last && (last instanceof PsiWhiteSpace ||
+                                 last instanceof PsiJavaToken && ((PsiJavaToken) last).getTokenType() == JavaTokenType.RBRACE))
           last = last.getPrevSibling();
 
 
         PsiBlockStatement codeBlock = (PsiBlockStatement) factory.createStatementFromText("{}", null);
         codeBlock.getCodeBlock().addRange(first, last);
         first.getParent().deleteChildRange(first, last);
-        codeBlock = (PsiBlockStatement) ifStatement.getThenBranch().replace(codeBlock);
+        ifStatement.getThenBranch().replace(codeBlock);
       }
       codeStyle.reformat(ifStatement);
       return;
@@ -349,10 +350,11 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
         break;
       }
     }
-
-    int length = instructions.size();
-    while (endOffset < length && instructions.get(endOffset) instanceof GoToInstruction && !((GoToInstruction) instructions.get(endOffset)).isReturn) {
-      endOffset = ((GoToInstruction) instructions.get(endOffset)).offset;
+    if (endOffset == -1) {
+      endOffset = controlFlow.getSize();
+    }
+    while (endOffset < instructions.size() && instructions.get(endOffset) instanceof GoToInstruction && !((GoToInstruction) instructions.get(endOffset)).isReturn) {
+      endOffset = ((BranchingInstruction)instructions.get(endOffset)).offset;
     }
 
     return endOffset;
