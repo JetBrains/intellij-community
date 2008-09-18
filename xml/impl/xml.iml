@@ -6,7 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="module" module-name="xml-openapi" />
+    <orderEntry type="module" module-name="xml-openapi" exported="" />
     <orderEntry type="module" module-name="resources" />
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="sourceFolder" forTests="false" />
