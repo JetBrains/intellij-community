@@ -35,7 +35,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -52,9 +51,12 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class GroovyPositionManager implements PositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.PositionManagerImpl");
@@ -185,8 +187,8 @@ public class GroovyPositionManager implements PositionManager {
     int dollar = originalQName.indexOf('$');
     final String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
     final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
-    Collection<PsiClass> classes = StubIndex.getInstance().get(GrFullClassNameIndex.KEY, qName.hashCode(), project, searchScope);
-    PsiClass clazz = classes.size() == 1 ? classes.iterator().next() : null;
+    final PsiClass[] classes = GroovyPsiManager.getInstance(project).getNamesCache().getClassesByFQName(qName, searchScope);
+    PsiClass clazz = classes.length == 1 ? classes[0] : null;
     if (clazz != null) return clazz.getContainingFile();
 
     DirectoryIndex directoryIndex = DirectoryIndex.getInstance(project);

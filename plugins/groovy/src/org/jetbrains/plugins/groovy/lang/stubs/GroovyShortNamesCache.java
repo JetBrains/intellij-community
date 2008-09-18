@@ -73,20 +73,40 @@ public class GroovyShortNamesCache implements PsiShortNamesCache {
 
   @Nullable
   public PsiClass getClassByFQName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
-    //todo implement 4 script classes
     final Collection<? extends PsiClass> classes = StubIndex.getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, scope);
-    for (PsiClass clazz : classes) {
+    final Collection<PsiClass> scriptClasses = getScriptClassesByFQName(name, scope);
+    scriptClasses.addAll(classes);
+    for (PsiClass clazz : scriptClasses) {
       if (name.equals(clazz.getQualifiedName())) return clazz;
     }
     return null;
   }
 
+  public Collection<PsiClass> getScriptClassesByFQName(final String name, final GlobalSearchScope scope) {
+    Collection<GroovyFile> scripts = StubIndex.getInstance().get(GrFullScriptNameIndex.KEY, name.hashCode(), myProject, scope);
+    final Collection<String> keys = StubIndex.getInstance().getAllKeys(GrScriptClassNameIndex.KEY);
+    scripts = ContainerUtil.findAll(scripts, new Condition<GroovyFile>() {
+      public boolean value(final GroovyFile groovyFile) {
+        final PsiClass clazz = groovyFile.getScriptClass();
+        return groovyFile.isScript() && clazz != null && name.equals(clazz.getQualifiedName());
+      }
+    });
+    return ContainerUtil.map(scripts, new Function<GroovyFile, PsiClass>() {
+      public PsiClass fun(final GroovyFile groovyFile) {
+        return groovyFile.getScriptClass();
+      }
+    });
+  }
+
   @NotNull
   public PsiClass[] getClassesByFQName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
-    //todo implement 4 script classes
+    //Collecting all classes
     final Collection<PsiClass> classes = StubIndex.getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, scope);
+    final Collection<PsiClass> scriptClasses = getScriptClassesByFQName(name, scope);
+    scriptClasses.addAll(classes);
+
     ArrayList<PsiClass> list = new ArrayList<PsiClass>();
-    for (PsiClass psiClass : classes) {
+    for (PsiClass psiClass : scriptClasses) {
       if (name.equals(psiClass.getQualifiedName())) {
         list.add(psiClass);
       }
