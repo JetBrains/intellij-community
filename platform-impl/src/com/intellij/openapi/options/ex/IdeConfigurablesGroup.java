@@ -52,11 +52,8 @@ public class IdeConfigurablesGroup implements ConfigurableGroup {
   private static void removeEmptyComposites(final List<Configurable> result) {
     for (Iterator<Configurable> iterator = result.iterator(); iterator.hasNext();) {
       Configurable configurable = iterator.next();
-      if (configurable instanceof CompositeConfigurable) {
-        final List children = ((CompositeConfigurable)configurable).getConfigurables();
-        if (children.isEmpty()) {
-          iterator.remove();
-        }
+      if (configurable instanceof CompositeConfigurable && !((CompositeConfigurable) configurable).hasAnyConfigurables()) {
+        iterator.remove();
       }
     }
   }

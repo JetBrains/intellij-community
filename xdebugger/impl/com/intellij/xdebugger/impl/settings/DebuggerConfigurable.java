@@ -58,6 +58,16 @@ public class DebuggerConfigurable extends TabbedConfigurable implements Searchab
     return configurables;
   }
 
+  public boolean hasAnyConfigurables() {
+    DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
+    for (DebuggerSupport support : supports) {
+      if (support.getSettingsPanelProvider().hasAnySettingsPanels()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public void apply() throws ConfigurationException {
     super.apply();
     for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {

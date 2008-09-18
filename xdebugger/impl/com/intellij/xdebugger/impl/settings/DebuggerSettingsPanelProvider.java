@@ -16,4 +16,8 @@ public abstract class DebuggerSettingsPanelProvider {
 
   public void apply() {
   }
+
+  public boolean hasAnySettingsPanels() {
+    return true;
+  }
 }

@@ -48,4 +48,8 @@ public abstract class CompositeConfigurable<T extends UnnamedConfigurable> exten
     }
     return myConfigurables;
   }
+
+  public boolean hasAnyConfigurables() {
+    return !getConfigurables().isEmpty();
+  }
 }

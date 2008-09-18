@@ -24,4 +24,9 @@ public class XDebuggerSettingsPanelProviderImpl extends DebuggerSettingsPanelPro
     }
     return list;
   }
+
+  @Override
+  public boolean hasAnySettingsPanels() {
+    return Extensions.getExtensions(XDebuggerSettings.EXTENSION_POINT).length > 0;
+  }
 }
