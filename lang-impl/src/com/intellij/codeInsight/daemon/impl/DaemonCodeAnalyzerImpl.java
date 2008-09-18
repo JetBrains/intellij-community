@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * This class also controls the auto-reparse and auto-hints.
@@ -159,7 +160,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
   }
 
-  private List<Pair<NamedScope, NamedScopesHolder>> myScopes = Collections.emptyList();
+  private final List<Pair<NamedScope, NamedScopesHolder>> myScopes = new CopyOnWriteArrayList<Pair<NamedScope, NamedScopesHolder>>();
   void reloadScopes() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<Pair<NamedScope, NamedScopesHolder>>();
@@ -170,7 +171,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         scopeList.add(Pair.create(scope, holder));
       }
     }
-    myScopes = scopeList;
+    myScopes.clear();
+    myScopes.addAll(scopeList);
   }
 
   @NotNull

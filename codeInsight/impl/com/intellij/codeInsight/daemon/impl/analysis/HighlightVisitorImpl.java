@@ -52,6 +52,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<String, Pair<PsiImportStaticReferenceElement, PsiField>>();
   private volatile boolean released = true;
   private PsiFile myFile;
+  private final PsiRecursiveElementVisitor REGISTER_REFERENCES_VISITOR = new PsiRecursiveElementVisitor() {
+    @Override public void visitElement(PsiElement element) {
+      super.visitElement(element);
+      for (PsiReference reference : element.getReferences()) {
+        PsiElement resolved = reference.resolve();
+        if (resolved instanceof PsiNamedElement) {
+          myRefCountHolder.registerLocallyReferenced((PsiNamedElement)resolved);
+        }
+      }
+    }
+  };
 
   @SuppressWarnings({"UnusedDeclaration"}) //in plugin.xml
   public HighlightVisitorImpl(Project project) {
@@ -86,29 +97,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     element.accept(this);
 
     if (myRefCountHolder != null) {
-      registerReferencesFromInjectedFragments(element, myRefCountHolder);
+      registerReferencesFromInjectedFragments(element);
     }
   }
 
-  private void registerReferencesFromInjectedFragments(final PsiElement element, final RefCountHolder refCountHolder) {
-    final PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
-      @Override public void visitElement(PsiElement element) {
-        super.visitElement(element);
-
-        for (PsiReference reference : element.getReferences()) {
-          PsiElement resolved = reference.resolve();
-          if (resolved instanceof PsiNamedElement) {
-            refCountHolder.registerLocallyReferenced((PsiNamedElement)resolved);
-          }
-        }
-      }
-    };
+  private void registerReferencesFromInjectedFragments(final PsiElement element) {
     InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
-        injectedPsi.accept(visitor);
+        injectedPsi.accept(REGISTER_REFERENCES_VISITOR);
       }
     }, false);
-
   }
 
   public boolean analyze(final Runnable action, final boolean updateWholeFile, final PsiFile file) {
@@ -361,8 +359,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override public void visitForeachStatement(PsiForeachStatement statement) {
     if (!PsiUtil.isLanguageLevel5OrHigher(statement)) {
-      HighlightInfo info = HighlightInfo
-          .createHighlightInfo(HighlightInfoType.ERROR, statement.getFirstChild(), JavaErrorMessages.message("foreach.prior.15"));
+      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement.getFirstChild(), JavaErrorMessages.message("foreach.prior.15"));
       QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
       myHolder.add(info);
     }
@@ -370,8 +367,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override public void visitImportStaticStatement(PsiImportStaticStatement statement) {
     if (!PsiUtil.isLanguageLevel5OrHigher(statement)) {
-      HighlightInfo info = HighlightInfo
-          .createHighlightInfo(HighlightInfoType.ERROR, statement.getFirstChild(), JavaErrorMessages.message("static.imports.prior.15"));
+      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement.getFirstChild(), JavaErrorMessages.message("static.imports.prior.15"));
       QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
       myHolder.add(info);
     }

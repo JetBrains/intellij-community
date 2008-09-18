@@ -114,7 +114,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     public boolean showToolTipByMouseMove(final MouseEvent e, final double width) {
       recalcMarkSpots();
       final List<MarkSpot> nearestMarkSpots = getNearestMarkSpots(e, width);
-      Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>();
+      if (nearestMarkSpots.isEmpty()) return false;
+      Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>(nearestMarkSpots.size() + 4);
       for (MarkSpot markSpot : nearestMarkSpots) {
         highlighters.addAll(Arrays.asList(markSpot.highlighters));
       }
@@ -360,17 +361,20 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private List<MarkSpot> getNearestMarkSpots(final MouseEvent e, final double width) {
-      List<MarkSpot> nearestSpot = new SmartList<MarkSpot>();
+      List<MarkSpot> nearestSpot = null;
       for (MarkSpot markSpot : mySpots) {
         if (markSpot.near(e, width)) {
+          if (nearestSpot == null) {
+            nearestSpot = new SmartList<MarkSpot>();
+          }
           nearestSpot.add(markSpot);
         }
       }
-      return nearestSpot;
+      return nearestSpot == null ? Collections.<MarkSpot>emptyList() : nearestSpot;
     }
   }
 
-  EditorMarkupModelImpl(EditorImpl editor) {
+  EditorMarkupModelImpl(@NotNull EditorImpl editor) {
     super((DocumentImpl)editor.getDocument());
     myEditor = editor;
   }
@@ -389,7 +393,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
-  public void setErrorPanelPopupHandler(PopupHandler handler) {
+  public void setErrorPanelPopupHandler(@NotNull PopupHandler handler) {
     if (myErrorPanel != null) {
       myErrorPanel.setPopupHandler(handler);
     }
@@ -399,10 +403,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myTooltipRendererProvider = provider;
   }
 
+  @NotNull
   public ErrorStripTooltipRendererProvider getErrorStripTooltipRendererProvider() {
     return myTooltipRendererProvider;
   }
 
+  @NotNull
   public Editor getEditor() {
     return myEditor;
   }
@@ -595,9 +601,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private ErrorStripeListener[] getCachedErrorMarkerListeners() {
     if (myCachedErrorMarkerListeners == null) {
-      myCachedErrorMarkerListeners = myErrorMarkerListeners.toArray(
-        new ErrorStripeListener[myErrorMarkerListeners.size()]
-      );
+      myCachedErrorMarkerListeners = myErrorMarkerListeners.toArray(new ErrorStripeListener[myErrorMarkerListeners.size()]);
     }
 
     return myCachedErrorMarkerListeners;
@@ -611,12 +615,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
-  public void addErrorMarkerListener(ErrorStripeListener listener) {
+  public void addErrorMarkerListener(@NotNull ErrorStripeListener listener) {
     myCachedErrorMarkerListeners = null;
     myErrorMarkerListeners.add(listener);
   }
 
-  public void removeErrorMarkerListener(ErrorStripeListener listener) {
+  public void removeErrorMarkerListener(@NotNull ErrorStripeListener listener) {
     myCachedErrorMarkerListeners = null;
     boolean success = myErrorMarkerListeners.remove(listener);
     LOG.assertTrue(success);
@@ -638,13 +642,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
     public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<RangeHighlighter> highlighters) {
       LineTooltipRenderer bigRenderer = null;
-      Collection<String> tooltips = new THashSet<String>(); //do not show same tooltip twice
+      //do not show same tooltip twice
+      Set<String> tooltips = null;
 
       for (RangeHighlighter highlighter : highlighters) {
         final Object tooltipObject = highlighter.getErrorStripeTooltip();
         if (tooltipObject == null) continue;
 
         final String text = tooltipObject.toString();
+        if (tooltips == null) {
+          tooltips = new THashSet<String>();
+        }
         if (tooltips.add(text)) {
           if (bigRenderer == null) {
             bigRenderer = new LineTooltipRenderer(text);

@@ -38,4 +38,5 @@ public interface EditorColors {
   ColorKey ADDED_LINES_COLOR = ColorKey.createColorKey("ADDED_LINES_COLOR");
   ColorKey MODIFIED_LINES_COLOR = ColorKey.createColorKey("MODIFIED_LINES_COLOR");
   ColorKey LEFT_GUTTER_BACKGROUND = ColorKey.createColorKey("LEFT_GUTTER_BACKGROUND");
+  TextAttributesKey INJECTED_LANGUAGE_FRAGMENT = TextAttributesKey.createTextAttributesKey("INJECTED_LANGUAGE_FRAGMENT");
 }

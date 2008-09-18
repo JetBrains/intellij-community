@@ -168,7 +168,7 @@ public class ExpectedHighlightingData {
       }
 
       TextRange textRange = new TextRange(startOffset, startOffset + content.length());
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(expectedHighlightingSet.defaultErrorType, textRange, descr, forcedAttributes);
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(expectedHighlightingSet.defaultErrorType, textRange, descr, descr, forcedAttributes);
 
       HighlightInfoType type = null;
 

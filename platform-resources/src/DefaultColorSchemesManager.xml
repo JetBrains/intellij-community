@@ -555,6 +555,15 @@
         </value>
       </option>
 
+      <option name="INJECTED_LANGUAGE_FRAGMENT">
+        <value>
+          <option name="BACKGROUND" value="edfced"/>
+          <option name="FONT_TYPE" value="0"/>
+          <option name="EFFECT_COLOR"/>
+          <option name="EFFECT_TYPE" value="0"/>
+        </value>
+      </option>
+
       <option name="JAVA_KEYWORD">
         <value>
           <option name="FOREGROUND" value="80"/>

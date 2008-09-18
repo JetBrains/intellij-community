@@ -125,9 +125,8 @@ public class HighlightInfo {
 
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, String description, String toolTip) {
     LOG.assertTrue(ArrayUtil.find(HighlightSeverity.DEFAULT_SEVERITIES, type.getSeverity(element)) != -1 || element != null, "Custom type demands element to detect text attributes");
-    HighlightInfoFilter[] filters = getFilters();
     HighlightInfo highlightInfo = new HighlightInfo(type, element, start, end, description, toolTip);
-    for (HighlightInfoFilter filter : filters) {
+    for (HighlightInfoFilter filter : getFilters()) {
       if (!filter.accept(highlightInfo, element != null ? element.getContainingFile() : null)) {
         return null;
       }
@@ -149,9 +148,9 @@ public class HighlightInfo {
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description, String toolTip) {
     return createHighlightInfo(type, null, textRange.getStartOffset(), textRange.getEndOffset(), description, toolTip);
   }
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description, TextAttributes textAttributes) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description, String toolTip, TextAttributes textAttributes) {
     // do not use HighlightInfoFilter
-    return new HighlightInfo(textAttributes, type, textRange.getStartOffset(), textRange.getEndOffset(), description, htmlEscapeToolTip(description),type.getSeverity(null), false, null);
+    return new HighlightInfo(textAttributes, type, textRange.getStartOffset(), textRange.getEndOffset(), description, htmlEscapeToolTip(toolTip),type.getSeverity(null), false, null);
   }
 
   public boolean needUpdateOnTyping() {

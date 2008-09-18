@@ -25,15 +25,14 @@ import com.intellij.openapi.editor.colors.ColorKey;
 public final class ColorDescriptor {
   public static final ColorDescriptor[] EMPTY_ARRAY = new ColorDescriptor[0];
 
-  public static final class Kind {
-    public final static Kind BACKGROUND = new Kind();
-    public final static Kind FOREGROUND = new Kind();
-    private Kind() {}
+  public static enum Kind {
+    BACKGROUND,
+    FOREGROUND
   }
 
-  private Kind myKind;
-  private String myDisplayName;
-  private ColorKey myKey;
+  private final Kind myKind;
+  private final String myDisplayName;
+  private final ColorKey myKey;
 
   /**
    * Creates a color descriptor with the specified name and color key.

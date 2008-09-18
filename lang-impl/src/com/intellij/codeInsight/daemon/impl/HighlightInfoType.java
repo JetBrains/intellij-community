@@ -70,10 +70,9 @@ public interface HighlightInfoType {
   HighlightInfoType INFO = new HighlightInfoTypeImpl(HighlightSeverity.INFO, CodeInsightColors.INFO_ATTRIBUTES);
   HighlightInfoType OVERFLOW_WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.ERRORS_ATTRIBUTES);
   HighlightInfoType INFORMATION = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INFORMATION_ATTRIBUTES);
+  HighlightInfoType INJECTED_LANGUAGE_FRAGMENT = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INFORMATION_ATTRIBUTES);
 
-  HighlightInfoType RETURN_OUTSIDE_METHOD = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
   HighlightInfoType UNHANDLED_EXCEPTION = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
-
   HighlightSeverity getSeverity(PsiElement psiElement);
 
   TextAttributesKey getAttributesKey();

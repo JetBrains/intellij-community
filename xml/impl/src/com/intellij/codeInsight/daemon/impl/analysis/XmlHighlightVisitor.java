@@ -198,6 +198,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           warning,
           new TextRange(startOffset, startOffset + length),
           localizedMessage,
+          localizedMessage,
           new TextAttributes() {
             public boolean isEmpty() {
               return false;

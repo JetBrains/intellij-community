@@ -27,14 +27,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class HighlightNamesUtil {
-  private HighlightNamesUtil() {}
-
   @Nullable
   public static HighlightInfo highlightMethodName(PsiMethod method, PsiElement elementToHighlight, boolean isDeclaration) {
     HighlightInfoType type = getMethodNameHighlightType(method, isDeclaration);
     if (type != null && elementToHighlight != null) {
       TextAttributes attributes = mergeWithScopeAttributes(method, type);
-      return HighlightInfo.createHighlightInfo(type, elementToHighlight.getTextRange(), null, attributes);
+      return HighlightInfo.createHighlightInfo(type, elementToHighlight.getTextRange(), null, null, attributes);
     }
     return null;
   }
@@ -70,7 +68,7 @@ public class HighlightNamesUtil {
         range = new TextRange(psiAnnotation.getTextRange().getStartOffset(), range.getEndOffset());
       }
 
-      return HighlightInfo.createHighlightInfo(type, range, null, attributes);
+      return HighlightInfo.createHighlightInfo(type, range, null, null, attributes);
     }
     return null;
   }
@@ -81,7 +79,7 @@ public class HighlightNamesUtil {
     if (varType != null) {
       if (variable instanceof PsiField) {
         TextAttributes attributes = mergeWithScopeAttributes(variable, varType);
-        return HighlightInfo.createHighlightInfo(varType, elementToHighlight.getTextRange(), null, attributes);
+        return HighlightInfo.createHighlightInfo(varType, elementToHighlight.getTextRange(), null, null, attributes);
       }
       return HighlightInfo.createHighlightInfo(varType, elementToHighlight, null);
     }
@@ -230,4 +228,5 @@ public class HighlightNamesUtil {
     if (node != null) return node.getTextRange().getStartOffset();
     return textRange.getStartOffset();
   }
+
 }

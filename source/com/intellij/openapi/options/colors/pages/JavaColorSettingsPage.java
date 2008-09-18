@@ -51,7 +51,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class JavaColorSettingsPage implements ColorSettingsPage {
-  private final static AttributesDescriptor[] ourDescriptors = new AttributesDescriptor[] {
+  private static final AttributesDescriptor[] ourDescriptors = new AttributesDescriptor[] {
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.keyword"), SyntaxHighlighterColors.KEYWORD),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.number"), SyntaxHighlighterColors.NUMBER),
 
@@ -64,7 +64,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.braces"), SyntaxHighlighterColors.BRACES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.brackets"), SyntaxHighlighterColors.BRACKETS),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.comma"), SyntaxHighlighterColors.COMMA),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.semicolon"), JavaHighlighterColors.JAVA_SEMICOLON),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.semicolon"), SyntaxHighlighterColors.JAVA_SEMICOLON),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.dot"), SyntaxHighlighterColors.DOT),
 
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.line.comment"), SyntaxHighlighterColors.LINE_COMMENT),
@@ -98,14 +98,14 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.annotation.attribute.name"), CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
   };
 
-  private final static ColorDescriptor[] ourColorDescriptors = new ColorDescriptor[]{
+  private static final ColorDescriptor[] ourColorDescriptors = new ColorDescriptor[]{
     new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.method.separator.color"), CodeInsightColors.METHOD_SEPARATORS_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.full.coverage"), CodeInsightColors.LINE_FULL_COVERAGE, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.partial.coverage"), CodeInsightColors.LINE_PARTIAL_COVERAGE, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.none.coverage"), CodeInsightColors.LINE_NONE_COVERAGE, ColorDescriptor.Kind.FOREGROUND)
   };
 
-  @NonNls private final static Map<String, TextAttributesKey> ourTags = new HashMap<String, TextAttributesKey>();
+  @NonNls private static final Map<String, TextAttributesKey> ourTags = new HashMap<String, TextAttributesKey>();
   static {
     ourTags.put("field", CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES);
     ourTags.put("unusedField", CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);

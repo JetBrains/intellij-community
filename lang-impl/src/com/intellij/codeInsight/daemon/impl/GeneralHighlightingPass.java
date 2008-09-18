@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -178,9 +179,17 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     hosts.addAll(elements);
 
     final Collection<PsiFile> injectedFiles = new THashSet<PsiFile>();
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    final TextAttributes injectedAttributes = scheme.getAttributes(EditorColors.INJECTED_LANGUAGE_FRAGMENT);
     for (PsiElement element : hosts) {
       InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+          for (PsiLanguageInjectionHost.Shred place : places) {
+            TextRange textRange = place.getRangeInsideHost().shiftRight(place.host.getTextRange().getStartOffset());
+            String desc = injectedPsi.getText();
+            HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT, textRange, null, desc, injectedAttributes);
+            addHighlightInfo(textRange, highlightInfo);
+          }
           injectedFiles.add(injectedPsi);
         }
       }, false);
@@ -189,6 +198,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     JobUtil.invokeConcurrentlyForAll(injectedFiles, new Processor<PsiFile>() {
       public boolean process(final PsiFile injectedPsi) {
+
         AnnotationHolderImpl annotationHolder = createAnnotationHolder();
         InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
         highlightInjectedIn(injectedPsi, annotationHolder, errorFilters);
@@ -211,13 +221,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           addHighlightInfo(textRange, highlightInfo);
         }
 
-        Collection<HighlightInfo> todos = highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength());
-        for (HighlightInfo info : todos) {
+        for (HighlightInfo info : highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength())) {
           List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, new ProperTextRange(info.startOffset, info.endOffset));
           for (TextRange editable : editables) {
             TextRange hostRange = documentWindow.injectedToHost(editable);
 
-            HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, hostRange, info.description, info.forcedTextAttributes);
+            HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, hostRange, info.description, info.description, info.forcedTextAttributes);
             patched.toolTip = info.toolTip;
             addHighlightInfo(hostRange, patched);
           }
@@ -496,7 +505,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       TextRange range = todoItem.getTextRange();
       String description = text.subSequence(range.getStartOffset(), range.getEndOffset()).toString();
       TextAttributes attributes = todoItem.getPattern().getAttributes().getTextAttributes();
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.TODO, range, description, attributes);
+      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.TODO, range, description, description, attributes);
       list.add(info);
     }
     return list;

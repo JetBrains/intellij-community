@@ -7,20 +7,21 @@ import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NotNull;
 
 public interface EditorMarkupModel extends MarkupModel {
-  Editor getEditor();
+  @NotNull Editor getEditor();
 
   void setErrorStripeVisible(boolean val);
 
   void setErrorStripeRenderer(ErrorStripeRenderer renderer);
   ErrorStripeRenderer getErrorStripeRenderer();
 
-  void addErrorMarkerListener(ErrorStripeListener listener);
-  void removeErrorMarkerListener(ErrorStripeListener listener);
+  void addErrorMarkerListener(@NotNull ErrorStripeListener listener);
+  void removeErrorMarkerListener(@NotNull ErrorStripeListener listener);
 
-  void setErrorPanelPopupHandler(PopupHandler handler);
+  void setErrorPanelPopupHandler(@NotNull PopupHandler handler);
 
   void setErrorStripTooltipRendererProvider(@NotNull ErrorStripTooltipRendererProvider provider);
 
+  @NotNull
   ErrorStripTooltipRendererProvider getErrorStripTooltipRendererProvider();
 
   int getMinMarkHeight();
