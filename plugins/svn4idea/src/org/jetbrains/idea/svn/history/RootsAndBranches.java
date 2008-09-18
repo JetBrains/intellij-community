@@ -949,7 +949,9 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     public void notifyListener() {
-      myListener.stateChanged(new ChangeEvent(this));
+      if (myListener != null) {
+        myListener.stateChanged(new ChangeEvent(this));
+      }
       myManager.repaintTree();
     }
   }
