@@ -13,10 +13,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.CollectingContentIterator;
@@ -36,7 +33,6 @@ import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.IOUtil;
@@ -49,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -78,7 +74,6 @@ public class FileBasedIndex implements ApplicationComponent {
   public static final int REBUILD_IN_PROGRESS = 3;
   private final Map<ID<?, ?>, AtomicInteger> myRebuildStatus = new HashMap<ID<?,?>, AtomicInteger>();
 
-  private final ExecutorService myInvalidationService = ConcurrencyUtil.newSingleThreadExecutor("FileBasedIndex.InvalidationQueue");
   private final VirtualFileManagerEx myVfManager;
   private final Semaphore myUnsavedDataIndexingSemaphore = new Semaphore();
   private final Map<Document, PsiFile> myTransactionMap = new HashMap<Document, PsiFile>();
@@ -248,13 +243,6 @@ public class FileBasedIndex implements ApplicationComponent {
 
   public void disposeComponent() {
     myChangedFilesUpdater.forceUpdate();
-    myInvalidationService.shutdown();
-    try {
-      myInvalidationService.awaitTermination(30, TimeUnit.SECONDS);
-    }
-    catch (InterruptedException e) {
-      LOG.info(e);
-    }
 
     for (ID<?, ?> indexId : myIndices.keySet()) {
       final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
@@ -335,6 +323,8 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public <K> void ensureUpToDate(final ID<K, ?> indexId) {
+    myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();
+    
     if (isUpToDateCheckEnabled()) {
       try {
         checkRebuild(indexId);
@@ -825,9 +815,21 @@ public class FileBasedIndex implements ApplicationComponent {
     return LoadTextUtil.loadText(file, true);
   }
 
+  private static abstract class InvalidationTask implements Runnable {
+    private VirtualFile mySubj;
+
+    protected InvalidationTask(final VirtualFile subj) {
+      mySubj = subj;
+    }
+
+    public VirtualFile getSubj() {
+      return mySubj;
+    }
+  }
+
   private final class ChangedFilesUpdater extends VirtualFileAdapter implements CacheUpdater{
     private final Set<VirtualFile> myFilesToUpdate = Collections.synchronizedSet(new HashSet<VirtualFile>());
-    private final Queue<FutureTask<?>> myFutureInvalidations = new LinkedBlockingQueue<FutureTask<?>>();
+    private final Queue<InvalidationTask> myFutureInvalidations = new LinkedList<InvalidationTask>();
     private final ManagingFS myManagingFS = ManagingFS.getInstance();
     // No need to react on movement events since files stay valid, their ids don't change and all associated attributes remain intact.
 
@@ -971,7 +973,7 @@ public class FileBasedIndex implements ApplicationComponent {
             }
             final FileContent fc = new FileContent(file, content);
             synchronized (myFutureInvalidations) {
-              final FutureTask<?> future = (FutureTask<?>)myInvalidationService.submit(new Runnable() {
+              final InvalidationTask invalidator = new InvalidationTask(file) {
                 public void run() {
                   Throwable unexpectedError = null;
                   for (ID<?, ?> indexId : affectedIndices) {
@@ -992,16 +994,18 @@ public class FileBasedIndex implements ApplicationComponent {
                   //synchronized (myInvalidationInProgress) {
                   //  myInvalidationInProgress.remove(fileId);
                   //}
-                  
+
                   IndexingStamp.flushCache();
                   if (unexpectedError != null) {
                     LOG.error(unexpectedError);
                   }
                 }
-              });
-              myFutureInvalidations.offer(future);
+              };
+
+              myFutureInvalidations.offer(invalidator);
             }
           }
+
           iterateIndexableFiles(file, new Processor<VirtualFile>() {
             public boolean process(final VirtualFile file) {
               myFilesToUpdate.add(file);
@@ -1012,29 +1016,41 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     }
 
-    private void ensureAllInvalidateTasksCompleted() {
-      while (true) {
-        final FutureTask<?> future;
-        synchronized (myFutureInvalidations) {
-          future = myFutureInvalidations.poll();
-        }
+    public void ensureAllInvalidateTasksCompleted() {
+      final boolean doProgressThing;
 
-        if (future == null) {
-          return;
-        }
+      final int size;
+      synchronized (myFutureInvalidations) {
+        size = myFutureInvalidations.size();
+        if (size == 0) return;
 
-        future.run(); // force the task run if it is has not been run yet
-        ((ApplicationEx)ApplicationManager.getApplication()).writeLockSafeWait(new Runnable() {
-          public void run() {
-            try {
-              future.get();
+        doProgressThing = size > 1 && ApplicationManager.getApplication().isDispatchThread();
+      }
+
+      final Task.Modal task = new Task.Modal(null, "Invalidating Index Entries", false) {
+        public void run(@NotNull final ProgressIndicator indicator) {
+          indicator.setText("");
+          int count = 0;
+          while (true) {
+            InvalidationTask r;
+            synchronized (myFutureInvalidations) {
+              r = myFutureInvalidations.poll();
             }
-            catch (InterruptedException ignored) {
-            }
-            catch (ExecutionException ignored) {
-            }
+
+            if (r == null) return;
+            indicator.setFraction(((double)count++)/size);
+            indicator.setText2(r.getSubj().getPresentableUrl());
+            r.run();
           }
-        });
+        }
+      };
+
+      if (doProgressThing) {
+        task.queue();
+      }
+      else {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        task.run(indicator != null ? indicator : new EmptyProgressIndicator());
       }
     }
 
