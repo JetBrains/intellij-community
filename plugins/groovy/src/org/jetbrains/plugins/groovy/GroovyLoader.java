@@ -30,7 +30,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.startup.StartupManager;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
@@ -112,17 +111,11 @@ public class GroovyLoader implements ApplicationComponent {
 
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       public void projectOpened(final Project project) {
-
-        StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-          public void run() {
-            final TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(project);
-            GroovyUnusedImportsPassFactory unusedImportsPassFactory = project.getComponent(GroovyUnusedImportsPassFactory.class);
-            registrar.registerTextEditorHighlightingPass(unusedImportsPassFactory, new int[]{Pass.UPDATE_ALL}, null, true, -1);
-            GroovyAddImportsPassFactory addImportsPassFactory = project.getComponent(GroovyAddImportsPassFactory.class);
-            registrar.registerTextEditorHighlightingPass(addImportsPassFactory, new int[]{Pass.POPUP_HINTS}, null, true, -1);
-          }
-        });
-
+        final TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(project);
+        GroovyUnusedImportsPassFactory unusedImportsPassFactory = project.getComponent(GroovyUnusedImportsPassFactory.class);
+        registrar.registerTextEditorHighlightingPass(unusedImportsPassFactory, new int[]{Pass.UPDATE_ALL}, null, true, -1);
+        GroovyAddImportsPassFactory addImportsPassFactory = project.getComponent(GroovyAddImportsPassFactory.class);
+        registrar.registerTextEditorHighlightingPass(addImportsPassFactory, new int[]{Pass.POPUP_HINTS}, null, true, -1);
 
         WolfTheProblemSolver.getInstance(project).registerFileHighlightFilter(new Condition<VirtualFile>() {
           public boolean value(VirtualFile virtualFile) {
