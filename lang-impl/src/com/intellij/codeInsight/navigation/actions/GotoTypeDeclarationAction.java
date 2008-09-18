@@ -95,6 +95,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
         final PsiElement[] declarations = getSymbolTypeDeclarations(r.getElement());
         if (declarations != null) {
           for (PsiElement declaration : declarations) {
+            assert declaration != null;
             types.add(declaration);
           }
         }
