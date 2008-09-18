@@ -737,6 +737,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public void indexFileContent(com.intellij.ide.startup.FileContent content) {
+    myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();
     final VirtualFile file = content.getVirtualFile();
     FileContent fc = null;
     FileContent oldContent = null;
@@ -769,12 +770,30 @@ public class FileBasedIndex implements ApplicationComponent {
     IndexingStamp.flushCache();
   }
 
+  //private final TIntHashSet myInvalidationInProgress = new TIntHashSet();
+
   private void updateSingleIndex(final ID<?, ?> indexId, final VirtualFile file, final FileContent currentFC, final FileContent oldFC)
     throws StorageException {
 
     setDataBufferingEnabled(false);
 
     final int inputId = Math.abs(getFileId(file));
+
+    //if ("Stubs".equals(indexId.toString())) {
+    //  synchronized (myInvalidationInProgress) {
+    //    if (currentFC == null) {
+    //      if (!myInvalidationInProgress.contains(inputId)) {
+    //        LOG.assertTrue(false);
+    //      }
+    //    }
+    //    else {
+    //      if (myInvalidationInProgress.contains(inputId)) {
+    //        LOG.assertTrue(false);
+    //      }
+    //    }
+    //  }
+    //}
+
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     assert index != null;
     
@@ -898,6 +917,13 @@ public class FileBasedIndex implements ApplicationComponent {
 
         final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndices.size());
         FileContent fileContent = null;
+
+        //final int fileId = getFileId(file);
+        //LOG.assertTrue(fileId >= 0);
+        //synchronized (myInvalidationInProgress) {
+        //  myInvalidationInProgress.add(fileId);
+        //}
+
         for (ID<?, ?> indexId : myIndices.keySet()) {
           if (shouldUpdateIndex(file, indexId)) {
             if (myNeedContentLoading.contains(indexId)) {
@@ -918,6 +944,9 @@ public class FileBasedIndex implements ApplicationComponent {
             }
           }
         }
+        //synchronized (myInvalidationInProgress) {
+        //  myInvalidationInProgress.remove(fileId);
+        //}
 
         IndexingStamp.flushCache();
 
@@ -926,6 +955,10 @@ public class FileBasedIndex implements ApplicationComponent {
             myFileContentAttic.offer(file);
           }
           else {
+            //synchronized (myInvalidationInProgress) {
+            //  myInvalidationInProgress.add(fileId);
+            //}
+
             // first check if there is an unprocessed content from previous events
             byte[] content = myFileContentAttic.remove(file);
             try {
@@ -955,6 +988,11 @@ public class FileBasedIndex implements ApplicationComponent {
                       }
                     }
                   }
+
+                  //synchronized (myInvalidationInProgress) {
+                  //  myInvalidationInProgress.remove(fileId);
+                  //}
+                  
                   IndexingStamp.flushCache();
                   if (unexpectedError != null) {
                     LOG.error(unexpectedError);
@@ -1032,14 +1070,12 @@ public class FileBasedIndex implements ApplicationComponent {
     }
 
     public void processFile(final com.intellij.ide.startup.FileContent fileContent) {
-      ensureAllInvalidateTasksCompleted();
       processFileImpl(fileContent);
     }
 
     private final Semaphore myForceUpdateSemaphore = new Semaphore();
     
     public void forceUpdate() {
-      ensureAllInvalidateTasksCompleted();
       myForceUpdateSemaphore.down();
       try {
         for (VirtualFile file: queryNeededFiles()) {
