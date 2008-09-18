@@ -56,7 +56,7 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
   @NonNls private static final String MANIFEST_ATTR = "manifest";
   @NonNls private static final String META_INF = "META-INF";
   @NonNls private static final String PLUGIN_XML = "plugin.xml";
-  private PluginBuildParticipant myBuildParticipant;
+  private final PluginBuildParticipant myBuildParticipant;
   private String myPluginXmlUrl;
 
   public PluginBuildConfiguration(Module module) {
@@ -108,7 +108,7 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
         if (myPluginXmlUrl != null) {
           setPluginXmlUrl(myPluginXmlUrl);
         } else {
-          setPluginXmlUrl(getDefaultLocation());
+          setPluginXmlUrl(VfsUtil.pathToUrl(getDefaultLocation()));
         }
         myPluginXmlUrl = null;
       }

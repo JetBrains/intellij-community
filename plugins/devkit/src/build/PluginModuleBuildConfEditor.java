@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
@@ -41,16 +42,16 @@ import java.io.File;
  * Date: Nov 24, 2004
  */
 public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
-  private JPanel myWholePanel = new JPanel(new GridBagLayout());
-  @NonNls private JLabel myPluginXMLLabel = new JLabel(DevKitBundle.message("deployment.view.meta-inf.label", " META-INF" + File.separator + "plugin.xml:"));
-  private TextFieldWithBrowseButton myPluginXML = new TextFieldWithBrowseButton();
+  private final JPanel myWholePanel = new JPanel(new GridBagLayout());
+  @NonNls private final JLabel myPluginXMLLabel = new JLabel(DevKitBundle.message("deployment.view.meta-inf.label", " META-INF" + File.separator + "plugin.xml:"));
+  private final TextFieldWithBrowseButton myPluginXML = new TextFieldWithBrowseButton();
 
-  private TextFieldWithBrowseButton myManifest = new TextFieldWithBrowseButton();
-  private JCheckBox myUseUserManifest = new JCheckBox(DevKitBundle.message("manifest.use.user.defined"));
+  private final TextFieldWithBrowseButton myManifest = new TextFieldWithBrowseButton();
+  private final JCheckBox myUseUserManifest = new JCheckBox(DevKitBundle.message("manifest.use.user.defined"));
 
-  private PluginBuildConfiguration myBuildProperties;
+  private final PluginBuildConfiguration myBuildProperties;
 
-  private Module myModule;
+  private final Module myModule;
   @NonNls private static final String META_INF = "META-INF";
   @NonNls private static final String PLUGIN_XML = "plugin.xml";
   @NonNls private static final String MANIFEST_MF = "manifest.mf";
@@ -126,6 +127,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   }
 
   public void reset() {
+    LocalFileSystem.getInstance().refresh(false);
     myPluginXML.setText(myBuildProperties.getPluginXmlPath().substring(0, myBuildProperties.getPluginXmlPath().length() - META_INF.length() - PLUGIN_XML.length() - 2));
     myManifest.setText(myBuildProperties.getManifestPath());
     myUseUserManifest.setSelected(myBuildProperties.isUseUserManifest());
