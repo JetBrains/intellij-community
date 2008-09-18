@@ -411,7 +411,6 @@ public class PsiUtilBase {
 
   @Nullable
   public static PsiFile getPsiFileInEditor(final Editor editor, final Project project) {
-    //PsiDocumentManager.getInstance(project).commitAllDocuments();
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
 
@@ -429,6 +428,7 @@ public class PsiUtilBase {
     PsiElement elt = getElementAtOffset(file, mostProbablyCorrectLanguageOffset);
     if (elt == null) return file;
 
+    assert elt.isValid() : elt + "; file: "+file + "; isvalid: "+file.isValid();
     return elt.getContainingFile();
   }
 
