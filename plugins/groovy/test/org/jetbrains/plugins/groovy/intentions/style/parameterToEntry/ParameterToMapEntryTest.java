@@ -47,6 +47,12 @@ public class ParameterToMapEntryTest extends UsefulTestCase {
     setSettings();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myFixture.tearDown();
+    super.tearDown();
+  }
+
   public void testParam1() throws Throwable {
     doTestImpl("A.groovy");
   }

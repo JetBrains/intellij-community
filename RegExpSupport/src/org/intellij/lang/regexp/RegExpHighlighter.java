@@ -32,8 +32,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 class RegExpHighlighter extends SyntaxHighlighterBase {
-    private static Map<IElementType, TextAttributesKey> keys1;
-    private static Map<IElementType, TextAttributesKey> keys2;
+    private static final Map<IElementType, TextAttributesKey> keys1;
+    private static final Map<IElementType, TextAttributesKey> keys2;
 
     static final TextAttributesKey META = TextAttributesKey.createTextAttributesKey(
             "REGEXP.META",

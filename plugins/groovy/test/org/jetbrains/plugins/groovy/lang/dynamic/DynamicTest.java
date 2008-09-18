@@ -103,7 +103,7 @@ public class DynamicTest extends GroovyFileSetTestCase {
     DynamicFix dynamicFix = null;
     for (IntentionAction action : actions) {
       if (action instanceof DynamicFix) {
-        dynamicFix = ((DynamicFix) action);
+        dynamicFix = (DynamicFix) action;
         break;
       }
     }
@@ -142,8 +142,8 @@ public class DynamicTest extends GroovyFileSetTestCase {
       CodeStyleSettingsManager.getInstance(myProject).dropTemporarySettings();
       myCodeInsightFixture.tearDown();
       myCodeInsightFixture = null;
-      myFixture.tearDown();
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       e.printStackTrace();
     }
     super.tearDown();

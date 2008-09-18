@@ -36,6 +36,7 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
   public void setUp() throws Exception {
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     myTempDirFixture = fixtureFactory.createTempDirTestFixture();
+    myTempDirFixture.setUp();
 
     final File svnRoot = new File(myTempDirFixture.getTempDirPath(), "svnroot");
     svnRoot.mkdir();

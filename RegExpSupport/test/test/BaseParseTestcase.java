@@ -15,8 +15,8 @@
  */
 package test;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
@@ -24,46 +24,41 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-
 import junit.framework.TestCase;
 import org.intellij.lang.regexp.RegExpFileType;
 
 public abstract class BaseParseTestcase extends TestCase {
-    protected CodeInsightTestFixture myFixture;
+  protected CodeInsightTestFixture myFixture;
 
-    protected void setUp() throws Exception {
-      super.setUp();
-      final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-      final TestFixtureBuilder<IdeaProjectTestFixture> builder = fixtureFactory.createLightFixtureBuilder();
+  protected void setUp() throws Exception {
+    super.setUp();
+    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+    final TestFixtureBuilder<IdeaProjectTestFixture> builder = fixtureFactory.createLightFixtureBuilder();
 
-      final IdeaProjectTestFixture projectFixture = builder.getFixture();
-      projectFixture.setUp();
+    myFixture = fixtureFactory.createCodeInsightFixture(builder.getFixture());
+    myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
 
-      final CodeInsightTestFixture fixture = fixtureFactory.createCodeInsightFixture(projectFixture);
-      fixture.setTestDataPath(getTestDataPath());
-      fixture.setUp();
+    final Project project = myFixture.getProject();
 
-      final Project project = projectFixture.getProject();
+    new WriteCommandAction(project) {
+      protected void run(Result result) throws Throwable {
+        FileTypeManager.getInstance().registerFileType(RegExpFileType.INSTANCE, new String[]{"regexp"});
+      }
+    }.execute();
 
-      new WriteCommandAction(project) {
-        protected void run(Result result) throws Throwable {
-          FileTypeManager.getInstance().registerFileType(RegExpFileType.INSTANCE, new String[]{"regexp"});
-        }
-      }.execute();
-
-      myFixture = fixture;
-    }
+  }
 
   protected String getTestDataRoot() {
     return PathManager.getHomePath() + "/svnPlugins/RegExpSupport/testData";
-    }
+  }
 
   protected String getTestDataPath() {
     return getTestDataRoot() + "/psi";
-    }
+  }
 
-    protected void tearDown() throws Exception {
-      myFixture.tearDown();
-      super.tearDown();
-    }
+  protected void tearDown() throws Exception {
+    myFixture.tearDown();
+    super.tearDown();
+  }
 }
