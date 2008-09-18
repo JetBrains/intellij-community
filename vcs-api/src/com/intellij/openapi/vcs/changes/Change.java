@@ -153,10 +153,10 @@ public class Change {
         else {
           myMoved = true;
         }
+        if (myMoved && myMoveRelativePath == null && project != null) {
+          myMoveRelativePath = VcsPathPresenter.getInstance(project).getPresentableRelativePath(myBeforeRevision, myAfterRevision);
+        }
       }
-    }
-    if (myMoved && myMoveRelativePath == null && project != null) {
-      myMoveRelativePath = VcsPathPresenter.getInstance(project).getPresentableRelativePath(myBeforeRevision, myAfterRevision);
     }
   }
 

@@ -7,11 +7,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -49,7 +50,7 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     });
   }
 
-  public String getPresentableRelativePath(final ContentRevision fromRevision, final ContentRevision toRevision) {
+  public String getPresentableRelativePath(@NotNull final ContentRevision fromRevision, @NotNull final ContentRevision toRevision) {
     // need to use parent path because the old file is already not there
     FilePath fromPath = fromRevision.getFile();
     FilePath toPath = toRevision.getFile();
