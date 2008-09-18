@@ -1,12 +1,14 @@
 package org.jetbrains.plugins.ruby.testing.sm.runner.ui.statistics;
 
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.Marker;
 import org.jetbrains.plugins.ruby.testing.sm.runner.BaseSMTRunnerTestCase;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTRunnerEventsListener;
 import org.jetbrains.plugins.ruby.testing.sm.runner.SMTestProxy;
+import org.jetbrains.plugins.ruby.testing.sm.runner.ui.SMTestRunnerResultsForm;
 import org.jetbrains.plugins.ruby.testing.sm.runner.ui.TestProxySelectionChangedListener;
 
 import java.util.List;
@@ -18,6 +20,7 @@ public class RTestUnitStatisticsPanelTest extends BaseSMTRunnerTestCase {
   private StatisticsPanel myStatisticsPanel;
   private SMTRunnerEventsListener myTestEventsListener;
   private SMTestProxy myRootSuite;
+  private SMTestRunnerResultsForm myResultsForm;
 
   @Override
   protected void setUp() throws Exception {
@@ -25,8 +28,15 @@ public class RTestUnitStatisticsPanelTest extends BaseSMTRunnerTestCase {
 
     myRootSuite = createSuiteProxy("root");
 
+    myResultsForm = (SMTestRunnerResultsForm)createResultsViewer(createConsoleProperties());
     myStatisticsPanel = new StatisticsPanel(getProject());
     myTestEventsListener = myStatisticsPanel.createTestEventsListener();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    Disposer.dispose(myResultsForm);
+    super.tearDown();
   }
 
   public void testGotoSuite_OnTest() {
@@ -157,7 +167,7 @@ public class RTestUnitStatisticsPanelTest extends BaseSMTRunnerTestCase {
     myStatisticsPanel.selectRow(1);
     assertEquals(test1, myStatisticsPanel.getSelectedItem());
 
-    myStatisticsPanel.createChangeSelectionAction().run();
+    myStatisticsPanel.showSelectedProxyInTestsTree();
     assertTrue(onSelectedHappend.isSet());
     assertEquals(test1, proxyRef.get());
     assertTrue(focusRequestedRef.get());
@@ -172,7 +182,7 @@ public class RTestUnitStatisticsPanelTest extends BaseSMTRunnerTestCase {
     myStatisticsPanel.selectRow(1);
     assertEquals(suite1, myStatisticsPanel.getSelectedItem());
 
-    myStatisticsPanel.createChangeSelectionAction().run();
+    myStatisticsPanel.showSelectedProxyInTestsTree();
     assertTrue(onSelectedHappend.isSet());
     assertEquals(suite1, proxyRef.get());
     assertTrue(focusRequestedRef.get());
@@ -187,7 +197,7 @@ public class RTestUnitStatisticsPanelTest extends BaseSMTRunnerTestCase {
     myStatisticsPanel.selectRow(0);
     assertEquals(rootSuite, myStatisticsPanel.getSelectedItem());
 
-    myStatisticsPanel.createChangeSelectionAction().run();
+    myStatisticsPanel.showSelectedProxyInTestsTree();
     assertTrue(onSelectedHappend.isSet());
     assertEquals(rootSuite, proxyRef.get());
     assertTrue(focusRequestedRef.get());

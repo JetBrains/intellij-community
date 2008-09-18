@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * @author Roman Chernyatchik
  */
-public class StatisticsPanel extends JPanel {
+public class StatisticsPanel {
   public static final Icon STATISTICS_TAB_ICON = TestsUIUtil.loadIcon("testStatistics");
 
   private TableView<SMTestProxy> myStatisticsTableView;
@@ -55,8 +55,12 @@ public class StatisticsPanel extends JPanel {
 
     // Fire selection changed and move focus on SHIFT+ENTER
     final KeyStroke shiftEnterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
-    UIUtil.registerAsAction(shiftEnterKey, "change-selection-on-test-proxy",
-                            createChangeSelectionAction(),
+    UIUtil.registerAsAction(shiftEnterKey, "select-test-proxy-in-test-view",
+                            new Runnable() {
+                              public void run() {
+                                showSelectedProxyInTestsTree();
+                              }
+                            },
                             myStatisticsTableView);
 
     // Expand selected or go to parent on ENTER
@@ -64,6 +68,8 @@ public class StatisticsPanel extends JPanel {
     UIUtil.registerAsAction(enterKey, "go-to-selected-suite-or-parent",
                             gotoSuiteOrParentAction,
                             myStatisticsTableView);
+    // Contex menu in Table
+    //PopupHandler.installPopupHandler(myStatisticsTableView, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
   }
 
   public void addChangeSelectionListener(final TestProxySelectionChangedListener listener) {
@@ -126,6 +132,14 @@ public class StatisticsPanel extends JPanel {
     };
   }
 
+  //public Object getData(@NonNls final String dataId) {
+  //  final SMTestProxy testProxy = getSelectedItem();
+  //  if (testProxy == null) {
+  //    return null;
+  //  }
+  //  return TestsUIUtil.getData(testProxy, dataId, myModel);
+  //}
+
   /**
    * On event change selection and probably requests focus. Is used when we want
    * navigate from other component to this
@@ -165,19 +179,14 @@ public class StatisticsPanel extends JPanel {
     });
   }
 
-  protected Runnable createChangeSelectionAction() {
-    // Change selection
-    return new Runnable() {
-      public void run() {
-        final Collection<SMTestProxy> proxies = myStatisticsTableView.getSelection();
-        if (proxies.isEmpty()) {
-          return;
-        }
-        final SMTestProxy proxy = proxies.iterator().next();
-        myStatisticsTableView.clearSelection();
-        fireOnSelectionChanged(proxy);
-      }
-    };
+  protected void showSelectedProxyInTestsTree() {
+    final Collection<SMTestProxy> proxies = myStatisticsTableView.getSelection();
+    if (proxies.isEmpty()) {
+      return;
+    }
+    final SMTestProxy proxy = proxies.iterator().next();
+    myStatisticsTableView.clearSelection();
+    fireOnSelectionChanged(proxy);
   }
 
   protected Runnable createGotoSuiteOrParentAction() {
