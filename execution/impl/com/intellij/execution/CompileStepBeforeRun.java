@@ -12,6 +12,7 @@ import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * @author spleaner
  */
 public class CompileStepBeforeRun implements StepsBeforeRunProvider {
+  public static final Key<RunConfiguration> RUN_CONFIGURATION = Key.create("RUN_CONFIGURATION");
   @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
 
   private Project myProject;
@@ -81,6 +83,7 @@ public class CompileStepBeforeRun implements StepsBeforeRunProvider {
           }
 
           done.down();
+          scope.putUserData(RUN_CONFIGURATION, configuration);
           compilerManager.make(scope, callback);
         }
       }, ModalityState.NON_MODAL);
