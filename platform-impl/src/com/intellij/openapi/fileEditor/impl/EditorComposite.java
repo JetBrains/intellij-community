@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
@@ -86,6 +87,8 @@ public abstract class EditorComposite implements Disposable {
     myFileEditorManager = fileEditorManager;
     myInitialFileTimeStamp     = myFile.getTimeStamp();
     myInitialFileModificationStamp = myFile.getModificationStamp();
+
+    Disposer.register(fileEditorManager.getProject(), this);
 
     if(editors.length > 1){
       final TabbedPaneWrapper wrapper = new TabbedPaneWrapper(SwingConstants.BOTTOM, new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_EDITOR_TAB,
