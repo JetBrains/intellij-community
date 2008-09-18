@@ -412,7 +412,7 @@ public class SvnChangeProvider implements ChangeProvider {
           baseUrl = myBranchConfigurationManager.get(vcsRoot).getBaseName(switchUrl);
         }
         catch (VcsException e) {
-          LOG.error(e);
+          LOG.info(e);
         }
         builder.processSwitchedFile(virtualFile, baseUrl == null ? switchUrl : baseUrl, true);
       }
