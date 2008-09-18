@@ -56,6 +56,7 @@ public class ShowDiffAction extends AnAction {
     if (project == null || changes == null) return;
 
     final boolean needsConvertion = checkIfThereAreFakeRevisions(project, changes);
+    final List<Change> changesInList = e.getData(VcsDataKeys.CHANGES_IN_LIST_KEY);
 
     // this trick is essential since we are under some conditions to refresh changes;
     // but we can only rely on callback after refresh
@@ -72,7 +73,7 @@ public class ShowDiffAction extends AnAction {
           return;
         }
 
-        List<Change> changesInList = e.getData(VcsDataKeys.CHANGES_IN_LIST_KEY);
+        List<Change> changesInListCopy = changesInList;
 
         int index = 0;
         if (convertedChanges.length == 1) {
@@ -82,15 +83,15 @@ public class ShowDiffAction extends AnAction {
           }
           ChangeList changeList = ((ChangeListManagerImpl) ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChange);
           if (changeList != null) {
-            if (changesInList == null) {
-              changesInList = new ArrayList<Change>(changeList.getChanges());
-              Collections.sort(changesInList, new Comparator<Change>() {
+            if (changesInListCopy == null) {
+              changesInListCopy = new ArrayList<Change>(changeList.getChanges());
+              Collections.sort(changesInListCopy, new Comparator<Change>() {
                 public int compare(final Change o1, final Change o2) {
                   return ChangesUtil.getFilePath(o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath(o2).getName());
                 }
               });
             }
-            convertedChanges = changesInList.toArray(new Change[changesInList.size()]);
+            convertedChanges = changesInListCopy.toArray(new Change[changesInListCopy.size()]);
             for(int i=0; i<convertedChanges.length; i++) {
               if (convertedChanges [i] == selectedChange) {
                 index = i;
