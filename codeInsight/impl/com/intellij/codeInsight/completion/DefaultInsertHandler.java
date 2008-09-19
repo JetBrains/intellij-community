@@ -251,7 +251,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
                                  || tailType != TailType.NONE) && tailType != TailType.SMART_COMPLETION;
 
     if (needParenth){
-      if (myContext.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET) >= 0){
+      if (myContext.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET) >= 0 && myContext.getOffsetMap().getOffset(JavaCompletionUtil.ARG_LIST_END_OFFSET) >= 0){
         myState.tailOffset = myContext.getOffsetMap().getOffset(JavaCompletionUtil.ARG_LIST_END_OFFSET);
         if (myContext.getOffsetMap().getOffset(JavaCompletionUtil.RPAREN_OFFSET) < 0 && insertRightParenth){
           myDocument.insertString(myState.tailOffset, ")");
