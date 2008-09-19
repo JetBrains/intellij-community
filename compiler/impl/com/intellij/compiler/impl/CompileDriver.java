@@ -256,9 +256,12 @@ public class CompileDriver {
 
   private CompileScope addAdditionalRoots(CompileScope originalScope) {
     CompileScope scope = originalScope;
+    final Set<Module> affected = new HashSet<Module>(Arrays.asList(originalScope.getAffectedModules()));
     for (final Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
-      final Pair<VirtualFile, VirtualFile> outputs = myGenerationCompilerModuleToOutputDirMap.get(pair);
-      scope = new CompositeScope(scope, new FileSetCompileScope(new VirtualFile[]{outputs.getFirst(), outputs.getSecond()}, new Module[]{pair.getSecond()}));
+      if (affected.contains(pair.getSecond())) {
+        final Pair<VirtualFile, VirtualFile> outputs = myGenerationCompilerModuleToOutputDirMap.get(pair);
+        scope = new CompositeScope(scope, new FileSetCompileScope(new VirtualFile[]{outputs.getFirst(), outputs.getSecond()}, new Module[]{pair.getSecond()}));
+      }
     }
 
     final AdditionalCompileScopeProvider[] scopeProviders = Extensions.getExtensions(AdditionalCompileScopeProvider.EXTENSION_POINT_NAME);
