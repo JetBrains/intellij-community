@@ -21,7 +21,15 @@ import java.util.Map;
  */
 public class JavaMethodMergingContributor extends CompletionContributor {
   public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    if (parameters.getCompletionType() != CompletionType.BASIC && parameters.getCompletionType() != CompletionType.SMART) return true;
+    if (parameters.getCompletionType() == CompletionType.BASIC) {
+      if (!CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION) return true;
+    }
+    else if (parameters.getCompletionType() == CompletionType.SMART) {
+      if (!CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION) return true;
+    }
+    else {
+      return true;
+    }
 
     final Ref<Boolean> wereNonGrouped = Ref.create(false);
     final Map<String, LookupItem<PsiMethod>> methodNameToItem = new LinkedHashMap<String, LookupItem<PsiMethod>>();
