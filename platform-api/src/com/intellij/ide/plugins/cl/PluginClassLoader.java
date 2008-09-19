@@ -5,6 +5,7 @@
  */
 package com.intellij.ide.plugins.cl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.lang.UrlClassLoader;
@@ -50,7 +51,7 @@ public class PluginClassLoader extends UrlClassLoader {
       }
       return c;
     }
-    throw new ClassNotFoundException("Cannot find class while loading plugin '" + myPluginId + "': " + name);
+    throw new PluginException("Cannot find class while loading plugin '" + myPluginId + "': " + name, myPluginId);
   }
 
   @Nullable
