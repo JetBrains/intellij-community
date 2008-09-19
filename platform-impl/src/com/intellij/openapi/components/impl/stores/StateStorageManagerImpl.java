@@ -304,7 +304,7 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   }
 
   public void finishSave(final SaveSession saveSession) {
-    assert mySession == saveSession;
+    assert mySession == saveSession: "mySession=" + mySession + " saveSession=" + saveSession;
 
     ((MySaveSession)saveSession).finishSave();
 
