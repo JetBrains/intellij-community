@@ -7,11 +7,19 @@ package com.intellij.application.options.editor;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.ListUtil;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.ListSelectionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import java.util.regex.Pattern;
+import java.util.Arrays;
 
-public class JavaEditorOptions implements EditorOptionsProvider {
+public class EditorImportOptions implements EditorOptionsProvider {
   private static final String INSERT_IMPORTS_ALWAYS = ApplicationBundle.message("combobox.insert.imports.all");
   private static final String INSERT_IMPORTS_ASK = ApplicationBundle.message("combobox.insert.imports.ask");
   private static final String INSERT_IMPORTS_NONE = ApplicationBundle.message("combobox.insert.imports.none");
@@ -20,15 +28,52 @@ public class JavaEditorOptions implements EditorOptionsProvider {
   private JComboBox mySmartPasteCombo;
   private JCheckBox myCbShowImportPopup;
   private JPanel myWholePanel;
+  private JList myExcludePackagesList;
+  private JButton myAddPackageButton;
+  private JButton myRemoveButton;
 
-  public JavaEditorOptions() {
+  private DefaultListModel myExcludePackagesModel;
+  private static Pattern ourPackagePattern = Pattern.compile("(\\w+\\.)*\\w+");
+
+  public EditorImportOptions() {
     mySmartPasteCombo.addItem(INSERT_IMPORTS_ALWAYS);
     mySmartPasteCombo.addItem(INSERT_IMPORTS_ASK);
     mySmartPasteCombo.addItem(INSERT_IMPORTS_NONE);
+
+    myAddPackageButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        InputValidator validator = new InputValidator() {
+
+          public boolean checkInput(String inputString) {
+            return ourPackagePattern.matcher(inputString).matches();
+          }
+
+          public boolean canClose(String inputString) {
+            return checkInput(inputString);
+          }
+        };
+        String packageName = Messages.showInputDialog(myWholePanel, ApplicationBundle.message("exclude.from.completion.prompt"),
+                                                      ApplicationBundle.message("exclude.from.completion.title"),
+                                                      Messages.getWarningIcon(), "", validator);
+        if (packageName != null) {
+          myExcludePackagesModel.add(myExcludePackagesModel.size(), packageName);
+          myExcludePackagesList.setSelectedValue(packageName, true);
+        }
+      }
+    });
+    myExcludePackagesList.addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        myRemoveButton.setEnabled(myExcludePackagesList.getSelectedValue() != null);
+      }
+    });
+    myRemoveButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        ListUtil.removeSelectedItems(myExcludePackagesList);
+      }
+    });
   }
 
   public void reset() {
-    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
 
@@ -48,6 +93,12 @@ public class JavaEditorOptions implements EditorOptionsProvider {
 
 
     myCbShowImportPopup.setSelected(daemonSettings.isImportHintEnabled());
+
+    myExcludePackagesModel = new DefaultListModel();
+    for(String aPackage: codeInsightSettings.EXCLUDED_PACKAGES) {
+      myExcludePackagesModel.add(myExcludePackagesModel.size(), aPackage);
+    }
+    myExcludePackagesList.setModel(myExcludePackagesModel);
   }
 
   public void disposeUIResources() {
@@ -59,8 +110,18 @@ public class JavaEditorOptions implements EditorOptionsProvider {
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
 
     codeInsightSettings.ADD_IMPORTS_ON_PASTE = getSmartPasteValue();
+    codeInsightSettings.EXCLUDED_PACKAGES = getExcludedPackages();
     daemonSettings.setImportHintEnabled(myCbShowImportPopup.isSelected());
   }
+
+  private String[] getExcludedPackages() {
+    String[] excludedPackages = new String[myExcludePackagesModel.size()];
+    for (int i = 0; i < myExcludePackagesModel.size(); i++) {
+      excludedPackages [i] = (String)myExcludePackagesModel.elementAt(i);
+    }
+    return excludedPackages;
+  }
+
 
   public JComponent createComponent() {
     return myWholePanel;
@@ -73,6 +134,8 @@ public class JavaEditorOptions implements EditorOptionsProvider {
     boolean isModified = isModified(myCbShowImportPopup, daemonSettings.isImportHintEnabled());
     
     isModified |= getSmartPasteValue() != codeInsightSettings.ADD_IMPORTS_ON_PASTE;
+    isModified |= !Arrays.deepEquals(getExcludedPackages(), codeInsightSettings.EXCLUDED_PACKAGES);
+
     return isModified;
   }
 
@@ -94,7 +157,7 @@ public class JavaEditorOptions implements EditorOptionsProvider {
   }
 
   public String getDisplayName() {
-    return "JAVA";
+    return "Auto Import";
   }
 
   public Icon getIcon() {

@@ -6,17 +6,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.ListUtil;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
-import java.util.regex.Pattern;
 
 public class CodeCompletionPanel {
   JPanel myPanel;
@@ -48,13 +41,7 @@ public class CodeCompletionPanel {
   private JRadioButton myRbInsertParenth;
   private JRadioButton myRbInsertBothParenthes;
   private JCheckBox myCbInsertBothParenthesWhenNoArgs;
-  private JList myExcludePackagesList;
-  private JButton myAddPackageButton;
-  private JButton myRemoveButton;
   ButtonGroup buttonGroup = new ButtonGroup();
-
-  private DefaultListModel myExcludePackagesModel;
-  private static Pattern ourPackagePattern = Pattern.compile("(\\w+\\.)*\\w+");
 
   public CodeCompletionPanel(){
    myCaseSensitiveCombo.setModel(new DefaultComboBoxModel(new String[]{CASE_SENSITIVE_ALL, CASE_SENSITIVE_NONE,
@@ -116,37 +103,6 @@ public class CodeCompletionPanel {
    buttonGroup.add(myRbInsertBothParenthes);
 
     reset();
-    myAddPackageButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        InputValidator validator = new InputValidator() {
-
-          public boolean checkInput(String inputString) {
-            return ourPackagePattern.matcher(inputString).matches();
-          }
-
-          public boolean canClose(String inputString) {
-            return checkInput(inputString);
-          }
-        };
-        String packageName = Messages.showInputDialog(myPanel, ApplicationBundle.message("exclude.from.completion.prompt"),
-                                                      ApplicationBundle.message("exclude.from.completion.title"),
-                                                      Messages.getWarningIcon(), "", validator);
-        if (packageName != null) {
-          myExcludePackagesModel.add(myExcludePackagesModel.size(), packageName);
-          myExcludePackagesList.setSelectedValue(packageName, true);
-        }
-      }
-    });
-    myExcludePackagesList.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        myRemoveButton.setEnabled(myExcludePackagesList.getSelectedValue() != null);
-      }
-    });
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        ListUtil.removeSelectedItems(myExcludePackagesList);
-      }
-    });
   }
 
     /*
@@ -212,12 +168,6 @@ public class CodeCompletionPanel {
     myCbShowFullParameterSignatures.setSelected(codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO);
 
     myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_MEMBER_LOOKUP);
-
-    myExcludePackagesModel = new DefaultListModel();
-    for(String aPackage: codeInsightSettings.EXCLUDED_PACKAGES) {
-      myExcludePackagesModel.add(myExcludePackagesModel.size(), aPackage);
-    }
-    myExcludePackagesList.setModel(myExcludePackagesModel);
   }
 
   public void apply() {
@@ -249,22 +199,11 @@ public class CodeCompletionPanel {
     codeInsightSettings.JAVADOC_INFO_DELAY = getIntegerValue(myAutopopupJavaDocField.getText(), 0);
     codeInsightSettings.LOOKUP_HEIGHT = getIntegerValue(myFldLookupHeight.getText(), 0);
 
-    codeInsightSettings.EXCLUDED_PACKAGES = getExcludedPackages();
-
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
     if (project != null){
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     }
   }
-
-  private String[] getExcludedPackages() {
-    String[] excludedPackages = new String[myExcludePackagesModel.size()];
-    for (int i = 0; i < myExcludePackagesModel.size(); i++) {
-      excludedPackages [i] = (String)myExcludePackagesModel.elementAt(i);
-    }
-    return excludedPackages;
-  }
-
 
   public boolean isModified() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
@@ -293,8 +232,6 @@ public class CodeCompletionPanel {
     isModified |= isModified(myParameterInfoDelayField, codeInsightSettings.PARAMETER_INFO_DELAY, 0);
     isModified |= isModified(myAutopopupJavaDocField, codeInsightSettings.JAVADOC_INFO_DELAY, 0);
     isModified |= isModified(myFldLookupHeight, codeInsightSettings.LOOKUP_HEIGHT, 11);
-
-    isModified |= !Arrays.deepEquals(getExcludedPackages(), codeInsightSettings.EXCLUDED_PACKAGES);
 
     return isModified;
   }
