@@ -14,9 +14,6 @@
   <depends>com.intellij.modules.vcs</depends>
 
   <actions>
-    <action id="Git.Clone" class="git4idea.actions.GitClone" text="Git Clone a Repository">
-      <add-to-group group-id="VcsGroups" anchor="last"/>
-    </action>
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="Git">
       <reference id="CheckinFiles"/>
       <!-- <reference id="CheckinProject"/>
@@ -67,6 +64,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs"/>
+    <checkoutProvider implementation="git4idea.GitCheckoutProvider"/>
 
     <projectService
         serviceInterface="git4idea.GitAnnotationProvider"

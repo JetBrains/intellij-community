@@ -22,11 +22,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -109,5 +111,32 @@ public class GitUtil {
    */
   public static void showOperationError(final Project project, final VcsException ex, @NonNls final String operation) {
     Messages.showErrorDialog(project, ex.getMessage(), GitBundle.message("error.occurred.during", operation));
+  }
+
+  /**
+   * @return a temporary directory to use
+   */
+  @NotNull
+  public static VirtualFile getTempDir() throws VcsException {
+    try {
+      File temp = File.createTempFile("git-temp-file", "txt");
+      try {
+        final File parentFile = temp.getParentFile();
+        if (parentFile == null) {
+          throw new Exception("Missing parent in " + temp);
+        }
+        final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(parentFile);
+        if (vFile == null) {
+          throw new Exception("Missing virtual file for dir " + parentFile);
+        }
+        return vFile;
+      }
+      finally {
+        temp.delete();
+      }
+    }
+    catch (Exception e) {
+      throw new VcsException("Unable to locate temporary directory", e);
+    }
   }
 }
