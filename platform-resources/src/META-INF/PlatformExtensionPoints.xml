@@ -69,4 +69,5 @@
 
   <extensionPoint name="editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider"/>
 
+  <extensionPoint name="filetype.decompiler" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
 </extensionPoints>
