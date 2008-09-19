@@ -6,7 +6,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -1100,11 +1099,7 @@ public class FileBasedIndex implements ApplicationComponent {
       }
       finally {
         myForceUpdateSemaphore.up();
-        ((ApplicationEx)ApplicationManager.getApplication()).writeLockSafeWait(new Runnable() {
-          public void run() {
-            myForceUpdateSemaphore.waitFor(); // possibly wait until another thread completes indexing
-          }
-        });
+        myForceUpdateSemaphore.waitFor(); // possibly wait until another thread completes indexing
       }
     }
 
