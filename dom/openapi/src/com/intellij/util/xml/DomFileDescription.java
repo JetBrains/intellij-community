@@ -67,7 +67,7 @@ public class DomFileDescription<T> {
    *
    * @see #initializeFileDescription()
    */
-  protected final <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
+  public final <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
     myImplementations.put(domElementClass, implementationClass);
   }
 
