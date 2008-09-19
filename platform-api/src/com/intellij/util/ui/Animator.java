@@ -129,14 +129,14 @@ public abstract class Animator implements Disposable {
   private void cycleEnd() throws InterruptedException {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        try {
-          onAnimationMaxCycleReached();
-        }
-        catch (InterruptedException e) {
-          return;
-        }
+        paintCycleEnd();
       }
     });
+    onAnimationMaxCycleReached();
+  }
+
+  protected void paintCycleEnd() {
+
   }
 
   protected void onAnimationMaxCycleReached() throws InterruptedException {

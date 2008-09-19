@@ -164,7 +164,7 @@ public class BalloonImpl implements Disposable, Balloon {
       }
 
       @Override
-      protected void onAnimationMaxCycleReached() throws InterruptedException {
+      protected void paintCycleEnd() {
         if (myComp.getParent() == null) return;
 
         if (isForward()) {
