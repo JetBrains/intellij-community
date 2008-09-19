@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseCodeInsightAction extends CodeInsightAction {
@@ -25,17 +26,17 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
   }
 
   @Nullable
-  protected Editor getEditor(final DataContext dataContext, final Project project) {
+  protected Editor getEditor(@NotNull final DataContext dataContext, @NotNull final Project project) {
     Editor editor = getBaseEditor(dataContext, project);
     if (!myLookForInjectedEditor) return editor;
     return getInjectedEditor(project, editor);
   }
 
-  public static Editor getInjectedEditor(final Project project, final Editor editor) {
+  public static Editor getInjectedEditor(@NotNull Project project, final Editor editor) {
     return getInjectedEditor(project, editor, true);
   }
 
-  public static Editor getInjectedEditor(final Project project, final Editor editor, boolean commit) {
+  public static Editor getInjectedEditor(@NotNull Project project, final Editor editor, boolean commit) {
     Editor injectedEditor = editor;
     if (editor != null) {
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);

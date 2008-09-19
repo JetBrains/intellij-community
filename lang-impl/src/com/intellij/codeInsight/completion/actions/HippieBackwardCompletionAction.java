@@ -6,13 +6,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class HippieBackwardCompletionAction extends BaseCodeInsightAction {
   public HippieBackwardCompletionAction() {
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformedImpl(Project project, Editor editor) {
+  public void actionPerformedImpl(@NotNull Project project, Editor editor) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.hippie");
     super.actionPerformedImpl(project, editor);
   }

@@ -10,6 +10,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author peter
@@ -19,7 +20,7 @@ public class CodeCompletionAction extends BaseCodeInsightAction implements HintM
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformedImpl(Project project, Editor editor) {
+  public void actionPerformedImpl(@NotNull Project project, Editor editor) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC);
     super.actionPerformedImpl(project, editor);
   }

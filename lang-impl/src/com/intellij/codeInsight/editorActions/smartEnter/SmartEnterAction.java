@@ -30,7 +30,10 @@ public class SmartEnterAction extends EditorAction {
   @Override
   protected Editor getEditor(final DataContext dataContext) {
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    return editor != null ? BaseCodeInsightAction.getInjectedEditor(editor.getProject(), editor) : null;
+    if (editor == null) return null;
+    Project project = editor.getProject();
+    if (project == null) project = PlatformDataKeys.PROJECT.getData(dataContext);
+    return project == null ? null : BaseCodeInsightAction.getInjectedEditor(project, editor);
   }
 
   private static class Handler extends EditorWriteActionHandler {

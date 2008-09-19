@@ -25,25 +25,27 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class CodeInsightAction extends AnAction {
-
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    Editor editor = getEditor(dataContext, project);
-    actionPerformedImpl(project, editor);
+    if (project != null) {
+      Editor editor = getEditor(dataContext, project);
+      actionPerformedImpl(project, editor);
+    }
   }
 
   @Nullable
-  protected Editor getEditor(final DataContext dataContext, final Project project) {
+  protected Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project) {
     return PlatformDataKeys.EDITOR.getData(dataContext);
   }
 
-  public void actionPerformedImpl(final Project project, final Editor editor) {
+  public void actionPerformedImpl(@NotNull final Project project, final Editor editor) {
     if (editor == null) return;
     //final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);

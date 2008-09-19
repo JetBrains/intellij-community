@@ -9,6 +9,7 @@ import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -18,7 +19,7 @@ public class ClassNameCompletionAction extends BaseCodeInsightAction implements 
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformedImpl(Project project, Editor editor) {
+  public void actionPerformedImpl(@NotNull Project project, Editor editor) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CLASSNAME);
     super.actionPerformedImpl(project, editor);
   }
