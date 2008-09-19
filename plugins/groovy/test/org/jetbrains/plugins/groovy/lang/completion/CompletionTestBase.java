@@ -35,8 +35,8 @@ public abstract class CompletionTestBase extends ActionTestCase {
   protected Editor myEditor;
   protected FileEditorManager myFileEditorManager;
   protected PsiFile myFile;
-  private static PrefixMatcher TRUE_MATCHER = new MyTruePrefixMatcher();
-  protected final static String RULEZZZ = "IntellijIdeaRulezzz";
+  private static final PrefixMatcher TRUE_MATCHER = new MyTruePrefixMatcher();
+  protected static final String RULEZZZ = "IntellijIdeaRulezzz";
 
   public CompletionTestBase(String path) {
     super(path);
@@ -49,8 +49,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
   }
 
   protected String processFile(final PsiFile file) throws IncorrectOperationException, InvalidDataException, IOException {
-    String result = "";
-//  todo [DIANA] uncomment me!
+    //  todo [DIANA] uncomment me!
     String fileText = file.getText();
     int offset = fileText.indexOf(CARET_MARKER);
     fileText = removeCaretMarker(fileText);
@@ -66,11 +65,13 @@ public abstract class CompletionTestBase extends ActionTestCase {
     final CodeInsightActionHandler handler = getCompetionHandler();
     CompletionData data = CompletionUtil.getCompletionDataByElement(myFile);
     LookupItem[] items = getAcceptableItems(data);
+    boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
+    CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX = false;
 
+    String result = "";
     try {
       performAction(myProject, new Runnable() {
         public void run() {
-          CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX = false;
           handler.invoke(myProject, myEditor, myFile);
         }
       });
@@ -88,8 +89,9 @@ public abstract class CompletionTestBase extends ActionTestCase {
         result = result.trim();
       }
 
-    } finally {
-      CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX = true;
+    }
+    finally {
+      CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX = old;
       myFileEditorManager.closeFile(virtualFile);
       myEditor = null;
     }
@@ -130,7 +132,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
     };
 
     PsiElement insertedElement = newFile.findElementAt(myOffset + 1);
-    if (lookupSet.size() == 0) {
+    if (lookupSet.isEmpty()) {
       final PsiReference ref = newFile.findReferenceAt(myOffset + 1);
       if (addKeywords(ref)) {
         // Do not duplicate reference & keyword variants for Grails tags
