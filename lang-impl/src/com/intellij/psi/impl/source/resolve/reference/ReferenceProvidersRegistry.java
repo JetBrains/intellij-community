@@ -206,10 +206,9 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
   public static PsiReference[] getReferencesFromProviders(PsiElement context, @NotNull Class clazz){
     assert context.isValid() : "Invalid context: " + context;
 
-    PsiReference[] result = PsiReference.EMPTY_ARRAY;
     final List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> providers = getInstance(context.getProject()).getPairsByElement(context, clazz);
     if (providers.isEmpty()) {
-      return result;
+      return PsiReference.EMPTY_ARRAY;
     }
     Collections.sort(providers, PRIORITY_COMPARATOR);
     if (LegacyCompletionContributor.DEBUG) {
@@ -217,23 +216,26 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
       System.out.println("providers = " + providers);
     }
 
+    Collection<PsiReference> result = new ArrayList<PsiReference>();
     final Double maxPriority = providers.get(0).getThird();
     next: for (Trinity<PsiReferenceProvider, ProcessingContext, Double> trinity : providers) {
       final PsiReference[] refs = trinity.getFirst().getReferencesByElement(context, trinity.getSecond());
-      if (trinity.getThird().equals(maxPriority)) {
-        result = ArrayUtil.mergeArrays(result, refs, PsiReference.class);
-      } else {
+      if (!trinity.getThird().equals(maxPriority)) {
         for (PsiReference ref : refs) {
           for (PsiReference reference : result) {
-            if (reference.getRangeInElement().contains(ref.getRangeInElement())) {
+            if (ref != null && reference.getRangeInElement().contains(ref.getRangeInElement())) {
               continue next;
             }
           }
         }
-        result = ArrayUtil.mergeArrays(result, refs, PsiReference.class);
+      }
+      for (PsiReference ref : refs) {
+        if (ref != null) {
+          result.add(ref);
+        }
       }
     }
-    return result;
+    return result.toArray(new PsiReference[result.size()]);
   }
 
 }
