@@ -50,7 +50,7 @@ public abstract class XDebuggerEvaluator {
     return 700;
   }
 
-  public static interface XEvaluationCallback {
+  public interface XEvaluationCallback {
 
     void evaluated(@NotNull XValue result);
 
