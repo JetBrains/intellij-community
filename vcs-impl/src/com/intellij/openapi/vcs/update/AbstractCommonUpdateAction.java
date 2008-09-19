@@ -405,6 +405,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
 
     public void onSuccess() {
+      if (myProject.isDisposed()) {
+        myProjectLevelVcsManager.stopBackgroundVcsOperation();
+        ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
+        return;
+      }
       boolean continueChain = false;
       for (SequentialUpdatesContext context : myContextInfo.values()) {
         continueChain |= context != null;
@@ -438,6 +443,10 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       if (! someSessionWasCancelled) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (myProject.isDisposed()) {
+              ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
+              return;
+            }
             if (! myVcsExceptions.isEmpty()) {
               if (continueChainFinal) {
                 myVcsExceptions.add(contextInterruptedMessages());

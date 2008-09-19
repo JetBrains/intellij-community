@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -169,7 +170,7 @@ public class ChangesUtil {
     Change change = ApplicationManager.getApplication().runReadAction(new Computable<Change>() {
       @Nullable
       public Change compute() {
-        if (project.isDisposed()) return null;
+        if (project.isDisposed()) throw new ProcessCanceledException();
         return ChangeListManager.getInstance(project).getChange(filePath);
       }
     });

@@ -16,7 +16,10 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -31,6 +34,15 @@ import java.util.List;
 public abstract class VcsDirtyScopeManager {
   public static VcsDirtyScopeManager getInstance(Project project) {
     return project.getComponent(VcsDirtyScopeManager.class);
+  }
+
+  public static VcsDirtyScopeManager getInstanceChecked(final Project project) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<VcsDirtyScopeManager>() {
+      public VcsDirtyScopeManager compute() {
+        if (project.isDisposed()) throw new ProcessCanceledException();
+        return project.getComponent(VcsDirtyScopeManager.class);
+      }
+    });
   }
 
   /**

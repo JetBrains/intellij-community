@@ -15,8 +15,11 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
@@ -42,6 +45,15 @@ import java.util.List;
 public abstract class AbstractVcsHelper {
   public static AbstractVcsHelper getInstance(Project project) {
     return ServiceManager.getService(project, AbstractVcsHelper.class);
+  }
+
+  public static AbstractVcsHelper getInstanceChecked(final Project project) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<AbstractVcsHelper>() {
+      public AbstractVcsHelper compute() {
+        if (project.isDisposed()) throw new ProcessCanceledException();
+        return ServiceManager.getService(project, AbstractVcsHelper.class);
+      }
+    });
   }
 
   public abstract void showErrors(List<VcsException> abstractVcsExceptions, @NotNull String tabDisplayName);

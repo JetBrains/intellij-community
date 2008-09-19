@@ -105,7 +105,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private VcsListener myVcsListener = new VcsListener() {
     public void directoryMappingChanged() {
-      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+      VcsDirtyScopeManager.getInstanceChecked(myProject).markEverythingDirty();
       scheduleUpdate();
     }
   };
@@ -216,6 +216,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         public void run() {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
+              if (myProject.isDisposed()) return;
               afterUpdate.run();
               ChangesViewManager.getInstance(myProject).refreshView();
             }
@@ -275,6 +276,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
               return;
             }
           }
+          if (myProject.isDisposed()) return;
           myRunnable.run();
           ChangesViewManager.getInstance(myProject).refreshView();
         }
@@ -334,7 +336,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         synchronized (myPendingUpdatesLock) {
           if (myDisposed) return;
         }
-        if ((! myInitialized) || (ProjectLevelVcsManager.getInstance(myProject).isBackgroundVcsOperationRunning())) {
+        if ((! myInitialized) || (ProjectLevelVcsManager.getInstanceChecked(myProject).isBackgroundVcsOperationRunning())) {
           scheduleUpdate();
           return;
         }
@@ -381,7 +383,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         checkIfDisposed();
       }
 
-      final VcsDirtyScopeManagerImpl dirtyScopeManager = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject));
+      final VcsDirtyScopeManagerImpl dirtyScopeManager = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstanceChecked(myProject));
       final boolean wasEverythingDirty = dirtyScopeManager.isEverythingDirty();
       final List<VcsDirtyScope> scopes = dirtyScopeManager.retrieveScopes();
 

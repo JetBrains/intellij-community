@@ -141,7 +141,7 @@ public class CommitHelper {
       processor.doBeforeRefresh();
       VirtualFileManager.getInstance().refresh(true, processor.postRefresh());
 
-      AbstractVcsHelper.getInstance(myProject).showErrors(processor.getVcsExceptions(), myActionName);
+      AbstractVcsHelper.getInstanceChecked(myProject).showErrors(processor.getVcsExceptions(), myActionName);
     }
     finally {
       commitCompleted(processor.getVcsExceptions(), processor);

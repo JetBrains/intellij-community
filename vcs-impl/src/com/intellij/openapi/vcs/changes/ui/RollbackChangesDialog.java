@@ -174,7 +174,7 @@ public class RollbackChangesDialog extends DialogWrapper {
           doRefresh(project, pathsToRefresh, true, afterRefresh);
         }
 
-        AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, VcsBundle.message("changes.action.rollback.text"));
+        AbstractVcsHelper.getInstanceChecked(project).showErrors(vcsExceptions, VcsBundle.message("changes.action.rollback.text"));
       }
     };
 
