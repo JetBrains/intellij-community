@@ -1,21 +1,22 @@
 package com.intellij.ui.tabs.impl;
 
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.util.Pass;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.util.ui.Centerizer;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.ide.DataManager;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -40,7 +41,6 @@ public class TabLabel extends JPanel {
     myLabel.setIconOpaque(false);
     setOpaque(false);
     setLayout(new BorderLayout(myLabel.getIconTextGap() * 2, 0));
-
 
 
     myLabelPlaceholder.setOpaque(false);
@@ -201,7 +201,12 @@ public class TabLabel extends JPanel {
 
     if (group == null) return;
 
-    myActionPanel = new ActionPanel(myTabs, myInfo);
+    myActionPanel = new ActionPanel(myTabs, myInfo, new Pass<MouseEvent>() {
+      public void pass(final MouseEvent event) {
+        final MouseEvent me = SwingUtilities.convertMouseEvent(event.getComponent(), event, TabLabel.this);
+        processMouseEvent(me);
+      }
+    });
 
     NonOpaquePanel wrapper = new NonOpaquePanel(new GridBagLayout());
     wrapper.add(myActionPanel);
@@ -209,6 +214,11 @@ public class TabLabel extends JPanel {
     add(wrapper, BorderLayout.EAST);
 
     myTabs.revalidateAndRepaint(false);
+  }
+
+  @Override
+  protected void processMouseEvent(final MouseEvent e) {
+    super.processMouseEvent(e);
   }
 
   private void removeOldActionPanel() {

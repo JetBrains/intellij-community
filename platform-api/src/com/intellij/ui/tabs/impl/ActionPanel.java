@@ -1,14 +1,16 @@
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.util.Pass;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 class ActionPanel extends NonOpaquePanel {
 
@@ -17,14 +19,14 @@ class ActionPanel extends NonOpaquePanel {
   private TabInfo myTabInfo;
   private JBTabsImpl myTabs;
 
-  public ActionPanel(JBTabsImpl tabs, TabInfo tabInfo) {
+  public ActionPanel(JBTabsImpl tabs, TabInfo tabInfo, Pass<MouseEvent> pass) {
     myTabs = tabs;
     myTabInfo = tabInfo;
     myGroup = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();
     AnAction[] children = myGroup.getChildren(null);
     setLayout(new FlowLayout(FlowLayout.LEFT, 2, 0));
     for (AnAction each : children) {
-      ActionButton eachButton = new ActionButton(myTabs, tabInfo, each, tabInfo.getTabActionPlace());
+      ActionButton eachButton = new ActionButton(myTabs, tabInfo, each, tabInfo.getTabActionPlace(), pass);
       myButtons.add(eachButton);
       add(eachButton.getComponent());
     }

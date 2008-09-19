@@ -3,6 +3,7 @@ package com.intellij.ui.tabs.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.util.Pass;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ObjectUtils;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 
 class ActionButton extends IconButton implements ActionListener {
 
@@ -21,13 +23,13 @@ class ActionButton extends IconButton implements ActionListener {
   private TabInfo myTabInfo;
   private JBTabsImpl myTabs;
 
-  public ActionButton(JBTabsImpl tabs, TabInfo tabInfo, AnAction action, String place) {
+  public ActionButton(JBTabsImpl tabs, TabInfo tabInfo, AnAction action, String place, Pass<MouseEvent> pass) {
     super(null, action.getTemplatePresentation().getIcon());
     myTabs = tabs;
     myTabInfo = tabInfo;
     myAction = action;
     myPlace = place;
-    myButton = new InplaceButton(this, this);
+    myButton = new InplaceButton(this, this, pass);
     myButton.setVisible(false);
   }
 
@@ -55,6 +57,7 @@ class ActionButton extends IconButton implements ActionListener {
 
     return changed;
   }
+
 
   private boolean areEqual(Presentation p1, Presentation p2) {
     if (p1 == null || p2 == null) return false;

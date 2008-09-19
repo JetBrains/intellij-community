@@ -1,6 +1,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.util.Pass;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.CenteredIcon;
 import com.intellij.util.ui.UIUtil;
@@ -27,13 +28,24 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
   private boolean myFill;
 
   public InplaceButton(String tooltip, final Icon icon, final ActionListener listener) {
-    this(new IconButton(tooltip, icon, icon), listener);
+    this(new IconButton(tooltip, icon, icon), listener, null);
   }
 
   public InplaceButton(IconButton source, final ActionListener listener) {
+    this(source, listener, null);
+  }
+
+  public InplaceButton(IconButton source, final ActionListener listener, final Pass<MouseEvent> me) {
     myBehavior = new BaseButtonBehavior(this) {
       protected void execute(final MouseEvent e) {
         listener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "execute"));
+      }
+
+      @Override
+      protected void pass(final MouseEvent e) {
+        if (me != null) {
+          me.pass(e);
+        }
       }
     };
 
@@ -52,6 +64,10 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     setToolTipText(source.getTooltip());
     setOpaque(false);
+  }
+
+  protected void pass(MouseEvent e) {
+
   }
 
   public InplaceButton setFillBg(boolean fill) {

@@ -909,5 +909,9 @@ public class UIUtil {
   public static String addPadding(final String html, int hPadding) {
     return "<table border=0 hspace=" + hPadding + "><tr><td>" + html + "</td></tr></table>";
   }
+
+  public static int getButtonMouseDeadzoneLength() {
+    return 300;
+  }
 }
 

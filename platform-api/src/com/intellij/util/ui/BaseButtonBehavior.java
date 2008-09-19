@@ -16,10 +16,13 @@
 
 package com.intellij.util.ui;
 
+import com.intellij.util.Alarm;
+
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+import java.awt.*;
 
 public abstract class BaseButtonBehavior {
 
@@ -30,68 +33,74 @@ public abstract class BaseButtonBehavior {
   private boolean mySelected;
 
 
+  private TimedDeadzone myMouseDeadzone;
+
   public BaseButtonBehavior(JComponent component) {
-    myComponent = component;
-    myComponent.addMouseListener(new MyMouseListener());
+    this(component, UIUtil.getButtonMouseDeadzoneLength());
   }
 
-  public boolean isHovered() {
+  public BaseButtonBehavior(JComponent component, int mouseDeadzoneTime) {
+    myComponent = component;
+    myMouseDeadzone = new TimedDeadzone(mouseDeadzoneTime, Alarm.ThreadToUse.SWING_THREAD);
+    myComponent.addMouseListener(new MyMouseListener());
+    myComponent.addMouseMotionListener(new MyMouseMotionListener());
+  }
+
+  public final boolean isHovered() {
     return myHovered;
   }
 
-  public void setHovered(boolean hovered) {
+  private void setHovered(boolean hovered) {
     myHovered = hovered;
     myComponent.repaint();
   }
 
-  public boolean isPressedByMouse() {
+  public final boolean isPressedByMouse() {
     return myPressedByMouse;
   }
 
-  public void setPressedByMouse(boolean pressedByMouse) {
+  private void setPressedByMouse(boolean pressedByMouse) {
     myPressedByMouse = pressedByMouse;
     myComponent.repaint();
   }
 
-  public boolean isSelected() {
+  public final boolean isSelected() {
     return mySelected;
   }
 
-  public void setSelected(boolean selected) {
+  private void setSelected(boolean selected) {
     mySelected = selected;
   }
 
-  public boolean isPressed() {
+  private boolean isPressed() {
     return isSelected() || isPressedByMouse();
   }
 
-
   private class MyMouseListener extends MouseAdapter {
     public void mouseEntered(MouseEvent e) {
+      myMouseDeadzone.reEnter();
+
       setHovered(true);
       myComponent.repaint();
     }
 
     public void mouseExited(MouseEvent e) {
+      myMouseDeadzone.clear();
+
       setHovered(false);
       myComponent.repaint();
     }
 
     public void mousePressed(MouseEvent e) {
-      if (!UIUtil.isActionClick(e)) {
-        pass(e);
-        return;
-      }
+      if (passIfNeeded(e)) return;
 
       setPressedByMouse(true);
       myComponent.repaint();
     }
 
+
     public void mouseReleased(MouseEvent e) {
-      if (!UIUtil.isActionClick(e)) {
-        pass(e);
-        return;
-      }
+      if (passIfNeeded(e)) return;
 
       setPressedByMouse(false);
 
@@ -100,6 +109,22 @@ public abstract class BaseButtonBehavior {
       if (point.y < 0 || point.y > myComponent.getHeight()) return;
 
       execute(e);
+    }
+
+    private boolean passIfNeeded(final MouseEvent e) {
+      if (!UIUtil.isActionClick(e) || myMouseDeadzone.isWithin()) {
+        pass(e);
+        return true;
+      }
+      return false;
+    }
+
+  }
+
+  private class MyMouseMotionListener extends MouseMotionAdapter {
+    @Override
+    public void mouseMoved(final MouseEvent e) {
+      myMouseDeadzone.enter();
     }
   }
 
