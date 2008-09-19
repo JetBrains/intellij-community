@@ -60,7 +60,10 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
       file = createFile(target);
       if (file == null) return null;
       if (myOriginal != null) {
-        ((PsiFileImpl)file).setOriginalFile(myOriginal.getPsi(target));
+        final PsiFile originalFile = myOriginal.getPsi(target);
+        if (originalFile != null) {
+          ((PsiFileImpl)file).setOriginalFile(originalFile);
+        }
       }
       file = myRoots.cacheOrGet(target, file);
     }

@@ -95,9 +95,6 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   }
 
   private TextEditorHighlightingPass[] getPasses(int[] passesToIgnore) {
-    renewFile();
-    if (myFile == null) return TextEditorHighlightingPass.EMPTY_ARRAY;
-
     if (myCompiled) {
       passesToIgnore = EXCEPT_OVERRIDDEN;
     }
@@ -105,7 +102,8 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
       return TextEditorHighlightingPass.EMPTY_ARRAY;
     }
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
+    renewFile();
+    if (myFile == null) return TextEditorHighlightingPass.EMPTY_ARRAY;
 
     TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject);
 
