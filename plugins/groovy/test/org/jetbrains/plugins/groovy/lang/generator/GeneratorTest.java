@@ -75,8 +75,8 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
     } catch (IOException e) {
       e.printStackTrace();
     } finally {
-      System.out.println("----------" + relTestPath + "----------");
-      System.out.println(buffer);
+      //System.out.println("----------" + relTestPath + "----------");
+      //System.out.println(buffer);
       tempDirFixture.tearDown();
     }
 

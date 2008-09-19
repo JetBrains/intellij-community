@@ -41,7 +41,7 @@ public abstract class OverridingTester extends SimpleGroovyFileSetTestCase {
     buffer.append("\n");  //metween class definitions
 
 
-    System.out.println(buffer);
+    //System.out.println(buffer);
     return buffer.toString();
   }
 

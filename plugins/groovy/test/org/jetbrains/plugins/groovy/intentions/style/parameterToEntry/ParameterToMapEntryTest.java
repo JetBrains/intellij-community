@@ -96,7 +96,7 @@ public class ParameterToMapEntryTest extends UsefulTestCase {
     // Launch it!
     intention.processIntention(element);
     final String result = file.getText();
-    System.out.println(result);
+    //System.out.println(result);
     String expected = getExpectedResult(filePath);
     Assert.assertEquals(result, expected);
   }

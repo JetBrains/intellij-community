@@ -45,9 +45,9 @@ public class StubsTest extends SimpleGroovyFileSetTestCase {
     StubBuilder builder = stubFileType.getBuilder();
     StubElement element = builder.buildStubTree(psiFile);
     String stubTree = getStubTree(element);
-    System.out.println("------------------------ " + testName + " ------------------------");
-    System.out.println(stubTree);
-    System.out.println("");
+    //System.out.println("------------------------ " + testName + " ------------------------");
+    //System.out.println(stubTree);
+    //System.out.println("");
     return stubTree;
   }
 
