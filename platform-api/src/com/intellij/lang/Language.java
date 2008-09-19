@@ -19,11 +19,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.util.ArrayUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * The base class for all programming language support implementations. Specific language implementations should inherit from this class
@@ -36,31 +40,35 @@ import java.util.*;
 public abstract class Language {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.Language");
 
-  private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = new HashMap<Class<? extends Language>, Language>();
+  private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = new THashMap<Class<? extends Language>, Language>();
+  private static final Map<String, Language> ourRegisteredIDs = new THashMap<String, Language>();
   private final Language myBaseLanguage;
   private final String myID;
   private final String[] myMimeTypes;
-  public static final Language ANY = new Language("", "") { };
+  public static final Language ANY = new Language("") { };
 
-  protected Language(@NonNls String id) {
-    this(id, "");
+  protected Language(@NotNull @NonNls String id) {
+    this(id, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  protected Language(@NonNls final String ID, @NonNls final String... mimeTypes) {
+  protected Language(@NotNull @NonNls final String ID, @NotNull @NonNls final String... mimeTypes) {
     this(null, ID, mimeTypes);
   }
 
-  protected Language(Language baseLanguage, @NonNls final String ID, @NonNls final String... mimeTypes) {
+  protected Language(@Nullable Language baseLanguage, @NotNull @NonNls final String ID, @NotNull @NonNls final String... mimeTypes) {
     myBaseLanguage = baseLanguage;
     myID = ID;
     myMimeTypes = mimeTypes;
     Class<? extends Language> langClass = getClass();
-
-    if (ourRegisteredLanguages.containsKey(langClass)) {
-      LOG.error("Language '" + langClass.getName() + "' is already registered");
+    Language prev = ourRegisteredLanguages.put(langClass, this);
+    if (prev != null) {
+      LOG.error("Language of '" + langClass + "' is already registered: "+prev);
       return;
     }
-    ourRegisteredLanguages.put(langClass, this);
+    prev = ourRegisteredIDs.put(ID, this);
+    if (prev != null) {
+      LOG.error("Language with ID '" + ID + "' is already registered: "+prev.getClass());
+    }
   }
 
   /**
@@ -91,6 +99,7 @@ public abstract class Language {
    *
    * @return The list of MIME types.
    */
+  @NotNull
   public String[] getMimeTypes() {
     return myMimeTypes;
   }
