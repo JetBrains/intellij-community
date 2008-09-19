@@ -143,6 +143,13 @@
   <!-- Editor -->
   <applicationConfigurable implementation="com.intellij.application.options.editor.EditorOptions" id="editor" order="after appearance"/>
 
+  <!--
+    -->
+<!-- Code Completion -->
+    <!--
+<applicationConfigurable implementation="com.intellij.application.options.CodeCompletionOptions" id="completion" order="after editor"/>
+  -->
+
   <!-- Colors & Fonts-->
   <applicationConfigurable implementation="com.intellij.application.options.colors.ColorAndFontOptions" id="colors" order="after editor"/>
 
@@ -295,6 +302,7 @@
   <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorTabsConfigurable"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.CodeFoldingConfigurable"/>
+  <editorOptionsProvider implementation="com.intellij.application.options.CodeCompletionOptions"/>
 
   <intentionAction>
     <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>

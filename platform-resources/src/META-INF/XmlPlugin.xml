@@ -248,6 +248,8 @@
 
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.XMLColorsPage"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.HTMLColorsPage"/>
+
+    <optionsApplicabilityFilter implementation="com.intellij.application.options.XmlOptionsApplicabilityFilter"/>
   </extensions>
   
 </idea-plugin>

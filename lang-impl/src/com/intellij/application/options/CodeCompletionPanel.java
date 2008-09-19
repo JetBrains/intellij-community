@@ -102,7 +102,18 @@ public class CodeCompletionPanel {
    buttonGroup.add(myRbInsertParenth);
    buttonGroup.add(myRbInsertBothParenthes);
 
+    hideOption(myCbShowStaticAfterInstance, OptionId.COMPLETION_SHOW_STATIC_AFTER_IMPORT);
+    hideOption(myCbXmlAutocompletion, OptionId.COMPLETION_AUTO_POPUP_XML);
+    hideOption(myXmlAutocompletionDelayField, OptionId.COMPLETION_AUTO_POPUP_XML);
+    hideOption(myCbJavadocAutocompletion, OptionId.COMPLETION_AUTO_POPUP_DOC_COMMENT);
+    hideOption(myAutopopupJavaDocField, OptionId.COMPLETION_AUTO_POPUP_DOC_COMMENT);
+    hideOption(myCbInsertBothParenthesWhenNoArgs, OptionId.COMPLETION_DOUBLE_PAREN_NO_ARGS);
+
     reset();
+  }
+
+  private static void hideOption(JComponent component, OptionId id) {
+    component.setVisible(OptionsApplicabilityFilter.isApplicable(id));
   }
 
     /*

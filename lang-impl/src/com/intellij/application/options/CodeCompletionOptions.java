@@ -1,5 +1,6 @@
 package com.intellij.application.options;
 
+import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -8,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class CodeCompletionOptions extends BaseConfigurable implements SearchableConfigurable {
+public class CodeCompletionOptions extends BaseConfigurable implements SearchableConfigurable, EditorOptionsProvider {
   private CodeCompletionPanel myPanel;
 
   public boolean isModified() {
