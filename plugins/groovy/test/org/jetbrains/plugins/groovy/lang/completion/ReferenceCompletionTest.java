@@ -15,14 +15,11 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.completion.CompletionData;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.util.IncorrectOperationException;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.util.PathUtil;
@@ -45,15 +42,11 @@ public class ReferenceCompletionTest extends CompletionTestBase {
     );
   }
 
-  protected LookupItem[] getAcceptableItems(CompletionData data) throws IncorrectOperationException {
-    return getAcceptableItemsImpl(data);
-  }
-
   protected boolean addKeywords(PsiReference ref) {
     return false;
   }
 
-  protected boolean addReferenceVariants(PsiReference ref) {
+  protected boolean addReferenceVariants() {
     return true;
   }
 
