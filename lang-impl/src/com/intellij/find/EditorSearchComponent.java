@@ -694,13 +694,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     super.paintComponent(g);
     final Graphics2D g2d = (Graphics2D) g;
 
-    g.setColor(BORDER_COLOR);
-    g.drawLine(0, 0, getWidth(), 0);
-    g.drawLine(0, 0, 0, getHeight());
-
-//    g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
     g2d.setPaint(new GradientPaint(0, 0, GRADIENT_C1, 0, getHeight(), GRADIENT_C2));
-
     g2d.fillRect(1, 1, getWidth(), getHeight() - 1);
-  }  
+    
+    g.setColor(BORDER_COLOR);
+    g2d.setPaint(null);
+    g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
+  }
 }
