@@ -47,8 +47,11 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     final boolean isWritable = virtualFile.isWritable();
 
     data.setPresentableText(name);
-     if (ProjectRootsUtil.isModuleContentRoot(directoryFile, project) || ProjectRootsUtil.isLibraryRoot(directoryFile, project)) {
-      data.setLocationString(directoryFile.getPresentableUrl());
+    if (ProjectRootsUtil.isModuleContentRoot(directoryFile, project) || ProjectRootsUtil.isLibraryRoot(directoryFile, project)) {
+      final String locationString = directoryFile.getPresentableUrl();
+      if (!locationString.equals(name)) {
+        data.setLocationString(locationString);
+      }
     }
     else {
       if (!ProjectRootsUtil.isInTestSource(directoryFile, project)) {
