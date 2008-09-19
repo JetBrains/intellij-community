@@ -16,6 +16,10 @@
       <interface-class>com.intellij.openapi.project.ProjectManager</interface-class>
       <implementation-class>com.intellij.openapi.project.impl.ProjectManagerImpl</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.ide.RecentProjectsManagerBase</interface-class>
+      <implementation-class>com.intellij.ide.RecentDirectoryProjectsManager</implementation-class>
+    </component>
   </application-components>
   <project-components>
     <component>
