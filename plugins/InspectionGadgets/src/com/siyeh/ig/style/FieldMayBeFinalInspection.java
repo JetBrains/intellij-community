@@ -133,6 +133,16 @@ public class FieldMayBeFinalInspection extends BaseInspection {
                     return false;
                 }
             }
+            PsiClass containingClass = aClass.getContainingClass();
+            final AssigmentVisitor assignmentVisitor =
+                    new AssigmentVisitor(field);
+            while (containingClass != null) {
+                containingClass.accept(assignmentVisitor);
+                if (assignmentVisitor.isVariableAssigned()) {
+                    return false;
+                }
+                containingClass = containingClass.getContainingClass();
+            }
             return true;
         }
 
@@ -177,6 +187,16 @@ public class FieldMayBeFinalInspection extends BaseInspection {
                     return false;
                 }
             }
+            PsiClass containingClass = aClass.getContainingClass();
+            final AssigmentVisitor assignmentVisitor =
+                    new AssigmentVisitor(field);
+            while (containingClass != null) {
+                containingClass.accept(assignmentVisitor);
+                if (assignmentVisitor.isVariableAssigned()) {
+                    return false;
+                }
+                containingClass = containingClass.getContainingClass();
+            }
             return true;
         }
 
@@ -210,6 +230,44 @@ public class FieldMayBeFinalInspection extends BaseInspection {
 
             public boolean isVariableAssignedInClass() {
                 return variableAssignedInClass;
+            }
+        }
+
+        private static class AssigmentVisitor
+                extends JavaRecursiveElementVisitor {
+
+            private final PsiVariable variable;
+            private boolean variableAssigned = false;
+
+            AssigmentVisitor(PsiVariable variable) {
+                this.variable = variable;
+            }
+
+            @Override
+            public void visitMethod(PsiMethod method) {
+                if (variableAssigned) {
+                    return;
+                }
+                super.visitMethod(method);
+                if (VariableAccessUtils.variableIsAssigned(variable, method)) {
+                    variableAssigned = true;
+                }
+            }
+
+            @Override
+            public void visitClassInitializer(PsiClassInitializer initializer) {
+                if (variableAssigned) {
+                    return;
+                }
+                super.visitClassInitializer(initializer);
+                if (VariableAccessUtils.variableIsAssigned(variable,
+                        initializer)) {
+                    variableAssigned = true;
+                }
+            }
+
+            public boolean isVariableAssigned() {
+                return variableAssigned;
             }
         }
     }

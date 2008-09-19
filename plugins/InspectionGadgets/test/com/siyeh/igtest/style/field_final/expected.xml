@@ -16,4 +16,11 @@
         <description>Field &lt;code&gt;number&lt;/code&gt; may be 'final' #loc</description>
     </problem>
 
+  <problem>
+    <file>FieldMayBeFinal.java</file>
+    <line>96</line>
+    <problem_class>Field may be final</problem_class>
+    <description>Field &lt;code&gt;pleaseTellMeIt&lt;/code&gt; may be 'final' #loc</description>
+  </problem>
+
 </problems>

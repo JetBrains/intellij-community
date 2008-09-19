@@ -80,4 +80,20 @@ public class FieldMayBeFinal {
             return false;
         }
     };
+
+    static class Test
+    {
+
+        public static void main(String[] args)
+        {
+            Inner inner = new Inner();
+            inner.val = false;
+        }
+
+        private static class Inner
+        {
+            private boolean val = true;
+            private boolean pleaseTellMeIt = true;
+        }
+    }
 }
