@@ -126,7 +126,9 @@ public final class ObjectTree<T> {
     }
     finally {
       synchronized (recursiveGuard) {
-        recursiveGuard.remove(object);
+        int i = ArrayUtil.indexOf(recursiveGuard, object, Equality.IDENTITY);
+        assert i != -1;
+        recursiveGuard.remove(i);
       }
     }
   }
