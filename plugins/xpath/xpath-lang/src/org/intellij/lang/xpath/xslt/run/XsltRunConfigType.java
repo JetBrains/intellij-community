@@ -91,8 +91,9 @@ public class XsltRunConfigType implements ConfigurationType, LocatableConfigurat
             if (file.isPhysical() && XsltSupport.isXsltFile(file)) {
                 final Project project = file.getProject();
                 return RunManager.getInstance(project).createRunConfiguration(file.getName(), new MyConfigurationFactory() {
-                    public RunConfiguration createTemplateConfiguration(Project project) {
-                        return XsltRunConfiguration.createFromFile(project, myFactory, file);
+                    @Override
+                    public RunConfiguration createConfiguration(String name, RunConfiguration template) {
+                        return ((XsltRunConfiguration)super.createConfiguration(name, template)).initFromFile(file);
                     }
                 });
             }

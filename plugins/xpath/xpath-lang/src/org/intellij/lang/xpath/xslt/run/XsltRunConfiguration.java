@@ -15,6 +15,9 @@
  */
 package org.intellij.lang.xpath.xslt.run;
 
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+
 import com.intellij.debugger.ui.DebuggerSessionTab;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -38,11 +41,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -54,8 +53,6 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 import org.jdom.Element;
 
 import java.io.File;
@@ -98,12 +95,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
     public String myModule;
     public String myJdk;
 
-    private final String mySuggestedName;
-
-    private XsltRunConfiguration(Project project, ConfigurationFactory factory, String suggestedName) {
-        super(project, factory, NAME);
-        mySuggestedName = suggestedName;
-    }
+    private String mySuggestedName;
 
     public XsltRunConfiguration(Project project, ConfigurationFactory factory) {
         super(project, factory, NAME);
@@ -472,21 +464,20 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         return mySuggestedName;
     }
 
-    public static XsltRunConfiguration createFromFile(Project project, ConfigurationFactory factory, XmlFile file) {
+    public XsltRunConfiguration initFromFile(XmlFile file) {
         assert XsltSupport.isXsltFile(file);
+        mySuggestedName = file.getName();
 
         final VirtualFile virtualFile = file.getVirtualFile();
         assert virtualFile != null;
 
-        final XsltRunConfiguration runConfiguration = new XsltRunConfiguration(project, factory, file.getName());
-
-        runConfiguration.setXsltFile(virtualFile);
+        setXsltFile(virtualFile);
 
         final PsiFile[] associations = FileAssociationsManager.getInstance(file.getProject()).getAssociationsFor(file);
         if (associations.length > 0) {
             final VirtualFile assoc = associations[0].getVirtualFile();
             assert assoc != null;
-            runConfiguration.setXmlInputFile(assoc);
+            setXmlInputFile(assoc);
         }
 
         final XmlDocument document = file.getDocument();
@@ -500,22 +491,21 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
             final String name = param.getAttributeValue("name");
             if (name != null) {
                 final Pair<String, String> pair = Pair.create(name, null);
-                runConfiguration.myParameters.add(pair);
+                myParameters.add(pair);
             }
         }
         final XmlTag[] outputs = rootTag.findSubTags("output", XsltSupport.XSLT_NS);
         for (XmlTag output : outputs) {
             final String method = output.getAttributeValue("method");
             if ("xml".equals(method)) {
-                runConfiguration.setFileType(StdFileTypes.XML);
+                setFileType(StdFileTypes.XML);
             } else if ("html".equals(method)) {
-                runConfiguration.setFileType(StdFileTypes.HTML);
+                setFileType(StdFileTypes.HTML);
             } else if ("text".equals(method)) {
-                runConfiguration.setFileType(StdFileTypes.PLAIN_TEXT);
+                setFileType(StdFileTypes.PLAIN_TEXT);
             }
         }
 
-        return runConfiguration;
+        return this;
     }
-
 }
