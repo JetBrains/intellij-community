@@ -4,8 +4,8 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeEventQueue;
@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -46,6 +47,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private static final int MAX_PREFERRED_COUNT = 5;
 
   private static final LookupItem EMPTY_LOOKUP_ITEM = new LookupItem("preselect", "preselect");
+  private static final Key<Boolean> USED_LOOKUP_ELEMENT = Key.create("USED_LOOKUP_ELEMENT");
 
   private final Project myProject;
   private final Editor myEditor;
@@ -178,12 +180,19 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myItemsMap.clear();
     myItems.clear();
     for (final LookupElement item : items) {
+      item.putUserData(USED_LOOKUP_ELEMENT, null);
       addItem(item);
     }
     updateList();
   }
 
   public synchronized void addItem(LookupElement item) {
+    if (item.getUserData(USED_LOOKUP_ELEMENT) != null) {
+      LOG.assertTrue(false, "An attempt to reuse lookup item detected, this is prohibited: item=" + item);
+    }
+
+    item.putUserData(USED_LOOKUP_ELEMENT, Boolean.TRUE);
+
     myItems.add(item);
     addItemWeight(item);
     int maxWidth = myCellRenderer.updateMaximumWidth(item);
