@@ -17,69 +17,33 @@ package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.fileTypes.FileOptionsProvider;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-
-import org.jdom.Element;
 
 import javax.swing.*;
 
-public class FileAssociationsConfigurable implements ProjectComponent, Configurable, JDOMExternalizable {
-    private Project myProject;
+public class FileAssociationsConfigurable implements FileOptionsProvider, NonDefaultProjectConfigurable {
+    private final Project myProject;
+    private final UIState myState;
     private AssociationsEditor myEditor;
-    private TreeState myState;
 
     FileAssociationsConfigurable(Project project) {
         myProject = project;
-    }
-
-    public void readExternal(Element element) throws InvalidDataException {
-        final Element child = element.getChild("TreeState");
-        if (child != null) {
-            myState = new TreeState();
-            myState.readExternal(child);
-        }
-    }
-
-    public void writeExternal(Element element) throws WriteExternalException {
-        if (myState != null) {
-            final Element child = new Element("TreeState");
-            myState.writeExternal(child);
-            element.addContent(child);
-        }
-    }
-
-    public void projectOpened() {
-    }
-
-    public void projectClosed() {
-    }
-
-    @NotNull
-    @NonNls
-    public String getComponentName() {
-        return "XSLT-Support.FileAssociationsSettings";
-    }
-
-    public void initComponent() {
-    }
-
-    public void disposeComponent() {
+        myState = ServiceManager.getService(project, UIState.class);
     }
 
     public String getDisplayName() {
-        return "File Associations";
+        return "XSLT File Associations";
     }
 
     public Icon getIcon() {
@@ -92,7 +56,7 @@ public class FileAssociationsConfigurable implements ProjectComponent, Configura
     }
 
     public JComponent createComponent() {
-        myEditor = new AssociationsEditor(myProject, myState);
+        myEditor = new AssociationsEditor(myProject, myState.state);
         return myEditor.getComponent();
     }
 
@@ -111,14 +75,14 @@ public class FileAssociationsConfigurable implements ProjectComponent, Configura
 
     public synchronized void disposeUIResources() {
         if (myEditor != null) {
-            myState = myEditor.getState();
+            myState.state = myEditor.getState();
             myEditor.dispose();
             myEditor = null;
         }
     }
 
     public static FileAssociationsConfigurable getInstance(Project project) {
-        return project.getComponent(FileAssociationsConfigurable.class);
+        return ShowSettingsUtil.getInstance().findProjectConfigurable(project, FileAssociationsConfigurable.class);
     }
 
     public AssociationsEditor getEditor() {
@@ -136,5 +100,20 @@ public class FileAssociationsConfigurable implements ProjectComponent, Configura
                 }
             }
         });
+    }
+
+    @State(name = "XSLT-Support.FileAssociations.UIState",
+            storages = @Storage(id = "default", file = "$WORKSPACE_FILE$")
+    )
+    public static class UIState implements PersistentStateComponent<TreeState> {
+        private TreeState state;
+
+        public TreeState getState() {
+            return state != null ? state : new TreeState();
+        }
+
+        public void loadState(TreeState state) {
+            this.state = state;
+        }
     }
 }

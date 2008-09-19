@@ -65,6 +65,12 @@
         serviceInterface="org.intellij.lang.xpath.xslt.psi.XsltElementFactory"
         serviceImplementation="org.intellij.lang.xpath.xslt.psi.impl.XsltElementFactoryImpl" />
 
+    <projectConfigurable implementation="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable" />
+
+    <projectService
+        serviceInterface="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable$UIState"
+        serviceImplementation="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable$UIState" />
+
     <annotator language="XPath" implementationClass="org.intellij.lang.xpath.validation.XPathAnnotator" />
     <lang.parserDefinition language="XPath" implementationClass="org.intellij.lang.xpath.XPathParserDefinition" />
     <lang.braceMatcher language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathPairedBraceMatcher" />
@@ -144,10 +150,6 @@
     <component>
       <interface-class>org.intellij.lang.xpath.xslt.associations.FileAssociationsManager</interface-class>
       <implementation-class>org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsManagerImpl</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable</implementation-class>
-      <option name="workspace" value="true" />
     </component>
     <component>
       <interface-class>org.intellij.lang.xpath.xslt.XsltSupport</interface-class>
