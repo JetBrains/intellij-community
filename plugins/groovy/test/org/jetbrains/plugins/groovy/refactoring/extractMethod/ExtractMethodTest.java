@@ -88,9 +88,9 @@ public class ExtractMethodTest extends ActionTestCase {
     String fileText = data[0];
     final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
     String result = processFile(psiFile);
-    System.out.println("------------------------ " + testName + " ------------------------");
-    System.out.println(result);
-    System.out.println("");
+    //System.out.println("------------------------ " + testName + " ------------------------");
+    //System.out.println(result);
+    //System.out.println("");
     return result;
   }
 

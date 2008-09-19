@@ -583,7 +583,7 @@ public abstract class GroovyRefactoringUtil {
           if (element instanceof GrReferenceExpression) {
             GrExpression newExpr = factory.createExpressionFromText(value.getText());
             ((GrReferenceExpression) element).replaceWithExpression(newExpr, true);
-            System.out.println("");
+            //System.out.println("");
           }
         }
       }

@@ -51,7 +51,7 @@ public class ImplementsExtendsQuickFixTest extends SimpleGroovyFileSetTestCase {
             }
         }, null, null);
 
-        System.out.println(newFileText[0]);
+        //System.out.println(newFileText[0]);
         return newFileText[0];
     }
 
