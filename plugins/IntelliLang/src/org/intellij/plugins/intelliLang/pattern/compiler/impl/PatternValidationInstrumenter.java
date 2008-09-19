@@ -60,10 +60,6 @@ public class PatternValidationInstrumenter extends ClassAdapter implements Instr
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     super.visit(version, access, name, signature, superName, interfaces);
     myClassName = name;
-
-    final FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL + ACC_STATIC, PATTERN_CACHE_NAME, JAVA_UTIL_REGEX_PATTERN, null, null);
-
-    fv.visitEnd();
   }
 
   public void visitInnerClass(String name, String outerName, String innerName, int access) {
@@ -76,23 +72,34 @@ public class PatternValidationInstrumenter extends ClassAdapter implements Instr
   public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
     if (name.equals(ASSERTIONS_DISABLED_NAME)) {
       myHasAssertions = true;
+    } else if (name.equals(PATTERN_CACHE_NAME)) {
+      throw new InstrumentationException("Internal Error: Processing already instrumented class: " + myClassName);
     }
 
     return super.visitField(access, name, desc, signature, value);
   }
 
   public void visitEnd() {
-    if (myInstrumented && myInstrumentationType == Configuration.InstrumentationType.ASSERT) {
-      if (!myHasAssertions) {
-        FieldVisitor fv = cv.visitField(ACC_FINAL + ACC_STATIC + ACC_SYNTHETIC, ASSERTIONS_DISABLED_NAME, "Z", null, null);
-        fv.visitEnd();
+    if (myInstrumented) {
+      addField(PATTERN_CACHE_NAME, ACC_PRIVATE + ACC_FINAL + ACC_STATIC + ACC_SYNTHETIC, JAVA_UTIL_REGEX_PATTERN);
+
+      if (myInstrumentationType == Configuration.InstrumentationType.ASSERT) {
+        if (!myHasAssertions) {
+          addField(ASSERTIONS_DISABLED_NAME, ACC_FINAL + ACC_STATIC + ACC_SYNTHETIC, "Z");
+        }
       }
+
       if (!myHasStaticInitializer) {
         createStaticInitializer();
       }
     }
 
     super.visitEnd();
+  }
+
+  private void addField(String name, int modifiers, String type) {
+    final FieldVisitor fv = cv.visitField(modifiers, name, type, null, null);
+    fv.visitEnd();
   }
 
   private void createStaticInitializer() {
