@@ -65,6 +65,4 @@ public interface ApplicationEx extends Application {
    * So this is the only right way to wait multiple threads with read action for completion.
    */
   <T> List<Future<T>> invokeAllUnderReadAction(@NotNull Collection<Callable<T>> tasks, ExecutorService executorService) throws Throwable;
-
-  void writeLockSafeWait(Runnable waitForImpl);
 }

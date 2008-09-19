@@ -34,10 +34,6 @@ public class MockApplication extends MockComponentManager implements Application
     return "mock";
   }
 
-  public void writeLockSafeWait(final Runnable waitForImpl) {
-    waitForImpl.run();
-  }
-
   public boolean holdsReadLock() {
     return false;
   }
