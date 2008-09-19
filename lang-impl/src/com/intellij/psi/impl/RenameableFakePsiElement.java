@@ -23,26 +23,26 @@ import javax.swing.*;
  * @author peter
 */
 public abstract class RenameableFakePsiElement extends FakePsiElement implements PsiMetaOwner, PsiPresentableMetaData {
-  private final PsiFile myContainingFile;
+  private final PsiElement myParent;
 
-  protected RenameableFakePsiElement(final PsiFile containingFile) {
-    myContainingFile = containingFile;
+  protected RenameableFakePsiElement(final PsiElement parent) {
+    myParent = parent;
   }
 
   public PsiFile getContainingFile() {
-    return myContainingFile;
+    return myParent.getContainingFile();
   }
 
   public abstract String getName();
 
   @NotNull
   public Language getLanguage() {
-    return myContainingFile.getLanguage();
+    return getContainingFile().getLanguage();
   }
 
   @NotNull
   public Project getProject() {
-    return myContainingFile.getProject();
+    return myParent.getProject();
   }
 
   public PsiManager getManager() {
