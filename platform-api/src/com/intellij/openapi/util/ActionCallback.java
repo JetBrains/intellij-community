@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.util;
 
-import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.NotNull;
 
 public class ActionCallback {
@@ -89,20 +88,5 @@ public class ActionCallback {
     }
   }
 
-  
-  public static abstract class Runnable extends ComparableObject.Impl {
 
-    protected Runnable() {
-    }
-
-    protected Runnable(final Object object) {
-      super(object);
-    }
-
-    protected Runnable(final Object[] objects) {
-      super(objects);
-    }
-
-    public abstract ActionCallback run();
-  }
 }

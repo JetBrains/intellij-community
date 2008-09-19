@@ -1,8 +1,8 @@
 package com.intellij.openapi.wm;
 
-import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.ActiveRunnable;
 
-public abstract class FocusCommand extends ActionCallback.Runnable {
+public abstract class FocusCommand extends ActiveRunnable {
   protected FocusCommand() {
   }
 

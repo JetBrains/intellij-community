@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -228,7 +229,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return new ActionCallback.Done();
   }
 
-  public ActionCallback requestFocus(final ActionCallback.Runnable command, final boolean forced) {
+  public ActionCallback requestFocus(final ActiveRunnable command, final boolean forced) {
     return new ActionCallback.Done();
   }
 

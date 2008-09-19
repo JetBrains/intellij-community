@@ -472,7 +472,13 @@ class AbstractTreeUi {
   }
 
   public final void updateSubtree(DefaultMutableTreeNode node) {
+    updateSubtree(new TreeUpdatePass(node));
+  }
+
+  public final void updateSubtree(TreeUpdatePass pass) {
     initRootNodeNowIfNeeded();
+
+    final DefaultMutableTreeNode node = pass.getNode();
 
     if (!(node.getUserObject() instanceof NodeDescriptor)) return;
 

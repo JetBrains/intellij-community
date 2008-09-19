@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -936,7 +937,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return result;
   }
 
-  public void validate(final Content content, final ActionCallback.Runnable toRestore) {
+  public void validate(final Content content, final ActiveRunnable toRestore) {
     final TabInfo current = myTabs.getSelectedInfo();
     myTabs.getPresentation().setPaintBlocked(true);
 

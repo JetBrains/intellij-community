@@ -366,7 +366,7 @@ public class GridCellImpl implements GridCell, Disposable {
 
     if (storedLocation == null || storedSize == null) {
       if (myContents.size() > 0) {
-        myContext.validate(myContents.getKeys().iterator().next(), new ActionCallback.Runnable() {
+        myContext.validate(myContents.getKeys().iterator().next(), new ActiveRunnable() {
           public ActionCallback run() {
             if (!myTabs.getComponent().isShowing()) {
               detachTo(targetBounds.getLocation(), targetBounds.getSize(), false, requestFocus).notifyWhenDone(result);

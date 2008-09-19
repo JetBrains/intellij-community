@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -49,7 +50,7 @@ public interface ViewContext extends Disposable {
 
   void setStateIsBeingRestored(boolean state, final Object requestor);
 
-  void validate(Content content, ActionCallback.Runnable toRestore);
+  void validate(Content content, ActiveRunnable toRestore);
 
   void restoreLayout();
 

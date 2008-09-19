@@ -91,7 +91,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
   };
 
-  private ActionCallback.Runnable myRequestFocusCmd;
+  private ActiveRunnable myRequestFocusCmd;
   private WeakReference<FocusCommand> myLastForcedRequest = new WeakReference<FocusCommand>(null);
 
   /**
@@ -1601,7 +1601,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     });
   }
 
-  private boolean checkForRejectOrByPass(final ActionCallback.Runnable cmd, final boolean forced, final ActionCallback result) {
+  private boolean checkForRejectOrByPass(final ActiveRunnable cmd, final boolean forced, final ActionCallback result) {
     if (!forced && !isUnforcedRequestAllowed()) {
       if (cmd.equals(getLastEffectiveForcedRequest())) {
         result.setDone();
