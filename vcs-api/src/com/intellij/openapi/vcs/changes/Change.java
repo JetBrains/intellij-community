@@ -173,6 +173,7 @@ public class Change {
 
   @Nullable
   public String getOriginText(final Project project) {
+    cacheRenameOrMove(project);
     if (isMoved()) {
       return getMovedText(project);
     } else if (isRenamed()) {
