@@ -624,8 +624,6 @@
     </group>
 
     <group id="WelcomeScreen.Documentation.IDEA">
-      <action id="WelcomeScreen.ReadHelp" class="com.intellij.openapi.wm.impl.welcomeScreen.ReadHelpAction"
-        icon="/general/readHelp.png"/>
       <reference ref="Help.KeymapReference"/>
       <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"
         icon="/general/pluginManager.png"/>

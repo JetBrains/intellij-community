@@ -318,6 +318,8 @@
     </group>
 
     <group id="WelcomeScreen.Documentation">
+      <action id="WelcomeScreen.ReadHelp" class="com.intellij.openapi.wm.impl.welcomeScreen.ReadHelpAction"
+        icon="/general/readHelp.png"/>
     </group>
 
     <group id="FileChooser">
