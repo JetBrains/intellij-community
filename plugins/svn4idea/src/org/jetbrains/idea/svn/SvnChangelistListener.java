@@ -27,7 +27,7 @@ public class SvnChangelistListener implements ChangeListListener {
   }
 
   public void changeListAdded(final ChangeList list) {
-    // SVN change list exists only when there are any files in it  
+    // SVN change list exists only when there are any files in it
   }
 
   public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
@@ -118,6 +118,10 @@ public class SvnChangelistListener implements ChangeListListener {
     // to track list addition
     if (oldDefaultList != null) {
       changeListRenamed(oldDefaultList, null);
+      final LocalChangeList oldList = ChangeListManager.getInstance(myProject).findChangeList(oldDefaultList.getName());
+      if (oldList != null) {
+        oldList.setReadOnly(false);
+      }
     }
     changeListRemoved(newDefaultList);
     ChangeListManager.getInstance(myProject).getDefaultChangeList().setReadOnly(true);
