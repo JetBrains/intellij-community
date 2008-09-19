@@ -409,7 +409,9 @@ public class SingleInspectionProfilePanel extends JPanel {
           InspectionProfileImpl selected = (InspectionProfileImpl)mySelectedProfile;
           if (selected != null) {
             InspectionProfileImpl baseProfile = (InspectionProfileImpl)selected.getParentProfile();
-            baseProfile.getExpandedNodes().setSelectionPaths(myTree.getSelectionPaths());
+            if (baseProfile != null) {
+              baseProfile.getExpandedNodes().setSelectionPaths(myTree.getSelectionPaths());
+            }
             selected.getExpandedNodes().setSelectionPaths(myTree.getSelectionPaths());
           }
         }
@@ -463,14 +465,20 @@ public class SingleInspectionProfilePanel extends JPanel {
       public void treeCollapsed(TreeExpansionEvent event) {
         InspectionProfileImpl selected = (InspectionProfileImpl)mySelectedProfile;
         String nodeTitle = getExpandedString(event.getPath());
-        ((InspectionProfileImpl)selected.getParentProfile()).getExpandedNodes().collapseNode(nodeTitle);
+        final InspectionProfileImpl parentProfile = (InspectionProfileImpl)selected.getParentProfile();
+        if (parentProfile != null) {
+          parentProfile.getExpandedNodes().collapseNode(nodeTitle);
+        }
         selected.getExpandedNodes().collapseNode(nodeTitle);
       }
 
       public void treeExpanded(TreeExpansionEvent event) {
         InspectionProfileImpl selected = (InspectionProfileImpl)mySelectedProfile;
         String nodeTitle = getExpandedString(event.getPath());
-        ((InspectionProfileImpl)selected.getParentProfile()).getExpandedNodes().expandNode(nodeTitle);
+        final InspectionProfileImpl parentProfile = (InspectionProfileImpl)selected.getParentProfile();
+        if (parentProfile != null) {
+          parentProfile.getExpandedNodes().expandNode(nodeTitle);
+        }
         selected.getExpandedNodes().expandNode(nodeTitle);
       }
     });
@@ -780,7 +788,9 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void setSelectedProfile(final ModifiableModel modifiableModel) {
     mySelectedProfile = modifiableModel;
-    myInitialProfile = mySelectedProfile.getName();
+    if (mySelectedProfile != null) {
+      myInitialProfile = mySelectedProfile.getName();
+    }
     initDescriptors();
     filterTree(myProfileFilter != null ? myProfileFilter.getFilter() : null);
   }

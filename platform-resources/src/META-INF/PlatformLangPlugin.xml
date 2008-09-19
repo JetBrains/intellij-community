@@ -60,6 +60,8 @@
     <treeStructureProvider implementation="com.intellij.platform.PlatformProjectViewStructureProvider"/>
 
     <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.platform.PlatformFileProjectDirectoryRule"/>
+
+    <applicationConfigurable implementation="com.intellij.profile.codeInspection.ui.InspectionConfigurable" order="before intentions"/>
   </extensions>
   <project-components>
     <component>

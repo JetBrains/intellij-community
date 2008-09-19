@@ -16,6 +16,7 @@ import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable;
+import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +81,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     reloadProfiles(profiles, profileManager, projectProfileManager, manager);
     panel.myBrowseProfilesCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final ErrorOptionsConfigurable errorConfigurable = ErrorOptionsConfigurable.getInstance(project);
+        final ErrorsConfigurable errorConfigurable = ErrorOptionsConfigurable.getInstance(project);
         final MySingleConfigurableEditor editor = new MySingleConfigurableEditor(project, errorConfigurable, manager);
         errorConfigurable.selectNodeInTree(((Profile)profiles.getSelectedItem()).getName());
         editor.show();
@@ -154,14 +155,14 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   private static class MySingleConfigurableEditor extends SingleConfigurableEditor {
     private InspectionManagerEx myManager;
 
-    public MySingleConfigurableEditor(final Project project, final ErrorOptionsConfigurable configurable, InspectionManagerEx manager) {
+    public MySingleConfigurableEditor(final Project project, final ErrorsConfigurable configurable, InspectionManagerEx manager) {
       super(project, configurable, createDimensionKey(configurable));
       myManager = manager;
     }
 
 
     protected void doOKAction() {
-      final Object o = ((ErrorOptionsConfigurable)getConfigurable()).getSelectedObject();
+      final Object o = ((ErrorsConfigurable)getConfigurable()).getSelectedObject();
       if (o instanceof Profile) {
         myManager.setProfile(((Profile)o).getName());
       }

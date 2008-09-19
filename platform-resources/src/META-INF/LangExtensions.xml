@@ -159,7 +159,7 @@
   <!-- File Types -->
   <applicationConfigurable implementation="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable"/>
 
-  <applicationConfigurable implementation="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable"/>
+  <applicationConfigurable implementation="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable" id="intentions"/>
 
   <!-- Live Templates -->
   <applicationConfigurable implementation="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"/>
@@ -175,9 +175,6 @@
 
   <!-- Local History -->
   <applicationConfigurable implementation="com.intellij.history.integration.ui.views.LocalHistoryConfigurable"/>
-
-  <!-- Errors -->
-  <projectConfigurable implementation="com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable"/>
 
   <!-- Project Code Style -->
   <projectConfigurable implementation="com.intellij.application.options.ProjectCodeStyleConfigurable" order="before vcs"/>
