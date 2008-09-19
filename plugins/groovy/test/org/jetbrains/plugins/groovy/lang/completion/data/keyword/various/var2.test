@@ -18,7 +18,6 @@ char
 class
 double
 enum
-false
 final
 float
 for
@@ -27,8 +26,6 @@ int
 interface
 long
 native
-new
-null
 private
 protected
 public
@@ -36,13 +33,10 @@ return
 short
 static
 strictfp
-super
 switch
 synchronized
-this
 throw
 transient
-true
 try
 void
 volatile

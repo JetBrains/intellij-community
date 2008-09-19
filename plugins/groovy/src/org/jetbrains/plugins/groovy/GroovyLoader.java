@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.completion.CompletionUtil;
-import org.jetbrains.plugins.groovy.CompositeCompletionData;
+import com.intellij.codeInsight.completion.CompositeCompletionData;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.engine.DebugProcess;
