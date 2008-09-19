@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.config.ConfigureProxiesListener;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
@@ -156,7 +157,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
     label.setEnabled(false);
     add(label, gb);
 
-    myUseCommonProxy = new JCheckBox(SvnBundle.message("use.idea.proxy.as.default"));
+    myUseCommonProxy = new JCheckBox(SvnBundle.message("use.idea.proxy.as.default", ApplicationNamesInfo.getInstance().getProductName()));
     gb.gridx = 0;
     gb.gridy += 1;
     gb.gridwidth = 1;

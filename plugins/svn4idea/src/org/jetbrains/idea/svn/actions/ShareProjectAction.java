@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnWorkingCopyFormatHolder;
@@ -93,7 +94,8 @@ public class ShareProjectAction extends BasicAction {
                 }
                 SVNURL url = SVNURL.parseURIEncoded(parent).appendPath(file.getName(), false);
                 SVNCommitInfo info = activeVcs.createCommitClient().doMkDir(new SVNURL[] {url},
-                                                                            SvnBundle.message("share.directory.commit.message", file.getName()));
+                                                                            SvnBundle.message("share.directory.commit.message", file.getName(),
+                                                                                              ApplicationNamesInfo.getInstance().getFullProductName()));
                 SVNRevision revision = SVNRevision.create(info.getNewRevision());
                 activeVcs.createUpdateClient().doCheckout(url, path, SVNRevision.UNDEFINED, revision, true);
                 SvnWorkingCopyFormatHolder.setPresetFormat(null);
