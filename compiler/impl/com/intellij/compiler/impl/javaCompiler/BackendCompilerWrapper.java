@@ -759,7 +759,7 @@ public class BackendCompilerWrapper {
       return null;
     }
     final String realOutputDir;
-    if (myProjectFileIndex.isInTestSourceContent(sourceFile)) {
+    if (myCompileContext.isInTestSourceContent(sourceFile)) {
       realOutputDir = getTestsOutputDir(module);
     }
     else {
