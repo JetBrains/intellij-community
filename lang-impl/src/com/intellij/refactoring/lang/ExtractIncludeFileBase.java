@@ -25,14 +25,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlTagChild;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,25 +40,22 @@ import java.util.List;
 /**
  * @author ven
  */
-public abstract class ExtractIncludeFileBase implements RefactoringActionHandler {
+public abstract class ExtractIncludeFileBase<T extends PsiElement> implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.lang.ExtractIncludeFileBase");
   private static final String REFACTORING_NAME = RefactoringBundle.message("extract.include.file.title");
   protected PsiFile myIncludingFile;
+  public static final String HELP_ID = "refactoring.extractInclude";
 
-  protected ExtractIncludeFileBase(final PsiFile includingFile) {
-    myIncludingFile = includingFile;
-  }
-
-  protected abstract void doReplaceRange(final String includePath, final XmlTagChild first, final XmlTagChild last);
+  protected abstract void doReplaceRange(final String includePath, final T first, final T last);
 
   @NotNull
   protected abstract String doExtract(final PsiDirectory targetDirectory,
                                       final String targetfileName,
-                                      final XmlTagChild first,
-                                      final XmlTagChild last,
+                                      final T first,
+                                      final T last,
                                       final Language includingLanguage) throws IncorrectOperationException;
 
-  protected abstract boolean verifyChildRange (final XmlTagChild first, final XmlTagChild last);
+  protected abstract boolean verifyChildRange (final T first, final T last);
 
   private void replaceDuplicates(final String includePath,
                                    final List<Pair<PsiElement, PsiElement>> duplicates,
@@ -87,10 +81,10 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
                 if (promptResult == FindManager.PromptResult.CANCEL) break;
 
                 if (promptResult == FindManager.PromptResult.OK) {
-                  doReplaceRange(includePath, ((XmlTagChild)pair.getFirst()), (XmlTagChild)pair.getSecond());
+                  doReplaceRange(includePath, ((T)pair.getFirst()), (T)pair.getSecond());
                 }
                 else if (promptResult == FindManager.PromptResult.ALL) {
-                  doReplaceRange(includePath, ((XmlTagChild)pair.getFirst()), (XmlTagChild)pair.getSecond());
+                  doReplaceRange(includePath, ((T)pair.getFirst()), (T)pair.getSecond());
                   replaceAll = true;
                 }
                 else {
@@ -98,7 +92,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
                 }
               }
               else {
-                doReplaceRange(includePath, ((XmlTagChild)pair.getFirst()), (XmlTagChild)pair.getSecond());
+                doReplaceRange(includePath, ((T)pair.getFirst()), (T)pair.getSecond());
               }
             }
           }
@@ -135,31 +129,32 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
+    myIncludingFile = file;
     if (!editor.getSelectionModel().hasSelection()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("no.selection"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_INCLUDE);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
       return;
     }
     final int start = editor.getSelectionModel().getSelectionStart();
     final int end = editor.getSelectionModel().getSelectionEnd();
 
-    final Pair<XmlTagChild, XmlTagChild> children = XmlUtil.findTagChildrenInRange(myIncludingFile, start, end);
+    final Pair<T, T> children = findPairToExtract(start, end);
     if (children == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selection.does.not.form.a.fragment.for.extraction"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_INCLUDE);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
       return;
     }
 
     if (!verifyChildRange(children.getFirst(), children.getSecond())) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.extract.selected.elements.into.include.file"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_INCLUDE);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
       return;
     }
 
     final FileType fileType = getFileType(getLanguageForExtract(children.getFirst()));
     if (!(fileType instanceof LanguageFileType)) {
       String message = RefactoringBundle.message("the.language.for.selected.elements.has.no.associated.file.type");
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_INCLUDE);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HELP_ID);
       return;
     }
 
@@ -177,8 +172,8 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
             public void run() {
               try {
                 final List<Pair<PsiElement, PsiElement>> duplicates = new ArrayList<Pair<PsiElement, PsiElement>>();
-                final XmlTagChild first = children.getFirst();
-                final XmlTagChild second = children.getSecond();
+                final T first = children.getFirst();
+                final T second = children.getSecond();
                 PsiEquivalenceUtil.findChildRangeDuplicates(first, second, duplicates, file);
                 final String includePath = processPrimaryFragment(first, second, targetDirectory, targetfileName, file);
 
@@ -201,17 +196,20 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
     }
   }
 
+  @Nullable
+  protected abstract Pair<T, T> findPairToExtract(int start, int end);
+
   @NonNls
   protected String getExtractExtension(final FileType extractFileType) {
     return extractFileType.getDefaultExtension();
   }
 
-  public boolean isValidRange(final XmlTagChild firstToExtract,final XmlTagChild lastToExtract) {
+  public boolean isValidRange(final T firstToExtract, final T lastToExtract) {
     return verifyChildRange(firstToExtract, lastToExtract);
   }
 
-  public String processPrimaryFragment(final XmlTagChild firstToExtract,
-                                       final XmlTagChild lastToExtract,
+  public String processPrimaryFragment(final T firstToExtract,
+                                       final T lastToExtract,
                                        final PsiDirectory targetDirectory,
                                        final String targetfileName,
                                        final PsiFile srcFile) throws IncorrectOperationException {

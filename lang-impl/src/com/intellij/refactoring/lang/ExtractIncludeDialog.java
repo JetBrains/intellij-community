@@ -14,9 +14,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.refactoring.HelpID;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileSystemItemUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.lang.jsp.extractInclude.ExtractJspIncludeFileHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
@@ -127,7 +126,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
             try {
               PsiDirectory targetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(project), directoryName);
               targetDirectory.checkCreateFile(targetFileName);
-              final String webPath = ExtractJspIncludeFileHandler.getWebPath(myCurrentDirectory, targetDirectory);
+              final String webPath = PsiFileSystemItemUtil.getRelativePath(myCurrentDirectory, targetDirectory);
               myTargetDirectory = webPath == null ? null : targetDirectory;
             }
             catch (IncorrectOperationException e) {
@@ -143,7 +142,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.EXTRACT_INCLUDE);
+    HelpManager.getInstance().invokeHelp(ExtractIncludeFileBase.HELP_ID);
   }
 
   protected Action[] createActions() {

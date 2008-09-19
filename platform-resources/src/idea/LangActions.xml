@@ -272,7 +272,8 @@
       <separator/>
       <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
       <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
-
+      <separator/>
+      <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="AnalyzeMenu"/>
     </group>
 

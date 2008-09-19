@@ -1,16 +1,12 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.lang.html.ExtractIncludeFromHTMLHandler;
-import com.intellij.refactoring.lang.jsp.extractInclude.ExtractJspIncludeFileHandler;
+import com.intellij.refactoring.lang.LanguageExtractInclude;
 
 /**
  * @author ven
@@ -29,19 +25,13 @@ public class ExtractIncludeAction extends BaseRefactoringAction {
   }
 
   protected boolean isAvailableForFile(PsiFile file) {
-    return PsiUtil.isInJspFile(file) || Language.findInstance(HTMLLanguage.class).equals(file.getLanguage()) ||
-      Language.findInstance(XHTMLLanguage.class).equals(file.getLanguage());
+    final Language baseLanguage = file.getViewProvider().getBaseLanguage();
+    return LanguageExtractInclude.INSTANCE.forLanguage(baseLanguage) != null;
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
     PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
-    if (PsiUtil.isInJspFile(file)) {
-      return new ExtractJspIncludeFileHandler(file);
-    }
-    else if (Language.findInstance(HTMLLanguage.class).equals(file.getLanguage()) ||
-             Language.findInstance(XHTMLLanguage.class).equals(file.getLanguage())) {
-      return new ExtractIncludeFromHTMLHandler(file);
-    }
-    return null;
+    if (file == null) return null;
+    return LanguageExtractInclude.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage());
   }
 }

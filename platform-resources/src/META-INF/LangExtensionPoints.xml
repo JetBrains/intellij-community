@@ -184,6 +184,8 @@
   <extensionPoint name="refactoring.helper" interface="com.intellij.refactoring.RefactoringHelper"/>
   <extensionPoint name="refactoring.inlineHandler" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="refactoring.safeDeleteProcessor" interface="com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate"/>
+  <extensionPoint name="refactoring.extractIncludeHandler"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
   <extensionPoint name="elementDescriptionProvider" interface="com.intellij.psi.ElementDescriptionProvider"/>
 

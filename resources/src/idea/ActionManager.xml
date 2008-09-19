@@ -162,11 +162,9 @@
       <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
       <action id="Migrate" class="com.intellij.refactoring.actions.MigrateAction"/>
       <separator/>
-      <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
-      <separator/>
       <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction"/>
 
-      <add-to-group group-id="RefactoringMenu" anchor="last"/>
+      <add-to-group group-id="RefactoringMenu" anchor="before" relative-to-action="ExtractInclude"/>
     </group>
 
     <action id="ReplaceMethodWithMethodObject" class="com.intellij.refactoring.actions.ReplaceMethodWithMethodObjectAction">

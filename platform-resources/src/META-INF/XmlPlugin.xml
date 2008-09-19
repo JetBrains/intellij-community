@@ -250,6 +250,9 @@
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.HTMLColorsPage"/>
 
     <optionsApplicabilityFilter implementation="com.intellij.application.options.XmlOptionsApplicabilityFilter"/>
-  </extensions>
+
+    <refactoring.extractIncludeHandler language="HTML" implementationClass="com.intellij.refactoring.lang.html.ExtractIncludeFromHTMLHandler"/>
+    <refactoring.extractIncludeHandler language="XHTML" implementationClass="com.intellij.refactoring.lang.html.ExtractIncludeFromHTMLHandler"/>
+  </extensions>                                   
   
 </idea-plugin>
