@@ -71,7 +71,7 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
     catch (SVNException e) {
       myExceptions.add(new VcsException(e));
     }
-    if (!SvnConfiguration.getInstance(myVcs.getProject()).UPDATE_RUN_STATUS) {
+    if (!SvnConfiguration.getInstanceChecked(myVcs.getProject()).UPDATE_RUN_STATUS) {
       return result;
     }
 

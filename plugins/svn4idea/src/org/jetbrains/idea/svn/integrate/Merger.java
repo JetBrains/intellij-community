@@ -39,7 +39,7 @@ public class Merger {
   public Merger(final SvnVcs vcs, final List<CommittedChangeList> changeLists, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl,
                 final Consumer<List<CommittedChangeList>> afterProcessing) {
     myAfterProcessing = afterProcessing;
-    mySvnConfig = SvnConfiguration.getInstance(vcs.getProject());
+    mySvnConfig = SvnConfiguration.getInstanceChecked(vcs.getProject());
     myCurrentBranchUrl = currentBranchUrl;
     myDiffClient = vcs.createDiffClient();
     myChangeLists = changeLists;

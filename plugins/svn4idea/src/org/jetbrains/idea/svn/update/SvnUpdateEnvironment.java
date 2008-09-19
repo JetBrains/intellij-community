@@ -80,7 +80,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
                                     SVNException {
       final long rev;
 
-      final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
+      final SvnConfiguration configuration = SvnConfiguration.getInstanceChecked(myVcs.getProject());
       final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(root, myVcs);
 
       final SVNUpdateClient updateClient = myVcs.createUpdateClient();
@@ -131,7 +131,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
   }
 
   public boolean validateOptions(final Collection<FilePath> roots) {
-    final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
+    final SvnConfiguration configuration = SvnConfiguration.getInstanceChecked(myVcs.getProject());
 
     final Map<File,UpdateRootInfo> map = configuration.getUpdateInfosMap();
     try {

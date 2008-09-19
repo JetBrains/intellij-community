@@ -164,7 +164,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       return;
     }
     File[] pathsToCommit = (File[])committables.toArray(new File[committables.size()]);
-    boolean keepLocks = SvnConfiguration.getInstance(mySvnVcs.getProject()).isKeepLocks();
+    boolean keepLocks = SvnConfiguration.getInstanceChecked(mySvnVcs.getProject()).isKeepLocks();
     SVNCommitPacket[] commitPackets = null;
     SVNCommitInfo[] results;
     try {

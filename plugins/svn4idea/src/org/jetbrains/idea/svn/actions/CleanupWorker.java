@@ -64,11 +64,17 @@ public class CleanupWorker {
 
       @Override
       public void onSuccess() {
+        if (myProject.isDisposed()) {
+          return;
+        }
         final VcsDirtyScopeManager manager = VcsDirtyScopeManager.getInstance(myProject);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
+                if (myProject.isDisposed()) {
+                  return;
+                }
                 for (final VirtualFile root : myRoots) {
                   root.refresh(false, true);
                 }

@@ -58,9 +58,10 @@ public class ResolveWorker {
       }
     }
 
-    return (! myConflictedVirtualFiles.isEmpty()) && (! SvnConfiguration.getInstance(myProject).MERGE_DRY_RUN);
+    return (! myConflictedVirtualFiles.isEmpty()) && (! SvnConfiguration.getInstanceChecked(myProject).MERGE_DRY_RUN);
   }
 
+  // on EDT, dispose checked
   public void execute(final UpdatedFiles updatedFiles) {
     if (myConflictedVirtualFiles.isEmpty()) {
       return;

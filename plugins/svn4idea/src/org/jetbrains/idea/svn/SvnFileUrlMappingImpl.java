@@ -244,7 +244,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
   public void doRefresh() {
     //LOG.info("do refresh: " + new Time(System.currentTimeMillis()));
     // will call convertsRoots
-    ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs);
+    ProjectLevelVcsManager.getInstanceChecked(myProject).getRootsUnderVcs(myVcs);
   }
 
   /**

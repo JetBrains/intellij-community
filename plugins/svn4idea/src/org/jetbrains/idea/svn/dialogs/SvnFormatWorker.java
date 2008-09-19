@@ -30,6 +30,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
   private final WorkingCopyFormat myNewFormat;
   private final List<WCInfo> myWcInfos;
   private List<LocalChangeList> myBeforeChangeLists;
+  private final SvnVcs myVcs;
 
   public SvnFormatWorker(final Project project, final WorkingCopyFormat newFormat, final List<WCInfo> wcInfos) {
     super(project, SvnBundle.message("action.change.wcopy.format.task.title"), false, DEAF);
@@ -37,6 +38,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
     myNewFormat = newFormat;
     myExceptions = new ArrayList<Throwable>();
     myWcInfos = wcInfos;
+    myVcs = SvnVcs.getInstance(myProject);
   }
 
   public SvnFormatWorker(final Project project, final WorkingCopyFormat newFormat, final WCInfo wcInfo) {
@@ -78,6 +80,9 @@ public class SvnFormatWorker extends Task.Backgroundable {
 
   @Override
   public void onSuccess() {
+    if (myProject.isDisposed()) {
+      return;
+    }
     // to map to native
     if (WorkingCopyFormat.ONE_DOT_FIVE.equals(myNewFormat)) {
       SvnVcs.getInstance(myProject).processChangeLists(myBeforeChangeLists);
@@ -95,13 +100,12 @@ public class SvnFormatWorker extends Task.Backgroundable {
   }
 
   public void run(@NotNull final ProgressIndicator indicator) {
-    ProjectLevelVcsManager.getInstance(myProject).startBackgroundVcsOperation();
+    ProjectLevelVcsManager.getInstanceChecked(myProject).startBackgroundVcsOperation();
     indicator.setIndeterminate(true);
     if (WorkingCopyFormat.ONE_DOT_FIVE.equals(myNewFormat)) {
-      myBeforeChangeLists = ChangeListManager.getInstance(myProject).getChangeLists();
+      myBeforeChangeLists = ChangeListManager.getInstanceChecked(myProject).getChangeLists();
     }
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.createWCClient();
+    final SVNWCClient wcClient = myVcs.createWCClient();
 
     try {
       for (WCInfo wcInfo : myWcInfos) {

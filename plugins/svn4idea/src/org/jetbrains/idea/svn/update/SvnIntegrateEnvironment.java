@@ -67,7 +67,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
 
   @Override
   protected boolean isDryRun() {
-    return SvnConfiguration.getInstance(myVcs.getProject()).MERGE_DRY_RUN;
+    return SvnConfiguration.getInstanceChecked(myVcs.getProject()).MERGE_DRY_RUN;
   }
 
   private class IntegrateCrawler extends AbstractUpdateIntegrateCrawler {
@@ -84,7 +84,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
     }
 
     protected void showProgressMessage(final ProgressIndicator progress, final File root) {
-      if (SvnConfiguration.getInstance(myVcs.getProject()).MERGE_DRY_RUN) {
+      if (SvnConfiguration.getInstanceChecked(myVcs.getProject()).MERGE_DRY_RUN) {
         progress.setText(SvnBundle.message("progress.text.merging.dry.run.changes", root.getAbsolutePath()));
       }
       else {
@@ -96,7 +96,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
       final File root,
       final SVNUpdateClient client) throws
                                                                                                         SVNException {
-      final SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
+      final SvnConfiguration svnConfig = SvnConfiguration.getInstanceChecked(myVcs.getProject());
 
       MergeRootInfo info = svnConfig.getMergeRootInfo(root, myVcs);
       if (info.getUrlString1().equals(info.getUrlString2()) &&
@@ -110,7 +110,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
                          info.getUrl2(), info.getRevision2(), root,
                          svnConfig.UPDATE_DEPTH, svnConfig.MERGE_DIFF_USE_ANCESTRY, false, svnConfig.MERGE_DRY_RUN, false);
 
-      SvnConfiguration.getInstance(myVcs.getProject()).LAST_MERGED_REVISION = getLastMergedRevision(info.getRevision2(), info.getUrl2());
+      svnConfig.LAST_MERGED_REVISION = getLastMergedRevision(info.getRevision2(), info.getUrl2());
       return info.getResultRevision();
     }
 

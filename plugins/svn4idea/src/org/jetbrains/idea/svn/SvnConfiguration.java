@@ -95,7 +95,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     return project.getComponent(SvnConfiguration.class);
   }
 
-  public static SvnConfiguration getInstanceSafe(final Project project) {
+  public static SvnConfiguration getInstanceChecked(final Project project) {
     return ApplicationManager.getApplication().runReadAction(new Computable<SvnConfiguration>() {
       public SvnConfiguration compute() {
         if (project.isDisposed()) throw new ProcessCanceledException();

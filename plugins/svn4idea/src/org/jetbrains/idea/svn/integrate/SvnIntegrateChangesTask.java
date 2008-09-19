@@ -131,6 +131,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         try {
+          if (myProject.isDisposed()) return;
           afterExecution();
         } finally {
           BlockReloadingUtil.unblock();
