@@ -18,7 +18,6 @@ public class JavaEditorOptions implements EditorOptionsProvider {
 
 
   private JComboBox mySmartPasteCombo;
-  private JCheckBox myCbRenameLocalVariablesInplace;
   private JCheckBox myCbShowImportPopup;
   private JPanel myWholePanel;
 
@@ -47,8 +46,6 @@ public class JavaEditorOptions implements EditorOptionsProvider {
         break;
     }
 
-    // Refactoring
-    myCbRenameLocalVariablesInplace.setSelected(editorSettings.isVariableInplaceRenameEnabled());
 
     myCbShowImportPopup.setSelected(daemonSettings.isImportHintEnabled());
   }
@@ -58,11 +55,9 @@ public class JavaEditorOptions implements EditorOptionsProvider {
   }
 
   public void apply() {
-    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
 
-    editorSettings.setVariableInplaceRenameEnabled(myCbRenameLocalVariablesInplace.isSelected());
     codeInsightSettings.ADD_IMPORTS_ON_PASTE = getSmartPasteValue();
     daemonSettings.setImportHintEnabled(myCbShowImportPopup.isSelected());
   }
@@ -72,13 +67,10 @@ public class JavaEditorOptions implements EditorOptionsProvider {
   }
 
   public boolean isModified() {
-    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
 
-    boolean isModified = isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());
-
-    isModified |= isModified(myCbShowImportPopup, daemonSettings.isImportHintEnabled());
+    boolean isModified = isModified(myCbShowImportPopup, daemonSettings.isImportHintEnabled());
     
     isModified |= getSmartPasteValue() != codeInsightSettings.ADD_IMPORTS_ON_PASTE;
     return isModified;

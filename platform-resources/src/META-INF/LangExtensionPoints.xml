@@ -338,4 +338,5 @@
 
   <extensionPoint name="editorAppearanceConfigurable" interface="com.intellij.openapi.options.UnnamedConfigurable"/>
   <extensionPoint name="editorSmartKeysConfigurable" interface="com.intellij.openapi.options.UnnamedConfigurable"/>
+  <extensionPoint name="optionsApplicabilityFilter" interface="com.intellij.application.options.OptionsApplicabilityFilter"/>
 </extensionPoints>

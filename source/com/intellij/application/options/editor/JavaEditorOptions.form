@@ -11,7 +11,7 @@
     <children>
       <vspacer id="84f9">
         <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="1.0"/>
         </constraints>
       </vspacer>
@@ -22,15 +22,6 @@
         </constraints>
         <properties>
           <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.import.popup"/>
-        </properties>
-      </component>
-      <component id="c86a1" class="javax.swing.JCheckBox" binding="myCbRenameLocalVariablesInplace">
-        <constraints>
-          <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-          <gridbag top="20" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/ApplicationBundle" key="checkbox.rename.local.variables.inplace"/>
         </properties>
       </component>
       <hspacer id="18ac8">

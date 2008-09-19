@@ -1,5 +1,7 @@
 package com.intellij.application.options.editor;
 
+import com.intellij.application.options.OptionId;
+import com.intellij.application.options.OptionsApplicabilityFilter;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.ui.UISettings;
@@ -44,6 +46,7 @@ public class EditorOptionsPanel {
   private JPanel myHighlightSettingsPanel;
   private JRadioButton myRbPreferScrolling;
   private JRadioButton myRbPreferMovingCaret;
+  private JCheckBox myCbRenameLocalVariablesInplace;
   private ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
 
   private TabbedPaneWrapper myTabbedPaneWrapper;
@@ -70,6 +73,8 @@ public class EditorOptionsPanel {
     for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
       myTabbedPaneWrapper.addTab(provider.getDisplayName(), provider.createComponent());
     }
+
+    myCbRenameLocalVariablesInplace.setVisible(OptionsApplicabilityFilter.isApplicable(OptionId.RENAME_IN_PLACE));
   }
 
 
@@ -121,6 +126,9 @@ public class EditorOptionsPanel {
 
 
     myRecentFilesLimitField.setText(Integer.toString(uiSettings.RECENT_FILES_LIMIT));
+
+    myCbRenameLocalVariablesInplace.setSelected(editorSettings.isVariableInplaceRenameEnabled());
+
     myErrorHighlightingPanel.reset();
     for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
       provider.reset();
@@ -180,6 +188,8 @@ public class EditorOptionsPanel {
     editorSettings.setWheelFontChangeEnabled(myCbEnableWheelFontChange.isSelected());
     editorSettings.setMouseClickSelectionHonorsCamelWords(myCbHonorCamelHumpsWhenSelectingByClicking.isSelected());
     editorSettings.setRefrainFromScrolling(myRbPreferMovingCaret.isSelected());
+
+    editorSettings.setVariableInplaceRenameEnabled(myCbRenameLocalVariablesInplace.isSelected());
 
     Editor[] editors = EditorFactory.getInstance().getAllEditors();
     for (Editor editor : editors) {
@@ -256,7 +266,8 @@ public class EditorOptionsPanel {
 
 
     isModified |= isModified(myRecentFilesLimitField, UISettings.getInstance().RECENT_FILES_LIMIT);
-
+    isModified |= isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());
+    
     isModified |= myErrorHighlightingPanel.isModified();
     for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
       isModified |= provider.isModified();
