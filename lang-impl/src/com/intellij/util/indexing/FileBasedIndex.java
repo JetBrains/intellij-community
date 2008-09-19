@@ -984,6 +984,7 @@ public class FileBasedIndex implements ApplicationComponent {
                       requestRebuild(indexId);
                     }
                     catch (Throwable e) {
+                      LOG.info(e);
                       if (unexpectedError == null) {
                         unexpectedError = e;
                       }
