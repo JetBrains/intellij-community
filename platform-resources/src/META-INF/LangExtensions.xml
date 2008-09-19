@@ -141,13 +141,13 @@
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage"/>
 
   <!-- Editor -->
-  <applicationConfigurable implementation="com.intellij.application.options.editor.EditorOptions"/>
+  <applicationConfigurable implementation="com.intellij.application.options.editor.EditorOptions" id="editor" order="after appearance"/>
 
   <!-- Colors & Fonts-->
-  <applicationConfigurable implementation="com.intellij.application.options.colors.ColorAndFontOptions"/>
+  <applicationConfigurable implementation="com.intellij.application.options.colors.ColorAndFontOptions" id="colors" order="after editor"/>
 
   <!-- Global Code Style -->
-  <applicationConfigurable implementation="com.intellij.application.options.CodeStyleSchemesConfigurable"/>
+  <applicationConfigurable implementation="com.intellij.application.options.CodeStyleSchemesConfigurable" order="after colors"/>
 
   <!-- File Types -->
   <applicationConfigurable implementation="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable"/>
@@ -173,7 +173,7 @@
   <projectConfigurable implementation="com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable"/>
 
   <!-- Project Code Style -->
-  <projectConfigurable implementation="com.intellij.application.options.ProjectCodeStyleConfigurable"/>
+  <projectConfigurable implementation="com.intellij.application.options.ProjectCodeStyleConfigurable" order="before vcs"/>
 
   <lang.parserDefinition language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextParserDefinition"/>
   <lang.syntaxHighlighterFactory language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainSyntaxHighlighterFactory"/>

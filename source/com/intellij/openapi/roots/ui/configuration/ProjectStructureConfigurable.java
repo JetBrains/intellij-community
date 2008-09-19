@@ -35,7 +35,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProjectStructureConfigurable extends BaseConfigurable implements SearchableConfigurable, Place.Navigator, SortableConfigurable {
+public class ProjectStructureConfigurable extends BaseConfigurable implements SearchableConfigurable, Place.Navigator {
 
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
 
@@ -493,7 +493,4 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return myToFocus;
   }
 
-  public int getSortWeight() {
-    return 0;
-  }
 }

@@ -54,24 +54,6 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
     List<Configurable> result = new ArrayList<Configurable>();
     result.addAll(Arrays.asList(extensions));
     result.addAll(Arrays.asList(components));
-
-    List<Configurable> sortedResult = new ArrayList<Configurable>();
-    for(Configurable c: result) {
-      if (c instanceof SortableConfigurable) {
-        sortedResult.add(c);
-      }
-    }
-    Collections.sort(sortedResult, new Comparator<Configurable>() {
-      public int compare(final Configurable o1, final Configurable o2) {
-        return ((SortableConfigurable) o1).getSortWeight() - ((SortableConfigurable) o2).getSortWeight();
-      }
-    });
-    for(Configurable c: result) {
-      if (!(c instanceof SortableConfigurable)) {
-        sortedResult.add(c);
-      }
-    }
-    result = sortedResult;
     return result;
   }
 

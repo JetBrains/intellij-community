@@ -82,7 +82,7 @@
   <applicationConfigurable implementation="com.intellij.ide.GeneralSettingsConfigurable"/>
 
   <!-- Appearance -->
-  <applicationConfigurable implementation="com.intellij.ide.ui.AppearanceConfigurable"/>
+  <applicationConfigurable implementation="com.intellij.ide.ui.AppearanceConfigurable" id="appearance"/>
 
   <!-- Keymap -->
   <applicationConfigurable implementation="com.intellij.openapi.keymap.impl.ui.KeymapConfigurable"/>

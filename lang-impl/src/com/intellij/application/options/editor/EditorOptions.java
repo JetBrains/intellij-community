@@ -3,13 +3,12 @@ package com.intellij.application.options.editor;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.SortableConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class EditorOptions implements SearchableConfigurable, SortableConfigurable {
+public class EditorOptions implements SearchableConfigurable {
   private EditorOptionsPanel myPanel;
 
   public boolean isModified() {
@@ -58,7 +57,4 @@ public class EditorOptions implements SearchableConfigurable, SortableConfigurab
     return null;
   }
 
-  public int getSortWeight() {
-    return 2;
-  }
 }

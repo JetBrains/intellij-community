@@ -8,7 +8,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.SortableConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -28,7 +27,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.nio.charset.Charset;
 
-public class GeneralSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, SortableConfigurable {
+public class GeneralSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private DiffOptionsForm myDiffOptions;
   private MyComponent myComponent;
   @NonNls private static final String SYSTEM_DEFAULT_ENCODING = "System Default";
@@ -209,10 +208,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
   @NotNull
   public String getHelpTopic() {
     return "preferences.general";
-  }
-
-  public int getSortWeight() {
-    return 0;
   }
 
   public boolean isEncodingModified() {
