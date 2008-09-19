@@ -599,9 +599,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         return;
       }
 
-      Window mywindow = SwingUtilities.windowForComponent(ActionToolbarImpl.this);
-      if (mywindow != null && !mywindow.isActive() && !mywindow.isFocused()) return;
-
       // do not update when a popup menu is shown (if popup menu contains action which is also in the toolbar, it should not be enabled/disabled)
       final MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
       final MenuElement[] selectedPath = menuSelectionManager.getSelectedPath();
