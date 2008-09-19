@@ -119,7 +119,7 @@ public class GitUtil {
   @NotNull
   public static VirtualFile getTempDir() throws VcsException {
     try {
-      File temp = File.createTempFile("git-temp-file", "txt");
+      @SuppressWarnings({"HardCodedStringLiteral"}) File temp = File.createTempFile("git-temp-file", "txt");
       try {
         final File parentFile = temp.getParentFile();
         if (parentFile == null) {
@@ -132,6 +132,7 @@ public class GitUtil {
         return vFile;
       }
       finally {
+        //noinspection ResultOfMethodCallIgnored
         temp.delete();
       }
     }

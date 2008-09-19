@@ -41,7 +41,7 @@ public class GitBranchNameValidator implements InputValidator {
   /**
    * The class is stateless, so the static instance is the safe to use.
    */
-  public static GitBranchNameValidator INSTANCE = new GitBranchNameValidator();
+  public static final GitBranchNameValidator INSTANCE = new GitBranchNameValidator();
 
   /**
    * {@inheritDoc}
