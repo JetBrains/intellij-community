@@ -15,6 +15,8 @@
  */
 package org.intellij.lang.xpath.xslt.context;
 
+import org.intellij.lang.xpath.context.NamespaceContext;
+
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,20 +26,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import org.intellij.lang.xpath.context.NamespaceContext;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.*;
 
 public class XsltNamespaceContext implements NamespaceContext {
     public static final XsltNamespaceContext NAMESPACE_CONTEXT = new XsltNamespaceContext();
@@ -66,12 +60,22 @@ public class XsltNamespaceContext implements NamespaceContext {
     public static Collection<String> getPrefixes(XmlElement context) {
         final XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class);
         if (tag != null) {
-            final HashSet<String> prefixes = new HashSet<String>();
+            final HashSet<String> allPrefixes = new HashSet<String>();
             final String[] uris = tag.knownNamespaces();
             for (String uri : uris) {
-                prefixes.add(tag.getPrefixByNamespace(uri));
+                for (XmlTag p = tag; p != null; p = p.getParentTag()) {
+                    final Set<Map.Entry<String,String>> localPrefixes = p.getLocalNamespaceDeclarations().entrySet();
+                    for (Map.Entry<String,String> entry : localPrefixes) {
+                        final String prefix = entry.getKey();
+                        if (prefix.length() > 0 && entry.getValue().equals(uri)) {
+                            if (!allPrefixes.contains(prefix)) {
+                                allPrefixes.add(prefix);
+                            }
+                        }
+                    }
+                }
             }
-            return prefixes;
+            return allPrefixes;
         } else {
             return Collections.emptySet();
         }
@@ -120,13 +124,18 @@ public class XsltNamespaceContext implements NamespaceContext {
         private final XmlFile myXmlFile;
 
         // TODO: verify API
-        public MyCreateNSDeclarationAction(XmlElement xmlElement, String s, XmlFile xmlFile) {
-            super(xmlElement, s);
+        public MyCreateNSDeclarationAction(XmlElement xmlElement, String prefix, XmlFile xmlFile) {
+            super(xmlElement, prefix);
             myXmlFile = xmlFile;
         }
 
         public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
             super.invoke(project, editor, myXmlFile);
+        }
+
+        @Override
+        public boolean showHint(Editor editor) {
+            return false; // doesn't work properly yet
         }
 
         public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
