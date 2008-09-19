@@ -474,6 +474,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     @NonNls final String id = "Log-" + tabComponent.getTabTitle();
     final Content logContent = myUi.createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(),
                                                   IconLoader.getIcon("/fileTypes/text.png"), tabComponent.getPreferredFocusableComponent());
+    logContent.setCloseable(false);
     logContent.setDescription(tabComponent.getTooltip());
     myAdditionalContent.put(tabComponent, logContent);
     myUi.addContent(logContent);
