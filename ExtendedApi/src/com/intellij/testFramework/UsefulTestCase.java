@@ -41,9 +41,12 @@ public abstract class UsefulTestCase extends TestCase {
       final CodeInsightSettings settings = CodeInsightSettings.getInstance();
       final boolean eq = areSettingsEqual(defaultSettings, settings);
       if (!eq) {
-        final Element element = new Element("temp");
-        defaultSettings.writeExternal(element);
-        settings.readExternal(element);
+        Element defaultElement = new Element("temp");
+        defaultSettings.writeExternal(defaultElement);
+        Element element = new Element("temp");
+        settings.writeExternal(element);
+        settings.readExternal(defaultElement);
+        assertEquals(JDOMUtil.writeElement(defaultElement, "\n"), JDOMUtil.writeElement(element, "\n"));
         fail("Code insight settings damaged");
       }
     }

@@ -116,9 +116,9 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
       clon.OTHER_INDENT_OPTIONS = (IndentOptions)OTHER_INDENT_OPTIONS.clone();
 
-      clon.ourAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
-      for(Map.Entry<FileType,IndentOptions> optionEntry:ourAdditionalIndentOptions.entrySet()) {
-        clon.ourAdditionalIndentOptions.put(optionEntry.getKey(),(IndentOptions)optionEntry.getValue().clone());
+      clon.myAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
+      for(Map.Entry<FileType,IndentOptions> optionEntry: myAdditionalIndentOptions.entrySet()) {
+        clon.myAdditionalIndentOptions.put(optionEntry.getKey(),(IndentOptions)optionEntry.getValue().clone());
       }
       return clon;
     }
@@ -193,7 +193,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   public IndentOptions OTHER_INDENT_OPTIONS = new IndentOptions();
 
-  private Map<FileType,IndentOptions> ourAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
+  private Map<FileType,IndentOptions> myAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
 
   private static final String ourSystemLineSeparator = SystemProperties.getLineSeparator();
 
@@ -1077,7 +1077,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   private void copyOldIndentOptions(@NonNls final String extension, final IndentOptions options) {
     final FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(extension);
-    if (fileType != FileTypes.UNKNOWN && !ourAdditionalIndentOptions.containsKey(fileType)) {
+    if (fileType != FileTypes.UNKNOWN && !myAdditionalIndentOptions.containsKey(fileType)) {
       registerAdditionalIndentOptions(fileType, options);
     }
   }
@@ -1142,7 +1142,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       settings.writeExternal(element, parentCustomSettings);
     }
 
-    final FileType[] fileTypes = ourAdditionalIndentOptions.keySet().toArray(new FileType[ourAdditionalIndentOptions.keySet().size()]);
+    final FileType[] fileTypes = myAdditionalIndentOptions.keySet().toArray(new FileType[myAdditionalIndentOptions.keySet().size()]);
     Arrays.sort(fileTypes, new Comparator<FileType>() {
       public int compare(final FileType o1, final FileType o2) {
         return o1.getDefaultExtension().compareTo(o2.getDefaultExtension());
@@ -1150,7 +1150,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     });
 
     for (FileType fileType : fileTypes) {
-      final IndentOptions indentOptions = ourAdditionalIndentOptions.get(fileType);
+      final IndentOptions indentOptions = myAdditionalIndentOptions.get(fileType);
       Element additionalIndentOptions = new Element(ADDITIONAL_INDENT_OPTIONS);
       indentOptions.writeExternal(additionalIndentOptions);
       additionalIndentOptions.setAttribute(FILETYPE,fileType.getDefaultExtension());
@@ -1161,7 +1161,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public IndentOptions getIndentOptions(FileType fileType) {
     if (USE_SAME_INDENTS || fileType == null) return OTHER_INDENT_OPTIONS;
 
-    final IndentOptions indentOptions = ourAdditionalIndentOptions.get(fileType);
+    final IndentOptions indentOptions = myAdditionalIndentOptions.get(fileType);
     if (indentOptions != null) return indentOptions;
 
     return OTHER_INDENT_OPTIONS;
@@ -1603,11 +1603,11 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   }
 
   private void registerAdditionalIndentOptions(FileType fileType, IndentOptions options) {
-    ourAdditionalIndentOptions.put(fileType, options);
+    myAdditionalIndentOptions.put(fileType, options);
   }
 
   public IndentOptions getAdditionalIndentOptions(FileType fileType) {
-    IndentOptions result = ourAdditionalIndentOptions.get(fileType);
+    IndentOptions result = myAdditionalIndentOptions.get(fileType);
     if (result == null) {
       final FileTypeIndentOptionsProvider[] fileTypeIndentOptionsProviders =
         Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
