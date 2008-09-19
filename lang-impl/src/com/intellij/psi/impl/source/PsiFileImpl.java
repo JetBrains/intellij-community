@@ -66,12 +66,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected final PsiManagerEx myManager;
   private volatile Object myTreeElementPointer; // SoftReference/WeakReference to RepositoryTreeElement when has repository id, RepositoryTreeElement otherwise
 
-  protected PsiFileImpl(IElementType elementType, IElementType contentElementType, FileViewProvider provider) {
+  protected PsiFileImpl(@NotNull IElementType elementType, IElementType contentElementType, @NotNull FileViewProvider provider) {
     this(provider);
     init(elementType, contentElementType);
   }
 
-  protected PsiFileImpl( FileViewProvider provider ) {
+  protected PsiFileImpl(@NotNull FileViewProvider provider ) {
     myManager = (PsiManagerEx)provider.getManager();
     myViewProvider = provider;
   }
