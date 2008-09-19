@@ -37,7 +37,15 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected void tearDown() throws Exception {
     if (ApplicationManager.getApplication() != null) {
-      assertTrue("Code insight settings damaged", areSettingsEqual(new CodeInsightSettings(null), CodeInsightSettings.getInstance()));
+      final CodeInsightSettings defaultSettings = new CodeInsightSettings(null);
+      final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+      final boolean eq = areSettingsEqual(defaultSettings, settings);
+      if (!eq) {
+        final Element element = new Element("temp");
+        defaultSettings.writeExternal(element);
+        settings.readExternal(element);
+        fail("Code insight settings damaged");
+      }
     }
     Disposer.dispose(myTestRootDisposable);
     super.tearDown();
