@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,12 +56,20 @@ public class AddImportAction implements HintAction, QuestionAction {
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final PsiElement element = myReference.getElement();
-    if (myReference instanceof PyReferenceExpression) {
-      final PyExpression qual = ((PyReferenceExpression)myReference).getQualifier();
-      if ((qual != null) /*&& (qual.getType() instanceof PyModuleType)*/) return false; // don't propose to import unknown fields, etc  
-    }
+    // not within import
     if (PsiTreeUtil.getParentOfType(element, PyImportStatement.class) != null) return false;
     if (PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class) != null) return false;
+    // don't propose to import unknown fields, etc qualified things
+    if (myReference instanceof PyReferenceExpression) {
+      final PyExpression qual = ((PyReferenceExpression)myReference).getQualifier();
+      if (qual != null) return false;
+    }
+    // don't propose to import unimportable
+    if (
+      !(myReference instanceof PyReferenceExpression)  ||
+      (ResolveImportUtil.resolvePythonImport2((PyReferenceExpression)myReference, null) == null)
+    ) return false;
+    //
     final String referenceName = getRefName();
     final PsiFile[] files = getRefFiles(referenceName);
     return files != null && files.length > 0;
@@ -80,7 +89,7 @@ public class AddImportAction implements HintAction, QuestionAction {
               myProject, "import " + referenceName + "\n\n"
           );
           try {
-            file.addAfter(importNodeToInsert, getInsertPosition(file));
+            file.addBefore(importNodeToInsert, getInsertPosition(file));
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -100,7 +109,10 @@ public class AddImportAction implements HintAction, QuestionAction {
         seeker = feeler;
         feeler = feeler.getNextSibling();
       }
-      else if (PyUtil.instanceOf(feeler, PsiWhiteSpace.class, PsiComment.class)) feeler = feeler.getNextSibling();
+      else if (PyUtil.instanceOf(feeler, PsiWhiteSpace.class, PsiComment.class)) {
+        seeker = feeler;
+        feeler = feeler.getNextSibling();
+      }
       else break; // some other statement, stop
     } while (feeler != null);
     return seeker;
