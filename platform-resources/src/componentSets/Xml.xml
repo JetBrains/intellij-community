@@ -17,7 +17,7 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.xml.breadcrumbs.BreadcrumbsLoaderComponent</implementation-class>
-      <skipForDummyProject/>
+      <skipForDefaultProject/>
     </component>
     <component>
       <interface-class>com.intellij.util.xml.DomManager</interface-class>

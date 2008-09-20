@@ -334,12 +334,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     getComponents();
   }
 
-  protected void loadComponentsConfiguration(ComponentConfig[] components, @Nullable final IdeaPluginDescriptor descriptor, final boolean loadDummies) {
-    myConfigurator.loadComponentsConfiguration(components, descriptor, loadDummies);
+  protected void loadComponentsConfiguration(ComponentConfig[] components, @Nullable final IdeaPluginDescriptor descriptor, final boolean defaultProject) {
+    myConfigurator.loadComponentsConfiguration(components, descriptor, defaultProject);
   }
 
-  protected void loadComponentsConfiguration(final String layer, final boolean loadDummies) {
-    myConfigurator.loadComponentsConfiguration(layer, loadDummies);
+  protected void loadComponentsConfiguration(final String layer, final boolean defaultProject) {
+    myConfigurator.loadComponentsConfiguration(layer, defaultProject);
   }
 
   protected void boostrapPicoContainer() {

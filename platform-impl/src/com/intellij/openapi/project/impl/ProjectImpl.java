@@ -47,7 +47,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   private ProjectManagerImpl myManager;
 
   private MyProjectManagerListener myProjectManagerListener;
-  private boolean myDummy;
 
   private final ArrayList<String> myConversionProblemsStorage = new ArrayList<String>();
 
@@ -141,10 +140,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     getStateStore().setSavePathsRelative(b);
   }
 
-  public boolean isDummy() {
-    return myDummy;
-  }
-
   public boolean isOpen() {
     return ProjectManagerEx.getInstanceEx().isProjectOpened(this);
   }
@@ -157,25 +152,18 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return isOpen() && !isDisposed() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
   }
 
-  public void setDummy(boolean isDummy) {
-    myDummy = isDummy;
-  }
-
   public ArrayList<String> getConversionProblemsStorage() {
     return myConversionProblemsStorage;
   }
 
   public void loadProjectComponents() {
-    boolean realProject = !isDummy();
-    loadComponentsConfiguration(PROJECT_LAYER, realProject);
+    loadComponentsConfiguration(PROJECT_LAYER, isDefault());
 
-    if (realProject) {
-      final Application app = ApplicationManager.getApplication();
-      final IdeaPluginDescriptor[] plugins = app.getPlugins();
-      for (IdeaPluginDescriptor plugin : plugins) {
-        if (PluginManager.shouldSkipPlugin(plugin)) continue;
-        loadComponentsConfiguration(plugin.getProjectComponents(), plugin, true);
-      }
+    final Application app = ApplicationManager.getApplication();
+    final IdeaPluginDescriptor[] plugins = app.getPlugins();
+    for (IdeaPluginDescriptor plugin : plugins) {
+      if (PluginManager.shouldSkipPlugin(plugin)) continue;
+      loadComponentsConfiguration(plugin.getProjectComponents(), plugin, isDefault());
     }
   }
 
@@ -325,7 +313,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public String getDefaultName() {
     if (isDefault()) return TEMPLATE_PROJECT_NAME;
-    if (isDummy()) return DUMMY_PROJECT_NAME;
 
     return getStateStore().getProjectName();    
   }

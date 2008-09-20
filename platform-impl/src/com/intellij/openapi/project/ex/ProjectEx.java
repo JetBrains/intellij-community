@@ -9,8 +9,6 @@ public interface ProjectEx extends Project {
 
   void setSavePathsRelative(boolean b);
 
-  boolean isDummy();
-
   @NotNull
   IProjectStore getStateStore();
 

@@ -217,7 +217,7 @@ public class FileManagerImpl implements FileManager {
   public PsiFile findFile(@NotNull VirtualFile vFile) {
     if (vFile.isDirectory()) return null;
     final ProjectEx project = (ProjectEx)myManager.getProject();
-    if (project.isDummy() || project.isDefault()) return null;
+    if (project.isDefault()) return null;
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {

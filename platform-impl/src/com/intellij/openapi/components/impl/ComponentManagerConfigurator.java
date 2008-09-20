@@ -23,20 +23,20 @@ class ComponentManagerConfigurator {
     myComponentManager = componentManager;
   }
 
-  private void loadConfiguration(final ComponentConfig[] configs, final boolean loadDummies, final IdeaPluginDescriptor descriptor) {
+  private void loadConfiguration(final ComponentConfig[] configs, final boolean defaultProject, final IdeaPluginDescriptor descriptor) {
     for (ComponentConfig config : configs) {
-      loadSingleConfig(loadDummies, config, descriptor);
+      loadSingleConfig(defaultProject, config, descriptor);
     }
   }
 
-  private void loadSingleConfig(final boolean loadDummies, final ComponentConfig config, final IdeaPluginDescriptor descriptor) {
-    if (!loadDummies && config.skipForDummyProject) return;
+  private void loadSingleConfig(final boolean defaultProject, final ComponentConfig config, final IdeaPluginDescriptor descriptor) {
+    if (defaultProject && config.skipForDefaultProject) return;
     if (!myComponentManager.isComponentSuitable(config.options)) return;
 
     myComponentManager.registerComponent(config, descriptor);
   }
 
-  private void loadComponentsConfiguration(String descriptor, String layer, boolean loadDummies) {
+  private void loadComponentsConfiguration(String descriptor, String layer, boolean defaultProject) {
     try {
       ComponentManagerConfig managerConfig = ourDescriptorToConfig.get(descriptor);
 
@@ -66,22 +66,22 @@ class ComponentManagerConfigurator {
         throw new IllegalArgumentException("Unsupported layer: "+ layer);
       }
 
-      loadComponentsConfiguration(componentConfigs, null, loadDummies);
+      loadComponentsConfiguration(componentConfigs, null, defaultProject);
     }
     catch (Exception e) {
       LOG.error(e);
     }
   }
 
-  public void loadComponentsConfiguration(String layer, final boolean loadDummies) {
-    loadComponentsConfiguration(ApplicationManagerEx.getApplicationEx().getComponentsDescriptor(), layer, loadDummies);
+  public void loadComponentsConfiguration(String layer, final boolean defaultProject) {
+    loadComponentsConfiguration(ApplicationManagerEx.getApplicationEx().getComponentsDescriptor(), layer, defaultProject);
   }
 
   public void loadComponentsConfiguration(final ComponentConfig[] components,
                                           final IdeaPluginDescriptor descriptor,
-                                          final boolean loadDummies) {
+                                          final boolean defaultProject) {
     if (components == null) return;
 
-    loadConfiguration(components, loadDummies, descriptor);
+    loadConfiguration(components, defaultProject, descriptor);
   }
 }

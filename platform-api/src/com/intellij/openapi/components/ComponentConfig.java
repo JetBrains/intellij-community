@@ -38,8 +38,8 @@ public class ComponentConfig {
   public String headlessImplementationClass;
 
   //todo: empty tag means TRUE
-  @Tag(value = "skipForDummyProject", textIfEmpty="true")
-  public boolean skipForDummyProject;
+  @Tag(value = "skipForDefaultProject", textIfEmpty="true")
+  public boolean skipForDefaultProject;
 
   @Property(surroundWithTag = false)
   @MapAnnotation(surroundWithTag = false, entryTagName = "option", keyAttributeName = "name", valueAttributeName = "value")

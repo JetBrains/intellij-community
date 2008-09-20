@@ -26,34 +26,34 @@
     <component>
       <implementation-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManager</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
+      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.update.RestoreUpdateTree</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
+      <skipForDefaultProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.vcs.changes.ChangeListManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.changes.ChangeListManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
+      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.ChangesViewManager</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
+      <skipForDefaultProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
+      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
+      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager</implementation-class>
@@ -63,29 +63,30 @@
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
+      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
+      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.committed.CommittedChangesCache</implementation-class>
-      <skipForDummyProject/>
+      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier</implementation-class>
-      <skipForDummyProject/>
+      <skipForDefaultProject/>
       <headless-implementation-class/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicator</implementation-class>
       <headless-implementation-class/>
-      <skipForDummyProject/>
+      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
+      <skipForDefaultProject/>
     </component>
   </project-components>
 </components>

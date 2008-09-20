@@ -255,12 +255,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private void loadApplicationComponents() {
-    loadComponentsConfiguration(APPLICATION_LAYER, true);
+    loadComponentsConfiguration(APPLICATION_LAYER, false);
 
     final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
       if (PluginManager.shouldSkipPlugin(plugin)) continue;
-      loadComponentsConfiguration(plugin.getAppComponents(), plugin, true);
+      loadComponentsConfiguration(plugin.getAppComponents(), plugin, false);
     }
   }
 

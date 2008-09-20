@@ -124,7 +124,7 @@
     <component>
       <interface-class>com.intellij.ui.content.MessageView</interface-class>
       <implementation-class>com.intellij.ui.content.impl.MessageViewImpl</implementation-class>
-      <skipForDummyProject/>
+      <skipForDefaultProject/>
     </component>
 
     <component>

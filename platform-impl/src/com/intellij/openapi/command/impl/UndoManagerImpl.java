@@ -94,7 +94,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
 
   private void init(Application application) {
-    if (myProject == null || application.isUnitTestMode() && !myProject.isDefault() && !myProject.isDummy()) {
+    if (myProject == null || application.isUnitTestMode() && !myProject.isDefault()) {
       initialize();
     }
   }
