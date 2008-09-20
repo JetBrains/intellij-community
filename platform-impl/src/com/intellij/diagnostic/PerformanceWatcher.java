@@ -46,7 +46,11 @@ public class PerformanceWatcher implements ApplicationComponent {
   public void initComponent() {
     if (shallNotWatch()) return;
 
-    deleteOldThreadDumps();
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        deleteOldThreadDumps();
+      }
+    });
 
     myLogDir = new File(PathManager.getSystemPath() + "/log/threadDumps-" + myDateFormat.format(new Date())
                         + "-" + ApplicationInfo.getInstance().getBuildNumber());
@@ -83,7 +87,7 @@ public class PerformanceWatcher implements ApplicationComponent {
       }
     });
     Arrays.sort(dirs);
-    for (int i = 0; i < dirs.length - 10; i++) {
+    for (int i = 0; i < dirs.length - 11; i++) {
       FileUtil.delete(new File(allLogsDir, dirs [i]));
     }
   }
