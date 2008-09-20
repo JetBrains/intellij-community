@@ -67,6 +67,8 @@
                       serviceImplementation="com.intellij.ui.errorView.impl.ErrorViewFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.openapi.fileChooser.FileSystemTreeFactory"
                       serviceImplementation="com.intellij.openapi.fileChooser.ex.FileSystemTreeFactoryImpl"/>
+  <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagerUISettings"
+                      serviceImplementation="com.intellij.ide.plugins.PluginManagerUISettings"/>
 
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
@@ -89,6 +91,9 @@
 
   <!-- Customizations -->
   <applicationConfigurable implementation="com.intellij.ide.ui.customization.CustomizationConfigurable"/>
+
+  <!-- Plugins -->
+  <applicationConfigurable implementation="com.intellij.ide.plugins.PluginManagerConfigurable"/>
 
   <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
   <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"

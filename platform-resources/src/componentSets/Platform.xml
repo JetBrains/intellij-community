@@ -11,11 +11,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.ide.plugins.PluginManagerConfigurable</interface-class>
-      <implementation-class>com.intellij.ide.plugins.PluginManagerConfigurable</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.ide.util.PropertiesComponent</interface-class>
       <implementation-class>com.intellij.ide.util.PropertiesComponentImpl</implementation-class>
     </component>
