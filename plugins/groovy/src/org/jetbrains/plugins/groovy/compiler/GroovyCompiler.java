@@ -124,6 +124,9 @@ public class GroovyCompiler implements TranslatingCompiler {
       commandLine.addParameter(classPathBuilder.toString());
       commandLine.addParameter(XMX_COMPILER_PROPERTY);
 
+      //commandLine.addParameter("-Xdebug");
+      //commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=6789");     
+
       commandLine.addParameter(GroovycRunner.class.getName());
 
       try {

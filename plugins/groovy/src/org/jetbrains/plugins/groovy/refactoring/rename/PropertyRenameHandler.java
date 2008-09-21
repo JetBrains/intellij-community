@@ -65,14 +65,18 @@ public class PropertyRenameHandler implements RenameHandler {
 
       final PsiMethod setter = myProperty.getSetter();
       if (setter != null) {
-        final String setterName = PropertyUtil.suggestSetterName(newName);
-        rename.addElement(setter, setterName);
+        if (setter.isPhysical()) {
+          final String setterName = PropertyUtil.suggestSetterName(newName);
+          rename.addElement(setter, setterName);
+        }
       }
 
       final PsiMethod[] getters = myProperty.getGetters();
       for (PsiMethod getter : getters) {
-        final String getterName = PropertyUtil.suggestGetterName(newName, getter.getReturnType(), getter.getName());
-        rename.addElement(getter, getterName);
+        if (getter.isPhysical()) {
+          final String getterName = PropertyUtil.suggestGetterName(newName, getter.getReturnType(), getter.getName());
+          rename.addElement(getter, getterName);
+        }
       }
 
       rename.run();
