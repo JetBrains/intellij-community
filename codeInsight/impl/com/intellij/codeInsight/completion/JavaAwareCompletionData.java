@@ -255,8 +255,8 @@ public class JavaAwareCompletionData extends CompletionData{
     }
   }
 
-  public static LookupItem<PsiClass> setShowFQN(final LookupItem<PsiClass> ret) {
-    final PsiClass psiClass = ret.getObject();
+  public static LookupItem setShowFQN(final LookupItem ret) {
+    final PsiClass psiClass = (PsiClass)ret.getObject();
     @NonNls String packageName = getPackageDisplayName(psiClass);
 
     final String tailText = (String)ret.getAttribute(LookupItem.TAIL_TEXT_ATTR);

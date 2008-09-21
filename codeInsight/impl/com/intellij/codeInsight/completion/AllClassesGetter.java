@@ -31,24 +31,25 @@ public class AllClassesGetter {
   private final ElementFilter myFilter;
   private static final InsertHandler<JavaPsiClassReferenceElement> INSERT_HANDLER = new InsertHandler<JavaPsiClassReferenceElement>() {
 
-    public int _handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
+    private void _handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
       final Editor editor = context.getEditor();
       final PsiClass psiClass = item.getObject();
       int endOffset = editor.getCaretModel().getOffset();
       final String qname = psiClass.getQualifiedName();
-      if (qname == null) return endOffset;
+      if (qname == null) return;
 
-      if (endOffset == 0) return endOffset;
+      if (endOffset == 0) return;
 
       final Document document = editor.getDocument();
-      final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(editor.getProject());
-      final PsiFile file = psiDocumentManager.getPsiFile(document);
-      final PsiElement element = file.findElementAt(endOffset - 1);
-      if (element == null) return endOffset;
+      final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(psiClass.getProject());
+      final PsiFile file = context.getFile();
+      if (file.findElementAt(endOffset - 1) == null) return;
 
-      if (context.getFile().getLanguage() == StdLanguages.JAVA) {
+      if (file.getLanguage() == StdLanguages.JAVA) {
+        final OffsetKey key = OffsetKey.create("endOffset");
+        context.getOffsetMap().addOffset(key, endOffset - 1);
         JavaPsiClassReferenceElement.JAVA_CLASS_INSERT_HANDLER.handleInsert(context, item);
-        return editor.getCaretModel().getOffset();
+        endOffset = context.getOffsetMap().getOffset(key) + 1;
       }
 
       final RangeMarker toDelete = DefaultInsertHandler.insertSpace(endOffset, document);
@@ -96,16 +97,13 @@ public class AllClassesGetter {
           i--;
         }
         document.replaceString(i + 1, endOffset, qname);
-        endOffset = i + 1 + qname.length();
       }
-      return endOffset;
     }
 
     public void handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
       context.setAddCompletionChar(false);
-      int endOffset = _handleInsert(context, item);
-      context.getEditor().getCaretModel().moveToOffset(endOffset);
-      item.getTailType().processTail(context.getEditor(), endOffset);
+      _handleInsert(context, item);
+      item.getTailType().processTail(context.getEditor(), context.getEditor().getCaretModel().getOffset());
     }
 
   };
@@ -207,7 +205,7 @@ public class AllClassesGetter {
 
   public static LookupItem<PsiClass> createLookupItem(final PsiClass psiClass) {
     return ApplicationManager.getApplication().runReadAction(new Computable<LookupItem<PsiClass>>() {
-      public LookupItem<PsiClass> compute() {
+      public LookupItem compute() {
         return new JavaPsiClassReferenceElement(psiClass).setInsertHandler(INSERT_HANDLER);
       }
     });

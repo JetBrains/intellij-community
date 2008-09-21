@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.module.Module;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -344,15 +345,19 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   public PsiClass createClass(String text) throws IOException {
+    return createClass(myModule, text);
+  }
+
+  protected PsiClass createClass(final Module module, final String text) throws IOException {
     final String qname =
       ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", text)).getClasses()[0].getQualifiedName();
-    final VirtualFile[] files = ModuleRootManager.getInstance(myModule).getSourceRoots();
+    final VirtualFile[] files = ModuleRootManager.getInstance(module).getSourceRoots();
     File dir;
     if (files.length > 0) {
       dir = VfsUtil.virtualToIoFile(files[0]);
     } else {
       dir = createTempDir("unitTest");
-      addSourceContentToRoots(myModule, LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/')));
+      addSourceContentToRoots(module, LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/')));
     }
 
     File file = new File(dir, qname.replace('.', '/') + ".java");
