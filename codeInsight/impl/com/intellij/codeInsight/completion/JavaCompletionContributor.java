@@ -104,16 +104,6 @@ public class JavaCompletionContributor extends CompletionContributor {
   public String advertise(@NotNull final CompletionParameters parameters) {
     if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
 
-    if (parameters.getCompletionType() == CompletionType.CLASS_NAME && parameters.getInvocationCount() == 1 && parameters.getOriginalFile().getLanguage() ==
-                                                                                                               StdLanguages.JAVA) {
-      if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION)) {
-        final String shortcut = getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION);
-        if (shortcut != null) {
-          return CompletionBundle.message("completion.class.name.hint.2", shortcut);
-        }
-      }
-    }
-
     if (parameters.getCompletionType() != CompletionType.SMART && shouldSuggestSmartCompletion(parameters.getPosition())) {
       if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_SMARTTYPE_GENERAL)) {
         final String shortcut = getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);

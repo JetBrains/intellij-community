@@ -10,6 +10,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.patterns.PsiJavaElementPattern;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import com.intellij.psi.*;
@@ -23,6 +25,8 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.lang.StdLanguages;
+import com.intellij.lang.LangBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -112,4 +116,32 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
 
   }
 
+  public String advertise(@NotNull final CompletionParameters parameters) {
+    if (shouldShowSecondSmartCompletionHint(parameters) &&
+        CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION)) {
+      return CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION));
+    }
+
+    return null;
+  }
+
+  @Override
+  public String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
+    if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
+
+    if (shouldShowSecondSmartCompletionHint(parameters)) {
+      return LangBundle.message("completion.no.suggestions") +
+             "; " +
+             StringUtil.decapitalize(
+                 CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION)));
+    }
+
+    return null;
+  }
+
+  private static boolean shouldShowSecondSmartCompletionHint(final CompletionParameters parameters) {
+    return parameters.getCompletionType() == CompletionType.CLASS_NAME &&
+           parameters.getInvocationCount() == 1 &&
+           parameters.getOriginalFile().getLanguage() == StdLanguages.JAVA;
+  }
 }
