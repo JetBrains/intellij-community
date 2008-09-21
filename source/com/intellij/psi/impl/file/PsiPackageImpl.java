@@ -399,7 +399,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     final String subpackageQName = qName.length() > 0 ? qName + "." + name : name;
     PsiPackage aPackage = JavaPsiFacade.getInstance(myManager.getProject()).findPackage(subpackageQName);
     if (aPackage == null) return null;
-    if (aPackage.getDirectories(scope).length == 0) return null;
+    //if (aPackage.getDirectories(scope).length == 0) return null;
     return aPackage;
   }
 
