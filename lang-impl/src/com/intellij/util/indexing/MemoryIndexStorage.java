@@ -1,6 +1,5 @@
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -99,9 +98,26 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
       myBackendStorage.addValue(key, inputId, value);
       return;
     }
+    getMemValueContainer(key).addValue(inputId, value);
+  }
+
+  public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
+    if (myBufferingEnabled.get()) {
+      getMemValueContainer(key).removeValue(inputId, value);
+    }
+    else {
+      myBackendStorage.removeValue(key, inputId, value);
+    }
+  }
+
+  private UpdatableValueContainer<Value> getMemValueContainer(final Key key) {
     UpdatableValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer == null) {
-      valueContainer = new ChangeTrackingValueContainer<Value>(new Computable<ValueContainer<Value>>() {
+      valueContainer = new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Initializer<Value>() {
+        public Object getLock() {
+          return this;
+        }
+
         public ValueContainer<Value> compute() {
           try {
             return myBackendStorage.read(key);
@@ -113,30 +129,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
       });
       myMap.put(key, valueContainer);
     }
-    valueContainer.addValue(inputId, value);
-  }
-
-  public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
-    if (myBufferingEnabled.get()) {
-      UpdatableValueContainer<Value> container = myMap.get(key);
-      if (container == null) {
-        container = new ChangeTrackingValueContainer<Value>(new Computable<ValueContainer<Value>>() {
-          public ValueContainer<Value> compute() {
-            try {
-              return myBackendStorage.read(key);
-            }
-            catch (StorageException e) {
-              throw new RuntimeException(e);
-            }
-          }
-        });
-        myMap.put(key, container);
-      }
-      container.removeValue(inputId, value);
-    }
-    else {
-      myBackendStorage.removeValue(key, inputId, value);
-    }
+    return valueContainer;
   }
 
   @NotNull

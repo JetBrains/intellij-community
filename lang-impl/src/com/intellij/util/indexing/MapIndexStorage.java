@@ -1,7 +1,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -24,7 +23,7 @@ import java.util.List;
 */
 public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapIndexStorage");
-  private PersistentHashMap<Key, ValueContainer<Value>> myMap;
+  private volatile PersistentHashMap<Key, ValueContainer<Value>> myMap;
   private final SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
   private Key myKeyBeingRemoved = null;
   private final File myStorageFile;
@@ -59,11 +58,17 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
 
       @NotNull
       public ChangeTrackingValueContainer<Value> createValue(final Key key) {
-        return new ChangeTrackingValueContainer<Value>(new Computable<ValueContainer<Value>>() {
+        return new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Initializer<Value>() {
+          public Object getLock() {
+            assert myMap != null;
+            return myMap;
+          }
+
           public ValueContainer<Value> compute() {
+            assert myMap != null;
             ValueContainer<Value> value = null;
             try {
-              value = myMap != null? myMap.get(key) : null;
+              value = myMap.get(key);
               if (value == null) {
                 value = new ValueContainerImpl<Value>();
               }

@@ -12,10 +12,14 @@ import java.util.List;
 class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>{
   private final ValueContainerImpl<Value> myAdded;
   private final ValueContainerImpl<Value> myRemoved;
-  private final Computable<ValueContainer<Value>> myInitializer;
+  private final Initializer<Value> myInitializer;
   private volatile ValueContainerImpl<Value> myMerged = null;
 
-  public ChangeTrackingValueContainer(Computable<ValueContainer<Value>> initializer) {
+  public interface Initializer<T> extends Computable<ValueContainer<T>> {
+    Object getLock();
+  }
+
+  public ChangeTrackingValueContainer(Initializer<Value> initializer) {
     myInitializer = initializer;
     myAdded = new ValueContainerImpl<Value>();
     myRemoved = new ValueContainerImpl<Value>();
@@ -65,30 +69,32 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   }
   // need 'synchronized' to ensure atomic initialization of merged data
   // because several threads that acquired read lock may simultaneously execute the method
-  private synchronized ValueContainer<Value> getMergedData() {
-    if (myMerged != null) {
+  private ValueContainer<Value> getMergedData() {
+    synchronized (myInitializer.getLock()) {
+      if (myMerged != null) {
+        return myMerged;
+      }
+      myMerged = new ValueContainerImpl<Value>();
+
+      final ValueContainer<Value> fromDisk = myInitializer.compute();
+
+      final ContainerAction<Value> addAction = new ContainerAction<Value>() {
+        public void perform(final int id, final Value value) {
+          myMerged.addValue(id, value);
+        }
+      };
+      final ContainerAction<Value> removeAction = new ContainerAction<Value>() {
+        public void perform(final int id, final Value value) {
+          myMerged.removeValue(id, value);
+        }
+      };
+
+      fromDisk.forEach(addAction);
+      myRemoved.forEach(removeAction);
+      myAdded.forEach(addAction);
+
       return myMerged;
     }
-    myMerged = new ValueContainerImpl<Value>();
-
-    final ValueContainer<Value> fromDisk = myInitializer.compute();
-
-    final ContainerAction<Value> addAction = new ContainerAction<Value>() {
-      public void perform(final int id, final Value value) {
-        myMerged.addValue(id, value);
-      }
-    };
-    final ContainerAction<Value> removeAction = new ContainerAction<Value>() {
-      public void perform(final int id, final Value value) {
-        myMerged.removeValue(id, value);
-      }
-    };
-
-    fromDisk.forEach(addAction);
-    myRemoved.forEach(removeAction);
-    myAdded.forEach(addAction);
-
-    return myMerged;
   }
 
   public boolean isDirty() {
