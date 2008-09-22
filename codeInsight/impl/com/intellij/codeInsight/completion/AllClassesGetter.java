@@ -15,6 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -203,7 +204,7 @@ public class AllClassesGetter {
     });
   }
 
-  public static LookupItem<PsiClass> createLookupItem(final PsiClass psiClass) {
+  public static LookupItem<PsiClass> createLookupItem(@NotNull final PsiClass psiClass) {
     return ApplicationManager.getApplication().runReadAction(new Computable<LookupItem<PsiClass>>() {
       public LookupItem compute() {
         return new JavaPsiClassReferenceElement(psiClass).setInsertHandler(INSERT_HANDLER);
