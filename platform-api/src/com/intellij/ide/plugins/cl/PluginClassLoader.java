@@ -50,7 +50,8 @@ public class PluginClassLoader extends UrlClassLoader {
       }
       return c;
     }
-    throw new ClassNotFoundException("Cannot find class while loading plugin '" + myPluginId + "': " + name);
+    PluginManager.addPluginClass(name, myPluginId);
+    throw new ClassNotFoundException(name);
   }
 
   @Nullable
