@@ -58,7 +58,7 @@
   <tip file="WildcardsInNavigationPopups.html"/>
   <tip file="MoveInnerToUpper.html"/>
   <tip file="IntroduceVariableIncompleteCode.html"/>
-  <tip file="CreateTargetTag.html"/>
+  <!--<tip file="CreateTargetTag.html"/>-->
   <tip file="GoToSymbol.html"/>
   <tip file="RecentChanges.html"/>          <!--covered-->
   <tip file="ImageFileCompletion.html"/>
