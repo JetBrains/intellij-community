@@ -1752,6 +1752,8 @@ public class JBTabsImpl extends JComponent
   }
 
   public void setFocused(final boolean focused) {
+    if (myFocused == focused) return;
+
     myFocused = focused;
     repaint();
   }

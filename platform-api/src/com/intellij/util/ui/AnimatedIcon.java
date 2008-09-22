@@ -93,6 +93,8 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
   }
 
   public void suspend() {
+    if (!myRunning && !myAnimator.isRunning()) return;
+
     myRunning = false;
     myAnimator.suspend();
     repaint();

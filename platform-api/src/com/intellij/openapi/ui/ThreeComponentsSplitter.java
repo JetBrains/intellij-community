@@ -240,27 +240,22 @@ public class ThreeComponentsSplitter extends JPanel {
     myLastDivider.setBounds(lastDividerRect);
     myLastDivider.doLayout();
 
-    if (!Splitter.isNull(myFirstComponent)) {
-      myFirstComponent.setBounds(firstRect);
-      myFirstComponent.revalidate();
-    } else {
-      Splitter.hideNull(myFirstComponent);
-    }
+    validateIfNeeded(myFirstComponent, firstRect);
+    validateIfNeeded(myInnerComponent, innerRect);
+    validateIfNeeded(myLastComponent, lastRect);
+  }
 
-    if (!Splitter.isNull(myInnerComponent)) {
-      myInnerComponent.setBounds(innerRect);
-      myInnerComponent.revalidate();
+  private static void validateIfNeeded(final JComponent c, final Rectangle rect) {
+    if (!Splitter.isNull(c)) {
+      if (!c.getBounds().equals(rect)) {
+        c.setBounds(rect);
+        c.revalidate();
+      }
     } else {
-      Splitter.hideNull(myInnerComponent);
-    }
-
-    if (!Splitter.isNull(myLastComponent)) {
-      myLastComponent.setBounds(lastRect);
-      myLastComponent.revalidate();
-    } else {
-      Splitter.hideNull(myLastComponent);
+      Splitter.hideNull(c);
     }
   }
+
 
   public int getDividerWidth() {
     return myDividerWidth;

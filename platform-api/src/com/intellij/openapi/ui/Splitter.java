@@ -60,6 +60,7 @@ public class Splitter extends JPanel {
   private JComponent myFirstComponent;
   private final FocusWatcher myFocusWatcher;
   private boolean myShowDividerControls;
+  private static Rectangle myNullBounds = new Rectangle();
 
 
   /**
@@ -270,8 +271,10 @@ public class Splitter extends JPanel {
 
   static void hideNull(Component component) {
     if (component instanceof NullableComponent) {
-      component.setBounds(0, 0, 0, 0);
-      component.validate();
+      if (!component.getBounds().equals(myNullBounds)) {
+        component.setBounds(myNullBounds);
+        component.validate();
+      }
     }
   }
 
