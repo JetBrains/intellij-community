@@ -42,7 +42,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -209,38 +208,18 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       // so we shouldn't add the listener to avoid calling stop() twice
       processHandler.addProcessListener(new ProcessAdapter() {
         public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-          if (!willBeDestroyed || ApplicationManager.getApplication().isUnitTestMode()) {
-            final DebugProcessImpl debugProcess = getDebugProcess(event.getProcessHandler());
-            if (debugProcess != null) {
-              // if current thread is a "debugger manager thread", stop will execute synchronously
-               debugProcess.stop(willBeDestroyed);
+          final DebugProcessImpl debugProcess = getDebugProcess(event.getProcessHandler());
+          if (debugProcess != null) {
+            // if current thread is a "debugger manager thread", stop will execute synchronously
+            debugProcess.stop(willBeDestroyed);
 
-               // wait at most 10 seconds: the problem is that debugProcess.stop() can hang if there are troubles in the debuggee
-               // if processWillTerminate() is called from AWT thread debugProcess.waitFor() will block it and the whole app will hang
-               if (!DebuggerManagerThreadImpl.isManagerThread()) {
-                 debugProcess.waitFor(10000);
-               }
-            }
-          }
-          else {
-            final DebuggerSession session = getDebugSession(event.getProcessHandler());
-            if (session != null) {
-              // on OSX & Linux the process should be resumed before calling destroyProcess(), otherwise the process will stay in memory
-              if (ApplicationManager.getApplication().isDispatchThread()) {
-                session.resume();
-              }
-              else {
-                //noinspection SSBasedInspection
-                SwingUtilities.invokeLater(new Runnable() {
-                  public void run() {
-                    session.resume();
-                  }
-                });
-              }
+            // wait at most 10 seconds: the problem is that debugProcess.stop() can hang if there are troubles in the debuggee
+            // if processWillTerminate() is called from AWT thread debugProcess.waitFor() will block it and the whole app will hang
+            if (!DebuggerManagerThreadImpl.isManagerThread()) {
+              debugProcess.waitFor(10000);
             }
           }
         }
-
       });
     }
     myDispatcher.getMulticaster().sessionCreated(session);
