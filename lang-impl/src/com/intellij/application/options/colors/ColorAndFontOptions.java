@@ -577,7 +577,9 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
       if (!myFontName.equals(myParentScheme.getEditorFontName())) return true;
 
       for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
-        if (descriptor.isModified()) return true;
+        if (descriptor.isModified()) {
+          return true;
+        }
       }
 
       return false;
