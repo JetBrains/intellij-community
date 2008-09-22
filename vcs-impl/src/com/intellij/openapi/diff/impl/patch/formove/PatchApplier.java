@@ -74,7 +74,6 @@ public class PatchApplier {
             }
 
             final ApplyPatchStatus status = actualApply(myVerifier);
-            showApplyStatus(status);
 
             if (status != null) {
               refStatus.set(status);
@@ -83,6 +82,7 @@ public class PatchApplier {
         }, VcsBundle.message("patch.apply.command"), null);
       }
     });
+    showApplyStatus(refStatus.get());
 
     final List<VirtualFile> directlyAffected = myVerifier.getDirectlyAffected();
     final List<VirtualFile> indirectlyAffected = myVerifier.getAllAffected();
