@@ -7,7 +7,10 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
+import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -54,10 +57,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -313,6 +313,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return getAvailableIntentions(myProjectFixture.getProject(), doHighlighting(), offset, myEditor, myFile);
   }
 
+  public List<IntentionAction> filterAvailableIntentions(@NotNull final String hint) throws Throwable {
+    return ContainerUtil.findAll(getAvailableIntentions(),new Condition<IntentionAction>() {
+      public boolean value(final IntentionAction intentionAction) {
+        return intentionAction.getText().contains(hint);
+      }
+    });
+  }
+
   public IntentionAction getAvailableIntention(final String intentionName, final String... filePaths) throws Throwable {
     List<IntentionAction> intentions = getAvailableIntentions(filePaths);
     return CodeInsightTestUtil.findIntentionByText(intentions, intentionName);
@@ -393,24 +401,28 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public void type(final char c) {
     assertInitialized();
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    final DataContext dataContext = DataManager.getInstance().getDataContext();
-    if (c == '\b') {
-      performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
-      return;
-    }
-    if (c == '\n') {
-      performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
-      return;
-    }
-    if (c == '\t') {
-      if (LookupManager.getInstance(getProject()).getActiveLookup() != null) {
-        actionManager.getActionHandler(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE).execute(getEditor(), dataContext);
-        return;
-      }
-    }
+    new WriteCommandAction(getProject()) {
+      protected void run(Result result) throws Throwable {
+        EditorActionManager actionManager = EditorActionManager.getInstance();
+        final DataContext dataContext = DataManager.getInstance().getDataContext();
+        if (c == '\b') {
+          performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+          return;
+        }
+        if (c == '\n') {
+          performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
+          return;
+        }
+        if (c == '\t') {
+          if (LookupManager.getInstance(getProject()).getActiveLookup() != null) {
+            actionManager.getActionHandler(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE).execute(getEditor(), dataContext);
+            return;
+          }
+        }
 
-    actionManager.getTypedAction().actionPerformed(getEditor(), c, dataContext);
+        actionManager.getTypedAction().actionPerformed(getEditor(), c, dataContext);
+      }
+    }.execute();
   }
 
   public void performEditorAction(final String actionId) {
@@ -756,7 +768,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final File tempFile = File.createTempFile("aaa", "." + extension, new File(getTempDirPath()));
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
-      fileTypeManager.associateExtension(fileType, extension);
+      new WriteCommandAction(getProject()) {
+        protected void run(Result result) throws Throwable {
+          fileTypeManager.associateExtension(fileType, extension);
+        }
+      }.execute();
     }
     final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
     VfsUtil.saveText(vFile, text);

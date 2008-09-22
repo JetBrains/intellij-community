@@ -201,7 +201,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static <T> T assertOneElement(Collection<T> collection) {
     assertNotNull(collection);
-    assertEquals(1, collection.size());
+    assertEquals(toString(collection), 1, collection.size());
     return collection.iterator().next();
   }
 

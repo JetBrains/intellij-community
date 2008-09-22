@@ -171,6 +171,14 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   List<IntentionAction> getAvailableIntentions() throws Throwable;
 
+  /**
+   * Returns all intentions whose text contains hint
+   * @param hint
+   * @return
+   * @throws Throwable
+   */
+  List<IntentionAction> filterAvailableIntentions(@NotNull String hint) throws Throwable;
+
   IntentionAction getAvailableIntention(final String intentionName, final String... filePaths) throws Throwable;
 
   /**
