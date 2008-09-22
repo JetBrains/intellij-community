@@ -459,6 +459,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
       if (app.isDisposed()) return;
       final HashSet<Pair<VirtualFile, StateStorage>> causes = new HashSet<Pair<VirtualFile, StateStorage>>(myChangedApplicationFiles);
+      if (causes.isEmpty()) return;
 
       final boolean[] reloadOk = new boolean[]{false};
 

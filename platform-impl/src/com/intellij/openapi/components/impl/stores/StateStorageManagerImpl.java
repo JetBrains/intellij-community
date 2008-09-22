@@ -282,6 +282,9 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   }
 
   public ExternalizationSession startExternalization() {
+    if (mySession != null) {
+      LOG.error("Starting duplicate externalization session: previous session=" + mySession);
+    }
     ExternalizationSession session = new MyExternalizationSession();
 
     mySession = session;
