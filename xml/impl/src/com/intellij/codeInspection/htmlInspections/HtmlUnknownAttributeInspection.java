@@ -84,7 +84,7 @@ public class HtmlUnknownAttributeInspection extends HtmlUnknownTagInspection {
 
           holder.registerProblem(nameElement, XmlErrorMessages.message("attribute.is.not.allowed.here", name),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 new AddCutomTagOrAttributeIntentionAction(getShortName(), name, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),
+                                 new AddCustomTagOrAttributeIntentionAction(getShortName(), name, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),
                                  new RemoveAttributeIntentionAction(name, attribute));
         }
       }

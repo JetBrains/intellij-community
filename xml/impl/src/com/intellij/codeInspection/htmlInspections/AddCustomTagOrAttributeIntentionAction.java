@@ -24,12 +24,12 @@ import java.io.IOException;
 /**
  * @author spleaner
  */
-public class AddCutomTagOrAttributeIntentionAction implements LocalQuickFix {
+public class AddCustomTagOrAttributeIntentionAction implements LocalQuickFix {
   private String myName;
   private int myType;
   private String myInspectionName;
 
-  public AddCutomTagOrAttributeIntentionAction(String shortName, String name, int type) {
+  public AddCustomTagOrAttributeIntentionAction(String shortName, String name, int type) {
     myInspectionName = shortName;
     myName = name;
     myType = type;

@@ -183,8 +183,8 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
         final String name = tag.getName();
 
         if (!isCustomValuesEnabled() || !isCustomValue(name)) {
-          final AddCutomTagOrAttributeIntentionAction action =
-            new AddCutomTagOrAttributeIntentionAction(getShortName(), name, XmlEntitiesInspection.UNKNOWN_TAG);
+          final AddCustomTagOrAttributeIntentionAction action =
+            new AddCustomTagOrAttributeIntentionAction(getShortName(), name, XmlEntitiesInspection.UNKNOWN_TAG);
           final String message = XmlErrorMessages.message("unknown.html.tag", name);
 
           final PsiElement startTagName = XmlTagUtil.getStartTagNameElement(tag);
