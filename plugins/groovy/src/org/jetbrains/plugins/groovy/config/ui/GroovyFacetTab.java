@@ -115,6 +115,11 @@ public class GroovyFacetTab extends FacetEditorTab {
     return false;
   }
 
+  @Override
+  public String getHelpTopic() {
+    return super.getHelpTopic();
+  }
+
   public void onFacetInitialized(@NotNull Facet facet) {
     fireRootsChangedEvent();
     oldGroovyLibName = newGroovyLibName;
