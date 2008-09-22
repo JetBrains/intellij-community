@@ -1,0 +1,20 @@
+<components>
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.util.xml.impl.DomApplicationComponent</implementation-class>
+    </component>
+  </application-components>
+
+  <project-components>
+    <component>
+      <interface-class>com.intellij.util.xml.DomManager</interface-class>
+      <implementation-class>com.intellij.util.xml.impl.DomManagerImpl</implementation-class>
+      <skipForDummyProject/>
+    </component>
+    <component>
+      <interface-class>com.intellij.util.xml.actions.generate.DomTemplateRunner</interface-class>
+      <implementation-class>com.intellij.util.xml.impl.DomTemplateRunnerImpl</implementation-class>
+      <skipForDummyProject/>
+    </component>
+  </project-components>
+</components>

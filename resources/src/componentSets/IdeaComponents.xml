@@ -43,6 +43,7 @@
   <xi:include href="StructuralSearch.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="PropertiesFile.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/Xml.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Dom.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Php.xml" xpointer="xpointer(/components/*)"/>
 
   <application-components>

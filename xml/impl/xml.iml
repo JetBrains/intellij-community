@@ -12,10 +12,8 @@
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="commons-collections" level="project" />
-    <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="codeInsight-openapi" />
     <orderEntry type="module" module-name="icons" />
   </component>
   <component name="copyright">

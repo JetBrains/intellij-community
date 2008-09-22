@@ -4,6 +4,7 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.PomManager;
@@ -32,13 +33,9 @@ import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.DefinesXml;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.impl.dom.DomElementXmlDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -336,27 +333,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     return references.length > 0 ? references[0] : null;
   }
 
-  @Nullable
-  private XmlElementDescriptor getDomDescriptor() {
-
-    final DomElement domElement = DomManager.getDomManager(getProject()).getDomElement(this);
-    if (domElement != null) {
-      final DefinesXml definesXml = domElement.getAnnotation(DefinesXml.class);
-      if (definesXml != null) {
-        return new DomElementXmlDescriptor(domElement);
-      }
-      if (parent instanceof XmlTag) {
-        final XmlElementDescriptor descriptor = ((XmlTag)parent).getDescriptor();
-
-        if (descriptor != null && descriptor instanceof DomElementXmlDescriptor) {
-          return descriptor.getElementDescriptor(this, (XmlTag)parent);
-        }
-      }
-    }
-
-    return null;
-  }
-
   public XmlElementDescriptor getDescriptor() {
     final long curModCount = getManager().getModificationTracker().getModificationCount();
     if (myDescriptorModCount != curModCount) {
@@ -368,8 +344,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
 
   protected XmlElementDescriptor computeElementDescriptor() {
     final String namespace = getNamespace();
-    XmlElementDescriptor elementDescriptor = getDomDescriptor();
-    if (elementDescriptor != null) return elementDescriptor;
+    XmlElementDescriptor elementDescriptor;
+    for(XmlElementDescriptorProvider provider: Extensions.getExtensions(XmlElementDescriptorProvider.EP_NAME)) {
+      elementDescriptor = provider.getDescriptor(this);
+      if (elementDescriptor != null) return elementDescriptor;
+    }
 
     if (XmlUtil.EMPTY_URI.equals(namespace)) { //nonqualified items
       final PsiElement parent = getParent();
