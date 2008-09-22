@@ -74,7 +74,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   private VisibleTreeState myVisibleTreeState = new VisibleTreeState();
 
-  InspectionProfileImpl(InspectionProfileImpl inspectionProfile) {
+  public InspectionProfileImpl(InspectionProfileImpl inspectionProfile) {
     super(inspectionProfile.getName());
 
     myRegistrar = inspectionProfile.myRegistrar;
