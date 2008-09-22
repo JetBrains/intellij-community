@@ -15,7 +15,7 @@
   <tip file="TabInLookups.html"/>           <!--covered-->
   <tip file="TabInEditorClose.html"/>           
   <tip file="AltInsertInEditor.html"/>
-  <tip file="ClosingTabsWithMiddleMouse.html"/>
+  <!--<tip file="ClosingTabsWithMiddleMouse.html"/>-->
   <tip file="SelectIn.html"/>               <!--covered-->
   <tip file="SpeedSearch.html"/>            <!--covered-->
   <tip file="Escape.html"/>
