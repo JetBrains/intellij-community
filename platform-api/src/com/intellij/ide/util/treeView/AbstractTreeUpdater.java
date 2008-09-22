@@ -30,15 +30,18 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Set;
 
 public class AbstractTreeUpdater implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeUpdater");
 
-  private final LinkedList<DefaultMutableTreeNode> myNodesToUpdate = new LinkedList<DefaultMutableTreeNode>();
+  private final LinkedList<TreeUpdatePass> myNodeQueue = new LinkedList<TreeUpdatePass>();
   private final AbstractTreeBuilder myTreeBuilder;
   private Runnable myRunAfterUpdate;
   private Runnable myRunBeforeUpdate;
   private final MergingUpdateQueue myUpdateQueue;
+
+  private long myUpdateCount;
 
   public AbstractTreeUpdater(AbstractTreeBuilder treeBuilder) {
     myTreeBuilder = treeBuilder;
@@ -60,29 +63,56 @@ public class AbstractTreeUpdater implements Disposable {
   }
 
   public synchronized void addSubtreeToUpdate(@NotNull DefaultMutableTreeNode rootNode) {
+    addSubtreeToUpdate(new TreeUpdatePass(rootNode));
+  }
+
+  public synchronized void addSubtreeToUpdate(@NotNull TreeUpdatePass toAdd) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("addSubtreeToUpdate:" + rootNode);
+      LOG.debug("addSubtreeToUpdate:" + toAdd.getNode());
     }
 
-    for (Iterator<DefaultMutableTreeNode> iterator = myNodesToUpdate.iterator(); iterator.hasNext();) {
-      DefaultMutableTreeNode node = iterator.next();
-      if (rootNode.isNodeAncestor(node)){
+    assert !toAdd.isExpired();
+
+    for (Iterator<TreeUpdatePass> iterator = myNodeQueue.iterator(); iterator.hasNext();) {
+      final TreeUpdatePass passInQueue = iterator.next();
+      if (passInQueue.getNode() == toAdd.getNode()) {
+        toAdd.expire();
+        return;
+      } else if (toAdd.getNode().isNodeAncestor(passInQueue.getNode())) {
+        toAdd.expire();
+        return;
+      } else if (passInQueue.getNode().isNodeAncestor(toAdd.getNode())) {
+        iterator.remove();
+        passInQueue.expire();
+      }
+    }
+
+    final Set<TreeUpdatePass> yielding = myTreeBuilder.getUi().getYeildingPasses();
+    for (Iterator<TreeUpdatePass> iterator = yielding.iterator(); iterator.hasNext();) {
+      TreeUpdatePass eachYielding = iterator.next();
+      if (eachYielding.getNode() == toAdd.getNode()) {
+        toAdd.expire();
+        return;
+      } else if (toAdd.getNode().isNodeAncestor(eachYielding.getNode())) {
+        toAdd.expire();
         return;
       }
-      else if (node.isNodeAncestor(rootNode)){
-        iterator.remove();
-      }
     }
-    myNodesToUpdate.add(rootNode);
 
-    myUpdateQueue.queue(new Update("ViewUpdate") {
+
+    myNodeQueue.add(toAdd);
+
+    myUpdateCount++;
+    toAdd.setSheduleStamp(myUpdateCount);
+
+    queue(new Update("ViewUpdate") {
       public boolean isExpired() {
         return myTreeBuilder.isDisposed();
       }
 
       public void run() {
         if (myTreeBuilder.getTreeStructure().hasSomethingToCommit()) {
-          myUpdateQueue.queue(this);
+          queue(this);
           return;
         }
         myTreeBuilder.getTreeStructure().commit();
@@ -98,6 +128,10 @@ public class AbstractTreeUpdater implements Disposable {
     });
   }
 
+  private void queue(Update update) {
+    myUpdateQueue.queue(update);
+  }
+
   protected void updateSubtree(DefaultMutableTreeNode node) {
     myTreeBuilder.updateSubtree(node);
   }
@@ -108,9 +142,9 @@ public class AbstractTreeUpdater implements Disposable {
       myRunBeforeUpdate = null;
     }
 
-    while(!myNodesToUpdate.isEmpty()){
-      DefaultMutableTreeNode node = myNodesToUpdate.removeFirst();
-      updateSubtree(node);
+    while(!myNodeQueue.isEmpty()){
+      final TreeUpdatePass eachPass = myNodeQueue.removeFirst();
+      myTreeBuilder.getUi().updateSubtree(eachPass);
     }
 
     if (myRunAfterUpdate != null) {
@@ -143,7 +177,7 @@ public class AbstractTreeUpdater implements Disposable {
   }
 
   public void cancelAllRequests(){
-    myNodesToUpdate.clear();
+    myNodeQueue.clear();
     myUpdateQueue.cancelAllUpdates();
   }
 
@@ -153,5 +187,9 @@ public class AbstractTreeUpdater implements Disposable {
 
   public synchronized void runBeforeUpdate(final Runnable runnable) {
     myRunBeforeUpdate = runnable;
+  }
+
+  public long getUpdateCount() {
+    return myUpdateCount;
   }
 }

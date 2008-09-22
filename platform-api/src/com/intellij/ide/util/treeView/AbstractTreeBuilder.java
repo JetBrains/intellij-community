@@ -306,4 +306,8 @@ public class AbstractTreeBuilder implements Disposable {
     }
     return result;
   }
+
+  public final void setCanYieldUpdate(boolean yield) {
+    getUi().setCanYield(yield);
+  }
 }
