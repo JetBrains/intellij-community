@@ -27,7 +27,8 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
 
   public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile, final FileType fileType) {
-    if (c == '>' && WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag()
+    final WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
+    if (c == '>' && webEditorOptions != null && webEditorOptions.isAutomaticallyInsertClosingTag()
         && (editedFile.getLanguage() instanceof XMLLanguage || editedFile.getViewProvider().getBaseLanguage() instanceof XMLLanguage)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
