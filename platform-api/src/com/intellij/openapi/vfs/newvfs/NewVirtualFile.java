@@ -122,4 +122,8 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   }
 
   public abstract Collection<VirtualFile> getCachedChildren();
+
+  public abstract void setFlag(int flag_mask, boolean value);
+
+  public abstract boolean getFlag(int flag_mask);
 }

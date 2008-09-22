@@ -1,5 +1,6 @@
 package com.intellij.util.indexing;
 
+import com.intellij.AppTopics;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.lang.ASTNode;
@@ -12,6 +13,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileTypeEvent;
+import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -36,6 +39,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +84,8 @@ public class FileBasedIndex implements ApplicationComponent {
   private final FileContentStorage myFileContentAttic;
   private final Map<ID<?, ?>, FileBasedIndexExtension<?, ?>> myExtentions = new HashMap<ID<?,?>, FileBasedIndexExtension<?,?>>();
 
+  private static final int ALREADY_PROCESSED = 0x02;
+
   public static interface InputFilter {
     boolean acceptInput(VirtualFile file);
   }
@@ -87,7 +93,8 @@ public class FileBasedIndex implements ApplicationComponent {
   public FileBasedIndex(final VirtualFileManagerEx vfManager, MessageBus bus) throws IOException {
     myVfManager = vfManager;
 
-    bus.connect().subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
+    final MessageBusConnection connection = bus.connect();
+    connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       public void transactionStarted(final Document doc, final PsiFile file) {
         if (file != null) {
           myTransactionMap.put(doc, file);
@@ -96,6 +103,31 @@ public class FileBasedIndex implements ApplicationComponent {
 
       public void transactionCompleted(final Document doc, final PsiFile file) {
         myTransactionMap.remove(doc);
+      }
+    });
+
+    connection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
+      public void beforeFileTypesChanged(final FileTypeEvent event) {
+        final VirtualFile[] roots = ManagingFS.getInstance().getRoots();
+        for (VirtualFile root : roots) {
+          cleanProcessedFlag(root);
+        }
+      }
+
+      private void cleanProcessedFlag(final VirtualFile file) {
+        final NewVirtualFile nvf = (NewVirtualFile)file;
+        if (file.isDirectory()) {
+          for (VirtualFile child : nvf.getCachedChildren()) {
+            cleanProcessedFlag(child);
+          }
+        }
+        else {
+          nvf.setFlag(ALREADY_PROCESSED, false);
+        }
+      }
+
+
+      public void fileTypesChanged(final FileTypeEvent event) {
       }
     });
 
@@ -861,6 +893,10 @@ public class FileBasedIndex implements ApplicationComponent {
         // indexes may depend on file name
         final VirtualFile file = event.getFile();
         if (!file.isDirectory()) {
+          if (file instanceof NewVirtualFile) {
+            ((NewVirtualFile)file).setFlag(ALREADY_PROCESSED, false);
+          }
+
           scheduleInvalidation(file, true);
         }
       }
@@ -1145,9 +1181,13 @@ public class FileBasedIndex implements ApplicationComponent {
 
     public boolean processFile(final VirtualFile file) {
       if (!file.isDirectory()) {
+        if (file instanceof NewVirtualFile) {
+          if (((NewVirtualFile)file).getFlag(ALREADY_PROCESSED)) return true;
+        }
+
         if (file instanceof VirtualFileWithId && !SingleRootFileViewProvider.isTooLarge(file)) {
           for (ID<?, ?> indexId : myIndexIds) {
-            if (myFileContentAttic.containsContent(file)? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
+            if (myFileContentAttic.containsContent(file) ? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
               myFiles.add(file);
               break;
             }
@@ -1168,6 +1208,10 @@ public class FileBasedIndex implements ApplicationComponent {
             }
           }
           IndexingStamp.flushCache();
+
+          if (file instanceof NewVirtualFile) {
+            ((NewVirtualFile)file).setFlag(ALREADY_PROCESSED, true);
+          }
         }
       }
       else {

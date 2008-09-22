@@ -60,4 +60,6 @@ public abstract class ManagingFS implements FileSystemInterface {
 
   @Nullable
   public abstract VirtualFile findFileById(int id);
+
+  public abstract VirtualFile[] getRoots();
 }

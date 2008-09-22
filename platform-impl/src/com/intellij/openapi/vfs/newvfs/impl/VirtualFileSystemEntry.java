@@ -20,10 +20,11 @@ import java.nio.charset.Charset;
 
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   protected static final PersistentFS ourPersistence = (PersistentFS)ManagingFS.getInstance();
+  private static byte DIRTY_FLAG = 0x01;
 
   private volatile String myName;
   private volatile VirtualDirectoryImpl myParent;
-  private volatile boolean myDirtyFlag = false;
+  private volatile byte myFlags = 0;
   private volatile int myId;
 
   public VirtualFileSystemEntry(final String name, final VirtualDirectoryImpl parent, int id) {
@@ -67,16 +68,29 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public boolean isDirty() {
-    return myDirtyFlag;
+    return (myFlags & DIRTY_FLAG) != 0;
+  }
+
+  public void setFlag(int flag_mask, boolean value) {
+    if (value) {
+      myFlags |= flag_mask;
+    }
+    else {
+      myFlags &= ~flag_mask;
+    }
+  }
+
+  public boolean getFlag(int flag_mask) {
+    return (myFlags & flag_mask) != 0;
   }
 
   public void markClean() {
-    myDirtyFlag = false;
+    setFlag(DIRTY_FLAG, false);
   }
 
   public void markDirty() {
-    if (!myDirtyFlag) {
-      myDirtyFlag = true;
+    if (!isDirty()) {
+      setFlag(DIRTY_FLAG, true);
       if (myParent != null) myParent.markDirty();
     }
   }

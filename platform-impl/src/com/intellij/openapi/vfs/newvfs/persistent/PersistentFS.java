@@ -641,6 +641,13 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
   }
 
+  public VirtualFile[] getRoots() {
+    synchronized (LOCK) {
+      final Collection<NewVirtualFile> roots = myRoots.values();
+      return roots.toArray(new VirtualFile[roots.size()]);
+    }
+  }
+
   public VirtualFile[] getRoots(final NewVirtualFileSystem fs) {
     List<VirtualFile> roots = new ArrayList<VirtualFile>();
     synchronized (LOCK) {
