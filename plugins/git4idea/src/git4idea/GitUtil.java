@@ -12,6 +12,8 @@ package git4idea;
  * Copyright 2007 Decentrix Inc
  * Copyright 2007 Aspiro AS
  * Copyright 2008 MQSoftware
+ * Copyright 2008 JetBrains s.r.o.
+ * 
  * Authors: gevession, Erlend Simonsen & Mark Scott
  *
  * This code was originally derived from the MKS & Mercurial IDEA VCS plugins
