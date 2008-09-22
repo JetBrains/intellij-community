@@ -1,7 +1,7 @@
 package com.intellij.testFramework;
 
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
@@ -46,6 +46,8 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.PatchedWeakReference;
@@ -87,6 +89,7 @@ import java.util.HashSet;
 
   private static final String ourOriginalTempDir = System.getProperty("java.io.tmpdir");
   private static int ourTestCount = 0;
+  private CodeStyleSettings ourOldCodeStyleSettings;
 
   protected static long getTimeRequired() {
     return DEFAULT_TEST_TIME;
@@ -129,6 +132,8 @@ import java.util.HashSet;
 
     setUpProject();
     markProjectCreationPlace();
+
+    ourOldCodeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
   }
 
   public Project getProject() {
@@ -258,9 +263,13 @@ import java.util.HashSet;
   }
 
   protected void tearDown() throws Exception {
+
     LookupManager.getInstance(myProject).hideActiveLookup();
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     try {
+      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+      assertEquals("Code style settings damaged", ourOldCodeStyleSettings, CodeStyleSettingsManager.getSettings(getProject()));
+
       assertNotNull("Application components damaged", ProjectManager.getInstance());
 
       ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flash posponed formatting if any.
@@ -312,6 +321,9 @@ import java.util.HashSet;
         editorFactory.releaseEditor(editor);
       }
       assertEquals(0, allEditors.length);
+
+
+      //cleanTheWorld();
     }
     finally {
       myProjectManager = null;
@@ -319,9 +331,27 @@ import java.util.HashSet;
       myModule = null;
       myFilesToDelete = null;
     }
-
-
   }
+
+  //private void cleanTheWorld() throws IllegalAccessException, NoSuchFieldException {
+  //  try {
+  //    ((JobSchedulerImpl)JobScheduler.getInstance()).waitForCompletion();
+  //  }
+  //  catch (Throwable throwable) {
+  //    LOG.error(throwable);
+  //  }
+  //  UIUtil.dispatchAllInvocationEvents();
+  //
+  //  Thread thread = Thread.currentThread();
+  //  Field locals = Thread.class.getDeclaredField("threadLocals");
+  //  locals.setAccessible(true);
+  //  locals.set(thread, null);
+  //
+  //  String path = HeapWalker.findObjectUnder(ourApplication, Project.class);
+  //  if (path != null) {
+  //    throw new RuntimeException(getName() + " " + path);
+  //  }
+  //}
 
   private void disposeProject() {
     if (myProject != null) {
