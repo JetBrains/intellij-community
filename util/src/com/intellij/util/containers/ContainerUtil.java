@@ -23,6 +23,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -516,5 +517,13 @@ public class ContainerUtil {
 
   public static <T> List<T> dropTail(List<T> items) {
     return items.subList(0, items.size()-1);
+  }
+
+  public static <T> Set<T> newSet(T... elements) {
+    return new THashSet<T>(Arrays.asList(elements));
+  }
+
+  public static <T> T[] ar(T... elements) {
+    return elements;
   }
 }
