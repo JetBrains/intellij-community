@@ -46,8 +46,7 @@ public abstract class UsefulTestCase extends TestCase {
         Element element = new Element("temp");
         settings.writeExternal(element);
         settings.readExternal(defaultElement);
-        assertEquals(JDOMUtil.writeElement(defaultElement, "\n"), JDOMUtil.writeElement(element, "\n"));
-        fail("Code insight settings damaged");
+        assertEquals("Code insight settings damaged",JDOMUtil.writeElement(defaultElement, "\n"), JDOMUtil.writeElement(element, "\n"));
       }
     }
     Disposer.dispose(myTestRootDisposable);
