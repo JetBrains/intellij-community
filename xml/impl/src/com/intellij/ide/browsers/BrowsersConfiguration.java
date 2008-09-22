@@ -116,8 +116,15 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
       String family = child.getAttributeValue("family");
       final String path = child.getAttributeValue("path");
       final String active = child.getAttributeValue("active");
-      final BrowserFamily browserFamily = BrowserFamily.valueOf(family);
-      myBrowserToPathMap.put(browserFamily, new Pair<String, Boolean>(path, Boolean.parseBoolean(active)));
+      final BrowserFamily browserFamily;
+
+      try {
+        browserFamily = BrowserFamily.valueOf(family);
+        myBrowserToPathMap.put(browserFamily, new Pair<String, Boolean>(path, Boolean.parseBoolean(active)));
+      }
+      catch (IllegalArgumentException e) {
+        // skip
+      }
     }
   }
 
