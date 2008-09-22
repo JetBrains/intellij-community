@@ -224,9 +224,10 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
       if (settings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO) {
         if (!method.isConstructor()) {
           PsiType returnType = method.getReturnType();
-          assert returnType != null;
-          buffer.append(returnType.getPresentableText());
-          buffer.append(" ");
+          if (returnType != null) {
+            buffer.append(returnType.getPresentableText());
+            buffer.append(" ");
+          }
         }
         buffer.append(element.getName());
         buffer.append("(");
