@@ -108,24 +108,8 @@ public class FileBasedIndex implements ApplicationComponent {
 
     connection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
       public void beforeFileTypesChanged(final FileTypeEvent event) {
-        final VirtualFile[] roots = ManagingFS.getInstance().getRoots();
-        for (VirtualFile root : roots) {
-          cleanProcessedFlag(root);
-        }
+        cleanupProcessedFlag();
       }
-
-      private void cleanProcessedFlag(final VirtualFile file) {
-        final NewVirtualFile nvf = (NewVirtualFile)file;
-        if (file.isDirectory()) {
-          for (VirtualFile child : nvf.getCachedChildren()) {
-            cleanProcessedFlag(child);
-          }
-        }
-        else {
-          nvf.setFlag(ALREADY_PROCESSED, false);
-        }
-      }
-
 
       public void fileTypesChanged(final FileTypeEvent event) {
       }
@@ -741,6 +725,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public void requestRebuild(ID<?, ?> indexId) {
+    cleanupProcessedFlag();
     myRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
   }
   
@@ -1279,6 +1264,25 @@ public class FileBasedIndex implements ApplicationComponent {
 
     public boolean acceptInput(final VirtualFile file) {
       return file instanceof VirtualFileWithId && myDelegate.acceptInput(file);
+    }
+  }
+
+  private void cleanupProcessedFlag() {
+    final VirtualFile[] roots = ManagingFS.getInstance().getRoots();
+    for (VirtualFile root : roots) {
+      cleanProcessedFlag(root);
+    }
+  }
+
+  private void cleanProcessedFlag(final VirtualFile file) {
+    final NewVirtualFile nvf = (NewVirtualFile)file;
+    if (file.isDirectory()) {
+      for (VirtualFile child : nvf.getCachedChildren()) {
+        cleanProcessedFlag(child);
+      }
+    }
+    else {
+      nvf.setFlag(ALREADY_PROCESSED, false);
     }
   }
 }
