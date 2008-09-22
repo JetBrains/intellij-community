@@ -11,8 +11,11 @@ import junit.framework.Assert;
 
 public class BaseFixture implements IdeaTestFixture {
   private Disposable myRootDisposable;
+  private boolean myDisposed;
 
   public void setUp() throws Exception {
+    Assert.assertNull("setUp() already has been called", myRootDisposable);
+    Assert.assertFalse("tearDown() already has been called", myDisposed);
     myRootDisposable = new Disposable() {
       public void dispose() {
       }
@@ -26,6 +29,8 @@ public class BaseFixture implements IdeaTestFixture {
 
   public void tearDown() throws Exception {
     Assert.assertNotNull("setUp() has not been called", myRootDisposable);
+    Assert.assertFalse("tearDown() already has been called", myDisposed);
+    myDisposed = true;
     Disposer.dispose(myRootDisposable);
     resetClassFields(getClass());
   }

@@ -410,7 +410,7 @@ public class FileUtil {
     File[] files = file.listFiles();
     if (files != null) {
       for (File file1 : files) {
-        delete(file1);
+        if (!delete(file1)) return false;
       }
     }
 
@@ -418,7 +418,8 @@ public class FileUtil {
       if (file.delete() || !file.exists()) return true;
       try {
         Thread.sleep(10);
-      } catch (InterruptedException e) {
+      }
+      catch (InterruptedException e) {
 
       }
     }

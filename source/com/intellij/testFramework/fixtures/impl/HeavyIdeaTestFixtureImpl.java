@@ -34,7 +34,7 @@ import com.intellij.psi.*;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
-import junit.framework.Assert;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,9 +43,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -59,15 +57,13 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private Project myProject;
   private final Set<File> myFilesToDelete = new HashSet<File>();
   private IdeaTestApplication myApplication;
-  private final List<ModuleFixtureBuilder> myModuleFixtureBuilders = new ArrayList<ModuleFixtureBuilder>();
-  private boolean myDisposed;
+  private final Set<ModuleFixtureBuilder> myModuleFixtureBuilders = new THashSet<ModuleFixtureBuilder>();
 
   protected void addModuleFixtureBuilder(ModuleFixtureBuilder builder) {
     myModuleFixtureBuilders.add(builder);
   }
 
   public void setUp() throws Exception {
-    Assert.assertNull("setUp() already has been called", myProject);
     super.setUp();
 
     initApplication();
@@ -75,9 +71,6 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   }
 
   public void tearDown() throws Exception {
-    Assert.assertFalse("tearDown() already has been called", myDisposed);
-    myDisposed = true;
-    Assert.assertNotNull("setUp() hasn't been called", myProject);
     for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
       moduleFixtureBuilder.getFixture().tearDown();
     }
@@ -91,7 +84,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     Disposer.dispose(myProject);
 
     for (final File fileToDelete : myFilesToDelete) {
-      delete(fileToDelete);
+      assert FileUtil.delete(fileToDelete) : "Can't delete "+fileToDelete;
     }
 
     myApplication.setDataProvider(null);
@@ -161,20 +154,6 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       else {
         return null;
       }
-    }
-  }
-
-  private static void delete(File file) {
-    if (file.isDirectory()) {
-      File[] files = file.listFiles();
-      for (File fileToDelete : files) {
-        delete(fileToDelete);
-      }
-    }
-
-    boolean b = file.delete();
-    if (!b && file.exists()) {
-      throw new IllegalStateException("Can't delete " + file.getAbsolutePath());
     }
   }
 

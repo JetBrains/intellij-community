@@ -23,7 +23,6 @@ import java.util.ArrayList;
  * @author Dmitry Avdeev
  */
 public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
-
   private final ArrayList<File> myFilesToDelete = new ArrayList<File>();
   private File myTempDir;
 
@@ -112,7 +111,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
 
   public void tearDown() throws Exception {
     for (final File fileToDelete : myFilesToDelete) {
-      delete(fileToDelete);
+      assert FileUtil.delete(fileToDelete) : "Can't delete "+fileToDelete;
     }
     super.tearDown();
   }
@@ -127,20 +126,6 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     }
     catch (IOException e) {
       throw new RuntimeException("Cannot create temp dir", e);
-    }
-  }
-
-  private static void delete(File file) {
-    if (file.isDirectory()) {
-      File[] files = file.listFiles();
-      for (File fileToDelete : files) {
-        delete(fileToDelete);
-      }
-    }
-
-    boolean b = file.delete();
-    if (!b && file.exists()) {
-      assert false : "Can't delete " + file.getAbsolutePath();
     }
   }
 

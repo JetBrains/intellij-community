@@ -707,7 +707,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void tearDown() throws Exception {
-    assertInitialized();
     if (SwingUtilities.isEventDispatchThread()) {
       LookupManager.getInstance(getProject()).hideActiveLookup();
     }
