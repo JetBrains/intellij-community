@@ -22,27 +22,24 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class VirtualFileManagerImpl extends VirtualFileManagerEx implements ApplicationComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
 
-  private ArrayList<VirtualFileSystem> myFileSystems = null;
-  private HashMap<String, VirtualFileSystem> myProtocolToSystemMap = null;
+  private final ArrayList<VirtualFileSystem> myFileSystems = new ArrayList<VirtualFileSystem>();
+  private final Map<String, VirtualFileSystem> myProtocolToSystemMap = new HashMap<String, VirtualFileSystem>();
 
-  private EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster =
-    EventDispatcher.create(VirtualFileListener.class);
-  private List<VirtualFileManagerListener> myVirtualFileManagerListeners = new CopyOnWriteArrayList<VirtualFileManagerListener>();
-  private EventDispatcher<ModificationAttemptListener> myModificationAttemptListenerMulticaster =
-    EventDispatcher.create(ModificationAttemptListener.class);
+  private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
+  private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = new CopyOnWriteArrayList<VirtualFileManagerListener>();
+  private final EventDispatcher<ModificationAttemptListener> myModificationAttemptListenerMulticaster = EventDispatcher.create(ModificationAttemptListener.class);
 
   @NonNls private static final String USER_HOME = "user.home";
   private int myRefreshCount = 0;
 
   public VirtualFileManagerImpl(VirtualFileSystem[] fileSystems, MessageBus bus) {
-    myFileSystems = new ArrayList<VirtualFileSystem>();
-    myProtocolToSystemMap = new HashMap<String, VirtualFileSystem>();
     for (VirtualFileSystem fileSystem : fileSystems) {
       registerFileSystem(fileSystem);
     }

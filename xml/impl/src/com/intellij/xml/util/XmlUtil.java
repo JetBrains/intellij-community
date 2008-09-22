@@ -1470,33 +1470,33 @@ public class XmlUtil {
 
   @Nullable
   private static String detect(final byte[] bytes) {
-    int start = 0;
+    int index = 0;
     if (CharsetToolkit.hasUTF8Bom(bytes)) {
-      start = CharsetToolkit.UTF8_BOM.length;
+      index = CharsetToolkit.UTF8_BOM.length;
     }
 
-    start = skipWhiteSpace(start, bytes);
-    if (!ArrayUtil.startsWith(bytes, start, XML_PROLOG_START_BYTES)) return null;
-    start += XML_PROLOG_START_BYTES.length;
-    while (start < bytes.length) {
-      start = skipWhiteSpace(start, bytes);
-      if (ArrayUtil.startsWith(bytes, start, XML_PROLOG_END_BYTES)) return null;
-      if (ArrayUtil.startsWith(bytes, start, ENCODING_BYTES)) {
-        start += ENCODING_BYTES.length;
-        start = skipWhiteSpace(start, bytes);
-        if (start >= bytes.length || bytes[start] != '=') continue;
-        start++;
-        start = skipWhiteSpace(start, bytes);
-        if (start >= bytes.length || bytes[start] != '\'' && bytes[start] != '\"') continue;
-        byte quote = bytes[start];
-        start++;
+    index = skipWhiteSpace(index, bytes);
+    if (!ArrayUtil.startsWith(bytes, index, XML_PROLOG_START_BYTES)) return null;
+    index += XML_PROLOG_START_BYTES.length;
+    while (index < bytes.length) {
+      index = skipWhiteSpace(index, bytes);
+      if (ArrayUtil.startsWith(bytes, index, XML_PROLOG_END_BYTES)) return null;
+      if (ArrayUtil.startsWith(bytes, index, ENCODING_BYTES)) {
+        index += ENCODING_BYTES.length;
+        index = skipWhiteSpace(index, bytes);
+        if (index >= bytes.length || bytes[index] != '=') continue;
+        index++;
+        index = skipWhiteSpace(index, bytes);
+        if (index >= bytes.length || bytes[index] != '\'' && bytes[index] != '\"') continue;
+        byte quote = bytes[index];
+        index++;
         StringBuilder encoding = new StringBuilder();
-        while (start < bytes.length) {
-          if (bytes[start] == quote) return encoding.toString();
-          encoding.append((char)bytes[start++]);
+        while (index < bytes.length) {
+          if (bytes[index] == quote) return encoding.toString();
+          encoding.append((char)bytes[index++]);
         }
       }
-      start++;
+      index++;
     }
     return null;
   }

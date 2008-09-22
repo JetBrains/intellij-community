@@ -2,9 +2,11 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -17,10 +19,9 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 
 public class VirtualFilePointerImpl extends UserDataHolderBase implements VirtualFilePointer, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.SmartVirtualFilePointerImpl");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerImpl");
   private String myUrl; // is null when myFile is not null
   private VirtualFile myFile;
-  private boolean myInitialized = false;
   private boolean myWasRecentlyValid = false;
   private final VirtualFileManager myVirtualFileManager;
   private final VirtualFilePointerListener myListener;
@@ -37,11 +38,14 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     myVirtualFileManager = virtualFileManager;
     myListener = listener;
     useCount = 0;
+    if (LOG.isDebugEnabled()) {
+      putUserData(CREATE_TRACE, new Throwable("parent ="+parentDisposable));
+    }
   }
 
   @NotNull
   public String getFileName() {
-    if (!myInitialized) update();
+    update();
 
     if (myFile != null) {
       return myFile.getName();
@@ -55,7 +59,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   public VirtualFile getFile() {
     checkDisposed();
 
-    if (!myInitialized) update();
+    update();
     if (myFile != null && !myFile.isValid()) {
       myUrl = myFile.getUrl();
       myFile = null;
@@ -67,14 +71,14 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   @NotNull
   public String getUrl() {
     //checkDisposed(); no check here since Disposer might want to compute hashcode during dispose()
-    if (!myInitialized) update();
+    update();
     return myUrl == null ? myFile.getUrl() : myUrl;
   }
 
   @NotNull
   public String getPresentableUrl() {
     checkDisposed();
-    if (!myInitialized) update();
+    update();
 
     return PathUtil.toPresentableUrl(getUrl());
   }
@@ -123,15 +127,17 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   }
 
   public boolean isValid() {
-    if (!myInitialized) update();
+    update();
 
+    return isFileRetrieved();
+  }
+
+  private boolean isFileRetrieved() {
     return !disposed && myFile != null; // && myFile.isValid();
   }
 
-  public void update() {
-    myInitialized = true;
-
-    if (!isValid()) {
+  void update() {
+    if (!isFileRetrieved()) {
       LOG.assertTrue(myUrl != null);
       myFile = myVirtualFileManager.findFileByUrl(myUrl);
       if (myFile != null) {
@@ -143,11 +149,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
       myFile = null;
     }
 
-    myWasRecentlyValid = isValid();
-  }
-
-  public boolean wasRecentlyValid() {
-    return myWasRecentlyValid;
+    myWasRecentlyValid = isFileRetrieved();
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -156,13 +158,13 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    if (!myInitialized) update();
+    update();
 
     element.setAttribute(ATTRIBUTE_URL, getUrl());
   }
 
   boolean willValidityChange() {
-    if (!myInitialized) update();
+    update();
 
     if (myWasRecentlyValid) {
       LOG.assertTrue(myFile != null);
@@ -177,7 +179,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
 
   @Override
   public String toString() {
-    return getUrl();
+    return myFile == null ? myUrl : myFile.getUrl();
   }
 
   public void dispose() {
@@ -185,11 +187,11 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
       throw new MyEx("Punching the dead horse.\nurl="+toString(), getUserData(CREATE_TRACE), getUserData(KILL_TRACE));
     }
     if (--useCount == 0) {
-      if (Disposer.isDebugMode()) {
+      if (LOG.isDebugEnabled()) {
         putUserData(KILL_TRACE, new Throwable());
       }
+      String url = getUrl();
       disposed = true;
-      String url = toString();
       ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).clearPointerCaches(url, myListener);
     }
   }

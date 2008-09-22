@@ -159,7 +159,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   public String extractPresentableUrl(String path) {
-    if (path.endsWith(JarFileSystem.JAR_SEPARATOR)) {
+    if (path.endsWith(JAR_SEPARATOR)) {
       path = path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length());
     }
     path = super.extractPresentableUrl(path);
@@ -168,7 +168,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   public String extractRootPath(@NotNull final String path) {
     final int jarSeparatorIndex = path.indexOf(JAR_SEPARATOR);
-    assert jarSeparatorIndex >=0 : "Path passed to JarFileSystem does have jar separator !/";
+    assert jarSeparatorIndex >=0 : "Path passed to JarFileSystem must have jar separator '!/': " + path;
     return path.substring(0, jarSeparatorIndex + JAR_SEPARATOR.length());
   }
 

@@ -8,10 +8,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -118,7 +115,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   @NotNull
   public synchronized VirtualFilePointer create(@NotNull String url, @NotNull Disposable parent,VirtualFilePointerListener listener) {
-    return create(null, url, parent,listener);
+    return create(null, url, parent, listener);
   }
 
   @Deprecated
@@ -139,6 +136,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     TreeMap<String, VirtualFilePointerImpl> pathToPointer = getPathToPointerMap(listener);
 
     url = FileUtil.toSystemIndependentName(url);
+    String protocol = VirtualFileManager.extractProtocol(url);
+    VirtualFileSystem fileSystem = myVirtualFileManager.getFileSystem(protocol);
+    assert fileSystem != null: "Illegal url: '"+url+"'";
+
+    url = stripTrailingPathSeparator(url, protocol);
+
     String path = urlToPath(url);
 
     VirtualFilePointerImpl pointer = pathToPointer.get(path);
@@ -165,6 +168,21 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
 
     return pointer;
+  }
+
+  private static String stripTrailingPathSeparator(String url, String protocol) {
+    String tail = StringUtil.trimStart(url, protocol);
+    if (protocol.equals(JarFileSystem.PROTOCOL)) {
+      int separator = tail.lastIndexOf(JarFileSystem.JAR_SEPARATOR);
+      if (separator != -1) {
+        tail = tail.substring(separator + JarFileSystem.JAR_SEPARATOR.length());
+      }
+    }
+    while (tail.endsWith("/")) {
+      tail = StringUtil.trimEnd(tail, "/");
+      url = StringUtil.trimEnd(url, "/");
+    }
+    return url;
   }
 
   private String urlToPath(@NotNull String url) {
@@ -227,7 +245,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   public void dispose() {
-
+    int i = 0;
   }
 
   @NotNull

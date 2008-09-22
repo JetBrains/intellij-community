@@ -43,7 +43,7 @@ public abstract class JarFileSystem extends NewVirtualFileSystem {
   @Nullable
   public VirtualFile getJarRootForLocalFile(@NotNull VirtualFile virtualFile) {
     if (virtualFile.getFileType() != FileTypes.ARCHIVE) return null;
-    return findFileByPath(virtualFile.getPath() + JarFileSystem.JAR_SEPARATOR);
+    return findFileByPath(virtualFile.getPath() + JAR_SEPARATOR);
 
   }
 }
