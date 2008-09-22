@@ -105,7 +105,10 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   private static class StubIdExternalizer implements DataExternalizer<TIntArrayList> {
     public void save(final DataOutput out, final TIntArrayList value) throws IOException {
       int size = value.size();
-      if (size == 1) {
+      if (size == 0) {
+        DataInputOutputUtil.writeSINT(out, Integer.MAX_VALUE);
+      }
+      else if (size == 1) {
         DataInputOutputUtil.writeSINT(out, -value.get(0));
       }
       else {
@@ -118,7 +121,10 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     public TIntArrayList read(final DataInput in) throws IOException {
       int size = DataInputOutputUtil.readSINT(in);
-      if (size < 0) {
+      if (size == Integer.MAX_VALUE) {
+        return new TIntArrayList();
+      }
+      else if (size <= 0) {
         TIntArrayList result = new TIntArrayList(1);
         result.add(-size);
         return result;
