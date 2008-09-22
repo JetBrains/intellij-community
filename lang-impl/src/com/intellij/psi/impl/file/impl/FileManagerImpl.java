@@ -303,9 +303,8 @@ public class FileManagerImpl implements FileManager {
           return ((ProjectRootManagerEx)myProjectRootManager).getScopeForJdk((JdkOrderEntry)entry);
         }
 
-        if (entry instanceof LibraryOrderEntry) {
-          Module ownerModule = entry.getOwnerModule();
-          modulesLibraryUsedIn.add(ownerModule);
+        if (entry instanceof LibraryOrderEntry || entry instanceof ModuleOrderEntry) {
+          modulesLibraryUsedIn.add(entry.getOwnerModule());
         }
       }
 
