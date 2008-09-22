@@ -8,18 +8,18 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.find.FindUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.find.FindUtil;
 
 public class ReplaceAction extends EditorAction {
-  private static class Handler extends EditorWriteActionHandler {
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+  private static class Handler extends EditorActionHandler {
+    public void execute(Editor editor, DataContext dataContext) {
       Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
       FindUtil.replace(project, editor);
     }
