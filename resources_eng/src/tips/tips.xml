@@ -91,4 +91,5 @@
     <tip file="HighlightMethodExitPoint.html"/>
     <tip file="HighlightThrows.html"/>
     <tip file="QuickFixRightArrow.html"/>
+	<tip file="NavigateToFilePath.html"/>
 </tips>
