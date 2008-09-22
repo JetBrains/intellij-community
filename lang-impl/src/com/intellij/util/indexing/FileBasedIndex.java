@@ -1186,15 +1186,18 @@ public class FileBasedIndex implements ApplicationComponent {
         }
 
         if (file instanceof VirtualFileWithId && !SingleRootFileViewProvider.isTooLarge(file)) {
+          boolean oldStuff = true;
           for (ID<?, ?> indexId : myIndexIds) {
             if (myFileContentAttic.containsContent(file) ? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
               myFiles.add(file);
+              oldStuff = false;
               break;
             }
           }
           FileContent fileContent = null;
           for (ID<?, ?> indexId : mySkipContentLoading) {
             if (shouldIndexFile(file, indexId)) {
+              oldStuff = false;
               try {
                 if (fileContent == null) {
                   fileContent = new FileContent(file);
@@ -1209,7 +1212,7 @@ public class FileBasedIndex implements ApplicationComponent {
           }
           IndexingStamp.flushCache();
 
-          if (file instanceof NewVirtualFile) {
+          if (oldStuff && file instanceof NewVirtualFile) {
             ((NewVirtualFile)file).setFlag(ALREADY_PROCESSED, true);
           }
         }
