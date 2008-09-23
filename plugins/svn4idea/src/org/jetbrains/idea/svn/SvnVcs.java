@@ -36,8 +36,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -182,8 +182,12 @@ public class SvnVcs extends AbstractVcs {
     upgradeTo15(supportOptions);
     changeListSynchronizationIdeaVersionToNative(supportOptions);
 
-    myChangeListListener = new SvnChangelistListener(myProject, createChangelistClient());
-    ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
+    if (myProject.isDefault()) {
+      myChangeListListener = null;
+    } else {
+      myChangeListListener = new SvnChangelistListener(myProject, createChangelistClient());
+      ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
+    }
   }
 
   private void changeListSynchronizationIdeaVersionToNative(final SvnBranchConfigurationManager.SvnSupportOptions supportOptions) {
@@ -281,7 +285,9 @@ public class SvnVcs extends AbstractVcs {
     if (myCommittedChangesProvider != null) {
       myCommittedChangesProvider.deactivate();
     }
-    ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
+    if (myChangeListListener != null && (! myProject.isDefault())) {
+      ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
+    }
     super.deactivate();
   }
 
