@@ -570,7 +570,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
     public final boolean isAvailable() {
       if (myValue == null) {
-        myValue = Boolean.valueOf(calcValue());
+        try {
+          myValue = Boolean.valueOf(calcValue());
+        }
+        catch (VMDisconnectedException e) {
+          LOG.info(e);
+          myValue = Boolean.FALSE;
+        }
       }
       return myValue.booleanValue();
     }
