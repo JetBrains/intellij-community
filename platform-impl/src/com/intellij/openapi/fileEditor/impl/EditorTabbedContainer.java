@@ -259,7 +259,7 @@ final class EditorTabbedContainer implements Disposable {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      myWindow.closeFile((VirtualFile)myTabInfo.getObject());
+      FileEditorManager.getInstance(myProject).closeFile((VirtualFile)myTabInfo.getObject());
     }
   }
 }

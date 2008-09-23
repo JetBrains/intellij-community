@@ -32,8 +32,6 @@ public class TabLabel extends JPanel {
   private Wrapper myLabelPlaceholder = new Wrapper();
   private JBTabsImpl myTabs;
 
-  private JPanel myContent = new NonOpaquePanel(new BorderLayout());
-
   public TabLabel(JBTabsImpl tabs, final TabInfo info) {
     myTabs = tabs;
     myInfo = info;
@@ -43,12 +41,11 @@ public class TabLabel extends JPanel {
     myLabel.setIconOpaque(false);
     myLabel.setIpad(new Insets(0, 0, 0, 0));
     setOpaque(false);
-    setLayout(new GridBagLayout());
-    add(myContent);
+    setLayout(new BorderLayout());
 
 
     myLabelPlaceholder.setOpaque(false);
-    myContent.add(myLabelPlaceholder, BorderLayout.CENTER);
+    add(myLabelPlaceholder, BorderLayout.CENTER);
 
     setAligmentToCenter(true);
 
@@ -93,12 +90,16 @@ public class TabLabel extends JPanel {
   public void paint(final Graphics g) {
     if (myTabs.getSelectedInfo() != myInfo) {
       g.translate(0, 2);
+    } else {
+      g.translate(0, 1);
     }
 
     super.paint(g);
 
     if (myTabs.getSelectedInfo() != myInfo) {
       g.translate(0, -2);
+    } else {
+      g.translate(0, 1);
     }
   }
 
@@ -213,7 +214,7 @@ public class TabLabel extends JPanel {
     NonOpaquePanel wrapper = new NonOpaquePanel(new GridBagLayout());
     wrapper.add(myActionPanel);
 
-    myContent.add(wrapper, BorderLayout.EAST);
+    add(wrapper, BorderLayout.EAST);
 
     myTabs.revalidateAndRepaint(false);
   }
