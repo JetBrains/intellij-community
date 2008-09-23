@@ -1,46 +1,44 @@
 package com.intellij.psi.impl.source.resolve;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.SmartList;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 
 import java.lang.ref.Reference;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ResolveCache {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ResolveCache");
   private static final Key<MapPair<PsiPolyVariantReference, Reference<ResolveResult[]>>> JAVA_RESOLVE_MAP = Key.create("ResolveCache.JAVA_RESOLVE_MAP");
   private static final Key<MapPair<PsiReference, Reference<PsiElement>>> RESOLVE_MAP = Key.create("ResolveCache.RESOLVE_MAP");
   private static final Key<MapPair<PsiPolyVariantReference, Reference<ResolveResult[]>>> JAVA_RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.JAVA_RESOLVE_MAP_INCOMPLETE");
   private static final Key<MapPair<PsiReference, Reference<PsiElement>>> RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.RESOLVE_MAP_INCOMPLETE");
-  private static final Key<List<Thread>> IS_BEING_RESOLVED_KEY = Key.create("ResolveCache.IS_BEING_RESOLVED_KEY");
 
   private final Map<PsiPolyVariantReference,Reference<ResolveResult[]>>[] myPolyVariantResolveMaps = new Map[4];
   private final Map<PsiReference,Reference<PsiElement>>[] myResolveMaps = new Map[4];
   private final AtomicInteger myClearCount = new AtomicInteger(0);
   private final PsiManagerEx myManager;
 
-  private final List<Runnable> myRunnablesToRunOnDropCaches = new ArrayList<Runnable>();
+  private final List<Runnable> myRunnablesToRunOnDropCaches = new CopyOnWriteArrayList<Runnable>();
 
-  public static interface AbstractResolver<Ref extends PsiReference,Result> {
+  public interface AbstractResolver<Ref extends PsiReference,Result> {
     Result resolve(Ref ref, boolean incompleteCode);
   }
-  public static interface PolyVariantResolver<T extends PsiPolyVariantReference> extends AbstractResolver<T,ResolveResult[]> {
+  public interface PolyVariantResolver<T extends PsiPolyVariantReference> extends AbstractResolver<T,ResolveResult[]> {
   }
 
-  public static interface Resolver extends AbstractResolver<PsiReference,PsiElement>{
+  public interface Resolver extends AbstractResolver<PsiReference,PsiElement>{
   }
 
   public ResolveCache(PsiManagerEx manager) {
@@ -79,9 +77,9 @@ public class ResolveCache {
     myRunnablesToRunOnDropCaches.add(r);
   }
 
-  private <Ref extends PsiReference, Result> Result resolve(Ref ref,
-                                        AbstractResolver<Ref, Result> resolver,
-                                        Map<? super Ref,Reference<Result>>[] maps,
+  private <TRef extends PsiReference, TResult> TResult resolve(TRef ref,
+                                        AbstractResolver<TRef, TResult> resolver,
+                                        Map<? super TRef,Reference<TResult>>[] maps,
                                         boolean needToPreventRecursion,
                                         boolean incompleteCode) {
     ProgressManager.getInstance().checkCanceled();
@@ -89,7 +87,7 @@ public class ResolveCache {
     int clearCountOnStart = myClearCount.intValue();
 
     boolean physical = ref.getElement().isPhysical();
-    Result result = getCached(ref, maps, physical, incompleteCode);
+    TResult result = getCached(ref, maps, physical, incompleteCode);
     if (result != null) {
       return result;
     }
@@ -130,48 +128,48 @@ public class ResolveCache {
     return resolve(ref, resolver, myResolveMaps, needToPreventRecursion, incompleteCode);
   }
 
+  private static final Key<Thread[]> IS_BEING_RESOLVED_KEY = Key.create("ResolveCache.IS_BEING_RESOLVED_KEY");
   private static boolean lockElement(PsiReference ref) {
-    synchronized (IS_BEING_RESOLVED_KEY) {
-      PsiElement elt = ref.getElement();
+    PsiElement elt = ref.getElement();
 
-      List<Thread> lockingThreads = elt.getUserData(IS_BEING_RESOLVED_KEY);
-      final Thread currentThread = Thread.currentThread();
+    final Thread currentThread = Thread.currentThread();
+    while (true) {
+      Thread[] lockingThreads = elt.getUserData(IS_BEING_RESOLVED_KEY);
+      Thread[] newThreads;
       if (lockingThreads == null) {
-        lockingThreads = new SmartList<Thread>();
-        elt.putUserData(IS_BEING_RESOLVED_KEY, lockingThreads);
+        newThreads = new Thread[]{currentThread};
+        if (((UserDataHolderEx)elt).putUserDataIfAbsent(IS_BEING_RESOLVED_KEY, newThreads) == newThreads) {
+          break;
+        }
       }
       else {
-        if (lockingThreads.contains(currentThread)) return false;
+        if (ArrayUtil.find(lockingThreads, currentThread) != -1) return false;
+        newThreads = ArrayUtil.append(lockingThreads, currentThread);
+        if (((UserDataHolderEx)elt).replace(IS_BEING_RESOLVED_KEY, lockingThreads, newThreads)) {
+          break;
+        }
       }
-      lockingThreads.add(currentThread);
     }
     return true;
   }
 
   private static void unlockElement(PsiReference ref) {
-    synchronized (IS_BEING_RESOLVED_KEY) {
-      PsiElement elt = ref.getElement();
-
-      List<Thread> lockingThreads = elt.getUserData(IS_BEING_RESOLVED_KEY);
-      if (lockingThreads == null) return;
-      final Thread currentThread = Thread.currentThread();
-      lockingThreads.remove(currentThread);
-      if (lockingThreads.isEmpty()) {
-        elt.putUserData(IS_BEING_RESOLVED_KEY, null);
+    PsiElement elt = ref.getElement();
+    final Thread currentThread = Thread.currentThread();
+    while (true) {
+      Thread[] lockingThreads = elt.getUserData(IS_BEING_RESOLVED_KEY);
+      Thread[] newThreads;
+      if (lockingThreads.length == 1) {
+        newThreads = null;
+      }
+      else {
+        newThreads = ArrayUtil.remove(lockingThreads, currentThread);
+      }
+      if (((UserDataHolderEx)elt).replace(IS_BEING_RESOLVED_KEY, lockingThreads, newThreads)) {
+        break;
       }
     }
   }
-
-  //for Visual Fabrique
-  public void clearResolveCaches(PsiReference ref) {
-    myClearCount.incrementAndGet();
-    final boolean physical = ref.getElement().isPhysical();
-    if (ref instanceof PsiPolyVariantReference) {
-      cache((PsiPolyVariantReference)ref, null, myPolyVariantResolveMaps, physical, false, myClearCount.intValue());
-      cache((PsiPolyVariantReference)ref, null, myPolyVariantResolveMaps, physical, true, myClearCount.intValue());
-    }
-  }
-
 
   private static int getIndex(boolean physical, boolean ic){
     return (physical ? 0 : 1) << 1 | (ic ? 1 : 0);
@@ -183,7 +181,8 @@ public class ResolveCache {
     if(reference == null) return null;
     return reference.get();
   }
-  private <Ref,Result> void cache(Ref ref, Result result, Map<? super Ref,Reference<Result>>[] maps, boolean physical, boolean incompleteCode, final int clearCountOnStart) {
+
+  private <Ref extends PsiReference, Result> void cache(Ref ref, Result result, Map<? super Ref,Reference<Result>>[] maps, boolean physical, boolean incompleteCode, final int clearCountOnStart) {
     if (clearCountOnStart != myClearCount.intValue() && result != null) return;
 
     int index = getIndex(physical, incompleteCode);

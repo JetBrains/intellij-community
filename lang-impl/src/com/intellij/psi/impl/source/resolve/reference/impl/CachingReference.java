@@ -38,7 +38,7 @@ public abstract class CachingReference implements PsiReference, EmptyResolveMess
   }
 
   private static class MyResolver implements ResolveCache.Resolver {
-    private static MyResolver INSTANCE = new MyResolver();
+    private static final MyResolver INSTANCE = new MyResolver();
     @Nullable
     public PsiElement resolve(PsiReference ref, boolean incompleteCode) {
       return ((CachingReference)ref).resolveInner();
