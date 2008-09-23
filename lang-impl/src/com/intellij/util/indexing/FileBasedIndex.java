@@ -803,7 +803,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     assert index != null;
-    
+
     index.update(inputId, currentFC, oldFC);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -1112,6 +1112,7 @@ public class FileBasedIndex implements ApplicationComponent {
     private final Semaphore myForceUpdateSemaphore = new Semaphore();
     
     public void forceUpdate() {
+      myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();
       myForceUpdateSemaphore.down();
       try {
         for (VirtualFile file: queryNeededFiles()) {
