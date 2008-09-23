@@ -181,12 +181,21 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
       if (myDescription != null) {
         fileChooserDescriptor.setDescription(myDescription);
       }
-      String directoryName = myAccessor.getText(myTextComponent.getChildComponent()).trim();
-      VirtualFile initialFile = LocalFileSystem.getInstance().findFileByPath(directoryName.replace(File.separatorChar, '/'));
+      VirtualFile initialFile = getInitialFile();
       VirtualFile[] files = doChoose(fileChooserDescriptor, initialFile);
       if (files != null && files.length != 0) {
         onFileChoosen(files[0]);
       }
+    }
+
+    @Nullable
+    protected VirtualFile getInitialFile() {
+      String directoryName = getComponentText();
+      return LocalFileSystem.getInstance().findFileByPath(directoryName.replace(File.separatorChar, '/'));
+    }
+
+    protected String getComponentText() {
+      return myAccessor.getText(myTextComponent.getChildComponent()).trim();
     }
 
     protected void onFileChoosen(VirtualFile chosenFile) {
