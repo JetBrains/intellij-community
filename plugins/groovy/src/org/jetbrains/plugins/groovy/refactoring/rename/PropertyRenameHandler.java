@@ -65,7 +65,7 @@ public class PropertyRenameHandler implements RenameHandler {
 
       final PsiMethod setter = myProperty.getSetter();
       if (setter != null) {
-        if (setter.isPhysical()) {
+        if (setter instanceof GrAccessorMethod) {
           final String setterName = PropertyUtil.suggestSetterName(newName);
           rename.addElement(setter, setterName);
         }
@@ -73,7 +73,7 @@ public class PropertyRenameHandler implements RenameHandler {
 
       final PsiMethod[] getters = myProperty.getGetters();
       for (PsiMethod getter : getters) {
-        if (getter.isPhysical()) {
+        if (getter instanceof GrAccessorMethod) {
           final String getterName = PropertyUtil.suggestGetterName(newName, getter.getReturnType(), getter.getName());
           rename.addElement(getter, getterName);
         }

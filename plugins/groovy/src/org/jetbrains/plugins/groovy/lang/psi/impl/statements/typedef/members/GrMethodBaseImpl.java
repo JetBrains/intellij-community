@@ -415,7 +415,6 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     PsiImplUtil.setName(name, getNameIdentifierGroovy());
-
     return this;
   }
 

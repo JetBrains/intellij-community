@@ -9,12 +9,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
@@ -22,6 +20,8 @@ import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.refactoring.CommonRefactoringTestCase;
 import org.jetbrains.plugins.groovy.util.PathUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -35,12 +35,10 @@ import java.io.IOException;
  * @author ven
  */
 public class RenameTest extends CommonRefactoringTestCase {
-  private static final String DATA_PATH = PathUtil.getDataPath(RenameTest.class);
+  private static final String DATA_PATH = PathUtil.getDataPath(RenameTest.class) + "/actual";
 
   public RenameTest() {
-    super(System.getProperty("path") != null ?
-        System.getProperty("path") :
-        DATA_PATH);
+    super(System.getProperty("path") != null ? System.getProperty("path") : DATA_PATH);
   }
 
   protected String processFile(String fileText) throws IncorrectOperationException, InvalidDataException, IOException {
@@ -86,21 +84,48 @@ public class RenameTest extends CommonRefactoringTestCase {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              new RenameProcessor(myProject, resolved, "newName", true, true).run();
+              if (resolved instanceof PsiMethod && !(resolved instanceof GrAccessorMethod)) {
+                PsiMethod method = (PsiMethod)resolved;
+                String name = method.getName();
+                String newName = createNewNameForMethod(name);
+                new RenameProcessor(myProject, resolved, newName, true, true).run();
+              } else if (resolved instanceof GrAccessorMethod) {
+                GrField field = ((GrAccessorMethod)resolved).getProperty();
+                RenameProcessor processor = new RenameProcessor(myProject, field, "newName", true, true);
+                processor.addElement(resolved, createNewNameForMethod(((GrAccessorMethod)resolved).getName()));
+                processor.run();
+              } else {
+                new RenameProcessor(myProject, resolved, "newName", true, true).run();
+              }
             }
           });
         }
       }, "Rename", null);
 
       result = myEditor.getDocument().getText();
-    } finally {
+    }
+    finally {
       fileEditorManager.closeFile(virtualFile);
       realFile.delete();
       myEditor = null;
     }
 
+    System.out.println(result);
+
     return result;
 
+  }
+
+  private String createNewNameForMethod(final String name) {
+    String newName = "newName";
+    if (name.startsWith("get")) {
+      newName = "get" + StringUtil.capitalize(newName);
+    } else if (name.startsWith("is")) {
+      newName = "is" + StringUtil.capitalize(newName);
+    } else if (name.startsWith("set")) {
+      newName = "set" + StringUtil.capitalize(newName);
+    }
+    return newName;
   }
 
   public static Test suite() {
