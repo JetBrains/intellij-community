@@ -67,6 +67,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public boolean ALWAYS_SHOW_WINDOW_BUTTONS = false;
   public boolean CYCLE_SCROLLING = true;
   public boolean SCROLL_TAB_LAYOUT_IN_EDITOR = false;
+  public boolean SHOW_CLOSE_BUTTON = true;
   public int EDITOR_TAB_PLACEMENT = 1;
   public boolean HIDE_KNOWN_EXTENSION_IN_TABS = false;
   public boolean SHOW_ICONS_IN_QUICK_NAVIGATION = true;

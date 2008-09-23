@@ -2,6 +2,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -256,6 +257,7 @@ final class EditorTabbedContainer implements Disposable {
     @Override
     public void update(final AnActionEvent e) {
       e.getPresentation().setIcon(IconLoader.getIcon("/actions/cross.png"));
+      e.getPresentation().setVisible(UISettings.getInstance().SHOW_CLOSE_BUTTON);
     }
 
     public void actionPerformed(final AnActionEvent e) {
