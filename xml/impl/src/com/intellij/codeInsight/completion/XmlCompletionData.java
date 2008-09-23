@@ -270,6 +270,10 @@ public class XmlCompletionData extends CompletionData {
           };
 
           XmlUtil.processXmlElements(descriptorFile, processor, true);
+          if (descriptorFile != containingFile && containingFile.getFileType() == StdFileTypes.XML) {
+            final XmlProlog element = containingFile.getDocument().getProlog();
+            if (element != null) XmlUtil.processXmlElements(element, processor, true);
+          }
 
           return results.toArray(new Object[results.size()]);
         }
