@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -29,41 +28,44 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Pattern;
 
 public class PatternPackageSet implements PackageSet {
-  public static final @NonNls String SCOPE_TEST = "test";
-  public static final @NonNls String SCOPE_SOURCE = "src";
-  public static final @NonNls String SCOPE_LIBRARY = "lib";
-  public static final @NonNls String SCOPE_PROBLEM = "problem";
+  @NonNls public static final String SCOPE_TEST = "test";
+  @NonNls public static final String SCOPE_SOURCE = "src";
+  @NonNls public static final String SCOPE_LIBRARY = "lib";
+  @NonNls public static final String SCOPE_PROBLEM = "problem";
   public static final String SCOPE_ANY = "";
 
-  private Pattern myPattern;
-  private Pattern myModulePattern;
-  private Pattern myModuleGroupPattern;
-  private String myAspectJSyntaxPattern;
-  private String myScope;
-  private String myModulePatternText;
-  private static final Logger LOG = Logger.getInstance("com.intellij.psi.search.scope.packageSet.PatternPackageSet");
+  private final Pattern myPattern;
+  private final Pattern myModulePattern;
+  private final Pattern myModuleGroupPattern;
+  private final String myAspectJSyntaxPattern;
+  private final String myScope;
+  private final String myModulePatternText;
 
-  public PatternPackageSet(@Nullable String aspectPattern,
+  public PatternPackageSet(@NonNls @Nullable String aspectPattern,
                            String scope,
                            @NonNls String modulePattern) {
     myAspectJSyntaxPattern = aspectPattern;
     myScope = scope;
     myModulePatternText = modulePattern;
+    Pattern mmgp = null;
+    Pattern mmp = null;
     if (modulePattern == null || modulePattern.length() == 0) {
-      myModulePattern = null;
+      mmp = null;
     }
     else {
       if (modulePattern.startsWith("group:")) {
         int idx = modulePattern.indexOf(':', 6);
         if (idx == -1) idx = modulePattern.length();
-        myModuleGroupPattern = Pattern.compile(StringUtil.replace(modulePattern.substring(6, idx), "*", ".*"));
+        mmgp = Pattern.compile(StringUtil.replace(modulePattern.substring(6, idx), "*", ".*"));
         if (idx < modulePattern.length() - 1) {
-          myModulePattern = Pattern.compile(StringUtil.replace(modulePattern.substring(idx + 1), "*", ".*"));
+          mmp = Pattern.compile(StringUtil.replace(modulePattern.substring(idx + 1), "*", ".*"));
         }
       } else {
-        myModulePattern = Pattern.compile(StringUtil.replace(modulePattern, "*", ".*"));
+        mmp = Pattern.compile(StringUtil.replace(modulePattern, "*", ".*"));
       }
     }
+    myModulePattern = mmp;
+    myModuleGroupPattern = mmgp;
     myPattern = aspectPattern != null ? Pattern.compile(FilePatternPackageSet.convertToRegexp(aspectPattern, '.')) : null;
   }
 
@@ -95,18 +97,16 @@ public class PatternPackageSet implements PackageSet {
     throw new RuntimeException("Unknown scope: " + myScope);
   }
 
-
-
   private static String getPackageName(PsiFile file, ProjectFileIndex fileIndex) {
-    VirtualFile vFile = file.getVirtualFile();
-    if (fileIndex.isInLibrarySource(vFile)) {
-      return fileIndex.getPackageNameByDirectory(vFile.getParent()) + "." + file.getVirtualFile().getNameWithoutExtension();
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (fileIndex.isInLibrarySource(virtualFile)) {
+      return fileIndex.getPackageNameByDirectory(virtualFile.getParent()) + "." + virtualFile.getNameWithoutExtension();
     }
 
-    if (file instanceof PsiJavaFile) return ((PsiJavaFile)file).getPackageName() + "." + file.getVirtualFile().getNameWithoutExtension();
+    if (file instanceof PsiJavaFile) return ((PsiJavaFile)file).getPackageName() + "." + virtualFile.getNameWithoutExtension();
     PsiDirectory dir = file.getContainingDirectory();
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
-    return aPackage == null ? file.getName() : aPackage.getQualifiedName() + "." + file.getVirtualFile().getNameWithoutExtension();
+    return aPackage == null ? file.getName() : aPackage.getQualifiedName() + "." + virtualFile.getNameWithoutExtension();
   }
 
   public PackageSet createCopy() {
@@ -118,7 +118,7 @@ public class PatternPackageSet implements PackageSet {
   }
 
   public String getText() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     if (myScope != SCOPE_ANY) {
       buf.append(myScope);
     }

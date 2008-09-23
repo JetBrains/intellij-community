@@ -39,8 +39,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
   private final Project myProject;
 
-  private boolean myInitialized = false;
-  private boolean myDisposed = false;
+  private volatile boolean myInitialized = false;
+  private volatile boolean myDisposed = false;
 
   private final boolean myIsLasyMode;
 
@@ -48,8 +48,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private Map<VirtualFile, DirectoryInfo> myDirToInfoMap = Collections.synchronizedMap(new THashMap<VirtualFile, DirectoryInfo>());
   private Map<String, VirtualFile[]> myPackageNameToDirsMap = Collections.synchronizedMap(new THashMap<String, VirtualFile[]>());
 
-  private DirectoryIndexExcludePolicy[] myExcludePolicies;
-  private MessageBusConnection myConnection;
+  private final DirectoryIndexExcludePolicy[] myExcludePolicies;
+  private final MessageBusConnection myConnection;
 
   public DirectoryIndexImpl(Project project, PsiManagerConfiguration psiManagerConfiguration, StartupManager startupManager) {
     myProject = project;
@@ -633,7 +633,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     return myDirToInfoMap.get(dir);
   }
 
-  private PackageSink mySink = new PackageSink();
+  private final PackageSink mySink = new PackageSink();
 
   private class PackageSink extends QueryFactory<VirtualFile, VirtualFile[]> {
     public PackageSink() {
