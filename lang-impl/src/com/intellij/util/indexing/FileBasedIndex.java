@@ -1275,6 +1275,8 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private static void cleanProcessedFlag(final VirtualFile file) {
+    if (!(file instanceof NewVirtualFile)) return;
+    
     final NewVirtualFile nvf = (NewVirtualFile)file;
     if (file.isDirectory()) {
       for (VirtualFile child : nvf.getCachedChildren()) {
