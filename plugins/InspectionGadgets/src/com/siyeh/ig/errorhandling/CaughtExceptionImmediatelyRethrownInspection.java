@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 public class CaughtExceptionImmediatelyRethrownInspection
         extends BaseInspection {
 
+    @Override
     @Nls
     @NotNull
     public String getDisplayName() {
@@ -41,16 +42,19 @@ public class CaughtExceptionImmediatelyRethrownInspection
                 "caught.exception.immediately.rethrown.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "caught.exception.immediately.rethrown.problem.descriptor");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiTryStatement tryStatement = (PsiTryStatement) infos[0];
@@ -79,6 +83,7 @@ public class CaughtExceptionImmediatelyRethrownInspection
             }
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -105,7 +110,6 @@ public class CaughtExceptionImmediatelyRethrownInspection
                 if (statements.length == 0) {
                     tryStatement.delete();
                 }
-                final PsiStatement firstStatement = statements[0];
                 final PsiElement containingElement = tryStatement.getParent();
                 final boolean keepBlock;
                 if (containingElement instanceof PsiCodeBlock) {
@@ -118,8 +122,10 @@ public class CaughtExceptionImmediatelyRethrownInspection
                     keepBlock = true;
                 }
                 if (keepBlock) {
-                    final PsiManager manager = element.getManager();
-                  final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+                    final JavaPsiFacade psiFacade =
+                            JavaPsiFacade.getInstance(project);
+                    final PsiElementFactory factory =
+                            psiFacade.getElementFactory();
                     final PsiBlockStatement resultStatement = (PsiBlockStatement)
                             factory.createStatementFromText("{}", element);
                     final PsiCodeBlock resultBlock =
@@ -129,10 +135,10 @@ public class CaughtExceptionImmediatelyRethrownInspection
                     }
                     tryStatement.replace(resultStatement);
                 } else {
-                    for (int i = 1; i < statements.length; i++) {
-                        containingElement.addAfter(statements[i], tryStatement);
+                    for (PsiStatement statement : statements) {
+                        containingElement.addBefore(statement, tryStatement);
                     }
-                    tryStatement.replace(firstStatement);
+                    tryStatement.delete();
                 }
             } else {
                 catchSection.delete();
@@ -140,6 +146,7 @@ public class CaughtExceptionImmediatelyRethrownInspection
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CaughtExceptionImmediatelyRethrownVisitor();
     }
