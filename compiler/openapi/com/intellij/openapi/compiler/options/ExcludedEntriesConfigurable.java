@@ -276,7 +276,10 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       myExcludedTable.setDefaultRenderer(Boolean.class, new BooleanRenderer());
       myExcludedTable.setDefaultRenderer(Object.class, new MyObjectRenderer());
       myExcludedTable.getColumn(names[0]).setPreferredWidth(350);
-      myExcludedTable.getColumn(names[1]).setPreferredWidth(140);
+      final int cbWidth = 15 + myExcludedTable.getFontMetrics(myExcludedTable.getFont()).stringWidth(names[1]);
+      final TableColumn cbColumn = myExcludedTable.getColumn(names[1]);
+      cbColumn.setPreferredWidth(cbWidth);
+      cbColumn.setMaxWidth(cbWidth);
       myExcludedTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       myExcludedTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
