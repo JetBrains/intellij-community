@@ -60,6 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
@@ -123,7 +124,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       final PsiMethod method = (PsiMethod) resolved;
       final String oldName = getReferenceName();
       if (!method.getName().equals(oldName)) { //was property reference to accessor
-        if (PropertyUtil.isSimplePropertyAccessor(method)) {
+        if (GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
           final String newPropertyName = PropertyUtil.getPropertyName(newElementName);
           if (newPropertyName != null) {
             return doHandleElementRename(newPropertyName);
@@ -565,7 +566,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    if (element instanceof PsiMethod && PropertyUtil.isSimplePropertyAccessor((PsiMethod) element)) {
+    if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod) element)) {
       return getManager().areElementsEquivalent(element, resolve());
     }
     if (element instanceof GrField && ((GrField) element).isProperty()) {

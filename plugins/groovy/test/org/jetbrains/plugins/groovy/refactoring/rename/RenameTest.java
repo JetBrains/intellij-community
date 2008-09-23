@@ -35,7 +35,7 @@ import java.io.IOException;
  * @author ven
  */
 public class RenameTest extends CommonRefactoringTestCase {
-  private static final String DATA_PATH = PathUtil.getDataPath(RenameTest.class) + "/actual";
+  private static final String DATA_PATH = PathUtil.getDataPath(RenameTest.class);
 
   public RenameTest() {
     super(System.getProperty("path") != null ? System.getProperty("path") : DATA_PATH);

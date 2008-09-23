@@ -26,9 +26,9 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
@@ -72,7 +72,7 @@ public class AccessorReferencesSearcher implements QueryExecutor<PsiReference, M
   private String getPropertyName(final PsiMethod method) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>(){
       public String compute() {
-        return PropertyUtil.getPropertyName(method);
+        return GroovyPropertyUtils.getPropertyName(method);
       }
     });
   }
