@@ -8,9 +8,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.psi.*;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -76,5 +75,9 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
 
   public PsiElementFactory getElementFactory() {
     return JavaPsiFacade.getInstance(getProject()).getElementFactory();
+  }
+
+  protected PsiFile createLightFile(final FileType fileType, final String text) {
+    return PsiFileFactory.getInstance(getProject()).createFileFromText("a." + fileType.getDefaultExtension(), fileType, text);
   }
 }
