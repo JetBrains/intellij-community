@@ -487,7 +487,7 @@ public class PyResolveUtil {
         PyReferenceExpression expr = (PyReferenceExpression)element;
         String referencedName = expr.getReferencedName();
         if (referencedName != null && !myVariants.containsKey(referencedName)) {
-          final LookupItem lookup_item = (LookupItem)LookupElementFactory.getInstance().createLookupElement(element, referencedName);
+          final LookupItem lookup_item = (LookupItem)LookupElementFactory.getInstance().createLookupElement(referencedName);
           setupItem(lookup_item);
           myVariants.put(referencedName, lookup_item);
         }
