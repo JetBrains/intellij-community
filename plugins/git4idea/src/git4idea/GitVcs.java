@@ -62,7 +62,6 @@ public class GitVcs extends AbstractVcs implements Disposable {
   private final GitAnnotationProvider annotationProvider;
   private final DiffProvider diffProvider;
   private final VcsHistoryProvider historyProvider;
-  private final GitChangeListListener changeListListener;
 
   private Disposable activationDisposable;
   private final ProjectLevelVcsManager vcsManager;
@@ -100,7 +99,6 @@ public class GitVcs extends AbstractVcs implements Disposable {
     revSelector = new GitRevisionSelector();
     configurable = new GitVcsConfigurable(settings, myProject);
     updateEnvironment = new GitUpdateEnvironment(myProject, settings, configurable);
-    changeListListener = new GitChangeListListener(myProject);
 
     ((GitCheckinEnvironment)checkinEnvironment).setProject(myProject);
     ((GitCheckinEnvironment)checkinEnvironment).setSettings(settings);
