@@ -26,4 +26,8 @@ public class ComponentRoamingManager {
   public void setRoamingType(final String name, final RoamingType roamingType) {
      myRoamingTypeMap.put(name, roamingType);
   }
+
+  public boolean typeSpecified(final String name) {
+    return myRoamingTypeMap.containsKey(name);
+  }
 }

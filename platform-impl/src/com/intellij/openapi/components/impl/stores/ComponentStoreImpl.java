@@ -74,6 +74,10 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
   }
 
+  public boolean isSaving() {
+    return mySession != null;
+  }
+
 
   @NotNull
   public SaveSession startSave() throws IOException {
@@ -169,14 +173,17 @@ abstract class ComponentStoreImpl implements IComponentStore {
   @Nullable
   private Element getJdomState(final Object component, final String componentName, @NotNull final StateStorage defaultsStorage)
       throws StateStorage.StateStorageException {
-    if (component instanceof RoamingTypeDisabled) {
-       ComponentRoamingManager.getInstance().setRoamingType(componentName, RoamingType.DISABLED);
-    }
-    else if (component instanceof RoamingTypePerPlatform) {
-      ComponentRoamingManager.getInstance().setRoamingType(componentName, RoamingType.PER_PLATFORM);
-    }
-    else {
-      ComponentRoamingManager.getInstance().setRoamingType(componentName, RoamingType.PER_USER);
+    ComponentRoamingManager roamingManager = ComponentRoamingManager.getInstance();
+    if (!roamingManager.typeSpecified(componentName)) {
+      if (component instanceof RoamingTypeDisabled) {
+         roamingManager.setRoamingType(componentName, RoamingType.DISABLED);
+      }
+      else if (component instanceof RoamingTypePerPlatform) {
+        roamingManager.setRoamingType(componentName, RoamingType.PER_PLATFORM);
+      }
+      else {
+        roamingManager.setRoamingType(componentName, RoamingType.PER_USER);
+      }
     }
     return defaultsStorage.getState(component, componentName, Element.class, null);
   }
@@ -184,7 +191,11 @@ abstract class ComponentStoreImpl implements IComponentStore {
   private <T> void initPersistentComponent(@NotNull final PersistentStateComponent<T> component) {
     final String name = getComponentName(component);
 
-    ComponentRoamingManager.getInstance().setRoamingType(name, getRoamingType(component));
+    RoamingType roamingTypeFromComponent = getRoamingType(component);
+    ComponentRoamingManager roamingManager = ComponentRoamingManager.getInstance();
+    if (!roamingManager.typeSpecified(name)) {
+      roamingManager.setRoamingType(name, roamingTypeFromComponent);
+    }
 
     myComponents.put(name, component);
     if (optimizeTestLoading()) return;

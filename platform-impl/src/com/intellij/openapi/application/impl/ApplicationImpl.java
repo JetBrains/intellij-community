@@ -949,4 +949,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myDisposeInProgress;
   }
 
+  public boolean isSaving() {
+    if (getStateStore().isSaving()) return true;
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    for (Project openProject : openProjects) {
+      ProjectEx project = (ProjectEx)openProject;
+      if (project.getStateStore().isSaving()) return true;
+    }
+
+    return false;
+  }
 }

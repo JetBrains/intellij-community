@@ -15,6 +15,7 @@ import java.util.Set;
 public interface IComponentStore {
   void initComponent(Object component);
   void load() throws IOException, StateStorage.StateStorageException;
+  boolean isSaving();
 
   StateStorageManager getStateStorageManager();
 

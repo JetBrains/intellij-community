@@ -39,7 +39,6 @@ public class FileBasedStorage extends XmlElementStorage {
   private final String myFilePath;
   private final IFile myFile;
   protected final String myRootElementName;
-  private long myInitialFileTimestamp;
   private static final byte[] BUFFER = new byte[10];
 
   public FileBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroManager,
@@ -61,10 +60,6 @@ public class FileBasedStorage extends XmlElementStorage {
     VirtualFileTracker virtualFileTracker = (VirtualFileTracker)picoContainer.getComponentInstanceOfType(VirtualFileTracker.class);
     MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
 
-
-    if (myFile.exists()) {
-      myInitialFileTimestamp = myFile.getTimeStamp();
-    }
 
     if (virtualFileTracker != null && messageBus != null) {
       final String path = myFile.getAbsolutePath();
@@ -169,6 +164,26 @@ public class FileBasedStorage extends XmlElementStorage {
       }
     }
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
+
+    /*
+VirtualFile result = LocalFileSystem.getInstance().findFileByIoFile(myFile);
+    if (result != null) {
+      return result;
+    }
+    if (myFile.exists()) {
+      FileUtil.delete(new File(myFile.getAbsolutePath()));
+    }
+    VirtualFile parentVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(myFile.getParentFile());
+    LOG.assertTrue(parentVirtualFile != null);
+    try {
+      return parentVirtualFile.createChildData(this, myFile.getName());
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
+    
+    * */
   }
 
 
