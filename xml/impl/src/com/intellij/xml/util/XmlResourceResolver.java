@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
@@ -66,16 +67,20 @@ public class XmlResourceResolver implements XMLEntityResolver {
   }
 
   @Nullable
-  public PsiFile resolve(final String baseSystemId, final String systemId) {
+  public PsiFile resolve(final String baseSystemId, final String _systemId) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: resolveEntity(baseSystemId='" + baseSystemId + "' systemId='" + systemId + "," + super.toString() + "')");
+      LOG.debug("enter: resolveEntity(baseSystemId='" + baseSystemId + "' systemId='" + _systemId + "," + super.toString() + "')");
     }
 
-    if (systemId == null) return null;
+    if (_systemId == null) return null;
     if (myStopOnUnDeclaredResource &&
-        ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(systemId)) {
+        ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(_systemId)) {
       throw new IgnoredResourceException();
     }
+
+    final int length = URIReferenceProvider.getPrefixLength(_systemId);
+    final String systemId = _systemId.substring(length);
+
     final PsiFile[] result = new PsiFile[] { null };
     final Runnable action = new Runnable() {
       public void run() {

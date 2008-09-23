@@ -12,10 +12,7 @@ import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
-import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -601,7 +598,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return complete(CompletionType.BASIC);
   }
 
-  @Nullable 
+  @Nullable
   public LookupElement[] getLookupElements() {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
     if (lookup == null) {
@@ -935,12 +932,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       highlights3 = inspectionsPass.getHighlights();
     }
 
+    ExternalToolPass action4 = new ExternalToolPass(myFile, myEditor, 0, myFile.getTextLength());
+    action4.doCollectInformation(new MockProgressIndicator());
+    Collection<HighlightInfo> highlights4 = action4.getHighlights();
+
     ArrayList<HighlightInfo> list = new ArrayList<HighlightInfo>();
     list.addAll(highlights1);
     list.addAll(highlights2);
     if (highlights3 != null) {
       list.addAll(highlights3);
     }
+    list.addAll(highlights4);
     return list;
   }
 
