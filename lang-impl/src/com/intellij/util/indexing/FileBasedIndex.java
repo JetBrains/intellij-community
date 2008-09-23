@@ -86,7 +86,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private static final int ALREADY_PROCESSED = 0x02;
 
-  public static interface InputFilter {
+  public interface InputFilter {
     boolean acceptInput(VirtualFile file);
   }
 
@@ -502,6 +502,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private void checkRebuild(final ID<?, ?> indexId) {
     if (myRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, REBUILD_IN_PROGRESS)) {
+      cleanupProcessedFlag();
 
       final FileSystemSynchronizer synchronizer = new FileSystemSynchronizer();
       synchronizer.setCancelable(false);
@@ -878,10 +879,6 @@ public class FileBasedIndex implements ApplicationComponent {
         // indexes may depend on file name
         final VirtualFile file = event.getFile();
         if (!file.isDirectory()) {
-          if (file instanceof NewVirtualFile) {
-            ((NewVirtualFile)file).setFlag(ALREADY_PROCESSED, false);
-          }
-
           scheduleInvalidation(file, true);
         }
       }
@@ -897,6 +894,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
 
     private void markDirty(final VirtualFileEvent event) {
+      cleanProcessedFlag(event.getFile());
       iterateIndexableFiles(event.getFile(), new Processor<VirtualFile>() {
         public boolean process(final VirtualFile file) {
           FileContent fileContent = null;
@@ -935,6 +933,7 @@ public class FileBasedIndex implements ApplicationComponent {
         }
       }
       else {
+        cleanProcessedFlag(file);
         if (SingleRootFileViewProvider.isTooLarge(file)) return;
 
         final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndices.size());
@@ -1267,14 +1266,14 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private void cleanupProcessedFlag() {
+  private static void cleanupProcessedFlag() {
     final VirtualFile[] roots = ManagingFS.getInstance().getRoots();
     for (VirtualFile root : roots) {
       cleanProcessedFlag(root);
     }
   }
 
-  private void cleanProcessedFlag(final VirtualFile file) {
+  private static void cleanProcessedFlag(final VirtualFile file) {
     final NewVirtualFile nvf = (NewVirtualFile)file;
     if (file.isDirectory()) {
       for (VirtualFile child : nvf.getCachedChildren()) {
