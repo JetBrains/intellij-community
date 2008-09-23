@@ -25,7 +25,7 @@ import java.util.Set;
  * @author Eugene Zhuravlev
  *         Date: Nov 27, 2004
  */
-public class PropertyFileGenerator extends Generator{
+public class PropertyFileGeneratorImpl extends PropertyFileGenerator {
   /**
    * List of the properties
    */
@@ -37,7 +37,7 @@ public class PropertyFileGenerator extends Generator{
    * @param project a project to examine
    * @param genOptions generation options
    */
-  public PropertyFileGenerator(Project project, GenerationOptions genOptions) {
+  public PropertyFileGeneratorImpl(Project project, GenerationOptions genOptions) {
     // path variables
     final PathMacros pathMacros = PathMacros.getInstance();
     final Set<String> macroNamesSet = pathMacros.getUserMacroNames();
@@ -59,16 +59,10 @@ public class PropertyFileGenerator extends Generator{
         addProperty(BuildProperties.getJdkHomeProperty(jdk.getName()), homeDir.getPath().replace(File.separatorChar, '/'));
       }
     }
+
+    ChunkBuildExtension.generateAllProperties(this, project, genOptions);
   }
 
-  /**
-   * Add property. Note that property name and value
-   * are automatically escaped when the property file
-   * is generated.
-   *
-   * @param name a property name
-   * @param value a property value
-   */
   public void addProperty(String name, String value) {
     myProperties.add(new Pair<String, String>(name, value));
   }

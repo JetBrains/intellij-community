@@ -32,7 +32,7 @@ public class Tag extends CompositeGenerator {
   private final String myTagName;
   private final Pair[] myTagOptions;
 
-  public Tag(@NonNls String tagName, Pair[] tagOptions) {
+  public Tag(@NonNls String tagName, Pair... tagOptions) {
     myTagName = tagName;
     myTagOptions = tagOptions;
   }

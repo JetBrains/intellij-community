@@ -192,7 +192,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
     final PrintWriter propertiesOut = makeWriter(propertiesFile);
     try {
-      new PropertyFileGenerator(project, genOptions).generate(propertiesOut);
+      new PropertyFileGeneratorImpl(project, genOptions).generate(propertiesOut);
     }
     finally {
       propertiesOut.close();
@@ -286,7 +286,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     // properties
     final PrintWriter propertiesOut = makeWriter(propertiesFile);
     try {
-      new PropertyFileGenerator(project, genOptions).generate(propertiesOut);
+      new PropertyFileGeneratorImpl(project, genOptions).generate(propertiesOut);
       generated.add(propertiesFile);
     }
     finally {

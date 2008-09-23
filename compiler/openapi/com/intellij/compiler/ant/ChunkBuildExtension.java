@@ -18,6 +18,7 @@ package com.intellij.compiler.ant;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public abstract class ChunkBuildExtension {
+  public static final ExtensionPointName<ChunkBuildExtension> EP_NAME = ExtensionPointName.create(ExtensionPoints.ANT_BUILD_GEN);
 
   public abstract boolean haveSelfOutputs(Module[] modules);
 
@@ -37,21 +39,23 @@ public abstract class ChunkBuildExtension {
 
   public abstract void process(Project project, ModuleChunk chunk, GenerationOptions genOptions, CompositeGenerator generator);
 
+  public void generateProperties(final PropertyFileGenerator generator, final Project project, final GenerationOptions options) {
+  }
+
   public static boolean hasSelfOutput(ModuleChunk chunk) {
-    final Object[] objects = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.ANT_BUILD_GEN).getExtensions();
+    final ChunkBuildExtension[] extensions = Extensions.getRootArea().getExtensionPoint(EP_NAME).getExtensions();
     final Module[] modules = chunk.getModules();
-    for (Object object : objects) {
-      if (!((ChunkBuildExtension)object).haveSelfOutputs(modules)) return false;
+    for (ChunkBuildExtension extension : extensions) {
+      if (!extension.haveSelfOutputs(modules)) return false;
     }
     return true;
   }
 
   public static String[] getAllTargets(ModuleChunk chunk) {
     List<String> allTargets = new ArrayList<String>();
-    final Object[] objects = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.ANT_BUILD_GEN).getExtensions();
-    for (Object object : objects) {
-      final String[] targets = ((ChunkBuildExtension)object).getTargets(chunk);
-      allTargets.addAll(Arrays.asList(targets));
+    final ChunkBuildExtension[] extensions = Extensions.getRootArea().getExtensionPoint(EP_NAME).getExtensions();
+    for (ChunkBuildExtension extension : extensions) {
+      allTargets.addAll(Arrays.asList(extension.getTargets(chunk)));
     }
     if (allTargets.isEmpty()) {
       allTargets.add(BuildProperties.getCompileTargetName(chunk.getName()));
@@ -61,10 +65,17 @@ public abstract class ChunkBuildExtension {
 
   public static void process(CompositeGenerator generator, ModuleChunk chunk, GenerationOptions genOptions) {
     final Project project = chunk.getProject();
-    final Object[] objects = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.ANT_BUILD_GEN).getExtensions();
-    for (Object object : objects) {
-      ((ChunkBuildExtension)object).process(project, chunk, genOptions, generator);
+    final ChunkBuildExtension[] extensions = Extensions.getRootArea().getExtensionPoint(EP_NAME).getExtensions();
+    for (ChunkBuildExtension extension : extensions) {
+      extension.process(project, chunk, genOptions, generator);
     }
   }
 
+  public static void generateAllProperties(final PropertyFileGenerator propertyFileGenerator, final Project project,
+                                        final GenerationOptions genOptions) {
+    ChunkBuildExtension[] extensions = Extensions.getRootArea().getExtensionPoint(EP_NAME).getExtensions();
+    for (ChunkBuildExtension extension : extensions) {
+      extension.generateProperties(propertyFileGenerator, project, genOptions);
+    }
+  }
 }
