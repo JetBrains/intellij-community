@@ -157,7 +157,7 @@ public class JavacCompiler extends ExternalCompiler {
   private void createStartupCommand(final ModuleChunk chunk, @NonNls final List<String> commandLine, final String outputPath) throws IOException {
     final Sdk jdk = getJdkForStartupCommand(chunk);
     final String versionString = jdk.getVersionString();
-    if (versionString == null || "".equals(versionString)) {
+    if (versionString == null || "".equals(versionString) || !(jdk.getSdkType() instanceof JavaSdkType)) {
       throw new IllegalArgumentException(CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()));
     }
 
