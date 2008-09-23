@@ -25,7 +25,11 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     if (aClass == null) return array;
 
     List<PsiElement> children = Arrays.asList(aClass.getChildren());
-    Collection<PsiElement> ownChildren = new THashSet<PsiElement>(children);
+    Collection<PsiElement> ownChildren = new THashSet<PsiElement>();
+    ownChildren.addAll(Arrays.asList(aClass.getFields()));
+    ownChildren.addAll(Arrays.asList(aClass.getMethods()));
+    ownChildren.addAll(Arrays.asList(aClass.getInnerClasses()));
+    ownChildren.addAll(Arrays.asList(aClass.getInitializers()));
     Collection<PsiElement> inherited = new LinkedHashSet<PsiElement>(children);
 
     aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), ResolveState.initial(), null, aClass);

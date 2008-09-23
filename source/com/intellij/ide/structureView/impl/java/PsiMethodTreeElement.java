@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +23,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
   public Collection<StructureViewTreeElement> getChildrenBase() {
     final ArrayList<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
     final PsiMethod element = getElement();
-    if (element == null) return result;
+    if (element == null || element instanceof JspHolderMethod) return result;
 
     final TextRange range = element.getTextRange();
     if (range == null) return result;
