@@ -186,11 +186,12 @@ public final class TabInfo {
     return myTabActionPlace;
   }
 
-  public void setTabLabelActions(final ActionGroup tabActions, String place) {
+  public TabInfo setTabLabelActions(final ActionGroup tabActions, String place) {
     ActionGroup old = myTabLabelActions;
     myTabLabelActions = tabActions;
     myTabActionPlace = place;
     myChangeSupport.firePropertyChange(TAB_ACTION_GROUP, old, myTabLabelActions);
+    return this;
   }
 
   @Nullable

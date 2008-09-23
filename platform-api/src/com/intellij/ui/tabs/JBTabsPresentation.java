@@ -63,4 +63,6 @@ public interface JBTabsPresentation {
   @NotNull
   JBTabsPresentation setActiveTabFillIn(@Nullable Color color);
 
+  JBTabsPresentation setTabLabelActionsAutoHide(boolean autoHide);
+
 }

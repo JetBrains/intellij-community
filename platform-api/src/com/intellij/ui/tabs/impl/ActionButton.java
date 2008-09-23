@@ -22,6 +22,8 @@ class ActionButton extends IconButton implements ActionListener {
   private String myPlace;
   private TabInfo myTabInfo;
   private JBTabsImpl myTabs;
+  private boolean myAutoHide;
+  private boolean myToShow;
 
   public ActionButton(JBTabsImpl tabs, TabInfo tabInfo, AnAction action, String place, Pass<MouseEvent> pass) {
     super(null, action.getTemplatePresentation().getIcon());
@@ -29,6 +31,7 @@ class ActionButton extends IconButton implements ActionListener {
     myTabInfo = tabInfo;
     myAction = action;
     myPlace = place;
+
     myButton = new InplaceButton(this, this, pass);
     myButton.setVisible(false);
   }
@@ -84,4 +87,26 @@ class ActionButton extends IconButton implements ActionListener {
     DataContext context = DataManager.getInstance().getDataContext(myTabInfo.getComponent());
     return new AnActionEvent(e, context, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation, myTabs.myActionManager, 0);
   }
+
+  public void setAutoHide(final boolean autoHide) {
+    myAutoHide = autoHide;
+    if (!myToShow) {
+      toggleShowActions(false);
+    }
+  }
+
+  public boolean isAutoHide() {
+    return myAutoHide;
+  }
+
+  public void toggleShowActions(boolean show) {
+    if (myAutoHide) {
+      myButton.setPainting(show);
+    } else {
+      myButton.setPainting(true);
+    }
+
+    myToShow = show;
+  }
+
 }

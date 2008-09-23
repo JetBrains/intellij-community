@@ -11,10 +11,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.ui.ShadowAction;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -86,7 +84,8 @@ final class EditorTabbedContainer implements Disposable {
       public void mouseClicked(final MouseEvent e) {
         if (UIUtil.isActionClick(e) && (e.getClickCount() % 2) == 0) {
           ActionUtil.execute("HideAllWindows", e, null, ActionPlaces.UNKNOWN, 0);
-        } else if (UIUtil.isActionClick(e) && (e.isMetaDown() || (!SystemInfo.isMac && e.isControlDown()))) {
+        }
+        else if (UIUtil.isActionClick(e) && (e.isMetaDown() || (!SystemInfo.isMac && e.isControlDown()))) {
           final TabInfo info = myTabs.findInfo(e);
           if (info != null && info.getObject() != null) {
             final VirtualFile vFile = (VirtualFile)info.getObject();
@@ -99,11 +98,10 @@ final class EditorTabbedContainer implements Disposable {
       public UiDecoration getDecoration() {
         return new UiDecoration(null, new Insets(1, 6, 1, 6));
       }
-    })
-        .setGhostsAlwaysVisible(true)
+    }).setGhostsAlwaysVisible(true)
+        .setTabLabelActionsAutoHide(true)
         .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground())
-        .setPaintFocus(false)
-        .getJBTabs().addListener(new TabsListener() {
+        .setPaintFocus(false).getJBTabs().addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
         final FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
         final FileEditor oldEditor = editorManager.getSelectedEditor((VirtualFile)oldSelection.getObject());
@@ -149,8 +147,7 @@ final class EditorTabbedContainer implements Disposable {
     if (!myProject.isOpen()) return;
 
     myTabs.getComponent().setBorder(new EmptyBorder(1, 0, 0, 0));
-    final List<String> rightIds =
-        ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).getIdsOn(ToolWindowAnchor.RIGHT);
+    final List<String> rightIds = ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).getIdsOn(ToolWindowAnchor.RIGHT);
     myTabs.getPresentation().setPaintBorder(5, -1, rightIds.size() > 0 ? 1 : 0, -1);
   }
 
@@ -184,7 +181,7 @@ final class EditorTabbedContainer implements Disposable {
   public void setTitleAt(final int index, final String text) {
     myTabs.getTabAt(index).setText(text);
   }
-                 
+
   public void setToolTipTextAt(final int index, final String text) {
     myTabs.getTabAt(index).setTooltipText(text);
   }
@@ -211,18 +208,23 @@ final class EditorTabbedContainer implements Disposable {
     return info != null ? info.getComponent() : null;
   }
 
-  public void insertTab(final VirtualFile file, final Icon icon, final JComponent comp, final String tooltip,
-                        final int indexToInsert) {
+  public void insertTab(final VirtualFile file, final Icon icon, final JComponent comp, final String tooltip, final int indexToInsert) {
 
     TabInfo tab = myTabs.findInfo(file);
     if (tab != null) return;
 
+
     tab = new TabInfo(comp).setText(getTabTitle(file)).setIcon(icon).setTooltipText(tooltip).setObject(file);
+
+    final DefaultActionGroup tabActions = new DefaultActionGroup();
+    tabActions.add(new CloseTab(myTabs.getComponent(), tab));
+
+    tab.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
     myTabs.addTab(tab, indexToInsert);
   }
 
   public String getTabTitle(final VirtualFile file) {
-    for(EditorTabTitleProvider provider: Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
+    for (EditorTabTitleProvider provider : Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
       final String result = provider.getEditorTabTitle(myProject, file);
       if (result != null) {
         return result;
@@ -239,5 +241,25 @@ final class EditorTabbedContainer implements Disposable {
 
   public void dispose() {
 
+  }
+
+  private class CloseTab extends AnAction {
+
+    ShadowAction myShadow;
+    private TabInfo myTabInfo;
+
+    public CloseTab(JComponent c, TabInfo info) {
+      myTabInfo = info;
+      myShadow = new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_EDITOR), c);
+    }
+
+    @Override
+    public void update(final AnActionEvent e) {
+      e.getPresentation().setIcon(IconLoader.getIcon("/actions/cross.png"));
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      myWindow.closeFile((VirtualFile)myTabInfo.getObject());
+    }
   }
 }

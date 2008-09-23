@@ -16,6 +16,8 @@
 
 package com.intellij.openapi.ui.popup;
 
+import com.intellij.util.ui.EmptyIcon;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -31,8 +33,8 @@ public class ActiveIcon implements Icon {
   }
 
   public ActiveIcon(final Icon regular, final Icon inactive) {
-    myRegular = regular;
-    myInactive = inactive;
+    myRegular = regular != null ? regular : new EmptyIcon(0);
+    myInactive = inactive != null ? inactive : new EmptyIcon(0);
   }
 
   public Icon getRegular() {

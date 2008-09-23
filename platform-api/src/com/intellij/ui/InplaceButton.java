@@ -49,25 +49,25 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
       }
     };
 
-    int width = Math.max(source.getRegular().getIconWidth(), source.getInactive().getIconWidth());
-    width = Math.max(width, source.getHovered().getIconWidth());
-
-    int height = Math.max(source.getRegular().getIconHeight(), source.getInactive().getIconHeight());
-    height = Math.max(height, source.getHovered().getIconHeight());
-
-    setPreferredSize(new Dimension(width, height));
-
-    myRegular = new CenteredIcon(source.getRegular(), width, height);
-    myHovered = new CenteredIcon(source.getHovered(), width, height);
-    myInactive = new CenteredIcon(source.getInactive(), width, height);
+    setIcons(source.getRegular(), source.getInactive(), source.getHovered());
 
     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     setToolTipText(source.getTooltip());
     setOpaque(false);
   }
 
-  protected void pass(MouseEvent e) {
+  private void setIcons(final Icon regular, final Icon inactive, final Icon hovered) {
+    int width = Math.max(regular.getIconWidth(), inactive.getIconWidth());
+    width = Math.max(width, hovered.getIconWidth());
+    int height = Math.max(regular.getIconHeight(), inactive.getIconHeight());
+    height = Math.max(height, hovered.getIconHeight());
 
+
+    setPreferredSize(new Dimension(width, height));
+
+    myRegular = new CenteredIcon(regular, width, height);
+    myHovered = new CenteredIcon(hovered, width, height);
+    myInactive = new CenteredIcon(inactive, width, height);
   }
 
   public InplaceButton setFillBg(boolean fill) {
@@ -76,7 +76,10 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
   }
 
   public void setPainting(final boolean active) {
+    if (myPainting == active) return;
+
     myPainting = active;
+
     repaint();
   }
 
@@ -86,9 +89,7 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
   }
 
   public void setIcon(final Icon icon) {
-    myRegular = new CenteredIcon(icon);
-    myHovered = new CenteredIcon(icon);
-    myInactive = new CenteredIcon(icon);
+    setIcons(icon, icon, icon);
   }
 
   public JComponent getComponent() {

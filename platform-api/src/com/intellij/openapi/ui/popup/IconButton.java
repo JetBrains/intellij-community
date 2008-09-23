@@ -16,6 +16,8 @@
 
 package com.intellij.openapi.ui.popup;
 
+import com.intellij.util.ui.EmptyIcon;
+
 import javax.swing.*;
 
 public class IconButton extends ActiveIcon {
@@ -27,7 +29,7 @@ public class IconButton extends ActiveIcon {
   public IconButton(final String tooltip, final Icon regular, final Icon hovered, final Icon inactive) {
     super(regular, inactive);
     myTooltip = tooltip;
-    myHovered = hovered;
+    myHovered = hovered != null ? hovered : new EmptyIcon(0);
   }
 
   public IconButton(final String tooltip, final Icon regular, final Icon hovered) {

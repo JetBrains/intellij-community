@@ -911,7 +911,7 @@ public class UIUtil {
   }
 
   public static int getButtonMouseDeadzoneLength() {
-    return 300;
+    return 200;
   }
 }
 

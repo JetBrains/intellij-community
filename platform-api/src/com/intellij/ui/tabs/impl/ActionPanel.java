@@ -11,6 +11,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Iterator;
 
 class ActionPanel extends NonOpaquePanel {
 
@@ -18,6 +19,8 @@ class ActionPanel extends NonOpaquePanel {
   private List<ActionButton> myButtons = new ArrayList<ActionButton>();
   private TabInfo myTabInfo;
   private JBTabsImpl myTabs;
+
+  private boolean myAutoHide;
 
   public ActionPanel(JBTabsImpl tabs, TabInfo tabInfo, Pass<MouseEvent> pass) {
     myTabs = tabs;
@@ -49,4 +52,24 @@ class ActionPanel extends NonOpaquePanel {
     }
     return new Dimension(0, 0);
   }
+
+  public boolean isAutoHide() {
+    return myAutoHide;
+  }
+
+  public void setAutoHide(final boolean autoHide) {
+    myAutoHide = autoHide;
+    for (Iterator<ActionButton> iterator = myButtons.iterator(); iterator.hasNext();) {
+      ActionButton each = iterator.next();
+      each.setAutoHide(myAutoHide);
+    }
+  }
+
+  public void toggleShowActtions(final boolean show) {
+    for (Iterator<ActionButton> iterator = myButtons.iterator(); iterator.hasNext();) {
+      ActionButton each = iterator.next();
+      each.toggleShowActions(show);
+    }
+  }
+
 }

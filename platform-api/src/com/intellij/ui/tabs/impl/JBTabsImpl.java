@@ -10,6 +10,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.tabs.*;
@@ -52,7 +54,7 @@ public class JBTabsImpl extends JComponent
 
   Insets myInnerInsets = new Insets(0, 0, 0, 0);
 
-  final List<MouseListener> myTabMouseListeners = new ArrayList<MouseListener>();
+  final List<EventListener> myTabMouseListeners = new ArrayList<EventListener>();
   final List<TabsListener> myTabListeners = new ArrayList<TabsListener>();
   public boolean myFocused;
 
@@ -110,6 +112,10 @@ public class JBTabsImpl extends JComponent
   private boolean myToDrawBorderIfTabsHidden = true;
   private Color myActiveTabFillIn;
 
+  private boolean myTabLabelActionsAutoHide;
+
+  private TabActionsAutoHideListener myTabActionsAutoHideListener = new TabActionsAutoHideListener();
+  private IdeGlassPane myGlassPane;
 
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
     myProject = project;
@@ -232,6 +238,12 @@ public class JBTabsImpl extends JComponent
       myActionManager.addTimerListener(500, this);
       myListenerAdded = true;
     }
+
+    final IdeGlassPane gp = IdeGlassPaneUtil.find(this);
+    if (gp != null) {
+      gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, this);
+      myGlassPane = gp;
+    }
   }
 
   public void removeNotify() {
@@ -240,6 +252,45 @@ public class JBTabsImpl extends JComponent
     setFocused(false);
 
     removeTimerUpdate();
+
+    if (myGlassPane != null) {
+      myGlassPane.removeMouseMotionPreprocessor(myTabActionsAutoHideListener);
+      myGlassPane = null;
+    }
+  }
+
+  class TabActionsAutoHideListener extends MouseMotionAdapter {
+
+    private TabLabel myCurrentOverLabel;
+    private Point myLastOverPoint;
+
+    @Override
+    public void mouseMoved(final MouseEvent e) {
+      final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getX(), e.getY(), JBTabsImpl.this);
+      myLastOverPoint = point;
+      processMouseOver();
+    }
+
+    void processMouseOver() {
+      if (myLastOverPoint == null) return;
+
+      if (myLastOverPoint.x >= 0 && myLastOverPoint.x < getWidth() && myLastOverPoint.y > 0 && myLastOverPoint.y < getHeight()) {
+        final TabLabel label = myInfo2Label.get(_findInfo(myLastOverPoint, true));
+        if (label != null) {
+          if (myCurrentOverLabel != null) {
+            myCurrentOverLabel.toggleShowActions(false);
+          }
+          label.toggleShowActions(true);
+          myCurrentOverLabel = label;
+          return;
+        }
+      }
+
+      if (myCurrentOverLabel != null) {
+        myCurrentOverLabel.toggleShowActions(false);
+        myCurrentOverLabel = null;
+      }
+    }
   }
 
   private void removeTimerUpdate() {
@@ -873,6 +924,14 @@ public class JBTabsImpl extends JComponent
       myHeaderFitSize =
           new Dimension(getSize().width, myHorizontalSide ? Math.max(max.myLabel.height, max.myToolbar.height) : max.myLabel.height);
 
+
+      final Collection<TabLabel> labels = myInfo2Label.values();
+      for (Iterator<TabLabel> iterator = labels.iterator(); iterator.hasNext();) {
+        TabLabel each = iterator.next();
+        each.setTabActionsAutoHide(myTabLabelActionsAutoHide);
+      }
+
+
       if (isSingleRow()) {
         myLastLayoutPass = mySingleRowLayout.layoutSingleRow();
         myTableLayout.myLastTableLayout = null;
@@ -889,6 +948,7 @@ public class JBTabsImpl extends JComponent
         label.setBounds(bounds.x, bounds.y, getWidth() - insets.right - insets.left, bounds.height);
       }
 
+      myTabActionsAutoHideListener.processMouseOver();
     }
     finally {
       myForcedRelayout = false;
@@ -1584,8 +1644,12 @@ public class JBTabsImpl extends JComponent
   }
 
   public TabInfo findInfo(MouseEvent event) {
+    return findInfo(event, false);
+  }
+
+  private TabInfo findInfo(final MouseEvent event, final boolean labelsOnly) {
     final Point point = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), this);
-    return _findInfo(point, false);
+    return _findInfo(point, labelsOnly);
   }
 
   public TabInfo findInfo(final Object object) {
@@ -1695,6 +1759,14 @@ public class JBTabsImpl extends JComponent
   }
 
   @NotNull
+  public JBTabs addTabMouseMotionListener(@NotNull MouseMotionListener listener) {
+    removeListeners();
+    myTabMouseListeners.add(listener);
+    addListeners();
+    return this;
+  }
+
+  @NotNull
   public JBTabs addTabMouseListener(@NotNull MouseListener listener) {
     removeListeners();
     myTabMouseListeners.add(listener);
@@ -1718,8 +1790,14 @@ public class JBTabsImpl extends JComponent
   private void addListeners() {
     for (TabInfo eachInfo : myVisibleInfos) {
       final TabLabel label = myInfo2Label.get(eachInfo);
-      for (MouseListener eachListener : myTabMouseListeners) {
-        label.addMouseListener(eachListener);
+      for (EventListener eachListener : myTabMouseListeners) {
+        if (eachListener instanceof MouseListener) {
+          label.addMouseListener(((MouseListener)eachListener));
+        } else if (eachListener instanceof MouseMotionListener) {
+          label.addMouseMotionListener(((MouseMotionListener)eachListener));
+        } else {
+          assert false;
+        }
       }
     }
   }
@@ -1727,8 +1805,14 @@ public class JBTabsImpl extends JComponent
   private void removeListeners() {
     for (TabInfo eachInfo : myVisibleInfos) {
       final TabLabel label = myInfo2Label.get(eachInfo);
-      for (MouseListener eachListener : myTabMouseListeners) {
-        label.removeMouseListener(eachListener);
+      for (EventListener eachListener : myTabMouseListeners) {
+        if (eachListener instanceof MouseListener) {
+          label.removeMouseListener(((MouseListener)eachListener));
+        } else if (eachListener instanceof MouseMotionListener) {
+          label.removeMouseMotionListener(((MouseMotionListener)eachListener));
+        } else {
+          assert false;
+        }
       }
     }
   }
@@ -1802,6 +1886,14 @@ public class JBTabsImpl extends JComponent
   public JBTabsPresentation setActiveTabFillIn(@Nullable final Color color) {
     myActiveTabFillIn = color;
     revalidateAndRepaint(false);
+    return this;
+  }
+
+  public JBTabsPresentation setTabLabelActionsAutoHide(final boolean autoHide) {
+    if (myTabLabelActionsAutoHide != autoHide) {
+      myTabLabelActionsAutoHide = autoHide;
+      revalidateAndRepaint(false);
+    }
     return this;
   }
 

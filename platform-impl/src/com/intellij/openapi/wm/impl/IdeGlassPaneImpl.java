@@ -169,7 +169,7 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
     removeListener(listener);
   }
 
-  public void removeMouseMotionPreprocessor(final MouseListener listener) {
+  public void removeMouseMotionPreprocessor(final MouseMotionListener listener) {
     removeListener(listener);
   }
 

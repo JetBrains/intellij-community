@@ -16,7 +16,6 @@ import com.intellij.util.ui.Centerizer;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -33,20 +32,25 @@ public class TabLabel extends JPanel {
   private Wrapper myLabelPlaceholder = new Wrapper();
   private JBTabsImpl myTabs;
 
+  private JPanel myContent = new NonOpaquePanel(new BorderLayout());
+
   public TabLabel(JBTabsImpl tabs, final TabInfo info) {
     myTabs = tabs;
     myInfo = info;
     myLabel.setOpaque(false);
+    myLabel.setBorder(null);
     myLabel.setIconTextGap(new JLabel().getIconTextGap());
     myLabel.setIconOpaque(false);
+    myLabel.setIpad(new Insets(0, 0, 0, 0));
     setOpaque(false);
-    setLayout(new BorderLayout(myLabel.getIconTextGap() * 2, 0));
+    setLayout(new GridBagLayout());
+    add(myContent);
 
 
     myLabelPlaceholder.setOpaque(false);
-    add(myLabelPlaceholder, BorderLayout.CENTER);
+    myContent.add(myLabelPlaceholder, BorderLayout.CENTER);
 
-    setAligmentToCenter(false);
+    setAligmentToCenter(true);
 
     myIcon = new LayeredIcon(2);
     myLabel.setIcon(myIcon);
@@ -69,8 +73,6 @@ public class TabLabel extends JPanel {
         handlePopup(e);
       }
     });
-
-    myLabel.setBorder(new LineBorder(Color.red));
   }
 
   public void setAligmentToCenter(boolean toCenter) {
@@ -187,8 +189,6 @@ public class TabLabel extends JPanel {
       Insets current = JBTabsImpl.ourDefaultDecorator.getDecoration().getLabelInsets();
       setBorder(new EmptyBorder(getValue(current.top, insets.top), getValue(current.left, insets.left),
                                 getValue(current.bottom, insets.bottom), getValue(current.right, insets.right)));
-      //setBorder(new EmptyBorder(getValue(current.top, insets.top) + 2, getValue(current.left, insets.left),
-      //                          getValue(current.bottom, insets.bottom) + 1, getValue(current.right, insets.right)));
     }
   }
 
@@ -208,10 +208,12 @@ public class TabLabel extends JPanel {
       }
     });
 
+    toggleShowActions(false);
+
     NonOpaquePanel wrapper = new NonOpaquePanel(new GridBagLayout());
     wrapper.add(myActionPanel);
 
-    add(wrapper, BorderLayout.EAST);
+    myContent.add(wrapper, BorderLayout.EAST);
 
     myTabs.revalidateAndRepaint(false);
   }
@@ -310,6 +312,19 @@ public class TabLabel extends JPanel {
       final int top = (getSize().height - myOverlayedIcon.getIconHeight()) / 2;
 
       myOverlayedIcon.paintIcon(this, g, textBounds.x - myOverlayedIcon.getIconWidth() / 2, top);
+    }
+
+  }
+
+  public void setTabActionsAutoHide(final boolean autoHide) {
+    if (myActionPanel.isAutoHide() == autoHide) return;
+
+    myActionPanel.setAutoHide(autoHide);
+  }
+
+  public void toggleShowActions(boolean show) {
+    if (myActionPanel != null) {
+      myActionPanel.toggleShowActtions(show);
     }
   }
 }

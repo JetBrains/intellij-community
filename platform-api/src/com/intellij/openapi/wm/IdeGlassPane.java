@@ -19,10 +19,9 @@ package com.intellij.openapi.wm;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.Painter;
 
-import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.awt.*;
 
 public interface IdeGlassPane {
   void addMousePreprocessor(MouseListener listener, Disposable parent);
@@ -33,5 +32,5 @@ public interface IdeGlassPane {
 
 
   void removeMousePreprocessor(MouseListener listener);
-  void removeMouseMotionPreprocessor(MouseListener listener);
+  void removeMouseMotionPreprocessor(MouseMotionListener listener);
 }
