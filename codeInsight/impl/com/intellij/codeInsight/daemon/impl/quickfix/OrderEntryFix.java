@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -65,7 +65,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   }
 
   @Nullable
-  public static List<LocalQuickFix> registerFixes(@Nullable HighlightInfo info, final PsiReference reference) {
+  public static List<LocalQuickFix> registerFixes(@NotNull QuickFixActionRegistrar registrar, final PsiReference reference) {
     final PsiElement psiElement = reference.getElement();
     @NonNls final String referenceName = reference.getRangeInElement().substring(psiElement.getText());
 
@@ -106,7 +106,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           addBundledJarToRoots(project, editor, currentModule, reference, className, jarPath);
         }
       };
-      QuickFixAction.registerQuickFixAction(info, fix);
+      registrar.register(fix);
       return Arrays.asList((LocalQuickFix)fix);
     }
 
@@ -148,7 +148,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           });
         }
       };
-      QuickFixAction.registerQuickFixAction(info, fix);
+      registrar.register(fix);
       return Arrays.asList((LocalQuickFix)fix);
     }
 
@@ -199,7 +199,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
             }
           }
         };
-        QuickFixAction.registerQuickFixAction(info, fix);
+        registrar.register(fix);
         result.add(fix);
       }
       ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(currentModule).getFileIndex();
@@ -235,7 +235,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
               }
             }
           };
-          QuickFixAction.registerQuickFixAction(info, fix);
+          registrar.register(fix);
           result.add(fix);
         }
       }

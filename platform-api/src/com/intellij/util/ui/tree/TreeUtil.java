@@ -342,7 +342,7 @@ public final class TreeUtil {
     }
   }
 
-  private static ActionCallback moveDown(final JTree tree) {
+  public static ActionCallback moveDown(final JTree tree) {
     final int size = tree.getRowCount();
     int row = getSelectedRow(tree);
     if (row < size - 1) {
@@ -353,7 +353,7 @@ public final class TreeUtil {
     }
   }
 
-  private static ActionCallback moveUp(final JTree tree) {
+  public static ActionCallback moveUp(final JTree tree) {
     int row = getSelectedRow(tree);
     if (row > 0) {
       row--;
@@ -363,7 +363,7 @@ public final class TreeUtil {
     }
   }
 
-  private static ActionCallback movePageUp(final JTree tree) {
+  public static ActionCallback movePageUp(final JTree tree) {
     final int visible = getVisibleRowCount(tree);
     if (visible <= 0){
       return moveHome(tree);
@@ -375,7 +375,7 @@ public final class TreeUtil {
     return showAndSelect(tree, top, bottom, row, getSelectedRow(tree));
   }
 
-  private static ActionCallback movePageDown(final JTree tree) {
+  public static ActionCallback movePageDown(final JTree tree) {
     final int visible = getVisibleRowCount(tree);
     if (visible <= 0){
       return moveEnd(tree);

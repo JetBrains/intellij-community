@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 public class MoveClassToModuleFix {
-  public static void registerFixes(final HighlightInfo info, final PsiJavaCodeReferenceElement reference) {
+  public static void registerFixes(QuickFixActionRegistrar registrar, final PsiJavaCodeReferenceElement reference) {
     final PsiElement psiElement = reference.getElement();
     @NonNls final String referenceName = reference.getRangeInElement().substring(psiElement.getText());
 
@@ -102,7 +102,7 @@ public class MoveClassToModuleFix {
             return false;
           }
         };
-        QuickFixAction.registerQuickFixAction(info, action);
+        registrar.register(action);
       }
     }
   }

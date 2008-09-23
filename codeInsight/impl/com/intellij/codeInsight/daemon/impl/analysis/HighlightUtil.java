@@ -7,14 +7,17 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -1056,7 +1059,7 @@ public class HighlightUtil {
 
   public static void checkArrayInitalizer(final PsiExpression initializer, final HighlightInfoHolder holder) {
     if (! (initializer instanceof PsiArrayInitializerExpression)) return;
-    
+
     final PsiType arrayInitializerType = initializer.getType();
     if (! (arrayInitializerType instanceof PsiArrayType)) return;
 
@@ -1886,34 +1889,13 @@ public class HighlightUtil {
         if (PsiUtil.isInsideJavadocComment(ref)) return null;
 
         HighlightInfo info = HighlightInfo.createHighlightInfo(type, refName, description);
-        QuickFixAction.registerQuickFixAction(info, new ImportClassFix(ref));
-        QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace());
-        OrderEntryFix.registerFixes(info, ref);
-        MoveClassToModuleFix.registerFixes(info, ref);
-        if (ref instanceof PsiReferenceExpression) {
-          TextRange fixRange = HighlightMethodUtil.getFixRange(ref);
-          PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
-          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateEnumConstantFromUsageFix(refExpr), null);
-          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateConstantFieldFromUsageFix(refExpr), null);
-          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateFieldFromUsageFix(refExpr), null);
-          QuickFixAction.registerQuickFixAction(info, new RenameWrongRefFix(refExpr));
-          if (!ref.isQualified()) {
-            QuickFixAction.registerQuickFixAction(info, fixRange, new BringVariableIntoScopeFix(refExpr), null);
-            QuickFixAction.registerQuickFixAction(info, fixRange, new CreateLocalFromUsageFix(refExpr), null);
-            QuickFixAction.registerQuickFixAction(info, fixRange, new CreateParameterFromUsageFix(refExpr), null);
-          }
+        QuickFixActionRegistrar registrar = new QuickFixActionRegistrarImpl(info);
+
+        UnresolvedReferenceQuickFixProvider[] fixProviders = Extensions.getExtensions(UnresolvedReferenceQuickFixProvider.EXTENSION_NAME);
+        for (UnresolvedReferenceQuickFixProvider each : fixProviders) {
+          each.registerFixes(ref, registrar);
         }
-        QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageFix(ref, CreateClassKind.INTERFACE));
-        QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
-        PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
-        if (parent instanceof PsiNewExpression && !(ref.getParent() instanceof PsiTypeElement)) {
-          QuickFixAction.registerQuickFixAction(info, new CreateClassFromNewFix((PsiNewExpression)parent));
-          QuickFixAction.registerQuickFixAction(info, new CreateInnerClassFromNewFix((PsiNewExpression)parent));
-        }
-        else {
-          QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
-          QuickFixAction.registerQuickFixAction(info, new CreateInnerClassFromUsageFix(ref, CreateClassKind.CLASS));
-        }
+
         return info;
       }
 

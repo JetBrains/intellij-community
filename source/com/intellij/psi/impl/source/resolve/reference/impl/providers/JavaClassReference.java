@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -406,7 +407,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   @Nullable
   private List<? extends LocalQuickFix> registerFixes(final HighlightInfo info) {
 
-    final List<LocalQuickFix> list = OrderEntryFix.registerFixes(info, this);
+    final List<LocalQuickFix> list = OrderEntryFix.registerFixes(new QuickFixActionRegistrarImpl(info), this);
 
     final String[] extendClasses = JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions());
     final String extendClass = extendClasses != null && extendClasses.length > 0 ? extendClasses[0] : null;

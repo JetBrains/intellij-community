@@ -18,10 +18,10 @@ package com.intellij.util.xml.ui.actions.generate;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.CodeInsightAction;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -43,18 +43,33 @@ public class GenerateDomElementAction extends CodeInsightAction {
   protected CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
       public void invoke(final Project project, final Editor editor, final PsiFile file) {
-        new WriteCommandAction(project, file) {
-          protected void run(final Result result) throws Throwable {
+        final Runnable runnable = new Runnable() {
+          public void run() {
             final DomElement element = myProvider.generate(project, editor, file);
             myProvider.navigate(element);
           }
-        }.execute();
+        };
+        
+        if (GenerateDomElementAction.this.startInWriteAction()) {
+          new WriteCommandAction(project, file) {
+            protected void run(final Result result) throws Throwable {
+              runnable.run();
+            }
+          }.execute();
+        }
+        else {
+          runnable.run();
+        }
       }
 
       public boolean startInWriteAction() {
         return false;
       }
     };
+  }
+
+  protected boolean startInWriteAction() {
+    return true;
   }
 
   protected boolean isValidForFile(final Project project, final Editor editor, final PsiFile file) {
