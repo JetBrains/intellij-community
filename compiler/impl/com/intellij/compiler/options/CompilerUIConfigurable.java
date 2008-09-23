@@ -10,8 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.util.LogicalRoot;
-import com.intellij.util.LogicalRootsManager;
 import com.intellij.util.Options;
 
 import javax.swing.*;
@@ -42,9 +40,6 @@ public class CompilerUIConfigurable implements Configurable {
 
     CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
-    for (LogicalRoot contentSourceRoot : LogicalRootsManager.getLogicalRootsManager(myProject).getLogicalRoots()) {
-      descriptor.addRoot(contentSourceRoot.getVirtualFile());
-    }
 
     myExcludedEntriesConfigurable = new ExcludedEntriesConfigurable(project, descriptor, compilerConfiguration.getExcludedEntriesConfiguration()) {
       public void apply() {
