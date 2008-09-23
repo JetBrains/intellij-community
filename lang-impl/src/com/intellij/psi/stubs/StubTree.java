@@ -90,4 +90,8 @@ public class StubTree {
 
     return null;
   }
+
+  public static StubTree getTreeFromTopLevelStub(final PsiFileStub stubElement) {
+    return stubElement != null ? ((UserDataHolder)stubElement).getUserData(HARD_REF_IN_STUB):null;
+  }
 }

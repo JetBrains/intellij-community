@@ -9,13 +9,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -32,6 +31,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -139,6 +139,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
+  private static final Key<WeakReference<StubTree>> ourCachedStubTreeRefKey = Key.create("our.cached.decompiler.stub");
+
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey, @NotNull final Key key, final Project project,
                                                            final GlobalSearchScope scope) {
     checkRebuild();
@@ -162,9 +164,33 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
           public void perform(final int id, final TIntArrayList value) {
             final VirtualFile file = IndexInfrastructure.findFileById(fs, id);
             if (file != null && (scope == null || scope.contains(file))) {
-              final PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)psiManager.findFile(file);
-              if (psiFile != null && !(psiFile instanceof PsiPlainTextFile)) {
-                StubTree stubTree = psiFile.getStubTree();
+              StubTree stubTree = null;
+
+              final PsiFile _psifile = psiManager.findFile(file);
+              PsiFileWithStubSupport psiFile = null;
+
+              if (_psifile != null && !(_psifile instanceof PsiPlainTextFile)) {
+                if (_psifile instanceof PsiFileWithStubSupport) {
+                  psiFile = (PsiFileWithStubSupport)_psifile;
+                  stubTree = psiFile.getStubTree();
+                } else if (_psifile instanceof PsiBinaryFile) {
+                  final WeakReference<StubTree> reference = _psifile.getUserData(ourCachedStubTreeRefKey);
+                  stubTree = reference != null ? reference.get():null;
+
+                  if (stubTree == null) {
+                    BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(file.getFileType());
+                    assert builder != null;
+                    try {
+                      stubTree = StubTree.getTreeFromTopLevelStub((PsiFileStub)builder.buildStubTree(file, file.contentsToByteArray()));
+                    } catch (IOException ex) {
+                      LOG.error(ex);
+                    }
+                    _psifile.putUserData(ourCachedStubTreeRefKey, new WeakReference<StubTree>(stubTree));
+                  }
+                }
+              }
+
+              if (stubTree != null || psiFile != null) {
                 if (stubTree == null) {
                   stubTree = StubTree.readFromVFile(file);
                   if (stubTree != null) {
