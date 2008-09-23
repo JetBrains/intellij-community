@@ -105,7 +105,10 @@ public class ExcludeEntryDescription implements Disposable {
   }
 
   public int hashCode() {
-    return getUrl().hashCode();
+    int result = (myIsFile ? 1 : 0);
+    result = 31 * result + (myIncludeSubdirectories ? 1 : 0);
+    result = 31 * result + getUrl().hashCode();
+    return result;
   }
 
   public void dispose() {

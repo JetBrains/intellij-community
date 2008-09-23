@@ -26,9 +26,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 
 /**
  * @author nik
@@ -38,12 +37,8 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
   @NonNls private static final String DIRECTORY = "directory";
   @NonNls private static final String URL = "url";
   @NonNls private static final String INCLUDE_SUBDIRECTORIES = "includeSubdirectories";
-  private List<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
+  private Collection<ExcludeEntryDescription> myExcludeEntryDescriptions = new LinkedHashSet<ExcludeEntryDescription>();
   private ExcludeEntryDescription[] myCachedDescriptions = null;
-
-  public void setExcludeEntryDescriptions(final ExcludeEntryDescription[] excludeEntryDescriptions) {
-    myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>(Arrays.asList(excludeEntryDescriptions));
-  }
 
   public synchronized ExcludeEntryDescription[] getExcludeEntryDescriptions() {
     if (myCachedDescriptions == null) {
