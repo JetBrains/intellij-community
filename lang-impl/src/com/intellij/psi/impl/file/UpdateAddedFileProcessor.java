@@ -4,7 +4,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Maxim.Mossienko
@@ -22,7 +22,7 @@ public abstract class UpdateAddedFileProcessor {
 
   public abstract void update(PsiFile element) throws IncorrectOperationException;
 
-  @NotNull
+  @Nullable
   public static UpdateAddedFileProcessor forElement(PsiFile element) {
     UpdateAddedFileProcessor defaultProcessor = null;
     
