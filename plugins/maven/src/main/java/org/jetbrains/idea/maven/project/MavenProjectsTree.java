@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.RuntimeInterruptedException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
@@ -9,6 +10,7 @@ import org.apache.maven.model.Parent;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.dom.model.Dependency;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 
@@ -447,6 +449,31 @@ public class MavenProjectsTree {
                           List<MavenProjectModel> projects,
                           boolean demand) throws MavenProcessCanceledException {
     MavenArtifactDownloader.download(this, projects, artifactSettings, demand, embedder, p);
+  }
+
+  public Dependency addDependency(Project project,
+                                  MavenProjectModel mavenProject,
+                                  Artifact artifact) throws MavenProcessCanceledException {
+    return mavenProject.addDependency(project, artifact);
+  }
+
+  public Artifact downloadArtifact(MavenProjectModel mavenProject,
+                                   MavenId id,
+                                   MavenCoreSettings coreSettings) throws MavenProcessCanceledException {
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings);
+    try {
+      Artifact artifact = e.createArtifact(id.groupId,
+                                           id.artifactId,
+                                           id.version,
+                                           MavenConstants.JAR_TYPE,
+                                           null);
+      artifact.setScope(Artifact.SCOPE_COMPILE);
+      e.resolve(artifact, mavenProject.getRepositories());
+      return artifact;
+    }
+    finally {
+      e.release();
+    }
   }
 
   public <Result> Result visit(Visitor<Result> visitor) {

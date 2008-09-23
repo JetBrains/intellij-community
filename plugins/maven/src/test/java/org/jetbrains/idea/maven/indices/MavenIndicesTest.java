@@ -2,15 +2,21 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.WildcardQuery;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderException;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.sonatype.nexus.index.ArtifactInfo;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MavenIndicesTest extends MavenImportingTestCase {
   private MavenCustomRepositoryHelper myRepositoryHelper;
@@ -230,9 +236,6 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   public void testRepairingIndicesOnReadWhileAddingArtifact() throws Exception {
-    // cannot make addArtifact throw an exception
-    if (ignore()) return;
-
     MavenIndex index = myIndices.add(myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndices.updateOrRepair(index, true, new EmptyProgressIndicator());
 
@@ -242,7 +245,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
 
     index = myIndices.getIndices().get(0);
 
-    index.addArtifact(new MavenId("junit", "junit", "xxx"));
+    index.addArtifact(null);
     assertTrue(isBroken);
 
     assertTrue(index.getGroupIds().isEmpty());
@@ -318,5 +321,49 @@ public class MavenIndicesTest extends MavenImportingTestCase {
     assertTrue(i.hasVersion("junit", "junit", "4.0"));
     assertTrue(i.hasVersion("jmock", "jmock", "1.0.0"));
     assertFalse(i.hasVersion("junit", "junit", "666"));
+  }
+
+  public void testSearching() throws Exception {
+    MavenIndex i = myIndices.add(myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    myIndices.updateOrRepair(i, true, new EmptyProgressIndicator());
+
+    assertSearchResults(i, new TermQuery(new Term(ArtifactInfo.GROUP_ID, "junit")),
+                        "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
+  }
+
+  public void testSearchingAfterArtifactAddition() throws Exception {
+    MavenIndex i = myIndices.add(myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    myIndices.updateOrRepair(i, true, new EmptyProgressIndicator());
+
+    i.addArtifact(new File(myRepositoryHelper.getTestDataPath("local2/jmock/jmock/1.0.0/jmock-1.0.0.jar")));
+
+    assertSearchResults(i, new TermQuery(new Term(ArtifactInfo.GROUP_ID, "jmock")),
+                        "jmock:jmock:1.0.0");
+  }
+
+  private void assertSearchResults(MavenIndex i, Query query, String... expectedArtifacts) {
+    List<String> actualArtifacts = new ArrayList<String>();
+    for (ArtifactInfo each : i.search(query, 100)) {
+      actualArtifacts.add(each.groupId + ":" + each.artifactId + ":" + each.version);
+    }
+    assertUnorderedElementsAreEqual(actualArtifacts, expectedArtifacts);
+  }
+
+  public void testSearchingForClasses() throws Exception {
+    MavenIndex i = myIndices.add(myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    myIndices.updateOrRepair(i, true, new EmptyProgressIndicator());
+
+    assertSearchResults(i, new WildcardQuery(new Term(ArtifactInfo.NAMES, "*runwith*")),
+                        "junit:junit:4.0");
+  }
+
+  public void testSearchingForClassesAfterArtifactAddition() throws Exception {
+    MavenIndex i = myIndices.add(myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    myIndices.updateOrRepair(i, true, new EmptyProgressIndicator());
+
+    i.addArtifact(new File(myRepositoryHelper.getTestDataPath("local2/jmock/jmock/1.0.0/jmock-1.0.0.jar")));
+
+    assertSearchResults(i, new WildcardQuery(new Term(ArtifactInfo.NAMES, "*mock*")),
+                        "jmock:jmock:1.0.0");
   }
 }

@@ -13,6 +13,7 @@ import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.idea.maven.dom.model.Dependency;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
+import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
 
 public class DependencyCompletionAndResolutionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
   @Override

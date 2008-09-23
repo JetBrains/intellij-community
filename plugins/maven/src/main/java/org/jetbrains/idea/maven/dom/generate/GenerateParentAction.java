@@ -4,30 +4,18 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.actions.generate.AbstractDomGenerateProvider;
 import com.intellij.util.xml.actions.generate.DomTemplateRunner;
 import com.intellij.util.xml.impl.DomTemplateRunnerImpl;
 import com.intellij.util.xml.ui.actions.generate.GenerateDomElementAction;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
 import org.jetbrains.idea.maven.dom.model.MavenParent;
 
 public class GenerateParentAction extends GenerateDomElementAction {
   public GenerateParentAction() {
-    super(new AbstractDomGenerateProvider<MavenParent>("Generate Parent", MavenParent.class) {
-      protected DomElement getParentDomElement(Project project, Editor editor, PsiFile file) {
-        DomElement el = DomUtil.getContextElement(editor);
-        return el.getRoot().getRootElement();
-      }
-
-      @Override
-      public MavenParent generate(@Nullable DomElement parent, Editor editor) {
-        MavenParent mavenParent = ((MavenModel)parent).getMavenParent();
+    super(new MavenGenerateProvider<MavenParent>("Generate Parent", MavenParent.class) {
+      protected MavenParent doGenerate(MavenModel mavenModel, Editor editor) {
+        MavenParent mavenParent = mavenModel.getMavenParent();
         mavenParent.ensureTagExists();
         return mavenParent;
       }
@@ -53,10 +41,8 @@ public class GenerateParentAction extends GenerateDomElementAction {
       }
 
       @Override
-      public boolean isAvailableForElement(@NotNull DomElement el) {
-        DomElement root = el.getRoot().getRootElement();
-        return root instanceof MavenModel
-               && ((MavenModel)root).getMavenParent().getXmlElement() == null;
+      protected boolean isAvailableForModel(MavenModel mavenModel) {
+        return mavenModel.getMavenParent().getXmlElement() == null;
       }
     });
   }

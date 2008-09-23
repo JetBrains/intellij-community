@@ -4,7 +4,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 
 import java.io.File;
@@ -52,7 +51,8 @@ public abstract class MavenIndicesStressTest extends MavenTestCase implements Ma
         while (!isFinished.get()) {
           int i = random.nextInt(100);
           System.out.println("Adding artifact #" + i);
-          index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
+          //index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
+          fail();
         }
       }
     });
@@ -86,7 +86,8 @@ public abstract class MavenIndicesStressTest extends MavenTestCase implements Ma
     MavenIndices indices = new MavenIndices(embedder, indicesDir, this);
     MavenIndex index = indices.add(getRepositoryPath(), MavenIndex.Kind.LOCAL);
 
-    index.addArtifact(new MavenId("group1", "artifact1", "1"));
+    //index.addArtifact(new MavenId("group1", "artifact1", "1"));
+    fail();
     indices.close();
 
     MavenIndices indices1 = new MavenIndices(embedder, indicesDir, this);
@@ -121,7 +122,8 @@ public abstract class MavenIndicesStressTest extends MavenTestCase implements Ma
         try {
           for (int i = 0; i < 1000; i++) {
             System.out.println("Adding artifact #" + i);
-            index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
+            //index.addArtifact(new MavenId("group" + i, "artifact" + i, "" + i));
+            fail();
           }
         }
         finally {

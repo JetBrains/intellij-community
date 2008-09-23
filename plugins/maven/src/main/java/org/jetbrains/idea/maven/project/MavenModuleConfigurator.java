@@ -7,14 +7,11 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.core.util.Strings;
 import org.jetbrains.idea.maven.facets.FacetImporter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 public class MavenModuleConfigurator {
   private Module myModule;
@@ -23,7 +20,6 @@ public class MavenModuleConfigurator {
   private MavenProjectModel myMavenProject;
   private Map<MavenProjectModel, String> myMavenProjectToModuleName;
   private MavenImportSettings mySettings;
-  private Pattern myIgnorePatternCache;
   private RootModelAdapter myRootModelAdapter;
 
   public MavenModuleConfigurator(Module module,
@@ -38,7 +34,6 @@ public class MavenModuleConfigurator {
     myMavenProject = mavenProject;
     myMavenProjectToModuleName = mavenProjectToModuleName;
     mySettings = settings;
-    myIgnorePatternCache = Pattern.compile(Strings.translateMasks(settings.getIgnoredDependencies()));
   }
 
   public ModifiableRootModel getRootModel() {
@@ -88,23 +83,15 @@ public class MavenModuleConfigurator {
 
   private void configDependencies() {
     for (Artifact artifact : myMavenProject.getDependencies()) {
-
-      if (isIgnored(new MavenId(artifact))) continue;
-
       boolean isExportable = myMavenProject.isExportableDependency(artifact);
-      MavenProjectModel p = myMavenTree.findProject(artifact);
-      if (p != null) {
-        myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(p),
-                                               isExportable);
+      MavenProjectModel depProject = myMavenTree.findProject(artifact);
+      if (depProject != null) {
+        myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), isExportable);
       }
       else {
         myRootModelAdapter.addLibraryDependency(artifact, isExportable);
       }
     }
-  }
-
-  private boolean isIgnored(MavenId id) {
-    return myIgnorePatternCache.matcher(id.toString()).matches();
   }
 
   private void configLanguageLevel() {

@@ -3,12 +3,14 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import org.apache.lucene.search.Query;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.sonatype.nexus.index.ArtifactInfo;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -158,6 +160,18 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
       if (each.hasVersion(groupId, artifactId, version)) return true;
     }
     return false;
+  }
+
+  public Set<ArtifactInfo> search(Query query, int maxResult) {
+    Set<ArtifactInfo> result = new HashSet<ArtifactInfo>();
+
+    for (MavenIndex each : myProjectIndices.get()) {
+      int remained = maxResult - result.size();
+      if (remained <= 0) break;
+      result.addAll(each.search(query, remained));
+    }
+
+    return result;
   }
 
   private Set<String> getProjectGroupIds() {

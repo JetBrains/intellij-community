@@ -5,14 +5,12 @@ import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 import java.io.File;
 
 public class ArtifactsDownloadingTest extends MavenImportingTestCase {
-  MavenCustomRepositoryHelper myRepositoryHelper;
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, "plugins", "local1");
-    myRepositoryHelper.copy("plugins", "local1");
-    setRepositoryPath(myRepositoryHelper.getTestDataPath("local1"));
+    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins", "local1");
+    helper.copy("plugins", "local1");
+    setRepositoryPath(helper.getTestDataPath("local1"));
   }
 
   public void testJavadocsAndSources() throws Exception {

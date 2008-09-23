@@ -4,6 +4,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.manager.WagonManager;
+import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.embedder.MavenEmbedder;
@@ -108,7 +109,7 @@ public class MavenEmbedderWrapper {
     }
   }
 
-  public void resolve(Artifact artifact, List remoteRepositories) throws MavenProcessCanceledException {
+  public void resolve(Artifact artifact, List<ArtifactRepository> remoteRepositories) throws MavenProcessCanceledException {
     try {
       myEmbedder.resolve(artifact, remoteRepositories, myEmbedder.getLocalRepository());
     }
@@ -122,6 +123,28 @@ public class MavenEmbedderWrapper {
     catch (Exception e) {
     }
   }
+  //
+  //public Set<Artifact> resolveTransitively(MavenProjectModel mavenProject, Artifact artifact) throws MavenProcessCanceledException {
+  //  try {
+  //    PlexusContainer container = myEmbedder.getPlexusContainer();
+  //
+  //    ArtifactResolver resolver = (ArtifactResolver)container.lookup(ArtifactResolver.class);
+  //    ArtifactMetadataSource metadataSource = (ArtifactMetadataSource)container.lookup(ArtifactMetadataSource.class);
+  //
+  //    ArtifactResolutionRequest request = new ArtifactResolutionRequest()
+  //        .setArtifact(mavenProject.getMavenProject().getArtifact())
+  //        .setArtifactDependencies(Collections.singleton(artifact))
+  //        .setLocalRepository(myEmbedder.getLocalRepository())
+  //        .setRemoteRepostories(mavenProject.getRepositories())
+  //        .setManagedVersionMap(mavenProject.getMavenProject().getManagedVersionMap()) // todo can be null
+  //        .setMetadataSource(metadataSource);
+  //
+  //    return resolver.resolve(request).getArtifacts();
+  //  }
+  //  catch (ComponentLookupException e) {
+  //    throw new RuntimeException(e);
+  //  }
+  //}
 
   public boolean resolvePlugin(Plugin plugin, MavenProject project) throws MavenProcessCanceledException {
     try {

@@ -3,9 +3,7 @@ package org.jetbrains.idea.maven.indices;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.WildcardQuery;
+import org.apache.lucene.search.*;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
@@ -120,6 +118,26 @@ public class NexusIndexerTest extends MavenTestCase {
       result.add(uinfo);
     }
     System.out.println(result);
+  }
+
+  public void testSearchingWithLucene() throws Exception {
+    IndexSearcher searcher = new IndexSearcher(myRepositoryHelper.getTestDataPath("local1_index"));
+    Hits result = searcher.search(new TermQuery(new Term(ArtifactInfo.GROUP_ID, "junit")));
+
+    assertEquals(3, result.length());
+
+    searcher.close();
+  }
+
+  public void testAddingTwoContextsWithSameId() throws Exception {
+    IndexingContext i1 = addContext("id", new File(myIndexDir, "one"), null, null);
+    IndexingContext i2 = addContext("id", new File(myIndexDir, "two"), null, null);
+
+    myIndexer.removeIndexingContext(i1, false);
+    myIndexer.removeIndexingContext(i2, false);
+    
+    addContext(null, new File(myIndexDir, "one"), null, null);
+    addContext(null, new File(myIndexDir, "two"), null, null);
   }
 
   private void addArtifact(IndexingContext c, String groupId, String artifactId, String version, String path) throws IOException {

@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import org.apache.maven.embedder.MavenEmbedder;
@@ -18,7 +19,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenLog;
-import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 
 import java.io.File;
@@ -136,14 +136,31 @@ public class MavenIndicesManager implements ApplicationComponent {
     return new ArrayList<MavenIndex>(result);
   }
 
-  public void addArtifact(File repository, MavenId artifact) {
+  public void addArtifact(File artifactFile, String name) {
+    File reporepository = getRepositoryFile(artifactFile, name);
+
     for (MavenIndex each : getIndices()) {
-      if (repository.equals(each.getRepositoryFile())) {
-        each.addArtifact(artifact);
+      if (each.isForLocal(reporepository)) {
+        each.addArtifact(artifactFile);
         return;
       }
     }
   }
+
+  private File getRepositoryFile(File artifactFile, String name) {
+    List<String> parts = getArtifactParts(name);
+
+    File result = artifactFile;
+    for (int i = 0; i < parts.size(); i++) {
+      result = result.getParentFile();
+    }
+    return result;
+  }
+
+  private List<String> getArtifactParts(String name) {
+    return StringUtil.split(name, "/");
+  }
+
 
   public void scheduleUpdate(List<MavenIndex> indices) {
     scheduleUpdate(indices, true);

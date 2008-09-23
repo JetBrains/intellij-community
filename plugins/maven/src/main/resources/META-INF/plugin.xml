@@ -42,8 +42,10 @@
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.Configuration" extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
 
     <intentionAction>
-      <className>org.jetbrains.idea.maven.dom.ChooseFileIntentionAction</className>
+      <className>org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction</className>
     </intentionAction>
+
+    <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.idea.maven.dom.intentions.ResolveReferenceQuickFixProvider"/>
   </extensions>
 
   <application-components>
@@ -155,11 +157,6 @@
     </action>
 
     <group id="Maven.State">
-      <!--<action id="Maven.AddDependency"-->
-              <!--class="org.jetbrains.idea.maven.project.action.AddDependencyAction" text="Add Dependency"-->
-              <!--description="Add Dependency"-->
-              <!--icon="/modules/library.png">-->
-      <!--</action>-->
       <action id="Maven.Ignore"
               class="org.jetbrains.idea.maven.project.action.IgnoreProjectAction" text="_Ignore"
               description="Toggle ignore flag for Maven project">
@@ -258,7 +255,8 @@
     </group>
 
     <group id="Maven.GenerateGroup" text="Generate">
-      <action id="GenerateParent" text="Generate Parent" class="org.jetbrains.idea.maven.dom.generate.GenerateParentAction"/>
+      <action id="GenerateParent" text="Parent" class="org.jetbrains.idea.maven.dom.generate.GenerateParentAction"/>
+      <action id="GenerateDependency" text="Dependency" class="org.jetbrains.idea.maven.dom.generate.GenerateDependencyAction"/>
       <add-to-group group-id="GenerateGroup" anchor="last"/>
     </group>
 

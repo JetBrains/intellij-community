@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.dom;
+package org.jetbrains.idea.maven.dom.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.Result;
@@ -20,6 +20,8 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.Dependency;
+import org.jetbrains.idea.maven.dom.MavenDomBundle;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 
 public class ChooseFileIntentionAction implements IntentionAction {
   private FileChooserFactory myTestFileChooserFactory;

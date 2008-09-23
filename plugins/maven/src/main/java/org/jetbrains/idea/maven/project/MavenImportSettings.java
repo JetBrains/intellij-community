@@ -2,9 +2,6 @@ package org.jetbrains.idea.maven.project;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author Vladislav.Kaznacheev
  */
@@ -17,7 +14,6 @@ public class MavenImportSettings implements Cloneable {
   private boolean useMavenOutput = true;
   private boolean updateFoldersOnImport = true;
   private boolean importInBackground = false;
-  private List<String> myIgnoredDependencies = new ArrayList<String>();
 
   @NotNull
   public String getDedicatedModuleDir() {
@@ -84,14 +80,6 @@ public class MavenImportSettings implements Cloneable {
     importInBackground = value;
   }
 
-  public List<String> getIgnoredDependencies() {
-    return myIgnoredDependencies;
-  }
-
-  public void setIgnoredDependencies(List<String> ignoredDependencies) {
-    myIgnoredDependencies = ignoredDependencies;
-  }
-
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -106,9 +94,6 @@ public class MavenImportSettings implements Cloneable {
     if (useMavenOutput != that.useMavenOutput) return false;
     if (importInBackground != that.importInBackground) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
-    if (myIgnoredDependencies != null ? !myIgnoredDependencies.equals(that.myIgnoredDependencies) : that.myIgnoredDependencies != null) {
-      return false;
-    }
 
     return true;
   }
@@ -123,7 +108,6 @@ public class MavenImportSettings implements Cloneable {
     result = 31 * result + (createModuleGroups ? 1 : 0);
     result = 31 * result + (useMavenOutput ? 1 : 0);
     result = 31 * result + (importInBackground ? 1 : 0);
-    result = 31 * result + (myIgnoredDependencies != null ? myIgnoredDependencies.hashCode() : 0);
     return result;
   }
 

@@ -10,6 +10,7 @@ import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.sonatype.nexus.index.NexusIndexer;
+import org.sonatype.nexus.index.ArtifactContextProducer;
 import org.sonatype.nexus.index.updater.IndexUpdater;
 
 import java.io.File;
@@ -20,11 +21,12 @@ public class MavenIndices {
   private final MavenEmbedder myEmbedder;
   private final NexusIndexer myIndexer;
   private final IndexUpdater myUpdater;
+  private final ArtifactContextProducer myArtifactContextProducer;
 
   private final File myIndicesDir;
   private final MavenIndex.IndexListener myListener;
-  private final List<MavenIndex> myIndices = new ArrayList<MavenIndex>();
 
+  private final List<MavenIndex> myIndices = new ArrayList<MavenIndex>();
   private static final Object ourDirectoryLock = new Object();
 
   public MavenIndices(MavenEmbedder e, File indicesDir, MavenIndex.IndexListener listener) {
@@ -36,6 +38,7 @@ public class MavenIndices {
     try {
       myIndexer = (NexusIndexer)p.lookup(NexusIndexer.class);
       myUpdater = (IndexUpdater)p.lookup(IndexUpdater.class);
+      myArtifactContextProducer = (ArtifactContextProducer)p.lookup(ArtifactContextProducer.class);
     }
     catch (ComponentLookupException ex) {
       throw new RuntimeException(ex);
@@ -51,7 +54,7 @@ public class MavenIndices {
     if (indices == null) return;
     for (File each : indices) {
       try {
-        MavenIndex index = new MavenIndex(each, myListener);
+        MavenIndex index = new MavenIndex(myIndexer, myArtifactContextProducer, each, myListener);
         if (findExisting(index.getRepositoryPathOrUrl(), index.getKind()) != null) {
           index.close();
           FileUtil.delete(each);
@@ -82,7 +85,7 @@ public class MavenIndices {
     if (index != null) return index;
 
     File dir = getAvailableIndexDir();
-    index = new MavenIndex(dir, repositoryPathOrUrl, kind, myListener);
+    index = new MavenIndex(myIndexer, myArtifactContextProducer, dir, repositoryPathOrUrl, kind, myListener);
     myIndices.add(index);
     return index;
   }
@@ -122,7 +125,7 @@ public class MavenIndices {
   }
 
   public void updateOrRepair(MavenIndex i, boolean fullUpdate, ProgressIndicator progress) throws ProcessCanceledException {
-    i.updateOrRepair(myIndexer, myUpdater, getProxyInfo(), fullUpdate, progress);
+    i.updateOrRepair(myUpdater, getProxyInfo(), fullUpdate, progress);
   }
 
   private ProxyInfo getProxyInfo() {

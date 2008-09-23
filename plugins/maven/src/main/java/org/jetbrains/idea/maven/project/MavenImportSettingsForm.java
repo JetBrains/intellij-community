@@ -4,7 +4,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.idea.maven.core.util.Strings;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -25,9 +24,6 @@ public class MavenImportSettingsForm {
   private JCheckBox myUseMavenOutputCheckBox;
   private JCheckBox myUpdateFoldersOnImportCheckBox;
   private JCheckBox myImportIsBackgroundCheckBox;
-
-  private JTextArea myIgnoreDependenciesTextArea;
-  private JPanel myIgnorePanel;
 
   public MavenImportSettingsForm() {
     this(false);
@@ -50,9 +46,6 @@ public class MavenImportSettingsForm {
       myUseMavenOutputCheckBox.setVisible(false);
       myUpdateFoldersOnImportCheckBox.setVisible(false);
       myImportIsBackgroundCheckBox.setVisible(false);
-
-      myIgnorePanel.setVisible(false);
-      myIgnoreDependenciesTextArea.setVisible(false);
     } else {
       myUseExhaustiveSearchCheckBox.setVisible(false);
     }
@@ -83,7 +76,6 @@ public class MavenImportSettingsForm {
     data.setUseMavenOutput(myUseMavenOutputCheckBox.isSelected());
     data.setUpdateFoldersOnImport(myUpdateFoldersOnImportCheckBox.isSelected());
     data.setImportInBackground(myImportIsBackgroundCheckBox.isSelected());
-    data.setIgnoredDependencies(Strings.tokenize(myIgnoreDependenciesTextArea.getText(), Strings.WHITESPACE + ",;"));
   }
 
   public void setData(final MavenImportSettings data) {
@@ -97,7 +89,6 @@ public class MavenImportSettingsForm {
     myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
     myUpdateFoldersOnImportCheckBox.setSelected(data.isUpdateFoldersOnImport());
     myImportIsBackgroundCheckBox.setSelected(data.isImportInBackground());
-    myIgnoreDependenciesTextArea.setText(Strings.detokenize(data.getIgnoredDependencies(), ','));
 
     enableControls();
   }
