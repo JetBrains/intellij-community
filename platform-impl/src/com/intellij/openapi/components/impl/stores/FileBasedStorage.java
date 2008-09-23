@@ -158,8 +158,11 @@ public class FileBasedStorage extends XmlElementStorage {
     if (!myFile.exists()) {
       try {
         File ioFile = new File(myFile.getPath());
-        ioFile.getParentFile().mkdirs();
-        ioFile.createNewFile();
+        File parentFile = ioFile.getParentFile();
+        if (parentFile != null) {
+          parentFile.mkdirs();
+          ioFile.createNewFile();
+        }
       }
       catch (IOException e) {
         LOG.error(e);
