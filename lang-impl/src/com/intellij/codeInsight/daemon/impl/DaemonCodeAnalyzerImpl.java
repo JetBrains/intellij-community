@@ -240,7 +240,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public boolean isHighlightingAvailable(PsiFile file) {
     if (myDisabledHighlightingFiles.contains(file)) return false;
 
-    if (!file.isPhysical()) return false;
+    if (file == null || !file.isPhysical()) return false;
     if (file instanceof PsiCompiledElement) return false;
     final FileType fileType = file.getFileType();
     if (fileType == StdFileTypes.GUI_DESIGNER_FORM){
