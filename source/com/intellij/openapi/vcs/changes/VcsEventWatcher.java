@@ -18,9 +18,9 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class VcsEventWatcher implements ProjectComponent {
-  private Project myProject;
+  private final Project myProject;
   private MessageBusConnection myConnection;
-  private WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
+  private final WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
 
   public VcsEventWatcher(Project project) {
     myProject = project;
@@ -35,7 +35,7 @@ public class VcsEventWatcher implements ProjectComponent {
       public void rootsChanged(ModuleRootEvent event) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            if (myProject.isDisposed() || DirectoryIndex.getInstance(myProject).isInitialized()) return;
+            if (myProject.isDisposed() || !DirectoryIndex.getInstance(myProject).isInitialized()) return;
             VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
           }
         }, ModalityState.NON_MODAL);
