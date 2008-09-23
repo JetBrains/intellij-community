@@ -21,7 +21,7 @@ class ModuleOutputNode extends ModuleOutputBaseNode {
     return myModuleLink.getName();
   }
 
-  public void render(final ColoredTreeCellRenderer renderer) {
+  public void render(@NotNull final ColoredTreeCellRenderer renderer) {
     final Module module = myModuleLink.getModule();
     if (module == null) {
       renderer.append(myModuleLink.getName(), SimpleTextAttributes.ERROR_ATTRIBUTES);

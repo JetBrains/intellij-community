@@ -47,7 +47,7 @@ class LibraryNode extends LibraryNodeBase {
     return getSearchName().compareToIgnoreCase(node.getSearchName());
   }
 
-  public void render(final ColoredTreeCellRenderer renderer) {
+  public void render(@NotNull final ColoredTreeCellRenderer renderer) {
     Library library = myLibraryLink.getLibrary();
     if (library == null) {
       String libraryName = myLibraryLink.getPresentableName();

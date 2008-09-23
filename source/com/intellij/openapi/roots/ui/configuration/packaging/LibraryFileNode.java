@@ -29,7 +29,7 @@ class LibraryFileNode extends LibraryNodeBase {
     return PackagingNodeWeights.FILE;
   }
 
-  public void render(final ColoredTreeCellRenderer renderer) {
+  public void render(@NotNull final ColoredTreeCellRenderer renderer) {
     PackagingEditorUtil.renderLibraryFile(renderer, myLibrary, myFile, getMainAttributes(), getCommentAttributes());
   }
 

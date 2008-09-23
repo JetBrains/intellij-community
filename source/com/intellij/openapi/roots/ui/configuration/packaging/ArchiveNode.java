@@ -26,7 +26,7 @@ class ArchiveNode extends PackagingTreeNode {
     return PackagingNodeWeights.ARCHIVE;
   }
 
-  public void render(final ColoredTreeCellRenderer renderer) {
+  public void render(@NotNull final ColoredTreeCellRenderer renderer) {
     renderer.setIcon(Icons.JAR_ICON);
     renderer.append(myArchiveName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }

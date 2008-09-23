@@ -29,7 +29,7 @@ public class PackagingArtifactNode extends PackagingTreeNode {
     return PackagingNodeWeights.ARTIFACT;
   }
 
-  public void render(final ColoredTreeCellRenderer renderer) {
+  public void render(@NotNull final ColoredTreeCellRenderer renderer) {
     myArtifact.render(renderer, getMainAttributes(), getCommentAttributes());
   }
 

@@ -30,7 +30,7 @@ public abstract class PackagingTreeNode extends DefaultMutableTreeNode implement
     return getOutputFileName();
   }
 
-  public abstract void render(ColoredTreeCellRenderer renderer);
+  public abstract void render(@NotNull ColoredTreeCellRenderer renderer);
 
   public abstract boolean canNavigate();
 

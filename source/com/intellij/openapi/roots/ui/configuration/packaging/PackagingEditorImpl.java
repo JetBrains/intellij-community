@@ -439,7 +439,7 @@ public class PackagingEditorImpl implements PackagingEditor {
       return 0;
     }
 
-    public void render(final ColoredTreeCellRenderer renderer) {
+    public void render(@NotNull final ColoredTreeCellRenderer renderer) {
     }
 
     public boolean canNavigate() {
