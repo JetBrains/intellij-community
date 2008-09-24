@@ -21,7 +21,6 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -191,11 +190,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       //catch (NoClassDefFoundError e) {
       //  // eclipse jar must be not in the classpath
       //}
-    }
-
-    for (BackendCompilerFactory factory : Extensions.getExtensions(BackendCompilerFactory.EP_NAME, myProject)) {
-      final BackendCompiler compiler = factory.create(myProject);
-      myRegisteredCompilers.add(compiler);
     }
 
     myDefaultJavaCompiler = JAVAC_EXTERNAL_BACKEND;

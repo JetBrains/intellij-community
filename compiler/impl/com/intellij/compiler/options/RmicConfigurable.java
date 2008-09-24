@@ -1,6 +1,7 @@
 package com.intellij.compiler.options;
 
 import com.intellij.compiler.RmicSettings;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.ui.RawCommandLineEditor;
@@ -42,7 +43,7 @@ public class RmicConfigurable implements Configurable{
   }
 
   public String getDisplayName() {
-    return null;
+    return CompilerBundle.message("rmi.compiler.description");
   }
 
   public Icon getIcon() {

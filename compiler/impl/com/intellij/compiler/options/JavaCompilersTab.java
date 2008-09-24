@@ -3,6 +3,7 @@ package com.intellij.compiler.options;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -63,7 +64,7 @@ public class JavaCompilersTab implements Configurable{
   }
 
   public String getDisplayName() {
-    return null;
+    return CompilerBundle.message("java.compiler.description");
   }
 
   public Icon getIcon() {

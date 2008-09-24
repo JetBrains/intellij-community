@@ -3,10 +3,12 @@ package com.intellij.compiler.options;
 import com.intellij.compiler.*;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -14,13 +16,12 @@ import com.intellij.util.Options;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.StringTokenizer;
+import java.util.*;
+import java.util.List;
 
 public class CompilerUIConfigurable implements Configurable {
   private JPanel myPanel;
   private JPanel myExcludeTablePanel;
-  private JavaCompilersTab myJavaCompilersTab;
   private Project myProject;
   private ExcludedEntriesConfigurable myExcludedEntriesConfigurable;
 
@@ -28,12 +29,12 @@ public class CompilerUIConfigurable implements Configurable {
   private JCheckBox myCbCompileInBackground;
   private JCheckBox myCbClearOutputDirectory;
   private JPanel myTabbedPanePanel;
-  private RmicConfigurable myRmicConfigurable;
   private JCheckBox myCbCompileDependent;
   private JRadioButton myDoNotDeploy;
   private JRadioButton myDeploy;
   private JRadioButton myShowDialog;
   private JCheckBox myCbAssertNotNull;
+  private List<Configurable> myCompilerConfigurables;
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
@@ -56,30 +57,42 @@ public class CompilerUIConfigurable implements Configurable {
     myExcludeTablePanel.add(exludedPanel, BorderLayout.CENTER);
 
     myTabbedPanePanel.setLayout(new BorderLayout());
-    myJavaCompilersTab = new JavaCompilersTab(project, compilerConfiguration.getRegisteredJavaCompilers(), compilerConfiguration.getDefaultCompiler());
-
     final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper();
-    tabbedPane.addTab(CompilerBundle.message("java.compiler.description"), myJavaCompilersTab.createComponent());
-    myRmicConfigurable = new RmicConfigurable(RmicSettings.getInstance(project));
-    tabbedPane.addTab(CompilerBundle.message("rmi.compiler.description"), myRmicConfigurable.createComponent());
-    myTabbedPanePanel.add(tabbedPane.getComponent(), BorderLayout.CENTER);
 
+    myCompilerConfigurables = new ArrayList<Configurable>();
+
+    final CompilerSettingsFactory[] factories = Extensions.getExtensions(CompilerSettingsFactory.EP_NAME, project);
+    if (factories.length > 0) {
+      for (CompilerSettingsFactory factory : factories) {
+        myCompilerConfigurables.add(factory.create(project));
+      }
+      Collections.sort(myCompilerConfigurables, new Comparator<Configurable>() {
+        public int compare(final Configurable o1, final Configurable o2) {
+          return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
+        }
+      });
+    }
+
+    myCompilerConfigurables.add(0, new RmicConfigurable(RmicSettings.getInstance(project)));
+    myCompilerConfigurables.add(0, new JavaCompilersTab(project, compilerConfiguration.getRegisteredJavaCompilers(), compilerConfiguration.getDefaultCompiler()));
+    for (Configurable configurable : myCompilerConfigurables) {
+      tabbedPane.addTab(configurable.getDisplayName(), configurable.createComponent());
+    }
+
+    myTabbedPanePanel.add(tabbedPane.getComponent(), BorderLayout.CENTER);
 
     ButtonGroup deployGroup = new ButtonGroup();
     deployGroup.add(myShowDialog);
     deployGroup.add(myDeploy);
     deployGroup.add(myDoNotDeploy);
-
   }
 
-
   public void reset() {
-
     myExcludedEntriesConfigurable.reset();
 
-    myJavaCompilersTab.reset();
-
-    myRmicConfigurable.reset();
+    for (Configurable configurable : myCompilerConfigurables) {
+      configurable.reset();
+    }
 
     final CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
@@ -117,9 +130,9 @@ public class CompilerUIConfigurable implements Configurable {
   public void apply() throws ConfigurationException {
     myExcludedEntriesConfigurable.apply();
 
-    myJavaCompilersTab.apply();
-
-    myRmicConfigurable.apply();
+    for (Configurable configurable : myCompilerConfigurables) {
+      configurable.apply();
+    }
 
     CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
@@ -133,13 +146,12 @@ public class CompilerUIConfigurable implements Configurable {
     applyResourcePatterns(extensionString, (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject));
 
     configuration.DEPLOY_AFTER_MAKE = getSelectedDeploymentOption();
-
   }
 
   private static void applyResourcePatterns(String extensionString, final CompilerConfigurationImpl configuration)
     throws ConfigurationException {
     StringTokenizer tokenizer = new StringTokenizer(extensionString, ";", false);
-    java.util.List<String[]> errors = new ArrayList<String[]>();
+    List<String[]> errors = new ArrayList<String[]>();
 
     while (tokenizer.hasMoreTokens()) {
       String namePattern = tokenizer.nextToken();
@@ -173,8 +185,9 @@ public class CompilerUIConfigurable implements Configurable {
     }
 
     boolean isModified = false;
-    isModified |= myJavaCompilersTab.isModified();
-    isModified |= myRmicConfigurable.isModified();
+    for (Configurable configurable : myCompilerConfigurables) {
+      isModified |= configurable.isModified();
+    }
 
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     isModified |= ComparingUtils.isModified(myCbCompileInBackground, workspaceConfiguration.COMPILE_IN_BACKGROUND);
