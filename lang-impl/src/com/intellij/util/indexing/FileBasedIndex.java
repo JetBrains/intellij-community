@@ -445,7 +445,7 @@ public class FileBasedIndex implements ApplicationComponent {
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof StorageException || cause instanceof IOException) {
-        scheduleRebuild(indexId, e);
+        scheduleRebuild(indexId, cause);
       }
       else {
         throw e;
