@@ -167,12 +167,13 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
             PsiExpression[] exprs = new PsiExpression[refsToInline.size()];
             int idx = 0;
             for (PsiReference reference : refsToInline) {
-              PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)reference;
-              exprs[idx++] = InlineUtil.inlineVariable(parameter, defToInline, refElement);
+              if (reference instanceof PsiJavaCodeReferenceElement) {
+                exprs[idx++] = InlineUtil.inlineVariable(parameter, defToInline, (PsiJavaCodeReferenceElement)reference);
+              }
             }
 
             for (final PsiExpression expr : exprs) {
-              InlineUtil.tryToInlineArrayCreationForVarargs(expr);
+              if (expr != null) InlineUtil.tryToInlineArrayCreationForVarargs(expr);
             }
 
             removeParameter(method, parameter);
