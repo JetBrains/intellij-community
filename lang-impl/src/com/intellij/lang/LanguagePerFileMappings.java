@@ -19,7 +19,7 @@ import java.util.*;
 /**
  * @author peter
  */
-public abstract class LanguagePerFileMappings<T> implements PersistentStateComponent<Element> {
+public abstract class LanguagePerFileMappings<T> implements PersistentStateComponent<Element>, PerFileMappings<T> {
   private final Map<VirtualFile, T> myMappings = new HashMap<VirtualFile, T>();
   private final Project myProject;
 
@@ -77,6 +77,12 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     }
   }
 
+  public Collection<T> getAvailableValues(VirtualFile file) {
+    return getAvailableValues();
+  }
+
+  protected abstract List<T> getAvailableValues();
+  
   protected abstract String serialize(T t);
 
   public Element getState() {
@@ -100,8 +106,6 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
       return element;
     }
   }
-
-  public abstract List<T> getAvailableValues();
 
   public void loadState(final Element state) {
     synchronized (myMappings) {

@@ -4,7 +4,7 @@
  */
 package com.intellij.util.ui.tree;
 
-import com.intellij.lang.LanguagePerFileMappings;
+import com.intellij.lang.PerFileMappings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -24,18 +24,16 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author peter
  */
 public abstract class LanguagePerFileConfigurable<T> implements FileOptionsProvider {
-  private final Project myProject;
+  protected final Project myProject;
   private final Class<T> myValueClass;
-  private final LanguagePerFileMappings<T> myMappings;
+  private final PerFileMappings<T> myMappings;
   private final String myTreeTableTitle;
   private final String myOverrideQuestion;
   private final String myOverrideTitle;
@@ -44,7 +42,7 @@ public abstract class LanguagePerFileConfigurable<T> implements FileOptionsProvi
   private JPanel myPanel;
   private JLabel myLabel;
 
-  protected LanguagePerFileConfigurable(final Project project, Class<T> valueClass, LanguagePerFileMappings<T> mappings, String caption, String treeTableTitle, String overrideQuestion, String overrideTitle) {
+  protected LanguagePerFileConfigurable(final Project project, Class<T> valueClass, PerFileMappings<T> mappings, String caption, String treeTableTitle, String overrideQuestion, String overrideTitle) {
     myProject = project;
     myValueClass = valueClass;
     myMappings = mappings;
@@ -52,10 +50,10 @@ public abstract class LanguagePerFileConfigurable<T> implements FileOptionsProvi
     myOverrideQuestion = overrideQuestion;
     myOverrideTitle = overrideTitle;
     myLabel.setText(caption);
+    myTreeView = new MyTreeTable();
   }
 
   public JComponent createComponent() {
-    myTreeView = new MyTreeTable();
     myTreePanel.setViewportView(myTreeView);
     return myPanel;
   }
@@ -87,6 +85,9 @@ public abstract class LanguagePerFileConfigurable<T> implements FileOptionsProvi
 
   protected abstract String visualize(@NotNull T t);
 
+  public AbstractFileTreeTable<T> getTreeView() {
+    return myTreeView;
+  }
 
   private class MyTreeTable extends AbstractFileTreeTable<T> {
 
@@ -216,7 +217,7 @@ public abstract class LanguagePerFileConfigurable<T> implements FileOptionsProvi
       if (showClear) {
         group.add(createChooseAction(myVirtualFile, null));
       }
-      final List<T> values = myMappings.getAvailableValues();
+      final List<T> values = new ArrayList<T>(myMappings.getAvailableValues(myVirtualFile));
       Collections.sort(values, new Comparator<T>() {
         public int compare(final T o1, final T o2) {
           return visualize(o1).compareTo(visualize(o2));
@@ -245,6 +246,5 @@ public abstract class LanguagePerFileConfigurable<T> implements FileOptionsProvi
 
       protected abstract void chosen(final VirtualFile file, final T t);
     }
-
   }
 }

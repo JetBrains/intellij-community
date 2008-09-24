@@ -302,7 +302,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     }
   }
 
-  private static class ProjectRootNode extends ConvenientNode<Project> {
+  public static class ProjectRootNode extends ConvenientNode<Project> {
     public ProjectRootNode(Project project) {
       super(project);
     }
@@ -321,7 +321,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     }
   }
 
-  private abstract static class ConvenientNode<T> extends DefaultMutableTreeNode {
+  public abstract static class ConvenientNode<T> extends DefaultMutableTreeNode {
     private final T myObject;
 
     private ConvenientNode(T object) {
@@ -388,10 +388,10 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     }
   }
 
-  private static class FileNode extends ConvenientNode<VirtualFile> {
+  public static class FileNode extends ConvenientNode<VirtualFile> {
     private final Project myProject;
 
-    private FileNode(@NotNull VirtualFile file, final Project project) {
+    public FileNode(@NotNull VirtualFile file, final Project project) {
       super(file);
       myProject = project;
     }
