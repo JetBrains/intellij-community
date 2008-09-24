@@ -3,10 +3,9 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -24,7 +23,6 @@ public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
     if (files != null && files.length > 1) {
       virtualFile = null;
     }
-    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (virtualFile != null){
       Navigatable navigatable = e.getData(PlatformDataKeys.NAVIGATABLE);
       if (navigatable instanceof OpenFileDescriptor) {
@@ -32,17 +30,17 @@ public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
         virtualFile = ((OpenFileDescriptor)navigatable).getFile();
       }
     }
-    Pair<String, Boolean> result = update(project, virtualFile);
+    Pair<String, Boolean> result = update(virtualFile);
     e.getPresentation().setText(result.getFirst());
     e.getPresentation().setEnabled(result.getSecond());
   }
 
-  public static Pair<String,Boolean> update(final Project project, final VirtualFile virtualFile) {
-    boolean enabled = virtualFile != null && ChooseFileEncodingAction.isEnabled(project, virtualFile);
+  public static Pair<String,Boolean> update(final VirtualFile virtualFile) {
+    boolean enabled = virtualFile != null && ChooseFileEncodingAction.isEnabled(virtualFile);
     String text;
     if (enabled) {
       String pattern;
-      Charset charset = ChooseFileEncodingAction.encodingFromContent(project, virtualFile);
+      Charset charset = ChooseFileEncodingAction.charsetFromContent(virtualFile);
       if (charset != null) {
         pattern = "Encoding: {0}";
         enabled = false;

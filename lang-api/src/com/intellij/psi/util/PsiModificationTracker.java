@@ -16,8 +16,9 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 
-public interface PsiModificationTracker {
+public interface PsiModificationTracker extends ModificationTracker {
   Key MODIFICATION_COUNT = Key.create("MODIFICATION_COUNT");
   Key OUT_OF_CODE_BLOCK_MODIFICATION_COUNT = Key.create("OUT_OF_CODE_BLOCK_MODIFICATION_COUNT");
   Key JAVA_STRUCTURE_MODIFICATION_COUNT = Key.create("JAVA_STRUCTURE_MODIFICATION_COUNT");

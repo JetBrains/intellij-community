@@ -315,7 +315,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public FileViewProvider clone() {
     final VirtualFile origFile = getVirtualFile();
-    LightVirtualFile copy = new LightVirtualFile(origFile.getName(), origFile.getFileType(), getContents(), getModificationStamp());
+    LightVirtualFile copy = new LightVirtualFile(origFile.getName(), origFile.getFileType(), getContents(), origFile.getCharset(), getModificationStamp());
     copy.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
     copy.setCharset(origFile.getCharset());
     return createCopy(copy);
@@ -403,7 +403,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myContent = content;
   }
 
-  private static interface Content {
+  private interface Content {
     CharSequence getText();
 
     long getModificationStamp();

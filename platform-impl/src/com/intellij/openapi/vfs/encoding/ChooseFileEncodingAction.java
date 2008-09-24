@@ -14,11 +14,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -35,23 +31,21 @@ import java.util.List;
 
 public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   private final VirtualFile myVirtualFile;
-  private final Project myProject;
 
-  public ChooseFileEncodingAction(VirtualFile virtualFile, Project project) {
+  public ChooseFileEncodingAction(VirtualFile virtualFile) {
     myVirtualFile = virtualFile;
-    myProject = project;
   }
 
   public void update(final AnActionEvent e) {
-    boolean enabled = isEnabled(myProject, myVirtualFile);
+    boolean enabled = isEnabled(myVirtualFile);
     if (myVirtualFile != null) {
       String prefix;
-      Charset charset = encodingFromContent(myProject, myVirtualFile);
-      if (charset != null) {
-        prefix = "Encoding:";
+      Charset charset = charsetFromContent(myVirtualFile);
+      if (charset == null) {
+        prefix = "";
       }
       else {
-        prefix = "";
+        prefix = "Encoding:";
       }
       if (charset == null) charset = myVirtualFile.getCharset();
       e.getPresentation().setText(prefix + " " + charset.toString());
@@ -59,11 +53,10 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     e.getPresentation().setEnabled(enabled);
   }
 
-  public static boolean isEnabled(Project project, VirtualFile virtualFile) {
-    if (project == null) return false;
+  public static boolean isEnabled(VirtualFile virtualFile) {
     boolean enabled = true;
     if (virtualFile != null) {
-      Charset charset = encodingFromContent(project, virtualFile);
+      Charset charset = charsetFromContent(virtualFile);
       if (charset != null) {
         enabled = false;
       }
@@ -88,26 +81,12 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     return enabled;
   }
 
-  private static final Key<Pair<Charset, Long>> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET");
-  public static Charset encodingFromContent(Project project, VirtualFile virtualFile) {
-    FileType fileType = virtualFile.getFileType();
-    if (fileType instanceof LanguageFileType) {
-      Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-      if (document == null) return null;
-      Pair<Charset, Long> cachedCharset = document.getUserData(CACHED_CHARSET_FROM_CONTENT);
-      Charset charset;
-      if (cachedCharset == null || cachedCharset.getSecond() != document.getModificationStamp()) {
-        charset = ((LanguageFileType)fileType).extractCharsetFromFileContent(project, virtualFile, document.getText());
-        document.putUserData(CACHED_CHARSET_FROM_CONTENT, Pair.create(charset, document.getModificationStamp()));
-      }
-      else {
-        charset = cachedCharset.getFirst();
-      }
-      if (charset != null) {
-        return charset;
-      }
-    }
-    return null;
+  @Nullable("returns null if charset set cannot be determined from content")
+  public static Charset charsetFromContent(final VirtualFile virtualFile) {
+    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    if (document == null) return null;
+
+    return EncodingManager.getInstance().getCachedCharsetFromContent(document);
   }
 
   @NotNull

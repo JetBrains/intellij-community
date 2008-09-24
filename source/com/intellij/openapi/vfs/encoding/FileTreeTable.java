@@ -23,7 +23,6 @@ import java.awt.event.ComponentEvent;
 import java.nio.charset.Charset;
 
 public class FileTreeTable extends AbstractFileTreeTable<Charset> {
-
   public FileTreeTable(final Project project) {
     super(project, Charset.class, "Default Encoding");
     reset(EncodingProjectManager.getInstance(project).getAllMappings());
@@ -35,23 +34,21 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
         final Charset t = (Charset)value;
         final Object userObject = table.getModel().getValueAt(row, 0);
         final VirtualFile file = userObject instanceof VirtualFile ? (VirtualFile)userObject : null;
-        final Pair<String,Boolean> pair = ChangeEncodingUpdateGroup.update(getProject(), file);
+        final Pair<String,Boolean> pair = ChangeEncodingUpdateGroup.update(file);
         final boolean enabled = file == null || pair.getSecond();
         if (t != null) {
           setText(t.displayName());
         }
-        else {
-          if (file != null) {
-            Charset charset = ChooseFileEncodingAction.encodingFromContent(getProject(), file);
-            if (charset != null) {
-              setText(charset.displayName());
-            }
-            else if (LoadTextUtil.utfCharsetWasDetectedFromBytes(file)) {
-              setText(file.getCharset().displayName());
-            }
-            else if (!ChooseFileEncodingAction.isEnabled(getProject(), file)) {
-              setText("N/A");
-            }
+        else if (file != null) {
+          Charset charset = ChooseFileEncodingAction.charsetFromContent(file);
+          if (charset != null) {
+            setText(charset.displayName());
+          }
+          else if (LoadTextUtil.utfCharsetWasDetectedFromBytes(file)) {
+            setText(file.getCharset().displayName());
+          }
+          else if (!ChooseFileEncodingAction.isEnabled(file)) {
+            setText("N/A");
           }
         }
         setEnabled(enabled);
@@ -77,7 +74,7 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
         final Object o = table.getModel().getValueAt(row, 0);
         myVirtualFile = o instanceof Project ? null : (VirtualFile)o;
 
-        final ChooseFileEncodingAction changeAction = new ChooseFileEncodingAction(myVirtualFile, getProject()){
+        final ChooseFileEncodingAction changeAction = new ChooseFileEncodingAction(myVirtualFile){
           protected void chosen(VirtualFile virtualFile, Charset charset) {
             getValueColumn().getCellEditor().stopCellEditing();
             if (clearSubdirectoriesOnDemandOrCancel(
@@ -115,6 +112,6 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
 
   @Override
   protected boolean isValueEditableForFile(final VirtualFile virtualFile) {
-    return ChangeEncodingUpdateGroup.update(getProject(), virtualFile).getSecond();
+    return ChangeEncodingUpdateGroup.update(virtualFile).getSecond();
   }
 }

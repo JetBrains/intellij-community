@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 
@@ -19,7 +20,7 @@ public abstract class XmlLikeFileType extends LanguageFileType {
     return charset == null ? CharsetToolkit.UTF8 : charset;
   }
 
-  public Charset extractCharsetFromFileContent(final Project project, @NotNull final VirtualFile file, @NotNull final String content) {
+  public Charset extractCharsetFromFileContent(final Project project, @Nullable final VirtualFile file, @NotNull final String content) {
     String name = XmlUtil.extractXmlEncodingFromProlog(content);
     Charset charset = CharsetToolkit.forName(name);
     return charset == null ? CharsetToolkit.UTF8_CHARSET : charset;

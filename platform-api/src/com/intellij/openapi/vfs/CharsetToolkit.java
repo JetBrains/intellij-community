@@ -443,7 +443,7 @@ public class CharsetToolkit {
       return s.getBytes(UTF8);
     }
     catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("UTF-8 must be supported", e);
     }
   }
 

@@ -20,7 +20,6 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
   private long myModStamp = LocalTimeCounter.currentTime();
   private boolean myIsWritable = true;
   private Language myLanguage;
-  private VirtualFileListener myListener = null;
 
   public LightVirtualFile() {
     this("");
@@ -44,13 +43,22 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
   }
 
   public LightVirtualFile(final String name, final FileType fileType, final CharSequence text, final long modificationStamp) {
+    this(name, fileType, text, charsetFromContent(fileType, text), modificationStamp);
+  }
+
+  private static Charset charsetFromContent(FileType fileType, CharSequence text) {
+    if (fileType instanceof LanguageFileType) {
+      return ((LanguageFileType)fileType).extractCharsetFromFileContent(null, null, text.toString());
+    }
+    return null;
+  }
+
+  public LightVirtualFile(final String name, final FileType fileType, final CharSequence text, Charset charset, final long modificationStamp) {
     myName = name;
     myFileType = fileType;
     myContent = text;
     myModStamp = modificationStamp;
-    if (fileType instanceof LanguageFileType) {
-      setCharset(((LanguageFileType)fileType).extractCharsetFromFileContent(null, this, text.toString()));
-    }
+    setCharset(charset);
   }
 
   public LightVirtualFile(final String name, final Language language, final CharSequence text) {
@@ -200,11 +208,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
 
   public void setContent(Object requestor, CharSequence content, boolean fireEvent) {
     myContent = content;
-    if (fireEvent) {
-      long oldStamp = myModStamp;
-      myModStamp = LocalTimeCounter.currentTime();
-      myListener.contentsChanged(new VirtualFileEvent(requestor, this, null, oldStamp, myModStamp));
-    }
+    myModStamp = LocalTimeCounter.currentTime();
   }
 
   public void setWritable(boolean b) {

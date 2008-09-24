@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,4 +58,6 @@ public abstract class EncodingManager implements ApplicationComponent {
   public abstract void addPropertyChangeListener(PropertyChangeListener listener);
 
   public abstract void removePropertyChangeListener(PropertyChangeListener listener);
+
+  public abstract Charset getCachedCharsetFromContent(@NotNull Document document);
 }

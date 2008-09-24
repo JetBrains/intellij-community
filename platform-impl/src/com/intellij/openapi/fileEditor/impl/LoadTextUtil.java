@@ -179,17 +179,9 @@ public final class LoadTextUtil {
     if (existing == null) return specified;
     if (specified == null) return existing;
     if (specified.equals(existing)) return specified;
-    boolean isExistingLossy = false;
-    boolean isSpecifiedLossy = false;
-    for (int i=0; i<text.length();i++) {
-      char c = text.charAt(i);
-      String str = Character.toString(c);
-      isExistingLossy |= !isSupported(existing, str);
-      isSpecifiedLossy |= !isSupported(specified, str);
-    }
-    if (!isSpecifiedLossy) return specified; //if explicitly specified encoding is safe, return it
-    if (!isExistingLossy) return existing;   //otherwise stick to the old encoding if it's ok
-    return specified;                        //if both are bad it's no difference
+    if (isSupported(specified, text)) return specified; //if explicitly specified encoding is safe, return it
+    if (isSupported(existing, text)) return existing;   //otherwise stick to the old encoding if it's ok
+    return specified;                                   //if both are bad there is no difference
   }
 
   private static boolean isSupported(Charset charset, String str) {
@@ -200,13 +192,18 @@ public final class LoadTextUtil {
   }
 
   public static Charset extractCharsetFromFileContent(@Nullable Project project, final VirtualFile virtualFile, final String text) {
-    FileType fileType = virtualFile.getFileType();
-    Charset charset = null;
-    if (fileType instanceof LanguageFileType) {
-      charset = ((LanguageFileType)fileType).extractCharsetFromFileContent(project, virtualFile, text);
-    }
+    Charset charset = charsetFromContentOrNull(project, virtualFile, text);
     if (charset == null) charset = virtualFile.getCharset();
     return charset;
+  }
+
+  @Nullable("returns null if cannot determine from content")
+  public static Charset charsetFromContentOrNull(@Nullable Project project, @NotNull VirtualFile virtualFile, @NotNull String text) {
+    FileType fileType = virtualFile.getFileType();
+    if (fileType instanceof LanguageFileType) {
+      return ((LanguageFileType)fileType).extractCharsetFromFileContent(project, virtualFile, text);
+    }
+    return null;
   }
 
   public static CharSequence loadText(VirtualFile file) {

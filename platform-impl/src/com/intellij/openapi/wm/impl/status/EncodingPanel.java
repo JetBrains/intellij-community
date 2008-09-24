@@ -44,11 +44,11 @@ public class EncodingPanel extends TextPanel implements StatusBarPatch {
     String text;
     if (selected != null) {
       VirtualFile file = getSelectedFile(selected);
-      Pair<String,Boolean> result = ChangeEncodingUpdateGroup.update(getProject(), file);
+      Pair<String,Boolean> result = ChangeEncodingUpdateGroup.update(file);
       text = result.getFirst();
       enabled = result.getSecond();
       if (file != null) {
-        Charset charset = ChooseFileEncodingAction.encodingFromContent(getProject(), file);
+        Charset charset = ChooseFileEncodingAction.charsetFromContent(file);
         if (charset == null) charset = file.getCharset();
         setText(charset.displayName());
       }
@@ -91,7 +91,7 @@ public class EncodingPanel extends TextPanel implements StatusBarPatch {
     if (virtualFile == null) return;
     if (!isEnabled()) return;
 
-    ChooseFileEncodingAction changeAction = new ChooseFileEncodingAction(virtualFile, getProject()) {
+    ChooseFileEncodingAction changeAction = new ChooseFileEncodingAction(virtualFile) {
       protected void chosen(final VirtualFile virtualFile, final Charset charset) {
         EncodingManager.getInstance().setEncoding(virtualFile, charset);
       }

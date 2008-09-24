@@ -6,8 +6,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomManager;
@@ -40,7 +38,7 @@ public class BlockSupportImpl extends BlockSupport {
   public BlockSupportImpl(Project project) {
     project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
       public void updateStarted(final Document doc) {
-        doc.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY,  Boolean.TRUE);
+        doc.putUserData(DO_NOT_REPARSE_INCREMENTALLY,  Boolean.TRUE);
       }
 
       public void updateFinished(final Document doc) {
@@ -95,11 +93,6 @@ public class BlockSupportImpl extends BlockSupport {
     final int textLength = file.getTextLength() + lengthShift;
 
     final FileElement treeFileElement = fileImpl.getTreeElement();
-
-    FileType fileType = file.getFileType();
-    if (file instanceof PsiPlainTextFile) {
-      fileType = FileTypes.PLAIN_TEXT;
-    }
 
     if (treeFileElement.getElementType() instanceof ITemplateDataElementType ||
         treeFileElement.getFirstChildNode() instanceof ChameleonElement
@@ -232,7 +225,7 @@ public class BlockSupportImpl extends BlockSupport {
     }
     else {
       final FileViewProvider viewProvider = fileImpl.getViewProvider();
-      final LightVirtualFile lightFile = new LightVirtualFile(fileImpl.getName(), viewProvider.getVirtualFile().getFileType(), newFileText,
+      final LightVirtualFile lightFile = new LightVirtualFile(fileImpl.getName(), viewProvider.getVirtualFile().getFileType(), newFileText, viewProvider.getVirtualFile().getCharset(),
                                                               fileImpl.getModificationStamp());
       final PsiFileImpl newFile = (PsiFileImpl)viewProvider.createCopy(lightFile).getPsi(fileImpl.getLanguage());
 

@@ -59,7 +59,7 @@ public class FileEncodingConfigurable implements FileOptionsProvider, NonDefault
   }
 
   public JComponent createComponent() {
-    myAction = new ChooseFileEncodingAction(null, myProject) {
+    myAction = new ChooseFileEncodingAction(null) {
       public void update(final AnActionEvent e) {
         super.update(e);
         getTemplatePresentation().setText(mySelectedCharsetForPropertiesFiles == null ?

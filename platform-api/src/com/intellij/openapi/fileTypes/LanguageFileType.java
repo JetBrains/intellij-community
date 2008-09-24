@@ -79,7 +79,7 @@ public abstract class LanguageFileType implements FileType{
     return false;
   }
 
-  public Charset extractCharsetFromFileContent(@Nullable Project project, @NotNull VirtualFile file, @NotNull String content) {
+  public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull String content) {
     return null;
   }
 }

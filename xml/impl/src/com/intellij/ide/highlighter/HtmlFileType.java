@@ -36,7 +36,9 @@ import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +86,13 @@ public class HtmlFileType extends XmlLikeFileType {
     return charset == null ? null : charset.name();
   }
 
-  public Charset extractCharsetFromFileContent(@Nullable final Project project, @NotNull final VirtualFile file, @NotNull final String content) {
+  public Charset extractCharsetFromFileContent(@Nullable final Project project, @Nullable final VirtualFile file, @NotNull final String content) {
+    String name = XmlUtil.extractXmlEncodingFromProlog(content);
+    Charset charset = CharsetToolkit.forName(name);
+
+    if (charset != null) {
+      return charset;
+    }
     return HtmlUtil.detectCharsetFromMetaHttpEquiv(content);
   }
 }
