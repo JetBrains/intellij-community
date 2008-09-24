@@ -2,9 +2,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -15,6 +13,9 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author nik
@@ -142,11 +143,17 @@ public class LibrariesContainerFactory {
       if (myRootModel != null) {
         return myRootModel.getModuleLibraryTable().getLibraries();
       }
-      //todo[nik] is there better way to get module libraries?
-      ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-      LibraryTable table = model.getModuleLibraryTable();
-      model.dispose();
-      return table.getLibraries();
+      OrderEntry[] orderEntries = ModuleRootManager.getInstance(myModule).getOrderEntries();
+      List<Library> libraries = new ArrayList<Library>();
+      for (OrderEntry orderEntry : orderEntries) {
+        if (orderEntry instanceof LibraryOrderEntry) {
+          final LibraryOrderEntry entry = (LibraryOrderEntry)orderEntry;
+          if (entry.isModuleLevel()) {
+            libraries.add(entry.getLibrary());
+          }
+        }
+      }
+      return libraries.toArray(new Library[libraries.size()]);
     }
 
     @NotNull
