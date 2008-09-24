@@ -37,6 +37,11 @@ public class DisposerTest extends TestCase {
   @NonNls private final List<String> myDisposeActions = new ArrayList<String>();
 
   protected void setUp() throws Exception {
+    if(!Disposer.getTree().isEmpty()) {
+      Disposer.assertIsEmpty();
+      fail("Clean leftovers from previous tests");
+      Disposer.getTree().clearAll();
+    }
     myRoot = new MyDisposable("root");
 
     myFolder1 = new MyDisposable("folder1");
@@ -51,7 +56,7 @@ public class DisposerTest extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     Disposer.dispose(myRoot);
-    //assertTrue(Disposer.getTree().isEmpty());
+    assertTrue(Disposer.getTree().isEmpty());
     super.tearDown();
   }
 

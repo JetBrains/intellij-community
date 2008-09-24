@@ -206,4 +206,12 @@ public final class ObjectTree<T> {
   public boolean isEmpty() {
     return myRootObjects.isEmpty();
   }
+
+  @TestOnly
+  public void clearAll() {
+    myRootObjects.clear();
+    myExecutedNodes.clear();
+    myExecutedUnregisteredNodes.clear();
+    myObject2NodeMap.clear();
+  }
 }
