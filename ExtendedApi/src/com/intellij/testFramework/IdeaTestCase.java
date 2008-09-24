@@ -133,7 +133,7 @@ import java.util.HashSet;
     setUpProject();
     markProjectCreationPlace();
 
-    ourOldCodeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+    ourOldCodeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
   }
 
   public Project getProject() {
@@ -155,7 +155,7 @@ import java.util.HashSet;
   private static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
   protected void setUpProject() throws Exception {
     myProjectManager = ProjectManagerEx.getInstanceEx();
-    LOG.assertTrue(myProjectManager != null, "Cannot instaitiate ProjectManager component");
+    assertNotNull("Cannot instantiate ProjectManager component", myProjectManager);
 
     File projectFile = getIprFile();
     myFilesToDelete.add(projectFile);
@@ -263,12 +263,11 @@ import java.util.HashSet;
   }
 
   protected void tearDown() throws Exception {
-
     LookupManager.getInstance(myProject).hideActiveLookup();
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     try {
       CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-      assertEquals("Code style settings damaged", ourOldCodeStyleSettings, CodeStyleSettingsManager.getSettings(getProject()));
+      checkSettingsEqual(ourOldCodeStyleSettings, CodeStyleSettingsManager.getSettings(getProject()), "Code style settings damaged");
 
       assertNotNull("Application components damaged", ProjectManager.getInstance());
 

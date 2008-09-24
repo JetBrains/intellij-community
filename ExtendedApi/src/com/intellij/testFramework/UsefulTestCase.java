@@ -7,8 +7,8 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -19,6 +19,7 @@ import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -35,22 +36,25 @@ public abstract class UsefulTestCase extends TestCase {
     }
   };
 
-  protected void tearDown() throws Exception {
-    if (ApplicationManager.getApplication() != null) {
-      final CodeInsightSettings defaultSettings = new CodeInsightSettings(null);
-      final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-      final boolean eq = areSettingsEqual(defaultSettings, settings);
-      if (!eq) {
-        Element defaultElement = new Element("temp");
-        defaultSettings.writeExternal(defaultElement);
-        Element element = new Element("temp");
-        settings.writeExternal(element);
-        settings.readExternal(defaultElement);
-        assertEquals("Code insight settings damaged",JDOMUtil.writeElement(defaultElement, "\n"), JDOMUtil.writeElement(element, "\n"));
-      }
+  private static final String DEFAULT_SETTINGS_EXTERNALIZED;
+  static {
+    try {
+      CodeInsightSettings defaultSettings = new CodeInsightSettings(null);
+      Element oldS = new Element("temp");
+      defaultSettings.writeExternal(oldS);
+      DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS, "\n");
     }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+  protected void tearDown() throws Exception {
     Disposer.dispose(myTestRootDisposable);
     super.tearDown();
+    if (ApplicationManager.getApplication() != null) {
+      final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+      checkSettingsEqual(DEFAULT_SETTINGS_EXTERNALIZED, settings, "Code insight settings damaged");
+    }
   }
 
   protected Disposable getTestRootDisposable() {
@@ -58,7 +62,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @NonNls
-  public static String toString(Collection collection) {
+  public static String toString(Collection<?> collection) {
     if (collection.isEmpty()) {
       return "<empty>";
     }
@@ -66,8 +70,9 @@ public abstract class UsefulTestCase extends TestCase {
     final StringBuilder builder = new StringBuilder();
     for (final Object o : collection) {
       if (o instanceof THashSet) {
-        builder.append(new TreeSet((Collection)o));
-      } else {
+        builder.append(new TreeSet<Object>((Collection<Object>)o));
+      }
+      else {
         builder.append(o);
       }
       builder.append("\n");
@@ -113,9 +118,9 @@ public abstract class UsefulTestCase extends TestCase {
     return toString(Arrays.asList(collection), separator);
   }
 
-  public static String toString(Collection collection, String separator) {
-    List<String> list = ContainerUtil.map2List(collection, new Function() {
-      public Object fun(final Object o) {
+  public static String toString(Collection<?> collection, String separator) {
+    List<String> list = ContainerUtil.map2List(collection, new Function<Object,String>() {
+      public String fun(final Object o) {
         return String.valueOf(o);
       }
     });
@@ -226,7 +231,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedEquals(array);
   }
   
-  public static void assertEmpty(final Collection collection) {
+  public static void assertEmpty(final Collection<?> collection) {
     assertOrderedEquals(collection);
   }
 
@@ -285,14 +290,21 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private static boolean areSettingsEqual(CodeInsightSettings oldCodeInsightSettings, CodeInsightSettings settings) throws WriteExternalException {
-    if (oldCodeInsightSettings == null || settings == null) return true;
+  protected static void checkSettingsEqual(JDOMExternalizable expected, JDOMExternalizable settings, String message) throws Exception {
+    if (expected == null) {
+      return;
+    }
+    Element oldS = new Element("temp");
+    expected.writeExternal(oldS);
+    checkSettingsEqual(JDOMUtil.writeElement(oldS, "\n"), settings, message);
+  }
+  private static void checkSettingsEqual(@NotNull String expected, JDOMExternalizable settings, String message) throws Exception {
+    if (settings == null) {
+      return;
+    }
     Element newS = new Element("temp");
     settings.writeExternal(newS);
 
-    Element oldS = new Element("temp");
-    oldCodeInsightSettings.writeExternal(oldS);
-
-    return JDOMUtil.areElementsEqual(newS, oldS);
+    assertEquals(message,expected, JDOMUtil.writeElement(newS, "\n"));
   }
 }

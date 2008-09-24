@@ -331,7 +331,7 @@ import java.util.Map;
     assertFalse(getPsiManager().isDisposed());
 
     CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    ourOldCodeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+    ourOldCodeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
   }
@@ -370,7 +370,7 @@ import java.util.Map;
     assertNotNull("Application components damaged", ProjectManager.getInstance());
 
     CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    assertEquals("Code style settings damaged", ourOldCodeStyleSettings, CodeStyleSettingsManager.getSettings(getProject()));
+    checkSettingsEqual(ourOldCodeStyleSettings, CodeStyleSettingsManager.getSettings(getProject()), "Code style settings damaged");
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {

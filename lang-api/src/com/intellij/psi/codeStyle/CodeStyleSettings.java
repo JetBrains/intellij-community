@@ -99,31 +99,31 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   public CodeStyleSettings clone() {
     try {
-      CodeStyleSettings clon = (CodeStyleSettings)super.clone();
+      CodeStyleSettings clone = (CodeStyleSettings)super.clone();
 
-      clon.myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
+      clone.myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
       for (final CustomCodeStyleSettings settings : myCustomSettings.values()) {
-        clon.addCustomSettings((CustomCodeStyleSettings) settings.clone());
+        clone.addCustomSettings((CustomCodeStyleSettings) settings.clone());
       }
 
-      clon.FIELD_TYPE_TO_NAME = (TypeToNameMap)FIELD_TYPE_TO_NAME.clone();
-      clon.STATIC_FIELD_TYPE_TO_NAME = (TypeToNameMap)STATIC_FIELD_TYPE_TO_NAME.clone();
-      clon.PARAMETER_TYPE_TO_NAME = (TypeToNameMap)PARAMETER_TYPE_TO_NAME.clone();
-      clon.LOCAL_VARIABLE_TYPE_TO_NAME = (TypeToNameMap)LOCAL_VARIABLE_TYPE_TO_NAME.clone();
+      clone.FIELD_TYPE_TO_NAME = (TypeToNameMap)FIELD_TYPE_TO_NAME.clone();
+      clone.STATIC_FIELD_TYPE_TO_NAME = (TypeToNameMap)STATIC_FIELD_TYPE_TO_NAME.clone();
+      clone.PARAMETER_TYPE_TO_NAME = (TypeToNameMap)PARAMETER_TYPE_TO_NAME.clone();
+      clone.LOCAL_VARIABLE_TYPE_TO_NAME = (TypeToNameMap)LOCAL_VARIABLE_TYPE_TO_NAME.clone();
 
-      clon.PACKAGES_TO_USE_IMPORT_ON_DEMAND = (PackageTable)PACKAGES_TO_USE_IMPORT_ON_DEMAND.clone();
-      clon.IMPORT_LAYOUT_TABLE = (ImportLayoutTable)IMPORT_LAYOUT_TABLE.clone();
+      clone.PACKAGES_TO_USE_IMPORT_ON_DEMAND = (PackageTable)PACKAGES_TO_USE_IMPORT_ON_DEMAND.clone();
+      clone.IMPORT_LAYOUT_TABLE = (ImportLayoutTable)IMPORT_LAYOUT_TABLE.clone();
 
-      clon.OTHER_INDENT_OPTIONS = (IndentOptions)OTHER_INDENT_OPTIONS.clone();
+      clone.OTHER_INDENT_OPTIONS = (IndentOptions)OTHER_INDENT_OPTIONS.clone();
 
-      clon.myAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
+      clone.myAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
       for(Map.Entry<FileType,IndentOptions> optionEntry: myAdditionalIndentOptions.entrySet()) {
-        clon.myAdditionalIndentOptions.put(optionEntry.getKey(),(IndentOptions)optionEntry.getValue().clone());
+        clone.myAdditionalIndentOptions.put(optionEntry.getKey(),(IndentOptions)optionEntry.getValue().clone());
       }
-      return clon;
+      return clone;
     }
     catch (CloneNotSupportedException e) {
-      return null;
+      throw new RuntimeException(e);
     }
   }
 
@@ -165,22 +165,38 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       }
       catch (CloneNotSupportedException e) {
         // Cannot happen
-        return null;
+        throw new RuntimeException(e);
       }
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof IndentOptions)) return false;
-      final IndentOptions indentOptions = (IndentOptions)o;
+      if (o == null || getClass() != o.getClass()) return false;
 
-      if (CONTINUATION_INDENT_SIZE != indentOptions.CONTINUATION_INDENT_SIZE) return false;
-      if (INDENT_SIZE != indentOptions.INDENT_SIZE) return false;
-      if (SMART_TABS != indentOptions.SMART_TABS) return false;
-      if (TAB_SIZE != indentOptions.TAB_SIZE) return false;
-      if (USE_TAB_CHARACTER != indentOptions.USE_TAB_CHARACTER) return false;
+      IndentOptions that = (IndentOptions)o;
+
+      if (CONTINUATION_INDENT_SIZE != that.CONTINUATION_INDENT_SIZE) return false;
+      if (INDENT_SIZE != that.INDENT_SIZE) return false;
+      if (LABEL_INDENT_ABSOLUTE != that.LABEL_INDENT_ABSOLUTE) return false;
+      if (LABEL_INDENT_SIZE != that.LABEL_INDENT_SIZE) return false;
+      if (SMART_TABS != that.SMART_TABS) return false;
+      if (TAB_SIZE != that.TAB_SIZE) return false;
+      if (USE_TAB_CHARACTER != that.USE_TAB_CHARACTER) return false;
 
       return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = INDENT_SIZE;
+      result = 31 * result + CONTINUATION_INDENT_SIZE;
+      result = 31 * result + TAB_SIZE;
+      result = 31 * result + (USE_TAB_CHARACTER ? 1 : 0);
+      result = 31 * result + (SMART_TABS ? 1 : 0);
+      result = 31 * result + LABEL_INDENT_SIZE;
+      result = 31 * result + (LABEL_INDENT_ABSOLUTE ? 1 : 0);
+      return result;
     }
   }
 
