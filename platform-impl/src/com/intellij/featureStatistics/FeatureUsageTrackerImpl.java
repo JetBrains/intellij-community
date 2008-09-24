@@ -109,10 +109,6 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
       FeatureDescriptor descriptor = ((ProductivityFeaturesRegistryImpl)myRegistry).getFeatureDescriptorEx(featureElement.getAttributeValue(ATT_ID));
       if (descriptor != null) {
         descriptor.readStatistics(featureElement);
-      } else {
-        descriptor = new FeatureDescriptor(featureElement.getAttributeValue(ATT_ID));
-        descriptor.readStatistics(featureElement);
-        ((ProductivityFeaturesRegistryImpl)myRegistry).addFeatureStatistics(descriptor);
       }
     }
 
