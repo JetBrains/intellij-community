@@ -230,8 +230,6 @@ public class HighlightUtil {
     PsiModifierList modifierList = refElement.getModifierList();
     if (modifierList == null) return;
 
-    PsiClass accessObjectClass = PsiTreeUtil.getParentOfType(place, PsiClass.class, false, true);
-
     PsiClass packageLocalClassInTheMiddle = getPackageLocalClassInTheMiddle(place);
     if (packageLocalClassInTheMiddle != null) {
       IntentionAction fix =
@@ -245,15 +243,17 @@ public class HighlightUtil {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       PsiModifierList modifierListCopy = facade.getElementFactory().createFieldFromText("int a;", null).getModifierList();
       modifierListCopy.setModifierProperty(PsiModifier.STATIC, modifierList.hasModifierProperty(PsiModifier.STATIC));
-      int i = 0;
+      @Modifier String minModifier = PsiModifier.PACKAGE_LOCAL;
       if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-        i = 1;
+        minModifier = PsiModifier.PROTECTED;
       }
       if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
-        i = 2;
+        minModifier = PsiModifier.PUBLIC;
       }
-      String[] modifiers = new String[]{PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
-      for (; i < modifiers.length; i++) {
+      String[] modifiers = {PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC,};
+      PsiClass accessObjectClass = PsiTreeUtil.getParentOfType(place, PsiClass.class, false, true);
+
+      for (int i = ArrayUtil.indexOf(modifiers, minModifier); i < modifiers.length; i++) {
         @Modifier String modifier = modifiers[i];
         modifierListCopy.setModifierProperty(modifier, true);
         if (facade.getResolveHelper().isAccessible(refElement, modifierListCopy, place, accessObjectClass, fileResolveScope)) {
@@ -537,9 +537,7 @@ public class HighlightUtil {
           if (errorResult != null && valueType != null) {
             IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, false);
             QuickFixAction.registerQuickFixAction(errorResult, fix);
-            if (returnType instanceof PsiArrayType &&
-                TypeConversionUtil.isAssignable(((PsiArrayType)returnType).getComponentType(), valueType) &&
-                returnValue != null) {
+            if (returnType instanceof PsiArrayType && TypeConversionUtil.isAssignable(((PsiArrayType)returnType).getComponentType(), valueType)) {
               QuickFixAction.registerQuickFixAction(errorResult, new SurroundWithArrayFix(null){
                 @Override
                 protected PsiExpression getExpression(final PsiElement element) {

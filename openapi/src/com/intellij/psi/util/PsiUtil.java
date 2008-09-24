@@ -87,12 +87,9 @@ public final class PsiUtil extends PsiUtilBase {
 
   public static boolean isAccessedForReading(PsiExpression expr) {
     PsiElement parent = expr.getParent();
-    if (parent instanceof PsiAssignmentExpression && expr.equals(((PsiAssignmentExpression) parent).getLExpression())) {
-      return ((PsiAssignmentExpression)parent).getOperationSign().getTokenType() != JavaTokenType.EQ;
-    }
-    else {
-      return true;
-    }
+    return !(parent instanceof PsiAssignmentExpression) ||
+           !expr.equals(((PsiAssignmentExpression)parent).getLExpression()) ||
+           ((PsiAssignmentExpression)parent).getOperationSign().getTokenType() != JavaTokenType.EQ;
   }
 
   public static boolean isAccessible(PsiMember member, PsiElement place, PsiClass accessObjectClass) {

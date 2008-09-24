@@ -5,8 +5,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
+import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaVariableConflictResolver;
 import com.intellij.psi.scope.processor.ConflictFilterProcessor;
 import com.intellij.psi.util.PsiUtil;
@@ -20,36 +20,34 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   private static final ClassFilter ourFilter = new ClassFilter(PsiVariable.class);
 
   private boolean myStaticScopeFlag = false;
-  private PsiClass myAccessClass = null;
+  private final PsiClass myAccessClass;
   private PsiElement myCurrentFileContext = null;
 
   public VariableResolverProcessor(PsiJavaCodeReferenceElement place) {
-    super(place.getText(), ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new SmartList<CandidateInfo>(),
-          place);
+    super(place.getText(), ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new SmartList<CandidateInfo>(), place);
 
-    PsiElement qualifier = place.getQualifier();
     PsiElement referenceName = place.getReferenceNameElement();
-
     if (referenceName instanceof PsiIdentifier){
       setName(referenceName.getText());
     }
-    if (qualifier instanceof PsiExpression){
+    PsiClass access = null;
+    PsiElement qualifier = place.getQualifier();
+    if (qualifier instanceof PsiExpression) {
       final JavaResolveResult accessClass = PsiUtil.getAccessObjectClass((PsiExpression)qualifier);
       final PsiElement element = accessClass.getElement();
       if (element instanceof PsiTypeParameter) {
-        final PsiManager manager = element.getManager();
-        final PsiClassType type = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType((PsiTypeParameter) element);
+        PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
+        final PsiClassType type = factory.createType((PsiTypeParameter)element);
         final PsiType accessType = accessClass.getSubstitutor().substitute(type);
-        if(accessType instanceof PsiArrayType) {
+        if (accessType instanceof PsiArrayType) {
           LanguageLevel languageLevel = PsiUtil.getLanguageLevel(qualifier);
-          myAccessClass = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().getArrayClass(languageLevel);
+          access = factory.getArrayClass(languageLevel);
         }
-        else if(accessType instanceof PsiClassType)
-          myAccessClass = ((PsiClassType)accessType).resolve();
+        else if (accessType instanceof PsiClassType) access = ((PsiClassType)accessType).resolve();
       }
-      else if (element instanceof PsiClass)
-        myAccessClass = (PsiClass) element;
+      else if (element instanceof PsiClass) access = (PsiClass)element;
     }
+    myAccessClass = access;
   }
 
   public final void handleEvent(Event event, Object associated) {
