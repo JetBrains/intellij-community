@@ -17,6 +17,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -32,16 +37,53 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
   protected static String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
+  private static final Key<PsiElement> ANCHOR = Key.create("anchor");
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     if (!editor.getSelectionModel().hasSelection()) {
-      editor.getSelectionModel().selectLineAtCaret();
+      final PsiElement elementAtCaret = file.findElementAt(editor.getCaretModel().getOffset());
+      final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+      PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
+      while (expression != null) {
+        if (!(expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression)) {
+          expressions.add(expression);
+        }
+        expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
+      }
+      if (expressions.isEmpty()) {
+        editor.getSelectionModel().selectLineAtCaret();
+      } else if (expressions.size() == 1) {
+        final TextRange textRange = expressions.get(0).getTextRange();
+        editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
+      } else {
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiExpression>("Expressions", expressions) {
+          @Override
+          public PopupStep onChosen(final PsiExpression selectedValue, final boolean finalChoice) {
+            SwingUtilities.invokeLater(new Runnable() {
+              public void run() {
+                invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
+              }
+            });
+            return FINAL_CHOICE;
+          }
+
+          @NotNull
+          @Override
+          public String getTextFor(final PsiExpression value) {
+            return value.getText();
+          }
+        }).showInBestPositionFor(editor);
+        return;
+      }
     }
     if (invoke(project, editor, file, editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd())) {
       editor.getSelectionModel().removeSelection();
@@ -58,6 +100,18 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       PsiElement[] statements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
       if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
         tempExpr = ((PsiExpressionStatement) statements[0]).getExpression();
+      }
+    }
+
+    if (tempExpr == null) {
+      try {
+        tempExpr = JavaPsiFacade.getInstance(project).getElementFactory()
+          .createExpressionFromText(file.getText().subSequence(startOffset, endOffset).toString(), file);
+        final PsiStatement statement = PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), PsiStatement.class);
+        tempExpr.putUserData(ANCHOR, statement);
+      }
+      catch (IncorrectOperationException e) {
+        tempExpr = null;
       }
     }
     return invokeImpl(project, tempExpr, editor);
@@ -77,8 +131,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       showErrorMessage(project, editor, message);
       return false;
     }
-    final PsiFile file = expr.getContainingFile();
-    LOG.assertTrue(file != null, "expr.getContainingFile() == null");
+
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
 
@@ -95,7 +148,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       return false;
     }
 
-    PsiElement anchorStatement = RefactoringUtil.getParentStatement(expr, false);
+    PsiElement anchorStatement = expr.getUserData(ANCHOR);
+    if (anchorStatement == null) {
+      anchorStatement = RefactoringUtil.getParentStatement(expr, false);
+    }
     if (anchorStatement == null) {
       return parentStatementNotFound(project, editor);
     }
@@ -125,6 +181,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       showErrorMessage(project, editor, message);
       return false;
     }
+
+    final PsiFile file = anchorStatement.getContainingFile();
+    LOG.assertTrue(file != null, "expr.getContainingFile() == null");
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
 
@@ -271,8 +330,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
             }
           } else {
             if (!deleteSelf && replaceSelf) {
-              final PsiExpression expr2 = RefactoringUtil.outermostParenthesizedExpression(expr1);
-              expr2.replace(ref);
+              replace(expr1, ref, editor, file);
             }
           }
 
@@ -295,6 +353,35 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         }
       }, REFACTORING_NAME, null);
     return true;
+  }
+
+  public static PsiElement replace(final PsiExpression expr1, final PsiExpression ref, final Editor editor, final PsiFile file)
+    throws IncorrectOperationException {
+    final PsiExpression expr2 = RefactoringUtil.outermostParenthesizedExpression(expr1);
+    if (expr2.isPhysical()) {
+      return expr2.replace(ref);
+    } else {
+      int selectionStart = editor.getSelectionModel().getSelectionStart();
+      final int selectionEnd = editor.getSelectionModel().getSelectionEnd();
+      PsiElement last = null;
+      final Set<PsiElement> toReplace = new HashSet<PsiElement>();
+      while (selectionStart < selectionEnd) {
+        final PsiElement at = file.findElementAt(selectionStart++);
+        if (at != null) {
+          last = at;
+          toReplace.add(last);
+        }
+      }
+      PsiElement replacement = null;
+      if (last != null) {
+        replacement = last.getParent().addAfter(ref, last);
+      }
+
+      for (PsiElement element : toReplace) {
+        if (element.isValid()) element.delete();
+      }
+      return replacement;
+    }
   }
 
   public static PsiStatement putStatementInLoopBody(PsiStatement declaration, PsiElement container, PsiElement finalAnchorStatement)

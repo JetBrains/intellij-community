@@ -62,7 +62,9 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
                                            PsiType type,
                                            PsiExpression[] occurences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
-    final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(expr, parentClass);
+    PsiElement element = expr.getUserData(ElementToWorkOn.PARENT);
+    if (element == null) element = expr;
+    final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(element, parentClass);
     boolean declareStatic = staticParentElement != null;
 
     boolean isInSuperOrThis = false;

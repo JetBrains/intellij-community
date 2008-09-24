@@ -13,8 +13,8 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -541,14 +541,14 @@ class IntroduceFieldDialog extends DialogWrapper {
       PsiReferenceExpression refExpr = (PsiReferenceExpression) initializerPart;
       if (refExpr.getQualifierExpression() == null) {
         PsiElement refElement = refExpr.resolve();
-        if (refElement instanceof PsiLocalVariable || refElement instanceof PsiParameter) {
-          if (!PsiTreeUtil.isAncestor(initializer, refElement, true)) {
-            myRbInFieldDeclaration.setEnabled(false);
-            myRbInConstructor.setEnabled(false);
-            if (myRbInSetUp != null) myRbInSetUp.setEnabled(false);
-            myCbFinal.setEnabled(false);
-            return false;
-          }
+        if (refElement == null ||
+            (refElement instanceof PsiLocalVariable || refElement instanceof PsiParameter) &&
+            !PsiTreeUtil.isAncestor(initializer, refElement, true)) {
+          myRbInFieldDeclaration.setEnabled(false);
+          myRbInConstructor.setEnabled(false);
+          if (myRbInSetUp != null) myRbInSetUp.setEnabled(false);
+          myCbFinal.setEnabled(false);
+          return false;
         }
       }
     }

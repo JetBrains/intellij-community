@@ -57,7 +57,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   private PsiClass myParentClass;
 
   protected boolean invokeImpl(final Project project, @NotNull final PsiExpression selectedExpr, final Editor editor) {
-    final PsiFile file = selectedExpr.getContainingFile();
+    PsiElement element = selectedExpr.getUserData(ElementToWorkOn.PARENT);
+    if (element == null) element = selectedExpr;
+    final PsiFile file = element.getContainingFile();
     LOG.assertTrue(file != null, "expr.getContainingFile() == null");
 
     if (LOG.isDebugEnabled()) {
@@ -257,7 +259,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                 occurrence = RefactoringUtil.outermostParenthesizedExpression(occurrence);
               }
               if (deleteSelf && occurrence.equals(expr)) continue;
-              array.add(RefactoringUtil.replaceOccurenceWithFieldRef(occurrence, field, destClass));
+              array.add(RefactoringUtil.replaceOccurenceWithFieldRef(occurrence, field, destClass, editor, file));
             }
 
             if (editor != null) {
@@ -272,7 +274,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           else {
             if (!deleteSelf) {
               expr = RefactoringUtil.outermostParenthesizedExpression(expr);
-              RefactoringUtil.replaceOccurenceWithFieldRef(expr, field, destClass);
+              RefactoringUtil.replaceOccurenceWithFieldRef(expr, field, destClass, editor, file);
             }
           }
 
@@ -359,7 +361,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   }
 
   public PsiClass getParentClass(PsiExpression initializerExpression) {
-    PsiElement parent = initializerExpression.getParent();
+    PsiElement element = initializerExpression.getUserData(ElementToWorkOn.PARENT);
+    if (element == null) element = initializerExpression.getParent();
+    PsiElement parent = element;
     while (parent != null) {
       if (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass)) {
         return (PsiClass)parent;

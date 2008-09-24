@@ -39,6 +39,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduceField.ElementToWorkOn;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -97,7 +99,8 @@ public class RefactoringUtil {
     }).booleanValue();
   }
 
-  public static PsiElement replaceOccurenceWithFieldRef(PsiExpression occurrence, PsiField newField, PsiClass destinationClass)
+  public static PsiElement replaceOccurenceWithFieldRef(PsiExpression occurrence, PsiField newField, PsiClass destinationClass,
+                                                        final Editor editor, final PsiFile file)
     throws IncorrectOperationException {
     final PsiManager manager = occurrence.getManager();
     final String fieldName = newField.getName();
@@ -112,7 +115,7 @@ public class RefactoringUtil {
       if (newField.hasModifierProperty(PsiModifier.STATIC)) {
         ref.setQualifierExpression(factory.createReferenceExpression(destinationClass));
       }
-      return occurrence.replace(ref);
+      return IntroduceVariableBase.replace(occurrence, ref, editor, file);
     }
   }
 
@@ -276,7 +279,8 @@ public class RefactoringUtil {
 
 
   public static PsiElement getParentExpressionAnchorElement(PsiElement place) {
-    PsiElement parent = place;
+    PsiElement parent = place.getUserData(ElementToWorkOn.PARENT);
+    if (parent == null) parent = place;
     while (true) {
       if (isExpressionAnchorElement(parent)) return parent;
       parent = parent.getParent();
