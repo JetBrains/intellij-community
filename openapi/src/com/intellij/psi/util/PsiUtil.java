@@ -96,13 +96,15 @@ public final class PsiUtil extends PsiUtilBase {
     return JavaPsiFacade.getInstance(place.getProject()).getResolveHelper().isAccessible(member, place, accessObjectClass);
   }
 
-  public static JavaResolveResult getAccessObjectClass(PsiExpression accessObject) {
-    PsiType type = accessObject.getType();
+  @NotNull
+  public static JavaResolveResult getAccessObjectClass(PsiExpression expression) {
+    if (expression instanceof PsiSuperExpression || expression instanceof PsiThisExpression) return JavaResolveResult.EMPTY;
+    PsiType type = expression.getType();
     if (type instanceof PsiClassType) {
       return ((PsiClassType)type).resolveGenerics();
     }
-    if (type == null && accessObject instanceof PsiReferenceExpression) {
-      JavaResolveResult resolveResult = ((PsiReferenceExpression)accessObject).advancedResolve(false);
+    if (type == null && expression instanceof PsiReferenceExpression) {
+      JavaResolveResult resolveResult = ((PsiReferenceExpression)expression).advancedResolve(false);
       if (resolveResult.getElement() instanceof PsiClass) {
         return resolveResult;
       }

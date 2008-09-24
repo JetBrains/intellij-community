@@ -67,13 +67,14 @@ public class JavaResolveUtil {
     if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PROTECTED) {
       if (JavaPsiFacade.getInstance(manager.getProject()).arePackagesTheSame(member, place)) return true;
       if (memberClass == null) return false;
-
       for (PsiElement placeParent = place; placeParent != null; placeParent = placeParent.getContext()) {
         if (placeParent instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)placeParent, memberClass, true)) {
           if (member instanceof PsiClass || modifierList.hasModifierProperty(PsiModifier.STATIC)) return true;
           if (accessObjectClass == null || InheritanceUtil.isInheritorOrSelf(accessObjectClass, (PsiClass)placeParent, true)) return true;
         }
       }
+      //if (accessObjectClass != null && accessObjectClass.getManager().areElementsEquivalent(accessObjectClass, memberClass)) return true;
+
       return false;
     }
     if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PRIVATE) {
@@ -127,7 +128,6 @@ public class JavaResolveUtil {
   }
 
   private static PsiClass getTopLevelClass(@NotNull PsiElement place, PsiClass memberClass) {
-    PsiManager manager = place.getManager();
     PsiClass lastClass = null;
     for (PsiElement placeParent = place; placeParent != null; placeParent = placeParent.getContext()) {
       if (placeParent instanceof PsiClass &&

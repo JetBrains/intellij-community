@@ -42,7 +42,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return ref1 instanceof PsiPolyVariantReference && ((PsiPolyVariantReference)ref1).multiResolve(false).length > 0 || ref1.resolve() != null;
   }
 
-  private PsiReference[] myReferences;
+  private final PsiReference[] myReferences;
   private final PsiElement myElement;
   private boolean mySorted;
 
@@ -115,9 +115,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     Set<Object> variants = new HashSet<Object>();
     for(PsiReference ref: myReferences) {
       Object[] refVariants = ref.getVariants();
-      for(Object refVariant : refVariants) {
-        variants.add(refVariant);
-      }
+      variants.addAll(Arrays.asList(refVariants));
     }
     return variants.toArray();
   }
@@ -129,7 +127,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final PsiReference[] refs = getReferences();
-    List<ResolveResult> result = new ArrayList<ResolveResult>();
+    List<ResolveResult> result = new ArrayList<ResolveResult>(refs.length);
     PsiElementResolveResult selfReference = null;
     for (PsiReference reference : refs) {
       if (reference instanceof PsiPolyVariantReference) {
@@ -148,7 +146,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
       }
     }
 
-    if (result.size() == 0 && selfReference != null) {
+    if (result.isEmpty() && selfReference != null) {
       result.add(selfReference); // if i the only one starring at the sun
     }
 
