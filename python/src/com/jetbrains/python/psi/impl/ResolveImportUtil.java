@@ -151,7 +151,7 @@ public class ResolveImportUtil {
                 importRef.getContainingFile().getVirtualFile()
             )
           ) {
-            PsiElement elt = resolveInRoots(entry.getFiles(OrderRootType.CLASSES), the_name, importRef);
+            PsiElement elt = resolveInRoots(entry.getFiles(OrderRootType.SOURCES), the_name, importRef);
             if (elt != null) return elt;
           }
         }
