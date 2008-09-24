@@ -30,7 +30,8 @@ import java.awt.event.ActionListener;
  *
  * @author dyoma
  */
-public final class SingleConfigurationConfigurable<Config extends RunConfiguration> extends SettingsEditorConfigurable<RunnerAndConfigurationSettingsImpl> {
+public final class SingleConfigurationConfigurable<Config extends RunConfiguration>
+    extends SettingsEditorConfigurable<RunnerAndConfigurationSettingsImpl> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.SingleConfigurationConfigurable");
   private final PlainDocument myNameDocument = new PlainDocument();
   private ValidationResult myLastValidationResult = null;
@@ -93,21 +94,22 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myLastValidationResult = null;
       try {
         RunnerAndConfigurationSettings snapshot = getSnapshot();
-        snapshot.setName(getNameText());
-        snapshot.checkSettings();
-        for (ProgramRunner runner : RunnerRegistry.getInstance().getRegisteredRunners()) {
-          for (Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
-            if (runner.canRun(executor.getId(), snapshot.getConfiguration())) {
-              checkConfiguration(runner, snapshot);
-              break;
+        if (snapshot != null) {
+          snapshot.setName(getNameText());
+          snapshot.checkSettings();
+          for (ProgramRunner runner : RunnerRegistry.getInstance().getRegisteredRunners()) {
+            for (Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
+              if (runner.canRun(executor.getId(), snapshot.getConfiguration())) {
+                checkConfiguration(runner, snapshot);
+                break;
+              }
             }
           }
         }
       }
       catch (RuntimeConfigurationException exception) {
-        myLastValidationResult = exception != null ? new ValidationResult(exception.getLocalizedMessage(),
-                                                                          exception.getTitle(),
-                                                                          exception.getQuickFix()) : null;
+        myLastValidationResult =
+            exception != null ? new ValidationResult(exception.getLocalizedMessage(), exception.getTitle(), exception.getQuickFix()) : null;
       }
       catch (ConfigurationException e) {
         myLastValidationResult = new ValidationResult(e.getLocalizedMessage(), ExecutionBundle.message("invalid.data.dialog.title"), null);
@@ -118,8 +120,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return myLastValidationResult;
   }
 
-  private static void checkConfiguration(final ProgramRunner runner, final RunnerAndConfigurationSettings snapshot) throws
-                                                                                                                        RuntimeConfigurationException {
+  private static void checkConfiguration(final ProgramRunner runner, final RunnerAndConfigurationSettings snapshot)
+      throws RuntimeConfigurationException {
     final RunnerSettings runnerSettings = snapshot.getRunnerSettings(runner);
     final ConfigurationPerRunnerSettings configurationSettings = snapshot.getConfigurationSettings(runner);
     try {
@@ -183,7 +185,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   public RunnerAndConfigurationSettingsImpl getSnapshot() throws ConfigurationException {
-    return getEditor().getSnapshot();
+    final SettingsEditor<RunnerAndConfigurationSettingsImpl> editor = getEditor();
+    return editor == null ? null : editor.getSnapshot();
   }
 
   private class MyValidatableComponent {
@@ -209,7 +212,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myWarningLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
 
       myComponentPlace.setLayout(new GridBagLayout());
-      myComponentPlace.add(getEditorComponent(), new GridBagConstraints(0,0,1,1,1.0,1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
+      myComponentPlace.add(getEditorComponent(),
+                           new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                                                  new Insets(0, 0, 0, 0), 0, 0));
       myComponentPlace.doLayout();
       myFixButton.setIcon(IconLoader.getIcon("/actions/quickfixBulb.png"));
       updateWarning();
@@ -263,8 +268,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     @NonNls
     private String generateWarningLabelText(final ValidationResult configurationException) {
-      return "<html><body><b>" + configurationException.getTitle() + ": </b>" +
-             configurationException.getMessage() + "</body></html>";
+      return "<html><body><b>" + configurationException.getTitle() + ": </b>" + configurationException.getMessage() + "</body></html>";
     }
   }
 }
