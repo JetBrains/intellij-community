@@ -31,11 +31,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.openapi.vfs.watcher.FileSystemTracker</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.impl.watcher.FileSystemTrackerImpl</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.vfs.pointers.VirtualFilePointerManager</interface-class>
       <implementation-class>com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl</implementation-class>
     </component>

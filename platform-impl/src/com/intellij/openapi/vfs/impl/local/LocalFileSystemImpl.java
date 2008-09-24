@@ -22,7 +22,6 @@ import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.io.fs.IFile;
-import com.intellij.vfs.local.win32.FileWatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,11 +40,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   private final List<WatchRequest> myRootsToWatch = new ArrayList<WatchRequest>();
   private WatchRequest[] myCachedNormalizedRequests = null;
 
-  private final Set<String> myDirtyFiles = new HashSet<String>(); // dirty files when FileWatcher is available
-  private final Set<String> myDeletedFiles = new HashSet<String>();
-
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
-  private List<String> myManualWatchRoots = new ArrayList<String>();
+  private final FileWatcher myWatcher;
 
   private static class WatchRequestImpl implements WatchRequest {
     public final String myRootPath;
@@ -109,9 +105,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public LocalFileSystemImpl() {
-    if (FileWatcher.isAvailable()) {
-      FileWatcher.initialize();
-      new WatchForChangesThread().start();
+    myWatcher = FileWatcher.getInstance();
+    if (myWatcher.isOperational()) {
       new StoreRefreshStatusThread().start();
     }
   }
@@ -141,18 +136,10 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
 
     myRootsToWatch.clear();
-    myDirtyFiles.clear();
-    myDeletedFiles.clear();
 
     final File file = new File(FileUtil.getTempDirectory());
     String path = file.getCanonicalPath().replace(File.separatorChar, '/');
     addRootToWatch(path, true);
-  }
-
-  private static void updateFileWatcher() {
-    if (FileWatcher.isAvailable()) {
-      FileWatcher.interruptWatcher();
-    }
   }
 
   public String getProtocol() {
@@ -291,21 +278,15 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   private void storeRefreshStatusToFiles() {
-    if (FileWatcher.isAvailable()) {
-      markPathsDirty(getAndClear(myDirtyFiles));
-      markPathsDirty(getAndClear(myDeletedFiles));
+    if (FileWatcher.getInstance().isOperational()) {
+      // TODO: different ways to marky dirty for all these cases
+      markPathsDirty(FileWatcher.getInstance().getDirtyPaths());
+      markFlatDirsDirty(FileWatcher.getInstance().getDirtyDirs());
+      markRecursiveDirsDirty(FileWatcher.getInstance().getDirtyRecursivePaths());
     }
   }
 
-  private static String[] getAndClear(final Set<String> set) {
-    synchronized (set) {
-      final String[] copy = set.toArray(new String[set.size()]);
-      set.clear();
-      return copy;
-    }
-  }
-
-  private void markPathsDirty(final String[] dirtyFiles) {
+  private void markPathsDirty(final List<String> dirtyFiles) {
     for (String dirtyFile : dirtyFiles) {
       String path = dirtyFile.replace(File.separatorChar, '/');
       VirtualFile file = findFileByPathIfCached(path);
@@ -315,11 +296,35 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
   }
 
+  private void markFlatDirsDirty(final List<String> dirtyFiles) {
+    for (String dirtyFile : dirtyFiles) {
+      String path = dirtyFile.replace(File.separatorChar, '/');
+      VirtualFile file = findFileByPathIfCached(path);
+      if (file instanceof NewVirtualFile) {
+        final NewVirtualFile nvf = (NewVirtualFile)file;
+        nvf.markDirty();
+        for (VirtualFile child : nvf.getCachedChildren()) {
+          ((NewVirtualFile)child).markDirty();
+        }
+      }
+    }
+  }
+
+  private void markRecursiveDirsDirty(final List<String> dirtyFiles) {
+    for (String dirtyFile : dirtyFiles) {
+      String path = dirtyFile.replace(File.separatorChar, '/');
+      VirtualFile file = findFileByPathIfCached(path);
+      if (file instanceof NewVirtualFile) {
+        ((NewVirtualFile)file).markDirtyRecursively();
+      }
+    }
+  }
+
   public void markSuspicousFilesDirty(List<VirtualFile> files) {
     storeRefreshStatusToFiles();
 
-    if (FileWatcher.isAvailable()) {
-      for (String root : myManualWatchRoots) {
+    if (myWatcher.isOperational()) {
+      for (String root : myWatcher.getManualWatchRoots()) {
         final VirtualFile suspicousRoot = findFileByPathIfCached(root);
         if (suspicousRoot != null) {
           ((NewVirtualFile)suspicousRoot).markDirtyRecursively();
@@ -371,84 +376,30 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return path.replace(File.separatorChar, '/');
   }
 
-  private class WatchForChangesThread extends Thread {
-    public WatchForChangesThread() {
-      //noinspection HardCodedStringLiteral
-      super("WatchForChangesThread");
-    }
-
-    public void run() {
-      updateFileWatcher();
-      try {
-        while (true) {
-          if (ApplicationManager.getApplication().isDisposeInProgress()) return;
-
-          FileWatcher.ChangeInfo[] infos = FileWatcher.waitForChange();
-
-          if (infos == null) {
-            setUpFileWatcher();
-          }
-          else {
-            for (FileWatcher.ChangeInfo info : infos) {
-              if (info == null) continue;
-
-              String path = info.getFilePath();
-              int changeType = info.getChangeType();
-              if (changeType == FileWatcher.FILE_MODIFIED) {
-                synchronized (myDirtyFiles) {
-                  myDirtyFiles.add(path);
-                }
-              }
-              else if (changeType == FileWatcher.FILE_ADDED || changeType == FileWatcher.FILE_RENAMED_NEW_NAME) {
-                synchronized (myDirtyFiles) {
-                  String parent = new File(path).getParent();
-                  if (parent != null) {
-                    myDirtyFiles.add(parent);
-                  }
-                }
-              }
-              else if (changeType == FileWatcher.FILE_REMOVED || changeType == FileWatcher.FILE_RENAMED_OLD_NAME) {
-                synchronized (myDeletedFiles) {
-                  myDeletedFiles.add(path);
-                }
-              }
-            }
-          }
-        }
-      }
-      catch (IOException e) {
-        LOG.info("Watcher terminated and attempt to restart has failed. Exiting watching thread.", e);
-      }
-    }
-  }
-
   private void setUpFileWatcher() {
     final Application application = ApplicationManager.getApplication();
 
     if (application.isDisposeInProgress()) return;
 
-    if (FileWatcher.isAvailable()) {
+    if (myWatcher.isOperational()) {
       application.runReadAction(new Runnable() {
         public void run() {
           WRITE_LOCK.lock();
           try {
             final WatchRequest[] watchRequests = normalizeRootsForRefresh();
-            String[] dirPaths = new String[watchRequests.length];
-            boolean[] toWatchRecursively = new boolean[watchRequests.length];
-            int cnt = 0;
+            List<String> myRecursiveRoots = new ArrayList<String>();
+            List<String> myFlatRoots = new ArrayList<String>();
+
             for (WatchRequest root : watchRequests) {
-              dirPaths[cnt] = root.getFileSystemRootPath();
-              toWatchRecursively[cnt] = root.isToWatchRecursively();
-              cnt++;
+              if (root.isToWatchRecursively()) {
+                myRecursiveRoots.add(root.getFileSystemRootPath());
+              }
+              else {
+                myFlatRoots.add(root.getFileSystemRootPath());
+              }
             }
 
-            final Vector<String> watchManual = new Vector<String>();
-            FileWatcher.setup(dirPaths, toWatchRecursively, watchManual);
-
-            myManualWatchRoots = new ArrayList<String>();
-            for (int i = 0; i < watchManual.size(); i++) {
-              myManualWatchRoots.add(watchManual.elementAt(i));
-            }
+            myWatcher.setWatchRoots(myRecursiveRoots, myFlatRoots);
           }
           finally {
             WRITE_LOCK.unlock();
@@ -469,7 +420,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
 
     public void run() {
-      //noinspection InfiniteLoopStatement
       while (true) {
         final Application application = ApplicationManager.getApplication();
         if (application == null || application.isDisposed()) break;
@@ -897,7 +847,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       }
     };
 
-    if (asynchronous && FileWatcher.isAvailable()) {
+    if (asynchronous && myWatcher.isOperational()) {
       RefreshQueue.getInstance().refresh(true, true, heavyRefresh, ManagingFS.getInstance().getRoots(this));
     }
     else {

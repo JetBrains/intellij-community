@@ -1,0 +1,1 @@
+gcc -framework CoreServices -o fsnotifier fsnotifier.c
