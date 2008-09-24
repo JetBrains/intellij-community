@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
@@ -320,8 +321,11 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
             visible = false;
             final PsiFile file = getFile(e.getDataContext());
             if (file != null) {
-              final WebBrowserUrlProvider urlProvider = getProvider(file);
-              visible = urlProvider != null;
+              final VirtualFile virtualFile = file.getVirtualFile();
+              if (virtualFile != null && virtualFile.isInLocalFileSystem()) {
+                final WebBrowserUrlProvider urlProvider = getProvider(file);
+                visible = urlProvider != null;
+              }
             }
           }
 

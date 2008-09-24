@@ -53,13 +53,19 @@ public class ContextMenuImpl extends JPanel implements Disposable {
         final Editor editor = e.getEditor();
         final JComponent c = editor.getComponent();
 
-        final Rectangle r = c.getBounds();
-        final Point viewPosition = container.getViewport().getViewPosition();
+        final DataContext dataContext = DataManager.getInstance().getDataContext();
+        if (dataContext != null) {
+          final Editor editor1 = PlatformDataKeys.EDITOR.getData(dataContext);
+          if (editor == editor1) { // check if an event is from the focused editor
+            final Rectangle r = c.getBounds();
+            final Point viewPosition = container.getViewport().getViewPosition();
 
-        final Rectangle activationArea = new Rectangle(0, 0, r.width, 150);
-        final MouseEvent event = e.getMouseEvent();
-        final Point p = event.getPoint();
-        toggleContextToolbar(activationArea.contains(p.x, p.y - viewPosition.y));
+            final Rectangle activationArea = new Rectangle(0, 0, r.width, 150);
+            final MouseEvent event = e.getMouseEvent();
+            final Point p = event.getPoint();
+            toggleContextToolbar(activationArea.contains(p.x, p.y - viewPosition.y));
+          }
+        }
       }
     });
 
