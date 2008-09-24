@@ -66,7 +66,7 @@ public class JDOMUtil {
     return LoggerHolder.ourLogger;
   }
 
-  public static final String ENCODING = "UTF-8";
+  private static final String ENCODING = "UTF-8";
 
   public static boolean areElementsEqual(Element e1, Element e2) {
     if (e1 == null && e2 == null) return true;
@@ -116,6 +116,7 @@ public class JDOMUtil {
   }
 
   @SuppressWarnings({"unchecked"})
+  @NotNull
   public static Object[] getChildNodesWithAttrs(final Element e) {
     ArrayList<Object> result = new ArrayList<Object>();
     result.addAll(e.getContent());
@@ -124,17 +125,20 @@ public class JDOMUtil {
   }
 
   @SuppressWarnings({"unchecked"})
+  @NotNull
   public static Content[] getContent(final Element m) {
     final List list = m.getContent();
     return (Content[])list.toArray(new Content[list.size()]);
   }
 
   @SuppressWarnings({"unchecked"})
+  @NotNull
   public static Element[] getElements(final Element m) {
     final List list = m.getChildren();
     return (Element[])list.toArray(new Element[list.size()]);
   }
 
+  @NotNull
   public static String concatTextNodesValues(final Object[] nodes) {
     StringBuilder result = new StringBuilder();
     for (Object node : nodes) {
@@ -187,12 +191,14 @@ public class JDOMUtil {
     }
   }
 
+  @NotNull
   private static String intern(final StringInterner interner, final String s) {
     synchronized (interner) {
       return interner.intern(s);
     }
   }
 
+  @NotNull
   public static String legalizeText(final String str) {
     StringReader reader = new StringReader(str);
     StringBuilder result = new StringBuilder();
@@ -282,25 +288,29 @@ public class JDOMUtil {
 
   }
 
+  @NotNull
   public static Document loadDocument(char[] chars, int length) throws IOException, JDOMException {
     SAXBuilder builder = ourSaxBuilder.get();
     return builder.build(new CharArrayReader(chars, 0, length));
   }
 
+  @NotNull
   public static Document loadDocument(CharSequence seq) throws IOException, JDOMException {
     SAXBuilder builder = ourSaxBuilder.get();
     return builder.build(new CharSequenceReader(seq));
   }
 
+  @NotNull
   public static Document loadDocument(File file) throws JDOMException, IOException {
     return loadDocument(new BufferedInputStream(new FileInputStream(file)));
   }
 
+  @NotNull
   public static Document loadDocument(final IFile iFile) throws IOException, JDOMException {
     return loadDocument(new BufferedInputStream(iFile.openInputStream()));
   }
 
-
+  @NotNull
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
     SAXBuilder saxBuilder = ourSaxBuilder.get();
     InputStreamReader reader = new InputStreamReader(stream, ENCODING);
@@ -312,10 +322,12 @@ public class JDOMUtil {
     }
   }
 
+  @NotNull
   public static Document loadDocument(URL url) throws JDOMException, IOException {
     return loadDocument(URLUtil.openStream(url));
   }
 
+  @NotNull
   public static Document loadResourceDocument(URL url) throws JDOMException, IOException {
     return loadDocument(URLUtil.openResourceStream(url));
   }
@@ -345,6 +357,7 @@ public class JDOMUtil {
   }
 
 
+  @NotNull
   public static byte[] printDocument(Document document, String lineSeparator) throws IOException {
     CharArrayWriter writer = new CharArrayWriter();
     writeDocument(document, writer, lineSeparator);
@@ -352,6 +365,7 @@ public class JDOMUtil {
     return new String(writer.toCharArray()).getBytes(ENCODING);
   }
 
+  @NotNull
   public static String writeDocument(Document document, String lineSeparator) {
     try {
       final StringWriter writer = new StringWriter();
@@ -375,13 +389,12 @@ public class JDOMUtil {
     }
   }
 
+  @NotNull
   public static String writeElement(Element element, String lineSeparator) throws IOException {
     final StringWriter writer = new StringWriter();
     writeElement(element, writer, lineSeparator);
     return writer.toString();
   }
-
-
 
   public static void writeDocument(Document document, Writer writer, String lineSeparator) throws IOException {
     XMLOutputter xmlOutputter = createOutputter(lineSeparator);
@@ -395,6 +408,7 @@ public class JDOMUtil {
     }
   }
 
+  @NotNull
   public static XMLOutputter createOutputter(String lineSeparator) {
     XMLOutputter xmlOutputter = new MyXMLOutputter();
     Format format = Format.getCompactFormat().
@@ -425,10 +439,12 @@ public class JDOMUtil {
     return null;
   }
 
+  @NotNull
   public static String escapeText(String text) {
     return escapeText(text, false);
   }
 
+  @NotNull
   private static String escapeText(String text, boolean escapeLineEnds) {
     StringBuffer buffer = null;
     for (int i = 0; i < text.length(); i++) {
@@ -461,6 +477,7 @@ public class JDOMUtil {
     return buffer == null ? text : buffer.toString();
   }
 
+  @NotNull
   public static List<Element> getChildrenFromAllNamespaces(final Element element, @NonNls final String name) {
     final ArrayList<Element> result = new ArrayList<Element>();
     final List children = element.getChildren();
@@ -497,6 +514,7 @@ public class JDOMUtil {
     }
   }
 
+  @NotNull
   private static ElementInfo getElementInfo(Element element) {
     ElementInfo info = new ElementInfo();
     StringBuilder buf = new StringBuilder(element.getName());

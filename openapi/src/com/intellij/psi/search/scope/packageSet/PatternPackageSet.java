@@ -24,6 +24,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
@@ -42,7 +43,7 @@ public class PatternPackageSet implements PackageSet {
   private final String myModulePatternText;
 
   public PatternPackageSet(@NonNls @Nullable String aspectPattern,
-                           String scope,
+                           @NotNull String scope,
                            @NonNls String modulePattern) {
     myAspectJSyntaxPattern = aspectPattern;
     myScope = scope;

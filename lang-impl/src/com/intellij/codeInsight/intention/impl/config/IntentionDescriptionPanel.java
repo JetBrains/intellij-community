@@ -43,8 +43,8 @@ public class IntentionDescriptionPanel {
   private TitledSeparator myBeforeSeparator;
   private TitledSeparator myAfterSeparator;
   private JPanel myPoweredByPanel;
-  private List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<IntentionUsagePanel>();
-  private List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<IntentionUsagePanel>();
+  private final List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<IntentionUsagePanel>();
+  private final List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<IntentionUsagePanel>();
   @NonNls private static final String BEFORE_TEMPLATE = "before.java.template";
   @NonNls private static final String AFTER_TEMPLATE = "after.java.template";
 

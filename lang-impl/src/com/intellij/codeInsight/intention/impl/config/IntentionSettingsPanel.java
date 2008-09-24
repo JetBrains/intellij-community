@@ -25,7 +25,7 @@ public class IntentionSettingsPanel {
 
   private JPanel myTreePanel;
   private JPanel myDescriptionPanel;
-  private GlassPanel myGlassPanel;
+  private final GlassPanel myGlassPanel;
 
   public IntentionSettingsPanel() {
     myIntentionSettingsTree = new IntentionSettingsTree() {
@@ -71,8 +71,7 @@ public class IntentionSettingsPanel {
   }
 
   private void intentionSelected(IntentionActionMetaData actionMetaData) {
-    myIntentionDescriptionPanel.reset(actionMetaData,
-                                      myIntentionSettingsTree.getFilter());
+    myIntentionDescriptionPanel.reset(actionMetaData, myIntentionSettingsTree.getFilter());
   }
 
   private void categorySelected(String intentionCategory) {

@@ -63,7 +63,7 @@ public abstract class IntentionSettingsTree {
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         TreePath path = e.getPath();
-        Object userObject = ((CheckedTreeNode)path.getLastPathComponent()).getUserObject();
+        Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
         selectionChanged(userObject);
       }
     });
@@ -276,7 +276,7 @@ public abstract class IntentionSettingsTree {
   }
 
   private class MyFilterComponent extends FilterComponent {
-    private TreeExpansionMonitor<DefaultMutableTreeNode> myExpansionMonitor = TreeExpansionMonitor.install(myTree);
+    private final TreeExpansionMonitor<DefaultMutableTreeNode> myExpansionMonitor = TreeExpansionMonitor.install(myTree);
 
     public MyFilterComponent() {
       super("INTENTION_FILTER_HISTORY", 10);

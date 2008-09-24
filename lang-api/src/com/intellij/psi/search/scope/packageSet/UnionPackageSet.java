@@ -16,12 +16,13 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class UnionPackageSet implements PackageSet {
-  private PackageSet myFirstSet;
-  private PackageSet mySecondSet;
+  private final PackageSet myFirstSet;
+  private final PackageSet mySecondSet;
 
-  public UnionPackageSet(PackageSet set1, PackageSet set2) {
+  public UnionPackageSet(@NotNull PackageSet set1, @NotNull PackageSet set2) {
     myFirstSet = set1;
     mySecondSet = set2;
   }

@@ -46,4 +46,9 @@ public class NamedScope {
       super(value.getText(), value);
     }
   }
+
+  @Override
+  public String toString() {
+    return "Scope '" + myName + "'; set:" + (myValue == null ? null : myValue.getText());
+  }
 }
