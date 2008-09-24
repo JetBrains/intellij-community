@@ -22,24 +22,22 @@ import java.util.regex.Pattern;
 
 abstract class StateStorageManagerImpl implements StateStorageManager, Disposable, StreamProvider {
 
-  private final static Logger LOG = Logger.getInstance("#" + StateStorageManagerImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + StateStorageManagerImpl.class.getName());
 
-  private Map<String, String> myMacros = new HashMap<String, String>();
-  private Map<String, StateStorage> myStorages = new HashMap<String, StateStorage>();
-  private Map<String, StateStorage> myPathToStorage = new HashMap<String, StateStorage>();
-  private TrackingPathMacroSubstitutor myPathMacroSubstitutor;
-  private String myRootTagName;
+  private final Map<String, String> myMacros = new HashMap<String, String>();
+  private final Map<String, StateStorage> myStorages = new HashMap<String, StateStorage>();
+  private final Map<String, StateStorage> myPathToStorage = new HashMap<String, StateStorage>();
+  private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
+  private final String myRootTagName;
   private Object mySession;
-  private PicoContainer myPicoContainer;
-  private Map<IFile, StateStorage> myFileToStorage = new HashMap<IFile, StateStorage>();
+  private final PicoContainer myPicoContainer;
 
   private final MultiMap<RoamingType, StreamProvider> myStreamProviders = new MultiMap<RoamingType, StreamProvider>();
 
-  public StateStorageManagerImpl(
-    @Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
-    final String rootTagName,
-    @Nullable Disposable parentDisposable,
-    PicoContainer picoContainer) {
+  public StateStorageManagerImpl(@Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
+                                 final String rootTagName,
+                                 @Nullable Disposable parentDisposable,
+                                 PicoContainer picoContainer) {
     myPicoContainer = picoContainer;
     myRootTagName = rootTagName;
     myPathMacroSubstitutor = pathMacroSubstitutor;
@@ -166,7 +164,7 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
 
   protected StateStorage createFileStateStorage(final String fileSpec, final String expandedFile, final String rootTagName,
                                                 final PicoContainer picoContainer) {
-    return new FileBasedStorage(getMacroSubstitutor(fileSpec),this,expandedFile,fileSpec, rootTagName, this, picoContainer,
+    return new FileBasedStorage(getMacroSubstitutor(fileSpec), this, expandedFile, fileSpec, rootTagName, this, picoContainer,
                                 ComponentRoamingManager.getInstance()) {
       @NotNull
       protected StorageData createStorageData() {
@@ -321,9 +319,8 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
       throws StateStorage.StateStorageException {
       assert mySession == this;
 
-      StateStorage stateStorage;             
       for (Storage storageSpec : storageSpecs) {
-        stateStorage = getStateStorage(storageSpec);
+        StateStorage stateStorage = getStateStorage(storageSpec);
         if (stateStorage == null) continue;
 
         final StateStorage.ExternalizationSession extSession = myCompoundExternalizationSession.getExternalizationSession(stateStorage);
@@ -354,11 +351,12 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
     public MySaveSession(final MyExternalizationSession externalizationSession) {
       myCompoundSaveSession = new CompoundSaveSession(externalizationSession.myCompoundExternalizationSession);
 
-      myFileToStorage.clear();
+      Map<IFile, StateStorage> fileToStorage = new HashMap<IFile, StateStorage>();
+      fileToStorage.clear();
       for (StateStorage storage : myCompoundSaveSession.getStateStorages()) {
         final List<IFile> storageFiles = myCompoundSaveSession.getSaveSession(storage).getAllStorageFiles();
         for (IFile storageFile : storageFiles) {
-          myFileToStorage.put(storageFile, storage);
+          fileToStorage.put(storageFile, storage);
         }
       }
     }

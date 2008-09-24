@@ -31,7 +31,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   @NonNls private static final String NAME = ATTR_NAME;
 
   protected TrackingPathMacroSubstitutor myPathMacroSubstitutor;
-  private @NotNull final String myRootElementName;
+  @NotNull private final String myRootElementName;
   private Object mySession;
   private StorageData myLoadedData;
   protected static StringInterner ourInterner = new StringInterner();
@@ -42,13 +42,12 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   protected Integer myUpToDateHash;
 
 
-
-  protected XmlElementStorage(
-    @Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
-    @NotNull Disposable parentDisposable,
-    @NotNull String rootElementName,
-    StreamProvider streamProvider,
-    String fileSpec, ComponentRoamingManager componentRoamingManager) {
+  protected XmlElementStorage(@Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
+                              @NotNull Disposable parentDisposable,
+                              @NotNull String rootElementName,
+                              StreamProvider streamProvider,
+                              String fileSpec,
+                              ComponentRoamingManager componentRoamingManager) {
     myPathMacroSubstitutor = pathMacroSubstitutor;
     myRootElementName = rootElementName;
     myStreamProvider = streamProvider;
@@ -59,10 +58,10 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   @Nullable
-  protected abstract Document loadDocument() throws StateStorage.StateStorageException;
+  protected abstract Document loadDocument() throws StateStorageException;
 
   @Nullable
-  protected synchronized Element getState(final String componentName) throws StateStorage.StateStorageException {
+  protected synchronized Element getState(final String componentName) throws StateStorageException {
     final StorageData storageData = getStorageData();
     final Element state = storageData.getState(componentName);
 
@@ -267,7 +266,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
       return true;
     }
 
-    protected abstract void doSave() throws StateStorage.StateStorageException;
+    protected abstract void doSave() throws StateStorageException;
 
     public void clearHash() {
       myUpToDateHash = null;

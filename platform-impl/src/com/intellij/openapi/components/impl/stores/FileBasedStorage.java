@@ -46,7 +46,7 @@ public class FileBasedStorage extends XmlElementStorage {
                           final String filePath,
                           final String fileSpec,
                           String rootElementName,
-                          Disposable parentDisposable,
+                          @NotNull Disposable parentDisposable,
                           PicoContainer picoContainer,
                           ComponentRoamingManager componentRoamingManager) {
     super(pathMacroManager, parentDisposable, rootElementName, streamProvider,  fileSpec, componentRoamingManager);
