@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -114,6 +115,17 @@ public class InspectionApplication {
 
       //fetch profile by name from project file (project profiles can be disabled)
       Profile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(myProfileName, false);
+
+      //check if ide profile is used for project
+      if (inspectionProfile == null) {
+        final Collection<Profile> profiles = InspectionProjectProfileManager.getInstance(myProject).getProfiles();
+        for (Profile profile : profiles) {
+          if (Comparing.strEqual(profile.getName(), myProfileName)) {
+            inspectionProfile = profile;
+            break;
+          }
+        }
+      }
 
       //otherwise look for profile file or use default
       if (inspectionProfile == null) {
