@@ -9,8 +9,11 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 
 public class EnumConstantsUtil {
+  private EnumConstantsUtil() {
+  }
+
   public static boolean isSuitableForEnumConstant(PsiType constantType, PsiClass enumClass) {
-    if (enumClass.isEnum()) {
+    if (enumClass != null && enumClass.isEnum()) {
       for (PsiMethod constructor : enumClass.getConstructors()) {
         final PsiParameter[] parameters = constructor.getParameterList().getParameters();
         if (parameters.length == 1 && TypeConversionUtil.isAssignable(parameters[0].getType(), constantType)) return true;
