@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
 
+    @Override
     @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new IterableForEachLoopPredicate();
     }
 
+    @Override
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiForeachStatement statement = (PsiForeachStatement)element.getParent();
@@ -71,7 +73,13 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
         }
         newStatement.append(iterator);
         newStatement.append(" = ");
-        newStatement.append(iteratedValue.getText());
+        if (iteratedValue instanceof PsiTypeCastExpression) {
+            newStatement.append('(');
+            newStatement.append(iteratedValue.getText());
+            newStatement.append(')');
+        } else {
+            newStatement.append(iteratedValue.getText());
+        }
         newStatement.append(".iterator();");
         newStatement.append(iterator);
         newStatement.append(".hasNext();) {");
