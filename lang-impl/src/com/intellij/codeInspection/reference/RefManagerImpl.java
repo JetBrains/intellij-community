@@ -291,7 +291,13 @@ public class RefManagerImpl extends RefManager {
         extension.removeReference(refElem);
       }
 
-      if (refTable.remove(PsiAnchor.create(element)) != null) return;
+      if (refTable.remove(ApplicationManager.getApplication().runReadAction(
+          new Computable<PsiAnchor>() {
+            public PsiAnchor compute() {
+              return PsiAnchor.create(element);
+            }
+          }
+      )) != null) return;
 
       //PsiElement may have been invalidated and new one returned by getElement() is different so we need to do this stuff.
       for (PsiAnchor psiElement : refTable.keySet()) {
@@ -427,7 +433,13 @@ public class RefManagerImpl extends RefManager {
   protected RefElement getFromRefTable(final PsiElement element) {
     myLock.readLock().lock();
     try {
-      return getRefTable().get(PsiAnchor.create(element));
+      return getRefTable().get(ApplicationManager.getApplication().runReadAction(
+          new Computable<PsiAnchor>() {
+            public PsiAnchor compute() {
+              return PsiAnchor.create(element);
+            }
+          }
+      ));
     }
     finally {
       myLock.readLock().unlock();
@@ -437,7 +449,13 @@ public class RefManagerImpl extends RefManager {
   protected void putToRefTable(final PsiElement element, final RefElement ref) {
     myLock.writeLock().lock();
     try {
-      getRefTable().put(PsiAnchor.create(element), ref);
+      getRefTable().put(ApplicationManager.getApplication().runReadAction(
+          new Computable<PsiAnchor>() {
+            public PsiAnchor compute() {
+              return PsiAnchor.create(element);
+            }
+          }
+      ), ref);
     }
     finally {
       myLock.writeLock().unlock();
