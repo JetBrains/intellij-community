@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -43,19 +44,23 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
   private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
   private Project myProject;
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    ElementToWorkOn elementToWorkOn = ElementToWorkOn.getElementToWorkOn(editor, file, REFACTORING_NAME, HelpID.INTRODUCE_PARAMETER, project);
-    if(elementToWorkOn == null) return;
+    ElementToWorkOn.processElementToWorkOn(editor, file, REFACTORING_NAME, HelpID.INTRODUCE_PARAMETER, project, new Pass<ElementToWorkOn>() {
+      @Override
+      public void pass(final ElementToWorkOn elementToWorkOn) {
+        if (elementToWorkOn == null) return;
 
-    final PsiExpression expr = elementToWorkOn.getExpression();
-    final PsiLocalVariable localVar = elementToWorkOn.getLocalVariable();
-    final boolean isInvokedOnDeclaration = elementToWorkOn.isInvokedOnDeclaration();
+        final PsiExpression expr = elementToWorkOn.getExpression();
+        final PsiLocalVariable localVar = elementToWorkOn.getLocalVariable();
+        final boolean isInvokedOnDeclaration = elementToWorkOn.isInvokedOnDeclaration();
 
-    if (invoke(editor, project, expr, localVar, isInvokedOnDeclaration)) {
-      editor.getSelectionModel().removeSelection();
-    }
+        if (invoke(editor, project, expr, localVar, isInvokedOnDeclaration)) {
+          editor.getSelectionModel().removeSelection();
+        }
+      }
+    });
   }
 
   protected boolean invokeImpl(Project project, PsiExpression tempExpr, Editor editor) {

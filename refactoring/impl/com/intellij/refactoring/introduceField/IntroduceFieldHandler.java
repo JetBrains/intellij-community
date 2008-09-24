@@ -38,24 +38,11 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     return HelpID.INTRODUCE_FIELD;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    ElementToWorkOn elementToWorkOn = ElementToWorkOn.getElementToWorkOn(editor, file, REFACTORING_NAME, HelpID.INTRODUCE_FIELD, project);
-
-    if (elementToWorkOn == null) return;
-
-    if (elementToWorkOn.getExpression() == null) {
-      final PsiLocalVariable localVariable = elementToWorkOn.getLocalVariable();
-      final boolean result = invokeImpl(project, localVariable, editor);
-      if (result) {
-        editor.getSelectionModel().removeSelection();
-      }
-    }
-    else if (invokeImpl(project, elementToWorkOn.getExpression(), editor)) {
-      editor.getSelectionModel().removeSelection();
-    }
+    ElementToWorkOn.processElementToWorkOn(editor, file, REFACTORING_NAME, HelpID.INTRODUCE_FIELD, project, getElementProcessor(project, editor));
   }
 
   protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass, PsiExpression expr,

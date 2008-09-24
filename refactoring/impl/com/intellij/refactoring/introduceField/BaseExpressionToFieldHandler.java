@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -499,6 +500,27 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       LOG.error(e);
       return null;
     }
+  }
+  
+
+  protected Pass<ElementToWorkOn> getElementProcessor(final Project project, final Editor editor) {
+    return new Pass<ElementToWorkOn>() {
+      @Override
+      public void pass(final ElementToWorkOn elementToWorkOn) {
+        if (elementToWorkOn == null) return;
+
+        if (elementToWorkOn.getExpression() == null) {
+          final PsiLocalVariable localVariable = elementToWorkOn.getLocalVariable();
+          final boolean result = invokeImpl(project, localVariable, editor);
+          if (result) {
+            editor.getSelectionModel().removeSelection();
+          }
+        }
+        else if (invokeImpl(project, elementToWorkOn.getExpression(), editor)) {
+          editor.getSelectionModel().removeSelection();
+        }
+      }
+    };
   }
 
   protected abstract String getRefactoringName();
