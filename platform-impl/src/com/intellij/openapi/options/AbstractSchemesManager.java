@@ -162,12 +162,6 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   }
 
   protected boolean isExternalizable(final T scheme) {
-    try {
-      E e = ((E)scheme);
-      return true;
-    }
-    catch (ClassCastException e) {
-      return false;
-    }
+    return scheme instanceof ExternalizableScheme;
   }
 }
