@@ -36,7 +36,12 @@ public class ExtractClassHandler implements RefactoringActionHandler {
       //todo
       return;
     }
-    final PsiClass containingClass = selectedMember instanceof PsiClass ? (PsiClass)selectedMember : selectedMember.getContainingClass();
+    
+    PsiClass containingClass = selectedMember.getContainingClass();
+
+    if (containingClass == null && selectedMember instanceof PsiClass) {
+      containingClass = (PsiClass)selectedMember;
+    }
 
     if (containingClass == null) {
       CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("the.caret.should.be.positioned.within.a.class.to.be.refactored"),
