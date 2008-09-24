@@ -1203,7 +1203,7 @@ public class CompileDriver {
     final boolean[] wereFilesDeleted = new boolean[]{false};
     try {
       final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
-      ApplicationManager.getApplication().runReadAction(new Runnable() { // todo: do we really need readAction here?
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
 
           TranslatingCompilerFilesMonitor.getInstance().collectFiles(
