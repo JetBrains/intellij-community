@@ -332,7 +332,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     actions.add(new AnAction(InspectionsBundle.message("what.s.new.in.idea.7"),
                              InspectionsBundle.message("what.s.new.in.idea.7.description"), IconLoader.getIcon("/actions/lightning.png")) {
       public void actionPerformed(AnActionEvent e) {
-        setFilter("\"New in 7\"");
+        setFilter("\"New in 8\"");
         myProfileFilter.selectText();
         myProfileFilter.requestFocusInWindow();
       }
