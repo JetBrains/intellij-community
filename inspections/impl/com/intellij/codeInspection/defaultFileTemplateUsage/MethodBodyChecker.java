@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.defaultFileTemplateUsage;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInspection.*;
@@ -158,6 +159,7 @@ public class MethodBodyChecker {
         if (method.isConstructor() || returnType == null) return;
         PsiCodeBlock body = method.getBody();
         if (body == null) return;
+        if (!CodeInsightUtil.preparePsiElementsForWrite(body)) return;
         PsiClass aClass = method.getContainingClass();
         if (aClass == null) return;
         List<HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
