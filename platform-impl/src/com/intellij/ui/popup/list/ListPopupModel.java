@@ -6,7 +6,7 @@ package com.intellij.ui.popup.list;
 
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
-import com.intellij.ui.popup.util.ElementFilter;
+import com.intellij.ui.speedSearch.ElementFilter;
 
 import javax.swing.*;
 import java.util.ArrayList;

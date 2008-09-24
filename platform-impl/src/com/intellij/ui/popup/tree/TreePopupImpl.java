@@ -4,11 +4,7 @@
  */
 package com.intellij.ui.popup.tree;
 
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AlphaComparator;
-import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -18,14 +14,13 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.treeStructure.*;
+import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
+import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.Range;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
@@ -45,7 +40,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
 
   private TreePath myShowingChildPath;
   private TreePath myPendingChildPath;
-  private MyTreeBuilder myBuilder;
+  private FilteringTreeBuilder myBuilder;
 
   public TreePopupImpl(JBPopup parent, TreePopupStep aStep, Object parentValue) {
     super(parent, aStep);
@@ -59,7 +54,12 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
   protected JComponent createContent() {
     myWizardTree = new MyTree();
     myWizardTree.getAccessibleContext().setAccessibleName("WizardTree");
-    myBuilder = new MyTreeBuilder();
+    myBuilder = new FilteringTreeBuilder(getProject(), myWizardTree, this, getTreeStep().getStructure(), AlphaComparator.INSTANCE) {
+      @Override
+      protected boolean isSelectable(final Object nodeObject) {
+        return getTreeStep().isSelectable(nodeObject, nodeObject);
+      }
+    };
 
     myBuilder.updateFromRoot();
 
@@ -352,8 +352,8 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
 
   private Object extractUserObject(Object aNode) {
     Object object = ((DefaultMutableTreeNode) aNode).getUserObject();
-    if (object instanceof TreePopupStructure.Node) {
-      return ((TreePopupStructure.Node) object).getDelegate();
+    if (object instanceof FilteringTreeStructure.Node) {
+      return ((FilteringTreeStructure.Node) object).getDelegate();
     }
     return object;
   }
@@ -396,97 +396,6 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
 
   private Project getProject() {
     return getTreeStep().getProject();
-  }
-
-  private class MyTreeBuilder extends AbstractTreeBuilder {
-
-    private Object myLastSuccessfulSelect;
-
-    MyTreeBuilder() {
-      super(myWizardTree, (DefaultTreeModel) myWizardTree.getModel(), new TreePopupStructure(getProject(), TreePopupImpl.this, getTreeStep().getStructure()), AlphaComparator.INSTANCE);
-      initRootNode();
-    }
-
-    public boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-      return false;
-    }
-
-    public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-      return true;
-    }
-
-    protected final DefaultMutableTreeNode createChildNode(final NodeDescriptor childDescr) {
-      return new PatchedDefaultMutableTreeNode(childDescr);
-    }
-
-    public void refilter() {
-      Object selectedObject = getSelected();
-      final Object toSelect = getTreeStep().isSelectable(selectedObject, selectedObject) ? selectedObject : null;
-
-      ((TreePopupStructure) getTreeStructure()).refilter();
-      updateFromRoot();
-
-      boolean wasSelected = false;
-      if (selectedObject != null) {
-        wasSelected = myWizardTree.select(this, new SimpleNodeVisitor() {
-          public boolean accept(SimpleNode simpleNode) {
-            if (simpleNode instanceof TreePopupStructure.Node) {
-              TreePopupStructure.Node node = (TreePopupStructure.Node)simpleNode;
-              return node.getDelegate().equals(toSelect);
-            }
-            else {
-              return false;
-            }
-          }
-        }, true);
-      }
-
-      if (!wasSelected) {
-        myWizardTree.select(this, new SimpleNodeVisitor() {
-          public boolean accept(SimpleNode simpleNode) {
-            if (simpleNode instanceof TreePopupStructure.Node) {
-              TreePopupStructure.Node node = (TreePopupStructure.Node)simpleNode;
-              if (getTreeStep().isSelectable(node, node.getDelegate())) {
-                return true;
-              }
-            }
-            else {
-              return false;
-            }
-            return false;
-          }
-        }, true);
-      }
-
-      if (!wasSelected && myLastSuccessfulSelect != null) {
-        wasSelected = myWizardTree.select(this, new SimpleNodeVisitor() {
-          public boolean accept(SimpleNode simpleNode) {
-            if (simpleNode instanceof TreePopupStructure.Node) {
-              Object object = ((TreePopupStructure.Node) simpleNode).getDelegate();
-              return myLastSuccessfulSelect.equals(object);
-            }
-            return false;
-          }
-        }, true);
-        if (wasSelected) {
-          myLastSuccessfulSelect = getSelected();
-        }
-      } else if (wasSelected) {
-        myLastSuccessfulSelect = getSelected();
-      }
-
-    }
-
-    @Nullable
-    private Object getSelected() {
-      TreePopupStructure.Node selected = (TreePopupStructure.Node) myWizardTree.getSelectedNode();
-      return selected != null ? selected.getDelegate() : null;
-    }
-
-    @NotNull
-    protected ProgressIndicator createProgressIndicator() {
-      return new StatusBarProgress();
-    }
   }
 
   protected void onAutoSelectionTimer() {

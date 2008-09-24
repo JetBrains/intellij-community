@@ -2,12 +2,12 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package com.intellij.ui.popup.tree;
+package com.intellij.ui.treeStructure.filtered;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.popup.util.ElementFilter;
+import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
@@ -16,13 +16,13 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TreePopupStructure extends AbstractTreeStructure {
+public class FilteringTreeStructure extends AbstractTreeStructure {
 
   private ElementFilter myFilter;
   private AbstractTreeStructure myStructure;
   private Node myRoot;
 
-  public TreePopupStructure(Project project, ElementFilter filter, AbstractTreeStructure originalStructure) {
+  public FilteringTreeStructure(Project project, ElementFilter filter, AbstractTreeStructure originalStructure) {
     myFilter = filter;
     myStructure = originalStructure;
     myRoot = new Node(project);

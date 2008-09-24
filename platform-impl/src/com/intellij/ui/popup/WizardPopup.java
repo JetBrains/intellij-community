@@ -12,11 +12,11 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
-import com.intellij.ui.popup.util.ElementFilter;
 import com.intellij.ui.popup.util.MnemonicsSearch;
-import com.intellij.ui.popup.util.SpeedSearch;
+import com.intellij.ui.speedSearch.SpeedSearch;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
