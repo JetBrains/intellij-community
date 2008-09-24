@@ -422,7 +422,8 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     myTree.addMouseListener(new PopupHandler() {
       public void invokePopup(Component comp, int x, int y) {
-        if (myTree.getPathForLocation(x, y) != null && Arrays.binarySearch(myTree.getSelectionRows(), myTree.getRowForLocation(x, y)) > -1)
+        final int[] selectionRows = myTree.getSelectionRows();
+        if (selectionRows != null && myTree.getPathForLocation(x, y) != null && Arrays.binarySearch(selectionRows, myTree.getRowForLocation(x, y)) > -1)
         {
           compoundPopup().show(comp, x, y);
         }
