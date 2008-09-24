@@ -48,7 +48,14 @@ public class DisposerTest extends TestCase {
     myDisposeActions.clear();
   }
 
-  public void testDiposalAndAbsenceOfReferences() throws Exception {
+  @Override
+  protected void tearDown() throws Exception {
+    Disposer.dispose(myRoot);
+    assertTrue(Disposer.getTree().isEmpty());
+    super.tearDown();
+  }
+
+  public void testDisposalAndAbsenceOfReferences() throws Exception {
     Disposer.register(myRoot, myFolder1);
     Disposer.register(myRoot, myFolder2);
     Disposer.register(myFolder1, myLeaf1);

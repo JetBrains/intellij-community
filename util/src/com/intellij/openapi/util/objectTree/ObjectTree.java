@@ -201,4 +201,9 @@ public final class ObjectTree<T> {
       System.err.println("***********************************************************************************************");
     }
   }
+  
+  @TestOnly
+  public boolean isEmpty() {
+    return myRootObjects.isEmpty();
+  }
 }
