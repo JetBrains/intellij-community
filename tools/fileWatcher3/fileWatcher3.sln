@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fileWatcher3", "fileWatcher3.vcproj", "{0EF2C2DB-0E16-4BC3-9927-9C51AF00EB57}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0EF2C2DB-0E16-4BC3-9927-9C51AF00EB57}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0EF2C2DB-0E16-4BC3-9927-9C51AF00EB57}.Debug|Win32.Build.0 = Debug|Win32
+		{0EF2C2DB-0E16-4BC3-9927-9C51AF00EB57}.Release|Win32.ActiveCfg = Release|Win32
+		{0EF2C2DB-0E16-4BC3-9927-9C51AF00EB57}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
