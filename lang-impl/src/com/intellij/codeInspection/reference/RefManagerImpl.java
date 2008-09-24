@@ -478,7 +478,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   public boolean belongsToScope(final PsiElement psiElement) {
-    if (psiElement == null) return false;
+    if (psiElement == null || !psiElement.isValid()) return false;
     if (psiElement instanceof PsiCompiledElement) return false;
     final PsiFile containingFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       public PsiFile compute() {
