@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -67,6 +69,13 @@ public class FieldMayBeFinalInspection extends BaseInspection {
             if (field.hasModifierProperty(PsiModifier.FINAL)) {
                 return;
             }
+            final ImplicitUsageProvider[] implicitUsageProviders =
+                    Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
+            for(ImplicitUsageProvider provider: implicitUsageProviders){
+                if(provider.isImplicitWrite(field)){
+                    return;
+                }
+            }
             if (field.hasModifierProperty(PsiModifier.STATIC)) {
                 if (!staticFieldMayBeFinal(field)) {
                     return;
@@ -81,6 +90,9 @@ public class FieldMayBeFinalInspection extends BaseInspection {
 
         private static boolean fieldMayBeFinal(PsiField field) {
             final PsiClass aClass = field.getContainingClass();
+            if (aClass == null) {
+                return false;
+            }
             final PsiExpression intializer = field.getInitializer();
             final PsiClassInitializer[] classInitializers =
                     aClass.getInitializers();
@@ -149,6 +161,9 @@ public class FieldMayBeFinalInspection extends BaseInspection {
         private static boolean staticFieldMayBeFinal(PsiField field) {
             final PsiExpression initializer = field.getInitializer();
             final PsiClass aClass = field.getContainingClass();
+            if (aClass == null) {
+                return false;
+            }
             final PsiClassInitializer[] classInitializers =
                     aClass.getInitializers();
             boolean assignedInInitializer = initializer != null;
