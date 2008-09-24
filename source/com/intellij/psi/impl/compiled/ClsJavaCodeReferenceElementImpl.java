@@ -124,7 +124,8 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveCache resolveCache = ((PsiManagerEx)getManager()).getResolveCache();
-    return (JavaResolveResult[])resolveCache.resolveWithCaching(this, Resolver.INSTANCE, true, incompleteCode);
+    ResolveResult[] results = resolveCache.resolveWithCaching(this, Resolver.INSTANCE, true, incompleteCode);
+    return (JavaResolveResult[])results;
   }
 
   public PsiElement resolve() {
