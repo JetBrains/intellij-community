@@ -27,12 +27,13 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.text.BlockSupport;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
@@ -48,14 +49,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   private final Project myProject;
   private final PsiManager myPsiManager;
   private final Key<TextBlock> KEY_TEXT_BLOCK = Key.create("KEY_TEXT_BLOCK");
-  private final Set<Document> myUncommittedDocuments = new HashSet<Document>(); 
+  private final Set<Document> myUncommittedDocuments = Collections.synchronizedSet(new HashSet<Document>());
 
   private final BlockSupportImpl myBlockSupport;
-  private boolean myIsCommitInProgress;
+  private volatile boolean myIsCommitInProgress;
   private final PsiToDocumentSynchronizer mySynchronizer;
 
   private final List<Listener> myListeners = new ArrayList<Listener>();
-  private Listener[] myCachedListeners = null;
+  private Listener[] myCachedListeners = null; //guarded by mylisteners
   private final SmartPointerManagerImpl mySmartPointerManager;
 
   public PsiDocumentManagerImpl(Project project,
@@ -380,34 +381,30 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
     myIsCommitInProgress = true;
     try{
-      if (true/*file.getModificationStamp() != document.getModificationStamp()*/){
-        if (mySmartPointerManager != null) { // mock tests
-          SmartPointerManagerImpl.synchronizePointers(file);
-        }
+      if (mySmartPointerManager != null) { // mock tests
+        SmartPointerManagerImpl.synchronizePointers(file);
+      }
 
-        myTreeElementBeingReparsedSoItWontBeCollected = ((PsiFileImpl)file).calcTreeElement();
+      myTreeElementBeingReparsedSoItWontBeCollected = ((PsiFileImpl)file).calcTreeElement();
 
-        if (textBlock.isEmpty()) return false ; // if tree was just loaded above textBlock will be cleared by contentsLoaded
+      if (textBlock.isEmpty()) return false ; // if tree was just loaded above textBlock will be cleared by contentsLoaded
 
-        textBlock.lock();
-        final CharSequence chars = document.getCharsSequence();
-        final Boolean data = document.getUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY);
-        if (data != null) {
-          document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, null);
-          file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
-        }
+      textBlock.lock();
+      final CharSequence chars = document.getCharsSequence();
+      final Boolean data = document.getUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY);
+      if (data != null) {
+        document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, null);
+        file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
+      }
 
-        if (file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
-          int startOffset = textBlock.getStartOffset();
-          int endOffset = textBlock.getTextEndOffset();
-          int psiEndOffset = textBlock.getPsiEndOffset();
-          myBlockSupport.reparseRange(file, startOffset, psiEndOffset, endOffset - psiEndOffset, chars);
-        }
-        else {
-          myBlockSupport.reparseRange(file, 0, document.getTextLength(), document.getTextLength() - file.getTextLength(), chars);
-        }
-
-        //file.setModificationStamp(document.getModificationStamp());
+      if (file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
+        int startOffset = textBlock.getStartOffset();
+        int endOffset = textBlock.getTextEndOffset();
+        int psiEndOffset = textBlock.getPsiEndOffset();
+        myBlockSupport.reparseRange(file, startOffset, psiEndOffset, endOffset - psiEndOffset, chars);
+      }
+      else {
+        myBlockSupport.reparseRange(file, 0, document.getTextLength(), document.getTextLength() - file.getTextLength(), chars);
       }
 
       textBlock.unlock();
@@ -585,7 +582,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (document != null) getTextBlock(document, file).clear();
   }
 
-
+  @TestOnly
   public void clearUncommitedDocuments() {
     myUncommittedDocuments.clear();
   }

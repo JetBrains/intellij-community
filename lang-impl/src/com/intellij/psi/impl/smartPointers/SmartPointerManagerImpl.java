@@ -128,8 +128,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
 
     public boolean equals(Object obj) {
-      if (!(obj instanceof SmartPsiElementPointer)) return false;
-      return Comparing.equal(getElement(), ((SmartPsiElementPointer)obj).getElement());
+      return obj instanceof SmartPsiElementPointer && Comparing.equal(getElement(), ((SmartPsiElementPointer)obj).getElement());
     }
 
     public PsiFile getContainingFile() {
