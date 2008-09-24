@@ -578,7 +578,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
             }
           }
           else {
-            if (myInputVariables.contains(variable) && ArrayUtil.find(myOutputVariables, variable) != -1) {
+            if (ArrayUtil.find(myOutputVariables, variable) != -1) {
               st = myElementFactory.createStatementFromText(name + " = " + object + ".get" + StringUtil.capitalize(name) + "();", myInnerMethod);
             }
           }
