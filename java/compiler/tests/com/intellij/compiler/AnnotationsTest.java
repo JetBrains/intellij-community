@@ -36,4 +36,9 @@ public class AnnotationsTest extends Jdk15CompilerTestCase {
 
   public void testChangeAnnotationRetentionPolicy4() throws Exception {doTest();}
 
+  public void testMetaAnnotationChanged() throws Exception {doTest();}
+
+  public void testMetaAnnotationChangedCascade() throws Exception {doTest();}
+  
+  public void testMetaAnnotationChangedCascade2() throws Exception {doTest();}
 }
