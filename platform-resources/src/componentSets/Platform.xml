@@ -143,13 +143,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.ui.RecentsManager</interface-class>
-      <implementation-class>com.intellij.ui.RecentsManager</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.vcs.FileStatusManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.FileStatusManagerImpl</implementation-class>
       <skipForDummyProject/>

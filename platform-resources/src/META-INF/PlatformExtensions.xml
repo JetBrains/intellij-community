@@ -82,6 +82,8 @@
 
   <projectService serviceInterface="com.intellij.ide.SelectInEditorManager"
                   serviceImplementation="com.intellij.ide.impl.SelectInEditorManagerImpl"/>
+  <projectService serviceInterface="com.intellij.ui.RecentsManager"
+                  serviceImplementation="com.intellij.ui.RecentsManager"/>
 
   <!-- General -->
   <applicationConfigurable implementation="com.intellij.ide.GeneralSettingsConfigurable"/>

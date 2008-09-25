@@ -1,10 +1,10 @@
 package com.intellij.ui;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -15,7 +15,15 @@ import java.util.*;
 /**
  * @author ven
  */
-public class RecentsManager implements JDOMExternalizable, ProjectComponent {
+@State(
+  name="RecentsManager",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public class RecentsManager implements PersistentStateComponent<Element> {
   private final Map<String, LinkedList<String>> myMap = new HashMap<String, LinkedList<String>>();
 
   private int myRecentsNumberToKeep = 5;
@@ -24,7 +32,7 @@ public class RecentsManager implements JDOMExternalizable, ProjectComponent {
   @NonNls protected static final String NAME_ATTR = "name";
 
   public static RecentsManager getInstance(Project project) {
-    return project.getComponent(RecentsManager.class);
+    return ServiceManager.getService(project, RecentsManager.class);
   }
 
   @Nullable
@@ -54,7 +62,7 @@ public class RecentsManager implements JDOMExternalizable, ProjectComponent {
     recentEntrues.addFirst(newEntry);
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public void loadState(Element element) {
     myMap.clear();
     final List keyElements = element.getChildren(KEY_ELEMENT_NAME);
     for (Iterator iterator = keyElements.iterator(); iterator.hasNext();) {
@@ -70,7 +78,8 @@ public class RecentsManager implements JDOMExternalizable, ProjectComponent {
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public Element getState() {
+    Element element = new Element("state");
     final Set<Map.Entry<String, LinkedList<String>>> entries = myMap.entrySet();
     for (Map.Entry<String, LinkedList<String>> entry : entries) {
       final Element keyElement = new Element(KEY_ELEMENT_NAME);
@@ -83,23 +92,10 @@ public class RecentsManager implements JDOMExternalizable, ProjectComponent {
       }
       element.addContent(keyElement);
     }
+    return element;
   }
 
   public void setRecentsNumberToKeep(final int recentsNumberToKeep) {
     myRecentsNumberToKeep = recentsNumberToKeep;
-  }
-
-  public void projectOpened() {}
-
-  public void projectClosed() {}
-
-  public String getComponentName() {
-    return "RecentsManager";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }
