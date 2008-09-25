@@ -1110,38 +1110,24 @@ public class FileBasedIndex implements ApplicationComponent {
       processFileImpl(fileContent);
     }
 
-    private final Semaphore myForceUpdateSemaphore = new Semaphore() {
-      ThreadLocal<Integer> myAlreadyAquired = new ThreadLocal<Integer>() {
-        protected Integer initialValue() {
-          return 0;
-        }
-      };
-
-      public void down() {
-        final Integer count = myAlreadyAquired.get();
-        if (count == 0) {
-          super.down();
-        }
-        myAlreadyAquired.set(count + 1);
-      }
-
-      public void up() {
-        final int count = myAlreadyAquired.get() - 1;
-        if (count == 0) {
-          super.up();
-        }
-        myAlreadyAquired.set(count);
-      }
-
-      public void waitFor() {
-        if (myAlreadyAquired.get() == 0)  {
-          super.waitFor();
-        }
+    private final ThreadLocal<Boolean> myAlreadyAquired = new ThreadLocal<Boolean>() {
+      protected Boolean initialValue() {
+        return Boolean.FALSE;
       }
     };
+    private final Semaphore myForceUpdateSemaphore = new Semaphore();
     
     public void forceUpdate() {
       ensureAllInvalidateTasksCompleted();
+
+      final Boolean alreadyAquired = myAlreadyAquired.get();
+      assert !alreadyAquired : "forceUpdate() is not reentrant!";
+
+      if (alreadyAquired) {
+        return;
+      }
+
+      myAlreadyAquired.set(Boolean.TRUE);
       myForceUpdateSemaphore.down();
       try {
         for (VirtualFile file: queryNeededFiles()) {
@@ -1150,6 +1136,8 @@ public class FileBasedIndex implements ApplicationComponent {
       }
       finally {
         myForceUpdateSemaphore.up();
+        myAlreadyAquired.set(Boolean.FALSE);
+
         myForceUpdateSemaphore.waitFor(); // possibly wait until another thread completes indexing
       }
     }
