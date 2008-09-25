@@ -216,6 +216,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     beanClassBuilder.setTypeArguments(typeParams);
     beanClassBuilder.setClassName(className);
     beanClassBuilder.setPackageName(packageName);
+    beanClassBuilder.setStatic(myCreateInnerClass && method.getModifierList().hasModifierProperty(PsiModifier.STATIC));
     final PsiType returnType = method.getReturnType();
     beanClassBuilder.setValueType(returnType);
 

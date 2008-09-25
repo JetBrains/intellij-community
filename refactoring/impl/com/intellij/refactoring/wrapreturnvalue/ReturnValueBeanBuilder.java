@@ -19,6 +19,7 @@ class ReturnValueBeanBuilder {
     private final List<PsiTypeParameter> typeParams = new ArrayList<PsiTypeParameter>();
     private Project myProject = null;
     private PsiType valueType = null;
+  private boolean myStatic;
 
   public void setClassName(String className) {
         this.className = className;
@@ -42,7 +43,9 @@ class ReturnValueBeanBuilder {
        
         if (packageName.length() > 0) out.append("package " + packageName + ';');
         out.append('\n');
-        out.append("public class " + className);
+      out.append("public ");
+      if (myStatic) out.append("static ");
+      out.append("class ").append(className);
         if (!typeParams.isEmpty()) {
             out.append('<');
             boolean first = true;
@@ -112,5 +115,9 @@ class ReturnValueBeanBuilder {
   public void setValueType(PsiType valueType) {
         this.valueType = valueType;
     }
+
+  public void setStatic(final boolean isStatic) {
+    myStatic = isStatic;
+  }
 }
 
