@@ -176,7 +176,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
           existingClassField.setText(className);
           model.removeAllElements();
           for (PsiField field : selectedClass.getFields()) {
-            if (TypeConversionUtil.isAssignable(sourceMethod.getReturnType(), field.getType())) {
+            if (TypeConversionUtil.isAssignable(field.getType(), sourceMethod.getReturnType())) {
               model.addElement(field);
             }
           }

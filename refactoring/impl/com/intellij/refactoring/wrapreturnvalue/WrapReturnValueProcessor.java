@@ -154,9 +154,27 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
           if (parameters.length == 1) {
             final PsiParameter parameter = parameters[0];
             final PsiType parameterType = parameter.getType();
-            if (TypeConversionUtil.isAssignable(method.getReturnType(), parameterType)) {
-              foundConstructor = true;
-              break;
+            if (TypeConversionUtil.isAssignable(parameterType, method.getReturnType())) {
+              final PsiCodeBlock body = constructor.getBody();
+              LOG.assertTrue(body != null);
+              final boolean[] found = new boolean[1];
+              body.accept(new JavaRecursiveElementVisitor() {
+                @Override
+                public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
+                  super.visitAssignmentExpression(expression);
+                  final PsiExpression lExpression = expression.getLExpression();
+                  if (lExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)lExpression).resolve() == myDelegateField) {
+                    final PsiExpression rExpression = expression.getRExpression();
+                    if (rExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)rExpression).resolve() == parameter) {
+                      found[0] = true;
+                    }
+                  }
+                }
+              });
+              if (found[0]) {
+                foundConstructor = true;
+                break;
+              }
             }
           }
         }

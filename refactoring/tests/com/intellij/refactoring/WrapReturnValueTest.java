@@ -98,4 +98,12 @@ public class WrapReturnValueTest extends MultiFileTestCase{
   public void testAnonymous() throws Exception {
     doTest(true, null, false);
   }
+
+  public void testWrongFieldAssignment() throws Exception {
+    doTest(true, "Existing class does not have appropriate constructor", false);
+  }
+
+  public void testWrongFieldType() throws Exception {
+    doTest(true, "Existing class does not have appropriate constructor", false);
+  }
 }
