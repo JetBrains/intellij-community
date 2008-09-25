@@ -23,6 +23,8 @@ public class GotoTestOrCodeAction extends BaseCodeInsightAction {
 
   @Override
   public void update(AnActionEvent event) {
+    Presentation p = event.getPresentation();
+    p.setEnabled(false);
     Project project = event.getData(PlatformDataKeys.PROJECT);
     Editor editor = event.getData(PlatformDataKeys.EDITOR);
     if (editor == null || project == null) return;
@@ -31,20 +33,16 @@ public class GotoTestOrCodeAction extends BaseCodeInsightAction {
     if (psiFile == null) return;
 
     PsiElement element = GotoTestOrCodeHandler.getSelectedElement(editor, psiFile);
-    Presentation p = event.getPresentation();
 
-    if (element == null) {
-      p.setEnabled(false);
-    }
-    else {
-      p.setEnabled(true);
-      if (TestFinderHelper.isTest(element)) {
-        p.setText(ActionsBundle.message("action.GotoTestSubject.text"));
-        p.setDescription(ActionsBundle.message("action.GotoTestSubject.description"));
-      } else {
-        p.setText(ActionsBundle.message("action.GotoTest.text"));
-        p.setDescription(ActionsBundle.message("action.GotoTest.description"));
-      }
+    if (element == null) return;
+
+    p.setEnabled(true);
+    if (TestFinderHelper.isTest(element)) {
+      p.setText(ActionsBundle.message("action.GotoTestSubject.text"));
+      p.setDescription(ActionsBundle.message("action.GotoTestSubject.description"));
+    } else {
+      p.setText(ActionsBundle.message("action.GotoTest.text"));
+      p.setDescription(ActionsBundle.message("action.GotoTest.description"));
     }
   }
 }
