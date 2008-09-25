@@ -80,6 +80,9 @@
   <projectService serviceInterface="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"
                   serviceImplementation="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"/>
 
+  <projectService serviceInterface="com.intellij.ide.SelectInEditorManager"
+                  serviceImplementation="com.intellij.ide.impl.SelectInEditorManagerImpl"/>
+
   <!-- General -->
   <applicationConfigurable implementation="com.intellij.ide.GeneralSettingsConfigurable"/>
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -24,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public abstract class SelectInEditorManager{
   public static SelectInEditorManager getInstance(Project project) {
-    return project.getComponent(SelectInEditorManager.class);
+    return ServiceManager.getService(project, SelectInEditorManager.class);
   }
 
   /** Do selection in Editor. This selection is removed automatically, then caret position is changed,

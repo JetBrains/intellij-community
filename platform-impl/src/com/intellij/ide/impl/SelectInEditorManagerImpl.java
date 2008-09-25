@@ -3,7 +3,7 @@ package com.intellij.ide.impl;
 import com.intellij.ide.SelectInEditorManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.FocusEvent;
@@ -29,7 +30,7 @@ import java.awt.event.FocusListener;
  * @author MYakovlev
  * Date: Jul 1, 2002
  */
-public class SelectInEditorManagerImpl extends SelectInEditorManager implements ProjectComponent, FocusListener, CaretListener{
+public class SelectInEditorManagerImpl extends SelectInEditorManager implements Disposable, FocusListener, CaretListener{
   private final Project myProject;
   private RangeHighlighter mySegmentHighlighter;
   private Editor myEditor;
@@ -38,20 +39,7 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
     myProject = project;
   }
 
-  public void projectOpened(){
-  }
-
-  public void projectClosed(){
-  }
-
-  @NotNull
-  public String getComponentName(){
-    return "SelectInEditorManager";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent(){
+  public void dispose() {
     releaseAll();
   }
 
@@ -143,6 +131,7 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
     }
   }
 
+  @Nullable
   private Editor openEditor(VirtualFile file, int textOffset){
     if (file == null || !file.isValid()){
       return null;

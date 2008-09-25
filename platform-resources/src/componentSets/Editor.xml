@@ -46,10 +46,5 @@
       <implementation-class>com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl</implementation-class>
       <skipForDummyProject/>
     </component>
-    <component>
-      <interface-class>com.intellij.ide.SelectInEditorManager</interface-class>
-      <implementation-class>com.intellij.ide.impl.SelectInEditorManagerImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
   </project-components>
 </components>
