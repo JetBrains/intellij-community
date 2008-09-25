@@ -79,6 +79,9 @@
                       serviceImplementation="com.intellij.codeInsight.folding.CodeFoldingSettings"/>
   <exportable serviceInterface="com.intellij.codeInsight.folding.CodeFoldingSettings"/>
 
+  <applicationService serviceInterface="com.intellij.psi.statistics.StatisticsManager"
+                      serviceImplementation="com.intellij.psi.statistics.impl.StatisticsManagerImpl"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"

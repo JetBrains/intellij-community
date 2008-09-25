@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.statistics;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
@@ -42,7 +42,7 @@ public abstract class StatisticsManager implements SettingsSavingComponent {
 
 
   public static StatisticsManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(StatisticsManager.class);
+    return ServiceManager.getService(StatisticsManager.class);
   }
 
   public abstract int getUseCount(@NotNull StatisticsInfo info);

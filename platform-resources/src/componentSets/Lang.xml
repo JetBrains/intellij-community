@@ -1,11 +1,6 @@
 <components>
   <application-components>
     <component>
-      <interface-class>com.intellij.psi.statistics.StatisticsManager</interface-class>
-      <implementation-class>com.intellij.psi.statistics.impl.StatisticsManagerImpl</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.psi.codeStyle.CodeStyleSettingsManager</implementation-class>
     </component>
 
