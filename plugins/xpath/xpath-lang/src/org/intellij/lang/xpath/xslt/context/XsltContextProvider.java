@@ -31,6 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import gnu.trove.THashSet;
@@ -61,6 +62,12 @@ import java.util.*;
 
 public class XsltContextProvider extends ContextProvider {
     public static final ContextType TYPE = ContextType.lookupOrCreate("XSLT");
+
+    private static final Set<String> IGNORED_URIS = new THashSet<String>();
+    static {
+        IGNORED_URIS.add(XsltSupport.XSLT_NS);
+        IGNORED_URIS.addAll(XmlUtil.ourSchemaUrisList);
+    }
 
     private CachedValue<ElementNames> myNames;
 
@@ -323,7 +330,7 @@ public class XsltContextProvider extends ContextProvider {
     }
 
     private static boolean isIgnoredNamespace(String prefix, String namespace) {
-        return namespace.equals(XsltSupport.XSLT_NS) || prefix.length() == 0 || "xmlns".equals(prefix);
+        return IGNORED_URIS.contains(namespace) || prefix.length() == 0 || "xmlns".equals(prefix);
     }
 
     private static void processElementDescriptors(XmlElementDescriptor descriptor, XmlTag tag, ElementNames names, Set<XmlElementDescriptor> history) {
