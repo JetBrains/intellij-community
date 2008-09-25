@@ -117,7 +117,9 @@ public abstract class AutoScrollToSourceHandler {
     myAutoScrollAlarm.addRequest(
       new Runnable() {
         public void run() {
-          scrollToSource(component);
+          if (component.isShowing()) { //for tests
+            scrollToSource(component);
+          }
         }
       },
       500
@@ -139,7 +141,7 @@ public abstract class AutoScrollToSourceHandler {
       // asking to register some file type for this file. This behaviour is undesirable when autoscrolling.
       if (FileTypeManager.getInstance().getFileTypeByFile(vFile) == FileTypes.UNKNOWN) return;
     }
-    Navigatable[] navigatables = (Navigatable[])dataContext.getData(DataConstants.NAVIGATABLE_ARRAY);
+    Navigatable[] navigatables = PlatformDataKeys.NAVIGATABLE_ARRAY.getData(dataContext);
     if (navigatables != null) {
       for (Navigatable navigatable : navigatables) {
         // we are not going to open modal dialog during autoscrolling
