@@ -27,7 +27,7 @@ public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringP
         ((FixableUsageInfo)usageInfo).fixUsage();
       }
       catch (IncorrectOperationException e) {
-        LOG.error(e);
+        LOG.info(e);
       }
     }
   }
