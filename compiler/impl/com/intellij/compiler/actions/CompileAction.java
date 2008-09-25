@@ -12,6 +12,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -20,7 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CompileAction extends CompileActionBase {
-  
+  private Condition<Pair<Project, VirtualFile>> myCompilableResourceFileCondition;
+
   protected void doAction(DataContext dataContext, Project project) {
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     final boolean trackDependencies = CompilerWorkspaceConfiguration.getInstance(project).COMPILE_DEPENDENT_FILES;
@@ -36,7 +39,7 @@ public class CompileAction extends CompileActionBase {
 
   }
 
-  public void update(AnActionEvent event){
+  public void update(AnActionEvent event) {
     super.update(event);
     Presentation presentation = event.getPresentation();
     if (!presentation.isEnabled()) {
@@ -83,7 +86,7 @@ public class CompileAction extends CompileActionBase {
 
       if (aPackage != null) {
         String name = aPackage.getQualifiedName();
-        if(name.length() == 0) {
+        if (name.length() == 0) {
           //noinspection HardCodedStringLiteral
           name = "<default>";
         }
@@ -92,10 +95,10 @@ public class CompileAction extends CompileActionBase {
       else if (files.length == 1) {
         final VirtualFile file = files[0];
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
-        if(CompilerManager.getInstance(project).isCompilableFileType(fileType) || compilerConfiguration.isResourceFile(file.getName())) {
+        if (CompilerManager.getInstance(project).isCompilableFileType(fileType) || isCompilableResourceFile(project, compilerConfiguration, file)) {
           elementDescription = "'" + file.getName() + "'";
         }
-        else  {
+        else {
           if (!ActionPlaces.MAIN_MENU.equals(event.getPlace())) {
             // the action should be invisible in popups for non-java files
             presentation.setEnabled(false);
@@ -135,7 +138,11 @@ public class CompileAction extends CompileActionBase {
     return buffer.toString();
   }
 
-  private static VirtualFile[] getCompilableFiles(Project project, VirtualFile[] files) {
+  public void setCompilableResourceFileCondition(final Condition<Pair<Project, VirtualFile>> compilableResourceFileCondition) {
+    myCompilableResourceFileCondition = compilableResourceFileCondition;
+  }
+
+  private VirtualFile[] getCompilableFiles(Project project, VirtualFile[] files) {
     if (files == null || files.length == 0) {
       return VirtualFile.EMPTY_ARRAY;
     }
@@ -160,12 +167,17 @@ public class CompileAction extends CompileActionBase {
       }
       else {
         FileType fileType = typeManager.getFileTypeByFile(file);
-        if (!(compilerManager.isCompilableFileType(fileType) || compilerConfiguration.isResourceFile(file.getName()))) {
+        if (!(compilerManager.isCompilableFileType(fileType) || isCompilableResourceFile(project, compilerConfiguration, file))) {
           continue;
         }
       }
       filesToCompile.add(file);
     }
-    return filesToCompile.size() > 0? filesToCompile.toArray(new VirtualFile[filesToCompile.size()]) : VirtualFile.EMPTY_ARRAY;
+    return filesToCompile.size() > 0 ? filesToCompile.toArray(new VirtualFile[filesToCompile.size()]) : VirtualFile.EMPTY_ARRAY;
+  }
+
+  private boolean isCompilableResourceFile(final Project project, final CompilerConfiguration compilerConfiguration, final VirtualFile file) {
+    return compilerConfiguration.isResourceFile(file.getName()) &&
+           (myCompilableResourceFileCondition == null || myCompilableResourceFileCondition.value(Pair.create(project, file)));
   }
 }
