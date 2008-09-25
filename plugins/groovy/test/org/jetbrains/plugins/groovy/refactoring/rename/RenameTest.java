@@ -110,7 +110,7 @@ public class RenameTest extends CommonRefactoringTestCase {
       myEditor = null;
     }
 
-    System.out.println(result);
+    //System.out.println(result);
 
     return result;
 
