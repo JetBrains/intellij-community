@@ -16,12 +16,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author spleaner
  */
 public class CompileStepBeforeRun implements StepsBeforeRunProvider {
-  public static final Key<RunConfiguration> RUN_CONFIGURATION = Key.create("RUN_CONFIGURATION");
+  private static final Key<RunConfiguration> RUN_CONFIGURATION = Key.create("RUN_CONFIGURATION");
   @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
 
   private Project myProject;
@@ -109,5 +110,10 @@ public class CompileStepBeforeRun implements StepsBeforeRunProvider {
 
   public String configureStep(final RunConfiguration runConfiguration) {
     return getStepName();
+  }
+
+  @Nullable
+  public static RunConfiguration getRunConfiguration(final CompileContext context) {
+    return context.getCompileScope().getUserData(RUN_CONFIGURATION);
   }
 }
