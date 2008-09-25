@@ -10,7 +10,7 @@
       <component id="d5d5b" class="javax.swing.JRadioButton" binding="createNewClassButton">
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-          <gridbag top="10" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+          <gridbag top="15" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
           <text value="&amp;Create new class"/>
@@ -31,7 +31,7 @@
       <component id="ca685" class="javax.swing.JRadioButton" binding="useExistingClassButton">
         <constraints>
           <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-          <gridbag top="10" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+          <gridbag top="15" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
           <text value="&amp;Use existing class"/>
@@ -67,7 +67,7 @@
           <component id="b3fd9" class="javax.swing.JLabel">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="0.0" weighty="0.0"/>
+              <gridbag top="5" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
               <text value="&amp;Package name"/>
@@ -76,7 +76,7 @@
           <component id="e72f1" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="packageTextField">
             <constraints>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="1.0" weighty="0.0"/>
+              <gridbag top="5" left="0" bottom="0" right="0" weightx="1.0" weighty="0.0"/>
             </constraints>
             <properties/>
           </component>
@@ -96,7 +96,7 @@
               <gridbag weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
-              <text value="&amp;Name"/>
+              <text value="Name"/>
             </properties>
           </component>
           <component id="17eb8" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="existingClassField">
@@ -109,14 +109,14 @@
           <component id="4d2b9" class="javax.swing.JComboBox" binding="myFieldsCombo">
             <constraints>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="0.0" weighty="0.0"/>
+              <gridbag top="5" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties/>
           </component>
           <component id="cc9af" class="javax.swing.JLabel">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="0.0" weighty="0.0"/>
+              <gridbag top="5" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
               <text value="Wrapper &amp;field"/>
@@ -145,7 +145,7 @@
       <component id="809b1" class="javax.swing.JRadioButton" binding="myCreateInnerClassButton" default-binding="true">
         <constraints>
           <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-          <gridbag top="10" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+          <gridbag top="15" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
           <text value="Create &amp;inner class"/>
@@ -166,7 +166,7 @@
             </constraints>
             <properties>
               <labelFor value="3bee"/>
-              <text value="&amp;Name"/>
+              <text value="Na&amp;me"/>
             </properties>
           </component>
           <component id="3bee" class="javax.swing.JTextField" binding="myInnerClassNameTextField" default-binding="true">
