@@ -28,6 +28,7 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.List;
 
 /*
  * @author: MYakovlev
@@ -154,35 +155,42 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
       }
     };
     myCurrentTab = myTemplatesList;
-    myJ2eeTemplatesList = new FileTemplateTabAsTree(J2EE_TITLE) {
-      public void onTemplateSelected() {
-        onListSelectionChanged();
-      }
 
-      protected FileTemplateNode initModel() {
-        SortedSet<FileTemplateGroupDescriptor> categories = new TreeSet<FileTemplateGroupDescriptor>(new Comparator<FileTemplateGroupDescriptor>() {
-          public int compare(FileTemplateGroupDescriptor o1, FileTemplateGroupDescriptor o2) {
-            return o1.getTitle().compareTo(o2.getTitle());
-          }
-        });
+    List<FileTemplateTab> allTabs = new ArrayList<FileTemplateTab>(Arrays.asList(myTemplatesList, myPatternsList, myCodeTemplatesList));
 
-        Set<FileTemplateGroupDescriptorFactory> factories = new THashSet<FileTemplateGroupDescriptorFactory>();
-        factories.addAll(Arrays.asList(ApplicationManager.getApplication().getComponents(FileTemplateGroupDescriptorFactory.class)));
-        factories.addAll(Arrays.asList(Extensions.getExtensions(FileTemplateGroupDescriptorFactory.EXTENSION_POINT_NAME)));
+    final Set<FileTemplateGroupDescriptorFactory> factories = new THashSet<FileTemplateGroupDescriptorFactory>();
+    factories.addAll(Arrays.asList(ApplicationManager.getApplication().getComponents(FileTemplateGroupDescriptorFactory.class)));
+    factories.addAll(Arrays.asList(Extensions.getExtensions(FileTemplateGroupDescriptorFactory.EXTENSION_POINT_NAME)));
 
-        for (FileTemplateGroupDescriptorFactory templateGroupFactory : factories) {
-          ContainerUtil.addIfNotNull(templateGroupFactory.getFileTemplatesDescriptor(), categories);
+    if (!factories.isEmpty()) {
+      myJ2eeTemplatesList = new FileTemplateTabAsTree(J2EE_TITLE) {
+        public void onTemplateSelected() {
+          onListSelectionChanged();
         }
 
-        //noinspection HardCodedStringLiteral
-        return new FileTemplateNode("ROOT", null, ContainerUtil.map2List(categories, new Function<FileTemplateGroupDescriptor, FileTemplateNode>() {
-          public FileTemplateNode fun(FileTemplateGroupDescriptor s) {
-            return new FileTemplateNode(s);
+        protected FileTemplateNode initModel() {
+          SortedSet<FileTemplateGroupDescriptor> categories = new TreeSet<FileTemplateGroupDescriptor>(new Comparator<FileTemplateGroupDescriptor>() {
+            public int compare(FileTemplateGroupDescriptor o1, FileTemplateGroupDescriptor o2) {
+              return o1.getTitle().compareTo(o2.getTitle());
+            }
+          });
+
+
+          for (FileTemplateGroupDescriptorFactory templateGroupFactory : factories) {
+            ContainerUtil.addIfNotNull(templateGroupFactory.getFileTemplatesDescriptor(), categories);
           }
-        }));
-      }
-    };
-    myTabs = new FileTemplateTab[]{myTemplatesList, myPatternsList, myCodeTemplatesList, myJ2eeTemplatesList};
+
+          //noinspection HardCodedStringLiteral
+          return new FileTemplateNode("ROOT", null, ContainerUtil.map2List(categories, new Function<FileTemplateGroupDescriptor, FileTemplateNode>() {
+            public FileTemplateNode fun(FileTemplateGroupDescriptor s) {
+              return new FileTemplateNode(s);
+            }
+          }));
+        }
+      };
+      allTabs.add(myJ2eeTemplatesList);
+    }
+    myTabs = allTabs.toArray(new FileTemplateTab[allTabs.size()]);
     myTabbedPane = new TabbedPaneWrapper();
     myTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     for (FileTemplateTab tab : myTabs) {
@@ -421,7 +429,9 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     myTemplatesList.init(templatesAndInternals);
     myPatternsList.init(templateManager.getAllPatterns());
     myCodeTemplatesList.init(templateManager.getAllCodeTemplates());
-    myJ2eeTemplatesList.init(templateManager.getAllJ2eeTemplates());
+    if (myJ2eeTemplatesList != null) {
+      myJ2eeTemplatesList.init(templateManager.getAllJ2eeTemplates());
+    }
   }
 
   public boolean isModified() {
@@ -543,12 +553,14 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     apply(newModifiedItems, myCodeTemplatesList.savedTemplates, CODE_ID, templatesManager.getAllCodeTemplates());
 
     //Apply J2EE templates
-    newModifiedItems = new ArrayList<FileTemplate>();
-    templates = myJ2eeTemplatesList.getTemplates();
-    for (FileTemplate template : templates) {
-      newModifiedItems.add(template);
+    if (myJ2eeTemplatesList != null) {
+      newModifiedItems = new ArrayList<FileTemplate>();
+      templates = myJ2eeTemplatesList.getTemplates();
+      for (FileTemplate template : templates) {
+        newModifiedItems.add(template);
+      }
+      apply(newModifiedItems, myJ2eeTemplatesList.savedTemplates, J2EE_ID, templatesManager.getAllJ2eeTemplates());
     }
-    apply(newModifiedItems, myJ2eeTemplatesList.savedTemplates, J2EE_ID, templatesManager.getAllJ2eeTemplates());
 
     FileTemplateManager.getInstance().saveAll();
 
