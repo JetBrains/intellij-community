@@ -76,7 +76,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     LOG.assertTrue(!PsiDocumentManager.getInstance(project).hasUncommitedDocuments());
     PsiMethod method;
     if (expr != null) {
-      method = Util.getContainingMethod(expr);
+      final PsiElement physicalElement = expr.getUserData(ElementToWorkOn.PARENT);
+      method = Util.getContainingMethod(physicalElement != null ? physicalElement : expr);
     }
     else {
       method = Util.getContainingMethod(localVar);

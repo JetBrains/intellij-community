@@ -12,8 +12,8 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -26,6 +26,8 @@ public class ElementToWorkOn {
   public static final Key<PsiElement> PARENT = Key.create("PARENT");
   private final PsiExpression myExpression;
   private final PsiLocalVariable myLocalVariable;
+  public static final Key<PsiElement> PREFIX = Key.create("prefix");
+  public static final Key<PsiElement> SUFFIX = Key.create("suffix");
 
   private ElementToWorkOn(PsiLocalVariable localVariable, PsiExpression expr) {
     myLocalVariable = localVariable;
@@ -134,14 +136,7 @@ public class ElementToWorkOn {
       }
     }
     if (localVar == null && expr == null) {
-      try {
-        expr = JavaPsiFacade.getInstance(project).getElementFactory()
-          .createExpressionFromText(file.getText().subSequence(startOffset, endOffset).toString(), file);
-        expr.putUserData(PARENT, file.findElementAt(startOffset));
-      }
-      catch (IncorrectOperationException e) {
-        expr = null;
-      }
+      expr = IntroduceVariableBase.getSelectedExpression(project, file, startOffset, endOffset);
     }
 
     if (localVar == null && expr == null) {
