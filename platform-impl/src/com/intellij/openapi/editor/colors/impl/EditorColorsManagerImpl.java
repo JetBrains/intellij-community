@@ -146,11 +146,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager
 
   public EditorColorsScheme[] getAllSchemes() {
     ArrayList<EditorColorsScheme> schemes = new ArrayList<EditorColorsScheme>(mySchemesManager.getAllSchemes());
-    Collections.sort(schemes, new Comparator() {
-      public int compare(Object o1, Object o2) {
-        EditorColorsScheme s1 = (EditorColorsScheme)o1;
-        EditorColorsScheme s2 = (EditorColorsScheme)o2;
-
+    Collections.sort(schemes, new Comparator<EditorColorsScheme>() {
+      public int compare(EditorColorsScheme s1, EditorColorsScheme s2) {
         if (isDefaultScheme(s1) && !isDefaultScheme(s2)) return -1;
         if (!isDefaultScheme(s1) && isDefaultScheme(s2)) return 1;
 
