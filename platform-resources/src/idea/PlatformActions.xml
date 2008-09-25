@@ -320,6 +320,8 @@
     <group id="WelcomeScreen.Documentation">
       <action id="WelcomeScreen.ReadHelp" class="com.intellij.openapi.wm.impl.welcomeScreen.ReadHelpAction"
         icon="/general/readHelp.png"/>
+      <action id="WelcomeScreen.ShowTips" class="com.intellij.ide.actions.ShowTipsAction"
+        icon="/general/tipsOfTheDay.png"/>
     </group>
 
     <group id="FileChooser">
