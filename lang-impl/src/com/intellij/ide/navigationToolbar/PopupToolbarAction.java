@@ -35,4 +35,10 @@ public class PopupToolbarAction extends AnAction {
     };
     toolbarPanel.showHint(editor, dataContext);
   }
+
+  @Override
+  public void update(final AnActionEvent e) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    e.getPresentation().setEnabled(project != null);
+  }
 }
