@@ -6,6 +6,7 @@ package com.intellij.openapi.vfs.impl.local;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -166,7 +167,9 @@ public class FileWatcher {
 
     shutdownProcess();
 
-    notifierProcess = Runtime.getRuntime().exec(new String[]{PathManager.getBinPath() + "/fsnotifier"});
+    @NonNls final String executableName = SystemInfo.isWindows ? "fsnotifier.exe" : "fsnotifier";
+    notifierProcess = Runtime.getRuntime().exec(new String[]{PathManager.getBinPath() + File.separatorChar + executableName});
+    
     notifierReader = new BufferedReader(new InputStreamReader(notifierProcess.getInputStream()));
     notifierWriter = new BufferedWriter(new OutputStreamWriter(notifierProcess.getOutputStream()));
   }
