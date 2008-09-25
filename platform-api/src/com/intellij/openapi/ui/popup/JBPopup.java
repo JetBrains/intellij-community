@@ -104,7 +104,7 @@ public interface JBPopup extends Disposable {
    * Checks if it's currently allowed to close the popup.
    *
    * @return true if the popup can be closed, false if a callback disallowed closing the popup.
-   * @see com.intellij.openapi.ui.popup.ComponentPopupBuilder#setCancelCallback(com.intellij.openapi.util.Computable<java.lang.Boolean>)
+   * @see com.intellij.openapi.ui.popup.ComponentPopupBuilder#setCancelCallback(com.intellij.openapi.util.Computable)
    */
   boolean canClose();
 

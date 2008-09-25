@@ -20,8 +20,6 @@ import com.intellij.openapi.project.Project;
 
 /**
  * Factory interface for creating instances of the standard structure view component.
- *
- * @see com.intellij.peer.PeerFactory#getStructureViewFactory()
  */
 public abstract class StructureViewFactory {
   /**

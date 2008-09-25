@@ -130,7 +130,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * In order to save time when multiple inspections need to process
    * usages of the same classes and methods, usage searches are not performed directly, but
    * instead are queued for batch processing through
-   * {@link GlobalInspectionContext#enqueueClassUsagesProcessor} and similar methods. The method
+   * {@link GlobalJavaInspectionContext#enqueueClassUsagesProcessor} and similar methods. The method
    * can add new problems to <code>problemDescriptionsProcessor</code> or remove some of the problems
    * collected by {@link #runInspection} by calling {@link ProblemDescriptionsProcessor#ignoreElement}.
    *

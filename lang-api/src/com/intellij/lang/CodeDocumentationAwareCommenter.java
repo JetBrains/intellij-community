@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Defines support for "Enter within comments" actions in a custom language.
  * @author Maxim.Mossienko
- * @see Language#getCommenter()
+ * @see LanguageCommenters
  */
 public interface CodeDocumentationAwareCommenter extends Commenter {
   /**

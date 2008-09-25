@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * lexer from <code>getHighlightingLexer()</code>.
  *
  * @author max
- * @see Language#getPairedBraceMatcher()
+ * @see LanguageBraceMatching
  * @see BracePair
  */
 public interface PairedBraceMatcher {

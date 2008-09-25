@@ -24,7 +24,7 @@ import java.util.List;
  * Implemented by a custom language plugin to add annotations to files in the language.
  *
  * @author max
- * @see com.intellij.lang.Language#getAnnotator()
+ * @see com.intellij.lang.LanguageAnnotators
  */
 public interface Annotator {
   List<Annotator> EMPTY_LIST = Collections.emptyList();

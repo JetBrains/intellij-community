@@ -17,13 +17,13 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <html><body bgcolor="white">
 Provides interfaces for registering and implementing code inspections. To register inspections,
-a plugin should implement the {@link InspectionToolProvider} interface and return the
+a plugin should implement the {@link com.intellij.codeInspection.InspectionToolProvider} interface and return the
 list of inspection classes from the <code>getInspectionClasses()</code> method.
-An inspection is a class extending {@link LocalInspectionTool}. During background code
+An inspection is a class extending {@link com.intellij.codeInspection.LocalInspectionTool}. During background code
 analysis or when the "Inspect Code..." action is invoked,, IDEA calls the inspection
 to inspect individual files, classes, methods and fields, and if the inspection detects any problems,
-it returns an array of {@link ProblemDescriptor} classes reporting the problem. Each problem
-descriptor can return a list of {@link LocalQuickFix} classes, each of which represents an
+it returns an array of {@link com.intellij.codeInspection.ProblemDescriptor} classes reporting the problem. Each problem
+descriptor can return a list of {@link com.intellij.codeInspection.LocalQuickFix} classes, each of which represents an
 action which the user can invoke by pressing Alt-Enter in order to fix the problem detected
 by the inspection.
 </body></html>

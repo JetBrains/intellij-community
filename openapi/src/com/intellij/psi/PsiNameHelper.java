@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 /**
  * Service for validating and parsing Java identifiers.
  *
- * @see com.intellij.psi.PsiManager#getNameHelper()
+ * @see com.intellij.psi.JavaPsiFacade#getNameHelper()
  */
 public abstract class PsiNameHelper {
   @NonNls private static final Pattern WHITESPACE_PATTERN = Pattern.compile("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)");

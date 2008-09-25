@@ -22,7 +22,7 @@ import java.util.Collection;
 /**
  * A group of items in a generic tree.
  *
- * @see Grouper#group(com.intellij.ide.util.treeView.AbstractTreeNode, java.util.Collection<com.intellij.ide.util.treeView.smartTree.TreeElement>)
+ * @see Grouper#group(com.intellij.ide.util.treeView.AbstractTreeNode, java.util.Collection)  
  */
 public interface Group {
   /**

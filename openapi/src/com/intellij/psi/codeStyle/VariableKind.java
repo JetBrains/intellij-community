@@ -18,7 +18,7 @@ package com.intellij.psi.codeStyle;
 /**
  * Defines different types of variables for which the code style specifies naming settings.
  *
- * @see CodeStyleManager#getVariableKind(com.intellij.psi.PsiVariable)
+ * @see JavaCodeStyleManager#getVariableKind(com.intellij.psi.PsiVariable)
  */
 public enum VariableKind {
   FIELD,

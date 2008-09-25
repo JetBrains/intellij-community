@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * Service for evaluating values of constant expressions.
  *
  * @author ven
- * @see com.intellij.psi.PsiManager#getConstantEvaluationHelper()
+ * @see com.intellij.psi.JavaPsiFacade#getConstantEvaluationHelper()
  */
 public abstract class PsiConstantEvaluationHelper {
   /**

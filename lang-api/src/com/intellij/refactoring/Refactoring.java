@@ -94,9 +94,9 @@ public interface Refactoring {
    * <p/>
    * <ol>
    * <li> execute {@link #findUsages()} (with progress dialog and all)
-   * <li> execute {@link #preprocessUsages(Ref<UsageInfo[]>)}
-   * <li> if refactoring was not cancelled, check whether we {@link #shouldPreviewUsages(UsageInfo[])}, and show the preview
-   * <li> execute {@link #doRefactoring(UsageInfo[])} if appropiate (if either the preview
+   * <li> execute {@link #preprocessUsages(com.intellij.openapi.util.Ref)} 
+   * <li> if refactoring was not cancelled, check whether we {@link #shouldPreviewUsages(com.intellij.usageView.UsageInfo[])} , and show the preview
+   * <li> execute {@link #doRefactoring(com.intellij.usageView.UsageInfo[])} if appropiate (if either the preview
    * was not shown, or 'Do Refactor' button have been pressed)
    * </ol>
    */

@@ -39,25 +39,25 @@ public interface RefactoringSupportProvider {
 
   /**
    * @return handler for introducing local variables in this language
-   * @see com.intellij.refactoring.RefactoringActionHandler;
+   * @see com.intellij.refactoring.RefactoringActionHandler
    */
   @Nullable RefactoringActionHandler getIntroduceVariableHandler();
 
   /**
    * @return handler for extracting methods in this language
-   * @see com.intellij.refactoring.RefactoringActionHandler;
+   * @see com.intellij.refactoring.RefactoringActionHandler
    */
   @Nullable RefactoringActionHandler getExtractMethodHandler();
 
   /**
    * @return handler for introducing constants in this language
-   * @see com.intellij.refactoring.RefactoringActionHandler;
+   * @see com.intellij.refactoring.RefactoringActionHandler
    */
   @Nullable RefactoringActionHandler getIntroduceConstantHandler();
 
   /**
    * @return handler for introducing fields in this language
-   * @see com.intellij.refactoring.RefactoringActionHandler;
+   * @see com.intellij.refactoring.RefactoringActionHandler
    */
   @Nullable RefactoringActionHandler getIntroduceFieldHandler();
 

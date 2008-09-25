@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Key;
  * Represents an array of suggested variable names and allows to keep statistics on
  * which of the suggestions has been accepted.
  *
- * @see CodeStyleManager#suggestVariableName(VariableKind, String, com.intellij.psi.PsiExpression, com.intellij.psi.PsiType)
+ * @see JavaCodeStyleManager#suggestVariableName(VariableKind, String, com.intellij.psi.PsiExpression, com.intellij.psi.PsiType)
  */
 public abstract class SuggestedNameInfo {
   public static final Key<SuggestedNameInfo> SUGGESTED_NAME_INFO_KEY = Key.create("SUGGESTED_NAME_INFO_KEY");

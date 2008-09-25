@@ -133,7 +133,7 @@ public final class TreeUtil {
   /**
    * Expands specified paths.
    * @param tree JTree to apply expansion status to
-   * @param paths to expand. See {@link #collectExpandedPaths(JTree, List<TreePath>)}
+   * @param paths to expand. See {@link #collectExpandedPaths(javax.swing.JTree, java.util.List)}
    */
   public static void restoreExpandedPaths(@NotNull final JTree tree, @NotNull final List<TreePath> paths){
     for(int i = paths.size() - 1; i >= 0; i--){

@@ -34,8 +34,8 @@ import java.util.Collection;
  *
  * Instances of this interface can be obtained via methods of {@link RefactoringFactory}.
  *
- * @see RefactoringFactory#createSourceFolderPreservingMoveDestination(java.lang.String)
- * @see RefactoringFactory#createSourceRootMoveDestination(java.lang.String, com.intellij.openapi.vfs.VirtualFile)
+ * @see JavaRefactoringFactory#createSourceFolderPreservingMoveDestination(String) 
+ * @see JavaRefactoringFactory#createSourceRootMoveDestination(java.lang.String, com.intellij.openapi.vfs.VirtualFile)
  *  @author dsl
  */
 public interface MoveDestination {

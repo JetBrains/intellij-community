@@ -22,12 +22,12 @@ public abstract class FileCopyPatcher {
    *
    * Default implementation is {@link com.intellij.codeInsight.completion.DummyIdentifierPatcher} which
    * inserts {@link com.intellij.codeInsight.completion.CompletionInitializationContext#DUMMY_IDENTIFIER} 
-   * to the document replacing editor selection (see {@link CompletionInitializationContext.START_OFFSET} and
-   * {@link CompletionInitializationContext.SELECTION_END_OFFSET}).
+   * to the document replacing editor selection (see {@link CompletionInitializationContext#START_OFFSET} and
+   * {@link CompletionInitializationContext#SELECTION_END_OFFSET}).
    *
    * @param fileCopy
    * @param document
-   * @param map {@link com.intellij.codeInsight.completion.CompletionInitializationContext.START_OFFSET} should be valid after return
+   * @param map {@link com.intellij.codeInsight.completion.CompletionInitializationContext#START_OFFSET} should be valid after return
    */
   public abstract void patchFileCopy(@NotNull final PsiFile fileCopy, @NotNull Document document, @NotNull OffsetMap map);
 

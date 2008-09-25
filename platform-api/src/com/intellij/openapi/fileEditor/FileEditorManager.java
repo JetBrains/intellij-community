@@ -111,24 +111,24 @@ public abstract class FileEditorManager {
 
 
   /**
-   * @Deprecated Use MessageBus instead
    * Adds specified <code>listener</code>
    * @param listener listener to be added
+   * @deprecated Use MessageBus instead
    */
   public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
 
   /**
-   * @Deprecated Use MessageBus instead
    * @param listener
    * @param parentDisposable
+   * @deprecated Use MessageBus instead
    */
   public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, Disposable parentDisposable);
 
   /**
-   * @Deprecated Use Message Bus instead
    * Removes specified <code>listener</code>
    *
    * @param listener listener to be removed
+   * @deprecated Use Message Bus instead
    */
   public abstract void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
 

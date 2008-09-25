@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * Defines the support for "Comment with Line Comment" and "Comment with Block Comment"
  * actions in a custom language.
  * @author max
- * @see com.intellij.lang.Language#getCommenter()
+ * @see LanguageCommenters
  */
 public interface Commenter {
   /**

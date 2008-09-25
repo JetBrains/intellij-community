@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * the standard implementation of this interface - {@link TreeBasedStructureViewBuilder} -
  * should be used.
  *
- * @see com.intellij.lang.Language#getStructureViewBuilder(com.intellij.psi.PsiFile)
+ * @see com.intellij.lang.LanguageStructureViewBuilder#getStructureViewBuilder(com.intellij.psi.PsiFile)
  */
 
 public interface StructureViewBuilder {
