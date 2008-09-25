@@ -46,11 +46,11 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
   }
 
   public String getQualifiedName() {
-    return myChildrenDescription.getXmlName().getLocalName();
+    return myChildrenDescription.getXmlElementName();
   }
 
   public String getDefaultName() {
-    return myChildrenDescription.getXmlName().getLocalName();
+    return myChildrenDescription.getXmlElementName();
   }
 
   public XmlElementDescriptor[] getElementsDescriptors(final XmlTag context) {
@@ -245,7 +245,7 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
 
     @NotNull
     public String getXmlElementName() {
-      throw new UnsupportedOperationException("Method getXmlElementName not implemented in " + getClass());
+      return myDomElement.getXmlElementName();
     }
 
     @NotNull
