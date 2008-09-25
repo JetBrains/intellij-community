@@ -529,8 +529,10 @@ public class Messages {
           messageComponent.setContentType("text/html");
         }
         messageComponent.setText(myMessage);
-        messageComponent.setEditable(false);                                                         
-        messageComponent.setCaretPosition(0);
+        messageComponent.setEditable(false);
+        if (messageComponent.getCaret() != null) {
+          messageComponent.setCaretPosition(0);
+        }
         messageComponent.setBackground(UIUtil.getOptionPaneBackground());
         messageComponent.setForeground(label.getForeground());
 
