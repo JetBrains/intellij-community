@@ -5,6 +5,10 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
@@ -16,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PythonFileType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,6 +38,16 @@ import java.util.regex.Pattern;
  */
 public class PythonSdkType extends SdkType {
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
+
+  private Project myProjectForProgress; // used for progress-indicated path setup
+
+  /**
+   * Poor man's way to have setupSdkPaths run under a progress dialog, when possible.
+   * @param project project to pass to ProgressManager.run().
+   */
+  public void setProjectForProgress(Project project) {
+    myProjectForProgress = project;
+  }
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);    
@@ -176,7 +191,7 @@ public class PythonSdkType extends SdkType {
         if (!stubs_dir.exists()) {
           generateBuiltinStubs(currentSdk.getHomePath(), path);
         }
-        generateBinaryStubs(currentSdk.getHomePath(), path);
+        generateBinaryStubs(currentSdk.getHomePath(), path, null); // TODO: add a nice progress indicator somehow 
         break;
       }
     }
@@ -189,8 +204,28 @@ public class PythonSdkType extends SdkType {
     return "Python SDK";
   }
   
-
   public void setupSdkPaths(final Sdk sdk) {
+    final SdkModificator[] sdk_mod_holder = new SdkModificator[]{null};
+    if (myProjectForProgress != null) { // nice, progress-bar way
+      ProgressManager progman = ProgressManager.getInstance();
+      final Task.Modal setup_task = new Task.Modal(myProjectForProgress, "Setting up library files", true) {
+
+        public void run(@NotNull final ProgressIndicator indicator) {
+          sdk_mod_holder[0] = setupSdkPathsUnderProgress(sdk, indicator);
+        }
+
+      };
+      progman.run(setup_task);
+      if (sdk_mod_holder[0] != null) sdk_mod_holder[0].commitChanges(); // commit in dispatch thread, not task's
+    }
+    else { // old, dull way
+      final SdkModificator modificator = setupSdkPathsUnderProgress(sdk, null);
+      if (modificator != null) modificator.commitChanges();
+    }
+  }
+
+
+  protected SdkModificator setupSdkPathsUnderProgress(final Sdk sdk, ProgressIndicator indicator) {
     final SdkModificator sdkModificator = sdk.getSdkModificator();
     String sdk_path = sdk.getHomePath();
     String bin_path = getInterpreterPath(sdk_path);
@@ -202,11 +237,17 @@ public class PythonSdkType extends SdkType {
       "for x in sys.path:\n"+
       "  sys.stdout.write(x+chr(10))"
     ;
+    if (indicator != null) {
+      indicator.setText("Adding library roots");
+    }
     final List<String> paths = SdkUtil.getProcessOutput(sdk_path, new String[] {bin_path, "-c", script}).getStdout();
     if ((paths != null) && paths.size() > 0) {
       // add every path as root.
       for (String path: paths) {
         if (path.indexOf(File.separator) < 0) continue; // TODO: interpret possible 'special' paths reasonably
+        if (indicator != null) {
+          indicator.setText2(path);
+        }
         VirtualFile child = LocalFileSystem.getInstance().findFileByPath(path);
         if (child != null) {
           @NonNls String suffix = child.getExtension();
@@ -222,12 +263,17 @@ public class PythonSdkType extends SdkType {
         }
         else LOG.info("Bogus sys.path entry "+path);
       }
+      if (indicator != null) {
+        indicator.setText("Generating skeletons of __builtins__");
+        indicator.setText2("");
+      }
       generateBuiltinStubs(sdk_path, stubs_path);
       sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path), OrderRootType.SOURCES);
     }
-    generateBinaryStubs(sdk_path, stubs_path);
-    
-    sdkModificator.commitChanges();
+    generateBinaryStubs(sdk_path, stubs_path, indicator);
+
+    return sdkModificator;
+    //sdkModificator.commitChanges() must happen outside, and probably in a different thread.
   }
 
   @Nullable
@@ -291,12 +337,15 @@ public class PythonSdkType extends SdkType {
   /**
    * (Re-)generates skeletons for all binary python modules. Up-to-date stubs not regenerated.
    * Does one module at a time: slower, but avoids certain conflicts.
-   * TODO: Show a modal progress window.
    * @param sdkPath where to find interpreter.
    * @param stubsRoot where to put results (expected to exist).
+   * @param indicator ProgressIndicator to update, or null.
    */
-  public void generateBinaryStubs(final String sdkPath, final String stubsRoot) {
+  public static void generateBinaryStubs(final String sdkPath, final String stubsRoot, ProgressIndicator indicator) {
     if (!new File(stubsRoot).exists()) return; 
+    if (indicator != null) {
+      indicator.setText("Generating skeletons of binary libs");
+    }
     try {
       final String bin_path = getInterpreterPath(sdkPath);
       String text;
@@ -330,6 +379,9 @@ public class PythonSdkType extends SdkType {
             File f_skel = new File(stubsRoot + File.separator + mod_fname + ".py");
             if (f_orig.lastModified() >= f_skel.lastModified()) {
               // skeleton stale, rebuild
+              if (indicator != null) {
+                indicator.setText2(modname);
+              }
               LOG.info("Skeleton for " + modname);
               final SdkUtil.ProcessCallInfo gen_result = SdkUtil.getProcessOutput(sdkPath,
                 new String[] {bin_path, gen3_file.getPath(), "-d", stubsRoot, modname}
