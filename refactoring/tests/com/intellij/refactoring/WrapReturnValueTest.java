@@ -94,4 +94,8 @@ public class WrapReturnValueTest extends MultiFileTestCase{
   public void testHierarchy() throws Exception {
     doTest(false, null, true);
   }
+
+  public void testAnonymous() throws Exception {
+    doTest(true, null, false);
+  }
 }

@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.psi.PropertyUtils;
@@ -117,7 +118,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     }
     final String returnType = calculateReturnTypeString();
     usages.add(new ChangeReturnType(psiMethod, returnType));
-    psiMethod.accept(new ReturnSearchVisitor(usages, returnType));
+    psiMethod.accept(new ReturnSearchVisitor(usages, returnType, psiMethod));
   }
 
   private String calculateReturnTypeString() {
@@ -248,15 +249,20 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   private class ReturnSearchVisitor extends JavaRecursiveElementVisitor {
     private final List<FixableUsageInfo> usages;
     private final String type;
+    private final PsiMethod myMethod;
 
-    ReturnSearchVisitor(List<FixableUsageInfo> usages, String type) {
+    ReturnSearchVisitor(List<FixableUsageInfo> usages, String type, final PsiMethod psiMethod) {
       super();
       this.usages = usages;
       this.type = type;
+      myMethod = psiMethod;
     }
 
     public void visitReturnStatement(PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
+
+      if (PsiTreeUtil.getParentOfType(statement, PsiMethod.class) != myMethod) return;
+
       final PsiExpression returnValue = statement.getReturnValue();
       if (myUseExistingClass && returnValue instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)returnValue;
