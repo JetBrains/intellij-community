@@ -61,15 +61,6 @@ public class OptimizeImportsTest extends IdeaTestCase {
         rootModel.commit();
       }
     });
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
-    settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
-    settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
-    super.tearDown();
   }
 
   public void testNewline() throws Throwable {
@@ -129,6 +120,8 @@ public class OptimizeImportsTest extends IdeaTestCase {
   }
 
   private void doTest(String folder, String filePath) throws Throwable {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+    settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
     String basePath = TestUtils.getTestDataPath() + "/optimizeImports/";
     String resultText = getResultFromFile(basePath + folder);
     VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl("file://" + basePath + folder + "/" + filePath);
@@ -143,18 +136,17 @@ public class OptimizeImportsTest extends IdeaTestCase {
     GroovyImportOptimizer optimizer = new GroovyImportOptimizer();
     final Runnable runnable = optimizer.processFile(file);
 
-    CommandProcessor.getInstance().executeCommand(
-        myProject,
-        new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(runnable);
-          }
-        }, "Optimize imports", null);
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(runnable);
+      }
+    }, "Optimize imports", null);
 
     String text = file.getText();
     //System.out.println("---------------------------- " + folder + " ----------------------------");
     //System.out.println(text);
     assertEquals("Results are not equal", resultText, text);
+    settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
   }
 
   private String getResultFromFile(String basePath) throws IOException {
