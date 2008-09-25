@@ -389,7 +389,7 @@ public class SimpleColoredComponent extends JComponent {
       }
       g.setColor(color);
 
-      final int textBaseline = (getHeight() - metrics.getHeight()) / 2 + metrics.getAscent() - metrics.getDescent() / 2;
+      final int textBaseline = (getHeight() - metrics.getHeight()) / 2 + metrics.getAscent();
       g.drawString(fragment, xOffset, textBaseline);
 
       // 1. Strikeout effect

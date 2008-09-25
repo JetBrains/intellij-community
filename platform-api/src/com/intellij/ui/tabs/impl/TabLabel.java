@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
@@ -211,10 +210,7 @@ public class TabLabel extends JPanel {
 
     toggleShowActions(false);
 
-    NonOpaquePanel wrapper = new NonOpaquePanel(new GridBagLayout());
-    wrapper.add(myActionPanel);
-
-    add(wrapper, BorderLayout.EAST);
+    add(myActionPanel, BorderLayout.EAST);
 
     myTabs.revalidateAndRepaint(false);
   }

@@ -22,12 +22,16 @@ class ActionPanel extends NonOpaquePanel {
 
   private boolean myAutoHide;
 
+  private int myGap = 2;
+
   public ActionPanel(JBTabsImpl tabs, TabInfo tabInfo, Pass<MouseEvent> pass) {
     myTabs = tabs;
     myTabInfo = tabInfo;
     myGroup = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();
     AnAction[] children = myGroup.getChildren(null);
-    setLayout(new FlowLayout(FlowLayout.LEFT, 2, 0));
+
+    setLayout(new GridLayout(1, children.length, 0, myGap));
+
     for (AnAction each : children) {
       ActionButton eachButton = new ActionButton(myTabs, tabInfo, each, tabInfo.getTabActionPlace(), pass);
       myButtons.add(eachButton);
@@ -42,15 +46,6 @@ class ActionPanel extends NonOpaquePanel {
     }
 
     return changed;
-  }
-
-  public Dimension getPreferredSize() {
-    for (ActionButton each : myButtons) {
-      if (each.getComponent().isVisible()) {
-        return super.getPreferredSize();
-      }
-    }
-    return new Dimension(0, 0);
   }
 
   public boolean isAutoHide() {
