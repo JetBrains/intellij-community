@@ -1,9 +1,13 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.impl.Variable;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -11,6 +15,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptPredicate;
@@ -123,8 +130,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
       }
     });
 
-
-
     boolean hasContextVar = false;
     for(Variable var:variables) {
       if (Configuration.CONTEXT_VAR_NAME.equals(var.getName())) {
@@ -219,7 +224,16 @@ class EditVarConstraintsDialog extends DialogWrapper {
     maxoccursUnlimited.addChangeListener(
       new MyChangeListener(maxoccurs)
     );
-    
+
+    customScriptCode.getButton().addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        final EditScriptDialog wrapper = new EditScriptDialog(project, customScriptCode.getText());
+        wrapper.show();
+        if (wrapper.getExitCode() == OK_EXIT_CODE) {
+          customScriptCode.setText(wrapper.getScriptText());
+        }
+      }
+    });
     init();
 
     if (variables.size() > 0) parameterList.setSelectedIndex(0);
@@ -439,6 +453,43 @@ class EditVarConstraintsDialog extends DialogWrapper {
       else {
         textField.setEnabled(true);
       }
+    }
+  }
+
+  private static class EditScriptDialog extends DialogWrapper {
+    private Editor editor;
+
+    public EditScriptDialog(final Project project, String text) {
+      super(project, true);
+      setTitle("Edit Groovy Script Constraint");
+
+      final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName("1.groovy");
+      PsiFile file = PsiFileFactory.getInstance(project).createFileFromText("1.groovy", fileType, text, -1, true);
+
+      Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
+      editor = EditorFactory.getInstance().createEditor(doc, project);
+
+      init();
+      setSize(300, 300);
+    }
+
+    @Override
+    protected String getDimensionServiceKey() {
+      return getClass().getName();
+    }
+
+    protected JComponent createCenterPanel() {
+      return editor.getComponent();
+    }
+
+    String getScriptText() {
+      return editor.getDocument().getText();
+    }
+
+    @Override
+    protected void dispose() {
+      EditorFactory.getInstance().releaseEditor(editor);
+      super.dispose();
     }
   }
 }
