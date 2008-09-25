@@ -24,7 +24,7 @@ import java.lang.annotation.ElementType;
 /**
  * Sets separate naming convention for XML attributes
  *
- * @see @NameStrategy
+ * @see NameStrategy
  * @see GenericAttributeValue
  */
 @Retention(RetentionPolicy.RUNTIME)

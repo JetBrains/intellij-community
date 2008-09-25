@@ -22,13 +22,13 @@ import java.lang.annotation.ElementType;
 
 /**
  * Annotates DOM attribute children getters, that should return {@link DomElement}.
- * The getters may be annotated with {@link @com.intellij.util.xml.Convert()} annotation, if it returns {@link GenericDomValue} inheritor.
+ * The getters may be annotated with {@link com.intellij.util.xml.Convert} annotation, if it returns {@link GenericDomValue} inheritor.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface SubTag {
   /**
-   * @return child XML tag name if it can't be inferred from the getter name (see {@link @com.intellij.util.xml.NameStrategy()})
+   * @return child XML tag name if it can't be inferred from the getter name (see {@link com.intellij.util.xml.NameStrategy})
    */
   String value() default "";
 

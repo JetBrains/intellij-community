@@ -39,7 +39,9 @@ public interface DomElement extends AnnotatedElement, UserDataHolder {
   XmlTag getXmlTag();
 
   /**
-   * @return XmlFile, XmlTag or XmlAttribute
+   * Returns the underlying XML element/file.
+   *
+   * @return {@link com.intellij.psi.xml.XmlFile}, {@link com.intellij.psi.xml.XmlTag} or {@link com.intellij.psi.xml.XmlAttribute}
    */
   @Nullable
   XmlElement getXmlElement();
@@ -70,7 +72,7 @@ public interface DomElement extends AnnotatedElement, UserDataHolder {
 
   /**
    * @return namespace key if this element or one of its ancestors is annotated with
-   * {@link @Namespace}, or null otherwise, which means that namespace should be equal
+   * {@link Namespace}, or null otherwise, which means that namespace should be equal
    * to that of the element's parent
    */
   @Nullable @NonNls String getXmlElementNamespaceKey();
@@ -97,10 +99,12 @@ public interface DomElement extends AnnotatedElement, UserDataHolder {
 
   /**
    * Walk up the DOM tree searching for element of requiredClass type
-   * @param requiredClass
+   * @param requiredClass parent element's type
    * @param strict
-   * strict = false: if the current element is already of the correct type, then it is returned.
-   * strict = true: the returned element must be higher in the hierarchy. 
+   * <ul>
+   * <li>strict = false: if the current element is already of the correct type, then it is returned.</li>
+   * <li>strict = true: the returned element must be higher in the hierarchy.</li>
+   * </ul> 
    * @return the parent of requiredClass type
    */
   @Nullable

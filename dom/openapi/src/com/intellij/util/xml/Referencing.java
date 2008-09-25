@@ -23,7 +23,7 @@ import java.lang.annotation.RetentionPolicy;
  * @author Dmitry Avdeev
  *
  * @see com.intellij.util.xml.CustomReferenceConverter
- * @see @com.intellij.util.xml.Convert()
+ * @see com.intellij.util.xml.Convert
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Referencing {

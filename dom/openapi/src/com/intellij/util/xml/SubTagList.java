@@ -31,7 +31,7 @@ import java.lang.annotation.ElementType;
 public @interface SubTagList {
 
   /**
-   * @return child XML tag name if it can't be inferred from the getter name (see {@link @com.intellij.util.xml.NameStrategy()})
+   * @return child XML tag name if it can't be inferred from the getter name (see {@link com.intellij.util.xml.NameStrategy})
    */
   String value() default "";
 }

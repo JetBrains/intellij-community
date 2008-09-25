@@ -42,6 +42,13 @@ public abstract class DomHighlightingHelper {
 
   public abstract void runAnnotators(DomElement element, DomElementAnnotationHolder holder, Class<? extends DomElement> rootClass);
 
+  /**
+   * Runs all registered {@link DomCustomAnnotationChecker}s.
+   *
+   * @param element Dom element to check.
+   * @param holder Holder instance.
+   * @return Collected problem descriptors. 
+   */
   @NotNull
   public List<DomElementProblemDescriptor> checkCustomAnnotations(final DomElement element, final DomElementAnnotationHolder holder) {
     List<DomElementProblemDescriptor> result = null;

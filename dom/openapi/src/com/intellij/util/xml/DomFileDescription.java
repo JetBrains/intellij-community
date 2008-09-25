@@ -73,7 +73,7 @@ public class DomFileDescription<T> {
 
   /**
    * @param namespaceKey namespace identifier
-   * @see @com.intellij.util.xml.Namespace()
+   * @see com.intellij.util.xml.Namespace
    * @param policy function that takes XML file root tag and returns (maybe empty) list of possible namespace URLs or DTD public ids. This
    * function shouldn't use DOM since it may be not initialized for the file at the moment
    */
@@ -83,7 +83,7 @@ public class DomFileDescription<T> {
 
   /**
    * @param namespaceKey namespace identifier
-   * @see @com.intellij.util.xml.Namespace()
+   * @see com.intellij.util.xml.Namespace
    * @param namespaces XML namespace or DTD public or system id value for the given namespaceKey
    */
   public final void registerNamespacePolicy(String namespaceKey, final String... namespaces) {

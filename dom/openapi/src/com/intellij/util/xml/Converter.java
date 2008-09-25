@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.util.xml.ResolvingConverter
  * @see com.intellij.util.xml.CustomReferenceConverter
  *
+ * @param <T> Type to convert from/to.
+ *
  * @author peter
  */
 public abstract class Converter<T> {
@@ -45,6 +47,10 @@ public abstract class Converter<T> {
     return CodeInsightBundle.message("error.cannot.convert.default.message", s);
   }
 
+
+  /**
+   * @deprecated {@link com.intellij.util.xml.converters.values.NumberValueConverter}
+   */
   @Deprecated
   public static final Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {
     public Integer fromString(final String s, final ConvertContext context) {

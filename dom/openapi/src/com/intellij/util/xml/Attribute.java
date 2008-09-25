@@ -22,7 +22,7 @@ import java.lang.annotation.ElementType;
 
 /**
  * Annotates DOM attribute children getters, that should return {@link com.intellij.util.xml.GenericAttributeValue}.
- * The getters may be annotated with {@link @com.intellij.util.xml.Convert()} annotation.
+ * The getters may be annotated with {@link com.intellij.util.xml.Convert()} annotation.
  *
  * @author peter
  */
@@ -30,7 +30,7 @@ import java.lang.annotation.ElementType;
 @Target({ElementType.METHOD})
 public @interface Attribute {
   /**
-   * @return XML attribute name if it can't be inferred from the getter name (see {@link @com.intellij.util.xml.NameStrategy()})
+   * @return XML attribute name if it can't be inferred from the getter name (see {@link com.intellij.util.xml.NameStrategy()})
    */
   String value() default "";
 }

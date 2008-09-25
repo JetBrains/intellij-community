@@ -23,7 +23,7 @@ import java.lang.annotation.ElementType;
 /**
  * @author peter
  * @see com.intellij.util.xml.DomFileDescription#registerNamespacePolicy(String, com.intellij.util.NotNullFunction) 
- * @see com.intellij.util.xml.DomFileDescription#registerNamespacePolicy(String, String) 
+ * @see com.intellij.util.xml.DomFileDescription#registerNamespacePolicy(String, String[]) 
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})

@@ -12,8 +12,8 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 
 /**
- * With my help you can plug into default dom inspection (see {@link com.intellij.util.xml.highlighting.BasicDomElementsInspection})
- * with custom DOM elements checking based on custom user-defined annotations on those DOM elements
+ * Basic DOM inspection (see {@link com.intellij.util.xml.highlighting.BasicDomElementsInspection})
+ * calls this annotator on all DOM elements with the given custom user-defined annotation.
  *
  * @author peter
  */
