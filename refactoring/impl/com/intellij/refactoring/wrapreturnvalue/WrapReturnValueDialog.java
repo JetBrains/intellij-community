@@ -136,7 +136,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
     }
 
     final PsiClass containingClass = sourceMethod.getContainingClass();
-    final String containingClassName = containingClass.getName();
+    final String containingClassName = containingClass instanceof PsiAnonymousClass ? "Anonymous " + ((PsiAnonymousClass)containingClass).getBaseClassType().getClassName() : containingClass.getName();
     final String sourceMethodName = sourceMethod.getName();
     sourceMethodTextField.setText(containingClassName + '.' + sourceMethodName);
     final ButtonGroup buttonGroup = new ButtonGroup();
