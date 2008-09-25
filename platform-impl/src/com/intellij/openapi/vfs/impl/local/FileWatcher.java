@@ -121,19 +121,34 @@ public class FileWatcher {
         myRecursiveWatchRoots = recursive;
         myFlatWatchRoots = flat;
 
-        writeLine(ROOTS_COMMAND);
-        for (String path : recursive) {
-          writeLine(path);
+        if (isAlive()) {
+          writeLine(ROOTS_COMMAND);
+          for (String path : recursive) {
+            writeLine(path);
+          }
+          for (String path : flat) {
+            writeLine("|" + path);
+          }
+          writeLine("#");
         }
-        for (String path : flat) {
-          writeLine("|" + path);
-        }
-        writeLine("#");
       }
       catch (IOException e) {
         LOG.error(e);
       }
     }
+  }
+
+  private boolean isAlive() {
+    if (!isOperational()) return false;
+
+    try {
+      notifierProcess.exitValue();
+    }
+    catch (IllegalThreadStateException e) {
+      return true;
+    }
+
+    return false;
   }
 
   private void setManualWatchRoots(List<String> roots) {
@@ -158,7 +173,9 @@ public class FileWatcher {
 
   private void shutdownProcess() throws IOException {
     if (notifierProcess != null) {
-      writeLine(EXIT_COMMAND);
+      if (isAlive()) {
+        writeLine(EXIT_COMMAND);
+      }
 
       notifierProcess = null;
       notifierReader = null;
@@ -233,9 +250,23 @@ public class FileWatcher {
   }
 
   private void writeLine(String line) throws IOException {
-    notifierWriter.write(line);
-    notifierWriter.newLine();
-    notifierWriter.flush();
+    try {
+      notifierWriter.write(line);
+      notifierWriter.newLine();
+      notifierWriter.flush();
+    }
+    catch (IOException e) {
+      try {
+        notifierProcess.exitValue();
+      }
+      catch (IllegalThreadStateException e1) {
+        throw e;
+      }
+
+      notifierProcess = null;
+      notifierWriter = null;
+      notifierReader = null;
+    }
   }
 
   private String readLine() throws IOException {
