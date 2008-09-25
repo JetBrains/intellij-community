@@ -94,6 +94,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   public boolean isProperty() {
     final PsiClass clazz = getContainingClass();
+    if (clazz == null) return false;
     if (clazz.isInterface()) return false;
     final GrModifierList modifierList = getModifierList();
     return modifierList != null && !modifierList.hasExplicitVisibilityModifiers();
