@@ -218,7 +218,7 @@ final class EditorTabbedContainer implements Disposable {
     tab = new TabInfo(comp).setText(getTabTitle(file)).setIcon(icon).setTooltipText(tooltip).setObject(file);
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
-    tabActions.add(new CloseTab(myTabs.getComponent(), tab));
+    tabActions.add(new CloseTab(comp, tab));
 
     tab.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
     myTabs.addTab(tab, indexToInsert);
