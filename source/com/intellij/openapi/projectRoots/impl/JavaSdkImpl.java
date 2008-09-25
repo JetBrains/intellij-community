@@ -4,7 +4,6 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
@@ -307,7 +306,7 @@ public class JavaSdkImpl extends JavaSdk {
     };
 
     File[] jarDirs;
-    if((SystemInfo.isMac && !ApplicationManager.getApplication().isUnitTestMode()) && !file.getName().equals("mockJDK")){
+    if(SystemInfo.isMac && /*!ApplicationManager.getApplication().isUnitTestMode()) &&*/ !file.getName().equals("mockJDK")){
       File libFile = new File(file, "lib");
       @NonNls File classesFile = new File(file, "../Classes");
       @NonNls File libExtFile = new File(libFile, "ext");
