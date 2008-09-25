@@ -54,7 +54,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
       PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
       while (expression != null) {
-        if (!(expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression)) {
+        if (!(expression instanceof PsiReferenceExpression)) {
           expressions.add(expression);
         }
         expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
@@ -149,16 +149,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       }
 
       tempExpr = elementFactory.createExpressionFromText(text, file);
+
       tempExpr.putUserData(ElementToWorkOn.PREFIX, prefix);
       tempExpr.putUserData(ElementToWorkOn.SUFFIX, suffix);
 
+      tempExpr.putUserData(ElementToWorkOn.PARENT, elementAt);
     }
     catch (IncorrectOperationException e) {
       tempExpr = null;
-    }
-    if (tempExpr != null) {
-      final PsiStatement statement = PsiTreeUtil.getParentOfType(elementAt, PsiStatement.class);
-      tempExpr.putUserData(ElementToWorkOn.PARENT, elementAt);
     }
     return tempExpr;
   }

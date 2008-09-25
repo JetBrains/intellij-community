@@ -70,7 +70,7 @@ public class ElementToWorkOn {
           final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
           PsiExpression expression = PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class);
           while (expression != null) {
-            if (!(expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression)) {
+            if (!(expression instanceof PsiReferenceExpression)) {
               expressions.add(expression);
             }
             expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
@@ -80,7 +80,6 @@ public class ElementToWorkOn {
           } else if (expressions.size() == 1) {
             expr = expressions.get(0);
           } else {
-            final ElementToWorkOn[] el = new ElementToWorkOn[1];
             JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiExpression>("Expressions", expressions) {
               @Override
               public PopupStep onChosen(final PsiExpression selectedValue, final boolean finalChoice) {
