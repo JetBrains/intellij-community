@@ -208,7 +208,7 @@ public class PythonSdkType extends SdkType {
     final SdkModificator[] sdk_mod_holder = new SdkModificator[]{null};
     if (myProjectForProgress != null) { // nice, progress-bar way
       ProgressManager progman = ProgressManager.getInstance();
-      final Task.Modal setup_task = new Task.Modal(myProjectForProgress, "Setting up library files", true) {
+      final Task.Modal setup_task = new Task.Modal(myProjectForProgress, "Setting up library files", false) {
 
         public void run(@NotNull final ProgressIndicator indicator) {
           sdk_mod_holder[0] = setupSdkPathsUnderProgress(sdk, indicator);
