@@ -107,42 +107,7 @@ public class LookupItemUtil{
       return new ExpressionLookupItem((PsiExpression) object).setTailType(tailType);
     }
     else if (object instanceof PsiType) {
-      PsiType type = (PsiType)object;
-      final PsiType original = type;
-      int dim = 0;
-      while (type instanceof PsiArrayType) {
-        type = ((PsiArrayType)type).getComponentType();
-        dim++;
-      }
-
-      if (type instanceof PsiClassType) {
-        PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
-        final PsiClass psiClass = classResolveResult.getElement();
-        final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
-        final String text = type.getCanonicalText();
-        String typeString = text;
-        if (text.indexOf('<') > 0 && text.endsWith(">")) {
-          typeString = text.substring(0, text.indexOf('<'));
-        }
-        s = text.substring(typeString.lastIndexOf('.') + 1);
-
-        item = psiClass != null ? new LookupItem(psiClass, s) : new LookupItem(text, s);
-        item.setAttribute(LookupItem.SUBSTITUTOR, substitutor);
-      }
-      else {
-        s = type.getPresentableText();
-      }
-
-      if (dim > 0) {
-        final StringBuilder tail = new StringBuilder();
-        for (int i = 0; i < dim; i++) {
-          tail.append("[]");
-        }
-        item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + tail.toString());
-        item.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
-        item.setAttribute(LookupItem.BRACKETS_COUNT_ATTR, dim);
-      }
-      item.setAttribute(LookupItem.TYPE, original);
+      return PsiTypeLookupItem.createLookupItem((PsiType)object);
     }
     else if (object instanceof PsiMetaData) {
       s = ((PsiMetaData)object).getName();

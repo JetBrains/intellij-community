@@ -690,9 +690,14 @@ public class ExpectedTypesProvider {
     }
 
     @Override public void visitArrayAccessExpression(PsiArrayAccessExpression expr) {
+      if (myForCompletion) {
+        expr.getParent().accept(this);
+        return;
+      }
+
       if (myExpr.equals(expr.getIndexExpression())) {
-        ExpectedTypeInfoImpl info = createInfoImpl(PsiType.INT, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
-                                                   PsiType.INT, TailType.NONE); //todo: special tail type
+        ExpectedTypeInfoImpl info = createInfoImpl(PsiType.INT, ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT, TailType.NONE)
+            ; //todo: special tail type
         myResult = new ExpectedTypeInfo[]{info};
       }
       else if (myExpr.equals(expr.getArrayExpression())) {
@@ -708,8 +713,7 @@ public class ExpectedTypesProvider {
           for (int i = 0; i < componentTypeInfo.length; i++) {
             ExpectedTypeInfo compInfo = componentTypeInfo[i];
             PsiType expectedArrayType = compInfo.getType().createArrayType();
-            myResult[i] = createInfoImpl(expectedArrayType, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
-                                         expectedArrayType, TailType.NONE);
+            myResult[i] = createInfoImpl(expectedArrayType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, expectedArrayType, TailType.NONE);
           }
         }
       }

@@ -64,6 +64,12 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
       else if (qualifier != null) {
         myQualifierType = qualifier.getType();
         myQualifierClass = PsiUtil.resolveClassInType(myQualifierType);
+        if (myQualifierType == null && qualifier instanceof PsiJavaCodeReferenceElement) {
+          final PsiElement target = ((PsiJavaCodeReferenceElement)qualifier).resolve();
+          if (target instanceof PsiClass) {
+            myQualifierClass = (PsiClass)target;
+          }
+        }
       }
     }
   }
@@ -108,7 +114,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
       if(name != null
          && myFilter.isClassAcceptable(element.getClass())
          && myFilter.isAcceptable(new CandidateInfo(element, state.get(PsiSubstitutor.KEY)), myElement))
-        add(new CompletionElement(myQualifierType, element, state.get(PsiSubstitutor.KEY)));
+        add(new CompletionElement(myQualifierType, element, state.get(PsiSubstitutor.KEY), myQualifierClass));
     }
     return true;
   }
@@ -121,7 +127,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
 
   public void setCompletionElements(@NotNull Object[] elements) {
     for (Object element: elements) {
-      myResults.add(new CompletionElement(null, element, PsiSubstitutor.EMPTY));
+      myResults.add(new CompletionElement(null, element, PsiSubstitutor.EMPTY, myQualifierClass));
     }
   }
 

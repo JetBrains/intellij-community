@@ -113,7 +113,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, psiElement().afterLeaf(psiElement().withText("(").withParent(PsiTypeCastExpression.class)), new CompletionProvider<CompletionParameters>() {
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         for (final ExpectedTypeInfo type : getExpectedTypes(parameters.getPosition())) {
-          result.addElement(LookupItemUtil.objectToLookupItem(type.getType()).setTailType(TailTypes.CAST_RPARENTH).setAutoCompletionPolicy(
+          result.addElement(LookupItemUtil.objectToLookupItem(type.getDefaultType()).setTailType(TailTypes.CAST_RPARENTH).setAutoCompletionPolicy(
               AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE));
         }
       }
@@ -503,6 +503,19 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       item.setAttribute(LookupItem.INDICATE_ANONYMOUS, "");
     }
     result.addElement(item);
+  }
+
+  @Override
+  public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
+    super.beforeCompletion(context);
+    if (context.getCompletionType() == CompletionType.SMART) {
+      final PsiElement element = context.getFile().findElementAt(context.getStartOffset());
+      final ElementPattern<PsiElement> lParen = psiElement().withElementType(JavaTokenType.LPARENTH).withParent(
+          or(psiElement(PsiTypeCastExpression.class)));
+      if (or(lParen, psiElement().beforeLeaf(lParen)).accepts(element)) {
+        //context.setFileCopyPatcher(new DummyIdentifierPatcher("xxx;"));
+      }
+    }
   }
 
   public static THashSet<LookupElement> completeReference(final PsiElement element, final PsiReference reference, final PsiFile originalFile,

@@ -179,9 +179,15 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   public void run() {
                     if (indicator != CompletionProgressIndicator.getCurrentCompletion()) return;
+                    final Lookup lookup = LookupManager.getActiveLookup(editor);
+                    assert lookup == indicator.getLookup() : lookup;
 
                     indicator.closeAndFinish();
+                    CompletionProgressIndicator completion = CompletionProgressIndicator.getCurrentCompletion();
+                    assert completion == null : "1 this=" + indicator + "\ncurrent=" + completion;
                     HintManager.getInstance().hideAllHints();
+                    completion = CompletionProgressIndicator.getCurrentCompletion();
+                    assert completion == null : "2 this=" + indicator + "\ncurrent=" + completion;
                     handleEmptyLookup(context, parameters, indicator);
                   }
                 });

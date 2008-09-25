@@ -12,7 +12,9 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
@@ -56,6 +58,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private int myMinPrefixLength;
   private int myPreferredItemsCount;
   private int myInitialOffset;
+  private String myInitialPrefix;
   private final LookupItemPreferencePolicy myItemPreferencePolicy;
 
   private RangeMarker myLookupStartMarker;
@@ -250,6 +253,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public void setAdditionalPrefix(final String additionalPrefix) {
     myAdditionalPrefix = additionalPrefix;
+    myInitialPrefix = null;
     markDirty();
     updateList();
   }
@@ -444,6 +448,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         if (item == null || item == EMPTY_LOOKUP_ITEM) return;
 
         if (curOffset != myInitialOffset + myAdditionalPrefix.length()) {
+          myInitialPrefix = null;
           hide();
         }
       }
@@ -642,6 +647,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       if (afterCaret.length() == 0) return false;
     }
 
+    if (myAdditionalPrefix.length() == 0 && myInitialPrefix == null && !explicitlyInvoked) {
+      myInitialPrefix = presentPrefix;
+    } else {
+      myInitialPrefix = null;
+    }
+
     EditorModificationUtil.deleteSelectedText(myEditor);
     int offset = myEditor.getCaretModel().getOffset();
     if (beforeCaret != null) { // correct case, expand camel-humps
@@ -714,7 +725,20 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     Disposer.dispose(this);
 
     if (fireCanceled) {
+      restorePrefix();
+
       fireLookupCanceled();
+    }
+  }
+
+  public void restorePrefix() {
+    if (myInitialPrefix != null) {
+      new WriteCommandAction(myProject) {
+        protected void run(Result result) throws Throwable {
+          myEditor.getDocument()
+              .replaceString(getLookupStart(), myEditor.getCaretModel().getOffset(), myInitialPrefix);
+        }
+      }.execute();
     }
   }
 
