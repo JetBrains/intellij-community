@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -46,7 +46,7 @@ import java.lang.ref.WeakReference;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class DocumentationManager implements ProjectComponent {
+public class DocumentationManager {
   @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
   private final Project myProject;
   private Editor myEditor = null;
@@ -59,60 +59,42 @@ public class DocumentationManager implements ProjectComponent {
   @NonNls private static final String DOC_ELEMENT_PROTOCOL = "doc_element://";
 
   private final ActionManagerEx myActionManagerEx;
-  private final AnActionListener myActionListener = new AnActionListener() {
-    public void beforeActionPerformed(AnAction action, DataContext dataContext) {
-      final JBPopup hint = getDocInfoHint();
-      if (hint != null) {
-        if (action instanceof HintManagerImpl.ActionToIgnore) return;
-        if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
-        if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
-        if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN)) return;
-        if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP)) return;
-        if (action == ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE)) return;
-        hint.cancel();
-      }
-    }
-
-    public void beforeEditorTyping(char c, DataContext dataContext) {
-      final JBPopup hint = getDocInfoHint();
-      if (hint != null) {
-        hint.cancel();
-      }
-    }
-
-
-    public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
-    }
-  };
 
   private static final int ourFlagsForTargetElements = TargetElementUtilBase.getInstance().getAllAccepted();
 
   public static DocumentationManager getInstance(Project project) {
-    return project.getComponent(DocumentationManager.class);
+    return ServiceManager.getService(project, DocumentationManager.class);
   }
 
   public DocumentationManager(Project project, ActionManagerEx managerEx) {
     myProject = project;
     myActionManagerEx = managerEx;
-  }
+    final AnActionListener actionListener = new AnActionListener() {
+      public void beforeActionPerformed(AnAction action, DataContext dataContext) {
+        final JBPopup hint = getDocInfoHint();
+        if (hint != null) {
+          if (action instanceof HintManagerImpl.ActionToIgnore) return;
+          if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
+          if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
+          if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN)) return;
+          if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP)) return;
+          if (action == ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE)) return;
+          hint.cancel();
+        }
+      }
 
-  @NotNull
-  public String getComponentName() {
-    return "JavaDocManager";
-  }
+      public void beforeEditorTyping(char c, DataContext dataContext) {
+        final JBPopup hint = getDocInfoHint();
+        if (hint != null) {
+          hint.cancel();
+        }
+      }
 
-  public void initComponent() {
-  }
 
-  public void disposeComponent() {
-  }
-
-  public void projectOpened() {
-    myActionManagerEx.addAnActionListener(myActionListener);
-  }
-
-  public void projectClosed() {
-    myActionManagerEx.removeAnActionListener(myActionListener);
+      public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
+      }
+    };
+    myActionManagerEx.addAnActionListener(actionListener, project);
   }
 
   public JBPopup showJavaDocInfo(@NotNull final PsiElement element) {

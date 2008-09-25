@@ -145,6 +145,9 @@
   <projectService serviceInterface="com.intellij.packageDependencies.DependencyValidationManager"
                   serviceImplementation="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
 
+  <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
+                  serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManager"/>
+
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage"/>
 
