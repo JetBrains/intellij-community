@@ -114,7 +114,9 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   protected <T extends DomElement> DomFileElementImpl<T> _getRoot() {
     if (myRoot == null) {
-      myRoot = getParentHandler()._getRoot();
+      final DomInvocationHandler parent = getParentHandler();
+      assert parent != null : "getRoot() operation should be performed on the DOM having a parent, your DOM may be not very fresh";
+      myRoot = parent._getRoot();
     }
     return myRoot;
   }
@@ -123,14 +125,15 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   public DomElement getParent() {
     checkIsValid();
 
-    return getParentHandler().getProxy();
+    final DomInvocationHandler handler = getParentHandler();
+    return handler == null ? null : handler.getProxy();
   }
 
   protected final void checkIsValid() {
       LOG.assertTrue(isValid());
     }
 
-  @NotNull
+  @Nullable
   final DomInvocationHandler getParentHandler() {
     return getParentStrategy().getParentHandler();
   }
@@ -236,7 +239,9 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @NotNull
   public String getXmlElementNamespace() {
-    final XmlElement element = getParentHandler().getXmlElement();
+    final DomInvocationHandler parent = getParentHandler();
+    assert parent != null : "this operation should be performed on the DOM having a physical parent, your DOM may be not very fresh";
+    final XmlElement element = parent.getXmlElement();
     assert element != null;
     return getXmlName().getNamespace(element, getFile());
   }
@@ -458,7 +463,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     if (strategy != null) {
       return strategy;
     }
-    return getParentHandler().getNameStrategy();
+    final DomInvocationHandler handler = getParentHandler();
+    return handler == null ? DomNameStrategy.HYPHEN_STRATEGY : handler.getNameStrategy();
   }
 
   protected boolean isAttribute() {

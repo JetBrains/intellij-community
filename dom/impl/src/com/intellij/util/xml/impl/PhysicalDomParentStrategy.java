@@ -20,13 +20,10 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     myElement = element;
   }
 
-  @NotNull
   public DomInvocationHandler getParentHandler() {
     final XmlTag parentTag = (XmlTag)getParentTag();
     assert parentTag != null;
-    final DomInvocationHandler handler = DomManagerImpl.getDomManager(myElement.getProject()).getDomHandler(parentTag);
-    assert handler != null : parentTag.getText();
-    return handler;
+    return DomManagerImpl.getDomManager(myElement.getProject()).getDomHandler(parentTag);
   }
 
   private PsiElement getParentTag() {
@@ -52,7 +49,9 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
 
   @NotNull
   public DomParentStrategy clearXmlElement() {
-    return new VirtualDomParentStrategy(getParentHandler());
+    final DomInvocationHandler parent = getParentHandler();
+    assert parent != null : "write operations should be performed on the DOM having a parent, your DOM may be not very fresh";
+    return new VirtualDomParentStrategy(parent);
   }
 
   public boolean isValid() {

@@ -69,6 +69,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
 
   protected XmlTag setEmptyXmlTag() {
     final DomInvocationHandler parent = getParentHandler();
+    assert parent != null : "write operations should be performed on the DOM having a parent, your DOM may be not very fresh";
     final FixedChildDescriptionImpl description = getChildDescription();
     final XmlFile xmlFile = getFile();
     parent.createFixedChildrenTags(getXmlName(), description, myIndex);
@@ -97,6 +98,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
 
   public void undefineInternal() {
     final DomInvocationHandler parent = getParentHandler();
+    assert parent != null : "write operations should be performed on the DOM having a parent, your DOM may be not very fresh";
     final XmlTag parentTag = parent.getXmlTag();
     if (parentTag == null) return;
 

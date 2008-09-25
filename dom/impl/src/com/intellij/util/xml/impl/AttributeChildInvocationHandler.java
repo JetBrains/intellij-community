@@ -7,12 +7,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
-import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.EvaluatedXmlName;
+import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.xml.util.XmlStringUtil;
@@ -103,11 +106,14 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
 
   @Nullable
   public final XmlTag getXmlTag() {
-    return getParentHandler().getXmlTag();
+    final DomInvocationHandler handler = getParentHandler();
+    return handler == null ? null : handler.getXmlTag();
   }
 
   public final XmlTag ensureTagExists() {
-    return getParentHandler().ensureTagExists();
+    final DomInvocationHandler parent = getParentHandler();
+    assert parent != null : "write operations should be performed on the DOM having a parent, your DOM may be not very fresh";
+    return parent.ensureTagExists();
   }
 
   @Nullable

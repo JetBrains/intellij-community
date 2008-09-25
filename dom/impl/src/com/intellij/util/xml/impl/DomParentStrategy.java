@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public interface DomParentStrategy {
-  @NotNull DomInvocationHandler getParentHandler();
+  @Nullable DomInvocationHandler getParentHandler();
 
   @Nullable
   XmlElement getXmlElement();

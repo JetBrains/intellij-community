@@ -17,7 +17,7 @@ public class VirtualDomParentStrategy implements DomParentStrategy {
   private long myModCount;
   private final PsiModificationTracker myModificationTracker;
 
-  public VirtualDomParentStrategy(final DomInvocationHandler parentHandler) {
+  public VirtualDomParentStrategy(@NotNull final DomInvocationHandler parentHandler) {
     myParentHandler = parentHandler;
     myModificationTracker = PsiManager.getInstance(myParentHandler.getManager().getProject()).getModificationTracker();
     myModCount = getModCount();
