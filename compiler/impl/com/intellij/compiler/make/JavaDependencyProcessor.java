@@ -5,10 +5,7 @@
 package com.intellij.compiler.make;
 
 import com.intellij.compiler.SymbolTable;
-import com.intellij.compiler.classParsing.ConstantValue;
-import com.intellij.compiler.classParsing.FieldInfo;
-import com.intellij.compiler.classParsing.MemberInfo;
-import com.intellij.compiler.classParsing.MethodInfo;
+import com.intellij.compiler.classParsing.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -45,6 +42,7 @@ class JavaDependencyProcessor {
   private final boolean myIsRemoteInterface;
   private final boolean myWereAnnotationTargetsRemoved;
   private final boolean myRetentionPolicyChanged;
+  private final boolean myAnnotationSemanticsChanged;
 
   public JavaDependencyProcessor(Project project, DependencyCache dependencyCache, int qName) throws CacheCorruptedException {
     myProject = project;
@@ -72,6 +70,7 @@ class JavaDependencyProcessor {
     myIsAnnotation = ClsUtil.isAnnotation(cache.getFlags(oldCacheClassId));
     myWereAnnotationTargetsRemoved = myIsAnnotation && wereAnnotationTargesRemoved(cache, newClassesCache);
     myRetentionPolicyChanged = myIsAnnotation && hasRetentionPolicyChanged(cache, newClassesCache);
+    myAnnotationSemanticsChanged = myIsAnnotation && hasAnnotationSemanticsChanged(cache, newClassesCache);
 
     int[] oldInterfaces = cache.getSuperInterfaces(oldCacheClassId);
     int[] newInterfaces = newClassesCache.getSuperInterfaces(newCacheClassId);
@@ -142,11 +141,17 @@ class JavaDependencyProcessor {
 
     if (!myMembersChanged &&
         oldCache.getFlags(oldCache.getClassId(myQName)) == newCache.getFlags(newCache.getClassId(myQName)) &&
-        !superListChanged && !myWereAnnotationTargetsRemoved && !myRetentionPolicyChanged) {
+        !superListChanged && !myWereAnnotationTargetsRemoved && !myRetentionPolicyChanged && !myAnnotationSemanticsChanged) {
       return; // nothing to do
     }
 
     if (myIsAnnotation) {
+      if (myAnnotationSemanticsChanged) {
+        final TIntHashSet visited = new TIntHashSet();
+        visited.add(myQName);
+        markAnnotationDependenciesRecursively(myBackDependencies, LOG.isDebugEnabled()? "; reason: semantics changed for " + myDependencyCache.resolve(myQName) : "", visited);
+        return;
+      }
       if (hasMembersWithoutDefaults(myAddedMembers)) {
         markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: added annotation type member without default " + myDependencyCache.resolve(myQName) : "");
         return;
@@ -327,6 +332,25 @@ class JavaDependencyProcessor {
     }
   }
 
+  private void markAnnotationDependenciesRecursively(final Dependency[] dependencies, final @NonNls String reason, final TIntHashSet visitedAnnotations)
+      throws CacheCorruptedException {
+    final Cache oldCache = myDependencyCache.getCache();
+    for (Dependency dependency : dependencies) {
+      if (myDependencyCache.markTargetClassInfo(dependency)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Mark dependent class " + myDependencyCache.resolve(dependency.getClassQualifiedName()) + reason);
+        }
+      }
+      final int depQName = dependency.getClassQualifiedName();
+      if (ClsUtil.isAnnotation(oldCache.getFlags(oldCache.getClassId(depQName)))) {
+        if (!visitedAnnotations.contains(depQName)) {
+          visitedAnnotations.add(depQName);
+          markAnnotationDependenciesRecursively(oldCache.getBackDependencies(depQName), LOG.isDebugEnabled()? "; reason: cascade semantics change for " + myDependencyCache.resolve(depQName) : "", new TIntHashSet());
+        }
+      }
+    }
+  }
+
   private static final int[] ALL_TARGETS = new int[] {
     AnnotationTargets.ANNOTATION_TYPE,
     AnnotationTargets.CONSTRUCTOR,
@@ -359,6 +383,65 @@ class JavaDependencyProcessor {
       return true;
     }
     return oldPolicy == RetentionPolicies.CLASS && newPolicy == RetentionPolicies.RUNTIME;
+  }
+
+  private boolean hasAnnotationSemanticsChanged(final Cache oldCache, final Cache newCache) throws CacheCorruptedException {
+    final TIntObjectHashMap<AnnotationConstantValue> oldAnnotations = fetchAllAnnotations(oldCache);
+    final TIntObjectHashMap<AnnotationConstantValue> newAnnotations = fetchAllAnnotations(newCache);
+    // filter certain known annotation which are processed separately
+    final int retentionAnnotation = myDependencyCache.getSymbolTable().getId("java.lang.annotation.Retention");
+    final int targetAnnotation = myDependencyCache.getSymbolTable().getId("java.lang.annotation.Target");
+    oldAnnotations.remove(retentionAnnotation);
+    oldAnnotations.remove(targetAnnotation);
+    newAnnotations.remove(retentionAnnotation);
+    newAnnotations.remove(targetAnnotation);
+
+    if (oldAnnotations.size() != newAnnotations.size()) {
+      return true; // number of annotation has changed
+    }
+    for (int annotName : oldAnnotations.keys()) {
+      if (!newAnnotations.contains(annotName)) {
+        return true;
+      }
+      final AnnotationNameValuePair[] oldValues = oldAnnotations.get(annotName).getMemberValues();
+      final AnnotationNameValuePair[] newValues = newAnnotations.get(annotName).getMemberValues();
+      if (annotationValuesDiffer(oldValues, newValues)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean annotationValuesDiffer(final AnnotationNameValuePair[] oldValues, final AnnotationNameValuePair[] newValues) {
+    if (oldValues.length != newValues.length) {
+      return true;
+    }
+    final TIntObjectHashMap<ConstantValue> names = new TIntObjectHashMap<ConstantValue>();
+    for (AnnotationNameValuePair value : oldValues) {
+      names.put(value.getName(), value.getValue());
+    }
+    for (AnnotationNameValuePair value : newValues) {
+      if (!names.containsKey(value.getName())) {
+        return true;
+      }
+      if (!value.getValue().equals(names.get(value.getName()))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
+  private TIntObjectHashMap<AnnotationConstantValue> fetchAllAnnotations(final Cache cache) throws CacheCorruptedException {
+    final int classId = cache.getClassId(myQName);
+    TIntObjectHashMap<AnnotationConstantValue> oldAnnotations = new TIntObjectHashMap<AnnotationConstantValue>();
+    for (AnnotationConstantValue annot : cache.getRuntimeVisibleAnnotations(classId)) {
+      oldAnnotations.put(annot.getAnnotationQName(), annot);
+    }
+    for (AnnotationConstantValue annot : cache.getRuntimeInvisibleAnnotations(classId)) {
+      oldAnnotations.put(annot.getAnnotationQName(), annot);
+    }
+    return oldAnnotations;
   }
 
   private void markAll(Dependency[] backDependencies, @NonNls String reason) throws CacheCorruptedException {
