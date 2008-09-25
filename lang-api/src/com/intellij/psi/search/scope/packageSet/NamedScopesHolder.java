@@ -15,10 +15,8 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +28,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class NamedScopesHolder implements JDOMExternalizable {
+public abstract class NamedScopesHolder implements PersistentStateComponent<Element> {
   private List<NamedScope> myScopes = new ArrayList<NamedScope>();
   @NonNls private static final String SCOPE_TAG = "scope";
   @NonNls private static final String NAME_ATT = "name";
@@ -132,18 +130,20 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
     return new NamedScope(name, set);
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    List sets = element.getChildren(SCOPE_TAG);
+  public void loadState(final Element state) {
+    List sets = state.getChildren(SCOPE_TAG);
     for (Object set : sets) {
       addScope(readScope((Element)set));
     }
     fireScopeListeners();
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public Element getState() {
+    Element element = new Element("state");
     for (NamedScope myScope : myScopes) {
       element.addContent(writeScope(myScope));
     }
+    return element;
   }
 
   @Nullable

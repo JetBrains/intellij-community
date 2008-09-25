@@ -15,7 +15,7 @@
  */
 package com.intellij.packageDependencies;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -29,9 +29,9 @@ import java.util.Map;
  * User: anna
  * Date: Mar 2, 2005
  */
-public abstract class DependencyValidationManager extends NamedScopesHolder implements ProjectComponent{
+public abstract class DependencyValidationManager extends NamedScopesHolder {
   public static DependencyValidationManager getInstance(Project project) {
-    return project.getComponent(DependencyValidationManager.class);
+    return ServiceManager.getService(project, DependencyValidationManager.class);
   }
 
   public abstract boolean hasRules();

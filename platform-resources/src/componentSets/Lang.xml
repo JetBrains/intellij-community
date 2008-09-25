@@ -161,11 +161,6 @@
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
-    <component>
-      <interface-class>com.intellij.packageDependencies.DependencyValidationManager</interface-class>
-      <implementation-class>com.intellij.packageDependencies.DependencyValidationManagerImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
 
     <component>
       <interface-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzer</interface-class>
@@ -234,12 +229,6 @@
     <component>
       <interface-class>com.intellij.codeInsight.template.TemplateManager</interface-class>
       <implementation-class>com.intellij.codeInsight.template.impl.TemplateManagerImpl</implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.psi.search.scope.packageSet.NamedScopeManager</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
     </component>
 
     <component>

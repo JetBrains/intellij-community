@@ -2,6 +2,7 @@ package com.intellij.packageDependencies;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -12,10 +13,11 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -25,7 +27,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+@State(
+  name="DependencyValidationManager",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$PROJECT_FILE$"
+    )}
+)
 public class DependencyValidationManagerImpl extends DependencyValidationManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.DependencyValidationManagerImpl");
+
   private final List<DependencyRule> myRules = new ArrayList<DependencyRule>();
 
   public boolean SKIP_IMPORT_STATEMENTS = false;
@@ -44,8 +56,23 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   private final Map<String, PackageSet> myUnnamedScopes = new HashMap<String, PackageSet>();
 
-  public DependencyValidationManagerImpl(Project project) {
+  public DependencyValidationManagerImpl(final Project project) {
     myProject = project;
+
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+      public void run() {
+        final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+        if (toolWindowManager == null) return;
+        ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.DEPENDENCIES,
+                                                                     true,
+                                                                     ToolWindowAnchor.BOTTOM,
+                                                                     project);
+        myContentManager = toolWindow.getContentManager();
+
+        toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowInspection.png"));
+        new ContentManagerWatcher(toolWindow, myContentManager);
+      }
+    });
   }
 
 
@@ -133,22 +160,6 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
   }
 
-  public void projectOpened() {
-    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    if (toolWindowManager == null) return;
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);
-        ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.DEPENDENCIES,
-                                                                     myContentManager.getComponent(),
-                                                                     ToolWindowAnchor.BOTTOM);
-
-        toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowInspection.png"));
-        new ContentManagerWatcher(toolWindow, myContentManager);
-      }
-    });
-  }
-
   public void addContent(Content content) {
     myContentManager.addContent(content);
     myContentManager.setSelectedContent(content);
@@ -159,21 +170,6 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     myContentManager.removeContent(content, true);
   }
 
-  public void projectClosed() {
-    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    if (toolWindowManager == null) return;
-    toolWindowManager.unregisterToolWindow(ToolWindowId.DEPENDENCIES);
-  }
-
-  public void initComponent() {}
-
-  public void disposeComponent() {}
-
-  @NotNull
-  public String getComponentName() {
-    return "DependencyValidationManager";
-  }
-
   public String getDisplayName() {
     return IdeBundle.message("shared.scopes.node.text");
   }
@@ -182,9 +178,15 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return SHARED_SCOPES;
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-    super.readExternal(element);
+  @Override
+  public void loadState(final Element element) {
+    try {
+      DefaultJDOMExternalizer.readExternal(this, element);
+    }
+    catch (InvalidDataException e) {
+      LOG.info(e);
+    }
+    super.loadState(element);
 
     myUnnamedScopes.clear();
     final List unnamedScopes = element.getChildren(UNNAMED_SCOPE);
@@ -208,10 +210,15 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-    super.writeExternal(element);
-
+  @Override
+  public Element getState() {
+    Element element = super.getState();
+    try {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
+    catch (WriteExternalException e) {
+      LOG.info(e);
+    }
     final List<String> unnamedScopes = new ArrayList<String>(myUnnamedScopes.keySet());
     Collections.sort(unnamedScopes);
     for (final String unnamedScope : unnamedScopes) {
@@ -226,6 +233,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
         element.addContent(ruleElement);
       }
     }
+    return element;
   }
 
   @Nullable

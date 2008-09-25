@@ -16,28 +16,27 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class NamedScopeManager extends NamedScopesHolder implements ProjectComponent {
+@State(
+  name="NamedScopeManager",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public class NamedScopeManager extends NamedScopesHolder {
   private static final Icon LOCAL_SCOPES = IconLoader.getIcon("/ide/localScope.png");
   public static NamedScopeManager getInstance(Project project) {
-    return project.getComponent(NamedScopeManager.class);
+    return ServiceManager.getService(project, NamedScopeManager.class);
   }
-
-  @NotNull
-  public String getComponentName() {
-    return "NamedScopeManager";
-  }
-
-  public void initComponent() {}
-  public void disposeComponent() {}
-  public void projectOpened() {}
-  public void projectClosed() {}
 
   public String getDisplayName() {
     return IdeBundle.message("local.scopes.node.text");

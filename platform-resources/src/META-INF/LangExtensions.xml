@@ -140,6 +140,11 @@
   <projectService serviceInterface="com.intellij.ide.hierarchy.HierarchyBrowserManager"
                   serviceImplementation="com.intellij.ide.hierarchy.HierarchyBrowserManager"/>
 
+  <projectService serviceInterface="com.intellij.psi.search.scope.packageSet.NamedScopeManager"
+                  serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>
+  <projectService serviceInterface="com.intellij.packageDependencies.DependencyValidationManager"
+                  serviceImplementation="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
+
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage"/>
 
