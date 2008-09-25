@@ -210,4 +210,10 @@ public class ShowImplementationsAction extends AnAction {
     }
     return (psiFile.getVirtualFile() != null && element.getTextRange() != null) ? new PsiElement[] {element} : PsiElement.EMPTY_ARRAY;
   }
+
+  @Override
+  public void update(final AnActionEvent e) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    e.getPresentation().setEnabled(project != null);
+  }
 }
