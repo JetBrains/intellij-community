@@ -15,8 +15,8 @@
  */
 package com.intellij.usageView;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.InvalidDataException;
@@ -36,7 +36,7 @@ public class UsageTreeColorsScheme implements ApplicationComponent, JDOMExternal
   }
 
   public static UsageTreeColorsScheme getInstance() {
-    return ApplicationManager.getApplication().getComponent(UsageTreeColorsScheme.class);
+    return ServiceManager.getService(UsageTreeColorsScheme.class);
   }
 
   @NotNull
