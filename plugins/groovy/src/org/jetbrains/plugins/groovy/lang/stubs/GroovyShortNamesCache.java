@@ -84,7 +84,6 @@ public class GroovyShortNamesCache implements PsiShortNamesCache {
 
   public Collection<PsiClass> getScriptClassesByFQName(final String name, final GlobalSearchScope scope) {
     Collection<GroovyFile> scripts = StubIndex.getInstance().get(GrFullScriptNameIndex.KEY, name.hashCode(), myProject, scope);
-    final Collection<String> keys = StubIndex.getInstance().getAllKeys(GrScriptClassNameIndex.KEY);
     scripts = ContainerUtil.findAll(scripts, new Condition<GroovyFile>() {
       public boolean value(final GroovyFile groovyFile) {
         final PsiClass clazz = groovyFile.getScriptClass();
