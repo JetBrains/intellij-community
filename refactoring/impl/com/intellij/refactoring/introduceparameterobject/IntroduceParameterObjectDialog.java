@@ -145,8 +145,8 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
       return false;
     }
     if (myCreateInnerClassRadioButton.isSelected()) {
-      final String innerClassName = getInnerClassName();
-      return innerClassName.length() > 0 && sourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) == null;
+      final String innerClassName = getInnerClassName().trim();
+      return nameHelper.isIdentifier(innerClassName) && sourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) == null;
     } else if (!useExistingClass()) {
       final String className = getClassName();
       if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
