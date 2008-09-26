@@ -11,6 +11,8 @@ import com.intellij.openapi.components.Storage;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.NonNls;
+
 @State(
   name="masterDetails",
   storages= {
@@ -22,7 +24,7 @@ import java.util.Map;
 public class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.State>{
   public State myStates = new State();
 
-  public void register(String key, MasterDetailsComponent masterDetailsComponent) {
+  public void register(@NonNls String key, MasterDetailsComponent masterDetailsComponent) {
     final MasterDetailsComponent.UIState loadedState = myStates.getStates().get(key);
     if (loadedState != null) masterDetailsComponent.loadState(loadedState);
     myStates.getStates().put(key, masterDetailsComponent.getState());

@@ -30,6 +30,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,7 +41,10 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Set;
 
 /**
  * User: anna
@@ -167,11 +171,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   private static Collection<NamedScope> getPredefinedScopes(Project project) {
     final Collection<NamedScope> result = new ArrayList<NamedScope>();
-    final NamedScopesHolder[] holders = project.getComponents(NamedScopesHolder.class);
-    for (NamedScopesHolder holder : holders) {
-      final List<NamedScope> predefinedScopes = holder.getPredefinedScopes();
-      result.addAll(predefinedScopes);
-    }
+    result.addAll(NamedScopeManager.getInstance(project).getPredefinedScopes());
+    result.addAll(DependencyValidationManager.getInstance(project).getPredefinedScopes());
     return result;
   }
 
@@ -218,7 +219,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     return SCOPES;
   }
 
-  @Nullable
+  @NotNull
   @NonNls
   public String getHelpTopic() {
     return "project.scopes";  //todo help id
@@ -322,6 +323,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       }
     }
 
+    @NotNull
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       if (myChildren == null) {
         myChildren = new AnAction[2];
