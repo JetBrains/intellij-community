@@ -11,12 +11,12 @@ public abstract class GroupedElementsRenderer {
   public static final Color POPUP_SEPARATOR_FOREGROUND = Color.gray;
   public static final Color SELECTED_FRAME_FOREGROUND = Color.black;
 
-  private final static Border ourSelectedBorder = new DottedBorder(SELECTED_FRAME_FOREGROUND);
-  private final static Border ourBorder = BorderFactory.createEmptyBorder(1, 1, 1, 1);
+  final static Border ourSelectedBorder = new DottedBorder(SELECTED_FRAME_FOREGROUND);
+  final static Border ourBorder = BorderFactory.createEmptyBorder(1, 1, 1, 1);
 
-  private SeparatorWithText mySeparatorComponent = new SeparatorWithText();
-  private JComponent myComponent;
-  private JPanel myRendererComponent;
+  SeparatorWithText mySeparatorComponent = new SeparatorWithText();
+  JComponent myComponent;
+  JPanel myRendererComponent;
 
   protected ErrorLabel myTextLabel;
 
@@ -26,10 +26,11 @@ public abstract class GroupedElementsRenderer {
 
     myComponent = createItemComponent();
 
-    myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
-    myRendererComponent.add(myComponent, BorderLayout.WEST);
+    layout();
   }
-  
+
+  protected abstract void layout();
+
   protected abstract JComponent createItemComponent();
 
   protected final JComponent configureComponent(String text, String tooltip, Icon icon, Icon disabledIcon, boolean isSelected, boolean hasSeparatorAbove, String separatorTextAbove, int preferredForcedWidth) {
@@ -81,37 +82,49 @@ public abstract class GroupedElementsRenderer {
   }
 
   public static abstract class List extends GroupedElementsRenderer {
-    protected Color getSelectionBackground() {
+
+    protected final void layout() {
+      myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
+      myRendererComponent.add(myComponent, BorderLayout.CENTER);
+    }
+
+    protected final Color getSelectionBackground() {
       return UIUtil.getListSelectionBackground();
     }
 
-    protected Color getSelectionForeground() {
+    protected final Color getSelectionForeground() {
       return UIUtil.getListSelectionForeground();
     }
 
-    protected Color getBackground() {
+    protected final Color getBackground() {
       return UIUtil.getListBackground();
     }
 
-    protected Color getForeground() {
+    protected final Color getForeground() {
       return UIUtil.getListForeground();
     }
   }
 
   public static abstract class Tree extends GroupedElementsRenderer {
-    protected Color getSelectionBackground() {
+
+    protected final void layout() {
+      myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
+      myRendererComponent.add(myComponent, BorderLayout.WEST);
+    }
+
+    protected final Color getSelectionBackground() {
       return UIUtil.getTreeSelectionBackground();
     }
 
-    protected Color getSelectionForeground() {
+    protected final Color getSelectionForeground() {
       return UIUtil.getTreeSelectionForeground();
     }
 
-    protected Color getBackground() {
+    protected final Color getBackground() {
       return UIUtil.getTreeTextBackground();
     }
 
-    protected Color getForeground() {
+    protected final Color getForeground() {
       return UIUtil.getTreeTextForeground();
     }
   }
