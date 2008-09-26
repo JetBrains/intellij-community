@@ -11,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -247,7 +248,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       ArrayList<CandidateInfo> result = new ArrayList<CandidateInfo>();
 
       if (!(argList.getParent() instanceof PsiAnonymousClass)) {
-        for (CandidateInfo candidate : candidates) {
+        cand: for (CandidateInfo candidate : candidates) {
+          for (CandidateInfo info : result) {
+            if (MethodSignatureUtil.isSuperMethod((PsiMethod)candidate.getElement(), (PsiMethod)info.getElement())) {
+              continue cand;
+            }
+          }
           if (candidate.isStaticsScopeCorrect() && candidate.isAccessible()) result.add(candidate);
         }
       }
