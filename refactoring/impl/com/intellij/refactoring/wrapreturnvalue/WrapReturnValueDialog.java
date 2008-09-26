@@ -80,15 +80,15 @@ class WrapReturnValueDialog extends RefactoringDialog {
   }
 
   protected boolean areButtonsValid() {
+    final Project project = sourceMethod.getProject();
+    final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(project).getNameHelper();
     if (useExistingClassButton.isSelected()) {
       return myFieldsCombo.getSelectedItem() != null && existingClassField.getText().length() != 0;
     }
     if (myCreateInnerClassButton.isSelected()) {
-      final String innerClassName = getInnerClassName();
-      return innerClassName.length() > 0 && sourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) == null;
+      final String innerClassName = getInnerClassName().trim();
+      return nameHelper.isIdentifier(innerClassName) && sourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) == null;
     }
-    final Project project = sourceMethod.getProject();
-    final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(project).getNameHelper();
     final String packageName = getPackageName();
     if (packageName.length() == 0 || PackageNameUtil.containsNonIdentifier(nameHelper, packageName)) {
       return false;
