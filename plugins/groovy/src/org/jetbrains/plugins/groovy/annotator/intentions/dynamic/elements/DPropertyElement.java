@@ -47,11 +47,13 @@ public class DPropertyElement extends DItemElement {
   public PsiVariable getPsi(PsiManager manager, String containingClassName) {
     if (myPsi != null) return myPsi;
 
-      LinkedHashSet<String> hashSet = new LinkedHashSet<String>();
-      if (isStatic()) {
-        hashSet.add(PsiModifier.STATIC);
-      }
-      myPsi = new GrDynamicImplicitProperty(manager, getName(), getType(), containingClassName, new LightModifierList(manager, hashSet));
+    LinkedHashSet<String> hashSet = new LinkedHashSet<String>();
+
+    Boolean isStatic = isStatic();
+    if (isStatic != null && isStatic.booleanValue()) {
+      hashSet.add(PsiModifier.STATIC);
+    }
+    myPsi = new GrDynamicImplicitProperty(manager, getName(), getType(), containingClassName, new LightModifierList(manager, hashSet));
     return myPsi;
   }
 }

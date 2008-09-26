@@ -60,12 +60,14 @@ public class DMethodElement extends DItemElement implements Comparable {
     final String type = getType();
 
     String staticModifier = null;
-    boolean isStatic = isStatic();
-      if (isStatic){
-        staticModifier = PsiModifier.STATIC;
+    Boolean isStatic = isStatic();
+
+    if (isStatic != null && isStatic.booleanValue()) {
+      staticModifier = PsiModifier.STATIC;
     }
 
-    final GrMethod method = GroovyPsiElementFactory.getInstance(manager.getProject()).createMethodFromText(staticModifier, getName(), type, QuickfixUtil.getArgumentsTypes(myPairs));
+    final GrMethod method = GroovyPsiElementFactory.getInstance(manager.getProject())
+        .createMethodFromText(staticModifier, getName(), type, QuickfixUtil.getArgumentsTypes(myPairs));
 
     myImplicitMethod = new GrDynamicImplicitMethod(manager, method, containingClassName);
     return myImplicitMethod;
@@ -73,7 +75,7 @@ public class DMethodElement extends DItemElement implements Comparable {
 
   public int compareTo(Object o) {
     if (!(o instanceof DMethodElement)) return 0;
-    final DMethodElement otherMethod = (DMethodElement) o;
+    final DMethodElement otherMethod = (DMethodElement)o;
 
     return getName().compareTo(otherMethod.getName()) + getType().compareTo(otherMethod.getType());
   }
