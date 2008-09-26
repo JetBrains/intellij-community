@@ -175,7 +175,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       return (Psi[])myStub.getChildrenByType(elementType, array);
     }
     else {
-      final ASTNode[] nodes = getNode().getChildren(TokenSet.create(elementType));
+      final ASTNode[] nodes = SharedImplUtil.getChildrenOfType(getNode(), elementType);
       Psi[] psiElements = (Psi[])java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), nodes.length);
       for (int i = 0; i < nodes.length; i++) {
         psiElements[i] = (Psi)nodes[i].getPsi();
@@ -190,7 +190,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       return (Psi[])myStub.getChildrenByType(elementType, f);
     }
     else {
-      final ASTNode[] nodes = getNode().getChildren(TokenSet.create(elementType));
+      final ASTNode[] nodes = SharedImplUtil.getChildrenOfType(getNode(), elementType);
       Psi[] psiElements = f.create(nodes.length);
       for (int i = 0; i < nodes.length; i++) {
         psiElements[i] = (Psi)nodes[i].getPsi();

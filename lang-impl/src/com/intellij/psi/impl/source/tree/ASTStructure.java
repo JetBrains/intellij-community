@@ -9,7 +9,7 @@ import com.intellij.util.diff.FlyweightCapableTreeStructure;
  * @author max
  */
 public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
-  private ASTNode myRoot;
+  private final ASTNode myRoot;
 
   public ASTStructure(final ASTNode root) {
     ChameleonTransforming.transformChildren(root);
@@ -43,7 +43,7 @@ public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
     int count = 0;
     while (child != null) {
       if (count >= store.length) {
-        ASTNode[] newStore = new ASTNode[(count * 3) / 2];
+        ASTNode[] newStore = new ASTNode[count * 3 / 2];
         System.arraycopy(store, 0, newStore, 0, count);
         into.set(newStore);
         store = newStore;

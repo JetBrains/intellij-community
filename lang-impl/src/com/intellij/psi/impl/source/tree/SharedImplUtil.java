@@ -9,8 +9,11 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 //TODO: rename/regroup?
@@ -135,4 +138,32 @@ public class SharedImplUtil {
     return node.getTreeParent().getPsi().getManager();
   }
 
+  public static ASTNode[] getChildrenOfType(ASTNode node, IElementType elementType) {
+    int count = countChildrenOfType(node, elementType);
+    if (count == 0) {
+      return ASTNode.EMPTY_ARRAY;
+    }
+    final ASTNode[] result = new ASTNode[count];
+    count = 0;
+    for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      if (child.getElementType() == elementType) {
+        result[count++] = child;
+      }
+    }
+    return result;
+  }
+
+  private static int countChildrenOfType(@NotNull ASTNode node, @NotNull IElementType elementType) {
+    ChameleonTransforming.transformChildren(node);
+
+    // no lock is needed because all chameleons are expanded already
+    int count = 0;
+    for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      if (child.getElementType() == elementType) {
+        count++;
+      }
+    }
+
+    return count;
+  }
 }
