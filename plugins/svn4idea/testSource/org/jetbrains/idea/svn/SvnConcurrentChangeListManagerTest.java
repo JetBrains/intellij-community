@@ -267,6 +267,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     // not parralel, just test of correct detection
     runSvn("changelist", targetName, file.getPath());
 
+    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
     checkFilesAreInList(new VirtualFile[] {file}, targetName, changeListManager);
   }
