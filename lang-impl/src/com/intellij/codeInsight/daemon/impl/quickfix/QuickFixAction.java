@@ -1,12 +1,10 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -18,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -59,30 +56,6 @@ public final class QuickFixAction {
     info.fixEndOffset = Math.max (info.fixEndOffset, fixRange.getEndOffset());
     if (action instanceof HintAction) {
       info.setHint(true);
-    }
-  }
-
-  public static void removeAction(Editor editor, Project project, IntentionAction action) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    int offset = editor.getCaretModel().getOffset();
-
-    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    HighlightInfo info = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(editor.getDocument(), offset, true);
-    if (info != null) {
-      removeFrom(info.quickFixActionMarkers, action);
-      removeFrom(info.quickFixActionRanges, action);
-    }
-  }
-
-  private static <T> void removeFrom(List<Pair<HighlightInfo.IntentionActionDescriptor, T>> list, IntentionAction action) {
-    if (list == null) return;
-    Iterator<Pair<HighlightInfo.IntentionActionDescriptor, T>> iterator = list.iterator();
-    while (iterator.hasNext()) {
-      Pair<HighlightInfo.IntentionActionDescriptor, T> pair = iterator.next();
-      if (pair.getFirst().getAction() == action) {
-        iterator.remove();
-        break;
-      }
     }
   }
 

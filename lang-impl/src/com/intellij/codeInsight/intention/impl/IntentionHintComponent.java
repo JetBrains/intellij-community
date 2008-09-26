@@ -3,7 +3,6 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -628,7 +627,6 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
             }
             Runnable runnable = new Runnable() {
               public void run() {
-                removeActionFromList(cachedAction);
                 try {
                   action.invoke(myProject, myEditor, file);
                 }
@@ -653,16 +651,6 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
         });
       }
     });
-  }
-
-  private void removeActionFromList(IntentionActionWithTextCaching cachedAction) {
-    IntentionListStep step = (IntentionListStep)myPopup.getListStep();
-    if (step == null) return;
-    
-    step.myCachedErrorFixes.remove(cachedAction);
-    step.myCachedInspectionFixes.remove(cachedAction);
-
-    QuickFixAction.removeAction(myEditor, myProject, cachedAction.getAction());
   }
 
   public static class EnableDisableIntentionAction implements IntentionAction{
