@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,13 @@ import org.jetbrains.annotations.Nullable;
  * @see PsiJavaFile#getImportList() 
  */
 public interface PsiImportList extends PsiElement {
+  PsiImportList[] EMPTY_ARRAY = new PsiImportList[0];
+  ArrayFactory<PsiImportList> ARRAY_FACTORY = new ArrayFactory<PsiImportList>() {
+    public PsiImportList[] create(int count) {
+      return count == 0 ? EMPTY_ARRAY : new PsiImportList[count];
+    }
+  };
+
   /**
    * Returns the non-static import statements contained in the list.
    *
