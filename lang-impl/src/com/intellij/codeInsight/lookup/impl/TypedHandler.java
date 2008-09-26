@@ -18,7 +18,7 @@ import com.intellij.openapi.extensions.Extensions;
 import java.awt.*;
 import java.util.Arrays;
 
-class TypedHandler implements TypedActionHandler {
+public class TypedHandler implements TypedActionHandler {
   private final TypedActionHandler myOriginalHandler;
 
   public TypedHandler(TypedActionHandler originalHandler){

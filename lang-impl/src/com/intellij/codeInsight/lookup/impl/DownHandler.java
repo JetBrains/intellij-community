@@ -3,7 +3,7 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.ui.ListScrollingUtil;
 
-class DownHandler extends LookupActionHandler {
+public class DownHandler extends LookupActionHandler {
 
   public DownHandler(EditorActionHandler originalHandler){
     super(originalHandler);

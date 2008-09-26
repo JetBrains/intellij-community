@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
 import java.awt.*;
 
-class BackspaceHandler extends EditorActionHandler {
+public class BackspaceHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
 
   public BackspaceHandler(EditorActionHandler originalHandler){

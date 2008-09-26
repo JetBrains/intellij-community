@@ -1,14 +1,12 @@
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.ListScrollingUtil;
-import com.intellij.codeInsight.lookup.LookupManager;
 
-class HomeHandler extends EditorActionHandler {
+public class HomeHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
 
   public HomeHandler(EditorActionHandler originalHandler){

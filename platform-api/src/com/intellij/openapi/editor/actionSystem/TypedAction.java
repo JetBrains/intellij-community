@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 
 /**
@@ -30,9 +31,19 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
  */
 public class TypedAction {
   private TypedActionHandler myHandler;
+  private boolean myHandlersLoaded;
 
   public TypedAction() {
     myHandler = new Handler();
+  }
+
+  private void ensureHandlersLoaded() {
+    if (!myHandlersLoaded) {
+      myHandlersLoaded = true;
+      for(EditorTypedHandlerBean handlerBean: Extensions.getExtensions(EditorTypedHandlerBean.EP_NAME)) {
+        myHandler = handlerBean.getHandler(myHandler);
+      }
+    }
   }
 
   private static class Handler implements TypedActionHandler {
@@ -67,6 +78,7 @@ public class TypedAction {
    * @return the current typing handler.
    */
   public TypedActionHandler getHandler() {
+    ensureHandlersLoaded();
     return myHandler;
   }
 
@@ -78,6 +90,7 @@ public class TypedAction {
    * @return the previously registered handler.
    */
   public TypedActionHandler setupHandler(TypedActionHandler handler) {
+    ensureHandlersLoaded();
     TypedActionHandler tmp = myHandler;
     myHandler = handler;
     return tmp;

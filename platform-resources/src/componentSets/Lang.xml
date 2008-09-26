@@ -38,14 +38,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.codeInsight.template.impl.TemplateManagerActions</interface-class>
-      <implementation-class>com.intellij.codeInsight.template.impl.TemplateManagerActions</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.codeInsight.lookup.impl.LookupManagerActions</interface-class>
-      <implementation-class>com.intellij.codeInsight.lookup.impl.LookupManagerActions</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.util.indexing.FileBasedIndex</implementation-class>
     </component>
     <component>
@@ -61,11 +53,6 @@
     <component>
       <interface-class>com.intellij.tools.ToolManager</interface-class>
       <implementation-class>com.intellij.tools.ToolManager</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.codeInsight.highlighting.HighlightManagerActions</interface-class>
-      <implementation-class>com.intellij.codeInsight.highlighting.HighlightManagerActions</implementation-class>
     </component>
 
     <component>

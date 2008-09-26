@@ -1,12 +1,8 @@
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.editorActions.*;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
@@ -122,22 +118,7 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
   )
   public String[] EXCLUDED_PACKAGES = new String[0];
   
-  public CodeInsightSettings(EditorActionManager actionManager) {
-    if (actionManager != null) {
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_ENTER, new EnterHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END, new EndHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET, new SelectWordHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET, new UnSelectWordHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_PASTE, new PasteHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_PASTE)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_COPY, new CopyHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_COPY)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_CUT, new CutHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_CUT)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES, new JoinLinesHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE, new BackspaceHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START, new BackspaceHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START)));
-
-      TypedAction typedAction = actionManager.getTypedAction();
-      typedAction.setupHandler(new TypedHandler(typedAction.getHandler()));
-    }
+  public CodeInsightSettings() {
   }
 
   public void initComponent() { }

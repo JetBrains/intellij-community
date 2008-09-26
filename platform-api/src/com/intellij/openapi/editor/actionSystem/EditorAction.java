@@ -20,12 +20,15 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.extensions.Extensions;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class EditorAction extends AnAction {
   private EditorActionHandler myHandler;
+  private boolean myHandlersLoaded;
 
   public final EditorActionHandler getHandler() {
+    ensureHandlersLoaded();
     return myHandler;
   }
 
@@ -35,9 +38,22 @@ public abstract class EditorAction extends AnAction {
   }
 
   public final EditorActionHandler setupHandler(EditorActionHandler newHandler) {
+    ensureHandlersLoaded();
     EditorActionHandler tmp = myHandler;
     myHandler = newHandler;
     return tmp;
+  }
+
+  private void ensureHandlersLoaded() {
+    if (!myHandlersLoaded) {
+      myHandlersLoaded = true;
+      final String id = ActionManager.getInstance().getId(this);
+      for(EditorActionHandlerBean handlerBean: Extensions.getExtensions(EditorActionHandlerBean.EP_NAME)) {
+        if (handlerBean.action.equals(id)) {
+          myHandler = handlerBean.getHandler(myHandler);
+        }
+      }
+    }
   }
 
   public final void actionPerformed(AnActionEvent e) {

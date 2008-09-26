@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -152,9 +151,6 @@ public class HintManagerImpl extends HintManager {
         }
       }
     };
-
-    editorActionManager.setActionHandler(IdeActions.ACTION_EDITOR_ESCAPE,
-                                   new EscapeHandler(editorActionManager.getActionHandler(IdeActions.ACTION_EDITOR_ESCAPE)));
 
     myTooltipController = new TooltipController();
   }
@@ -724,41 +720,19 @@ public class HintManagerImpl extends HintManager {
     }
   }
 
-  public static class EscapeHandler extends EditorActionHandler {
-    private final EditorActionHandler myOriginalHandler;
-
-    public EscapeHandler(EditorActionHandler originalHandler) {
-      myOriginalHandler = originalHandler;
-    }
-
-    public void execute(Editor editor, DataContext dataContext) {
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      if (project == null || !getInstanceImpl().hideHints(HIDE_BY_ESCAPE | HIDE_BY_ANY_KEY, true, false)) {
-        myOriginalHandler.execute(editor, dataContext);
-      }
-    }
-
-    public boolean isEnabled(Editor editor, DataContext dataContext) {
-      LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-
-      if (project != null) {
-        HintManagerImpl hintManager = getInstanceImpl();
-        for (int i = hintManager.myHintsStack.size() - 1; i >= 0; i--) {
-          final HintInfo info = hintManager.myHintsStack.get(i);
-          if (!info.hint.isVisible()) {
-            hintManager.myHintsStack.remove(i);
-            continue;
-          }
-
-          if ((info.flags & (HIDE_BY_ESCAPE | HIDE_BY_ANY_KEY)) != 0) {
-            return true;
-          }
-        }
+  boolean isEscapeHandlerEnabled() {
+    for (int i = myHintsStack.size() - 1; i >= 0; i--) {
+      final HintInfo info = myHintsStack.get(i);
+      if (!info.hint.isVisible()) {
+        myHintsStack.remove(i);
+        continue;
       }
 
-      return myOriginalHandler.isEnabled(editor, dataContext);
+      if ((info.flags & (HIDE_BY_ESCAPE | HIDE_BY_ANY_KEY)) != 0) {
+        return true;
+      }
     }
+    return false;
   }
 
   protected boolean hideHints(int mask, boolean onlyOne, boolean editorChanged) {

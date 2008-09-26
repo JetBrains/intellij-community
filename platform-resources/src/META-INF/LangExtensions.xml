@@ -315,4 +315,38 @@
   <intentionAction>
     <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>
   </intentionAction>
+
+  <!-- CodeInsightSettings -->
+  <editorActionHandler action="EditorEnter" implementationClass="com.intellij.codeInsight.editorActions.EnterHandler"/>
+  <editorActionHandler action="EditorLineEnd" implementationClass="com.intellij.codeInsight.editorActions.EndHandler"/>
+  <editorActionHandler action="EditorSelectWord" implementationClass="com.intellij.codeInsight.editorActions.SelectWordHandler"/>
+  <editorActionHandler action="EditorUnSelectWord" implementationClass="com.intellij.codeInsight.editorActions.UnSelectWordHandler"/>
+  <editorActionHandler action="EditorPaste" implementationClass="com.intellij.codeInsight.editorActions.PasteHandler"/>
+  <editorActionHandler action="EditorCopy" implementationClass="com.intellij.codeInsight.editorActions.CopyHandler"/>
+  <editorActionHandler action="EditorCut" implementationClass="com.intellij.codeInsight.editorActions.CutHandler"/>
+  <editorActionHandler action="EditorJoinLines" implementationClass="com.intellij.codeInsight.editorActions.JoinLinesHandler"/>
+  <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.editorActions.BackspaceHandler"/>
+  <editorActionHandler action="EditorDeleteToWordStart" implementationClass="com.intellij.codeInsight.editorActions.BackspaceHandler"/>
+  <editorTypedHandler implementationClass="com.intellij.codeInsight.editorActions.TypedHandler"/>
+
+  <!-- LookupManagerActions -->
+  <editorActionHandler action="EditorUp" implementationClass="com.intellij.codeInsight.lookup.impl.UpHandler"/>
+  <editorActionHandler action="EditorDown" implementationClass="com.intellij.codeInsight.lookup.impl.DownHandler"/>
+  <editorActionHandler action="EditorPageUp" implementationClass="com.intellij.codeInsight.lookup.impl.PageUpHandler"/>
+  <editorActionHandler action="EditorPageDown" implementationClass="com.intellij.codeInsight.lookup.impl.PageDownHandler"/>
+  <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.lookup.impl.HomeHandler"/>
+  <editorActionHandler action="EditorLineEnd" implementationClass="com.intellij.codeInsight.lookup.impl.EndHandler"/>
+  <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.lookup.impl.BackspaceHandler"/>
+  <editorTypedHandler implementationClass="com.intellij.codeInsight.lookup.impl.TypedHandler"/>
+
+  <!-- TemplateManagerActions -->
+  <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EscapeHandler"/>
+  <editorActionHandler action="EditorEnter" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EnterHandler"/>
+  <editorActionHandler action="EditorTab" implementationClass="com.intellij.codeInsight.template.impl.editorActions.TabHandler"/>
+  <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.template.impl.editorActions.HomeHandler"/>
+  <editorActionHandler action="EditorLineEnd" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EndHandler"/>
+  <editorTypedHandler implementationClass="com.intellij.codeInsight.template.impl.editorActions.SpaceHandler"/>
+
+  <!-- HighlightManagerActions -->
+  <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.highlighting.EscapeHandler"/>
 </extensions>

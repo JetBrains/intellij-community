@@ -39,7 +39,7 @@ public abstract class UsefulTestCase extends TestCase {
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   static {
     try {
-      CodeInsightSettings defaultSettings = new CodeInsightSettings(null);
+      CodeInsightSettings defaultSettings = new CodeInsightSettings();
       Element oldS = new Element("temp");
       defaultSettings.writeExternal(oldS);
       DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS, "\n");
