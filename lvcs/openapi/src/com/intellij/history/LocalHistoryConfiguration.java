@@ -16,15 +16,21 @@
 
 package com.intellij.history;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 
-public class LocalHistoryConfiguration implements JDOMExternalizable, ApplicationComponent {
+@State(
+  name = "LocalHistoryConfiguration",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$APP_CONFIG$/other.xml"
+    )}
+)
+public class LocalHistoryConfiguration implements PersistentStateComponent<LocalHistoryConfiguration> {
   private static final long DEFAULT_PURGING_PERIOD = 1000 * 60 * 60 * 24 * 3; // 3 days
 
   public long PURGE_PERIOD = DEFAULT_PURGING_PERIOD;
@@ -41,24 +47,14 @@ public class LocalHistoryConfiguration implements JDOMExternalizable, Applicatio
   public boolean SHOW_CHANGES_ONLY = false;
 
   public static LocalHistoryConfiguration getInstance() {
-    return ApplicationManager.getApplication().getComponent(LocalHistoryConfiguration.class);
+    return ServiceManager.getService(LocalHistoryConfiguration.class);
   }
 
-  public void disposeComponent() {
+  public LocalHistoryConfiguration getState() {
+    return this;
   }
 
-  public void initComponent() {
-  }
-
-  public String getComponentName() {
-    return "LocalHistoryConfiguration";
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+  public void loadState(final LocalHistoryConfiguration state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 }

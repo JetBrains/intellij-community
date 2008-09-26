@@ -75,6 +75,9 @@
                       serviceImplementation="com.intellij.codeInsight.hint.TooltipController"/>
   <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.EditorActionManager"
                       serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
+  <applicationService serviceInterface="com.intellij.history.LocalHistoryConfiguration"
+                      serviceImplementation="com.intellij.history.LocalHistoryConfiguration"/>
+
 
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
