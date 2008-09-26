@@ -258,6 +258,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         mover.doMove(src, dst);
       }
       dst.setLastModified(srcTime);
+      
+      vcs.pathChanged(src, dst);
     }
     catch (SVNException e) {
       addToMoveExceptions(vcs.getProject(), e);

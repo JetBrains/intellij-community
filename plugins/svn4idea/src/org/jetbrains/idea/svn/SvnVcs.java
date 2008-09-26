@@ -191,21 +191,23 @@ public class SvnVcs extends AbstractVcs {
   }
 
   private void changeListSynchronizationIdeaVersionToNative(final SvnBranchConfigurationManager.SvnSupportOptions supportOptions) {
-    if (! supportOptions.changeListsSynchronized()) {
       final MessageBusConnection messageBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
       messageBusConnection.subscribe(ChangeListManagerImpl.LISTS_LOADED, new LocalChangeListsLoadedListener() {
         public void processLoadedLists(final List<LocalChangeList> lists) {
-          try {
-            processChangeLists(lists);
-            supportOptions.upgradeToChangeListsSynchronized();
-          }
-          catch (ProcessCanceledException e) {
-            //
+          ChangeListManager.getInstance(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
+
+          if (! supportOptions.changeListsSynchronized()) {
+            try {
+              processChangeLists(lists);
+              supportOptions.upgradeToChangeListsSynchronized();
+            }
+            catch (ProcessCanceledException e) {
+              //
+            }
           }
           messageBusConnection.disconnect();
         }
       });
-    }
   }
 
   public void processChangeLists(final List<LocalChangeList> lists) {
@@ -835,5 +837,9 @@ public class SvnVcs extends AbstractVcs {
   @Override
   public List<AnAction> getAdditionalActionsForLocalChange() {
     return Arrays.<AnAction>asList(new ShowPropertiesDiffWithLocalAction());
+  }
+
+  public void pathChanged(final File from, final File to) throws SVNException {
+    myChangeListListener.pathChanged(from, to);
   }
 }

@@ -34,6 +34,7 @@ import java.util.*;
  */
 public class SvnChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangeProvider");
+  public static final String ourDefaultListName = VcsBundle.message("changes.default.changlist.name");
 
   private final SvnVcs myVcs;
   private final VcsContextFactory myFactory;
@@ -90,11 +91,11 @@ public class SvnChangeProvider implements ChangeProvider {
     if (WorkingCopyFormat.ONE_DOT_FIVE.getFormat() == status.getWorkingCopyFormat()) {
       if (SVNNodeKind.FILE.equals(status.getKind())) {
         final String clName = status.getChangelistName();
-        return (clName == null) ? myClManager.getDefaultChangeList().getName() : clName;
+        return (clName == null) ? ourDefaultListName : clName;
       }
     }
     // always null for earlier versions
-    return null;
+    return ourDefaultListName;
   }
 
   private void processCopiedFile(SvnChangedFile copiedFile, ChangelistBuilder builder, SvnChangeProviderContext context) throws SVNException {
