@@ -75,6 +75,9 @@ public class RollbackAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     FileDocumentManager.getInstance().saveAllDocuments();
     Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) {
+      return;
+    }
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
     if (missingFiles != null && !missingFiles.isEmpty()) {
       new RollbackDeletionAction().actionPerformed(e);
