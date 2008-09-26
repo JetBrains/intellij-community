@@ -11,7 +11,7 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
 
-public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub {
+public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub<PsiClass> {
   private final StringRef myQualifiedName;
   private final StringRef myName;
   private final StringRef myBaseRefText;

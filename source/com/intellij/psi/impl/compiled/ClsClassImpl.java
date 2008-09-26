@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub> implements PsiClass {
+public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<? extends PsiClass>> implements PsiClass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsClassImpl");
 
   private volatile Map<String, PsiField> myCachedFieldsMap = null;
