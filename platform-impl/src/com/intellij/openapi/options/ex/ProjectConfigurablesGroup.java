@@ -64,4 +64,6 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
   public boolean equals(Object object) {
     return object instanceof ProjectConfigurablesGroup && ((ProjectConfigurablesGroup)object).myProject == myProject;
   }
+
+
 }

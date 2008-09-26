@@ -94,6 +94,14 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
       }
     }
 
+    @Override
+    public int getWeight() {
+      if (getDelegate() instanceof SimpleNode) {
+        return ((SimpleNode)getDelegate()).getWeight();
+      }
+      return super.getWeight();
+    }
+
     public void clear() {
       cleanUpCache();
       myChildren.clear();

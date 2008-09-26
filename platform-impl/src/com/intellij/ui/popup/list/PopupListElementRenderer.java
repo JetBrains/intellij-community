@@ -39,12 +39,10 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
     myPopup = aPopup;
   }
 
-  protected void prepareItemComponent(JList list, Object value, boolean isSelected) {
+  protected void customizeComponent(JList list, Object value, boolean isSelected) {
     ListPopupStep<Object> step = myPopup.getListStep();
     boolean isSelectable = step.isSelectable(value);
     myTextLabel.setEnabled(isSelectable);
-
-    super.prepareItemComponent(list, value, isSelected);
 
     if (step.isMnemonicsNavigationEnabled()) {
       final int pos = step.getMnemonicNavigationFilter().getMnemonicPos(value);
@@ -66,6 +64,12 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
     else {
       myNextStepLabel.setVisible(false);
       //myNextStepLabel.setIcon(PopupIcons.EMPTY_ICON);
+    }
+
+    if (isSelected) {
+      setSelected(myNextStepLabel);
+    } else {
+      setDeselected(myNextStepLabel);
     }
   }
 

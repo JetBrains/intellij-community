@@ -24,10 +24,9 @@ package com.intellij.openapi.options;
  * Time: 3:21:22 PM
  * To change this template use Options | File Templates.
  */
-public interface ConfigurableGroup {
+public interface ConfigurableGroup extends Configurable.Composite {
   String getDisplayName();
 
   String getShortName();
 
-  Configurable[] getConfigurables();
 }

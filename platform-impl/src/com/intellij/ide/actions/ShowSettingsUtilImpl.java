@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.newEditor.OptionsEditorDialog;
 import com.intellij.openapi.options.ex.ControlPanelSettingsEditor;
 import com.intellij.openapi.options.ex.ExplorerSettingsEditor;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -24,7 +25,10 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   public void showSettingsDialog(Project project, ConfigurableGroup[] group) {
     group = filterEmptyGroups(group);
-    if (Boolean.toString(true).equals(PropertiesComponent.getInstance().getValue(PREFER_CLASSIC_OPTIONS_EDITOR))) {
+
+    if ("true".equalsIgnoreCase(System.getProperty("new.options.editor"))) {
+      new OptionsEditorDialog(project, group, null).show();
+    }  else if (Boolean.toString(true).equals(PropertiesComponent.getInstance().getValue(PREFER_CLASSIC_OPTIONS_EDITOR))) {
       showExplorerOptions(project, group);
     }
     else {

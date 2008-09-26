@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.popup.list;
+package com.intellij.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.border.Border;
@@ -41,10 +40,7 @@ public class DottedBorder implements Border {
 
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     g.setColor(myColor);
-
-    if (ApplicationManager.getApplication() != null) {
-      UIUtil.drawDottedRectangle(g, x, y, x + width - 1, y + height - 1);
-    }
+    UIUtil.drawDottedRectangle(g, x, y, x + width - 1, y + height - 1);
   }
 
   public Insets getBorderInsets(Component c) {

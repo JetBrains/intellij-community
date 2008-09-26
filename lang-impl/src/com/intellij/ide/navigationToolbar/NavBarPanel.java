@@ -65,7 +65,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
-import com.intellij.ui.popup.list.DottedBorder;
+import com.intellij.ui.DottedBorder;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;

@@ -63,4 +63,8 @@ public interface Configurable extends UnnamedConfigurable {
 
   }
 
+  interface Composite {
+    Configurable[] getConfigurables();
+  }
+
 }
