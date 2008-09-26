@@ -261,7 +261,8 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
 
     {
-      final CompletionVariant variant = new CompletionVariant(new LeftNeighbour(new LeftNeighbour(new TextFilter("<", ","))));
+      final CompletionVariant variant = new CompletionVariant(psiElement().afterLeaf(
+          psiElement(PsiIdentifier.class).afterLeaf(",", "<")).withSuperParent(2, PsiTypeParameterList.class));
       variant.includeScopeClass(PsiClass.class, true);
       variant.addCompletion(PsiKeyword.EXTENDS, TailType.SPACE);
       registerVariant(variant);
