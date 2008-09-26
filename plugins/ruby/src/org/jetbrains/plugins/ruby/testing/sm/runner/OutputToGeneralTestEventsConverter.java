@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Key;
 import jetbrains.buildServer.messages.serviceMessages.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ruby.testing.sm.runner.GeneralTestEventsProcessor;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -103,9 +103,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnTestStarted(final String testName) {
+  private void fireOnTestStarted(final String testName, @Nullable  final String locationUrl) {
     for (GeneralTestEventsProcessor processor : myProcessors) {
-      processor.onTestStarted(testName);
+      processor.onTestStarted(testName, locationUrl);
     }
   }
 
@@ -148,9 +148,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnSuiteStarted(final String suiteName) {
+  private void fireOnSuiteStarted(final String suiteName, @Nullable final String locationUrl) {
     for (GeneralTestEventsProcessor processor : myProcessors) {
-      processor.onSuiteStarted(suiteName);
+      processor.onSuiteStarted(suiteName, locationUrl);
     }
   }
 
@@ -164,9 +164,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls public static final String KEY_TESTS_COUNT = "testCount";
     @NonNls private static final String ATTR_KEY_TEST_ERROR = "error";
     @NonNls private static final String ATTR_KEY_TEST_DURATION = "duration";
+    @NonNls private static final String ATTR_KEY_LOCATION_URL = "location";
 
     public void visitTestSuiteStarted(@NotNull final TestSuiteStarted suiteStarted) {
-      fireOnSuiteStarted(suiteStarted.getSuiteName());
+      final String locationUrl = suiteStarted.getAttributes().get(ATTR_KEY_LOCATION_URL);
+      fireOnSuiteStarted(suiteStarted.getSuiteName(), locationUrl);
     }
 
     public void visitTestSuiteFinished(@NotNull final TestSuiteFinished suiteFinished) {
@@ -174,7 +176,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     public void visitTestStarted(@NotNull final TestStarted testStarted) {
-      fireOnTestStarted(testStarted.getTestName());
+      final String locationUrl = testStarted.getAttributes().get(ATTR_KEY_LOCATION_URL);
+      fireOnTestStarted(testStarted.getTestName(), locationUrl);
     }
 
     public void visitTestFinished(@NotNull final TestFinished testFinished) {

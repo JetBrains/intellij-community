@@ -75,7 +75,8 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
     });
   }
 
-  public void onTestStarted(final String testName) {
+  public void onTestStarted(final String testName, final String locationUrl) {
+    //TODO[romeo] : location info
     UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final String fullName = getFullTestName(testName);
@@ -103,7 +104,8 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
     });
   }
 
-  public void onSuiteStarted(final String suiteName) {
+  public void onSuiteStarted(final String suiteName, final String locationUrl) {
+    //TODO[romeo] : location info
     UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final SMTestProxy parentSuite = getCurrentSuite();

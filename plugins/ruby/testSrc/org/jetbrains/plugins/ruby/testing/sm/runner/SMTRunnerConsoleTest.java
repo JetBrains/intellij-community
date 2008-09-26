@@ -269,7 +269,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testOnUncapturedOutput_SomeSuite() {
     myEventsProcessor.onStartTesting();
 
-    myEventsProcessor.onSuiteStarted("my suite");
+    myEventsProcessor.onSuiteStarted("my suite", null);
     final SMTestProxy mySuite = myEventsProcessor.getCurrentSuite();
     assertTrue(mySuite != myRootSuite);
     mySuite.setPrintLinstener(myMockResetablePrinter);
@@ -280,7 +280,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testOnUncapturedOutput_SomeTest() {
     myEventsProcessor.onStartTesting();
 
-    myEventsProcessor.onSuiteStarted("my suite");
+    myEventsProcessor.onSuiteStarted("my suite", null);
     startTestWithPrinter("my test");
 
     assertOnUncapturedOutput();
@@ -318,7 +318,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myConsole.attachToProcess(null);
 
     myEventsProcessor.onStartTesting();
-    myEventsProcessor.onSuiteStarted("suite");
+    myEventsProcessor.onSuiteStarted("suite", null);
     final SMTestProxy suite = myEventsProcessor.getCurrentSuite();
     myEventsProcessor.onSuiteFinished("suite");
     myEventsProcessor.onUncapturedOutput("preved", ProcessOutputTypes.STDOUT);
@@ -340,7 +340,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   }
 
   private SMTestProxy startTestWithPrinter(final String testName) {
-    myEventsProcessor.onTestStarted(testName);
+    myEventsProcessor.onTestStarted(testName, null);
     final SMTestProxy proxy =
         myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName(testName));
     proxy.setPrintLinstener(myMockResetablePrinter);

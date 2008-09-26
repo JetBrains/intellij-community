@@ -286,15 +286,15 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   }
 
   public void testConcurrentSuite_intersected() {
-    myEventsProcessor.onSuiteStarted("suite1");
-    myEventsProcessor.onTestStarted("suite2.test1");
+    myEventsProcessor.onSuiteStarted("suite1", null);
+    myEventsProcessor.onTestStarted("suite2.test1", null);
 
     final SMTestProxy test1 =
         myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName("suite2.test1"));
 
     myEventsProcessor.onSuiteFinished("suite1");
 
-    myEventsProcessor.onSuiteStarted("suite2");
+    myEventsProcessor.onSuiteStarted("suite2", null);
     myEventsProcessor.onTestFinished("suite2.test1", 10);
     myEventsProcessor.onSuiteFinished("suite2");
 
@@ -310,12 +310,12 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   }
 
   private void onTestStarted(final String testName) {
-    myEventsProcessor.onTestStarted(testName);
+    myEventsProcessor.onTestStarted(testName, null);
     myResultsViewer.performUpdate();
   }
 
   private void onTestSuiteStarted(final String suiteName) {
-    myEventsProcessor.onSuiteStarted(suiteName);
+    myEventsProcessor.onSuiteStarted(suiteName, null);
     myResultsViewer.performUpdate();
   }
 }

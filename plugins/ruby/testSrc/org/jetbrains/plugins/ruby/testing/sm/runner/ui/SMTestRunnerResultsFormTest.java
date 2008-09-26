@@ -180,17 +180,17 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     TestConsoleProperties.HIDE_PASSED_TESTS.set(myConsoleProperties, true);
 
     myEventsProcessor.onStartTesting();
-    myEventsProcessor.onSuiteStarted("suite");
+    myEventsProcessor.onSuiteStarted("suite", null);
     myResultsViewer.performUpdate();
 
-    myEventsProcessor.onTestStarted("test_failed");
+    myEventsProcessor.onTestStarted("test_failed", null);
     myResultsViewer.performUpdate();
     myEventsProcessor.onTestFailure("test_failed", "", "", false);
     myResultsViewer.performUpdate();
     myEventsProcessor.onTestFinished("test_failed", 10);
     myResultsViewer.performUpdate();
 
-    myEventsProcessor.onTestStarted("test");
+    myEventsProcessor.onTestStarted("test", null);
     myResultsViewer.performUpdate();
     assertEquals(2, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
 
@@ -205,19 +205,19 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
 
   public void testExpandIfOnlyOneRootChild() throws InterruptedException {
     myEventsProcessor.onStartTesting();
-    myEventsProcessor.onSuiteStarted("suite1");
+    myEventsProcessor.onSuiteStarted("suite1", null);
     myResultsViewer.performUpdate();
-    myEventsProcessor.onSuiteStarted("suite2");
+    myEventsProcessor.onSuiteStarted("suite2", null);
     myResultsViewer.performUpdate();
 
-    myEventsProcessor.onTestStarted("test_failed");
+    myEventsProcessor.onTestStarted("test_failed", null);
     myResultsViewer.performUpdate();
     myEventsProcessor.onTestFailure("test_failed", "", "", false);
     myResultsViewer.performUpdate();
     myEventsProcessor.onTestFinished("test_failed", 10);
     myResultsViewer.performUpdate();
 
-    myEventsProcessor.onTestStarted("test");
+    myEventsProcessor.onTestStarted("test", null);
     myResultsViewer.performUpdate();
 
     myEventsProcessor.onTestFinished("test", 10);
