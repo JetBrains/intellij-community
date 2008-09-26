@@ -31,6 +31,10 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
     this(new IconButton(tooltip, icon, icon), listener, null);
   }
 
+  public InplaceButton(String tooltip, final Icon icon, final ActionListener listener, final Pass<MouseEvent> me) {
+    this(new IconButton(tooltip, icon, icon), listener, me);
+  }
+
   public InplaceButton(IconButton source, final ActionListener listener) {
     this(source, listener, null);
   }
@@ -49,14 +53,18 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
       }
     };
 
-    setIcons(source.getRegular(), source.getInactive(), source.getHovered());
+    setIcons(source);
 
     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     setToolTipText(source.getTooltip());
     setOpaque(false);
   }
 
-  private void setIcons(final Icon regular, final Icon inactive, final Icon hovered) {
+  public void setIcons(IconButton source) {
+    setIcons(source.getRegular(), source.getInactive(), source.getHovered());
+  }
+
+  public void setIcons(final Icon regular, final Icon inactive, final Icon hovered) {
     int width = Math.max(regular.getIconWidth(), inactive.getIconWidth());
     width = Math.max(width, hovered.getIconWidth());
     int height = Math.max(regular.getIconHeight(), inactive.getIconHeight());

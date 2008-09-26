@@ -100,7 +100,7 @@ final class EditorTabbedContainer implements Disposable {
         return new UiDecoration(null, new Insets(1, 6, 1, 6));
       }
     }).setGhostsAlwaysVisible(true)
-        .setTabLabelActionsAutoHide(true)
+        .setTabLabelActionsAutoHide(false)
         .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground())
         .setPaintFocus(false).getJBTabs().addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
@@ -256,7 +256,8 @@ final class EditorTabbedContainer implements Disposable {
 
     @Override
     public void update(final AnActionEvent e) {
-      e.getPresentation().setIcon(IconLoader.getIcon("/actions/cross.png"));
+      e.getPresentation().setIcon(IconLoader.getIcon("/actions/close.png"));
+      e.getPresentation().setHoveredIcon(IconLoader.getIcon("/actions/closeHovered.png"));
       e.getPresentation().setVisible(UISettings.getInstance().SHOW_CLOSE_BUTTON);
     }
 

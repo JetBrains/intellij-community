@@ -17,6 +17,7 @@
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,9 +33,13 @@ public class ActiveIcon implements Icon {
     this(icon, icon);
   }
 
-  public ActiveIcon(final Icon regular, final Icon inactive) {
+  public ActiveIcon(@Nullable final Icon regular, @Nullable final Icon inactive) {
+    setIcons(regular, inactive);
+  }
+
+  protected void setIcons(@Nullable final Icon regular, @Nullable final Icon inactive) {
     myRegular = regular != null ? regular : new EmptyIcon(0);
-    myInactive = inactive != null ? inactive : new EmptyIcon(0);
+    myInactive = inactive != null ? inactive : myRegular;
   }
 
   public Icon getRegular() {

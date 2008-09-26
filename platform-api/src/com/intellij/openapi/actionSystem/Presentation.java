@@ -58,6 +58,10 @@ public final class Presentation implements Cloneable {
    */
   @NonNls public static final String PROP_DISABLED_ICON = "disabledIcon";
   /**
+   * value: Icon
+   */
+  @NonNls public static final String PROP_HOVERED_ICON = "hoveredIcon";
+  /**
    * value: Boolean
    */
   @NonNls public static final String PROP_VISIBLE = "visible";
@@ -72,6 +76,7 @@ public final class Presentation implements Cloneable {
   private String myDescription;
   private Icon myIcon;
   private Icon myDisabledIcon;
+  private Icon myHoveredIcon;
   private int myMnemonic;
   private int myDisplayedMnemonicIndex = -1;
   private boolean myVisible;
@@ -204,6 +209,16 @@ public final class Presentation implements Cloneable {
     Icon oldDisabledIcon = myDisabledIcon;
     myDisabledIcon = icon;
     myChangeSupport.firePropertyChange(PROP_DISABLED_ICON, oldDisabledIcon, myDisabledIcon);
+  }
+
+  public Icon getHoveredIcon() {
+    return myHoveredIcon;
+  }
+
+  public void setHoveredIcon(final Icon hoveredIcon) {
+    Icon old = myHoveredIcon;
+    myHoveredIcon = hoveredIcon;
+    myChangeSupport.firePropertyChange(PROP_DISABLED_ICON, old, myHoveredIcon);
   }
 
   public int getMnemonic(){

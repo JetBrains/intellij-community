@@ -49,8 +49,10 @@ class ActionButton extends IconButton implements ActionListener {
     Presentation p = event.getPresentation();
     boolean changed = !areEqual(p, myPrevPresentation);
 
+    setIcons(p.getIcon(), p.getDisabledIcon(), p.getHoveredIcon());
+
     if (changed) {
-      myButton.setIcon(p.getIcon());
+      myButton.setIcons(this);
       String tooltipText = AnAction.createTooltipText(p.getText(), myAction);
       myButton.setToolTipText(tooltipText.length() > 0 ? tooltipText : null);
       myButton.setVisible(p.isEnabled() && p.isVisible());
@@ -65,9 +67,11 @@ class ActionButton extends IconButton implements ActionListener {
   private boolean areEqual(Presentation p1, Presentation p2) {
     if (p1 == null || p2 == null) return false;
 
-    return ObjectUtils.equals(p1.getText(), p2.getText()) && ObjectUtils.equals(p1.getIcon(), p2.getIcon()) &&
-           p1.isEnabled() == p2.isEnabled() &&
-           p1.isVisible() == p2.isVisible();
+    return ObjectUtils.equals(p1.getText(), p2.getText())
+           && ObjectUtils.equals(p1.getIcon(), p2.getIcon())
+           && ObjectUtils.equals(p1.getHoveredIcon(), p2.getHoveredIcon())
+           && p1.isEnabled() == p2.isEnabled()
+           && p1.isVisible() == p2.isVisible();
 
   }
 

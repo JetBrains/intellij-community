@@ -16,7 +16,7 @@
 
 package com.intellij.openapi.ui.popup;
 
-import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -26,10 +26,14 @@ public class IconButton extends ActiveIcon {
 
   private Icon myHovered;
 
-  public IconButton(final String tooltip, final Icon regular, final Icon hovered, final Icon inactive) {
+  public IconButton(final String tooltip, @Nullable final Icon regular, @Nullable final Icon hovered, @Nullable final Icon inactive) {
     super(regular, inactive);
     myTooltip = tooltip;
-    myHovered = hovered != null ? hovered : new EmptyIcon(0);
+    setHovered(hovered);
+  }
+
+  private void setHovered(final Icon hovered) {
+    myHovered = hovered != null ? hovered : getRegular();
   }
 
   public IconButton(final String tooltip, final Icon regular, final Icon hovered) {
@@ -40,6 +44,11 @@ public class IconButton extends ActiveIcon {
     this(tooltip, regular, regular, regular);
   }
 
+
+  protected void setIcons(@Nullable final Icon regular, @Nullable final Icon inactive, @Nullable final Icon hovered) {
+    setIcons(regular, inactive);
+    setHovered(hovered);
+  }
 
   public Icon getHovered() {
     return myHovered;
