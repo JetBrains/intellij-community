@@ -1,12 +1,11 @@
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
@@ -17,27 +16,29 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.List;
 
-public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, ExportableApplicationComponent {
+
+@State(
+  name = "CodeInsightSettings",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$APP_CONFIG$/editor.codeinsight.xml"
+    )}
+)
+public class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable, ExportableComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.CodeInsightSettings");
+
   @NonNls private static final String EXCLUDED_PACKAGE = "EXCLUDED_PACKAGE";
   @NonNls private static final String ATTRIBUTE_NAME = "NAME";
   @NonNls public static final String EXTERNAL_FILE_NAME = "editor.codeinsight";
 
   public static CodeInsightSettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(CodeInsightSettings.class);
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "CodeInsightSettings";
-  }
-
-  public String getExternalFileName() {
-    return EXTERNAL_FILE_NAME;
+    return ServiceManager.getService(CodeInsightSettings.class);
   }
 
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
+    return new File[]{PathManager.getOptionsFile(EXTERNAL_FILE_NAME)};
   }
 
   @NotNull
@@ -117,26 +118,34 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
     elementValueAttribute = "NAME"
   )
   public String[] EXCLUDED_PACKAGES = new String[0];
-  
-  public CodeInsightSettings() {
-  }
 
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-    final List list = element.getChildren(EXCLUDED_PACKAGE);
+  public void loadState(final Element state) {
+    try {
+      DefaultJDOMExternalizer.readExternal(this, state);
+    }
+    catch (InvalidDataException e) {
+      LOG.info(e);
+    }
+    final List list = state.getChildren(EXCLUDED_PACKAGE);
     EXCLUDED_PACKAGES = new String[list.size()];
     for(int i=0; i<list.size(); i++) {
       EXCLUDED_PACKAGES [i] = ((Element) list.get(i)).getAttributeValue(ATTRIBUTE_NAME);
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+  public Element getState() {
+    Element element = new Element("state");
+    writeExternal(element);
+    return element;
+  }
+
+  public void writeExternal(final Element element) {
+    try {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
+    catch (WriteExternalException e) {
+      LOG.info(e);
+    }
     for(String s: EXCLUDED_PACKAGES) {
       final Element child = new Element(EXCLUDED_PACKAGE);
       child.setAttribute(ATTRIBUTE_NAME, s);

@@ -88,6 +88,10 @@
   <applicationService serviceInterface="com.intellij.find.FindSettings"
                       serviceImplementation="com.intellij.find.impl.FindSettingsImpl"/>
 
+  <applicationService serviceInterface="com.intellij.codeInsight.CodeInsightSettings"
+                      serviceImplementation="com.intellij.codeInsight.CodeInsightSettings"/>
+  <exportable serviceInterface="com.intellij.codeInsight.CodeInsightSettings"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"

@@ -53,7 +53,10 @@ public abstract class UsefulTestCase extends TestCase {
     super.tearDown();
     if (ApplicationManager.getApplication() != null) {
       final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-      checkSettingsEqual(DEFAULT_SETTINGS_EXTERNALIZED, settings, "Code insight settings damaged");
+      Element newS = new Element("temp");
+      settings.writeExternal(newS);
+
+      assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS, "\n"));
     }
   }
 
