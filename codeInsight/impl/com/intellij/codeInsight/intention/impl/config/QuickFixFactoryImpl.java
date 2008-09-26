@@ -22,6 +22,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyMemberType;
+import com.intellij.psi.util.ClassKind;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -97,11 +98,11 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   public IntentionAction createCreateClassOrPackageFix(@NotNull final PsiElement context, @NotNull final String qualifiedName, final boolean createClass, final String superClass) {
-    return new CreateClassOrPackageFix(context, qualifiedName, createClass, superClass);
+    return new CreateClassOrPackageFix(context, qualifiedName, createClass ? ClassKind.CLASS : null, superClass);
   }
 
   public IntentionAction createCreateClassOrInterfaceFix(@NotNull final PsiElement context, @NotNull final String qualifiedName, final boolean createClass, final String superClass) {
-    return new CreateClassOrPackageFix(context, qualifiedName, true, !createClass, superClass);
+    return new CreateClassOrPackageFix(context, qualifiedName, createClass ? ClassKind.CLASS : ClassKind.INTERFACE, superClass);
   }
 
   public IntentionAction createCreateFieldOrPropertyFix(final PsiClass aClass, final String name, final PsiType type, final PropertyMemberType targetMember, final PsiAnnotation... annotations) {

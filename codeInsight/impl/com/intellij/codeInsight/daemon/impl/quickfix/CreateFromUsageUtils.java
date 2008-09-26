@@ -47,6 +47,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+
 import java.util.*;
 
 /**
@@ -318,7 +319,7 @@ public class CreateFromUsageUtils {
         public PsiClass compute() {
           try {
             PsiClass targetClass;
-            if (!ApplicationManager.getApplication().isUnitTestMode()) {
+            if (directory != null) {
               try {
                 if (classKind == INTERFACE) {
                   targetClass = JavaDirectoryService.getInstance().createInterface(directory, name);
@@ -342,7 +343,7 @@ public class CreateFromUsageUtils {
                 targetClass.getModifierList().setModifierProperty(PsiKeyword.PUBLIC, true);
               }
             }
-            else {
+            else { //tests
               PsiClass aClass;
               if (classKind == INTERFACE) {
                 aClass = factory.createInterface(name);

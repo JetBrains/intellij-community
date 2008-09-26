@@ -5,6 +5,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -40,7 +41,7 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
     ExtendClass extendClass = genericDomValue.getAnnotation(ExtendClass.class);
     final JavaClassReferenceProvider provider = new JavaClassReferenceProvider(getScope(genericDomValue), context.getPsiManager().getProject());
     if (extendClass != null) {
-      if (!StringUtil.isEmpty(extendClass.value())) {
+      if (StringUtil.isNotEmpty(extendClass.value())) {
         provider.setOption(JavaClassReferenceProvider.EXTEND_CLASS_NAMES, new String[] {extendClass.value()});
       }
       if (extendClass.instantiatable()) {
@@ -61,6 +62,12 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
       provider.setAllowEmpty(extendClass.allowEmpty());
 
     }
+
+    ClassTemplate template = genericDomValue.getAnnotation(ClassTemplate.class);
+    if (template != null && StringUtil.isNotEmpty(template.value())) {
+      provider.setOption(JavaClassReferenceProvider.CLASS_TEMPLATE, Pair.create(template.value(), template.kind()));
+    }
+
     provider.setSoft(true);
     return provider.getReferencesByElement(element);
   }

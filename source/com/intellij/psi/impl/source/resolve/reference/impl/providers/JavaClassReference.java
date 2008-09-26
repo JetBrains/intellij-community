@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
@@ -36,6 +37,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.ClassKind;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -419,28 +421,23 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       boolean createJavaClass = !canReferencePackage();
       final List<PsiDirectory> writableDirectoryList = getWritableDirectoryList(context);
       if (!writableDirectoryList.isEmpty() && checkCreateClassOrPackage(writableDirectoryList, createJavaClass)) {
-        final CreateClassOrPackageFix fix = doRegisterQuickFix(info, writableDirectoryList, createJavaClass, extendClass);
+        final Pair<String,ClassKind> pair = JavaClassReferenceProvider.CLASS_TEMPLATE.getValue(getOptions());
+        final ClassKind kind = createJavaClass ? pair != null ? pair.second : ClassKind.CLASS : null;
+        final CreateClassOrPackageFix action = new CreateClassOrPackageFix(writableDirectoryList, this, kind, extendClass,
+                                                                           pair == null ? null : pair.first);
+        QuickFixAction.registerQuickFixAction(info, action);
         if (list == null) {
-          return Arrays.asList(fix);
+          return Arrays.asList(action);
         }
         else {
           final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(list.size() + 1);
           fixes.addAll(list);
-          fixes.add(fix);
+          fixes.add(action);
           return fixes;
         }
       }
     }
     return list;
-  }
-
-  private CreateClassOrPackageFix doRegisterQuickFix(final HighlightInfo info,
-                                                     final List<PsiDirectory> writableDirectoryList,
-                                                     final boolean createJavaClass,
-                                                     final String extendClass) {
-    final CreateClassOrPackageFix action = new CreateClassOrPackageFix(writableDirectoryList, this, createJavaClass, extendClass);
-    QuickFixAction.registerQuickFixAction(info, action);
-    return action;
   }
 
   @NotNull

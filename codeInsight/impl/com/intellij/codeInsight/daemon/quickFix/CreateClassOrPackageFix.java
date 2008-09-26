@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -21,8 +22,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
+import com.intellij.psi.util.ClassKind;
+import com.intellij.psi.util.CreateClassUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.ide.util.DirectoryChooserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,41 +37,37 @@ import java.util.StringTokenizer;
  * @author peter
 */
 public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
-  private boolean myCreateClass;
   @Nullable private final String mySuperClass;
   private PsiDirectory myDirectory;
   private final List<PsiDirectory> myWritableDirectoryList;
   private final PsiElement myContext;
   private final String myCanonicalText;
-  private final boolean myCreateInterface;
+  @Nullable private final ClassKind myClassKind;
+  @Nullable private final String myTemplateName;
 
-  public CreateClassOrPackageFix(final List<PsiDirectory> writableDirectoryList, final JavaClassReference reference, boolean createClass,
-                                             @Nullable String superClass) {
-    this(writableDirectoryList, reference.getElement(), reference.getCanonicalText(), createClass, false, superClass);
+  public CreateClassOrPackageFix(final List<PsiDirectory> writableDirectoryList, final JavaClassReference reference, @Nullable ClassKind kind,
+                                             @Nullable String superClass, @Nullable String templateName) {
+    this(writableDirectoryList, reference.getElement(), reference.getCanonicalText(), kind, superClass, templateName);
   }
 
-  public CreateClassOrPackageFix(final PsiElement context, final String qualifiedName, final boolean createClass, final String superClass) {
-    this(getWritableDirectoryListDefault(context, context.getManager()), context, qualifiedName, createClass, false, superClass);
+  public CreateClassOrPackageFix(final PsiElement context, final String qualifiedName, @Nullable ClassKind kind, final String superClass) {
+    this(getWritableDirectoryListDefault(context, context.getManager()), context, qualifiedName, kind, superClass, null);
   }
 
-  public CreateClassOrPackageFix(final PsiElement context, final String qualifiedName, final boolean createClass, final boolean createInterface, final String superClass) {
-    this(getWritableDirectoryListDefault(context, context.getManager()), context, qualifiedName, createClass, createInterface, superClass);
-  }
-
-  public CreateClassOrPackageFix(final List<PsiDirectory> writableDirectoryList, final PsiElement context, final String canonicalText, boolean createClass, boolean createInterface,
-                                 @Nullable String superClass) {
-    myDirectory = writableDirectoryList.isEmpty()? null : writableDirectoryList.get(0);
+  private CreateClassOrPackageFix(final List<PsiDirectory> writableDirectoryList, final PsiElement context, final String canonicalText,
+                                  @Nullable ClassKind kind, @Nullable String superClass, @Nullable final String templateName) {
+    myTemplateName = templateName;
+    myDirectory = writableDirectoryList.isEmpty() ? null : writableDirectoryList.get(0);
     myWritableDirectoryList = writableDirectoryList;
     myContext = context;
-    myCreateClass = createClass;
-    myCreateInterface = createInterface;
+    myClassKind = kind;
     mySuperClass = superClass;
     myCanonicalText = canonicalText;
   }
 
   @NotNull
   public String getText() {
-    return QuickFixBundle.message(myCreateClass ? myCreateInterface ? "create.interface.text" : "create.class.text":"create.package.text",myCanonicalText);
+    return QuickFixBundle.message(myClassKind == ClassKind.INTERFACE ? "create.interface.text" : myClassKind != null ? "create.class.text" : "create.package.text",myCanonicalText);
   }
 
   @NotNull
@@ -100,11 +98,10 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
+    PsiDirectory preferredDirectory = myDirectory;
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    final Module moduleForFile = fileIndex.getModuleForFile(file.getVirtualFile());
     if (myWritableDirectoryList.size() > 1 && !unitTestMode) {
-      PsiDirectory preferredDirectory = myDirectory;
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      final Module moduleForFile = fileIndex.getModuleForFile(file.getVirtualFile());
-
       if (moduleForFile != null) {
         for(PsiDirectory d:myWritableDirectoryList) {
           if (fileIndex.getModuleForFile(d.getVirtualFile()) == moduleForFile) {
@@ -143,25 +140,23 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
         break;
       }
     }
-    if (myCreateClass) {
-      if (unitTestMode) {
-        try {
-          JavaDirectoryService.getInstance().createClass(directory, lastName);
-        }
-        catch (IncorrectOperationException e) {
-          CreateFromUsageUtils.scheduleFileOrPackageCreationFailedMessageBox(e, lastName, directory, false);
-        }
+    if (myClassKind != null) {
+      PsiClass createdClass;
+      if (myTemplateName != null && moduleForFile != null) {
+        createdClass = CreateClassUtil.createClassFromCustomTemplate(directory, moduleForFile, lastName, myTemplateName);
       }
       else {
-        CreateFromUsageUtils.createClass(
-          myCreateInterface? CreateClassKind.INTERFACE : CreateClassKind.CLASS,
-          directory,
-          lastName,
-          manager,
-          myContext,
-          null,
-          mySuperClass
+        createdClass = CreateFromUsageUtils.createClass(myClassKind == ClassKind.INTERFACE ? CreateClassKind.INTERFACE : CreateClassKind.CLASS,
+                                         directory,
+                                         lastName,
+                                         manager,
+                                         myContext,
+                                         null,
+                                         mySuperClass
         );
+      }
+      if (createdClass != null) {
+        createdClass.navigate(true);
       }
     }
     else {

@@ -25,6 +25,7 @@ import java.lang.annotation.RetentionPolicy;
  * Specifies that the references class should extend some other class (or implement interface).
  * If this doesn't happen, error will appear.
  *
+ * @see com.intellij.util.xml.ClassTemplate
  * @author Dmitry Avdeev
  */
 @Retention(RetentionPolicy.RUNTIME)
