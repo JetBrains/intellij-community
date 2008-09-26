@@ -144,7 +144,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     // TODO: gather all top-level functions, maybe within control statements
     final PyClassStub classStub = getStub();
     if (classStub != null) {
-      return classStub.getChildrenByType(PyElementTypes.FUNCTION_DECLARATION, new PyFunction[0]);
+      return classStub.getChildrenByType(PyElementTypes.FUNCTION_DECLARATION, PyFunction.EMPTY_ARRAY);
     }
     List<PyFunction> result = new ArrayList<PyFunction>();
     final PyStatementList statementList = getStatementList();
@@ -169,7 +169,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   public PyTargetExpression[] getClassAttributes() {
     PyClassStub stub = getStub();
     if (stub != null) {
-      return stub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, new PyTargetExpression[0]);
+      return stub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY);
     }
     List<PyTargetExpression> result = new ArrayList<PyTargetExpression>();
     for (PsiElement psiElement : getStatementList().getChildren()) {
@@ -194,7 +194,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
     final PyFunctionStub methodStub = initMethod.getStub();
     if (methodStub != null) {
-      return methodStub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, new PyTargetExpression[0]);
+      return methodStub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY);
     }
 
     final List<PyTargetExpression> result = new ArrayList<PyTargetExpression>();
