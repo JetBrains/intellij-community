@@ -103,7 +103,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
     ProjectLevelVcsManager.getInstanceChecked(myProject).startBackgroundVcsOperation();
     indicator.setIndeterminate(true);
     if (WorkingCopyFormat.ONE_DOT_FIVE.equals(myNewFormat)) {
-      myBeforeChangeLists = ChangeListManager.getInstanceChecked(myProject).getChangeLists();
+      myBeforeChangeLists = ChangeListManager.getInstanceChecked(myProject).getChangeListsCopy();
     }
     final SVNWCClient wcClient = myVcs.createWCClient();
 

@@ -502,11 +502,16 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
 
     if (myFilesToRefresh.size() > 0) {
       final List<VirtualFile> toRefresh = new ArrayList<VirtualFile>(myFilesToRefresh);
-      final RefreshSession session = RefreshQueue.getInstance().createSession(true, true, new Runnable() {
+      // if refresh asynchronously, local changes would also be notified that they are dirty asynchronously,
+      // and commit could be executed while not all changes are visible
+      final RefreshSession session = RefreshQueue.getInstance().createSession(false, true, new Runnable() {
         public void run() {
           if (project.isDisposed()) return;
           for(VirtualFile f: toRefresh) {
-            if (!f.isValid()) continue;
+            if (!f.isValid()) {
+              LOG.info("Refresh root is not valid: " + f.getPath());
+              continue;
+            }
             if (f.isDirectory()) {
               VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(f);
             }
