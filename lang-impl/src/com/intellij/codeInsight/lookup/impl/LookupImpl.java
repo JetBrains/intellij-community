@@ -8,7 +8,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -710,7 +709,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public void hide(){
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (IdeEventQueue.getInstance().getPopupManager().closeAllPopups()) return;
+    //if (IdeEventQueue.getInstance().getPopupManager().closeAllPopups()) return;
 
     if (myDisposed) return;
 
