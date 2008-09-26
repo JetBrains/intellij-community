@@ -1,12 +1,14 @@
 package com.intellij.codeInsight.template;
 
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A macro which can be used in live templates.
+ */
 public interface Macro {
   ExtensionPointName<Macro> EP_NAME = ExtensionPointName.create("com.intellij.liveTemplateMacro");
   
