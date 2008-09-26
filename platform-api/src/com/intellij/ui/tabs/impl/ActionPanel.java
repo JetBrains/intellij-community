@@ -7,11 +7,12 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.TabInfo;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 
 class ActionPanel extends NonOpaquePanel {
 
@@ -30,13 +31,16 @@ class ActionPanel extends NonOpaquePanel {
     myGroup = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();
     AnAction[] children = myGroup.getChildren(null);
 
-    setLayout(new GridLayout(1, children.length, 0, myGap));
-
+    final NonOpaquePanel wrapper = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+    wrapper.add(Box.createHorizontalStrut(myGap));
     for (AnAction each : children) {
       ActionButton eachButton = new ActionButton(myTabs, tabInfo, each, tabInfo.getTabActionPlace(), pass);
       myButtons.add(eachButton);
-      add(eachButton.getComponent());
+      wrapper.add(eachButton.getComponent());
     }
+
+    setLayout(new GridBagLayout());
+    add(wrapper);
   }
 
   public boolean update() {
