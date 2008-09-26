@@ -73,6 +73,8 @@
                       serviceImplementation="com.intellij.codeInsight.hint.HintManagerImpl"/>
   <applicationService serviceInterface="com.intellij.codeInsight.hint.TooltipController"
                       serviceImplementation="com.intellij.codeInsight.hint.TooltipController"/>
+  <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.EditorActionManager"
+                      serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
 
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>

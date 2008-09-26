@@ -13,10 +13,6 @@
       <implementation-class>com.intellij.openapi.editor.ex.EditorSettingsExternalizable</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.editor.actionSystem.EditorActionManager</interface-class>
-      <implementation-class>com.intellij.openapi.editor.impl.EditorActionManagerImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.ide.actionMacro.ActionMacroManager</implementation-class>
     </component>
     <component>

@@ -1,14 +1,13 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
-public class EditorActionManagerImpl extends EditorActionManager implements ApplicationComponent {
+public class EditorActionManagerImpl extends EditorActionManager {
   private TypedAction myTypedAction = new TypedAction();
   private ReadonlyFragmentModificationHandler myReadonlyFragmentsHandler = new DefaultReadOnlyFragmentModificationHandler();
   private ActionManager myActionManager;
@@ -26,11 +25,6 @@ public class EditorActionManagerImpl extends EditorActionManager implements Appl
     return action.setupHandler(handler);
   }
 
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
-
   @NotNull
   public TypedAction getTypedAction() {
     return myTypedAction;
@@ -46,11 +40,6 @@ public class EditorActionManagerImpl extends EditorActionManager implements Appl
     return oldHandler;
   }
 
-
-  @NotNull
-  public String getComponentName() {
-    return "EditorActionManager";
-  }
 
   private static class DefaultReadOnlyFragmentModificationHandler implements ReadonlyFragmentModificationHandler {
     public void handle(ReadOnlyFragmentModificationException e) {

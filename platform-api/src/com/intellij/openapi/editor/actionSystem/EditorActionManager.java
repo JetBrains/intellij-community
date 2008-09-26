@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.editor.actionSystem;
 
-import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows to register actions which are activated by typing and navigation keystrokes
@@ -30,7 +30,7 @@ public abstract class EditorActionManager {
    * @return the editor action manger instance.
    */
   public static EditorActionManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(EditorActionManager.class);
+    return ServiceManager.getService(EditorActionManager.class);
   }
 
   /**
