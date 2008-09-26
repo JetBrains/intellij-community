@@ -85,6 +85,7 @@ public class ShelveChangesCommitExecutor implements CommitExecutor {
         ShelvedChangesViewManager.getInstance(myProject).activateView(list);
 
         Change[] changesArray = changes.toArray(new Change[changes.size()]);
+        // todo better under lock   
         ChangeList changeList = ChangesUtil.getChangeListIfOnlyOne(myProject, changesArray);
         if (changeList instanceof LocalChangeList) {
           LocalChangeList localChangeList = (LocalChangeList) changeList;

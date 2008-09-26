@@ -38,7 +38,7 @@ public class UnshelveChangesAction extends AnAction {
     LOG.assertTrue(changeLists != null);
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    final List<LocalChangeList> allChangeLists = changeListManager.getChangeLists();
+    final List<LocalChangeList> allChangeLists = changeListManager.getChangeListsCopy();
     final LocalChangeList defaultChangeList = changeListManager.getDefaultChangeList();
     String defaultName = changeLists.length == 1 ? changeLists [0].DESCRIPTION : null;
     ChangeListChooser chooser = new ChangeListChooser(project, allChangeLists, defaultChangeList,

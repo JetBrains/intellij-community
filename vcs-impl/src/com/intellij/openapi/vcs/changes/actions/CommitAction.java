@@ -41,12 +41,16 @@ public class CommitAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Change[] changes = e.getData(VcsDataKeys.CHANGES);
     final ChangeList list = ChangesUtil.getChangeListIfOnlyOne(project, changes);
     if ((list == null) || (! (list instanceof LocalChangeList))) return;
 
-    CommitChangeListDialog.commitChanges(project, Arrays.asList(changes), (LocalChangeList) list,
-                                         ChangeListManager.getInstance(project).getRegisteredExecutors(), true, null);
+    ChangeListManager.getInstance(project).invokeAfterUpdate(new Runnable() {
+      public void run() {
+        CommitChangeListDialog.commitChanges(project, Arrays.asList(changes), (LocalChangeList) list,
+                                             ChangeListManager.getInstance(project).getRegisteredExecutors(), true, null);
+      }
+    }, false, true, "common checkin");
   }
 }

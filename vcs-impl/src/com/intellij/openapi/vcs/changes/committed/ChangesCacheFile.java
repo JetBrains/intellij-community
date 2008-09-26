@@ -669,12 +669,13 @@ public class ChangesCacheFile {
     private Map<Long, IndexEntry> myIndexEntryCache = new HashMap<Long, IndexEntry>();
     private Map<Long, CommittedChangeList> myPreviousChangeListsCache = new HashMap<Long, CommittedChangeList>();
     private List<LocalChangeList> myChangeLists;
+    private ChangeListManager myClManager;
 
     public boolean invoke() throws VcsException, IOException {
       if (myProject.isDisposed()) {
         return false;
       }
-      myChangeLists = ChangeListManager.getInstance(myProject).getChangeLists();
+      myClManager = ChangeListManager.getInstance(myProject);
       final DiffProvider diffProvider = myVcs.getDiffProvider();
       if (diffProvider == null) return false;
       final Collection<FilePath> incomingFiles = myChangesProvider.getIncomingFiles(myLocation);
@@ -806,7 +807,8 @@ public class ChangesCacheFile {
     }
 
     private boolean fileMarkedForDeletion(final FilePath localPath) {
-      for (LocalChangeList list : myChangeLists) {
+      final List<LocalChangeList> changeLists =  myClManager.getChangeListsCopy();
+      for (LocalChangeList list : changeLists) {
         final Collection<Change> changes = list.getChanges();
         for (Change change : changes) {
           if (change.getBeforeRevision() != null && change.getBeforeRevision().getFile() != null &&

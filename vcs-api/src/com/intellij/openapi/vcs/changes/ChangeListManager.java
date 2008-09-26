@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * @author max
  */
-public abstract class ChangeListManager {
+public abstract class ChangeListManager implements ChangeListModification {
   public static ChangeListManager getInstance(Project project) {
     return project.getComponent(ChangeListManager.class);
   }
@@ -52,6 +52,7 @@ public abstract class ChangeListManager {
   public abstract void invokeAfterUpdate(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title);
   public abstract boolean ensureUpToDate(boolean canBeCanceled);
 
+  public abstract List<LocalChangeList> getChangeListsCopy();
   @NotNull
   public abstract List<LocalChangeList> getChangeLists();
 
@@ -62,10 +63,12 @@ public abstract class ChangeListManager {
 
   @Nullable
   public abstract LocalChangeList findChangeList(final String name);
-  public abstract LocalChangeList addChangeList(@NotNull String name, final String comment);
-  public abstract void setDefaultChangeList(@NotNull LocalChangeList list);
+//  public abstract LocalChangeList addChangeList(@NotNull String name, final String comment);
+//  public abstract void setDefaultChangeList(@NotNull LocalChangeList list);
+  @Nullable
   public abstract LocalChangeList getDefaultChangeList();
 
+  @Nullable
   public abstract LocalChangeList getChangeList(Change change);
 
   @NotNull
@@ -88,9 +91,9 @@ public abstract class ChangeListManager {
   @NotNull
   public abstract Collection<Change> getChangesIn(FilePath path);
 
-  public abstract void removeChangeList(final LocalChangeList list);
+//  public abstract void removeChangeList(final LocalChangeList list);
 
-  public abstract void moveChangesTo(final LocalChangeList list, final Change[] changes);
+//  public abstract void moveChangesTo(final LocalChangeList list, final Change[] changes);
 
   public abstract void addChangeListListener(ChangeListListener listener);
   public abstract void removeChangeListListener(ChangeListListener listener);
@@ -126,4 +129,5 @@ public abstract class ChangeListManager {
 
   @Nullable
   public abstract String getSwitchedBranch(VirtualFile file);
+  public abstract String getDefaultListName();
 }

@@ -18,9 +18,11 @@ import java.util.ArrayList;
  */
 public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList> {
   private ChangeListDecorator[] myDecorators;
+  private final ChangeListManagerEx myClManager;
 
   public ChangesBrowserChangeListNode(Project project, ChangeList userObject) {
     super(userObject);
+    myClManager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
     myDecorators = project.getComponents(ChangeListDecorator.class);
   }
 
@@ -34,7 +36,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       for(ChangeListDecorator decorator: myDecorators) {
         decorator.decorateChangeList(list, renderer, selected, expanded, hasFocus);
       }
-      if (list.isInUpdate()) {
+      if (myClManager.isInUpdate()) {
         renderer.append(" " + VcsBundle.message("changes.nodetitle.updating"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }

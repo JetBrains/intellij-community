@@ -56,7 +56,7 @@ public class AlienLocalChangeList extends LocalChangeList {
     throw new UnsupportedOperationException();
   }
 
-  public LocalChangeList clone() {
+  public LocalChangeList copy() {
     throw new UnsupportedOperationException();
   }
 

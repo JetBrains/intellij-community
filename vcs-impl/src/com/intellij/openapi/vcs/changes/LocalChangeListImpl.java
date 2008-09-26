@@ -63,11 +63,15 @@ public class LocalChangeListImpl extends LocalChangeList {
     return myName;
   }
 
+  // seems that here we can do "rename list with the same name inside ChangeListManagerImpl"
+  // because it's likely that usages of this method is like that.
+  // but it is not very good... it can mix everything up
   public void setName(@NotNull final String name) {
-    if (!myName.equals(name)) {
+    if (! myName.equals(name)) {
+      
       String oldName = myName;
+      ChangeListManagerImpl.getInstanceImpl(myProject).editName(oldName, name);
       myName = name;
-      ChangeListManagerImpl.getInstanceImpl(myProject).notifyChangeListRenamed(this, oldName);
     }
   }
 
@@ -75,12 +79,21 @@ public class LocalChangeListImpl extends LocalChangeList {
     return myComment;
   }
 
+  // same as for setName()
   public void setComment(final String comment) {
-    if (!Comparing.equal(comment, myComment)) {
+    if (! Comparing.equal(comment, myComment)) {
       String oldComment = myComment;
+      ChangeListManagerImpl.getInstanceImpl(myProject).editComment(oldComment, comment);
       myComment = comment != null ? comment : "";
-      ChangeListManagerImpl.getInstanceImpl(myProject).notifyChangeListCommentChanged(this, oldComment);
     }
+  }
+
+  void setNameImpl(@NotNull final String name) {
+    myName = name;
+  }
+
+  void setCommentImpl(final String comment) {
+    myComment = comment;
   }
 
   public boolean isDefault() {
@@ -108,12 +121,17 @@ public class LocalChangeListImpl extends LocalChangeList {
     myChanges.add(change);
   }
 
-  synchronized boolean removeChange(Change change) {
-    boolean wasRemoved = myChanges.remove(change);
-    if (wasRemoved && !myIsInUpdate) {
-      myReadChangesCache = null;
+  synchronized Change removeChange(Change change) {
+    for (Change localChange : myChanges) {
+      if (localChange.equals(change)) {
+        myChanges.remove(localChange);
+        if (! myIsInUpdate) {
+          myReadChangesCache = null;
+        }
+        return localChange;
+      }
     }
-    return wasRemoved;
+    return null;
   }
 
   synchronized void startProcessingChanges(final Project project, @Nullable final VcsDirtyScope scope) {
@@ -228,7 +246,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     return myName.trim();
   }
 
-  public synchronized LocalChangeList clone() {
+  public synchronized LocalChangeList copy() {
     final LocalChangeListImpl copy = new LocalChangeListImpl(myProject, myName);
     copy.myComment = myComment;
     copy.myIsDefault = myIsDefault;

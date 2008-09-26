@@ -144,7 +144,7 @@ public class ChangesUtil {
       if (selectedList == null) {
         selectedList = list;
       }
-      else if (selectedList != list) {
+      else if (! selectedList.equals(list)) {
         return null;
       }
     }

@@ -111,7 +111,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     DefaultComboBoxModel model = new DefaultComboBoxModel();
     model.addElement(ALL);
-    final List<? extends ChangeList> changeLists = changeListManager.getChangeLists();
+    final List<? extends ChangeList> changeLists = changeListManager.getChangeListsCopy();
     for (ChangeList changeList : changeLists) {
       model.addElement(changeList.getName());
     }
@@ -212,7 +212,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
         if (myChangeLists.getSelectedItem() == ALL){
           files = changeListManager.getAffectedFiles();
         } else {
-          for (ChangeList list : changeListManager.getChangeLists()) {
+          for (ChangeList list : changeListManager.getChangeListsCopy()) {
             if (!Comparing.strEqual(list.getName(), (String)myChangeLists.getSelectedItem())) continue;
             final Collection<Change> changes = list.getChanges();
             for (Change change : changes) {

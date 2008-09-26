@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
@@ -51,7 +52,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
 
     myChangeListChooser = new ChangeListChooser(changeLists);
     myHeaderPanel.add(myChangeListChooser, BorderLayout.EAST);
-    myShowingAllChangeLists = changeLists.equals(ChangeListManager.getInstance(project).getChangeLists());
+    myShowingAllChangeLists = Comparing.haveEqualElements((List<LocalChangeList>) changeLists, ChangeListManager.getInstance(project).getChangeLists());
     ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
 
     myExtender = new Extender(project, this);
@@ -145,7 +146,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   private List<Change> filterBySelectedChangeList(final Collection<Change> changes) {
     List<Change> filtered = new ArrayList<Change>();
     for (Change change : changes) {
-      if (getList(change) == mySelectedChangeList) {
+      if (getList(change).equals(mySelectedChangeList)) {
         filtered.add(change);
       }
     }
@@ -228,7 +229,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
       Runnable runnable = new Runnable() {
         public void run() {
           if (myChangeListChooser != null && myShowingAllChangeLists) {
-            myChangeListChooser.updateLists(ChangeListManager.getInstance(myProject).getChangeLists());
+            myChangeListChooser.updateLists(ChangeListManager.getInstance(myProject).getChangeListsCopy());
           }
         }
       };

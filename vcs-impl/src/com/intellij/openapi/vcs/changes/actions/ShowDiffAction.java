@@ -121,11 +121,11 @@ public class ShowDiffAction extends AnAction {
     for(Change change: changes) {
       final ContentRevision beforeRevision = change.getBeforeRevision();
       final ContentRevision afterRevision = change.getAfterRevision();
-      if (beforeRevision instanceof ChangeListManagerImpl.FakeRevision) {
+      if (beforeRevision instanceof FakeRevision) {
         VcsDirtyScopeManager.getInstance(project).fileDirty(beforeRevision.getFile());
         needsConvertion = true;
       }
-      if (afterRevision instanceof ChangeListManagerImpl.FakeRevision) {
+      if (afterRevision instanceof FakeRevision) {
         VcsDirtyScopeManager.getInstance(project).fileDirty(afterRevision.getFile());
         needsConvertion = true;
       }

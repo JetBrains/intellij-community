@@ -8,5 +8,5 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ChangeListManagerEx extends ChangeListManager {
   @Nullable
   public abstract LocalChangeList getIdentityChangeList(Change change);
-
+  public abstract boolean isInUpdate();
 }

@@ -100,11 +100,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private MyUpdateButtonsRunnable myUpdateButtonsRunnable = new MyUpdateButtonsRunnable(this);
 
-  private static void commit(Project project, final List<Change> changes, final LocalChangeList initialSelection,
-                             final List<CommitExecutor> executors, boolean showVcsCommit, final String comment) {
+  private static void commit(final Project project, final List<Change> changes, final LocalChangeList initialSelection,
+                             final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
     final LocalChangeList defaultList = manager.getDefaultChangeList();
-    final ArrayList<LocalChangeList> changeLists = new ArrayList<LocalChangeList>(manager.getChangeLists());
+    final ArrayList<LocalChangeList> changeLists = new ArrayList<LocalChangeList>(manager.getChangeListsCopy());
     new CommitChangeListDialog(project, changes, initialSelection, executors, showVcsCommit, defaultList, changeLists, null, false, comment).show();
   }
 

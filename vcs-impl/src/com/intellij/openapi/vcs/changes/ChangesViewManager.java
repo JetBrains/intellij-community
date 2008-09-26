@@ -78,6 +78,8 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     final Content content = ContentFactory.SERVICE.getInstance().createContent(createChangeViewComponent(), "Local", false);
     content.setCloseable(false);
     myContentManager.addContent(content);
+
+    scheduleRefresh();
   }
 
   public void projectClosed() {
@@ -180,7 +182,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
   }
 
   void refreshView() {
-    if (myDisposed || ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (myDisposed || (! myProject.isInitialized()) || ApplicationManager.getApplication().isUnitTestMode()) return;
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
     myView.updateModel(changeListManager.getChangeListsCopy(),
                        changeListManager.getUnversionedFiles(),

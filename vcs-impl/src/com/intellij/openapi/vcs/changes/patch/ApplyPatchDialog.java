@@ -137,7 +137,7 @@ public class ApplyPatchDialog extends DialogWrapper {
     myPatchContentsList.setCellRenderer(new PatchCellRendererPanel());
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    myChangeListChooser.setChangeLists(changeListManager.getChangeLists());
+    myChangeListChooser.setChangeLists(changeListManager.getChangeListsCopy());
     myChangeListChooser.setDefaultSelection(changeListManager.getDefaultChangeList());
 
     init();

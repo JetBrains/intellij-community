@@ -20,7 +20,7 @@ import java.util.*;
 /**
  * @author max
  */
-public class SwitchedFileHolder {
+public class SwitchedFileHolder implements FileHolder {
   private Map<VirtualFile, String> myFiles = new HashMap<VirtualFile, String>();
   private List<VirtualFile> mySwitchRoots;
   private Project myProject;
@@ -54,6 +54,10 @@ public class SwitchedFileHolder {
         }
       }
     });
+  }
+
+  public HolderType getType() {
+    return HolderType.SWITCHED;
   }
 
   private boolean fileDropped(final VirtualFile file) {

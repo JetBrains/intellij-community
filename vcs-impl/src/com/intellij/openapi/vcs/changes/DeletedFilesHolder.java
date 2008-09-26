@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class DeletedFilesHolder {
+public class DeletedFilesHolder implements FileHolder {
   private List<FilePath> myFiles = new ArrayList<FilePath>();
 
   public synchronized void cleanAll() {
@@ -28,6 +28,10 @@ public class DeletedFilesHolder {
         }
       }
     });
+  }
+
+  public HolderType getType() {
+    return HolderType.DELETED;
   }
 
   public synchronized void addFile(FilePath file) {

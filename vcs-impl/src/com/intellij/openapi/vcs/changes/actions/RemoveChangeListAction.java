@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -44,7 +43,7 @@ public class RemoveChangeListAction extends AnAction {
       if (!(changeList instanceof LocalChangeList)) return false;
       LocalChangeList localChangeList = (LocalChangeList) changeList;
       if (localChangeList.isReadOnly()) return false;
-      if (localChangeList.isDefault() && ChangeListManager.getInstance(project).getChangeLists().size() <= lists.length) return false;
+      if (localChangeList.isDefault() && ChangeListManager.getInstance(project).getChangeListsCopy().size() <= lists.length) return false;
     }
     return true;
   }
@@ -89,7 +88,7 @@ public class RemoveChangeListAction extends AnAction {
   }
 
   private static void removeActiveChangeList(final Project project, final ChangeList[] lists, final boolean empty) {
-    List<LocalChangeList> remainingLists = new ArrayList<LocalChangeList>(ChangeListManager.getInstance(project).getChangeLists());
+    List<LocalChangeList> remainingLists = ChangeListManager.getInstance(project).getChangeListsCopy();
     remainingLists.removeAll(Arrays.asList(lists));
     String[] names = new String[remainingLists.size()];
     for(int i=0; i<remainingLists.size(); i++) {

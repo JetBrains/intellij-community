@@ -49,5 +49,5 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
 
   public abstract void setReadOnly(boolean isReadOnly);
 
-  public abstract LocalChangeList clone();
+  public abstract LocalChangeList copy();
 }

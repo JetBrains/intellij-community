@@ -17,6 +17,7 @@ public class MockAbstractVcs extends AbstractVcs {
   private CheckinEnvironment myCheckinEnvironment;
   private CommittedChangesProvider myCommittedChangesProvider;
   private DiffProvider myDiffProvider;
+  private ChangeProvider myChangeProvider;
 
   public MockAbstractVcs(Project project){
     super(project);
@@ -47,7 +48,7 @@ public class MockAbstractVcs extends AbstractVcs {
   }
 
   public ChangeProvider getChangeProvider() {
-    return null;
+    return myChangeProvider;
   }
 
   public boolean markExternalChangesAsUpToDate() {
@@ -89,4 +90,7 @@ public class MockAbstractVcs extends AbstractVcs {
     return ourIntegerPattern;
   }
 
+  public void setChangeProvider(final ChangeProvider changeProvider) {
+    myChangeProvider = changeProvider;
+  }
 }

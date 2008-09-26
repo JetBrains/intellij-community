@@ -15,12 +15,18 @@ import java.util.Set;
 /**
  * @author max
  */
-public class VirtualFileHolder {
+public class VirtualFileHolder implements FileHolder {
   private Set<VirtualFile> myFiles = new HashSet<VirtualFile>();
   private Project myProject;
+  private final HolderType myType;
 
-  public VirtualFileHolder(Project project) {
+  public VirtualFileHolder(Project project, final HolderType type) {
     myProject = project;
+    myType = type;
+  }
+
+  public HolderType getType() {
+    return myType;
   }
 
   public synchronized void cleanAll() {
@@ -81,7 +87,7 @@ public class VirtualFileHolder {
   }
 
   public synchronized VirtualFileHolder copy() {
-    final VirtualFileHolder copyHolder = new VirtualFileHolder(myProject);
+    final VirtualFileHolder copyHolder = new VirtualFileHolder(myProject, myType);
     copyHolder.myFiles.addAll(myFiles);
     return copyHolder;
   }

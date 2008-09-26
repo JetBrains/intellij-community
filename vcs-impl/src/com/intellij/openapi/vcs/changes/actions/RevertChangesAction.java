@@ -39,7 +39,7 @@ public class RevertChangesAction extends AnAction {
       defaultName = VcsBundle.message("revert.changes.default.name", changeLists[0].getName());
     }
 
-    ChangeListChooser chooser = new ChangeListChooser(project, ChangeListManager.getInstance(project).getChangeLists(), null,
+    ChangeListChooser chooser = new ChangeListChooser(project, ChangeListManager.getInstance(project).getChangeListsCopy(), null,
                                                       "Select Target Changelist", defaultName);
     chooser.show();
     if (!chooser.isOK()) return;
