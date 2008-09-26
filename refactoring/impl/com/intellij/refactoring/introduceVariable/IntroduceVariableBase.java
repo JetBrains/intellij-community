@@ -118,7 +118,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       String text = file.getText().subSequence(startOffset, endOffset).toString();
       PsiElement prefix = null;
       PsiElement suffix = null;
-      if (literalExpression != null) {
+      if (literalExpression != null && literalExpression == PsiTreeUtil.getParentOfType(file.findElementAt(endOffset), PsiLiteralExpression.class)) {
 
         final String stripped = StringUtil.stripQuotesAroundValue(text);
 
