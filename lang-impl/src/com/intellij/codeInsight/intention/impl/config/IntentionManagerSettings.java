@@ -11,12 +11,11 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ResourceUtil;
 import org.jdom.Element;
@@ -28,7 +27,15 @@ import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
 
-public class IntentionManagerSettings implements ApplicationComponent, NamedJDOMExternalizable {
+@State(
+  name = "IntentionManagerSettings",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$APP_CONFIG$/intentionSettings.xml"
+    )}
+)
+public class IntentionManagerSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings");
 
   private class MetaDataKey {
@@ -71,20 +78,9 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
 
 
-  public String getExternalFileName() {
-    return "intentionSettings";
-  }
-
   public static IntentionManagerSettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(IntentionManagerSettings.class);
+    return ServiceManager.getService(IntentionManagerSettings.class);
   }
-
-  @NotNull
-  public String getComponentName() {
-    return "IntentionManagerSettings";
-  }
-
-  public void initComponent() { }
 
   public synchronized void registerIntentionMetaData(@NotNull IntentionAction intentionAction, @NotNull String[] category, @NotNull String descriptionDirectoryName) {
     registerMetaData(new IntentionActionMetaData(intentionAction.getFamilyName(), getClassLoader(intentionAction), category, descriptionDirectoryName));
@@ -104,14 +100,11 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     registerMetaData(new IntentionActionMetaData(intentionAction.getFamilyName(), classLoader, category, descriptionDirectoryName));
   }
 
-  public void disposeComponent() {
-  }
-
   public synchronized boolean isShowLightBulb(@NotNull IntentionAction action) {
     return !myIgnoredActions.contains(action.getFamilyName());
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public void loadState(Element element) {
     myIgnoredActions.clear();
     List children = element.getChildren(IGNORE_ACTION_TAG);
     for (final Object aChildren : children) {
@@ -120,10 +113,12 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public Element getState() {
+    Element element = new Element("state");
     for (String name : myIgnoredActions) {
       element.addContent(new Element(IGNORE_ACTION_TAG).setAttribute(NAME_ATT, name));
     }
+    return element;
   }
 
   @NotNull public synchronized List<IntentionActionMetaData> getMetaData() {
