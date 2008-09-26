@@ -195,7 +195,7 @@ public class DaemonListeners {
     myErrorStripeHandler = new ErrorStripeHandler(myProject);
     ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(myErrorStripeHandler);
 
-    final NamedScopesHolder[] holders = myProject.getComponents(NamedScopesHolder.class);
+    final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(project);
     NamedScopesHolder.ScopeListener scopeListener = new NamedScopesHolder.ScopeListener() {
       public void scopesChanged() {
         myDaemonCodeAnalyzer.reloadScopes();

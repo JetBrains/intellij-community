@@ -126,7 +126,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     DefaultComboBoxModel model = new DefaultComboBoxModel();
     createPredefinedScopeDescriptors(model);
 
-    final NamedScopesHolder[] holders = myProject.getComponents(NamedScopesHolder.class);
+    final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
     for (NamedScopesHolder holder : holders) {
       NamedScope[] scopes = holder.getEditableScopes(); //predefined scopes already included
       for (NamedScope scope : scopes) {

@@ -17,6 +17,7 @@ package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.packageDependencies.DependencyValidationManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +89,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
 
   @Nullable
   public static NamedScope getScope(final Project project, final String scopeName) {
-    final NamedScopesHolder[] holders = project.getComponents(NamedScopesHolder.class);
+    final NamedScopesHolder[] holders = getAllNamedScopeHolders(project);
     for (NamedScopesHolder holder : holders) {
       final NamedScope scope = holder.getScope(scopeName);
       if (scope != null) {
@@ -98,9 +99,16 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     return null;
   }
 
+  public static NamedScopesHolder[] getAllNamedScopeHolders(final Project project) {
+    NamedScopesHolder[] holders = new NamedScopesHolder[2];
+    holders [0] = NamedScopeManager.getInstance(project);
+    holders [1] = DependencyValidationManager.getInstance(project);
+    return holders;
+  }
+
   @Nullable
   public static NamedScopesHolder getHolder(final Project project, final String scopeName, final NamedScopesHolder defaultHolder) {
-    final NamedScopesHolder[] holders = project.getComponents(NamedScopesHolder.class);
+    final NamedScopesHolder[] holders = getAllNamedScopeHolders(project);
     for (NamedScopesHolder holder : holders) {
       final NamedScope scope = holder.getScope(scopeName);
       if (scope != null) {
