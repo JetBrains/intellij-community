@@ -19,6 +19,7 @@ import java.util.Set;
  */
 public class PrefixBasedPropertyReference extends PropertyReference {
   private boolean myPrefixEvaluated;
+  private boolean myDynamicPrefix;
   @Nullable private String myKeyPrefix;
   @NonNls private static final String PREFIX_ATTR_NAME = "prefix";
 
@@ -59,6 +60,7 @@ public class PrefixBasedPropertyReference extends PropertyReference {
     return super.handleElementRename(newElementName);
   }
 
+  @Nullable
   private String getKeyPrefix() {
     if (!myPrefixEvaluated) {
       for(PsiElement curParent = PsiTreeUtil.getParentOfType(getElement().getParent().getParent(),XmlTag.class);
@@ -76,7 +78,7 @@ public class PrefixBasedPropertyReference extends PropertyReference {
               myKeyPrefix = attributeValue;
             }
             else {
-              setSoft(true);
+              myDynamicPrefix = true;
             }
           }
           break;
@@ -88,8 +90,7 @@ public class PrefixBasedPropertyReference extends PropertyReference {
     return myKeyPrefix;
   }
 
-  public boolean isSoft() {
-    getKeyPrefix();
-    return super.isSoft();
+  public boolean isDynamicPrefix() {
+    return myDynamicPrefix;
   }
 }
