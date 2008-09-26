@@ -19,6 +19,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,12 +32,12 @@ public class SimpleNodeRenderer extends NodeRenderer {
                                     boolean expanded, boolean leaf, int row, boolean hasFocus) {
 
     mySelected = selected;
-    myFocused = hasFocus;
+    myFocused = tree.hasFocus();
 
     if (selected) {
       setPaintFocusBorder(true);
-      if (hasFocus) {
-        setBackground(UIManager.getColor("Tree.selectionBackground"));
+      if (myFocused) {
+        setBackground(UIUtil.getTreeSelectionBackground());
       } else {
         setBackground(tree.getBackground());
       }
