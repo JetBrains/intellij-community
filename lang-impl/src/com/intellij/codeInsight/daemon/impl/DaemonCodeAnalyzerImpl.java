@@ -36,8 +36,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
+import com.intellij.packageDependencies.DependencyValidationManager;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -164,15 +166,17 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   void reloadScopes() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<Pair<NamedScope, NamedScopesHolder>>();
-    final NamedScopesHolder[] holders = myProject.getComponents(NamedScopesHolder.class);
-    for (NamedScopesHolder holder : holders) {
-      NamedScope[] scopes = holder.getScopes();
-      for (NamedScope scope : scopes) {
-        scopeList.add(Pair.create(scope, holder));
-      }
-    }
+    addScopesToList(scopeList, NamedScopeManager.getInstance(myProject));
+    addScopesToList(scopeList, DependencyValidationManager.getInstance(myProject));
     myScopes.clear();
     myScopes.addAll(scopeList);
+  }
+
+  private static void addScopesToList(final List<Pair<NamedScope, NamedScopesHolder>> scopeList, final NamedScopesHolder holder) {
+    NamedScope[] scopes = holder.getScopes();
+    for (NamedScope scope : scopes) {
+      scopeList.add(Pair.create(scope, holder));
+    }
   }
 
   @NotNull
