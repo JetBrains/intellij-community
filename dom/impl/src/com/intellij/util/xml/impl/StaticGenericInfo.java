@@ -211,6 +211,8 @@ public class StaticGenericInfo extends DomGenericInfoEx {
 
   @Nullable
   public XmlElement getNameElement(DomElement element) {
+    buildMethodMaps();
+
     Object o = getNameObject(element);
     if (o instanceof GenericAttributeValue) {
       return ((GenericAttributeValue)o).getXmlAttributeValue();
@@ -224,6 +226,8 @@ public class StaticGenericInfo extends DomGenericInfoEx {
 
   @Nullable
   public GenericDomValue getNameDomElement(DomElement element) {
+    buildMethodMaps();
+
     Object o = getNameObject(element);
     return o instanceof GenericDomValue ? (GenericDomValue)o : null;
   }
@@ -240,6 +244,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
 
   @Nullable
   public String getElementName(DomElement element) {
+    buildMethodMaps();
     Object o = getNameObject(element);
     return o == null || o instanceof String ? (String)o : ((GenericValue)o).getStringValue();
   }

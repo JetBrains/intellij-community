@@ -150,6 +150,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
   @Nullable
   public CustomDomChildrenDescriptionImpl getCustomNameChildrenDescription() {
+    checkInitialized();
     if (myCustomChildren != null) return myCustomChildren;
     return myStaticGenericInfo.getCustomNameChildrenDescription();
   }

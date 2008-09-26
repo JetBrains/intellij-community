@@ -307,7 +307,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @NotNull
   public final DomGenericInfoEx getGenericInfo() {
-    myGenericInfo.checkInitialized();
     return myGenericInfo;
   }
 
