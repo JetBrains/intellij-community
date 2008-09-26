@@ -44,8 +44,6 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
   }
 
   public void handleInsert(InsertionContext context, LookupElement item) {
-    context.setAddCompletionChar(false);
-    super.handleInsert(context, item);
     Project project = context.getProject();
     Editor editor = context.getEditor();
     // Need to insert " " to prevent creating tags like <tagThis is my text
@@ -57,6 +55,8 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
     final XmlTag tag = PsiTreeUtil.getContextOfType(current, XmlTag.class, true);
 
     if (!isValidTag(tag)) return;
+
+    context.setAddCompletionChar(false);
 
     final XmlElementDescriptor descriptor = tag.getDescriptor();
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) == null &&

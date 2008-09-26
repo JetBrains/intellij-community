@@ -19,10 +19,12 @@ public abstract class CharFilter {
   }
 
   /**
-   * Informs about further action on typing character c when completion lookup has specified prefix
+   * Informs about further action on typing character c when completion lookup has specified prefix. If
    * @param c character being inserted
    * @param prefixLength
-   *@param lookup @return further action
+   * @param lookup
+   * @return further action or null, which indicates that some other {@link com.intellij.codeInsight.lookup.CharFilter}
+   * should handle this char. Default char filter handles common cases like finishing with ' ', '(', ';', etc.  
    */
   @Nullable
   public abstract Result acceptChar(char c, final int prefixLength, final Lookup lookup);

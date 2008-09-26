@@ -83,6 +83,6 @@ class TypedHandler implements TypedActionHandler {
         return result;
       }
     }
-    throw new AssertionError("c=" + charTyped + "; prefix=" + currentItem + "; filters=" + Arrays.toString(filters));
+    throw new AssertionError("Typed char not handler by char filter: c=" + charTyped + "; prefix=" + currentItem + "; filters=" + Arrays.toString(filters));
   }
 }

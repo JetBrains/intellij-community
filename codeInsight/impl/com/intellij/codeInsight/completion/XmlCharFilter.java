@@ -68,14 +68,8 @@ public class XmlCharFilter extends CharFilter {
 
     if (Character.isJavaIdentifierPart(c)) return Result.ADD_TO_PREFIX;
     switch(c){
-      case ':':
-      case '.':
       case '-':
         return Result.ADD_TO_PREFIX;
-      case ',':
-      case ';':
-      case '=':
-      case '(':
       case '/':
         if (isWithinTag(lookup)) {
           if (prefixLength > 0) {
@@ -85,17 +79,16 @@ public class XmlCharFilter extends CharFilter {
           return Result.HIDE_LOOKUP;
         }
         return Result.ADD_TO_PREFIX;
-        
+
       case '>': if (prefixLength > 0) {
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
 
-      default:
-        return Result.HIDE_LOOKUP;
-      case ' ':
       case '\'':
       case '\"':
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+      default:
+        return null;
     }
   }
 }
