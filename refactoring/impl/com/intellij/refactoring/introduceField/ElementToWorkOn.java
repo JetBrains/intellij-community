@@ -70,7 +70,7 @@ public class ElementToWorkOn {
           final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
           PsiExpression expression = PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class);
           while (expression != null) {
-            if (!(expression instanceof PsiReferenceExpression)) {
+            if (!(expression instanceof PsiReferenceExpression) && expression.getType() != PsiType.VOID) {
               expressions.add(expression);
             }
             expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
