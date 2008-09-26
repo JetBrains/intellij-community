@@ -92,4 +92,5 @@
     <tip file="HighlightThrows.html"/>
     <tip file="QuickFixRightArrow.html"/>
 	<tip file="NavigateToFilePath.html"/>
+	<tip file="IssueNavigation.html"/>
 </tips>
