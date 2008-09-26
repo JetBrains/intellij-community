@@ -5,6 +5,8 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInspection.i18n.CreatePropertyFix;
 import com.intellij.codeInspection.i18n.I18nUtil;
+import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -16,7 +18,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class PropertyReference extends PropertyReferenceBase implements QuickFixProvider {
+public class PropertyReference extends PropertyReferenceBase implements QuickFixProvider, LocalQuickFixProvider {
   @Nullable private final String myBundleName;
 
   public PropertyReference(@NotNull String key, @NotNull PsiElement element, @Nullable final String bundleName, final boolean soft) {
@@ -38,4 +40,9 @@ public class PropertyReference extends PropertyReferenceBase implements QuickFix
     QuickFixAction.registerQuickFixAction(info, fix);
   }
 
+  public LocalQuickFix[] getQuickFixes() {
+    List<PropertiesFile> propertiesFiles = I18nUtil.propertiesFilesByBundleName(myBundleName, getElement());
+    CreatePropertyFix fix = new CreatePropertyFix(myElement, myKey, propertiesFiles);
+    return new LocalQuickFix[] {fix};
+  }
 }

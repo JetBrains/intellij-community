@@ -70,7 +70,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
     if (value instanceof String) {
       String text = (String)value;
       PsiReference reference = propertyRefWithPrefix ?
-                               new PrefixBasedPropertyReference(text, element, bundleName):
+                               new PrefixBasedPropertyReference(text, element, bundleName, soft):
                                new PropertyReference(text, element, bundleName, soft);
       return new PsiReference[]{reference};
     }

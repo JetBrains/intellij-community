@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -63,6 +64,11 @@ public class ProblemsHolder {
     }
 
     myProblems.add(myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(), descriptionTemplate, highlightType, fixes));
+  }
+
+  public void registerProblem(PsiReference reference) {
+    assert reference instanceof EmptyResolveMessageProvider;
+    registerProblem(reference, ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern(), ProblemHighlightType.ERROR);
   }
 
   @Nullable

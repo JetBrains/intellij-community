@@ -22,8 +22,8 @@ public class PrefixBasedPropertyReference extends PropertyReference {
   @Nullable private String myKeyPrefix;
   @NonNls private static final String PREFIX_ATTR_NAME = "prefix";
 
-  public PrefixBasedPropertyReference(String key, final PsiElement element, @Nullable final String bundleName) {
-    super(key, element, bundleName, false);
+  public PrefixBasedPropertyReference(String key, final PsiElement element, @Nullable final String bundleName, final boolean soft) {
+    super(key, element, bundleName, soft);
   }
 
   @NotNull
