@@ -85,6 +85,9 @@
   <applicationService serviceInterface="com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings"
                       serviceImplementation="com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings"/>
 
+  <applicationService serviceInterface="com.intellij.find.FindSettings"
+                      serviceImplementation="com.intellij.find.impl.FindSettingsImpl"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"

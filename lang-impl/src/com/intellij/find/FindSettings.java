@@ -1,13 +1,13 @@
 package com.intellij.find;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 
 import java.util.ArrayList;
 
 public abstract class FindSettings{
 
   public static FindSettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(FindSettings.class);
+    return ServiceManager.getService(FindSettings.class);
   }
 
   public abstract boolean isSkipResultsWithOneUsage();

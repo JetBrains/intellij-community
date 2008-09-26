@@ -15,11 +15,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.find.FindSettings</interface-class>
-      <implementation-class>com.intellij.find.impl.FindSettingsImpl</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.codeInsight.CodeInsightSettings</implementation-class>
     </component>
 

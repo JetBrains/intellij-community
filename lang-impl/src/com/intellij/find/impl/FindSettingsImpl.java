@@ -3,16 +3,31 @@ package com.intellij.find.impl;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FindSettingsImpl extends FindSettings implements ApplicationComponent, JDOMExternalizable{
+@State(
+  name = "FindSettings",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$APP_CONFIG$/other.xml"
+    )}
+)
+public class FindSettingsImpl extends FindSettings implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindSettingsImpl");
+
   @NonNls private static final String FIND_DIRECTION_FORWARD = "forward";
   @NonNls private static final String FIND_DIRECTION_BACKWARD = "backward";
   @NonNls private static final String FIND_ORIGIN_FROM_CURSOR = "from_cursor";
@@ -58,18 +73,14 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   @SuppressWarnings({"WeakerAccess"}) public JDOMExternalizableStringList RECENT_DIR_STRINGS = new JDOMExternalizableStringList();
   @SuppressWarnings({"WeakerAccess"}) @NonNls public JDOMExternalizableStringList RECENT_FILE_MASKS = new JDOMExternalizableStringList();
 
-  @NotNull
-  public String getComponentName(){
-    return "FindSettings";
-  }
 
-  public void initComponent() { }
-
-  public void disposeComponent(){
-  }
-
-  public void readExternal(Element element) throws InvalidDataException{
-    DefaultJDOMExternalizer.readExternal(this, element);
+  public void loadState(final Element state) {
+    try {
+      DefaultJDOMExternalizer.readExternal(this, state);
+    }
+    catch (InvalidDataException e) {
+      LOG.info(e);
+    }
     if (RECENT_FILE_MASKS.isEmpty()) {
       RECENT_FILE_MASKS.add("*.properites");
       RECENT_FILE_MASKS.add("*.html");
@@ -79,8 +90,15 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException{
-    DefaultJDOMExternalizer.writeExternal(this, element);
+  public Element getState() {
+    Element element = new Element("state");
+    try {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
+    catch (WriteExternalException e) {
+      LOG.info(e);
+    }
+    return element;
   }
 
   public boolean isSkipResultsWithOneUsage(){
