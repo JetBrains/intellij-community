@@ -2,7 +2,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.openapi.actionSystem.*;
@@ -385,7 +385,7 @@ public class DaemonListeners {
   private static class MyEditorMouseListener extends EditorMouseAdapter {
 
     public void mouseExited(EditorMouseEvent e) {
-      if (!HintManagerImpl.getInstanceImpl().getTooltipController().shouldSurvive(e.getMouseEvent())) {
+      if (!TooltipController.getInstance().shouldSurvive(e.getMouseEvent())) {
         DaemonTooltipUtil.cancelTooltips();
       }
     }
@@ -409,14 +409,14 @@ public class DaemonListeners {
         }
       }
       finally {
-        if (!shown && !HintManagerImpl.getInstanceImpl().getTooltipController().shouldSurvive(e.getMouseEvent())) {
+        if (!shown && !TooltipController.getInstance().shouldSurvive(e.getMouseEvent())) {
           DaemonTooltipUtil.cancelTooltips();
         }
       }
     }
 
     public void mouseDragged(EditorMouseEvent e) {
-      HintManagerImpl.getInstanceImpl().getTooltipController().cancelTooltips();
+      TooltipController.getInstance().cancelTooltips();
     }
   }
 

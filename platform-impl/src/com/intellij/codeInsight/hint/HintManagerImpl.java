@@ -1,13 +1,17 @@
 package com.intellij.codeInsight.hint;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
@@ -35,7 +39,7 @@ import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 
-public class HintManagerImpl extends HintManager {
+public class HintManagerImpl extends HintManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.HintManager");
 
   public static final short ABOVE = 1;
@@ -52,8 +56,6 @@ public class HintManagerImpl extends HintManager {
   public static final int HIDE_BY_SCROLLING = 0x20;
   public static final int HIDE_IF_OUT_OF_EDITOR = 0x40;
   public static final int UPDATE_BY_SCROLLING = 0x80;
-
-  private final TooltipController myTooltipController;
 
   private final AnActionListener myAnActionListener;
   private final MyEditorManagerListener myEditorManagerListener;
@@ -86,10 +88,10 @@ public class HintManagerImpl extends HintManager {
   }
 
   public static HintManagerImpl getInstanceImpl() {
-    return (HintManagerImpl)ApplicationManager.getApplication().getComponent(HintManager.class);
+    return (HintManagerImpl)ServiceManager.getService(HintManager.class);
   }
 
-  public HintManagerImpl(ActionManagerEx actionManagerEx, ProjectManager projectManager, EditorActionManager editorActionManager) {
+  public HintManagerImpl(ActionManagerEx actionManagerEx, ProjectManager projectManager) {
     myEditorManagerListener = new MyEditorManagerListener();
 
     myAnActionListener = new MyAnActionListener();
@@ -151,16 +153,7 @@ public class HintManagerImpl extends HintManager {
         }
       }
     };
-
-    myTooltipController = new TooltipController();
   }
-
-  @NotNull
-  public String getComponentName() {
-    return "HintManager";
-  }
-
-  public void initComponent() { }
 
   private void updateScrollableHints(VisibleAreaEvent e) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
@@ -171,10 +164,6 @@ public class HintManagerImpl extends HintManager {
     }
   }
 
-  public TooltipController getTooltipController() {
-    return myTooltipController;
-  }
-
   public boolean hasShownHintsThatWillHideByOtherHint() {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     for (HintInfo hintInfo : myHintsStack) {
@@ -183,7 +172,7 @@ public class HintManagerImpl extends HintManager {
     return false;
   }
 
-  public void disposeComponent() {
+  public void dispose() {
     ActionManagerEx.getInstanceEx().removeAnActionListener(myAnActionListener);
   }
 
@@ -716,7 +705,7 @@ public class HintManagerImpl extends HintManager {
     public void projectClosed(Project project) {
       FileEditorManager.getInstance(project).removeFileEditorManagerListener(myEditorManagerListener);
       // avoid leak through com.intellij.codeInsight.hint.TooltipController.myCurrentTooltip
-      getTooltipController().cancelTooltips();
+      TooltipController.getInstance().cancelTooltips();
     }
   }
 

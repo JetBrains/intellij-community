@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.hint;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.project.Project;
@@ -17,6 +18,10 @@ public class TooltipController {
   private TooltipRenderer myCurrentTooltipObject;
   private TooltipGroup myCurrentTooltipGroup;
   private final Alarm myTooltipAlarm = new Alarm();
+
+  public static TooltipController getInstance() {
+    return ServiceManager.getService(TooltipController.class);
+  }
 
   public void cancelTooltips() {
     myTooltipAlarm.cancelAllRequests();

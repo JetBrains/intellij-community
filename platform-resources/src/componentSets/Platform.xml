@@ -6,11 +6,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.codeInsight.hint.HintManager</interface-class>
-      <implementation-class>com.intellij.codeInsight.hint.HintManagerImpl</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.ide.util.PropertiesComponent</interface-class>
       <implementation-class>com.intellij.ide.util.PropertiesComponentImpl</implementation-class>
     </component>
