@@ -175,7 +175,7 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
   }
 
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 
   public static List<PsiDirectory> getWritableDirectoryListDefault(final PsiElement context, final PsiManager psiManager) {
