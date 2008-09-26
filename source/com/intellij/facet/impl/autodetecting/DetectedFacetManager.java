@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
@@ -228,10 +229,17 @@ public class DetectedFacetManager implements Disposable {
   }
 
   private HashMap<DetectedFacetInfo<Module>, List<VirtualFile>> getFilesMap(final List<DetectedFacetInfo<Module>> detectedFacets) {
+    MultiValuesMap<DetectedFacetInfo<Module>, DetectedFacetInfo<Module>> facet2Children = new MultiValuesMap<DetectedFacetInfo<Module>, DetectedFacetInfo<Module>>();
+    for (DetectedFacetInfo<Module> detected : detectedFacets) {
+      FacetInfo2<Module> underlying = detected.getUnderlyingFacetInfo();
+      if (underlying instanceof DetectedFacetInfo) {
+        facet2Children.put((DetectedFacetInfo<Module>)underlying, detected);
+      }
+    }
+    
     HashMap<DetectedFacetInfo<Module>, List<VirtualFile>> filesMap = new HashMap<DetectedFacetInfo<Module>, List<VirtualFile>>();
-    Iterator<DetectedFacetInfo<Module>> iterator = detectedFacets.iterator();
-    while (iterator.hasNext()) {
-      DetectedFacetInfo<Module> detected = iterator.next();
+    Set<DetectedFacetInfo<Module>> toRemove = new HashSet<DetectedFacetInfo<Module>>();
+    for (DetectedFacetInfo<Module> detected : detectedFacets) {
       Set<String> urls = myAutodetectingManager.getFileIndex().getFiles(detected.getId());
       List<VirtualFile> files = new ArrayList<VirtualFile>();
       if (urls != null) {
@@ -246,10 +254,26 @@ public class DetectedFacetManager implements Disposable {
         filesMap.put(detected, files);
       }
       else {
-        iterator.remove();
+        addWithChildren(detected, facet2Children, toRemove);
       }
     }
+
+    detectedFacets.removeAll(toRemove);
+
     return filesMap;
+  }
+
+  private static void addWithChildren(final DetectedFacetInfo<Module> detected,
+                               final MultiValuesMap<DetectedFacetInfo<Module>, DetectedFacetInfo<Module>> facet2Children,
+                               final Set<DetectedFacetInfo<Module>> result) {
+    if (result.add(detected)) {
+      Collection<DetectedFacetInfo<Module>> children = facet2Children.get(detected);
+      if (children != null) {
+        for (DetectedFacetInfo<Module> info : children) {
+          addWithChildren(info, facet2Children, result);
+        }
+      }
+    }
   }
 
   public Facet createFacet(final DetectedFacetInfo<Module> info, final Facet underlyingFacet) {

@@ -77,6 +77,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   public void projectOpened() {
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
 
+    myDetectedFacetSet.loadDetectedFacets(FacetDetectionIndex.getDetectedFacetsFile(myProject));
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         myDetectedFacetManager.initUI();
@@ -85,6 +86,9 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   }
 
   public void projectClosed() {
+    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+
+    myDetectedFacetSet.saveDetectedFacets(FacetDetectionIndex.getDetectedFacetsFile(myProject));
     if (myDetectedFacetManager != null) {
       myDetectedFacetManager.disposeUI();
     }
@@ -108,7 +112,6 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     for (FacetType<?,?> type : types) {
       registerDetectors(type);
     }
-    myDetectedFacetSet.loadDetectedFacets(FacetDetectionIndex.getDetectedFacetsFile(myProject));
     myFileIndex = new FacetDetectionIndex(myProject, this, myDetectors.keySet());
     myFileIndex.initialize();
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
@@ -210,7 +213,6 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
 
   public void dispose() {
     if (myFileIndex != null) {
-      myDetectedFacetSet.saveDetectedFacets(FacetDetectionIndex.getDetectedFacetsFile(myProject));
       myFileIndex.dispose();
     }
   }

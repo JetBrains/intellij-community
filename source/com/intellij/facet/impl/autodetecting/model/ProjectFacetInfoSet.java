@@ -94,14 +94,16 @@ public class ProjectFacetInfoSet extends FacetInfoSet<Module> {
         continue;
       }
 
-      FacetInfo2<Module> underlyingFacet;
+      FacetInfo2<Module> underlyingFacet = null;
       String underlyingId = facetBean.myUnderlyingId;
-      if (underlyingId.startsWith("/")) {
-        underlyingFacet = findById(Integer.parseInt(underlyingId.substring(1)));
-      }
-      else {
-        Facet facet = FacetPointersManager.getInstance(myProject).create(underlyingId).getFacet();
-        underlyingFacet = facet != null ? getOrCreateInfo(facet) : null;
+      if (underlyingId != null) {
+        if (underlyingId.startsWith("/")) {
+          underlyingFacet = findById(Integer.parseInt(underlyingId.substring(1)));
+        }
+        else {
+          Facet facet = FacetPointersManager.getInstance(myProject).create(underlyingId).getFacet();
+          underlyingFacet = facet != null ? getOrCreateInfo(facet) : null;
+        }
       }
       FacetConfiguration configuration = type.createDefaultConfiguration();
       try {

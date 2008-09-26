@@ -13,6 +13,7 @@ import com.intellij.facet.impl.autodetecting.model.FacetInfoBackedByFacet;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -134,8 +135,8 @@ public class ImplicitFacetsTreeComponent {
   private static class FacetNodeImpl extends DetectedFacetsTree.FacetNode {
     private final DetectedFacetInfo<Module> myDetectedFacetInfo;
 
-    private FacetNodeImpl(DetectedFacetInfo<Module> detectedFacet, VirtualFile projectRoot, @Nullable final DetectedFacetsTree.FacetNode parent,
-                          final List<VirtualFile> files) {
+    private FacetNodeImpl(@NotNull DetectedFacetInfo<Module> detectedFacet, VirtualFile projectRoot, @Nullable final DetectedFacetsTree.FacetNode parent,
+                          final @NotNull List<VirtualFile> files) {
       super(detectedFacet, detectedFacet.getFacetType(), projectRoot, files.toArray(new VirtualFile[files.size()]), parent);
       myDetectedFacetInfo = detectedFacet;
     }
