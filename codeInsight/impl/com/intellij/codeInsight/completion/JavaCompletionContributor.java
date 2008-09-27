@@ -7,6 +7,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -26,6 +27,7 @@ import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -285,6 +287,28 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap());
 
+    if (file instanceof PsiJavaFile) {
+      final JavaElementVisitor visitor = new JavaRecursiveElementVisitor() {
+        @Override public void visitClass(PsiClass aClass) {
+          aClass.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, aClass);
+          super.visitClass(aClass);
+        }
+
+        @Override public void visitVariable(PsiVariable variable) {
+          variable.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, variable);
+          super.visitVariable(variable);
+        }
+
+        @Override public void visitMethod(PsiMethod method) {
+          method.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, method);
+          super.visitMethod(method);
+        }
+      };
+      visitor.visitFile(file);
+
+      autoImport(file, context.getStartOffset() - 1, context.getEditor());
+    }
+
     if (context.getCompletionType() == CompletionType.BASIC && file instanceof PsiJavaFile) {
       final PsiElement element = file.findElementAt(context.getStartOffset());
       if (METHOD_START.accepts(element)) {
@@ -316,6 +340,44 @@ public class JavaCompletionContributor extends CompletionContributor {
 
       context.setFileCopyPatcher(new DummyIdentifierPatcher(CompletionInitializationContext.DUMMY_IDENTIFIER.trim()));
     }
+  }
+
+  private static void autoImport(final PsiFile file, int offset, final Editor editor) {
+    final CharSequence text = editor.getDocument().getCharsSequence();
+    while (offset > 0 && Character.isJavaIdentifierPart(text.charAt(offset))) offset--;
+    if (offset <= 0) return;
+
+    while (offset > 0 && Character.isWhitespace(text.charAt(offset))) offset--;
+    if (offset <= 0 || text.charAt(offset) != '.') return;
+
+    offset--;
+
+    while (offset > 0 && Character.isWhitespace(text.charAt(offset))) offset--;
+    if (offset <= 0) return;
+
+    PsiJavaCodeReferenceElement element = extractReference(PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiExpression.class, false));
+    if (element == null) return;
+
+    while (true) {
+      final PsiJavaCodeReferenceElement qualifier = extractReference(element.getQualifier());
+      if (qualifier == null) break;
+
+      element = qualifier;
+    }
+    if (!(element.getParent() instanceof PsiMethodCallExpression) && element.multiResolve(true).length == 0) {
+      new ImportClassFix(element).doFix(editor, false, false);
+    }
+  }
+
+  @Nullable
+  private static PsiJavaCodeReferenceElement extractReference(@Nullable PsiElement expression) {
+    if (expression instanceof PsiJavaCodeReferenceElement) {
+      return (PsiJavaCodeReferenceElement)expression;
+    }
+    if (expression instanceof PsiMethodCallExpression) {
+      return ((PsiMethodCallExpression)expression).getMethodExpression();
+    }
+    return null;
   }
 
 }

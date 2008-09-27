@@ -39,7 +39,7 @@ public class CompletionUtil {
 
   @NotNull
   public static <T extends PsiElement> T getOriginalElement(@NotNull T element) {
-    final T data = (T)element.getUserData(ORIGINAL_KEY);
+    final T data = (T)element.getCopyableUserData(ORIGINAL_KEY);
     return data != null ? data : element;
   }
 

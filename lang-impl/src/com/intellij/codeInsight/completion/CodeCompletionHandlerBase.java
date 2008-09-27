@@ -33,9 +33,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
@@ -105,10 +103,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         final CompletionInitializationContext initializationContext = new CompletionInitializationContext(editor, psiFile, myCompletionType);
         result.setResult(initializationContext);
 
-        DaemonCodeAnalyzer.getInstance(project).autoImportReferenceAtCursor(editor, psiFile);
-        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(psiFile.getViewProvider());
-
-        documentManager.commitAllDocuments();
         for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
           contributor.beforeCompletion(initializationContext);
           assert !documentManager.isUncommited(editor.getDocument()) : "Contributor " + contributor + " left the document uncommitted";
@@ -457,7 +451,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   protected PsiFile createFileCopy(PsiFile file) {
-    return PsiUtilBase.copyElementPreservingOriginalLinks(file, CompletionUtil.ORIGINAL_KEY);
+    return (PsiFile)file.copy();
   }
 
 
