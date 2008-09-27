@@ -4,11 +4,15 @@ import com.intellij.execution.Location;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.testing.sm.LocationProvider;
+import org.jetbrains.plugins.ruby.testing.sm.LocationProviderUtil;
 import org.jetbrains.plugins.ruby.testing.sm.runner.states.*;
 import org.jetbrains.plugins.ruby.testing.sm.runner.ui.TestsPresentationUtil;
 
@@ -28,7 +32,7 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
   private AbstractState myState = NotRunState.getInstance();
   private String myName;
   private Integer myDuration = null; // duration is unknown
-  @Nullable private String myLocationUrl;
+  @Nullable private final String myLocationUrl;
   private boolean myDurationIsCached = false; // is used for separating unknown and unset duration
 
 
@@ -92,25 +96,35 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
 
   @Nullable
   public Location getLocation(final Project project) {
-    //final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(myMethod.replace(
-    //    File.separatorChar, '/'));
-    //if (virtualFile != null)
-    //  return PsiLocation.fromPsiElement(project, PsiManager.getInstance(project).findFile(virtualFile));
-    //return null;
-
-    //TODO
     //determines location of test proxy
+
+    if (myLocationUrl == null) {
+      return null;
+    }
+
+    final String protocolId = LocationProviderUtil.extractProtocol(myLocationUrl);
+    final String path = LocationProviderUtil.extractPath(myLocationUrl);
+
+    if (protocolId != null && path != null) {
+      for (LocationProvider provider : Extensions.getExtensions(LocationProvider.EP_NAME)) {
+        final List<Location> locations = provider.getLocation(protocolId, path, project);
+        if (!locations.isEmpty()) {
+          return locations.iterator().next();
+        }
+      }
+    }
+
     return null;
   }
 
   @Nullable
   public Navigatable getDescriptor(final Location location) {
-    //if (location != null) return EditSourceUtil.getDescriptor(location.getPsiElement());
-    //return null;
-
-    //TODO
     // by location gets navigatable element.
     // It can be file or place in file (e.g. when OPEN_FAILURE_LINE is enabled)
+
+    if (location != null) {
+      return EditSourceUtil.getDescriptor(location.getPsiElement());
+    }
     return null;
   }
 
