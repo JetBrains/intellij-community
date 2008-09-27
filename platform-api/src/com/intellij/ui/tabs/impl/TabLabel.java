@@ -314,7 +314,9 @@ public class TabLabel extends JPanel {
   }
 
   public void setTabActionsAutoHide(final boolean autoHide) {
-    if (myActionPanel.isAutoHide() == autoHide) return;
+    if (myActionPanel == null || myActionPanel.isAutoHide() == autoHide) {
+      return;
+    }
 
     myActionPanel.setAutoHide(autoHide);
   }
