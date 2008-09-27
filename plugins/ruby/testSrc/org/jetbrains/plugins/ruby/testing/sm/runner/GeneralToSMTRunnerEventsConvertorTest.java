@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ruby.testing.sm.runner;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.Marker;
 import org.jetbrains.plugins.ruby.testing.sm.runner.ui.SMTRunnerConsoleView;
 import org.jetbrains.plugins.ruby.testing.sm.runner.ui.SMTRunnerTestTreeView;
@@ -94,6 +95,15 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     onTestStarted("some_test");
 
     assertEquals(1, myEventsProcessor.getRunningTestsQuantity());
+  }
+
+  public void testOnTestStarted_WithLocation() throws InterruptedException {
+    onTestStarted("some_test", "file://some/file.rb:1");
+    final String fullName = myEventsProcessor.getFullTestName("some_test");
+    final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
+
+    assertNotNull(proxy);
+    assertEquals("file://some/file.rb:1", proxy.getLocationUrl());
   }
 
   public void testOnTestFailure() {
@@ -278,6 +288,18 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     myEventsProcessor.onSuiteFinished("suite1");
   }
 
+  public void testOnSuiteStarted_WithLocation() {
+    onTestSuiteStarted("suite1", "file://some/file.rb:1");
+
+    //lets check that new tests have right parent
+    onTestStarted("test1", "file://some/file.rb:4");
+    final SMTestProxy test1 =
+        myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName("test1"));
+
+    assertEquals("file://some/file.rb:1", test1.getParent().getLocationUrl());
+    assertEquals("file://some/file.rb:4", test1.getLocationUrl());
+  }
+
   public void testGetCurrentTestSuite() {
     assertEquals(myResultsViewer.getTestsRootNode(), myEventsProcessor.getCurrentSuite());
 
@@ -310,12 +332,20 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   }
 
   private void onTestStarted(final String testName) {
-    myEventsProcessor.onTestStarted(testName, null);
+    onTestStarted(testName, null);
+  }
+
+  private void onTestStarted(final String testName, @Nullable final String locationUrl) {
+    myEventsProcessor.onTestStarted(testName, locationUrl);
     myResultsViewer.performUpdate();
   }
 
   private void onTestSuiteStarted(final String suiteName) {
-    myEventsProcessor.onSuiteStarted(suiteName, null);
+    onTestSuiteStarted(suiteName, null);
+  }
+
+  private void onTestSuiteStarted(final String suiteName, @Nullable final String locationUrl) {
+    myEventsProcessor.onSuiteStarted(suiteName, locationUrl);
     myResultsViewer.performUpdate();
   }
 }

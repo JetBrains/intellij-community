@@ -38,7 +38,7 @@ public abstract class BaseSMTRunnerTestCase extends LightIdeaTestCase {
   }
 
   protected SMTestProxy createTestProxy(final String name, final SMTestProxy parentSuite) {
-    final SMTestProxy proxy = new SMTestProxy(name, false);
+    final SMTestProxy proxy = new SMTestProxy(name, false, null);
     if (parentSuite != null) {
       parentSuite.addChild(proxy);
     }
@@ -50,7 +50,7 @@ public abstract class BaseSMTRunnerTestCase extends LightIdeaTestCase {
   }
 
   protected SMTestProxy createSuiteProxy(final String name, final SMTestProxy parentSuite) {
-    final SMTestProxy suite = new SMTestProxy(name, true);
+    final SMTestProxy suite = new SMTestProxy(name, true, null);
     if (parentSuite != null) {
       parentSuite.addChild(suite);
     }

@@ -28,6 +28,7 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
   private AbstractState myState = NotRunState.getInstance();
   private String myName;
   private Integer myDuration = null; // duration is unknown
+  @Nullable private String myLocationUrl;
   private boolean myDurationIsCached = false; // is used for separating unknown and unset duration
 
 
@@ -35,9 +36,11 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
 
   private final boolean myIsSuite;
 
-  public SMTestProxy(final String testName, final boolean isSuite) {
+  public SMTestProxy(final String testName, final boolean isSuite,
+                     @Nullable final String locationUrl) {
     myName = testName;
     myIsSuite = isSuite;
+    myLocationUrl = locationUrl;
   }
 
   public boolean isInProgress() {
@@ -89,6 +92,12 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
 
   @Nullable
   public Location getLocation(final Project project) {
+    //final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(myMethod.replace(
+    //    File.separatorChar, '/'));
+    //if (virtualFile != null)
+    //  return PsiLocation.fromPsiElement(project, PsiManager.getInstance(project).findFile(virtualFile));
+    //return null;
+
     //TODO
     //determines location of test proxy
     return null;
@@ -96,6 +105,9 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
 
   @Nullable
   public Navigatable getDescriptor(final Location location) {
+    //if (location != null) return EditSourceUtil.getDescriptor(location.getPsiElement());
+    //return null;
+
     //TODO
     // by location gets navigatable element.
     // It can be file or place in file (e.g. when OPEN_FAILURE_LINE is enabled)
@@ -325,6 +337,11 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
 
   public boolean wasTerminated() {
     return myState.wasTerminated();
+  }
+
+  @Nullable
+  protected String getLocationUrl() {
+    return myLocationUrl;
   }
 
   /**

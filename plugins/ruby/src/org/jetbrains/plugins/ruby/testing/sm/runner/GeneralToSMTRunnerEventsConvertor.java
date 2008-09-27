@@ -76,7 +76,6 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onTestStarted(final String testName, final String locationUrl) {
-    //TODO[romeo] : location info
     UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final String fullName = getFullTestName(testName);
@@ -90,7 +89,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
         final SMTestProxy parentSuite = getCurrentSuite();
 
         // creates test
-        final SMTestProxy testProxy = new SMTestProxy(testName, false);
+        final SMTestProxy testProxy = new SMTestProxy(testName, false, locationUrl);
         parentSuite.addChild(testProxy);
         // adds to running tests map
         myRunningTestsFullNameToProxy.put(fullName, testProxy);
@@ -105,12 +104,11 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onSuiteStarted(final String suiteName, final String locationUrl) {
-    //TODO[romeo] : location info
     UIUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final SMTestProxy parentSuite = getCurrentSuite();
         //new suite
-        final SMTestProxy newSuite = new SMTestProxy(suiteName, true);
+        final SMTestProxy newSuite = new SMTestProxy(suiteName, true, locationUrl);
         parentSuite.addChild(newSuite);
 
         mySuitesStack.pushSuite(newSuite);

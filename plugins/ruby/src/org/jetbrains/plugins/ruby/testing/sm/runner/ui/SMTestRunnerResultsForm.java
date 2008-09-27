@@ -119,7 +119,7 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
 
     //Create tests common suite root
     //noinspection HardCodedStringLiteral
-    myTestsRootNode = new SMTestProxy("[root]", true);
+    myTestsRootNode = new SMTestProxy("[root]", true, null);
 
     //Adds tabs view component
     myTabs = new JBTabsImpl(project,
