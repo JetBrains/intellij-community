@@ -98,6 +98,8 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
   public Location getLocation(final Project project) {
     //determines location of test proxy
 
+    //TODO multiresolve support
+
     if (myLocationUrl == null) {
       return null;
     }
