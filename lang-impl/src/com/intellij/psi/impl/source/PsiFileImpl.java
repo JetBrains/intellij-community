@@ -65,6 +65,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private WeakReference<StubTree> myStub;
   protected final PsiManagerEx myManager;
   private volatile Object myTreeElementPointer; // SoftReference/WeakReference to RepositoryTreeElement when has repository id, RepositoryTreeElement otherwise
+  public static final Key<Boolean> BUILDING_STUB = new Key<Boolean>("Don't use stubs mark!");
 
   protected PsiFileImpl(@NotNull IElementType elementType, IElementType contentElementType, @NotNull FileViewProvider provider) {
     this(provider);
@@ -526,6 +527,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Nullable
   public StubTree getStubTree() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
+
+    if (Boolean.TRUE.equals(getUserData(BUILDING_STUB))) return null;
 
     final StubTree derefd = derefStub();
     if (derefd != null) return derefd;

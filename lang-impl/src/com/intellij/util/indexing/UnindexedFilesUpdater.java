@@ -38,6 +38,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   }
 
   public void processFile(final FileContent fileContent) {
+    fileContent.putUserData(FileBasedIndex.PROJECT, myProject);
     myIndex.indexFileContent(fileContent);
   }
 

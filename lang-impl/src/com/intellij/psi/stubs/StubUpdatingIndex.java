@@ -145,12 +145,17 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     Language l = filetype.getLanguage();
     final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
 
-    Project project = ProjectManager.getInstance().getDefaultProject(); // TODO
+    PsiFile psi = inputData.getUserData(FileBasedIndex.PSI_FILE);
+    if (psi == null) {
+      Project project = inputData.getUserData(FileBasedIndex.PROJECT);
+      if (project == null) {
+        project = ProjectManager.getInstance().getDefaultProject();
+      }
 
-    PsiFile copy =
-      PsiFileFactory.getInstance(project).createFileFromText(inputData.getFileName(), filetype, inputData.getContentAsText(), 1, false, false);
+      psi = PsiFileFactory.getInstance(project).createFileFromText(inputData.getFileName(), filetype, inputData.getContentAsText(), 1, false, false);
+    }
 
-    return ((IStubFileElementType)type).getBuilder().buildStubTree(copy);
+    return ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
   }
 
   public KeyDescriptor<Integer> getKeyDescriptor() {

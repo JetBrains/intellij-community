@@ -21,6 +21,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -33,6 +34,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -653,7 +655,7 @@ public class FileBasedIndex implements ApplicationComponent {
     PsiFile dominantContentFile = findDominantPsiForDocument(document);
 
     DocumentContent content;
-    if (dominantContentFile != null) {
+    if (dominantContentFile != null && dominantContentFile.getModificationStamp() != document.getModificationStamp()) {
       content = new PsiContent(document, dominantContentFile);
     }
     else {
@@ -668,15 +670,29 @@ public class FileBasedIndex implements ApplicationComponent {
       }
       final FileContent oldFc = new FileContent(vFile, lastIndexed, vFile.getCharset());
       final FileContent newFc = new FileContent(vFile, content.getText(), vFile.getCharset());
+
+      if (dominantContentFile != null) {
+        dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
+        newFc.putUserData(PSI_FILE, dominantContentFile);
+      }
+
       for (ID<?, ?> indexId : myIndices.keySet()) {
         if (getInputFilter(indexId).acceptInput(vFile)) {
           final int inputId = Math.abs(getFileId(vFile));
           getIndex(indexId).update(inputId, newFc, oldFc);
         }
       }
+
+      if (dominantContentFile != null) {
+        dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
+      }
+
       myLastIndexedUnsavedContent.put(document, newFc.getContentAsText());
     }
   }
+
+  public static final Key<PsiFile> PSI_FILE = new Key<PsiFile>("PSI for stubs");
+  public static final Key<Project> PROJECT = new Key<Project>("Context project");
 
   @Nullable
   private PsiFile findDominantPsiForDocument(final Document document) {
@@ -686,6 +702,14 @@ public class FileBasedIndex implements ApplicationComponent {
 
     return findLatestKnownPsiForUncomittedDocument(document);
   }
+
+
+  @Nullable
+  private PsiFile findPsiFileForFile(final VirtualFile file) {
+    final Document doc = FileDocumentManager.getInstance().getCachedDocument(file);
+    return doc != null ? findDominantPsiForDocument(doc) : null;
+  }
+
 
   @NotNull
   private AtomicLong getLastIndexedStamp(final Document document) {
@@ -750,7 +774,8 @@ public class FileBasedIndex implements ApplicationComponent {
     FileContent oldContent = null;
     final byte[] oldBytes = myFileContentAttic.remove(file);
     final boolean forceIndexing = oldBytes != null;
-    
+
+    PsiFile psiFile = null;
     for (ID<?, ?> indexId : myIndices.keySet()) {
       if (forceIndexing? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
         if (fc == null) {
@@ -762,8 +787,15 @@ public class FileBasedIndex implements ApplicationComponent {
             currentBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
           }
           fc = new FileContent(file, currentBytes);
+
+          psiFile = content.getUserData(PSI_FILE);
+          if (psiFile != null) {
+            psiFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
+            fc.putUserData(PSI_FILE, psiFile);
+          }
           oldContent = oldBytes != null? new FileContent(file, oldBytes) : null;
         }
+
         try {
           updateSingleIndex(indexId, file, fc, oldContent);
         }
@@ -772,6 +804,10 @@ public class FileBasedIndex implements ApplicationComponent {
           LOG.info(e);
         }
       }
+    }
+
+    if (psiFile != null) {
+      psiFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
     }
 
     IndexingStamp.flushCache();
@@ -1131,7 +1167,9 @@ public class FileBasedIndex implements ApplicationComponent {
       myForceUpdateSemaphore.down();
       try {
         for (VirtualFile file: queryNeededFiles()) {
-          processFileImpl(new com.intellij.ide.startup.FileContent(file));
+          final com.intellij.ide.startup.FileContent fileContent = new com.intellij.ide.startup.FileContent(file);
+          fileContent.putUserData(PSI_FILE, findPsiFileForFile(file));
+          processFileImpl(fileContent);
         }
       }
       finally {
@@ -1258,7 +1296,7 @@ public class FileBasedIndex implements ApplicationComponent {
   @Nullable
   private static PsiFile findLatestKnownPsiForUncomittedDocument(Document doc) {
     PsiFile target = null;
-    long modStamp = doc.getModificationStamp();
+    long modStamp = -1L;
 
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       final PsiDocumentManager pdm = PsiDocumentManager.getInstance(project);

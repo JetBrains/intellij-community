@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,7 @@ import java.nio.charset.Charset;
  * @author Eugene Zhuravlev
 *         Date: Mar 28, 2008
 */
-public final class FileContent {
+public final class FileContent extends UserDataHolderBase {
   private final VirtualFile myFile;
   private final String fileName;
   private final FileType myFileType;
