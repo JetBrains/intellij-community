@@ -13,7 +13,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -140,8 +142,10 @@ public class PyStubsTest extends CodeInsightTestCase {
 
     StubElement fileStub = fileImpl.getStub();
     assertNull("There should be no stub if file holds tree element", fileStub);
-
+    
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID);
     fileImpl.unloadContent();
+    assertNull(fileImpl.getTreeElement()); // Test unload successed.
 
     fileStub = fileImpl.getStub();
     assertNotNull("After tree element have been unloaded we must be able to create updated stub", fileStub);
