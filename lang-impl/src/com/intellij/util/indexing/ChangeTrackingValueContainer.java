@@ -25,6 +25,16 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
     myRemoved = new ValueContainerImpl<Value>();
   }
 
+  //public void log(String op, int id, final Value value) {
+  //  System.out.print("@" + mcount + ": ");
+  //  System.out.print(op);
+  //  System.out.print("(" + id + ")");
+  //  System.out.print(" value=" + value + " ");
+  //  System.out.print("+[" + myAdded.dumpInputIdMapping() + "], ");
+  //  System.out.print("-[" + myRemoved.dumpInputIdMapping() + "], ");
+  //  System.out.println("*[" + (myMerged != null ? myMerged.dumpInputIdMapping() : "null") + "] ");
+  //}
+
   public void addValue(int inputId, Value value) {
     if (myMerged != null) {
       myMerged.addValue(inputId, value);

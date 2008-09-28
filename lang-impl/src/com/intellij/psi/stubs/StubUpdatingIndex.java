@@ -259,17 +259,17 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
   }
   
   private static void updateStubIndices(final Collection<StubIndexKey> indexKeys, final int inputId, final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree,
-                                                final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree) {
+                                        final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree) {
     final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
     for (StubIndexKey key : indexKeys) {
-        final Map<Object, TIntArrayList> oldMap = oldStubTree.get(key);
-        final Map<Object, TIntArrayList> newMap = newStubTree.get(key);
+      final Map<Object, TIntArrayList> oldMap = oldStubTree.get(key);
+      final Map<Object, TIntArrayList> newMap = newStubTree.get(key);
     
-        final Map<Object, TIntArrayList> _oldMap = oldMap != null ? oldMap : Collections.<Object, TIntArrayList>emptyMap();
-        final Map<Object, TIntArrayList> _newMap = newMap != null ? newMap : Collections.<Object, TIntArrayList>emptyMap();
-            
-        stubIndex.updateIndex(key, inputId, _oldMap, _newMap);
-      }
+      final Map<Object, TIntArrayList> _oldMap = oldMap != null ? oldMap : Collections.<Object, TIntArrayList>emptyMap();
+      final Map<Object, TIntArrayList> _newMap = newMap != null ? newMap : Collections.<Object, TIntArrayList>emptyMap();
+
+      stubIndex.updateIndex(key, inputId, _oldMap, _newMap);
+    }
   }
   
   private static Collection<StubIndexKey> getAffectedIndices(final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree, final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree) {
@@ -382,6 +382,14 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
         }
       }
     }
-    
+
+    public void dispose() {
+      try {
+        super.dispose();
+      }
+      finally {
+        ((StubIndexImpl)StubIndex.getInstance()).dispose();
+      }
+    }
   }
 }
