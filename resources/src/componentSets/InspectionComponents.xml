@@ -5,7 +5,6 @@
 
   <xi:include href="/componentSets/LocalHistory.xml"/>
   <xi:include href="Core.xml"/>
-  <xi:include href="CodeInspection.xml"/>
 
   <application-components>
     <component>
