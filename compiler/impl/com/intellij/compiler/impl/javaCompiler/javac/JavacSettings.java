@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 import java.util.StringTokenizer;
@@ -23,7 +22,7 @@ import java.util.StringTokenizer;
    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class JavacSettings implements PersistentStateComponent<Element>, ProjectComponent {
+public class JavacSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.javac.JavacSettings");
 
   public boolean DEBUGGING_INFO = true;
@@ -33,17 +32,6 @@ public class JavacSettings implements PersistentStateComponent<Element>, Project
   public int MAXIMUM_HEAP_SIZE = 128;
 
   private boolean myTestsUseExternalCompiler = false;
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
-  }
 
   public Element getState() {
     try {
@@ -115,11 +103,6 @@ public class JavacSettings implements PersistentStateComponent<Element>, Project
   }
 
   public static JavacSettings getInstance(Project project) {
-    return project.getComponent(JavacSettings.class);
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "JavacSettings";
+    return ServiceManager.getService(project, JavacSettings.class);
   }
 }

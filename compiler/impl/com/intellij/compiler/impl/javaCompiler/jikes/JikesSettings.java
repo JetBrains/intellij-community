@@ -18,7 +18,7 @@ import java.util.StringTokenizer;
    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class JikesSettings implements PersistentStateComponent<Element>, ProjectComponent {
+public class JikesSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.jikes.JikesSettings");
 
   public String JIKES_PATH = "";
@@ -48,17 +48,6 @@ public class JikesSettings implements PersistentStateComponent<Element>, Project
     catch (InvalidDataException e) {
       LOG.error(e);
     }
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -113,11 +102,7 @@ public class JikesSettings implements PersistentStateComponent<Element>, Project
   }
 
   public static JikesSettings getInstance(Project project) {
-    return project.getComponent(JikesSettings.class);
-  }
-
-  public String getComponentName() {
-    return "JikesSettings";
+    return ServiceManager.getService(project, JikesSettings.class);
   }
 
   public void readExternal(Element element) throws InvalidDataException {

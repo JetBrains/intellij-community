@@ -9,7 +9,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 import java.util.StringTokenizer;
@@ -21,7 +20,7 @@ import java.util.StringTokenizer;
    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class EclipseCompilerSettings implements PersistentStateComponent<Element>, ProjectComponent {
+public class EclipseCompilerSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerSettings");
 
   public boolean DEBUGGING_INFO = true;
@@ -29,17 +28,6 @@ public class EclipseCompilerSettings implements PersistentStateComponent<Element
   public boolean DEPRECATION = false;
   public String ADDITIONAL_OPTIONS_STRING = "";
   public int MAXIMUM_HEAP_SIZE = 128;
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
-  }
 
 
   public Element getState() {
@@ -105,11 +93,7 @@ public class EclipseCompilerSettings implements PersistentStateComponent<Element
   }
 
   public static EclipseCompilerSettings getInstance(Project project) {
-    return project.getComponent(EclipseCompilerSettings.class);
+    return ServiceManager.getService(project, EclipseCompilerSettings.class);
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "EclipseCompilerSettings";
-  }
 }

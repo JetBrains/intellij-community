@@ -12,23 +12,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.compiler.impl.javaCompiler.javac.JavacSettings</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerSettings</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompilerSettings</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.compiler.RmicSettings</interface-class>
-      <implementation-class>com.intellij.compiler.RmicSettings</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.compiler.impl.javaCompiler.jikes.JikesSettings</implementation-class>
       <skipForDummyProject/>
     </component>

@@ -20,7 +20,7 @@ import java.util.StringTokenizer;
    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class RmicSettings implements PersistentStateComponent<Element>, ProjectComponent {
+public class RmicSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.RmicSettings");
 
   public boolean IS_EANABLED = false;
@@ -28,17 +28,6 @@ public class RmicSettings implements PersistentStateComponent<Element>, ProjectC
   public boolean GENERATE_NO_WARNINGS = false;
   public boolean GENERATE_IIOP_STUBS = false;
   public String ADDITIONAL_OPTIONS_STRING = "";
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
-  }
 
   public Element getState() {
     try {
@@ -91,11 +80,7 @@ public class RmicSettings implements PersistentStateComponent<Element>, ProjectC
   }
 
   public static RmicSettings getInstance(Project project) {
-    return project.getComponent(RmicSettings.class);
-  }
-
-  public String getComponentName() {
-    return "RmicSettings";
+    return ServiceManager.getService(project, RmicSettings.class);
   }
 
   public void readExternal(Element element) throws InvalidDataException {
