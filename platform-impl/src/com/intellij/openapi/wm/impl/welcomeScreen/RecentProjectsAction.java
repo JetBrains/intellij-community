@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.UIBundle;
 
 /**
@@ -26,5 +27,10 @@ public class RecentProjectsAction extends WelcomePopupAction {
 
   protected String getCaption() {
     return "";
+  }
+
+  @Override
+  public void update(final AnActionEvent e) {
+    e.getPresentation().setVisible(RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false).length > 0);
   }
 }

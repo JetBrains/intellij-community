@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -165,13 +166,19 @@ public class WelcomeScreen {
 
     private void appendActionsFromGroup(final ActionGroup group) {
       final AnAction[] actions = group.getChildren(null);
+      PresentationFactory factory = new PresentationFactory();
       for (final AnAction action : actions) {
         if (action instanceof ActionGroup) {
           final ActionGroup childGroup = (ActionGroup)action;
           appendActionsFromGroup(childGroup);
         }
         else {
-          appendButtonForAction(action);
+          Presentation presentation = factory.getPresentation(action);
+          action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(myMainPanel),
+                                          ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
+          if (presentation.isVisible()) {
+            appendButtonForAction(action);
+          }
         }
       }
     }
