@@ -12,10 +12,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.compiler.impl.javaCompiler.jikes.JikesSettings</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.compiler.impl.CompilerCacheManager</implementation-class>
       <skipForDummyProject/>
     </component>
