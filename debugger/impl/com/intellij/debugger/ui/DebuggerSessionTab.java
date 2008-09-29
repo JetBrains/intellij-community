@@ -2,7 +2,6 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.actions.KillProcessAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
@@ -261,7 +260,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     addActionToGroup(group, XDebuggerActions.RESUME);
     addActionToGroup(group, XDebuggerActions.PAUSE);
-    group.add(new KillProcessAction());
+    //group.add(new KillProcessAction());
     addActionToGroup(group, IdeActions.ACTION_STOP_PROGRAM);
 
     group.addSeparator();
