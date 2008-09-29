@@ -39,15 +39,13 @@ public class TestData implements Cloneable
 
   public AdditionalClasspath ADDITIONAL_CLASS_PATH;
   public TestSearchScope.Wrapper TEST_SEARCH_SCOPE;
-  public Map<String, String> TEST_PROPERTIES;
-  public List<String> TEST_LISTENERS;
+  public Map<String, String> TEST_PROPERTIES = new HashMap<String, String>();
+  public List<String> TEST_LISTENERS = new ArrayList<String>();
   public String PROPERTIES_FILE;
 
   public TestData() {
     TEST_OBJECT = TestType.CLASS.getType();
     TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
-    TEST_PROPERTIES = new HashMap<String, String>();
-    TEST_LISTENERS = new ArrayList<String>();
   }
 
   public TestSearchScope getScope() {
@@ -122,6 +120,14 @@ public class TestData implements Cloneable
   public Object clone() throws CloneNotSupportedException {
     TestData data = (TestData) super.clone();
     data.TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
+
+    data.TEST_PROPERTIES = new HashMap<String, String>();
+    data.TEST_PROPERTIES.putAll(TEST_PROPERTIES);
+
+    data.TEST_LISTENERS = new ArrayList<String>();
+    data.TEST_LISTENERS.addAll(TEST_LISTENERS);
+
+    data.setScope(getScope());
     return data;
   }
 
