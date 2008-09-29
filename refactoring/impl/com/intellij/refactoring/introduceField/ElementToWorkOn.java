@@ -4,9 +4,6 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
@@ -14,7 +11,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,21 +75,15 @@ public class ElementToWorkOn {
             editor.getSelectionModel().selectLineAtCaret();
           } else if (expressions.size() == 1) {
             expr = expressions.get(0);
-          } else {
-            JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiExpression>("Expressions", expressions) {
+          }
+          else {
+            IntroduceVariableBase.showChooser(editor, expressions, new Pass<PsiExpression>() {
               @Override
-              public PopupStep onChosen(final PsiExpression selectedValue, final boolean finalChoice) {
+              public void pass(final PsiExpression selectedValue) {
                 processor.pass(getElementToWorkOn(editor, file, refactoringName, helpId, project, null, selectedValue));
-                return FINAL_CHOICE;
               }
-
-              @NotNull
-              @Override
-              public String getTextFor(final PsiExpression value) {
-                return value.getText();
-              }
-            }).showInBestPositionFor(editor);
-
+            });
+            return;
           }
         }
       }

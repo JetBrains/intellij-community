@@ -12,8 +12,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -22,7 +20,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementVisitor;
@@ -36,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UnwrapHandler implements CodeInsightActionHandler {
-  private static final int HIGHLIGHTER_LEVEL = HighlighterLayer.SELECTION + 1;
+  public static final int HIGHLIGHTER_LEVEL = HighlighterLayer.SELECTION + 1;
 
   public boolean startInWriteAction() {
     return true;
@@ -79,7 +76,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   }
 
   private void showPopup(final List<AnAction> options, Editor editor) {
-    final MyScopeHighlighter highlighter = new MyScopeHighlighter(editor);
+    final ScopeHighlighter highlighter = new ScopeHighlighter(editor);
 
     DefaultListModel m = new DefaultListModel();
     for (AnAction a : options) {
@@ -125,64 +122,9 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     popup.showInBestPositionFor(editor);
   }
 
-  private static TextAttributes getTestAttributesForRemoval() {
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    return manager.getGlobalScheme().getAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES);
-  }
-
-  private static TextAttributes getTestAttributesForExtract() {
+  public static TextAttributes getTestAttributesForExtract() {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     return manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-  }
-
-  private static class MyScopeHighlighter {
-    private Editor myEditor;
-    private List<RangeHighlighter> myActiveHighliters = new ArrayList<RangeHighlighter>();
-
-    private MyScopeHighlighter(Editor editor) {
-      myEditor = editor;
-    }
-
-    public void highlight(PsiElement wholeAffected, List<PsiElement> toExtract) {
-      dropHighlight();
-
-      Pair<TextRange, List<TextRange>> ranges = collectTextRanges(wholeAffected, toExtract);
-
-      TextRange wholeRange = ranges.first;
-
-      List<TextRange> rangesToExtract = ranges.second;
-      List<TextRange> rangesToRemove = RangeSplitter.split(wholeRange, rangesToExtract);
-
-      for (TextRange r : rangesToRemove) {
-        addHighliter(r, HIGHLIGHTER_LEVEL, getTestAttributesForRemoval());
-      }
-      for (TextRange r : rangesToExtract) {
-        addHighliter(r, HIGHLIGHTER_LEVEL, getTestAttributesForExtract());
-      }
-    }
-
-    private Pair<TextRange, List<TextRange>> collectTextRanges(PsiElement wholeElement, List<PsiElement> elementsToExtract) {
-      TextRange affectedRange = wholeElement.getTextRange();
-      List<TextRange> rangesToExtract = new ArrayList<TextRange>();
-
-      for (PsiElement e : elementsToExtract) {
-        rangesToExtract.add(e.getTextRange());
-      }
-
-      return new Pair<TextRange, List<TextRange>>(affectedRange, rangesToExtract);
-    }
-
-    private void addHighliter(TextRange r, int level, TextAttributes attr) {
-      myActiveHighliters.add(myEditor.getMarkupModel().addRangeHighlighter(
-          r.getStartOffset(), r.getEndOffset(), level, attr, HighlighterTargetArea.EXACT_RANGE));
-    }
-
-    public void dropHighlight() {
-      for (RangeHighlighter h : myActiveHighliters) {
-        myEditor.getMarkupModel().removeHighlighter(h);
-      }
-      myActiveHighliters.clear();
-    }
   }
 
   private static class MyUnwrapAction extends AnAction {

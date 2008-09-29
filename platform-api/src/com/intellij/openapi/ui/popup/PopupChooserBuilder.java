@@ -315,8 +315,9 @@ public class PopupChooserBuilder {
     return this;
   }
 
-  public void addListener(final JBPopupListener listener) {
+  public PopupChooserBuilder addListener(final JBPopupListener listener) {
     myListeners.add(listener);
+    return this;
   }
 
   private class MyListWrapper extends JScrollPane implements DataProvider {

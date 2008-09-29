@@ -8,6 +8,7 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,9 +18,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -39,6 +41,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -64,30 +69,71 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       } else if (expressions.size() == 1) {
         final TextRange textRange = expressions.get(0).getTextRange();
         editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
-      } else {
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiExpression>("Expressions", expressions) {
-          @Override
-          public PopupStep onChosen(final PsiExpression selectedValue, final boolean finalChoice) {
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
-              }
-            });
-            return FINAL_CHOICE;
+      }
+      else {
+        showChooser(editor, expressions, new Pass<PsiExpression>(){
+          public void pass(final PsiExpression selectedValue) {
+            invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
           }
-
-          @NotNull
-          @Override
-          public String getTextFor(final PsiExpression value) {
-            return value.getText();
-          }
-        }).showInBestPositionFor(editor);
+        });
         return;
       }
     }
     if (invoke(project, editor, file, editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd())) {
       editor.getSelectionModel().removeSelection();
     }
+  }
+
+  public static void showChooser(final Editor editor, final List<PsiExpression> expressions, final Pass<PsiExpression> callback) {
+    final ScopeHighlighter highlighter = new ScopeHighlighter(editor);
+    final DefaultListModel model = new DefaultListModel();
+    for (PsiExpression expr : expressions) {
+      model.addElement(expr);
+    }
+    final JList list = new JList(model);
+    list.setCellRenderer(new DefaultListCellRenderer() {
+
+      @Override
+      public Component getListCellRendererComponent(final JList list,
+                                                    final Object value,
+                                                    final int index,
+                                                    final boolean isSelected,
+                                                    final boolean cellHasFocus) {
+        final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        setText(((PsiExpression)value).getText()); //todo cut long text
+        return rendererComponent;
+      }
+    });
+
+    list.addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(final ListSelectionEvent e) {
+        highlighter.dropHighlight();
+        final int index = list.getSelectedIndex();
+        if (index < 0 ) return;
+        final PsiExpression expr = (PsiExpression)model.get(index);
+        final ArrayList<PsiElement> toExtract = new ArrayList<PsiElement>();
+        toExtract.add(expr);
+        highlighter.highlight(expr, toExtract);
+      }
+    });
+
+    JBPopupFactory.getInstance().createListPopupBuilder(list)
+          .setTitle("Expressions")
+          .setMovable(false)
+          .setResizable(false)
+          .setRequestFocus(true)
+          .setItemChoosenCallback(new Runnable() {
+                                    public void run() {
+                                      callback.pass((PsiExpression)list.getSelectedValue());
+                                    }
+                                  })
+          .addListener(new JBPopupAdapter() {
+                          @Override
+                          public void onClosed(JBPopup popup) {
+                            highlighter.dropHighlight();
+                          }
+                       })
+          .createPopup().showInBestPositionFor(editor);
   }
 
   private boolean invoke(final Project project, final Editor editor, PsiFile file, int startOffset, int endOffset) {
