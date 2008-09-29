@@ -232,6 +232,7 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract VirtualFile[] getAllVersionedRoots();
 
+  @NotNull
   public abstract VcsRoot[] getAllVcsRoots();
 
   public abstract void updateActiveVcss();

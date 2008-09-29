@@ -40,6 +40,7 @@
 
     <!-- Version Control -->
     <group id="VcsGroups" popup="true">
+      <action id="Start.Use.Vcs" class="com.intellij.ide.actions.StartUseVcsAction"/>
       <separator/>
       <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup" test="Version Control">
         <action id="Vcs.ChangesView" class="com.intellij.openapi.vcs.changes.ShowChangesViewAction"/>
