@@ -3,7 +3,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$/testSource">
-      <sourceFolder url="file://$MODULE_DIR$/testSource" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/testSource" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
