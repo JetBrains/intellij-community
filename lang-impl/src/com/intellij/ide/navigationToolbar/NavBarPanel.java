@@ -877,7 +877,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
     private NavBarModel myModel;
 
-    public MyCompositeLabel(final int idx, final Icon icon, final String presentableText, final SimpleTextAttributes textAttributes, NavBarModel model) {
+    public MyCompositeLabel(final int idx, final Icon icon, @NotNull final String presentableText, final SimpleTextAttributes textAttributes, NavBarModel model) {
       super(new GridBagLayout());
       myModel = model;
       myIndex = idx;

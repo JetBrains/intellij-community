@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -33,6 +34,8 @@ import java.util.*;
 import java.util.List;
 
 public class NavBarModel {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavBarModel");
+
   private ArrayList<Object> myModel = new ArrayList<Object>();
   private int mySelectedIndex;
   private Project myProject;
@@ -222,8 +225,7 @@ public class NavBarModel {
     return true;
   }
 
-
-  @Nullable
+  @NotNull
   protected static String getPresentableText(Object object, Window window) {
     if (!checkValid(object)) return IdeBundle.message("node.structureview.invalid");
     for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
@@ -240,7 +242,8 @@ public class NavBarModel {
         return text + (truncated ? "..." : "");
       }
     }
-    return null;
+    LOG.error("Failed to find navbar presentable text for " + object);
+    return object.toString();
   }
 
   @Nullable
@@ -373,7 +376,7 @@ public class NavBarModel {
       final Pair<Integer, String> w2 = getWeightedName(o2);
       if (w1 == null) return w2 == null ? 0 : -1;
       if (w2 == null) return 1;
-      if (w1.first != w2.first) {
+      if (!w1.first.equals(w2.first)) {
         return -w1.first.intValue() + w2.first.intValue();
       }
       return w1.second.compareToIgnoreCase(w2.second);
