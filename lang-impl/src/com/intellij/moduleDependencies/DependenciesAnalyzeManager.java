@@ -1,48 +1,56 @@
 package com.intellij.moduleDependencies;
 
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
-import org.jdom.Element;
 
 /**
  * User: anna
  * Date: Feb 10, 2005
  */
-public class DependenciesAnalyzeManager implements JDOMExternalizable, ProjectComponent{
+@State(
+    name = "DependenciesAnalyzeManager",
+    storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")}
+)
+public class DependenciesAnalyzeManager implements PersistentStateComponent<DependenciesAnalyzeManager.State> {
   private Project myProject;
   private ContentManager myContentManager;
-  public boolean myForwardDirection;
+
+  public static class State {
+    public boolean myForwardDirection;
+  }
+
+  private State myState;
 
   public DependenciesAnalyzeManager(final Project project) {
     myProject = project;
-  }
-
-  public static DependenciesAnalyzeManager getInstance(Project project){
-    return project.getComponent(DependenciesAnalyzeManager.class);
-  }
-  public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
       public void run() {
-        myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.MODULES_DEPENDENCIES,
-                                                                     myContentManager.getComponent(),
-                                                                     ToolWindowAnchor.RIGHT);
-
+                                                                     true,
+                                                                     ToolWindowAnchor.RIGHT,
+                                                                     project);
+        myContentManager = toolWindow.getContentManager();
         toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowModuleDependencies.png"));
         new ContentManagerWatcher(toolWindow, myContentManager);
       }
     });
+  }
+
+  public static DependenciesAnalyzeManager getInstance(Project project){
+    return ServiceManager.getService(project, DependenciesAnalyzeManager.class);
   }
 
   public void addContent(Content content) {
@@ -55,27 +63,11 @@ public class DependenciesAnalyzeManager implements JDOMExternalizable, ProjectCo
     myContentManager.removeContent(content, true);
   }
 
-  public void projectClosed() {
-    ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.MODULES_DEPENDENCIES);
+  public State getState() {
+    return myState;
   }
 
-  public String getComponentName() {
-    return "DependenciesAnalyzeManager";
-  }
-
-  public void initComponent() {
-
-  }
-
-  public void disposeComponent() {
-
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+  public void loadState(final State state) {
+    myState = state;
   }
 }

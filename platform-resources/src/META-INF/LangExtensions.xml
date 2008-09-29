@@ -161,6 +161,9 @@
   <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
                   serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManager"/>
 
+  <projectService serviceInterface="com.intellij.moduleDependencies.DependenciesAnalyzeManager"
+                  serviceImplementation="com.intellij.moduleDependencies.DependenciesAnalyzeManager"/>
+
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage"/>
 

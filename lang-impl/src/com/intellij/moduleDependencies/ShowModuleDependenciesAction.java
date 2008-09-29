@@ -57,7 +57,7 @@ public class ShowModuleDependenciesAction extends AnAction{
     Content content = ContentFactory.SERVICE.getInstance().createContent(panel,
                                                                                   AnalysisScopeBundle.message(
                                                                                     "module.dependencies.toolwindow.title",
-                                                                                    StringUtil.decapitalize(scope.getDisplayName())),
+                                                                                    StringUtil.capitalize(scope.getDisplayName())),
                                                                                   false);
     content.setDisposer(panel);
     panel.setContent(content);
