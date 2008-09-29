@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -93,11 +92,6 @@ public class PsiFileReferenceHelper implements FileReferenceHelper {
   @NotNull
   public String trimUrl(@NotNull String url) {
     return url.trim();
-  }
-
-  @Nullable
-  public PsiReference createDynamicReference(PsiElement element, String str) {
-    return null;
   }
 
 }

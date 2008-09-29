@@ -49,8 +49,12 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     myText = text;
   }
 
+  public FileReference(final FileReference original) {
+    this(original.myFileReferenceSet, original.myRange, original.myIndex, original.myText);
+  }
+
   @NotNull
-  private Collection<PsiFileSystemItem> getContexts() {
+  protected Collection<PsiFileSystemItem> getContexts() {
     final FileReference contextRef = getContextReference();
     if (contextRef == null) {
       return myFileReferenceSet.getDefaultContexts();
