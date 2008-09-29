@@ -42,21 +42,6 @@ import java.util.List;
 public class HintManagerImpl extends HintManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.HintManager");
 
-  public static final short ABOVE = 1;
-  public static final short UNDER = 2;
-  public static final short LEFT = 3;
-  public static final short RIGHT = 4;
-  public static final short RIGHT_UNDER = 5;
-
-  public static final int HIDE_BY_ESCAPE = 0x01;
-  public static final int HIDE_BY_ANY_KEY = 0x02;
-  public static final int HIDE_BY_LOOKUP_ITEM_CHANGE = 0x04;
-  public static final int HIDE_BY_TEXT_CHANGE = 0x08;
-  public static final int HIDE_BY_OTHER_HINT = 0x10;
-  public static final int HIDE_BY_SCROLLING = 0x20;
-  public static final int HIDE_IF_OUT_OF_EDITOR = 0x40;
-  public static final int UPDATE_BY_SCROLLING = 0x80;
-
   private final AnActionListener myAnActionListener;
   private final MyEditorManagerListener myEditorManagerListener;
   private final EditorMouseAdapter myEditorMouseListener;
