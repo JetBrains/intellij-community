@@ -1,11 +1,10 @@
-package com.intellij.openapi.roots.ui.configuration.actions;
+package com.intellij.ui.navigation;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.ShadowAction;
-import com.intellij.ui.navigation.History;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -28,10 +27,9 @@ abstract class NavigationAction extends AnAction {
 
   protected abstract void doUpdate(final AnActionEvent e);
 
-  protected final History getHistory(final AnActionEvent e) {
-    final ProjectStructureConfigurable config = e.getData(ProjectStructureConfigurable.KEY);
-    if (config == null) return null;
-    return config.getHistory();
+  @Nullable
+  protected static History getHistory(final AnActionEvent e) {
+    return e.getData(History.KEY);
   }
 
 }

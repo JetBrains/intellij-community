@@ -16,6 +16,7 @@
 
 package com.intellij.ui.navigation;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class History {
+
+  public static DataKey<History> KEY = DataKey.create("History");
 
   private List<Place> myHistory = new ArrayList<Place>();
   private int myCurrentPos;

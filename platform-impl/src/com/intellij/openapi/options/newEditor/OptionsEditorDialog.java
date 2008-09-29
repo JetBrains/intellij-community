@@ -4,6 +4,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 
@@ -23,7 +24,9 @@ public class OptionsEditorDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    return new OptionsEditor(myProject, myGroups, myPreselected);
+    final OptionsEditor editor = new OptionsEditor(myProject, myGroups, myPreselected);
+    Disposer.register(myDisposable, editor);
+    return editor;
   }
 
   @Override

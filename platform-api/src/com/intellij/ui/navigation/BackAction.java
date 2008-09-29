@@ -1,4 +1,4 @@
-package com.intellij.openapi.roots.ui.configuration.actions;
+package com.intellij.ui.navigation;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 

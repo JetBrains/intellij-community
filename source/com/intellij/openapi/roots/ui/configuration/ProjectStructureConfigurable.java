@@ -12,8 +12,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.ui.configuration.actions.BackAction;
-import com.intellij.openapi.roots.ui.configuration.actions.ForwardAction;
+import com.intellij.ui.navigation.BackAction;
+import com.intellij.ui.navigation.ForwardAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -473,7 +473,13 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
     @Nullable
     public Object getData(@NonNls final String dataId) {
-      return KEY.getName().equals(dataId) ? ProjectStructureConfigurable.this : null;
+      if (KEY.getName().equals(dataId)) {
+        return ProjectStructureConfigurable.this;
+      } else if (History.KEY.getName().equals(dataId)) {
+        return getHistory();
+      } else {
+        return null;
+      }
     }
 
     public Dimension getPreferredSize() {

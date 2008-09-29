@@ -1,8 +1,10 @@
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.LoadingNode;
@@ -15,13 +17,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class OptionsTree extends JPanel {
+public class OptionsTree extends JPanel implements Disposable {
   private Project myProject;
   private SimpleTree myTree;
   private java.util.List<ConfigurableGroup> myGroups;
@@ -44,10 +47,13 @@ public class OptionsTree extends JPanel {
 
     myTree = new SimpleTree();
     myTree.setRowHeight(-1);
+    myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myTree.setCellRenderer(new Renderer());
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
     myBuilder = new FilteringTreeBuilder(myProject, myTree, myFilter, structure, new WeightBasedComparator());
+    Disposer.register(this, myBuilder);
+
     myBuilder.updateFromRoot();
 
     setLayout(new BorderLayout());
@@ -225,4 +231,6 @@ public class OptionsTree extends JPanel {
     }
   }
 
+  public void dispose() {
+  }
 }
