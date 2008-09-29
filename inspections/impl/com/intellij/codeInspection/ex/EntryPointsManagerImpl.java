@@ -9,21 +9,25 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.reference.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectComponent, EntryPointsManager {
+@State(
+    name = "EntryPointsManager",
+    storages = {@Storage(id = "default", file = "$PROJECT_FILE$")}
+)
+public class EntryPointsManagerImpl implements PersistentStateComponent<Element>, EntryPointsManager, Disposable {
   private final Map<String, SmartRefElementPointer> myPersistentEntryPoints;
   private final Set<RefElement> myTemporaryEntryPoints;
   private static final String VERSION = "2.0";
@@ -42,11 +46,11 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
   }
 
   public static EntryPointsManagerImpl getInstance(Project project) {
-    return project.getComponent(EntryPointsManagerImpl.class);
+    return ServiceManager.getService(project, EntryPointsManagerImpl.class);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void readExternal(Element element) throws InvalidDataException {
+  public void loadState(Element element) {
     Element entryPointsElement = element.getChild("entry_points");
     final String version = entryPointsElement.getAttributeValue(VERSION_ATTR);
     if (!Comparing.strEqual(version, VERSION)) {
@@ -65,7 +69,14 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void writeExternal(Element element) throws WriteExternalException {
+  public Element getState()  {
+    Element element = new Element("state");
+    writeExternal(element);
+    return element;
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public void writeExternal(final Element element) {
     Element entryPointsElement = new Element("entry_points");
     entryPointsElement.setAttribute(VERSION_ATTR, VERSION);
     for (SmartRefElementPointer entryPoint : myPersistentEntryPoints.values()) {
@@ -199,22 +210,8 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
     return entries.toArray(new RefElement[entries.size()]);
   }
 
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
+  public void dispose() {
     cleanup();
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "EntryPointsManager";
   }
 
   private void validateEntryPoints() {
