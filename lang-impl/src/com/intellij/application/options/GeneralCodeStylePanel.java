@@ -267,8 +267,16 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     myOtherIndentOptions.reset(settings, settings.OTHER_INDENT_OPTIONS);
 
+    boolean first = true;
     for(FileType fileType: myAdditionalIndentOptions.keySet()) {
-      myAdditionalIndentOptions.get(fileType).reset(settings, settings.getAdditionalIndentOptions(fileType));
+      final IndentOptionsEditor editor = myAdditionalIndentOptions.get(fileType);
+      if (settings.USE_SAME_INDENTS && first) {
+        first = false;
+        editor.reset(settings, settings.OTHER_INDENT_OPTIONS);
+      }
+      else {
+        editor.reset(settings, settings.getAdditionalIndentOptions(fileType));
+      }
     }
 
     String lineSeparator = settings.LINE_SEPARATOR;
