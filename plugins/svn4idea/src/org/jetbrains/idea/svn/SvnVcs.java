@@ -194,7 +194,7 @@ public class SvnVcs extends AbstractVcs {
       final MessageBusConnection messageBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
       messageBusConnection.subscribe(ChangeListManagerImpl.LISTS_LOADED, new LocalChangeListsLoadedListener() {
         public void processLoadedLists(final List<LocalChangeList> lists) {
-          ChangeListManager.getInstance(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
+          ChangeListManager.getInstanceChecked(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
 
           if (! supportOptions.changeListsSynchronized()) {
             try {
@@ -211,7 +211,7 @@ public class SvnVcs extends AbstractVcs {
   }
 
   public void processChangeLists(final List<LocalChangeList> lists) {
-    final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstanceChecked(myProject);
     plVcsManager.startBackgroundVcsOperation();
     try {
       final SVNChangelistClient client = createChangelistClient();
