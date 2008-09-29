@@ -95,7 +95,7 @@ public class SvnChangeProvider implements ChangeProvider {
       }
     }
     // always null for earlier versions
-    return ourDefaultListName;
+    return null;
   }
 
   private void processCopiedFile(SvnChangedFile copiedFile, ChangelistBuilder builder, SvnChangeProviderContext context) throws SVNException {
