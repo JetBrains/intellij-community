@@ -17,11 +17,13 @@ package org.jetbrains.plugins.groovy.codeInspection.gpath;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -78,6 +80,8 @@ public class GroovyGetterCallCanBePropertyAccessInspection extends BaseInspectio
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @NonNls private static final String GET_PREFIX = "get";
+
     public void visitMethodCallExpression(GrMethodCallExpression grMethodCallExpression) {
       super.visitMethodCallExpression(grMethodCallExpression);
       final GrArgumentList args = grMethodCallExpression.getArgumentList();
@@ -96,10 +100,15 @@ public class GroovyGetterCallCanBePropertyAccessInspection extends BaseInspectio
       }
       final GrReferenceExpression referenceExpression = (GrReferenceExpression) methodExpression;
       final String name = referenceExpression.getReferenceName();
-      if (name == null || !name.startsWith("get")) {
+      if (name == null || !name.startsWith(GET_PREFIX)) {
         return;
       }
-      if (name.equals("get")) {
+      if (name.equals(GET_PREFIX)) {
+        return;
+      }
+      String tail = StringUtil.trimStart(name, GET_PREFIX);
+      // If doesn't conform to getter's convention
+      if (!tail.equals(StringUtil.capitalize(tail))) {
         return;
       }
       final GrExpression qualifier = referenceExpression.getQualifierExpression();

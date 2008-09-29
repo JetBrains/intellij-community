@@ -17,11 +17,13 @@ package org.jetbrains.plugins.groovy.codeInspection.gpath;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -82,6 +84,8 @@ public class GroovySetterCallCanBePropertyAccessInspection extends BaseInspectio
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    @NonNls private static final String SET_PREFIX = "set";
+
     public void visitMethodCallExpression(GrMethodCallExpression grMethodCallExpression) {
       super.visitMethodCallExpression(grMethodCallExpression);
       final GrArgumentList args = grMethodCallExpression.getArgumentList();
@@ -100,10 +104,15 @@ public class GroovySetterCallCanBePropertyAccessInspection extends BaseInspectio
       }
       final GrReferenceExpression referenceExpression = (GrReferenceExpression) methodExpression;
       final String name = referenceExpression.getReferenceName();
-      if (name == null || !name.startsWith("set")) {
+      if (name == null || !name.startsWith(SET_PREFIX)) {
         return;
       }
-      if ("set".equals(name)) {
+      if (SET_PREFIX.equals(name)) {
+        return;
+      }
+      String tail = StringUtil.trimStart(name, SET_PREFIX);
+      // If doesn't conform to getter's convention
+      if (!tail.equals(StringUtil.capitalize(tail))) {
         return;
       }
       final GrExpression qualifier = referenceExpression.getQualifierExpression();
