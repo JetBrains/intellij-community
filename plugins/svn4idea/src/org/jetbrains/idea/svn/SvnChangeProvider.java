@@ -91,7 +91,7 @@ public class SvnChangeProvider implements ChangeProvider {
     if (WorkingCopyFormat.ONE_DOT_FIVE.getFormat() == status.getWorkingCopyFormat()) {
       if (SVNNodeKind.FILE.equals(status.getKind())) {
         final String clName = status.getChangelistName();
-        return (clName == null) ? ourDefaultListName : clName;
+        return (clName == null) ? null : clName;
       }
     }
     // always null for earlier versions
