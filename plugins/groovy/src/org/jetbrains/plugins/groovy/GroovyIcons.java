@@ -25,8 +25,8 @@ import javax.swing.*;
 public interface GroovyIcons {
 
   Icon FILE_TYPE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_fileType.png");
-  Icon SMALLEST = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_16x16.png");
-  Icon BIG_ICON = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_32x32.png");
+  Icon GROOVY_ICON_16x16 = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_16x16.png");
+  Icon GROOVY_ICON_32x32 = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_32x32.png");
   Icon CLASS = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/class.png");
   Icon ABSTRACT_CLASS = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/abstractClass.png");
   Icon INTERFACE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/interface.png");
@@ -40,7 +40,6 @@ public interface GroovyIcons {
   Icon VARIABLE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/field.png");
 
   Icon NO_GROOVY_SDK = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/no_groovy_sdk.png");
-
   Icon GROOVY_SDK = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_sdk.png");
 
   Icon DYNAMIC_PROPERTY_TOOL_WINDOW_ICON = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png");

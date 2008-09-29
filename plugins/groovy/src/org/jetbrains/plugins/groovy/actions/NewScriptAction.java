@@ -28,7 +28,7 @@ public class NewScriptAction extends NewGroovyActionBase {
   public NewScriptAction() {
     super(GroovyBundle.message("newscript.menu.action.text"),
         GroovyBundle.message("newscript.menu.action.description"),
-        GroovyIcons.FILE_TYPE);
+        GroovyIcons.GROOVY_ICON_16x16);
   }
 
   protected String getActionName(PsiDirectory directory, String newName) {

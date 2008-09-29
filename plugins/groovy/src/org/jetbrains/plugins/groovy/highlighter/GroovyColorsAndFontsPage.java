@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -40,7 +41,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
 
   @Nullable
   public Icon getIcon() {
-    return GroovyFileType.GROOVY_LOGO;
+    return GroovyIcons.GROOVY_ICON_16x16;
   }
 
   @NotNull

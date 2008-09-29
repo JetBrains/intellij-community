@@ -221,7 +221,7 @@ public class GroovyFacetTab extends FacetEditorTab {
               boolean addVersion = !versions.contains(version) ||
                                    Messages.showOkCancelDialog(GroovyBundle.message("duplicate.groovy.lib.version.add", version),
                                                                GroovyBundle.message("duplicate.groovy.lib.version"),
-                                                               GroovyIcons.BIG_ICON) == 0;
+                                                               GroovyIcons.GROOVY_ICON_32x32) == 0;
 
               if (addVersion && !GroovyConfigUtils.UNDEFINED_VERSION.equals(version)) {
                 String name = myComboBox.generatePointerName(version);

@@ -424,7 +424,7 @@ public class GroovyConfigUtils {
       final Library library = libraries[0];
       int result = Messages.showOkCancelDialog(
         GroovyBundle.message("groovy.like.library.found.text", library.getName(), getGroovyLibVersion(library)),
-        GroovyBundle.message("groovy.like.library.found"), GroovyIcons.BIG_ICON);
+        GroovyBundle.message("groovy.like.library.found"), GroovyIcons.GROOVY_ICON_32x32);
       final Ref<Boolean> ref = new Ref<Boolean>();
       ref.set(false);
       if (result == 0) {

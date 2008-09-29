@@ -42,7 +42,7 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
 
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
     final FileTemplateGroupDescriptor group = new FileTemplateGroupDescriptor(GroovyBundle.message("file.template.group.title.groovy"),
-        GroovyIcons.SMALLEST);
+        GroovyIcons.GROOVY_ICON_16x16);
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     for (String template : TEMPLATES) {
       group.addTemplate(new FileTemplateDescriptor(template, fileTypeManager.getFileTypeByFileName(template).getIcon()));

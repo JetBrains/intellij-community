@@ -356,7 +356,7 @@ public class GroovyCompiler implements TranslatingCompiler {
           Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet", module.getName()),
                                    GroovyBundle.message("cannot.compile"));
           int result = Messages.showOkCancelDialog(GroovyBundle.message("groovy.configure.facet.question.text"),
-                                                   GroovyBundle.message("groovy.configure.facet.question"), GroovyIcons.BIG_ICON);
+                                                   GroovyBundle.message("groovy.configure.facet.question"), GroovyIcons.GROOVY_ICON_32x32);
           if (result == 0) {
             ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
           }
