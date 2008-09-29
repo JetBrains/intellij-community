@@ -84,8 +84,8 @@ public class DirectoryUtil {
     return directory;
   }
 
-  public static PsiDirectory createSubdirectories(final String subDirName, PsiDirectory baseDirectory) throws IncorrectOperationException {
-    StringTokenizer tokenizer = new StringTokenizer(subDirName, ".");
+  public static PsiDirectory createSubdirectories(final String subDirName, PsiDirectory baseDirectory, final String delim) throws IncorrectOperationException {
+    StringTokenizer tokenizer = new StringTokenizer(subDirName, delim);
     PsiDirectory dir = baseDirectory;
     while (tokenizer.hasMoreTokens()) {
       String packName = tokenizer.nextToken();

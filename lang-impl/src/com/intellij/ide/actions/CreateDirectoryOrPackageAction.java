@@ -132,7 +132,10 @@ public class CreateDirectoryOrPackageAction extends AnAction {
         }
       }*/
 
-      final boolean multiCreation = !myIsDirectory && subDirName.indexOf('.') != -1;
+      final boolean multiCreation = myIsDirectory
+                                    ? subDirName.indexOf('/') != -1 || subDirName.indexOf('\\') != -1
+                                    : subDirName.indexOf('.') != -1;
+
       if (!multiCreation) {
         try {
           myDirectory.checkCreateSubdirectory(subDirName);
@@ -157,10 +160,10 @@ public class CreateDirectoryOrPackageAction extends AnAction {
 
                 final PsiDirectory createdDir;
                 if (myIsDirectory) {
-                  createdDir = myDirectory.createSubdirectory(subDirName);
+                  createdDir = DirectoryUtil.createSubdirectories(subDirName, myDirectory, "\\/");
                 }
                 else {
-                  createdDir = DirectoryUtil.createSubdirectories(subDirName, MyInputValidator.this.myDirectory);
+                  createdDir = DirectoryUtil.createSubdirectories(subDirName, myDirectory, ".");
                 }
 
 
