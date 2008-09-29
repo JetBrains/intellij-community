@@ -249,7 +249,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       LOG.assertTrue(false, "getManager() == null!");
       return null;
     }
-    return (JavaResolveResult[])manager.getResolveCache().resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
+    ResolveResult[] results = manager.getResolveCache().resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
+    return (JavaResolveResult[])results;
   }
 
   public String getCanonicalText() {

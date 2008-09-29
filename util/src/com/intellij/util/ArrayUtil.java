@@ -213,6 +213,21 @@ public class ArrayUtil {
     }
     return -1;
   }
+  public static <T> int lastIndexOf(@NotNull final T[] src,final T obj){
+    for(int i=src.length-1;i>=0;i--){
+      final T o=src[i];
+      if(o==null){
+        if(obj==null){
+          return i;
+        }
+      }else{
+        if(o.equals(obj)){
+          return i;
+        }
+      }
+    }
+    return -1;
+  }
 
   public static int find(@NotNull int[] src, int obj) {
     for (int i = 0; i < src.length; i++) {

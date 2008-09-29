@@ -76,7 +76,8 @@ public class ImportClassFix implements HintAction {
     final PsiReferenceParameterList refParameters = myRef.getParameterList();
     boolean referenceHasTypeParameters = refParameters != null && refParameters.getTypeParameterElements().length > 0;
     PsiClass[] classes = cache.getClassesByName(name, scope);
-    ArrayList<PsiClass> classList = new ArrayList<PsiClass>();
+    if (classes.length == 0) return Collections.emptyList();
+    ArrayList<PsiClass> classList = new ArrayList<PsiClass>(classes.length);
     boolean isAnnotationReference = myRef.getParent() instanceof PsiAnnotation;
     for (PsiClass aClass : classes) {
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
