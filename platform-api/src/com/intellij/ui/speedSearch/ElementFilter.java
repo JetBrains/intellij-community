@@ -4,9 +4,9 @@
  */
 package com.intellij.ui.speedSearch;
 
-public interface ElementFilter {
+public interface ElementFilter<T> {
 
-  boolean shouldBeShowing(Object value);
+  boolean shouldBeShowing(T value);
   SpeedSearch getSpeedSearch();
 
 }

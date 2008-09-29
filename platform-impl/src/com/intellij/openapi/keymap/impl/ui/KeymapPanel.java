@@ -844,11 +844,13 @@ public class KeymapPanel extends JPanel {
   private static final class MyKeymapRenderer extends ColoredListCellRenderer {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       Keymap keymap = (Keymap)value;
-      String name = keymap.getPresentableName();
-      if(name == null) {
-        name = KeyMapBundle.message("keymap.noname.presentable.name");
-      }
-      append(name, selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      if (keymap != null) {
+        String name = keymap.getPresentableName();
+        if(name == null) {
+          name = KeyMapBundle.message("keymap.noname.presentable.name");
+        }
+        append(name, selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      } 
     }
   }
 

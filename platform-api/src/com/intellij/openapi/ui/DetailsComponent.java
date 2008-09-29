@@ -41,6 +41,8 @@ public class DetailsComponent  {
   private JLabel myEmptyContentLabel;
   private NonOpaquePanel myBanner;
 
+  private String myBannerText;
+
   public DetailsComponent() {
     myComponent = new JPanel(new BorderLayout()) {
       protected void paintComponent(final Graphics g) {
@@ -111,6 +113,8 @@ public class DetailsComponent  {
     myContentWrapper.setBorder(new EmptyBorder(5, 5, 5, 5));
     myComponent.add(myContentWrapper, BorderLayout.CENTER);
 
+    updateBanner();
+
     myComponent.revalidate();
     myComponent.repaint();
   }
@@ -119,12 +123,22 @@ public class DetailsComponent  {
 
 
   public void setText(String text) {
-    myBannerLabel.setText(text);
+    myBannerText = text;
+    updateBanner();
   }
 
-  public void setEmptyContentText(@Nullable final String emptyContentText) {
+  private void updateBanner() {
+    if (NullableComponent.Check.isNull(myContentWrapper)) {
+      myBannerLabel.setText(null);
+    } else {
+      myBannerLabel.setText(myBannerText);
+    }
+  }
+
+  public DetailsComponent setEmptyContentText(@Nullable final String emptyContentText) {
     @NonNls final String s = "<html><body><center>" + (emptyContentText!= null ? emptyContentText : "") + "</center></body><html>";
     myEmptyContentLabel.setText(s);
+    return this;
   }
 
   public JComponent getComponent() {

@@ -14,13 +14,17 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FilteringTreeStructure extends AbstractTreeStructure {
 
   private ElementFilter myFilter;
   private AbstractTreeStructure myStructure;
   private Node myRoot;
+
+  private Map<Object, Node> myNodeObject2Node = new HashMap<Object, Node>();
 
   public FilteringTreeStructure(Project project, ElementFilter filter, AbstractTreeStructure originalStructure) {
     myFilter = filter;
@@ -31,11 +35,13 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
 
   public void refilter() {
     myRoot.clear();
+    myNodeObject2Node.clear();
     fillChildren(myRoot, getStructure().getRootElement());
   }
 
   private void fillChildren(Node node, Object nodeObject) {
     node.setDelegate(nodeObject);
+    myNodeObject2Node.put(nodeObject, node);
     Object[] nodeChildren = getStructure().getChildElements(nodeObject);
     for (Object aNodeChildren : nodeChildren) {
       Node nodeChild = node.add(aNodeChildren);
@@ -46,6 +52,10 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     }
   }
 
+  public Node getVisibleNodeFor(Object nodeObject) {
+    return myNodeObject2Node.get(nodeObject);
+  }
+  
   public class Node extends CachingSimpleNode {
 
     private Object myDelegate;

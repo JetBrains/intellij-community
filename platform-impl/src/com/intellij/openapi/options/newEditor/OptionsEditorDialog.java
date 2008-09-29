@@ -13,6 +13,7 @@ public class OptionsEditorDialog extends DialogWrapper {
   private Project myProject;
   private ConfigurableGroup[] myGroups;
   private Configurable myPreselected;
+  private OptionsEditor myEditor;
 
   public OptionsEditorDialog(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     super(project, true);
@@ -24,13 +25,18 @@ public class OptionsEditorDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    final OptionsEditor editor = new OptionsEditor(myProject, myGroups, myPreselected);
-    Disposer.register(myDisposable, editor);
-    return editor;
+    myEditor = new OptionsEditor(myProject, myGroups, myPreselected);
+    Disposer.register(myDisposable, myEditor);
+    return myEditor;
   }
 
   @Override
   protected String getDimensionServiceKey() {
     return "OptionsEditor";
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myEditor.getPreferredFocusedComponent();
   }
 }

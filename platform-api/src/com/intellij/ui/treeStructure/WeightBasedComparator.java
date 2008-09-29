@@ -21,13 +21,23 @@ import java.util.Comparator;
 
 public class WeightBasedComparator implements Comparator<NodeDescriptor> {
 
+  private boolean myCompareToString;
+
   public static final WeightBasedComparator INSTANCE = new WeightBasedComparator();
+
+  public WeightBasedComparator() {
+    this(false);
+  }
+
+  public WeightBasedComparator(final boolean compareToString) {
+    myCompareToString = compareToString;
+  }
 
   public int compare(NodeDescriptor o1, NodeDescriptor o2) {
     SimpleNode first = (SimpleNode) o1;
     SimpleNode second = (SimpleNode) o2;
 
-    if (first.getWeight() == second.getWeight()) {
+    if (myCompareToString && first.getWeight() == second.getWeight()) {
       String s1 = first.toString();
       String s2 = second.toString();
       if (s1 == null) return s2 == null ? 0 : -1;

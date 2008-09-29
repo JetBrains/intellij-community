@@ -8,34 +8,42 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.LoadingNode;
-import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
+import java.util.List;
 
-public class OptionsTree extends JPanel implements Disposable {
-  private Project myProject;
-  private SimpleTree myTree;
-  private java.util.List<ConfigurableGroup> myGroups;
-  private ElementFilter myFilter;
-  private FilteringTreeBuilder myBuilder;
-  private Root myRoot;
+public class OptionsTree extends JPanel implements Disposable, OptionsEditorContext.Listener {
+  Project myProject;
+  SimpleTree myTree;
+  List<ConfigurableGroup> myGroups;
+  FilteringTreeBuilder myBuilder;
+  Root myRoot;
+  OptionsEditorContext myContext;
 
-  public OptionsTree(Project project, ConfigurableGroup[] groups, ElementFilter filter) {
+  Map<Configurable, EditorNode> myConfigurable2Node = new HashMap<Configurable, EditorNode>();
+
+  MergingUpdateQueue mySelection;
+
+  public OptionsTree(Project project, ConfigurableGroup[] groups, OptionsEditorContext context) {
     myProject = project;
     myGroups = Arrays.asList(groups);
-    myFilter = filter;
+    myContext = context;
 
 
     myRoot = new Root();
@@ -51,7 +59,7 @@ public class OptionsTree extends JPanel implements Disposable {
     myTree.setCellRenderer(new Renderer());
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
-    myBuilder = new FilteringTreeBuilder(myProject, myTree, myFilter, structure, new WeightBasedComparator());
+    myBuilder = new FilteringTreeBuilder(myProject, myTree, myContext.getFilter(), structure, new WeightBasedComparator(false));
     Disposer.register(this, myBuilder);
 
     myBuilder.updateFromRoot();
@@ -77,6 +85,51 @@ public class OptionsTree extends JPanel implements Disposable {
 
     final JScrollPane scrolls = new JScrollPane(myTree);
     add(scrolls, BorderLayout.CENTER);
+
+    mySelection = new MergingUpdateQueue("OptionsTree", 250, false, this, this, this).setRestartTimerOnAdd(true);
+    myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      public void valueChanged(final TreeSelectionEvent e) {
+        final TreePath path = e.getNewLeadSelectionPath();
+        if (path == null) {
+          queueSelection(null);
+        } else {
+          final Base base = extractNode(path.getLastPathComponent());
+          queueSelection(base != null ? base.getConfigurable() : null);
+        }
+      }
+    });
+  }
+
+  void select(@Nullable Configurable configurable) {
+    queueSelection(configurable);
+  }
+
+  public void selectFirst() {
+    for (ConfigurableGroup eachGroup : myGroups) {
+      final Configurable[] kids = eachGroup.getConfigurables();
+      if (kids.length > 0) {
+        queueSelection(kids[0]);
+        return;
+      }
+    }
+  }
+
+  void queueSelection(final Configurable configurable) {
+    mySelection.queue(new Update(this) {
+      public void run() {
+        if (configurable == null) {
+          myTree.getSelectionModel().clearSelection();
+          myContext.select(null, OptionsTree.this);
+        } else {
+          final EditorNode editorNode = myConfigurable2Node.get(configurable);
+          myBuilder.select(myBuilder.getVisibleNodeFor(editorNode), new Runnable() {
+            public void run() {
+              myContext.select(configurable, OptionsTree.this);
+            }
+          });
+        }
+      }
+    });
   }
 
   void revalidateTree() {
@@ -84,6 +137,11 @@ public class OptionsTree extends JPanel implements Disposable {
     myTree.revalidate();
     myTree.repaint();
   }
+
+  public JTree getTree() {
+    return myTree;
+  }
+
 
   class Renderer extends GroupedElementsRenderer.Tree implements TreeCellRenderer {
 
@@ -162,6 +220,10 @@ public class OptionsTree extends JPanel implements Disposable {
     String getText() {
       return null;
     }
+
+    Configurable getConfigurable() {
+      return null;
+    }
   }
 
   class Root extends Base {
@@ -196,6 +258,7 @@ public class OptionsTree extends JPanel implements Disposable {
       super(parent);
       myConfigurable = configurable;
       myGroup = group;
+      myConfigurable2Node.put(configurable, this);
       addPlainText(configurable.getDisplayName());
     }
 
@@ -210,6 +273,11 @@ public class OptionsTree extends JPanel implements Disposable {
       } else {
         return NO_CHILDREN;
       }
+    }
+
+    @Override
+    Configurable getConfigurable() {
+      return myConfigurable;
     }
 
     @Override
@@ -232,5 +300,8 @@ public class OptionsTree extends JPanel implements Disposable {
   }
 
   public void dispose() {
+  }
+
+  public void onSelected(final Configurable configurable) {
   }
 }

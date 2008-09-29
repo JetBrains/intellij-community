@@ -45,6 +45,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private boolean myDisposed;
 
   private UiNotifyConnector myUiNotifyConnector;
+  private boolean myRestartOnAdd;
 
   public MergingUpdateQueue(@NonNls String name, int mergingTimeSpan, boolean isActive, JComponent modalityStateComponent) {
     this(name, mergingTimeSpan, isActive, modalityStateComponent, null);
@@ -222,6 +223,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
         restartTimer();
       }
       put(update);
+
+      if (myRestartOnAdd) {
+        restartTimer();
+      }
     }
   }
 
@@ -289,5 +294,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     UiNotifyConnector connector = new UiNotifyConnector(c, this);
     Disposer.register(this, connector);
     myUiNotifyConnector = connector;
+  }
+
+  public MergingUpdateQueue setRestartTimerOnAdd(final boolean restart) {
+    myRestartOnAdd = restart;
+    return this;
   }
 }
