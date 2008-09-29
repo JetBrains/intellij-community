@@ -16,10 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.completion.getters;
 
 import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -29,7 +29,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
  * @author ven
  */
 public class ClassesGetter implements ContextGetter {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter");
+
+  protected static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter");
 
   public Object[] get(PsiElement context, CompletionContext completionContext) {
     if (context != null) {

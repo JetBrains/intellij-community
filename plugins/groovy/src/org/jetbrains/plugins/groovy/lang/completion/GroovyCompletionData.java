@@ -19,11 +19,14 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionVariant;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
@@ -52,12 +55,14 @@ import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNam
 import org.jetbrains.plugins.groovy.lang.completion.handlers.ContextSpecificInsertHandler;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
+import java.util.Arrays;
 import java.util.Set;
 
 /**
  * @author ilyas
  */
 public class GroovyCompletionData extends CompletionData {
+  private final static Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData");
   public final String[] BUILT_IN_TYPES = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
 
   public GroovyCompletionData() {
@@ -122,8 +127,7 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   private void registerControlCompletion() {
-    String[] controlKeywords = {"try", "while", "with", "switch", "for",
-            "return", "throw", "assert", "synchronized",};
+    String[] controlKeywords = {"try", "while", "with", "switch", "for", "return", "throw", "assert", "synchronized",};
 
     registerStandardCompletion(new ControlStructureFilter(), controlKeywords);
     registerStandardCompletion(new CaseDefaultFilter(), "case", "default");
@@ -184,11 +188,10 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   private void registerModifierCompletion() {
-    String[] modifiers = new String[]{"private", "public", "protected", "transient", "abstract",
-            "native", "volatile", "strictfp"};
+    String[] modifiers = new String[]{"private", "public", "protected", "transient", "abstract", "native", "volatile", "strictfp"};
     registerStandardCompletion(new ModifiersFilter(), modifiers);
     registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), "private", "public", "protected", "transient", "abstract",
-            "native", "volatile", "strictfp", "synchronized", "static");
+                               "native", "volatile", "strictfp", "synchronized", "static");
     registerStandardCompletion(new StaticFilter(), "static");
   }
 
@@ -197,8 +200,12 @@ public class GroovyCompletionData extends CompletionData {
 
   {
     ourReferenceVariant = new CompletionVariant() {
-      public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupElement> set, final PsiFile file,
+      public void addReferenceCompletions(PsiReference reference,
+                                          PsiElement position,
+                                          Set<LookupElement> set,
+                                          final PsiFile file,
                                           final CompletionData completionData) {
+        checkForEmptyPackage(reference);
         completeReference(reference, position, set, TailType.NONE, file, TrueFilter.INSTANCE, this);
       }
     };
@@ -206,9 +213,28 @@ public class GroovyCompletionData extends CompletionData {
     ourReferenceVariant.setInsertHandler(new GroovyInsertHandlerAdapter(handlers));
   }
 
+  private static void checkForEmptyPackage(final PsiReference reference) {
+    for (Object o : reference.getVariants()) {
+      if (o instanceof PsiPackage) {
+        PsiPackage aPackage = (PsiPackage)o;
+        if (StringUtil.isEmpty(aPackage.getName())) {
+          LOG.assertTrue(false, "Empty package name:\n" +
+                                reference.toString() +
+                                "\n" +
+                                reference.getElement().getText() +
+                                "\n" +
+                                Arrays.toString(reference.getVariants()));
+        }
+      }
+    }
+  }
+
   @Override
-  public void completeReference(final PsiReference reference, final Set<LookupElement> set, @NotNull final PsiElement position,
-                                final PsiFile file, final int offset) {
+  public void completeReference(final PsiReference reference,
+                                final Set<LookupElement> set,
+                                @NotNull final PsiElement position,
+                                final PsiFile file,
+                                final int offset) {
     final CompletionVariant[] variants = findVariants(position, file);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
