@@ -43,10 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.jar.Attributes;
 
@@ -132,7 +129,10 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   }
 
   public Collection<DebuggerSession> getSessions() {
-    return mySessions.values();
+    synchronized (mySessions) {
+      final Collection<DebuggerSession> values = mySessions.values();
+      return (values.size() > 0) ? new ArrayList<DebuggerSession>(values) : Collections.<DebuggerSession>emptyList();
+    }
   }
 
   public void disposeComponent() {
