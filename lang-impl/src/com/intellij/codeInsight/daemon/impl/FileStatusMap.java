@@ -116,7 +116,7 @@ public class FileStatusMap {
         case Pass.LOCAL_INSPECTIONS:
           status.localInspectionsDirtyScope = null;
           break;
-        case WolfPassFactory.PASS_ID:
+        case Pass.WOLF:
           status.wolfPassFinfished = true;
           break;
         case Pass.EXTERNAL_TOOLS:

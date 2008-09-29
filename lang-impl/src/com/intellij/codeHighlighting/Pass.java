@@ -26,4 +26,7 @@ public interface Pass {
   int UPDATE_OVERRIDEN_MARKERS = 0x20;
   int LOCAL_INSPECTIONS = 0x40;
   int EXTERNAL_TOOLS = 0x100;
+  int WOLF = 0x200;
+
+  int LAST_PASS = WOLF;
 }

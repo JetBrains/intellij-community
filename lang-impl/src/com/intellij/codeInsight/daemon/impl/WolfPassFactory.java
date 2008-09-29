@@ -17,12 +17,11 @@ import org.jetbrains.annotations.Nullable;
  * @author cdr
 */
 public class WolfPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-  public static final int PASS_ID = 0x200;
   private long myPsiModificationCount;
 
   public WolfPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, new int[]{Pass.LOCAL_INSPECTIONS}, false, PASS_ID);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, new int[]{Pass.LOCAL_INSPECTIONS}, false, Pass.WOLF);
   }
 
   @NonNls

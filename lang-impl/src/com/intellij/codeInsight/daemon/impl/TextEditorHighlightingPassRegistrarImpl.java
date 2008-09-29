@@ -31,7 +31,7 @@ import java.util.Set;
 public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx {
   private final TIntObjectHashMap<PassConfig> myRegisteredPassFactories = new TIntObjectHashMap<PassConfig>();
   private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = new ArrayList<DirtyScopeTrackingHighlightingPassFactory>();
-  private int nextAvailableId = Pass.EXTERNAL_TOOLS+1;
+  private int nextAvailableId = Pass.LAST_PASS + 1;
   private boolean checkedForCycles;
   private final Project myProject;
 

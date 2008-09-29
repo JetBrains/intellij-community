@@ -53,7 +53,6 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     Pass.POPUP_HINTS,
     Pass.UPDATE_ALL,
     Pass.POST_UPDATE_ALL,
-    //Pass.UPDATE_OVERRIDEN_MARKERS,
     Pass.LOCAL_INSPECTIONS,
     Pass.EXTERNAL_TOOLS,
   };
@@ -64,9 +63,6 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   private final Project myProject;
   private boolean myCompiled;
   private static final int[] EXCEPT_VISIBLE = new int[]{
-    //Pass.UPDATE_FOLDING,
-    //Pass.UPDATE_VISIBLE,
-    //Pass.POPUP_HINTS,
     Pass.UPDATE_ALL,
     Pass.POST_UPDATE_ALL,
     Pass.UPDATE_OVERRIDEN_MARKERS,
