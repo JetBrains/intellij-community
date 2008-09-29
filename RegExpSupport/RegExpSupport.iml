@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="ExtendedApi" />
   </component>
   <component name="RetroweaverPlugin">
     <setting name="active" value="false" />

@@ -19,5 +19,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
+
+    <lang.documentationProvider language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpDocumentionProvider"/>
+    <completion.contributor implementation="org.intellij.lang.regexp.RegExpCompletionContributor"/>
   </extensions>
 </idea-plugin>

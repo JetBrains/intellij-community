@@ -15,23 +15,12 @@
  */
 package org.intellij.lang.regexp;
 
-import com.intellij.lang.BracePair;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.LanguageBraceMatching;
-import com.intellij.lang.LanguageDocumentation;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.LanguageSurrounders;
-import com.intellij.lang.PairedBraceMatcher;
-import com.intellij.lang.documentation.QuickDocumentationProvider;
+import com.intellij.lang.*;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
-import org.intellij.lang.regexp.psi.RegExpGroup;
-import org.intellij.lang.regexp.psi.impl.RegExpElementImpl;
 import org.intellij.lang.regexp.surroundWith.SimpleSurroundDescriptor;
 import org.intellij.lang.regexp.validation.RegExpAnnotator;
 import org.jetbrains.annotations.NotNull;
@@ -52,17 +41,6 @@ public class RegExpLanguage extends Language {
             @NotNull
             protected SyntaxHighlighter createHighlighter() {
                 return new RegExpHighlighter(null, parserDefinition);
-            }
-        });
-
-        LanguageDocumentation.INSTANCE.addExplicitExtension(this, new QuickDocumentationProvider() {
-            @Nullable
-            public String getQuickNavigateInfo(PsiElement element) {
-                if (element instanceof RegExpGroup) {
-                    return "Capturing Group: " + ((RegExpElementImpl)element).getUnescapedText();
-                } else {
-                    return null;
-                }
             }
         });
     }
