@@ -14,13 +14,15 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.inlineSuperClass.usageInfo.*;
+import com.intellij.refactoring.inlineSuperClass.usageInfo.RemoveImportUsageInfo;
+import com.intellij.refactoring.inlineSuperClass.usageInfo.ReplaceConstructorUsageInfo;
+import com.intellij.refactoring.inlineSuperClass.usageInfo.ReplaceExtendsListUsageInfo;
+import com.intellij.refactoring.inlineSuperClass.usageInfo.ReplaceWithSubtypeUsageInfo;
 import com.intellij.refactoring.memberPushDown.PushDownConflicts;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
 import com.intellij.refactoring.util.JavaDocPolicy;
-import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
@@ -69,7 +71,6 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     final PsiSubstitutor superClassSubstitutor =
       TypeConversionUtil.getSuperClassSubstitutor(mySuperClass, myTargetClass, PsiSubstitutor.EMPTY);
     final PsiClassType targetClassType = elementFactory.createType(myTargetClass, superClassSubstitutor);
-    final String[] targetClassVisibility = new String[1];
     ReferencesSearch.search(mySuperClass).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference reference) {
         final PsiElement element = reference.getElement();
@@ -84,9 +85,6 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
               final PsiType superClassType = ((PsiTypeElement)parent).getType();
               PsiSubstitutor subst = getSuperClassSubstitutor(superClassType, targetClassType, resolveHelper);
               usages.add(new ReplaceWithSubtypeUsageInfo(((PsiTypeElement)parent), elementFactory.createType(myTargetClass, subst)));
-              if (!PsiUtil.isAccessible(myTargetClass, parent, null)) {
-                checkVisibility(VisibilityUtil.getPossibleVisibility(myTargetClass, parent), targetClassVisibility);
-              }
             }
             else if (parent instanceof PsiReferenceList) {
               final PsiElement pparent = parent.getParent();
@@ -106,36 +104,6 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         return true;
       }
     });
-    if (targetClassVisibility[0] != null) {
-      usages.add(new ReplaceVisibilityUsageInfo(myTargetClass, mySuperClass, myTargetClass, targetClassVisibility[0]));
-    }
-
-    for (MemberInfo info : myMemberInfos) {
-      final PsiMember member = info.getMember();
-      final String[] memberVisibility = new String[1];
-      int effectiveAccessLevel = PsiUtil.getAccessLevel(member.getModifierList());
-      if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PROTECTED || effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL) {
-        ReferencesSearch.search(member).forEach(new Processor<PsiReference>() {
-          public boolean process(final PsiReference psiReference) {
-            if (facade.arePackagesTheSame(myTargetClass, psiReference.getElement())) return true; //todo more accurate
-            checkVisibility(PsiModifier.PUBLIC, memberVisibility);
-            return true;
-          }
-        });
-        if (memberVisibility[0] != null) {
-          usages.add(new ReplaceVisibilityUsageInfo(member, mySuperClass, myTargetClass, memberVisibility[0]));
-        }
-      }
-    }
-  }
-
-  private static void checkVisibility(final String possibleVisibility, final String[] targetClassVisibility) {
-    if (targetClassVisibility[0] == null) {
-      targetClassVisibility[0] = possibleVisibility;
-    }
-    else if (VisibilityUtil.compare(possibleVisibility, targetClassVisibility[0]) < 0) {
-      targetClassVisibility[0] = possibleVisibility;
-    }
   }
 
   @Override

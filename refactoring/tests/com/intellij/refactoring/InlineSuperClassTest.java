@@ -78,10 +78,6 @@ public class InlineSuperClassTest extends MultiFileTestCase {
     doTest();
   }
 
-  public void testVisibility() throws Exception {
-    doTest();
-  }
-
   public void testNewexpr() throws Exception {
     doTest();
   }
