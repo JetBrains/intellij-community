@@ -148,33 +148,52 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
       }
       else {
         boolean foundConstructor = false;
+        final PsiCodeBlock methodBody = method.getBody();
+        assert methodBody != null;
+        final Set<PsiType> returnTypes = new HashSet<PsiType>();
+        returnTypes.add(method.getReturnType());
+        methodBody.accept(new JavaRecursiveElementVisitor() {
+          @Override
+          public void visitReturnStatement(final PsiReturnStatement statement) {
+            super.visitReturnStatement(statement);
+            if (PsiTreeUtil.getParentOfType(statement, PsiMethod.class) != method) return;
+            final PsiExpression returnValue = statement.getReturnValue();
+            if (returnValue != null) {
+              returnTypes.add(returnValue.getType());
+            }
+          }
+        });
+
         final PsiMethod[] constructors = existingClass.getConstructors();
-        for (PsiMethod constructor : constructors) {
+        constr: for (PsiMethod constructor : constructors) {
           final PsiParameter[] parameters = constructor.getParameterList().getParameters();
           if (parameters.length == 1) {
             final PsiParameter parameter = parameters[0];
             final PsiType parameterType = parameter.getType();
-            if (TypeConversionUtil.isAssignable(parameterType, method.getReturnType())) {
-              final PsiCodeBlock body = constructor.getBody();
-              LOG.assertTrue(body != null);
-              final boolean[] found = new boolean[1];
-              body.accept(new JavaRecursiveElementVisitor() {
-                @Override
-                public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
-                  super.visitAssignmentExpression(expression);
-                  final PsiExpression lExpression = expression.getLExpression();
-                  if (lExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)lExpression).resolve() == myDelegateField) {
-                    final PsiExpression rExpression = expression.getRExpression();
-                    if (rExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)rExpression).resolve() == parameter) {
-                      found[0] = true;
-                    }
+            for (PsiType returnType : returnTypes) {
+              if (!TypeConversionUtil.isAssignable(parameterType, returnType)) {
+                continue constr;
+              }
+            }
+            final PsiCodeBlock body = constructor.getBody();
+            LOG.assertTrue(body != null);
+            final boolean[] found = new boolean[1];
+            body.accept(new JavaRecursiveElementVisitor() {
+              @Override
+              public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
+                super.visitAssignmentExpression(expression);
+                final PsiExpression lExpression = expression.getLExpression();
+                if (lExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)lExpression).resolve() == myDelegateField) {
+                  final PsiExpression rExpression = expression.getRExpression();
+                  if (rExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)rExpression).resolve() == parameter) {
+                    found[0] = true;
                   }
                 }
-              });
-              if (found[0]) {
-                foundConstructor = true;
-                break;
               }
+            });
+            if (found[0]) {
+              foundConstructor = true;
+              break;
             }
           }
         }

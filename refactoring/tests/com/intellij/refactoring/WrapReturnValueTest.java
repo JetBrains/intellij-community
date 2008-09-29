@@ -4,6 +4,8 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -15,6 +17,10 @@ import org.jetbrains.annotations.NonNls;
 public class WrapReturnValueTest extends MultiFileTestCase{
   protected String getTestRoot() {
     return "/refactoring/wrapReturnValue/";
+  }
+
+  protected Sdk getTestProjectJdk() {
+    return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 
   private void doTest(final boolean existing) throws Exception {
@@ -110,4 +116,9 @@ public class WrapReturnValueTest extends MultiFileTestCase{
   public void testStaticMethodInnerClass() throws Exception {
     doTest(false, null, true);
   }
+
+  public void testRawReturnType() throws Exception {
+    doTest(true, "Existing class does not have appropriate constructor");
+  }
+
 }
