@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2007 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.diagnostic.Logger;
+
 import com.intellij.util.containers.LockPoolSynchronizedMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,8 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.UserDataHolderBase");
-
   private volatile Map<Key, Object> myUserMap = null;
   private static final Object WRITE_LOCK = new Object();
 
@@ -38,24 +21,22 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
       return clone;
     }
     catch (CloneNotSupportedException e) {
-      LOG.error(e);
-      return null;
+      throw new RuntimeException(e);
+
     }
   }
 
   public String getUserDataString() {
     final Map<Key, Object> userMap = myUserMap;
-    if (userMap != null) {
-      final Map copyableMap = (Map)userMap.get(COPYABLE_USER_MAP_KEY);
-      if (copyableMap == null) {
-        return userMap.toString();
-      }
-      else {
-        return userMap.toString() + copyableMap.toString();
-      }
+    if (userMap == null) {
+      return "";
+    }
+    final Map copyableMap = (Map)userMap.get(COPYABLE_USER_MAP_KEY);
+    if (copyableMap == null) {
+      return userMap.toString();
     }
     else {
-      return "";
+      return userMap.toString() + copyableMap.toString();
     }
   }
 
@@ -66,18 +47,16 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
 
   public <T> void putUserData(Key<T> key, T value) {
     synchronized (WRITE_LOCK) {
-      if (myUserMap == null) {
+      Map<Key, Object> map = myUserMap;
+      if (map == null) {
         if (value == null) return;
-        myUserMap = createMap();
+        myUserMap = map = createMap();
       }
-      if (value != null) {
-        myUserMap.put(key, value);
+      if (value == null) {
+        map.remove(key);
       }
       else {
-        myUserMap.remove(key);
-        if (myUserMap.isEmpty()) {
-          myUserMap = null;
-        }
+        map.put(key, value);
       }
     }
   }
@@ -123,14 +102,15 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   @NotNull
   public <T> T putUserDataIfAbsent(@NotNull final Key<T> key, @NotNull final T value) {
     synchronized (WRITE_LOCK) {
-      if (myUserMap == null) {
-        myUserMap = createMap();
-        myUserMap.put(key, value);
+      Map<Key, Object> map = myUserMap;
+      if (map == null) {
+        myUserMap = map = createMap();
+        map.put(key, value);
         return value;
       }
-      T prev = (T)myUserMap.get(key);
+      T prev = (T)map.get(key);
       if (prev == null) {
-        myUserMap.put(key, value);
+        map.put(key, value);
         return value;
       }
       else {
@@ -141,27 +121,25 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
 
   public <T> boolean replace(@NotNull Key<T> key, @NotNull T oldValue, @Nullable T newValue) {
     synchronized (WRITE_LOCK) {
-      if (myUserMap == null) {
+      Map<Key, Object> map = myUserMap;
+      if (map == null) {
         if (newValue != null) {
-          myUserMap = createMap();
-          myUserMap.put(key, newValue);
+          myUserMap = map = createMap();
+          map.put(key, newValue);
         }
         return true;
       }
-      T prev = (T)myUserMap.get(key);
-      if (prev == null || prev.equals(oldValue)) {
-        if (newValue != null) {
-          myUserMap.put(key, newValue);
-        }
-        else {
-          myUserMap.remove(key);
-          if (myUserMap.isEmpty()) {
-            myUserMap = null;
-          }
-        }
-        return true;
+      T prev = (T)map.get(key);
+      if (!oldValue.equals(prev)) {
+        return false;
       }
-      return false;
+      if (newValue == null) {
+        map.remove(key);
+      }
+      else {
+        map.put(key, newValue);
+      }
+      return true;
     }
   }
 
