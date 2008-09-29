@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.watcher.ChangeKind;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -272,8 +273,9 @@ public class FileWatcher {
     }
   }
 
+  @Nullable
   private String readLine() throws IOException {
-    return notifierReader.readLine();
+    return notifierReader != null ? notifierReader.readLine() : null;
   }
 
   private boolean isWatcheable(final String path) {
