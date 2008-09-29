@@ -50,7 +50,7 @@ public class GroovyGetterCallCanBePropertyAccessInspection extends BaseInspectio
 
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Dall to '#ref' can be property access #loc";
+    return "Call to '#ref' can be property access #loc";
   }
 
   public BaseInspectionVisitor buildVisitor() {

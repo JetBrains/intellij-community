@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -273,7 +274,6 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
           for (CandidateInfo info : list) {
             PsiMethod method = (PsiMethod)info.getElement();
             if (!isSameDeclaration(place, method) &&
-                //todo [DIANA] look more carefully
                 isMethodVisible(isPlaceGroovy, method) &&
                 !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY))) {
               return false;
@@ -286,7 +286,6 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
           for (CandidateInfo info : byName) {
             PsiMethod method = (PsiMethod)info.getElement();
             if (!isSameDeclaration(place, method) &&
-                //todo [DIANA] look more carefully
                 isMethodVisible(isPlaceGroovy, method) &&
                 !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY))) {
               return false;
@@ -294,8 +293,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
           }
         }
 
-        final boolean isGetter = name.startsWith("get");
-        final boolean isSetter = name.startsWith("set");
+        final boolean isGetter = PsiUtil.isGetterName(name);
+        final boolean isSetter = PsiUtil.isSetterName(name);
         if (isGetter || isSetter) {
           final String propName = StringUtil.decapitalize(name.substring(3));
           if (propName.length() > 0) {
