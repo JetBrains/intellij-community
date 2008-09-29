@@ -157,6 +157,20 @@ class WrapReturnValueDialog extends RefactoringDialog {
     final DefaultComboBoxModel model = new DefaultComboBoxModel();
     myFieldsCombo.setModel(model);
     myFieldsCombo.setRenderer(new DefaultPsiElementCellRenderer());
+    existingClassField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(final DocumentEvent e) {
+        final PsiClass currentClass = JavaPsiFacade.getInstance(myProject).findClass(existingClassField.getText(), GlobalSearchScope.allScope(myProject));
+        if (currentClass != null) {
+          model.removeAllElements();
+          for (PsiField field : currentClass.getFields()) {
+            if (TypeConversionUtil.isAssignable(field.getType(), sourceMethod.getReturnType())) {
+              model.addElement(field);
+            }
+          }
+        }
+      }
+    });
     existingClassField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final Project project = sourceMethod.getProject();
@@ -165,21 +179,14 @@ class WrapReturnValueDialog extends RefactoringDialog {
           new TreeClassChooserDialog(RefactorJBundle.message("select.wrapper.class"), project, scope, null, null);
         final String classText = existingClassField.getText();
         final PsiClass currentClass =
-          JavaPsiFacade.getInstance(PsiManager.getInstance(project).getProject()).findClass(classText, GlobalSearchScope.allScope(project));
+          JavaPsiFacade.getInstance(myProject).findClass(classText, GlobalSearchScope.allScope(myProject));
         if (currentClass != null) {
           chooser.selectClass(currentClass);
         }
         chooser.show();
         final PsiClass selectedClass = chooser.getSelectedClass();
         if (selectedClass != null) {
-          final String className = selectedClass.getQualifiedName();
-          existingClassField.setText(className);
-          model.removeAllElements();
-          for (PsiField field : selectedClass.getFields()) {
-            if (TypeConversionUtil.isAssignable(field.getType(), sourceMethod.getReturnType())) {
-              model.addElement(field);
-            }
-          }
+          existingClassField.setText(selectedClass.getQualifiedName());
         }
       }
     });
