@@ -80,6 +80,7 @@ public class DefaultPatchBaseVersionProvider {
       final VcsHistorySession session = myVcs.getVcsHistoryProvider().createSessionFor(filePath);
       if (session == null) return;
       final List<VcsFileRevision> list = session.getRevisionList();
+      if (list == null) return;
       for(VcsFileRevision fileRevision: list) {
         boolean found;
         if (revision != null) {
