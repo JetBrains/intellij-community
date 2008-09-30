@@ -133,7 +133,8 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     if (hasIdElement()) {
       return computeAttributeValue(getIdElement().getIdentifierName());
     }
-    return super.getName();
+    final XmlTag sourceElement = getSourceElement();
+    return sourceElement != null ? sourceElement.getName() : super.getName();
   }
 
   public PsiElement setName(@NotNull final String name) throws IncorrectOperationException {
