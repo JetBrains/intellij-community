@@ -19,8 +19,9 @@ import com.intellij.ide.FileIconPatcher;
 import com.intellij.ide.FileIconProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
@@ -33,14 +34,64 @@ public class IconUtil {
   private IconUtil() {
   }
 
-  public static Icon getIcon(VirtualFile file, int flags, Project project) {
-    Icon providersIcon = getProvidersIcon(file, flags, project);
+  private static class FileIconKey {
+    private final VirtualFile myFile;
+    private final Project myProject;
+    private final int myFlags;
 
-    Icon icon = providersIcon == null ? file.getIcon() : providersIcon;
-    for (FileIconPatcher patcher : getPatchers()) {
-      icon = patcher.patchIcon(icon, file, flags, project);
+    public FileIconKey(final VirtualFile file, final Project project, final int flags) {
+      myFile = file;
+      myProject = project;
+      myFlags = flags;
     }
-    return icon;
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (!(o instanceof FileIconKey)) return false;
+
+      final FileIconKey that = (FileIconKey)o;
+
+      if (myFlags != that.myFlags) return false;
+      if (!myFile.equals(that.myFile)) return false;
+      if (myProject != null ? !myProject.equals(that.myProject) : that.myProject != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myFile.hashCode();
+      result = 31 * result + (myProject != null ? myProject.hashCode() : 0);
+      result = 31 * result + myFlags;
+      return result;
+    }
+
+    public VirtualFile getFile() {
+      return myFile;
+    }
+
+    public Project getProject() {
+      return myProject;
+    }
+
+    public int getFlags() {
+      return myFlags;
+    }
+  }
+
+  public static Icon getIcon(final VirtualFile file, final int flags, final Project project) {
+    return IconDeferrer.getInstance().defer(file.getIcon(), new FileIconKey(file, project, flags), new Function<FileIconKey, Icon>() {
+      public Icon fun(final FileIconKey fileIconKey) {
+        Icon providersIcon = getProvidersIcon(file, flags, project);
+
+        Icon icon = providersIcon == null ? file.getIcon() : providersIcon;
+        for (FileIconPatcher patcher : getPatchers()) {
+          icon = patcher.patchIcon(icon, file, flags, project);
+        }
+        return icon;
+      }
+    });
   }
 
   @Nullable

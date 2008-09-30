@@ -95,6 +95,9 @@
   <applicationService serviceInterface="com.intellij.usageView.UsageTreeColorsScheme"
                       serviceImplementation="com.intellij.usageView.UsageTreeColorsScheme"/>
 
+  <applicationService serviceInterface="com.intellij.ui.IconDeferrer"
+                        serviceImplementation="com.intellij.ui.IconDeferrerImpl"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"

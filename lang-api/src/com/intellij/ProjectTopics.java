@@ -21,15 +21,15 @@ package com.intellij;
 
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.LogicalRootsManager;
 import com.intellij.util.messages.Topic;
-import com.intellij.psi.util.PsiModificationTracker;
 
 public class ProjectTopics {
   public static final Topic<ModuleRootListener> PROJECT_ROOTS = new Topic<ModuleRootListener>("project root changes", ModuleRootListener.class);
   public static final Topic<ModuleListener> MODULES = new Topic<ModuleListener>("modules added or removed from project", ModuleListener.class);
   public static final Topic<LogicalRootsManager.LogicalRootListener> LOGICAL_ROOTS = new Topic<LogicalRootsManager.LogicalRootListener>("logical root changes", LogicalRootsManager.LogicalRootListener.class);
-  public static final Topic<PsiModificationTracker.Listener> MODIFICATION_TRACKER = new Topic<PsiModificationTracker.Listener>("modification tracker", PsiModificationTracker.Listener.class);
+  public static final Topic<PsiModificationTracker.Listener> MODIFICATION_TRACKER = new Topic<PsiModificationTracker.Listener>("modification tracker", PsiModificationTracker.Listener.class, Topic.BroadcastDirection.TO_PARENT);
 
   private ProjectTopics() {
   }

@@ -15,7 +15,10 @@
                         serviceImplementation="com.intellij.codeStyle.DefaultCodeStyleFacade"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
-      serviceImplementation="com.intellij.openapi.project.impl.DefaultProjectLocator"/>
+                        serviceImplementation="com.intellij.openapi.project.impl.DefaultProjectLocator"/>
+    
+    <applicationService serviceInterface="com.intellij.ui.IconDeferrer"
+                        serviceImplementation="com.intellij.ui.DefaultIconDeferrer"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.ExcludedFileIndex"
                     serviceImplementation="com.intellij.openapi.vcs.impl.DefaultExcludedFileIndex"/>
