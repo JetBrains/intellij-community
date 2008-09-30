@@ -1,10 +1,4 @@
 <components>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable</implementation-class>
-    </component>
-  </application-components>
-
   <project-components>
     <component>
       <implementation-class>com.intellij.openapi.roots.ui.configuration.ModuleEditorState</implementation-class>

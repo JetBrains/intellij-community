@@ -2,20 +2,18 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ListUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.MappingListCellRenderer;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,7 +34,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 
-public class UpdateSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent, JDOMExternalizable {
+public class UpdateSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private UpdatesSettingsPanel myUpdatesSettingsPanel;
   private boolean myCheckNowEnabled = true;
   @NonNls public static final String ON_START_UP = "On every start";
@@ -45,9 +43,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   @NonNls public static final String MONTHLY = "Monthly";
   private static final Map<Object, String> PERIOD_VALUE_MAP = new HashMap<Object, String>();
 
-  @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
-  public JDOMExternalizableStringList myPluginHosts = new JDOMExternalizableStringList();
-
   static {
     PERIOD_VALUE_MAP.put(ON_START_UP, IdeBundle.message("updates.check.period.on.startup"));
     PERIOD_VALUE_MAP.put(DAILY, IdeBundle.message("updates.check.period.daily"));
@@ -55,18 +50,9 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     PERIOD_VALUE_MAP.put(MONTHLY, IdeBundle.message("updates.check.period.monthly"));
   }
 
-  public boolean CHECK_NEEDED = true;
-  public String CHECK_PERIOD = WEEKLY;
-  public long LAST_TIME_CHECKED = 0;
-
   public JComponent createComponent() {
     myUpdatesSettingsPanel = new UpdatesSettingsPanel();
     return myUpdatesSettingsPanel.myPanel;
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "UpdatesConfigurable";
   }
 
   public String getDisplayName() {
@@ -82,7 +68,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   }
 
   public static UpdateSettingsConfigurable getInstance() {
-    return ApplicationManager.getApplication().getComponent(UpdateSettingsConfigurable.class);
+    return ShowSettingsUtil.getInstance().findApplicationConfigurable(UpdateSettingsConfigurable.class);
   }
 
   public void setCheckNowEnabled(boolean enabled) {
@@ -90,39 +76,28 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   }
 
   public void apply() throws ConfigurationException {
-    CHECK_PERIOD = (String)myUpdatesSettingsPanel.myPeriodCombo.getSelectedItem();
-    CHECK_NEEDED = myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected();
+    UpdateSettings settings = UpdateSettings.getInstance();
+    settings.CHECK_PERIOD = (String)myUpdatesSettingsPanel.myPeriodCombo.getSelectedItem();
+    settings.CHECK_NEEDED = myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected();
 
-    myPluginHosts.clear();
-    myPluginHosts.addAll(myUpdatesSettingsPanel.getPluginsHosts());
+    settings.myPluginHosts.clear();
+    settings.myPluginHosts.addAll(myUpdatesSettingsPanel.getPluginsHosts());
   }
 
   public void reset() {
-    myUpdatesSettingsPanel.myCbCheckForUpdates.setSelected(CHECK_NEEDED);
-    myUpdatesSettingsPanel.myPeriodCombo.setSelectedItem(CHECK_PERIOD);
+    UpdateSettings settings = UpdateSettings.getInstance();
+    myUpdatesSettingsPanel.myCbCheckForUpdates.setSelected(settings.CHECK_NEEDED);
+    myUpdatesSettingsPanel.myPeriodCombo.setSelectedItem(settings.CHECK_PERIOD);
     myUpdatesSettingsPanel.myPeriodCombo.setEnabled(myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected());
     myUpdatesSettingsPanel.updateLastCheckedLabel();
-    myUpdatesSettingsPanel.setPluginHosts(myPluginHosts);
+    myUpdatesSettingsPanel.setPluginHosts(settings.myPluginHosts);
   }
 
   public boolean isModified() {
-    if (!myPluginHosts.equals(myUpdatesSettingsPanel.getPluginsHosts())) return true;
-    return CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected() ||
-           !Comparing.equal(CHECK_PERIOD, myUpdatesSettingsPanel.myPeriodCombo.getSelectedItem());
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
+    UpdateSettings settings = UpdateSettings.getInstance();
+    if (!settings.myPluginHosts.equals(myUpdatesSettingsPanel.getPluginsHosts())) return true;
+    return settings.CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected() ||
+           !Comparing.equal(settings.CHECK_PERIOD, myUpdatesSettingsPanel.myPeriodCombo.getSelectedItem());
   }
 
   public void disposeUIResources() {
@@ -134,7 +109,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     if (myUpdatesSettingsPanel != null) {
       hosts.addAll(myUpdatesSettingsPanel.getPluginsHosts());
     } else {
-      hosts.addAll(myPluginHosts);
+      hosts.addAll(UpdateSettings.getInstance().myPluginHosts);
     }
     final String pluginHosts = System.getProperty("idea.plugin.hosts");
     if (pluginHosts != null) {
@@ -267,8 +242,9 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
     private void updateLastCheckedLabel() {
       final DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.FULL);
+      final long lastChecked = UpdateSettings.getInstance().LAST_TIME_CHECKED;
       myLastCheckedDate
-        .setText(LAST_TIME_CHECKED == 0 ? IdeBundle.message("updates.last.check.never") : dateFormat.format(new Date(LAST_TIME_CHECKED)));
+        .setText(lastChecked == 0 ? IdeBundle.message("updates.last.check.never") : dateFormat.format(new Date(lastChecked)));
     }
 
     public List<String> getPluginsHosts() {

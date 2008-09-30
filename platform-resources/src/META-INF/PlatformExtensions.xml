@@ -77,7 +77,8 @@
                       serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
   <applicationService serviceInterface="com.intellij.history.LocalHistoryConfiguration"
                       serviceImplementation="com.intellij.history.LocalHistoryConfiguration"/>
-
+  <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateSettings"
+                      serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
 
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
@@ -112,6 +113,8 @@
   <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
   <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
+
+  <applicationConfigurable implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable"/>
 
   <!-- Scopes -->
   <projectConfigurable implementation="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable"/>

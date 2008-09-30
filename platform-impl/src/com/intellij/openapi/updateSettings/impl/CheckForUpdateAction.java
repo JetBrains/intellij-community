@@ -24,7 +24,7 @@ public class CheckForUpdateAction extends AnAction {
       final UpdateChecker.NewVersion newVersion = UpdateChecker.checkForUpdates();
       final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true);
       if (newVersion != null) {
-        UpdateSettingsConfigurable.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
+        UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
         UpdateChecker.showUpdateInfoDialog(enableLink, newVersion, updatedPlugins);
       }
       else {

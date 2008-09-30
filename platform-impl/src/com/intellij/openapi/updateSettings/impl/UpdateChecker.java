@@ -79,7 +79,7 @@ public final class UpdateChecker {
 
   public static boolean checkNeeded() {
 
-    final UpdateSettingsConfigurable settings = UpdateSettingsConfigurable.getInstance();
+    final UpdateSettings settings = UpdateSettings.getInstance();
     if (settings == null || getUpdateUrl() == null) return false;
 
     final String checkPeriod = settings.CHECK_PERIOD;
@@ -206,7 +206,7 @@ public final class UpdateChecker {
       return null;
     }
     finally {
-      UpdateSettingsConfigurable.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
+      UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
     }
   }
 
