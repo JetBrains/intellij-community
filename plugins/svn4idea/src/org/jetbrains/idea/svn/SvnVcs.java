@@ -194,16 +194,16 @@ public class SvnVcs extends AbstractVcs {
       final MessageBusConnection messageBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
       messageBusConnection.subscribe(ChangeListManagerImpl.LISTS_LOADED, new LocalChangeListsLoadedListener() {
         public void processLoadedLists(final List<LocalChangeList> lists) {
-          ChangeListManager.getInstanceChecked(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
+          try {
+            ChangeListManager.getInstanceChecked(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
 
-          if (! supportOptions.changeListsSynchronized()) {
-            try {
+            if (! supportOptions.changeListsSynchronized()) {
               processChangeLists(lists);
               supportOptions.upgradeToChangeListsSynchronized();
             }
-            catch (ProcessCanceledException e) {
-              //
-            }
+          }
+          catch (ProcessCanceledException e) {
+            //
           }
           messageBusConnection.disconnect();
         }
