@@ -103,7 +103,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
     final RunInspectionIntention runInspectionIntention = new RunInspectionIntention(key);
     result.add(new AnAction(runInspectionIntention.getText()) {
       public void actionPerformed(final AnActionEvent e) {
-        runInspectionIntention.rerunInspection((InspectionManagerEx)InspectionManagerEx.getInstance(myView.getProject()), myView.getScope());
+        runInspectionIntention.rerunInspection(tool, (InspectionManagerEx)InspectionManagerEx.getInstance(myView.getProject()), myView.getScope());
       }
     });
 

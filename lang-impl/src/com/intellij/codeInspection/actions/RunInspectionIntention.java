@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -73,10 +74,12 @@ public class RunInspectionIntention implements IntentionAction {
     if (!dlg.isOK()) return;
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     scope = dlg.getScope(uiOptions, scope, project, module);
-    rerunInspection(managerEx, scope);
+    final InspectionProfileEntry baseTool =
+        InspectionProjectProfileManager.getInstance(project).getInspectionProfile(file).getInspectionTool(myShortName);
+    rerunInspection(baseTool, managerEx, scope);
   }
 
-  public void rerunInspection(final InspectionManagerEx managerEx, final AnalysisScope scope) {
+  public void rerunInspection(final InspectionProfileEntry baseTool, final InspectionManagerEx managerEx, final AnalysisScope scope) {
     final InspectionProfileImpl profile = new InspectionProfileImpl(myDisplayName);
     final ModifiableModel model = profile.getModifiableModel();
     final InspectionProfileEntry[] profileEntries = model.getInspectionTools();
@@ -84,6 +87,14 @@ public class RunInspectionIntention implements IntentionAction {
       model.disableTool(entry.getShortName());
     }
     model.enableTool(myShortName);
+    try {
+      Element element = new Element("toCopy");
+      baseTool.writeSettings(element);
+      model.getInspectionTool(myShortName).readSettings(element);
+    }
+    catch (Exception e) {
+      //skip
+    }
     model.setEditable(myDisplayName);
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
     inspectionContext.setExternalProfile((InspectionProfile)model);
