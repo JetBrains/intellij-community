@@ -258,7 +258,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           }
         }
 
-        updateIgnoredFiles();
+        updateIgnoredFiles(false);
       }
       ChangesViewManager.getInstance(myProject).scheduleRefresh();
     }
@@ -729,32 +729,39 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public void addFilesToIgnore(final IgnoredFileBean... filesToIgnore) {
     myIgnoredIdeaLevel.add(filesToIgnore);
-    updateIgnoredFiles();
+    updateIgnoredFiles(true);
   }
 
   public void setFilesToIgnore(final IgnoredFileBean... filesToIgnore) {
     myIgnoredIdeaLevel.set(filesToIgnore);
-    updateIgnoredFiles();
+    updateIgnoredFiles(true);
   }
 
-  private void updateIgnoredFiles() {
+  private void updateIgnoredFiles(final boolean checkIgnored) {
     synchronized (myDataLock) {
       List<VirtualFile> unversionedFiles = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
       List<VirtualFile> ignoredFiles = myComposite.getVFHolder(FileHolder.HolderType.IGNORED).getFiles();
+      boolean somethingChanged = false;
       for(VirtualFile file: unversionedFiles) {
         if (isIgnoredFile(file)) {
+          somethingChanged = true;
           myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).removeFile(file);
           myComposite.getVFHolder(FileHolder.HolderType.IGNORED).addFile(file);
         }
       }
-      for(VirtualFile file: ignoredFiles) {
-        if (!isIgnoredFile(file)) {
-          // the file may have been reported as ignored by the VCS, so we can't directly move it to unversioned files
-          VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
+      if (checkIgnored) {
+        for(VirtualFile file: ignoredFiles) {
+          if (!isIgnoredFile(file)) {
+            somethingChanged = true;
+            // the file may have been reported as ignored by the VCS, so we can't directly move it to unversioned files
+            VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
+          }
         }
       }
-      FileStatusManager.getInstance(getProject()).fileStatusesChanged();
-      ChangesViewManager.getInstance(myProject).scheduleRefresh();
+      if (somethingChanged) {
+        FileStatusManager.getInstance(getProject()).fileStatusesChanged();
+        ChangesViewManager.getInstance(myProject).scheduleRefresh();
+      }
     }
   }
 
