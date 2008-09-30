@@ -74,16 +74,27 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
       writeCredentials();
     }
     myConfigurationBean.myTypedURLs.clear();
-    myConfigurationBean.myTypedURLs.addAll(myLimitedStringsList.getList());
+    myConfigurationBean.myTypedURLs.addAll(getTypedList().getList());
     return myConfigurationBean;
   }
 
   public void loadState(ConfigurationBean object) {
     myConfigurationBean = object;
+    getTypedList();
+  }
+
+  private LimitedStringsList getTypedList() {
+    if (myLimitedStringsList == null) {
+      checkFillTypedFromCheckout();
+      myLimitedStringsList = new LimitedStringsList(myConfigurationBean.myTypedURLs);
+    }
+    return myLimitedStringsList;
+  }
+
+  private void checkFillTypedFromCheckout() {
     if (myConfigurationBean.myTypedURLs.isEmpty() && (! myConfigurationBean.myCheckoutURLs.isEmpty())) {
       myConfigurationBean.myTypedURLs.addAll(myConfigurationBean.myCheckoutURLs);
     }
-    myLimitedStringsList = new LimitedStringsList(myConfigurationBean.myTypedURLs);
   }
 
   public void svnActivated() {
@@ -322,10 +333,10 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
   }
 
   public List<String> getTypedUrlsListCopy() {
-    return new ArrayList<String>(myLimitedStringsList.getList());
+    return new ArrayList<String>(getTypedList().getList());
   }
 
   public void addTypedUrl(final String url) {
-    myLimitedStringsList.add(url);
+    getTypedList().add(url);
   }
 }
