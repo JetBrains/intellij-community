@@ -541,6 +541,10 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return methods.length == 0 ? null : methods[0];
   }
 
+  public JavaClassReferenceSet getJavaClassReferenceSet() {
+    return myJavaClassReferenceSet;
+  }
+
   public String getUnresolvedMessagePattern() {
     return myJavaClassReferenceSet.getUnresolvedMessagePattern(myIndex);
   }
