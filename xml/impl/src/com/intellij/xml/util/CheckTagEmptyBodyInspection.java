@@ -7,6 +7,7 @@ package com.intellij.xml.util;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -47,13 +48,20 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
               holder.registerProblem(
                 tag,
                 XmlBundle.message("xml.inspections.tag.empty.body"),
-                localQuickFix
+                isCollapsableTag(tag) ? localQuickFix : null
               );
             }
           }
         }
       }
     };
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static boolean isCollapsableTag(final XmlTag tag) {
+    final String name = tag.getName().toLowerCase();
+    return tag.getLanguage() == XMLLanguage.INSTANCE ||
+           "link".equals(name) || "br".equals(name) || "meta".equals(name) || "img".equals(name) || "input".equals(name) || "hr".equals(name);
   }
 
   @NotNull
