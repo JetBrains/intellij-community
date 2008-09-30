@@ -215,12 +215,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               addSourceForRecompilation(projectId, file, info);
             }
           }
-
-          for (VirtualFile file : filesToRecompile) {
-            if (file.isValid()) {
-              addSourceForRecompilation(projectId, file, null);
-            }
-          }
         }
         catch (IOException e) {
           _ex[0] = e;
@@ -230,6 +224,20 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     if (_ex[0] != null) {
       throw _ex[0];
     }
+
+    if (filesToRecompile.length > 0) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          for (VirtualFile file : filesToRecompile) {
+            if (file.isValid()) {
+              addSourceForRecompilation(projectId, file, null);
+            }
+          }
+        }
+      });
+    }
+
+
   }
 
 
