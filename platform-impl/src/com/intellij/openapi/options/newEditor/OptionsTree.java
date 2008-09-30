@@ -11,6 +11,7 @@ import com.intellij.ui.LoadingNode;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ import java.awt.event.ComponentEvent;
 import java.util.*;
 import java.util.List;
 
-public class OptionsTree extends JPanel implements Disposable, OptionsEditorContext.Listener {
+public class OptionsTree extends JPanel implements Disposable, OptionsEditorColleague {
   Project myProject;
   SimpleTree myTree;
   List<ConfigurableGroup> myGroups;
@@ -119,12 +120,12 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorCont
       public void run() {
         if (configurable == null) {
           myTree.getSelectionModel().clearSelection();
-          myContext.select(null, OptionsTree.this);
+          myContext.fireSelected(null, OptionsTree.this);
         } else {
           final EditorNode editorNode = myConfigurable2Node.get(configurable);
           myBuilder.select(myBuilder.getVisibleNodeFor(editorNode), new Runnable() {
             public void run() {
-              myContext.select(configurable, OptionsTree.this);
+              myContext.fireSelected(configurable, OptionsTree.this);
             }
           });
         }
@@ -155,6 +156,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorCont
 
 
       JComponent result;
+      Color fg = UIUtil.getTreeTextForeground();
 
       final Base base = extractNode(value);
       if (base instanceof EditorNode) {
@@ -184,9 +186,17 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorCont
         result = configureComponent(base.getText(), base.getText(), null, null, selected, group != null,
                                                 group != null ? group.getDisplayName() : null, forcedWidth);
 
+
+        if (base.isError()) {
+          fg = Color.red;
+        } else if (base.isModified()) {
+          fg = Color.blue;
+        }
       } else {
         result = configureComponent(value.toString(), null, null, null, selected, false, null, -1);
       }
+
+      myTextLabel.setForeground(fg);
 
       return result;
     }
@@ -219,6 +229,14 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorCont
 
     String getText() {
       return null;
+    }
+
+    boolean isModified() {
+      return false;
+    }
+
+    boolean isError() {
+      return false;
     }
 
     Configurable getConfigurable() {
@@ -297,11 +315,33 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorCont
     String getText() {
       return myConfigurable.getDisplayName();
     }
+
+    @Override
+    boolean isModified() {
+      return myContext.getModified().contains(myConfigurable);
+    }
+
+    @Override
+    boolean isError() {
+      return myContext.getErrors().containsKey(myConfigurable);
+    }
   }
 
   public void dispose() {
   }
 
-  public void onSelected(final Configurable configurable) {
+  public void onSelected(final Configurable configurable, final Configurable oldConfigurable) {
+    queueSelection(configurable);
+  }
+
+  public void onModifiedAdded(final Configurable colleague) {
+    myTree.repaint();
+  }
+
+  public void onModifiedRemoved(final Configurable configurable) {
+    myTree.repaint();
+  }
+
+  public void onErrorsChanged() {
   }
 }
