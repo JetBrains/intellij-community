@@ -25,6 +25,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -32,7 +33,6 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   private ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
   @NonNls private static final String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
   @NonNls private static final String FILETYPE = "fileType";
-
 
   public CodeStyleSettings() {
     this(true);
@@ -1635,5 +1635,15 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       }
     }
     return result;
+  }
+
+  @TestOnly
+  public void clearCodeStyleSettings() throws Exception {
+    CodeStyleSettings cleanSettings = new CodeStyleSettings();
+    Element element = new Element("temp");
+    cleanSettings.writeExternal(element);
+
+    readExternal(element);
+    myAdditionalIndentOptions.clear(); //hack
   }
 }

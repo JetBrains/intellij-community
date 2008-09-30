@@ -89,7 +89,6 @@ import java.util.HashSet;
 
   private static final String ourOriginalTempDir = System.getProperty("java.io.tmpdir");
   private static int ourTestCount = 0;
-  private CodeStyleSettings ourOldCodeStyleSettings;
 
   protected static long getTimeRequired() {
     return DEFAULT_TEST_TIME;
@@ -107,6 +106,11 @@ import java.util.HashSet;
 
   private static void cleanPersistedVFSContent() {
     ((PersistentFS)ManagingFS.getInstance()).cleanPersistedContents();
+  }
+
+  @Override
+  protected CodeStyleSettings getCurrentCodeStyleSettings() {
+    return CodeStyleSettingsManager.getSettings(getProject());
   }
 
   protected void setUp() throws Exception {
@@ -132,8 +136,7 @@ import java.util.HashSet;
 
     setUpProject();
     markProjectCreationPlace();
-
-    ourOldCodeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
+    storeSettings();
   }
 
   public Project getProject() {
@@ -266,8 +269,7 @@ import java.util.HashSet;
     LookupManager.getInstance(myProject).hideActiveLookup();
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     try {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-      checkSettingsEqual(ourOldCodeStyleSettings, CodeStyleSettingsManager.getSettings(getProject()), "Code style settings damaged");
+      checkForSettingsDamage();
 
       assertNotNull("Application components damaged", ProjectManager.getInstance());
 

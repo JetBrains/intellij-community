@@ -6,11 +6,14 @@ package com.intellij.testFramework;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,7 +22,6 @@ import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -35,8 +37,9 @@ public abstract class UsefulTestCase extends TestCase {
     public void dispose() {
     }
   };
-
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
+  private static CodeStyleSettings myOldCodeStyleSettings;
+
   static {
     try {
       CodeInsightSettings defaultSettings = new CodeInsightSettings();
@@ -48,16 +51,37 @@ public abstract class UsefulTestCase extends TestCase {
       throw new RuntimeException(e);
     }
   }
+
   protected void tearDown() throws Exception {
     Disposer.dispose(myTestRootDisposable);
     super.tearDown();
-    if (ApplicationManager.getApplication() != null) {
+  }
+
+  protected void checkForSettingsDamage() throws Exception {
+    if (!isPerformanceTest() && ApplicationManager.getApplication() != null) {
       final CodeInsightSettings settings = CodeInsightSettings.getInstance();
       Element newS = new Element("temp");
       settings.writeExternal(newS);
-
       assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS, "\n"));
+
+
+      CodeStyleSettings codeStyleSettings = getCurrentCodeStyleSettings();
+      codeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
+      checkSettingsEqual(myOldCodeStyleSettings, codeStyleSettings, "Code style settings damaged");
+      codeStyleSettings.clearCodeStyleSettings();
+      myOldCodeStyleSettings = null;
     }
+  }
+
+  protected void storeSettings() {
+    if (!isPerformanceTest() && ApplicationManager.getApplication() != null) {
+      myOldCodeStyleSettings = getCurrentCodeStyleSettings().clone();
+      myOldCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
+    }
+  }
+
+  protected CodeStyleSettings getCurrentCodeStyleSettings() {
+    return CodeStyleSettingsManager.getInstance().getCurrentSettings();
   }
 
   protected Disposable getTestRootDisposable() {
@@ -297,17 +321,21 @@ public abstract class UsefulTestCase extends TestCase {
     if (expected == null) {
       return;
     }
-    Element oldS = new Element("temp");
-    expected.writeExternal(oldS);
-    checkSettingsEqual(JDOMUtil.writeElement(oldS, "\n"), settings, message);
-  }
-  private static void checkSettingsEqual(@NotNull String expected, JDOMExternalizable settings, String message) throws Exception {
     if (settings == null) {
       return;
     }
+    Element oldS = new Element("temp");
+    expected.writeExternal(oldS);
     Element newS = new Element("temp");
     settings.writeExternal(newS);
 
-    assertEquals(message,expected, JDOMUtil.writeElement(newS, "\n"));
+    String newString = JDOMUtil.writeElement(newS, "\n");
+    String oldString = JDOMUtil.writeElement(oldS, "\n");
+    assertEquals(message, oldString, newString);
+  }
+
+  public boolean isPerformanceTest() {
+    String name = getName();
+    return name != null && name.contains("Performance") || getClass().getName().contains("Performance");
   }
 }

@@ -97,7 +97,6 @@ import java.util.Map;
 
   private final Map<String, LocalInspectionTool> myAvailableTools = new HashMap<String, LocalInspectionTool>();
   private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new HashMap<String, LocalInspectionToolWrapper>();
-  private static CodeStyleSettings ourOldCodeStyleSettings;
 
   /**
    * @return Project to be used in tests for example for project components retrieval.
@@ -276,14 +275,14 @@ import java.util.Map;
     super.setUp();
     initApplication(this);
     doSetup(getProjectJDK(), configureLocalInspectionTools(), myAvailableTools, myAvailableLocalTools);
+    storeSettings();
   }
 
   public static void doSetup(final Sdk projectJDK,
                       final LocalInspectionTool[] localInspectionTools,
                       final Map<String, LocalInspectionTool> availableToolsMap,
                       final Map<String, LocalInspectionToolWrapper> availableLocalTools) throws Exception {
-    assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overriden without super call.",
-               ourTestCase);
+    assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overriden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
 
     if (ourProject == null || isJDKChanged(projectJDK)) {
@@ -330,9 +329,6 @@ import java.util.Map;
 
     assertFalse(getPsiManager().isDisposed());
 
-    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    ourOldCodeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
   }
 
@@ -357,6 +353,8 @@ import java.util.Map;
   }
 
   protected void tearDown() throws Exception {
+    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+    checkForSettingsDamage();
     doTearDown();
     super.tearDown();
   }
@@ -368,9 +366,6 @@ import java.util.Map;
 
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     assertNotNull("Application components damaged", ProjectManager.getInstance());
-
-    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    checkSettingsEqual(ourOldCodeStyleSettings, CodeStyleSettingsManager.getSettings(getProject()), "Code style settings damaged");
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -463,13 +458,13 @@ import java.util.Map;
       ourAssertionsInTestDetected = false;
     }
     finally {
-      try{
+      //try{
         tearDown();
-      }
-      catch(Throwable th){
-        //noinspection CallToPrintStackTrace
-        th.printStackTrace();
-      }
+      //}
+      //catch(Throwable th){
+      //  noinspection CallToPrintStackTrace
+        //th.printStackTrace();
+      //}
     }
   }
 
@@ -534,6 +529,11 @@ import java.util.Map;
   }
   protected static void commitAllDocuments() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+  }
+
+  @Override
+  protected CodeStyleSettings getCurrentCodeStyleSettings() {
+    return CodeStyleSettingsManager.getSettings(getProject());
   }
 
   protected static Document getDocument(final PsiFile file) {
