@@ -86,6 +86,18 @@ public class OptionsEditorContext {
     }
   }
 
+  public void fireReset(final Configurable configurable) {
+    if (myModified.contains(configurable)) {
+      fireModifiedRemoved(configurable, null);
+    }
+
+    if (myErrors.containsKey(configurable)) {
+      final HashMap<Configurable, ConfigurationException> newErrors = new HashMap<Configurable, ConfigurationException>();
+      newErrors.remove(configurable);
+      fireErrorsChanged(newErrors, null);
+    }
+  }
+
 
   interface ColleagueAction {
     void process(OptionsEditorColleague colleague);

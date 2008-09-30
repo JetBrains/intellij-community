@@ -143,12 +143,16 @@ public class LinkLabel extends JLabel {
 
         y += k;
 
+        int lineY = y + shiftY;
+        if (lineY >= getSize().height) {
+          lineY = getSize().height - 1;
+        }
         if (getHorizontalAlignment() == LEFT) {
-          UIUtil.drawLine(g, x + shiftX, y + shiftY, x + getFontMetrics(getFont()).stringWidth(getText()) + shiftX, y + shiftY);
+          UIUtil.drawLine(g, x + shiftX, lineY, x + getFontMetrics(getFont()).stringWidth(getText()) + shiftX, lineY);
         }
         else {
-          UIUtil.drawLine(g, getWidth() - 1 - getFontMetrics(getFont()).stringWidth(getText()) + shiftX, y + shiftY,
-                          getWidth() - 1 + shiftX, y + shiftY);
+          UIUtil.drawLine(g, getWidth() - 1 - getFontMetrics(getFont()).stringWidth(getText()) + shiftX, lineY,
+                          getWidth() - 1 + shiftX, lineY);
         }
       }
       else {

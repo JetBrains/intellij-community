@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.*;
 
 public class OptionsEditor extends JPanel implements DataProvider, Place.Navigator, Disposable {
@@ -51,7 +52,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
 
   Map<Configurable, JComponent> myConfigurable2Componenet = new HashMap<Configurable, JComponent>();
-  private OptionsEditor.MyColleague myColleague;
+  private MyColleague myColleague;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProject = project;
@@ -128,22 +129,54 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         reset = true;
         myConfigurable2Componenet.put(configurable, c);
       }
-      myContentWrapper.setContent(c, getContext().getErrors().get(configurable));
+
+      updateErrorBanner();
 
       myDetails.setContent(myContentWrapper);
       myDetails.setBannerMinHeight(myToolbar.getHeight());
       myDetails.setText(configurable.getDisplayName());
 
       if (reset) {
-        configurable.reset();
+        reset(configurable);
       }
+
+      myDetails.setBannerActions(new Action[] {new ResetAction(configurable)});
+      myDetails.updateBannerActions();
     }
   }
 
+  private void updateErrorBanner() {
+    final Configurable current = getContext().getCurrentConfigurable();
+    final JComponent c = myConfigurable2Componenet.get(current);
+    myContentWrapper.setContent(c, getContext().getErrors().get(current));
+  }
+
+
+  class ResetAction extends AbstractAction {
+    Configurable myConfigurable;
+
+    ResetAction(final Configurable configurable) {
+      myConfigurable = configurable;
+      putValue(NAME, "Reset");
+      putValue(SHORT_DESCRIPTION, "Rollback changes for this configuration element");
+    }
+
+    public void actionPerformed(final ActionEvent e) {
+      reset(myConfigurable);
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return myConfigurable.isModified() || getContext().getErrors().containsKey(myConfigurable);
+    }
+  }
 
   private class ContentWrapper extends NonOpaquePanel {
 
     private JLabel myErrorLabel;
+
+    private JComponent myContent;
+    private ConfigurationException myException;
 
     private ContentWrapper() {
       setLayout(new BorderLayout());
@@ -153,6 +186,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
 
     void setContent(JComponent c, ConfigurationException e) {
+      if (myContent == c && myException == e) return;
+
       removeAll();
       add(c, BorderLayout.CENTER);
 
@@ -160,7 +195,15 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         myErrorLabel.setText(UIUtil.toHtml(e.getMessage()));
         add(myErrorLabel, BorderLayout.NORTH);
       }
+
+      myContent = c;
+      myException = e;
     }
+  }
+
+  public void reset(Configurable configurable) {
+    configurable.reset();
+    getContext().fireReset(configurable);
   }
 
   public void apply() {
@@ -170,9 +213,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       Configurable each = iterator.next();
       try {
         each.apply();
-        if (each.getClass().toString().indexOf("ditor") >= 0) {
-          throw new ConfigurationException("That was a huge errror", "title");
-        }
         getContext().fireModifiedRemoved(each, myColleague);
       }
       catch (ConfigurationException e) {
@@ -180,7 +220,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       }
     }
 
-    getContext().fireErrorsChanged(errors, myColleague);
+    getContext().fireErrorsChanged(errors, null);
 
     if (errors.size() > 0) {
       myTree.select(errors.keySet().iterator().next());
@@ -228,6 +268,28 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private class MyColleague extends OptionsEditorColleague.Adapter {
     public void onSelected(final Configurable configurable, final Configurable oldConfigurable) {
       processSelected(configurable, oldConfigurable);
+    }
+
+    @Override
+    public void onModifiedRemoved(final Configurable configurable) {
+      updateIfCurrent(configurable);
+    }
+
+    @Override
+    public void onModifiedAdded(final Configurable configurable) {
+      updateIfCurrent(configurable);
+    }
+
+    @Override
+    public void onErrorsChanged() {
+      updateIfCurrent(getContext().getCurrentConfigurable());
+    }
+
+    private void updateIfCurrent(final Configurable configurable) {
+      if (getContext().getCurrentConfigurable() == configurable) {
+        updateErrorBanner();
+        myDetails.updateBannerActions();
+      }
     }
   }
 

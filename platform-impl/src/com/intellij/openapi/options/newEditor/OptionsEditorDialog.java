@@ -34,7 +34,7 @@ public class OptionsEditorDialog extends DialogWrapper {
     myEditor = new OptionsEditor(myProject, myGroups, myPreselected);
     myEditor.getContext().addColleague(new OptionsEditorColleague.Adapter() {
       @Override
-      public void onModifiedAdded(final Configurable colleague) {
+      public void onModifiedAdded(final Configurable configurable) {
         myApplyAction.setEnabled(myEditor.canApply());
       }
 

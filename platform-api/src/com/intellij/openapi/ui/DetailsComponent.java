@@ -17,11 +17,11 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
-import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -102,6 +102,16 @@ public class DetailsComponent  {
     myEmptyContentLabel = new JLabel("", JLabel.CENTER);
   }
 
+  public void setBannerActions(Action[] actions) {
+    myBannerLabel.clearActions();
+    for (Action each : actions) {
+      myBannerLabel.addAction(each);
+    }
+
+    myComponent.revalidate();
+    myComponent.repaint();
+  }
+
   public void setContent(@Nullable JComponent c) {
     if (myContentWrapper != null) {
       myComponent.remove(myContentWrapper);
@@ -153,35 +163,6 @@ public class DetailsComponent  {
     setContent(null);
   }
 
-  private class Banner extends JLabel {
-
-    private int myBannerMinHeight;
-
-    public Banner() {
-      super("", JLabel.LEFT);
-      setFont(getFont().deriveFont(Font.BOLD));
-      setBorder(new EmptyBorder(2, 6, 2, 4));
-    }
-
-    public Dimension getMinimumSize() {
-      final Dimension size = super.getMinimumSize();
-      size.height = myBannerMinHeight > 0 ? myBannerMinHeight : size.height;
-      return size;
-    }
-
-    public Dimension getPreferredSize() {
-      final Dimension size = super.getPreferredSize();
-      size.height = getMinimumSize().height;
-      return size;
-    }
-
-    public void setMinHeight(final int height) {
-      myBannerMinHeight = height;
-      revalidate();
-      repaint();
-    }
-  }
-
   public static void main(String[] args) {
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout());
@@ -199,6 +180,10 @@ public class DetailsComponent  {
 
     frame.setBounds(300, 300, 300, 300);
     frame.show();
+  }
+
+  public void updateBannerActions() {
+    myBannerLabel.updateActions();
   }
 
 

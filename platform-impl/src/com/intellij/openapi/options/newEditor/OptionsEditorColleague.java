@@ -6,7 +6,7 @@ import com.intellij.openapi.options.Configurable;
 interface OptionsEditorColleague {
   void onSelected(@Nullable Configurable configurable, final Configurable oldConfigurable);
 
-  void onModifiedAdded(final Configurable colleague);
+  void onModifiedAdded(final Configurable configurable);
 
   void onModifiedRemoved(final Configurable configurable);
 
@@ -16,7 +16,7 @@ interface OptionsEditorColleague {
     public void onSelected(@Nullable final Configurable configurable, final Configurable oldConfigurable) {
     }
 
-    public void onModifiedAdded(final Configurable colleague) {
+    public void onModifiedAdded(final Configurable configurable) {
     }
 
     public void onModifiedRemoved(final Configurable configurable) {
