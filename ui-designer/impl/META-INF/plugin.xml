@@ -113,7 +113,7 @@
     <component>
       <implementation-class>com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager</implementation-class>
       <headless-implementation-class></headless-implementation-class>
-      <skipForDummyProject/>
+      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.uiDesigner.palette.UIDesignerPaletteProvider</implementation-class>
