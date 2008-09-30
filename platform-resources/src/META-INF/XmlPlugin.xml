@@ -220,6 +220,8 @@
 
     <refactoring.extractIncludeHandler language="HTML" implementationClass="com.intellij.refactoring.lang.html.ExtractIncludeFromHTMLHandler"/>
     <refactoring.extractIncludeHandler language="XHTML" implementationClass="com.intellij.refactoring.lang.html.ExtractIncludeFromHTMLHandler"/>
+
+    <metaDataContributor implementation="com.intellij.xml.util.XmlApplicationComponent"/>
   </extensions>                                   
   
 </idea-plugin>

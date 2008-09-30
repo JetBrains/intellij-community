@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.meta;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -9,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +28,7 @@ import java.util.List;
  */
 public class MetaRegistry extends MetaDataRegistrar {
   private static final List<MyBinding> ourBindings = new ArrayList<MyBinding>();
+  private static boolean ourContributorsLoaded = false;
 
   private static final Key<CachedValue<PsiMetaData>> META_DATA_KEY = Key.create("META DATA KEY");
 
@@ -52,6 +55,7 @@ public class MetaRegistry extends MetaDataRegistrar {
         .createCachedValue(new CachedValueProvider<PsiMetaData>() {
           public Result<PsiMetaData> compute() {
             try {
+              ensureContributorsLoaded();
               for (final MyBinding binding : ourBindings) {
                 if (binding.myFilter.isClassAcceptable(element.getClass()) && binding.myFilter.isAcceptable(element, element.getParent())) {
                   final PsiMetaData data = binding.myDataClass.newInstance();
@@ -71,6 +75,15 @@ public class MetaRegistry extends MetaDataRegistrar {
         }, false);
       }
     };
+
+  private static void ensureContributorsLoaded() {
+    if (!ourContributorsLoaded) {
+      ourContributorsLoaded = true;
+      for(MetaDataContributor contributor: Extensions.getExtensions(MetaDataContributor.EP_NAME)) {
+        contributor.contributeMetaData(MetaDataRegistrar.getInstance());
+      }
+    }
+  }
   
   @Nullable
   public static PsiMetaData getMetaBase(final PsiElement element) {
