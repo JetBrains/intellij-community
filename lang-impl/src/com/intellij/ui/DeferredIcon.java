@@ -13,72 +13,79 @@ import javax.swing.*;
 import java.awt.*;
 
 public class DeferredIcon<T> implements Icon {
-  private final Icon myBaseIcon;
-  private volatile Icon myEvaluated;
+  private volatile Icon myDelegateIcon;
   private final Function<T, Icon> myEvaluator;
-  private boolean myIsScheduled = false;
+  private volatile boolean myIsScheduled = false;
   private final T myParam;
+  private Component myLastTarget = null;
 
   public DeferredIcon(Icon baseIcon, T param, Function<T, Icon> evaluator) {
     myParam = param;
-    myBaseIcon = baseIcon != null ? baseIcon : new EmptyIcon(16, 16);
+    myDelegateIcon = nonNull(baseIcon);
     myEvaluator = evaluator;
-    myEvaluated = null;
+  }
+
+  private static Icon nonNull(final Icon icon) {
+    return icon != null ? icon : new EmptyIcon(16, 16);
   }
 
   public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
-    if (myEvaluated != null) {
-      myEvaluated.paintIcon(c, g, x, y);
-    }
-    else {
-      myBaseIcon.paintIcon(c, g, x, y);
+    myDelegateIcon.paintIcon(c, g, x, y);
 
-      if (!myIsScheduled) {
-        myIsScheduled = true;
+    if (!myIsScheduled) {
+      myIsScheduled = true;
 
-        final Component target;
+      final Component target;
 
-        final Container list = SwingUtilities.getAncestorOfClass(JList.class, c);
-        if (list != null) {
-          target = list;
-        }
-        else {
-          target = c;
-        }
-
-        final Job<Object> job = JobScheduler.getInstance().createJob("Evaluating deferred icon", Job.DEFAULT_PRIORITY);
-        job.addTask(new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              public void run() {
-                myEvaluated = myEvaluator.fun(myParam);
-              }
-            });
-
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                if (c == target) {
-                  c.repaint(x, y, getIconWidth(), getIconHeight());
-                }
-                else {
-                  target.repaint();
-                }
-              }
-            });
-          }
-        });
-
-        job.schedule();
+      final Container list = SwingUtilities.getAncestorOfClass(JList.class, c);
+      if (list != null) {
+        target = list;
       }
+      else {
+        target = c;
+      }
+
+      myLastTarget = target;
+
+      final Job<Object> job = JobScheduler.getInstance().createJob("Evaluating deferred icon", Job.DEFAULT_PRIORITY);
+      job.addTask(new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              myDelegateIcon = nonNull(myEvaluator.fun(myParam));
+            }
+          });
+
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              if (c == target) {
+                c.repaint(x, y, getIconWidth(), getIconHeight());
+              }
+              else {
+                target.repaint();
+              }
+            }
+          });
+        }
+      });
+
+      job.schedule();
     }
   }
 
   public int getIconWidth() {
-    return myBaseIcon.getIconWidth();
+    return myDelegateIcon.getIconWidth();
   }
 
   public int getIconHeight() {
-    return myBaseIcon.getIconHeight();
+    return myDelegateIcon.getIconHeight();
+  }
+
+  public void invalidate() {
+    myIsScheduled = false;
+    if (myLastTarget != null) {
+      myLastTarget.repaint();
+    }
   }
 }
