@@ -46,9 +46,9 @@ public abstract class ChunkBuildExtension {
     final ChunkBuildExtension[] extensions = Extensions.getRootArea().getExtensionPoint(EP_NAME).getExtensions();
     final Module[] modules = chunk.getModules();
     for (ChunkBuildExtension extension : extensions) {
-      if (!extension.haveSelfOutputs(modules)) return false;
+      if (extension.haveSelfOutputs(modules)) return true;
     }
-    return true;
+    return false;
   }
 
   public static String[] getAllTargets(ModuleChunk chunk) {
