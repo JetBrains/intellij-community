@@ -21,16 +21,21 @@ import com.intellij.ui.navigation.Place;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.*;
 
-public class OptionsEditor extends JPanel implements DataProvider, Place.Navigator, Disposable {
+public class OptionsEditor extends JPanel implements DataProvider, Place.Navigator, Disposable, AWTEventListener {
 
   static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.newEditor.OptionsEditor");
 
@@ -53,6 +58,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   Map<Configurable, JComponent> myConfigurable2Componenet = new HashMap<Configurable, JComponent>();
   private MyColleague myColleague;
+
+  MergingUpdateQueue myModificationChecker;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProject = project;
@@ -110,14 +117,14 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     } else {
       myTree.selectFirst();
     }
+
+    Toolkit.getDefaultToolkit().addAWTEventListener(this, MouseEvent.MOUSE_EVENT_MASK | KeyEvent.KEY_EVENT_MASK);
+
+    myModificationChecker = new MergingUpdateQueue("OptionsModificationChecker", 1000, false, this, this, this);
   }
 
   private void processSelected(final Configurable configurable, Configurable oldConfigurable) {
-    if (oldConfigurable != null && oldConfigurable.isModified()) {
-      getContext().fireModifiedAdded(oldConfigurable, myColleague);
-    } else if (oldConfigurable != null && !oldConfigurable.isModified() && !getContext().getErrors().containsKey(oldConfigurable)) {
-      getContext().fireModifiedRemoved(oldConfigurable, myColleague);
-    }
+    checkModified(oldConfigurable);
 
     if (configurable == null) {
       myDetails.setContent(null);
@@ -142,6 +149,14 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       myDetails.setBannerActions(new Action[] {new ResetAction(configurable)});
       myDetails.updateBannerActions();
+    }
+  }
+
+  private void checkModified(final Configurable configurable) {
+    if (configurable != null && configurable.isModified()) {
+      getContext().fireModifiedAdded(configurable, null);
+    } else if (configurable != null && !configurable.isModified() && !getContext().getErrors().containsKey(configurable)) {
+      getContext().fireModifiedRemoved(configurable, null);
     }
   }
 
@@ -259,6 +274,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   public void dispose() {
     PropertiesComponent.getInstance(myProject).setValue(SPLITTER_PROPORTION, String.valueOf(mySplitter.getProportion()));
+    Toolkit.getDefaultToolkit().removeAWTEventListener(this);
   }
 
   public OptionsEditorContext getContext() {
@@ -299,5 +315,34 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   public boolean canRestore() {
     return getContext().getModified().size() > 0;
+  }
+
+  public void eventDispatched(final AWTEvent event) {
+    if (event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED) {
+      final MouseEvent me = (MouseEvent)event;
+      if (SwingUtilities.isDescendingFrom(me.getComponent(), myContentWrapper)) {
+        queueModificationCheck(getContext().getCurrentConfigurable());
+        return;
+      }
+    } else if (event.getID() == KeyEvent.KEY_PRESSED || event.getID() == KeyEvent.KEY_RELEASED) {
+      final KeyEvent ke = (KeyEvent)event;
+      if (SwingUtilities.isDescendingFrom(ke.getComponent(), myContentWrapper)) {
+        queueModificationCheck(getContext().getCurrentConfigurable());
+        return;
+      }
+    }
+  }
+
+  private void queueModificationCheck(final Configurable configurable) {
+    myModificationChecker.queue(new Update(this) {
+      public void run() {
+        checkModified(configurable);
+      }
+
+      @Override
+      public boolean isExpired() {
+        return getContext().getCurrentConfigurable() != configurable;
+      }
+    });
   }
 }
