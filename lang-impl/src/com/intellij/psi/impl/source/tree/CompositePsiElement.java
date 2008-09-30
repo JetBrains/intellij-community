@@ -147,7 +147,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public void delete() throws IncorrectOperationException {
-    LOG.assertTrue(getTreeParent() != null);
+    LOG.assertTrue(getTreeParent() != null, "Parent not found for " + this);
     CheckUtil.checkWritable(this);
     getTreeParent().deleteChildInternal(this);
     TreeUtil.invalidate(this);
