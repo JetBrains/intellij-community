@@ -57,6 +57,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -152,7 +153,7 @@ public class SvnVcs extends AbstractVcs {
     return Boolean.valueOf(System.getProperty(systemParameterName));
   }
 
-  public SvnVcs(Project project, SvnConfiguration svnConfiguration) {
+  public SvnVcs(Project project, MessageBus bus, SvnConfiguration svnConfiguration) {
     super(project);
     LOG.debug("ct");
     myConfiguration = svnConfiguration;
@@ -180,7 +181,7 @@ public class SvnVcs extends AbstractVcs {
     final SvnBranchConfigurationManager.SvnSupportOptions supportOptions =
       SvnBranchConfigurationManager.getInstance(myProject).getSupportOptions();
     upgradeTo15(supportOptions);
-    changeListSynchronizationIdeaVersionToNative(supportOptions);
+    changeListSynchronizationIdeaVersionToNative(supportOptions, bus);
 
     if (myProject.isDefault()) {
       myChangeListListener = null;
@@ -190,9 +191,10 @@ public class SvnVcs extends AbstractVcs {
     }
   }
 
-  private void changeListSynchronizationIdeaVersionToNative(final SvnBranchConfigurationManager.SvnSupportOptions supportOptions) {
-      final MessageBusConnection messageBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
-      messageBusConnection.subscribe(ChangeListManagerImpl.LISTS_LOADED, new LocalChangeListsLoadedListener() {
+  private void changeListSynchronizationIdeaVersionToNative(final SvnBranchConfigurationManager.SvnSupportOptions supportOptions,
+                                                            final MessageBus bus) {
+      final MessageBusConnection connection = bus.connect();
+      connection.subscribe(ChangeListManagerImpl.LISTS_LOADED, new LocalChangeListsLoadedListener() {
         public void processLoadedLists(final List<LocalChangeList> lists) {
           try {
             ChangeListManager.getInstanceChecked(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
@@ -205,7 +207,7 @@ public class SvnVcs extends AbstractVcs {
           catch (ProcessCanceledException e) {
             //
           }
-          messageBusConnection.disconnect();
+          connection.disconnect();
         }
       });
   }
