@@ -197,6 +197,9 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
     }, false);
   }
 
+  public void testIntroduceParameterWithDefaultValueInHierarchy() throws Exception {
+    doTest(null, new ParameterInfo[]{new ParameterInfo(-1, "i", PsiType.INT, "0")}, false);
+  }
 
   protected void setUpJdk() {
     super.setUpJdk();
