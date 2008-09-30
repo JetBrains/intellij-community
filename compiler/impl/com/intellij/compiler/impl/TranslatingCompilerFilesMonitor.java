@@ -155,63 +155,80 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       throws IOException {
     final Project project = context.getProject();
     final int projectId = getProjectId(project);
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final IOException[] _ex = new IOException[] {null};
 
-    try {
-      final LocalFileSystem lfs = LocalFileSystem.getInstance();
-      final Map<VirtualFile, SourceFileInfo> compiledSources = new HashMap<VirtualFile, SourceFileInfo>();
-      for (TranslatingCompiler.OutputItem item : successfullyCompiled) {
-        final VirtualFile sourceFile = item.getSourceFile();
-        SourceFileInfo srcInfo = compiledSources.get(sourceFile);
-        if (srcInfo == null) {
-          srcInfo = loadSourceInfo(sourceFile);
-          if (srcInfo != null) {
-            srcInfo.clearPaths(projectId);
+    // need read action here to ensure that no modifications were made to VFS while updating file attributes
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        try {
+          final Map<VirtualFile, SourceFileInfo> compiledSources = new HashMap<VirtualFile, SourceFileInfo>();
+
+          for (TranslatingCompiler.OutputItem item : successfullyCompiled) {
+            final VirtualFile sourceFile = item.getSourceFile();
+            final boolean isSourceValid = sourceFile.isValid();
+            SourceFileInfo srcInfo = compiledSources.get(sourceFile);
+            if (isSourceValid && srcInfo == null) {
+              srcInfo = loadSourceInfo(sourceFile);
+              if (srcInfo != null) {
+                srcInfo.clearPaths(projectId);
+              }
+              else {
+                srcInfo = new SourceFileInfo();
+              }
+              compiledSources.put(sourceFile, srcInfo);
+            }
+
+            final String outputPath = item.getOutputPath();
+            if (outputPath != null) { // can be null for packageinfo
+              final VirtualFile outputFile = lfs.findFileByPath(outputPath);
+
+              assert outputFile != null : "Virtual file was not found for \"" + outputPath + "\"";
+
+              if (!sourceFile.equals(outputFile)) {
+                final String outputRoot = item.getOutputRootDirectory();
+                final String className = MakeUtil.relativeClassPathToQName(outputPath.substring(outputRoot.length()), '/');
+                if (isSourceValid) {
+                  srcInfo.addOutputPath(projectId, outputPath);
+                  saveOutputInfo(outputFile, new OutputFileInfo(sourceFile.getPath(), className));
+                }
+                else {
+                  markOutputPathForDeletion(projectId, outputPath, className, sourceFile.getUrl());
+                }
+              }
+            }
           }
-          else {
-            srcInfo = new SourceFileInfo();
+
+          final long compilationStartStamp = ((CompileContextEx)context).getStartCompilationStamp();
+
+          for (Map.Entry<VirtualFile, SourceFileInfo> entry : compiledSources.entrySet()) {
+            final SourceFileInfo info = entry.getValue();
+            final VirtualFile file = entry.getKey();
+            final long fileStamp = file.getTimeStamp();
+            info.updateTimestamp(projectId, fileStamp);
+            saveSourceInfo(file, info);
+            removeSourceForRecompilation(projectId, getFileId(file));
+            if (fileStamp > compilationStartStamp) {
+              // changes were made during compilation, need to re-schedule compilation
+              // it is important to invoke removeSourceForRecompilation() before to make sure
+              // the corresponding output paths will be scheduled for deletion
+              addSourceForRecompilation(projectId, file, info);
+            }
           }
-          compiledSources.put(sourceFile, srcInfo);
+
+          for (VirtualFile file : filesToRecompile) {
+            if (file.isValid()) {
+              addSourceForRecompilation(projectId, file, null);
+            }
+          }
         }
-
-        final String outputPath = item.getOutputPath();
-        if (outputPath != null) { // can be null for packageinfo
-          final String outputRoot = item.getOutputRootDirectory();
-          final VirtualFile outputFile = lfs.findFileByPath(outputPath);
-          assert outputFile != null : "Virtual file was not found for \"" + outputPath + "\"";
-          if (!sourceFile.equals(outputFile)) {
-            srcInfo.addOutputPath(projectId, outputPath);
-
-            final String className = MakeUtil.relativeClassPathToQName(outputPath.substring(outputRoot.length()), '/');
-            saveOutputInfo(outputFile, new OutputFileInfo(sourceFile.getPath(), className));
-          }
+        catch (IOException e) {
+          _ex[0] = e;
         }
       }
-
-      final long compilationStartStamp = ((CompileContextEx)context).getStartCompilationStamp();
-
-      for (Map.Entry<VirtualFile, SourceFileInfo> entry : compiledSources.entrySet()) {
-        final SourceFileInfo info = entry.getValue();
-        final VirtualFile file = entry.getKey();
-        final long fileStamp = file.getTimeStamp();
-        info.updateTimestamp(projectId, fileStamp);
-        saveSourceInfo(file, info);
-        removeSourceForRecompilation(projectId, getFileId(file));
-        if (fileStamp > compilationStartStamp) {
-          // changes were made during compilation, need to re-schedule compilation
-          // it is important to invoke removeSourceForRecompilation() before to make sure
-          // the corresponding output paths will be scheduled for deletion
-          addSourceForRecompilation(projectId, file, info);
-        }
-      }
-
-      for (VirtualFile file : filesToRecompile) {
-        addSourceForRecompilation(projectId, file, null);
-      }
-    }
-    catch (InvalidVirtualFileAccessException e) {
-      final IOException ex = new IOException("Some source files were deleted while compilation was in progress");
-      ex.initCause(e);
-      throw ex;
+    });
+    if (_ex[0] != null) {
+      throw _ex[0];
     }
   }
 
@@ -988,7 +1005,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
   
-  private static interface Proc {
+  private interface Proc {
     boolean execute(final int projectId, String outputPath);
   }
   
@@ -1006,21 +1023,25 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       if (outFile != null) { // not deleted yet
         final OutputFileInfo outputInfo = loadOutputInfo(outFile);
         final String classname = outputInfo != null? outputInfo.getClassName() : null;
-        synchronized (myOutputsToDelete) {
-          Map<String, SourceUrlClassNamePair> map = myOutputsToDelete.get(projectId);
-          if (map == null) {
-            map = new HashMap<String, SourceUrlClassNamePair>();
-            myOutputsToDelete.put(projectId, map);
-          }
-          map.put(outputPath, new SourceUrlClassNamePair(mySrcUrl, classname));
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("ADD path to delete: " + outputPath + "; source: " + mySrcUrl);
-          }
-        }
+        markOutputPathForDeletion(projectId, outputPath, classname, mySrcUrl);
       }
       return true;
     }
-
   }
+
+  private void markOutputPathForDeletion(final int projectId, final String outputPath, final String classname, final String srcUrl) {
+    synchronized (myOutputsToDelete) {
+      Map<String, SourceUrlClassNamePair> map = myOutputsToDelete.get(projectId);
+      if (map == null) {
+        map = new HashMap<String, SourceUrlClassNamePair>();
+        myOutputsToDelete.put(projectId, map);
+      }
+      map.put(outputPath, new SourceUrlClassNamePair(srcUrl, classname));
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("ADD path to delete: " + outputPath + "; source: " + srcUrl);
+      }
+    }
+  }
+
   
 }
