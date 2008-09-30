@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -137,6 +136,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   public JComponent createToolbar(boolean horizontal) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AddLocationAction());
+    group.add(new EditLocationAction());
     group.add(new DiscardLocationAction());
     group.add(new DetailsAction());
     group.addSeparator();
@@ -206,6 +206,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     group.add(copyUrlAction);
     group.addSeparator();
     group.add(new RefreshAction());
+    group.add(new EditLocationAction());
     group.add(new DiscardLocationAction());
     ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(PLACE_MENU, group);
     return menu.getComponent();
@@ -384,26 +385,64 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      String url = Messages.showInputDialog(myProject, SvnBundle.message("repository.browser.add.location.prompt"),
-                                            SvnBundle.message("repository.browser.add.location.title"), null, "http://", new InputValidator() {
-        public boolean checkInput(String inputString) {
-          if (inputString == null) {
-            return false;
-          }
-          try {
-            return SVNURL.parseURIEncoded(inputString) != null;
-          } catch (SVNException e) {
-            //
-          }
-          return false;
+      final SvnApplicationSettings settings = SvnApplicationSettings.getInstance();
+      final AddRepositoryLocationDialog dialog = new AddRepositoryLocationDialog(myProject, settings.getTypedUrlsListCopy());
+      dialog.show();
+      if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+        final String url = dialog.getSelected();
+        if (url != null && url.length() > 0) {
+          settings.addTypedUrl(url);
+          settings.addCheckoutURL(url);
+          getRepositoryBrowser().addURL(url);
         }
-        public boolean canClose(String inputString) {
-          return true;
+      }
+    }
+  }
+
+  protected class EditLocationAction extends AnAction {
+    public EditLocationAction() {
+      super(SvnBundle.message("repository.browser.edit.location.menu.item"));
+    }
+
+    public void update(AnActionEvent e) {
+      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
+      if (e.getPlace().equals(PLACE_TOOLBAR)) {
+        e.getPresentation().setDescription(SvnBundle.message("repository.browser.edit.location.menu.item"));
+        e.getPresentation().setText(SvnBundle.message("repository.browser.edit.location.menu.item"));
+        e.getPresentation().setIcon(IconLoader.findIcon("/actions/editSource.png"));
+        e.getPresentation().setEnabled(node != null && node.getParent() instanceof RepositoryTreeRootNode);
+      }
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
+      if (node == null || (! (node.getParent() instanceof RepositoryTreeRootNode))) {
+        return;
+      }
+      final String oldUrl = node.getURL().toString();
+      final SvnApplicationSettings settings = SvnApplicationSettings.getInstance();
+      final AddRepositoryLocationDialog dialog = new AddRepositoryLocationDialog(myProject, settings.getTypedUrlsListCopy()) {
+        @Override
+        protected String initText() {
+          return oldUrl;
         }
-      });
-      if (url != null) {
-        SvnApplicationSettings.getInstance().addCheckoutURL(url);
-        getRepositoryBrowser().addURL(url);
+
+        @Override
+        public String getTitle() {
+          return SvnBundle.message("repository.browser.edit.location.dialog.title");
+        }
+      };
+      dialog.show();
+      if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+        final String url = dialog.getSelected();
+        if (url != null && url.length() > 0) {
+          settings.addTypedUrl(url);
+          settings.removeCheckoutURL(oldUrl);
+          settings.addCheckoutURL(url);
+          final RepositoryBrowserComponent browser = getRepositoryBrowser();
+          browser.removeURL(oldUrl);
+          browser.addURL(url);
+        }
       }
     }
   }

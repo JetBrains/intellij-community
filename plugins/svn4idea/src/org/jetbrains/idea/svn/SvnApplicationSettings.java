@@ -50,9 +50,11 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
   private SvnFileSystemListener myVFSHandler;
   private Map<String, Map<String, Map<String, String>>> myAuthenticationInfo;
   private int mySvnProjectCount;
+  private LimitedStringsList myLimitedStringsList;
 
   public static class ConfigurationBean {
     public List<String> myCheckoutURLs = new ArrayList<String>();
+    public List<String> myTypedURLs = new ArrayList<String>();
   }
 
   private ConfigurationBean myConfigurationBean;
@@ -71,11 +73,17 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
     if (myCredentialsModified) {
       writeCredentials();
     }
+    myConfigurationBean.myTypedURLs.clear();
+    myConfigurationBean.myTypedURLs.addAll(myLimitedStringsList.getList());
     return myConfigurationBean;
   }
 
   public void loadState(ConfigurationBean object) {
     myConfigurationBean = object;
+    if (myConfigurationBean.myTypedURLs.isEmpty() && (! myConfigurationBean.myCheckoutURLs.isEmpty())) {
+      myConfigurationBean.myTypedURLs.addAll(myConfigurationBean.myCheckoutURLs);
+    }
+    myLimitedStringsList = new LimitedStringsList(myConfigurationBean.myTypedURLs);
   }
 
   public void svnActivated() {
@@ -311,5 +319,13 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
         }
       }
     }
+  }
+
+  public List<String> getTypedUrlsListCopy() {
+    return new ArrayList<String>(myLimitedStringsList.getList());
+  }
+
+  public void addTypedUrl(final String url) {
+    myLimitedStringsList.add(url);
   }
 }
