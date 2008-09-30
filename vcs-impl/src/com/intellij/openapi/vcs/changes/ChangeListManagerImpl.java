@@ -797,9 +797,19 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   public boolean setReadOnly(final String name, final boolean value) {
+    // there could be external read action taken under which another method of ChangeListManager guarged by myDataLock
+    // is being called; so to avoid deadlock use the same sequence of locks - read action first (internal in getInstanceChecked)
+    final ChangesViewManager changesView;
+    try {
+      changesView = ChangesViewManager.getInstanceChecked(myProject);
+    }
+    catch (ProcessCanceledException e) {
+      return false;
+    }
+
     synchronized (myDataLock) {
       final boolean result = myModifier.setReadOnly(name, value);
-      ChangesViewManager.getInstance(myProject).scheduleRefresh();
+      changesView.scheduleRefresh();
       return result;
     }
   }
