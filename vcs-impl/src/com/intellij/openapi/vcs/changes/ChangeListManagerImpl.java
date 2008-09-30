@@ -109,7 +109,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     synchronized (myDataLock) {
       final List<LocalChangeList> listCopy = getChangeListsCopy();
       if (! listCopy.isEmpty()) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(LISTS_LOADED).processLoadedLists(listCopy);
+        myProject.getMessageBus().syncPublisher(LISTS_LOADED).processLoadedLists(listCopy);
       }
     }
   }
