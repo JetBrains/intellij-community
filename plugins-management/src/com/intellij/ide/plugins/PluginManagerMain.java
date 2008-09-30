@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressManager;
@@ -174,11 +175,13 @@ public class PluginManagerMain {
 
   public void reset() {
     TableUtil.ensureSelectionExists(getPluginTable());
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        loadAvailablePlugins();
-      }
-    });
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          loadAvailablePlugins();
+        }
+      });
+    }
   }
 
   PluginTable getPluginTable() {
