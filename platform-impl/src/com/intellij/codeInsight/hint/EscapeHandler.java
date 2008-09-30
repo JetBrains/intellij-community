@@ -25,7 +25,9 @@ public class EscapeHandler extends EditorActionHandler {
 
     if (project != null) {
       HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-      return hintManager.isEscapeHandlerEnabled();
+      if (hintManager.isEscapeHandlerEnabled()) {
+        return true;
+      }
     }
 
     return myOriginalHandler.isEnabled(editor, dataContext);
