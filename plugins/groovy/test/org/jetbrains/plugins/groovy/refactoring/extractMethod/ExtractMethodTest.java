@@ -107,8 +107,4 @@ public class ExtractMethodTest extends ActionTestCase {
     fixtureBuilder.addLibraryJars("GROOVY", TestUtils.getMockGrailsLibraryHome(), TestUtils.GROOVY_JAR);
     return builder.getFixture();
   }
-
-  protected void setUp() {
-    super.setUp();
-  }
 }

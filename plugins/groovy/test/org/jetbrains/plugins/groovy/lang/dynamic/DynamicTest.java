@@ -12,7 +12,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -139,8 +138,6 @@ public class DynamicTest extends GroovyFileSetTestCase {
 
   protected void tearDown() {
     try {
-      setSettingsBack();
-      CodeStyleSettingsManager.getInstance(myProject).dropTemporarySettings();
       myCodeInsightFixture.tearDown();
       myCodeInsightFixture = null;
     }

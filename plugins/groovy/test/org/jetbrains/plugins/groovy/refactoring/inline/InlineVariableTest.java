@@ -68,7 +68,7 @@ public class InlineVariableTest extends CommonRefactoringTestCase {
     Assert.assertNotNull(file);
 
     // Create physical file
-    String modulePath = myFixture.getTempDirPath();
+    String modulePath = getMyFixture().getTempDirPath();
     File realFile = new File(modulePath + "/" + TestUtils.TEMP_FILE);
     FileWriter fstream = new FileWriter(realFile);
     BufferedWriter out = new BufferedWriter(fstream);

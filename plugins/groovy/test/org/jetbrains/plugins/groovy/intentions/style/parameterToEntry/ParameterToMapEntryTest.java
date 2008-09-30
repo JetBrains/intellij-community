@@ -29,7 +29,6 @@ public class ParameterToMapEntryTest extends UsefulTestCase {
 
   protected CodeInsightTestFixture myFixture;
   protected Project myProject;
-  protected CodeStyleSettings mySettings;
 
 
   protected void setUp() throws Exception {
@@ -44,11 +43,19 @@ public class ParameterToMapEntryTest extends UsefulTestCase {
     myFixture.setUp();
 
     myProject = myFixture.getProject();
+    storeSettings();
     setSettings();
   }
 
   @Override
+  protected CodeStyleSettings getCurrentCodeStyleSettings() {
+    return CodeStyleSettingsManager.getSettings(myProject);
+  }
+
+  @Override
   protected void tearDown() throws Exception {
+    CodeStyleSettingsManager.getInstance(myProject).dropTemporarySettings();
+    checkForSettingsDamage();
     myFixture.tearDown();
     super.tearDown();
   }
@@ -125,24 +132,17 @@ public class ParameterToMapEntryTest extends UsefulTestCase {
     catch (IOException e) {
       e.printStackTrace();
     }
-    finally {
-
-      return expected;
-    }
+    return expected;
   }
 
-  protected CodeStyleSettings getSettings() {
-    return CodeStyleSettingsManager.getSettings(myProject);
-  }
-
-  protected final void setSettings() {
-    mySettings = getSettings();
+  private void setSettings() {
+    CodeStyleSettings mySettings = getCurrentCodeStyleSettings().clone();
     mySettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).INDENT_SIZE = 2;
     mySettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).CONTINUATION_INDENT_SIZE = 4;
     mySettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).TAB_SIZE = 2;
     mySettings.getIndentOptions(GspFileType.GSP_FILE_TYPE).INDENT_SIZE = 2;
     mySettings.getIndentOptions(GspFileType.GSP_FILE_TYPE).CONTINUATION_INDENT_SIZE = 4;
     mySettings.getIndentOptions(GspFileType.GSP_FILE_TYPE).TAB_SIZE = 2;
+    CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(mySettings);
   }
-
 }

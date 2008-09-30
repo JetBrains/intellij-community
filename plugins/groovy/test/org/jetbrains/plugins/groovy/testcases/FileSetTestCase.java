@@ -36,7 +36,7 @@ import java.util.List;
 public abstract class FileSetTestCase extends TestSuite {
   @NonNls
   protected static final String TEST_FILE_PATTERN = "(.*)\\.test";
-  private File[] myFiles;
+  private final File[] myFiles;
 
   public FileSetTestCase(String path) {
     List<File> myFileList;
@@ -87,10 +87,11 @@ public abstract class FileSetTestCase extends TestSuite {
   protected abstract void runTest(final File file) throws Throwable;
 
   private class ActualTest extends LightIdeaTestCase {
-    private File myTestFile;
+    private final File myTestFile;
 
     public ActualTest(File testFile) {
       myTestFile = testFile;
+      setName(testFile.getPath());
     }
 
     protected void setUp() throws Exception {
