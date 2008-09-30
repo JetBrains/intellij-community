@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
@@ -28,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -55,33 +57,48 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     if (!editor.getSelectionModel().hasSelection()) {
-      final PsiElement elementAtCaret = file.findElementAt(editor.getCaretModel().getOffset());
-      final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
-      PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
-      while (expression != null) {
-        if (!(expression instanceof PsiReferenceExpression) && expression.getType() != PsiType.VOID) {
-          expressions.add(expression);
-        }
-        expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
-      }
-      if (expressions.isEmpty()) {
+      final int offset = editor.getCaretModel().getOffset();
+      final PsiElement[] statementsInRange = findStatementsAtOffset(editor, file, offset);
+      if (statementsInRange.length == 1 && PsiUtil.hasErrorElementChild(statementsInRange[0])) {
         editor.getSelectionModel().selectLineAtCaret();
-      } else if (expressions.size() == 1) {
-        final TextRange textRange = expressions.get(0).getTextRange();
-        editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
-      }
-      else {
-        showChooser(editor, expressions, new Pass<PsiExpression>(){
-          public void pass(final PsiExpression selectedValue) {
-            invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
+      } else {
+        final PsiElement elementAtCaret = file.findElementAt(offset);
+        final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+        PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
+        while (expression != null) {
+          if (!(expression instanceof PsiReferenceExpression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) && expression.getType() != PsiType.VOID) {
+            expressions.add(expression);
           }
-        });
-        return;
+          expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
+        }
+        if (expressions.isEmpty()) {
+          editor.getSelectionModel().selectLineAtCaret();
+        } else if (expressions.size() == 1) {
+          final TextRange textRange = expressions.get(0).getTextRange();
+          editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
+        }
+        else {
+          showChooser(editor, expressions, new Pass<PsiExpression>(){
+            public void pass(final PsiExpression selectedValue) {
+              invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
+            }
+          });
+          return;
+        }
       }
     }
     if (invoke(project, editor, file, editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd())) {
       editor.getSelectionModel().removeSelection();
     }
+  }
+
+  public static PsiElement[] findStatementsAtOffset(final Editor editor, final PsiFile file, final int offset) {
+    final Document document = editor.getDocument();
+    final int lineNumber = document.getLineNumber(offset);
+    final int lineStart = document.getLineStartOffset(lineNumber);
+    final int lineEnd = document.getLineEndOffset(lineNumber);
+
+    return CodeInsightUtil.findStatementsInRange(file, lineStart, lineEnd);
   }
 
   public static void showChooser(final Editor editor, final List<PsiExpression> expressions, final Pass<PsiExpression> callback) {
@@ -92,6 +109,33 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }
     final JList list = new JList(model);
     list.setCellRenderer(new DefaultListCellRenderer() {
+      void appendText(PsiExpression expr, StringBuffer buf) {
+        if (expr instanceof PsiNewExpression) {
+          final PsiAnonymousClass anonymousClass = ((PsiNewExpression)expr).getAnonymousClass();
+          if (anonymousClass != null) {
+            buf.append("new ").append(anonymousClass.getBaseClassType().getPresentableText()).append("(...) {...}");
+          } else {
+            buf.append(expr.getText());
+          }
+        } else if (expr instanceof PsiReferenceExpression) {
+          final PsiExpression qualifierExpression = ((PsiReferenceExpression)expr).getQualifierExpression();
+          if (qualifierExpression != null) {
+            appendText(qualifierExpression, buf);
+            buf.append(".");
+          }
+          buf.append(((PsiReferenceExpression)expr).getReferenceName());
+        } else if (expr instanceof PsiMethodCallExpression) {
+          appendText(((PsiMethodCallExpression)expr).getMethodExpression(), buf);
+          final PsiExpression[] args = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
+          if (args.length > 0) {
+            buf.append("(...)");
+          } else {
+            buf.append("()");
+          }
+        } else {
+          buf.append(expr.getText());
+        }
+      }
 
       @Override
       public Component getListCellRendererComponent(final JList list,
@@ -100,7 +144,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                                                     final boolean isSelected,
                                                     final boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        setText(((PsiExpression)value).getText()); //todo cut long text
+
+        final StringBuffer buf = new StringBuffer();
+        appendText((PsiExpression)value, buf);
+        setText(buf.toString());
         return rendererComponent;
       }
     });

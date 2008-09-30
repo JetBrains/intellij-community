@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -63,27 +64,33 @@ public class ElementToWorkOn {
         if (variable != null) {
           localVar = variable;
         } else {
-          final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
-          PsiExpression expression = PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class);
-          while (expression != null) {
-            if (!(expression instanceof PsiReferenceExpression) && expression.getType() != PsiType.VOID) {
-              expressions.add(expression);
-            }
-            expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
-          }
-          if (expressions.isEmpty()) {
+          final int offset = editor.getCaretModel().getOffset();
+          final PsiElement[] statementsInRange = IntroduceVariableBase.findStatementsAtOffset(editor, file, offset);
+          if (statementsInRange.length == 1 && PsiUtil.hasErrorElementChild(statementsInRange[0])) {
             editor.getSelectionModel().selectLineAtCaret();
-          } else if (expressions.size() == 1) {
-            expr = expressions.get(0);
-          }
-          else {
-            IntroduceVariableBase.showChooser(editor, expressions, new Pass<PsiExpression>() {
-              @Override
-              public void pass(final PsiExpression selectedValue) {
-                processor.pass(getElementToWorkOn(editor, file, refactoringName, helpId, project, null, selectedValue));
+          } else {
+            final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+            PsiExpression expression = PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class);
+            while (expression != null) {
+              if (!(expression instanceof PsiReferenceExpression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) && expression.getType() != PsiType.VOID) {
+                expressions.add(expression);
               }
-            });
-            return;
+              expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
+            }
+            if (expressions.isEmpty()) {
+              editor.getSelectionModel().selectLineAtCaret();
+            } else if (expressions.size() == 1) {
+              expr = expressions.get(0);
+            }
+            else {
+              IntroduceVariableBase.showChooser(editor, expressions, new Pass<PsiExpression>() {
+                @Override
+                public void pass(final PsiExpression selectedValue) {
+                  processor.pass(getElementToWorkOn(editor, file, refactoringName, helpId, project, null, selectedValue));
+                }
+              });
+              return;
+            }
           }
         }
       }
