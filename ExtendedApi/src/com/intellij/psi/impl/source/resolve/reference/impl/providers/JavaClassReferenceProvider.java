@@ -39,6 +39,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public static final CustomizationKey<Boolean> NOT_ENUM= new CustomizationKey<Boolean>("NOT_ENUM");
   public static final CustomizationKey<Boolean> ADVANCED_RESOLVE = new CustomizationKey<Boolean>("RESOLVE_ONLY_CLASSES");
   public static final CustomizationKey<Boolean> JVM_FORMAT = new CustomizationKey<Boolean>("JVM_FORMAT");
+  public static final CustomizationKey<Boolean> ALLOW_DOLLAR_NAMES = new CustomizationKey<Boolean>("ALLOW_DOLLAR_NAMES");
   public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<String>("DEFAULT_PACKAGE");
 
   @Nullable private Map<CustomizationKey, Object> myOptions;
@@ -80,6 +81,11 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   @Nullable
+  public <T> T getOption(CustomizationKey<T> option) {
+    return myOptions == null ? null : (T)myOptions.get(option);
+  }
+
+  @Nullable
   public GlobalSearchScope getScope() {
     return myScope;
   }
@@ -100,7 +106,8 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     if (myAllowEmpty && StringUtil.isEmpty(str)) {
       return PsiReference.EMPTY_ARRAY;
     }
-    return new JavaClassReferenceSet(str, position, offsetInPosition, false, this).getAllReferences();
+    boolean allowDollars = Boolean.TRUE.equals(getOption(ALLOW_DOLLAR_NAMES));
+    return new JavaClassReferenceSet(str, position, offsetInPosition, allowDollars, this).getAllReferences();
   }
 
   public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {

@@ -175,7 +175,8 @@ public class JavaClassReferenceSet {
   }
 
   public boolean isAllowDollarInNames() {
-    return myElement.getLanguage() instanceof XMLLanguage;
+    final Boolean aBoolean = myProvider.getOption(JavaClassReferenceProvider.ALLOW_DOLLAR_NAMES);
+    return !Boolean.FALSE.equals(aBoolean) && myElement.getLanguage() instanceof XMLLanguage;
   }
 
   public void reparse(PsiElement element, final TextRange range) {
