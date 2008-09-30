@@ -4,8 +4,8 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.WatchPanel;
@@ -26,9 +26,9 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.tree.TreeModel;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -198,10 +198,12 @@ public abstract class EvaluationDialog extends DialogWrapper {
       if (node == null) {
         return;
       }
-      final int count = model.getChildCount(node);
-      for (int idx = 0; idx < count; idx++) {
-        final DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)model.getChild(node, idx);
-        updateTree(model, child);
+      if (node.getDescriptor().myIsExpanded) {
+        final int count = model.getChildCount(node);
+        for (int idx = 0; idx < count; idx++) {
+          final DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)model.getChild(node, idx);
+          updateTree(model, child);
+        }
       }
       node.labelChanged();
     }

@@ -22,6 +22,10 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor{
   private final Field myField;
   private ObjectReference myObject;
@@ -92,6 +96,10 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     }
   }
 
+
+  private static final Set<String> ourPrimitiveTypeNames = new HashSet<String>(Arrays.asList(
+      "byte", "short", "int", "long", "float", "double", "boolean", "char"
+  ));
   public boolean isPrimitive() {
     if (myIsPrimitive == null) {
       final Value value = getValue();
@@ -99,12 +107,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
         myIsPrimitive = super.isPrimitive();
       }
       else {
-        try {
-          myIsPrimitive = (myField.type() instanceof PrimitiveType)? Boolean.TRUE : Boolean.FALSE;
-        }
-        catch (Exception e) {
-          return super.isPrimitive();
-        }
+        myIsPrimitive = ourPrimitiveTypeNames.contains(myField.typeName())? Boolean.TRUE : Boolean.FALSE;
       }
     }
     return myIsPrimitive.booleanValue();
