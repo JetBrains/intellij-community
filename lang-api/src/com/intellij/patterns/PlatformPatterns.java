@@ -21,6 +21,10 @@ public class PlatformPatterns extends StandardPatterns {
     return new PsiFilePattern.Capture<PsiFile>(PsiFile.class);
   }
 
+  public static <T extends PsiFile> PsiFilePattern.Capture<T> psiFile(Class<T> fileClass) {
+    return new PsiFilePattern.Capture<T>(fileClass);
+  }
+
   public static PsiElementPattern.Capture<PsiElement> psiElement(IElementType type) {
     return psiElement().withElementType(type);
   }

@@ -99,15 +99,13 @@
 
     <compiler implementation="com.intellij.uiDesigner.make.Form2ByteCodeCompiler"/>
     <compiler implementation="com.intellij.uiDesigner.make.Form2SourceCompiler"/>
+
+    <psi.referenceContributor implementation="com.intellij.uiDesigner.binding.FormReferenceContributor"/>
   </extensions>
 
   <project-components>
     <component>
       <implementation-class>com.intellij.uiDesigner.palette.Palette</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.binding.FormReferenceProvider</implementation-class>
       <skipForDummyProject/>
     </component>
     <component>

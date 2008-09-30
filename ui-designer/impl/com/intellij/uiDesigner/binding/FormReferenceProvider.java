@@ -2,24 +2,22 @@ package com.intellij.uiDesigner.binding;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -35,7 +33,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class FormReferenceProvider extends PsiReferenceProvider implements ProjectComponent {
+public class FormReferenceProvider extends PsiReferenceProvider {
   private static class CachedFormData {
     PsiReference[] myReferences;
     Map<String, Pair<PsiType, TextRange>> myFieldNameToTypeMap;
@@ -47,10 +45,6 @@ public class FormReferenceProvider extends PsiReferenceProvider implements Proje
   }
 
   private static final Key<CachedValue<CachedFormData>> CACHED_DATA = Key.create("Cached form reference");
-
-  public FormReferenceProvider(ReferenceProvidersRegistry registry) {
-    registry.registerReferenceProvider(PsiPlainTextFile.class, this);
-  }
 
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
