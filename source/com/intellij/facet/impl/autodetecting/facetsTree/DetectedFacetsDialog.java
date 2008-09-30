@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,16 @@ public class DetectedFacetsDialog extends DialogWrapper {
   @Nullable
   protected JComponent createCenterPanel() {
     return myMainPanel;
+  }
+
+  @Override
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  }
+
+  @Override
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("procedures.workingwithmodules.facet");
   }
 
   protected void doOKAction() {
