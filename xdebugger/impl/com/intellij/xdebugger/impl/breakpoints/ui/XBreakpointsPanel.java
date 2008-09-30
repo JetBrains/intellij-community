@@ -44,7 +44,7 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
   private List<XBreakpointGroupingRule<B, ?>> myAllGroupingRules;
 
   public XBreakpointsPanel(@NotNull Project project, @NotNull DialogWrapper parentDialog, @NotNull XBreakpointType<B, ?> type) {
-    super(type.getTitle(), null, XBreakpoint.class);
+    super(type.getTitle(), type.getBreakpointsDialogHelpTopic(), XBreakpoint.class);
     myProject = project;
     myParentDialog = parentDialog;
     myType = type;

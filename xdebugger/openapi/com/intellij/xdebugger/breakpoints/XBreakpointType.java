@@ -126,4 +126,9 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   public B addBreakpoint(final Project project, JComponent parentComponent) {
     return null;
   }
+
+  @Nullable @NonNls
+  public String getBreakpointsDialogHelpTopic() {
+    return null;
+  }
 }
