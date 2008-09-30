@@ -1,6 +1,5 @@
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -11,14 +10,14 @@ public class EnsureUpToDateFromNonAWTThread {
   private volatile boolean myDone;
 
   public EnsureUpToDateFromNonAWTThread(final Project project) {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    assert ! ApplicationManager.getApplication().isDispatchThread();
+    //assert ApplicationManager.getApplication().isUnitTestMode();
+    //assert ! ApplicationManager.getApplication().isDispatchThread();
     myProject = project;
     myDone = false;
   }
 
   public void execute() {
-    assert ! ApplicationManager.getApplication().isDispatchThread();
+    //assert ! ApplicationManager.getApplication().isDispatchThread();
     final Object lock = new Object();
 
     synchronized (lock) {
