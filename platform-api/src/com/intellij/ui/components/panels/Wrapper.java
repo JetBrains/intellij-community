@@ -15,12 +15,14 @@
  */
 package com.intellij.ui.components.panels;
 
+import com.intellij.openapi.ui.NullableComponent;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusListener;
 import java.awt.event.FocusEvent;
 
-public class Wrapper extends JPanel {
+public class Wrapper extends JPanel implements NullableComponent {
 
   public Wrapper() {
     setLayout(new BorderLayout());
@@ -58,6 +60,10 @@ public class Wrapper extends JPanel {
     if (wrapped != null) {
       add(wrapped, BorderLayout.CENTER);
     }
+  }
+
+  public boolean isNull() {
+    return getComponentCount() == 0;
   }
 
   public void requestFocus() {

@@ -9,6 +9,7 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DetailsComponent;
+import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -34,6 +35,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 
 public class OptionsEditor extends JPanel implements DataProvider, Place.Navigator, Disposable, AWTEventListener {
 
@@ -141,7 +143,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       myDetails.setContent(myContentWrapper);
       myDetails.setBannerMinHeight(myToolbar.getHeight());
-      myDetails.setText(configurable.getDisplayName());
+      myDetails.setText(getBannerText(configurable));
 
       if (reset) {
         reset(configurable);
@@ -150,6 +152,20 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       myDetails.setBannerActions(new Action[] {new ResetAction(configurable)});
       myDetails.updateBannerActions();
     }
+  }
+
+  private String getBannerText(Configurable configurable) {
+    final List<Configurable> list = myTree.getPathToRoot(configurable);
+    StringBuffer result = new StringBuffer();
+    for (int i = list.size() - 1; i >= 0; i--) {
+      Configurable each = list.get(i);
+      result.append(each.getDisplayName());
+      if (i > 0) {
+        result.append(" : ");
+      }
+    }
+
+    return result.toString();
   }
 
   private void checkModified(final Configurable configurable) {
@@ -186,7 +202,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
   }
 
-  private class ContentWrapper extends NonOpaquePanel {
+  private class ContentWrapper extends NonOpaquePanel implements NullableComponent {
 
     private JLabel myErrorLabel;
 
@@ -213,6 +229,11 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       myContent = c;
       myException = e;
+    }
+
+    @Override
+    public boolean isNull() {
+      return super.isNull() || NullableComponent.Check.isNull(myContent);
     }
   }
 
@@ -275,6 +296,13 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   public void dispose() {
     PropertiesComponent.getInstance(myProject).setValue(SPLITTER_PROPORTION, String.valueOf(mySplitter.getProportion()));
     Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+
+
+    final Set<Configurable> configurables = myConfigurable2Componenet.keySet();
+    for (Iterator<Configurable> iterator = configurables.iterator(); iterator.hasNext();) {
+      Configurable each = iterator.next();
+      each.disposeUIResources();
+    }
   }
 
   public OptionsEditorContext getContext() {

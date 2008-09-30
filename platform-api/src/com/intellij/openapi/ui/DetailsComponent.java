@@ -195,7 +195,7 @@ public class DetailsComponent  {
 
   private class MyWrapper extends Wrapper implements NullableComponent {
     public MyWrapper(final JComponent c) {
-      super(c == null ? DetailsComponent.this.myEmptyContentLabel : c);
+      super(c == null || NullableComponent.Check.isNull(c) ? DetailsComponent.this.myEmptyContentLabel : c);
     }
 
     public boolean isNull() {

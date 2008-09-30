@@ -55,6 +55,10 @@ public class EditorOptionsPanel {
     return myTabbedPaneWrapper.getComponent();
   }
 
+  public TabbedPaneWrapper getTabs() {
+    return myTabbedPaneWrapper;
+  }
+
   public EditorOptionsPanel(){
     if (SystemInfo.isMac) {
       myCbEnableWheelFontChange.setText(ApplicationBundle.message("checkbox.enable.ctrl.mousewheel.changes.font.size.macos"));

@@ -143,6 +143,25 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     return myTree;
   }
 
+  public List<Configurable> getPathToRoot(final Configurable configurable) {
+    final ArrayList<Configurable> path = new ArrayList<Configurable>();
+
+    EditorNode eachNode = myConfigurable2Node.get(configurable);
+    if (eachNode == null) return path;
+
+    while (eachNode != null) {
+      path.add(eachNode.getConfigurable());
+      final SimpleNode parent = eachNode.getParent();
+      if (parent instanceof EditorNode) {
+        eachNode = (EditorNode)parent;
+      } else {
+        break;
+      }
+    }
+
+    return path;
+  }
+
 
   class Renderer extends GroupedElementsRenderer.Tree implements TreeCellRenderer {
 
