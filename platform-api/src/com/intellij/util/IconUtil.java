@@ -82,9 +82,12 @@ public class IconUtil {
 
   public static Icon getIcon(final VirtualFile file, final int flags, final Project project) {
     return IconDeferrer.getInstance().defer(file.getIcon(), new FileIconKey(file, project, flags), new Function<FileIconKey, Icon>() {
-      public Icon fun(final FileIconKey fileIconKey) {
-        Icon providersIcon = getProvidersIcon(file, flags, project);
+      public Icon fun(final FileIconKey key) {
+        VirtualFile file = key.getFile();
+        int flags = key.getFlags();
+        Project project = key.getProject();
 
+        Icon providersIcon = getProvidersIcon(file, flags, project);
         Icon icon = providersIcon == null ? file.getIcon() : providersIcon;
         for (FileIconPatcher patcher : getPatchers()) {
           icon = patcher.patchIcon(icon, file, flags, project);
