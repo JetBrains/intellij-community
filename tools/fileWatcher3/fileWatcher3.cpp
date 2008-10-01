@@ -177,6 +177,7 @@ void PrintChangeInfo(char *rootPath, FILE_NOTIFY_INFORMATION *info)
 	puts(command);
 	printf("%s", rootPath);
 	puts(FileNameBuffer);
+	fflush(stdout);
 	LeaveCriticalSection(&csOutput);
 }
 
@@ -299,6 +300,7 @@ void UpdateRoots()
 	if (haveUsedRoots)
 	{
 		puts("#");
+		fflush(stdout);
 		LeaveCriticalSection(&csOutput);
 	}
 }
