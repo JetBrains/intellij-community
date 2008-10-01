@@ -88,10 +88,10 @@ public class PyForStatementImpl extends PyElementImpl implements PyForStatement 
   @NotNull
   public Iterable<PyElement> iterateNames() {
     PyExpression tgt = getTargetExpression();
-    if (tgt instanceof PyTupleExpression) {
-      return new ArrayIterable<PyElement>(((PyTupleExpression)(tgt)).getElements());
+    if (tgt instanceof PyReferenceExpression) return new SingleIterable<PyElement>(tgt);
+    else {
+      return PyUtil.flattenedParens(new PyElement[]{tgt});
     }
-    else return new SingleIterable<PyElement>(tgt);
   }
 
   public PyElement getElementNamed(final String the_name) {
