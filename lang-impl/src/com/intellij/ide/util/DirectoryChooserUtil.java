@@ -44,7 +44,7 @@ public class DirectoryChooserUtil {
       possibleDirs.add(dir);
     }
 
-    if (possibleDirs.size() == 0) return null;
+    if (possibleDirs.isEmpty()) return null;
     if (possibleDirs.size() == 1) return possibleDirs.get(0);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) return possibleDirs.get(0);
@@ -56,7 +56,8 @@ public class DirectoryChooserUtil {
     return chooser.isOK() ? chooser.getSelectedDirectory() : null;
   }
 
-  public static @Nullable
+  @Nullable
+  public static
   PsiDirectory chooseDirectory(PsiDirectory[] targetDirectories,
                                                        @Nullable PsiDirectory initialDirectory, Project project,
                                                        Map<PsiDirectory, String> relativePathsToCreate) {

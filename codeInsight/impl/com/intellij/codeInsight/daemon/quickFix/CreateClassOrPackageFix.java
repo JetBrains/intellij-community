@@ -121,6 +121,14 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
     if (myDirectory == null) return;
     if (StringUtil.isEmpty(myCanonicalText)) return;
 
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        doCreate(moduleForFile);
+      }
+    });
+  }
+
+  private void doCreate(Module moduleForFile) {
     final PsiManager manager = myDirectory.getManager();
     PsiDirectory directory = myDirectory;
     String lastName;
