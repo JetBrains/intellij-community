@@ -151,7 +151,7 @@ public class PopupChooserBuilder {
 
     myChooserComponent.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
-        if (!e.isConsumed()) {
+        if (!isSelectionButtonDown(e) && !e.isConsumed()) {
           closePopup(true);
         }
       }
@@ -320,6 +320,10 @@ public class PopupChooserBuilder {
     return this;
   }
 
+  private static boolean isSelectionButtonDown(MouseEvent e) {
+    return e.isShiftDown() || e.isControlDown() || e.isMetaDown();
+  }
+
   private class MyListWrapper extends JScrollPane implements DataProvider {
     @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
     private JList myList;
@@ -329,7 +333,7 @@ public class PopupChooserBuilder {
       list.addMouseMotionListener(new MouseMotionAdapter() {
         boolean myIsEngaged = false;
         public void mouseMoved(MouseEvent e) {
-          if (myIsEngaged) {
+          if (myIsEngaged && !isSelectionButtonDown(e)) {
             Point point = e.getPoint();
             int index = list.locationToIndex(point);
             list.setSelectedIndex(index);
