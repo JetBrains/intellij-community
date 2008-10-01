@@ -87,6 +87,8 @@ public class IconUtil {
         int flags = key.getFlags();
         Project project = key.getProject();
 
+        if (!file.isValid() || project.isDisposed()) return null;
+
         Icon providersIcon = getProvidersIcon(file, flags, project);
         Icon icon = providersIcon == null ? file.getIcon() : providersIcon;
         for (FileIconPatcher patcher : getPatchers()) {
