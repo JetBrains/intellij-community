@@ -38,6 +38,9 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
     private static final Set<String> INNER_CLASS_REDUNDANT_MODIFIERS =
             new HashSet<String>(Arrays.asList(PsiModifier.PUBLIC,
                     PsiModifier.STATIC));
+    private static final Set<String> INNER_INTERFACE_REDUNDANT_MODIFIERS =
+            new HashSet<String>(Arrays.asList(PsiModifier.PUBLIC,
+                    PsiModifier.ABSTRACT, PsiModifier.STATIC));
     private static final Set<String> FIELD_REDUNDANT_MODIFIERS =
             new HashSet<String>(Arrays.asList(PsiModifier.PUBLIC,
                     PsiModifier.STATIC, PsiModifier.FINAL));
@@ -58,24 +61,26 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
         final PsiModifierList modifierList = (PsiModifierList)infos[1];
         final PsiElement parent = modifierList.getParent();
         if (parent instanceof PsiClass) {
-            return InspectionGadgetsBundle.message(
-                    "unnecessary.interface.modifier.problem.descriptor");
+            final PsiClass aClass = (PsiClass) parent;
+            final PsiClass containingClass = aClass.getContainingClass();
+            if (containingClass !=  null) {
+                if (aClass.isInterface()) {
+                    return InspectionGadgetsBundle.message(
+                            "unnecessary.interface.modifier.problem.descriptor1");
+                } else {
+                    return InspectionGadgetsBundle.message(
+                            "unnecessary.interface.modifier.problem.descriptor3");
+                }
+            } else {
+                return InspectionGadgetsBundle.message(
+                        "unnecessary.interface.modifier.problem.descriptor");
+            }
         } else if (parent instanceof PsiMethod) {
-            if (modifierList.getChildren().length > 1) {
-                return InspectionGadgetsBundle.message(
-                        "unnecessary.interface.modifier.problem.descriptor1");
-            } else {
-                return InspectionGadgetsBundle.message(
-                        "unnecessary.interface.modifier.problem.descriptor2");
-            }
+            return InspectionGadgetsBundle.message(
+                    "unnecessary.interface.modifier.problem.descriptor2");
         } else {
-            if (modifierList.getChildren().length > 1) {
-                return InspectionGadgetsBundle.message(
-                        "unnecessary.interface.modifier.problem.descriptor3");
-            } else {
-                return InspectionGadgetsBundle.message(
-                        "unnecessary.interface.modifier.problem.descriptor4");
-            }
+            return InspectionGadgetsBundle.message(
+                    "unnecessary.interface.modifier.problem.descriptor4");
         }
     }
 
@@ -86,23 +91,22 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
 
     @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
-        return new UnnecessaryInterfaceModifersFix((PsiElement) infos[0]);
+        return new UnnecessaryInterfaceModifersFix((String) infos[0]);
     }
 
     private static class UnnecessaryInterfaceModifersFix
             extends InspectionGadgetsFix {
 
-        private final String m_name;
+        private final String modifiersText;
 
-        private UnnecessaryInterfaceModifersFix(PsiElement fieldModifiers) {
-            m_name = InspectionGadgetsBundle.message(
-                    "smth.unnecessary.remove.quickfix",
-                    fieldModifiers.getText());
+        private UnnecessaryInterfaceModifersFix(String modifiersText) {
+            this.modifiersText = modifiersText;
         }
 
         @NotNull
         public String getName() {
-            return m_name;
+            return InspectionGadgetsBundle.message(
+                    "smth.unnecessary.remove.quickfix", modifiersText);
         }
 
         @Override
@@ -120,17 +124,25 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
                 modifierList = (PsiModifierList)parent;
             }
             modifierList.setModifierProperty(PsiModifier.STATIC, false);
-            modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
-            modifierList.setModifierProperty(PsiModifier.FINAL, false);
-            final PsiElement parent = modifierList.getParent();
-            assert parent != null;
-            if (parent instanceof PsiClass) {
-                if (ClassUtils.isInnerClass((PsiClass)parent))
-                {        // do the inner classes
+            final PsiElement modifierOwner = modifierList.getParent();
+            assert modifierOwner != null;
+            if (modifierOwner instanceof PsiClass) {
+                final PsiClass aClass = (PsiClass) modifierOwner;
+                if (aClass.isInterface()) {
+                    modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
+                }
+                final PsiClass containingClass =
+                        ClassUtils.getContainingClass(modifierOwner);
+                if (containingClass != null && containingClass.isInterface()) {
+                    // do the inner classes
                     modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
                 }
+            } else if (modifierOwner instanceof PsiMethod) {
+                modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
+                modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
             } else {
                 modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
+                modifierList.setModifierProperty(PsiModifier.FINAL, false);
             }
         }
     }
@@ -142,8 +154,13 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
             final PsiClass parent = ClassUtils.getContainingClass(aClass);
             if (parent != null && parent.isInterface()) {
                 final PsiModifierList modifiers = aClass.getModifierList();
-                checkForRedundantModifiers(modifiers,
-                        INNER_CLASS_REDUNDANT_MODIFIERS);
+                if (aClass.isInterface()) {
+                    checkForRedundantModifiers(modifiers,
+                            INNER_INTERFACE_REDUNDANT_MODIFIERS);
+                } else {
+                    checkForRedundantModifiers(modifiers,
+                            INNER_CLASS_REDUNDANT_MODIFIERS);
+                }
             } else if (aClass.isInterface()) {
                 final PsiModifierList modifiers = aClass.getModifierList();
                 checkForRedundantModifiers(modifiers,
@@ -183,9 +200,19 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
                 return;
             }
             final PsiElement[] children = list.getChildren();
+            final StringBuilder redundantModifiers = new StringBuilder();
+            for (PsiElement child : children) {
+                final String modifierText = child.getText();
+                if (modifiers.contains(modifierText)) {
+                    if (redundantModifiers.length() > 0) {
+                        redundantModifiers.append(' ');
+                    }
+                    redundantModifiers.append(modifierText);
+                }
+            }
             for (PsiElement child : children) {
                 if (modifiers.contains(child.getText())) {
-                    registerError(child, child, list);
+                    registerError(child, redundantModifiers.toString(), list);
                 }
             }
         }

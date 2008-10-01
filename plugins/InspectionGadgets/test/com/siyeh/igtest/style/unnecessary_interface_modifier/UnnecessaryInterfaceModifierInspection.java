@@ -8,10 +8,16 @@ public abstract interface UnnecessaryInterfaceModifierInspection {
 
     void foo2();
 
-    public static interface Inner {
+    public abstract static interface Inner {
 
     }
 }
-class Next {
+interface Next {
     static interface Nested {}
+
+    public abstract static class Inner {}
+    public abstract static interface Inner2 {}
+
+
+    public final class Sub extends Inner {}
 }
