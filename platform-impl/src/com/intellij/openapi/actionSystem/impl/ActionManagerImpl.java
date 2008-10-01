@@ -718,9 +718,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       ref = element.getAttributeValue(ID_ATTR_NAME);
     }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("ref=\"" + ref + "\"");
-    }
     if (ref == null || ref.length() == 0) {
       reportActionError(pluginId, "ID of reference element should be defined");
       return null;
