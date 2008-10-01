@@ -130,8 +130,10 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   protected final void checkIsValid() {
-      LOG.assertTrue(isValid());
+    if (!isValid()) {
+      LOG.assertTrue(false, this + "\nclass=" + getClass() + "\nxml=" + getXmlElement());
     }
+  }
 
   @Nullable
   final DomInvocationHandler getParentHandler() {
