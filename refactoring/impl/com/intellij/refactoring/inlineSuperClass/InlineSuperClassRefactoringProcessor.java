@@ -14,10 +14,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.inlineSuperClass.usageInfo.RemoveImportUsageInfo;
-import com.intellij.refactoring.inlineSuperClass.usageInfo.ReplaceConstructorUsageInfo;
-import com.intellij.refactoring.inlineSuperClass.usageInfo.ReplaceExtendsListUsageInfo;
-import com.intellij.refactoring.inlineSuperClass.usageInfo.ReplaceWithSubtypeUsageInfo;
+import com.intellij.refactoring.inlineSuperClass.usageInfo.*;
 import com.intellij.refactoring.memberPushDown.PushDownConflicts;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.FixableUsageInfo;
@@ -98,6 +95,8 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
               final PsiClassType newType = elementFactory
                 .createType(myTargetClass, getSuperClassSubstitutor(((PsiNewExpression)parent).getType(), targetClassType, resolveHelper));
               usages.add(new ReplaceConstructorUsageInfo(((PsiNewExpression)parent), myTargetClass, newType));
+            } else if (parent instanceof PsiReferenceExpression) {
+              usages.add(new ReplaceReferenceUsageInfo(((PsiReferenceExpression)parent).getQualifierExpression(), myTargetClass));
             }
           }
         }
