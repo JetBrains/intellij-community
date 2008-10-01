@@ -479,7 +479,7 @@ class ToolsPanel extends JPanel {
         if (dlg.isOK()) {
           selected.copyFrom(dlg.getData());
           String newGroupName = selected.getGroup();
-          if (!oldGroupName.equals(newGroupName)) {
+          if (!Comparing.equal(oldGroupName,newGroupName)) {
             CheckedTreeNode oldGroupNode = (CheckedTreeNode)node.getParent();
             removeNodeFromParent(node);
             ((ToolsGroup)oldGroupNode.getUserObject()).removeElement(selected);
