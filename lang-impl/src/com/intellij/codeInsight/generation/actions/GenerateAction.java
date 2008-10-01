@@ -2,12 +2,13 @@ package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 
-public class GenerateAction extends AnAction {
+public class GenerateAction extends AnAction implements PreloadableAction {
   public void actionPerformed(final AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
 
@@ -43,5 +44,9 @@ public class GenerateAction extends AnAction {
 
   private static DefaultActionGroup getGroup() {
     return (DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_GENERATE);
+  }
+
+  public void preload() {
+    ((ActionManagerImpl) ActionManager.getInstance()).preloadActionGroup(IdeActions.GROUP_GENERATE);
   }
 }

@@ -96,6 +96,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
   private List<ActionPopupMenuImpl> myPopups = new ArrayList<ActionPopupMenuImpl>();
   private Map<AnAction, DataContext> myQueuedNotifications = new LinkedHashMap<AnAction, DataContext>();
+  private Runnable myPreloadActionsRunnable;
 
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
     myId2Action = new THashMap<String, Object>();
@@ -174,9 +175,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   public AnAction getAction(@NotNull String id) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: getAction(" + id + ")");
-    }
     return getActionImpl(id, false);
   }
 
@@ -257,9 +255,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   public String getId(@NotNull AnAction action) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: getId(" + action + ")");
-    }
     LOG.assertTrue(!(action instanceof ActionStub));
     synchronized (myLock) {
       return myAction2Id.get(action);
@@ -267,9 +262,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   public String[] getActionIds(@NotNull String idPrefix) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: getActionIds(" + idPrefix + ")");
-    }
     synchronized (myLock) {
       ArrayList<String> idList = new ArrayList<String>();
       for (String id : myId2Action.keySet()) {
@@ -307,9 +299,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       bundle = getBundle(loader, resBundleName);
     }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: processActionElement(" + element.getName() + ")");
-    }
     if (!ACTION_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return null;
@@ -429,9 +418,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       bundle = getBundle(loader, resBundleName);
     }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: processGroupElement(" + element.getName() + ")");
-    }
     if (!GROUP_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return null;
@@ -575,10 +561,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
    * @param pluginId
    */
   private void processAddToGroupNode(AnAction action, Element element, final PluginId pluginId) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: processAddToGroupNode(" + action + "," + element.getName() + ")");
-    }
-
     // Real subclasses of AnAction should not be here
     if (!(action instanceof Separator)) {
       assertActionIsGroupOrStub(action);
@@ -659,10 +641,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   private void processKeyboardShortcutNode(Element element, String actionId, PluginId pluginId) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: processKeyboardShortcutNode(" + element.getName() + ")");
-    }
-
     String firstStrokeString = element.getAttributeValue(FIRST_KEYSTROKE_ATTR_NAME);
     if (firstStrokeString == null) {
       reportActionError(pluginId, "\"first-keystroke\" attribute must be specified for action with id=" + actionId);
@@ -699,10 +677,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   private static void processMouseShortcutNode(Element element, String actionId, PluginId pluginId) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: processMouseShortcutNode(" + element.getName() + ")");
-    }
-
     String keystrokeString = element.getAttributeValue(KEYSTROKE_ATTR_NAME);
     if (keystrokeString == null || keystrokeString.trim().length() == 0) {
       reportActionError(pluginId, "\"keystroke\" attribute must be specified for action with id=" + actionId);
@@ -733,9 +707,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
   @Nullable
   private AnAction processReferenceElement(Element element, PluginId pluginId) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: processReferenceElement(" + element.getName() + ")");
-    }
     if (!REFERENCE_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return null;
@@ -768,9 +739,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   private void processActionsElement(Element element, ClassLoader loader, PluginId pluginId) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: processActionsNode(" + element.getName() + ")");
-    }
     if (!ACTIONS_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
@@ -812,9 +780,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   public void registerAction(@NotNull String actionId, @NotNull AnAction action, @Nullable PluginId pluginId) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: registerAction(" + action + ")");
-    }
     synchronized (myLock) {
       if (myId2Action.containsKey(actionId)) {
         reportActionError(pluginId, "action with the ID \"" + actionId + "\" was already registered. Action being registered is " + action.toString() + 
@@ -871,9 +836,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   public void unregisterAction(@NotNull String actionId) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: unregisterAction(" + actionId + ")");
-    }
     synchronized (myLock) {
       if (!myId2Action.containsKey(actionId)) {
         if (LOG.isDebugEnabled()) {
@@ -1022,6 +984,72 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
   public Set<String> getActionIds(){
     return new HashSet<String>(myId2Action.keySet());
+  }
+
+  private int myActionsPreloaded = 0;
+
+  public void preloadActions() {
+    if (myPreloadActionsRunnable == null) {
+      myPreloadActionsRunnable = new Runnable() {
+        public void run() {
+          doPreloadActions();
+        }
+      };
+      ApplicationManager.getApplication().executeOnPooledThread(myPreloadActionsRunnable);
+    }
+  }
+
+  private void doPreloadActions() {
+    try {
+      Thread.sleep(5000); // wait for project initialization to complete
+    }
+    catch (InterruptedException e) {
+      // ignore
+    }
+    preloadActionGroup(IdeActions.GROUP_EDITOR_POPUP);
+    preloadActionGroup(IdeActions.GROUP_EDITOR_TAB_POPUP);
+    preloadActionGroup(IdeActions.GROUP_PROJECT_VIEW_POPUP);
+    preloadActionGroup(IdeActions.GROUP_MAIN_MENU);
+    // TODO anything else?
+    LOG.debug("Actions preloading completed");
+  }
+
+  public void preloadActionGroup(final String groupId) {
+    final AnAction action = getAction(groupId);
+    if (action instanceof DefaultActionGroup) {
+      preloadActionGroup((DefaultActionGroup) action);
+    }
+  }
+
+  private void preloadActionGroup(final DefaultActionGroup group) {
+    final AnAction[] actions = group.getChildActionsOrStubs(null);
+    for (AnAction action : actions) {
+      if (action instanceof ActionStub) {
+        AnAction convertedAction = null;
+        synchronized (myLock) {
+          final String id = myAction2Id.get(action);
+          if (id != null) {
+            convertedAction = convert((ActionStub)action);
+          }
+        }
+        if (convertedAction instanceof PreloadableAction) {
+          final PreloadableAction preloadableAction = (PreloadableAction)convertedAction;
+          preloadableAction.preload();
+        }
+        myActionsPreloaded++;
+        if (myActionsPreloaded % 10 == 0) {
+          try {
+            Thread.sleep(300);
+          }
+          catch (InterruptedException e) {
+            // ignore
+          }
+        }
+      }
+      else if (action instanceof DefaultActionGroup) {
+        preloadActionGroup((DefaultActionGroup) action);
+      }
+    }
   }
 
   private class MyTimer extends Timer implements ActionListener {

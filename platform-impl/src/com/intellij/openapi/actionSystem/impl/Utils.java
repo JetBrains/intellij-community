@@ -91,18 +91,23 @@ public class Utils{
   }
 
   // returns false if exception was thrown and handled
-  private static boolean doUpdate(final AnAction group, final AnActionEvent e, final Presentation presentation) throws ProcessCanceledException {
+  private static boolean doUpdate(final AnAction action, final AnActionEvent e, final Presentation presentation) throws ProcessCanceledException {
     if (ApplicationManager.getApplication().isDisposed()) return false;
     
+    long startTime = System.currentTimeMillis();
     try {
-      group.update(e);
+      action.update(e);
     }
     catch (ProcessCanceledException ex) {
       throw ex;
     }
     catch (Throwable exc) {
-      handleUpdateException(group, presentation, exc);
+      handleUpdateException(action, presentation, exc);
       return false;
+    }
+    long endTime = System.currentTimeMillis();
+    if (endTime - startTime > 10 && LOG.isDebugEnabled()) {
+      LOG.debug("Long update for action " + action + ": " + (endTime-startTime) + " ms");
     }
     return true;
   }

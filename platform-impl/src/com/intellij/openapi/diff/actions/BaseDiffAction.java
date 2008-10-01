@@ -1,9 +1,6 @@
 package com.intellij.openapi.diff.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
@@ -15,7 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-abstract class BaseDiffAction extends AnAction {
+abstract class BaseDiffAction extends AnAction implements PreloadableAction {
   public void actionPerformed(AnActionEvent e) {
     DiffRequest diffData = getDiffData(e.getDataContext());
     if (diffData == null) return;
@@ -77,5 +74,9 @@ abstract class BaseDiffAction extends AnAction {
       return name + " (" + FileUtil.toSystemDependentName(parent.getPath()) + ")";
     }
     return name;
+  }
+
+  public void preload() {
+    DiffManager.getInstance();
   }
 }
