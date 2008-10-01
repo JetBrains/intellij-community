@@ -4,6 +4,7 @@
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.stubs.PsiFileStubImpl;
@@ -49,5 +50,9 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "PsiJavaFileStub [" + myPackageName + "]";
+  }
+
+  public PsiClass[] getClasses() {
+    return getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
   }
 }

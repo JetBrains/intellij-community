@@ -18,19 +18,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.stubs.PsiFileStubImpl;
-import com.intellij.psi.stubs.StubBase;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubTree;
+import com.intellij.psi.stubs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implements PsiJavaFile, PsiFileWithStubSupport, PsiFileEx {
+public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub> implements PsiJavaFile, PsiFileWithStubSupport, PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
 
   private volatile ClsPackageStatementImpl myPackageStatement = null;
@@ -109,8 +104,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implem
 
   @NotNull
   public PsiClass[] getClasses() {
-    final PsiJavaFileStub fileStub = getStub();
-    return fileStub != null ? fileStub.getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY) : PsiClass.EMPTY_ARRAY;
+    final PsiClassHolderFileStub fileStub = getStub();
+    return fileStub != null ? fileStub.getClasses() : PsiClass.EMPTY_ARRAY;
   }
 
   public PsiPackageStatement getPackageStatement() {
@@ -125,8 +120,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implem
     PsiPackageStatement statement = getPackageStatement();
     if (statement == null) {
       return "";
-    }
-    else {
+    } else {
       return statement.getPackageName();
     }
   }
@@ -198,7 +192,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implem
       goNextLine(indentLevel, buffer);
       goNextLine(indentLevel, buffer);
     }
-    
+
     final PsiClass[] classes = getClasses();
     if (classes.length > 0) {
       PsiClass aClass = classes[0];
@@ -298,8 +292,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implem
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitJavaFile(this);
-    }
-    else {
+    } else {
       visitor.visitFile(this);
     }
   }
@@ -353,12 +346,13 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiJavaFileStub> implem
   }
 
   @Nullable
-  public PsiJavaFileStub getStub() {
+  public PsiClassHolderFileStub getStub() {
     StubTree stubHolder = getStubTree();
-    return stubHolder != null ? (PsiJavaFileStub)stubHolder.getRoot() : null;
+    return stubHolder != null ? (PsiClassHolderFileStub)stubHolder.getRoot() : null;
   }
 
   private final Object lock = new Object();
+
   @Nullable
   public StubTree getStubTree() {
     WeakReference<StubTree> stub = myStub;
