@@ -219,9 +219,9 @@ public class LineStatusTrackerManager implements ProjectComponent {
   }
 
   private void installTracker(final VirtualFile virtualFile, final Document document) {
+    if (virtualFile == null) return;
     synchronized (TRACKERS_LOCK) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      if (virtualFile == null) return;
 
       if (myLineStatusTrackers.containsKey(document)) return;
 
