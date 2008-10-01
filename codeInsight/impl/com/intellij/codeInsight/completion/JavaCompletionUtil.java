@@ -416,14 +416,21 @@ public class JavaCompletionUtil {
           if (field == element) continue;
           final PsiModifierList modifierList = field.getModifierList();
           if (staticContext && (modifierList != null && !modifierList.hasModifierProperty(PsiModifier.STATIC))) continue;
-          final PsiMethod getter = PropertyUtil.generateGetterPrototype(field);
-          if (getter.getReturnType().equals(varType) && psiClass.findMethodBySignature(getter, true) == null) {
-            propertyHandlers.add(getter.getName());
+
+          if (field.getType().equals(varType)) {
+            final String getterName = PropertyUtil.suggestGetterName(field.getProject(), field);
+            if ((psiClass.findMethodsByName(getterName, true).length == 0 ||
+                 psiClass.findMethodBySignature(PropertyUtil.generateGetterPrototype(field), true) == null)) {
+              propertyHandlers.add(getterName);
+            }
           }
 
-          final PsiMethod setter = PropertyUtil.generateSetterPrototype(field);
-          if (setter.getReturnType().equals(varType) && psiClass.findMethodBySignature(setter, true) == null) {
-            propertyHandlers.add(setter.getName());
+          if (PsiType.VOID.equals(varType)) {
+            final String setterName = PropertyUtil.suggestSetterName(field.getProject(), field);
+            if ((psiClass.findMethodsByName(setterName, true).length == 0 ||
+                 psiClass.findMethodBySignature(PropertyUtil.generateSetterPrototype(field), true) == null)) {
+              propertyHandlers.add(setterName);
+            }
           }
         }
         result = propertyHandlers.toArray(new String[propertyHandlers.size()]);
@@ -657,7 +664,7 @@ public class JavaCompletionUtil {
     return null;
   }
 
-  public static int getNameEndMatchingDegree(final Object object, final String name, ExpectedTypeInfo[] expectedInfos, String prefix) {
+  public static int getNameEndMatchingDegree(final String name, ExpectedTypeInfo[] expectedInfos, String prefix) {
     int res = 0;
     if (name != null && expectedInfos != null) {
       if (prefix.equals(name)) {
@@ -671,8 +678,6 @@ public class JavaCompletionUtil {
       }
     }
 
-    if (object instanceof String) res = 1;
-    else if (object instanceof PsiKeyword) res = -1;
     return res;
   }
 

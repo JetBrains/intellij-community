@@ -1,6 +1,9 @@
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.JavaCompletionContributor;
+import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -36,11 +39,13 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
   private boolean myMembersFlag = false;
   private PsiType myQualifierType = null;
   private PsiClass myQualifierClass = null;
+  private PrefixMatcher myMatcher;
 
   public JavaCompletionProcessor(PsiElement element, ElementFilter filter){
     mySettings = CodeInsightSettings.getInstance();
     myResults = new ArrayList<CompletionElement>();
     myElement = element;
+    myMatcher = element.getUserData(JavaCompletionContributor.PREFIX_MATCHER);
     myFilter = filter;
     myScope = element;
     if (JavaResolveUtil.isInJavaDoc(myElement))
@@ -108,13 +113,15 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
       }
     }
 
-    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(myElement.getProject()).getResolveHelper();
-    if(!(element instanceof PsiMember) || resolveHelper.isAccessible((PsiMember)element, myElement, myQualifierClass)){
+    if (myFilter.isClassAcceptable(element.getClass())
+        && myFilter.isAcceptable(new CandidateInfo(element, state.get(PsiSubstitutor.KEY)), myElement)) {
       final String name = PsiUtil.getName(element);
-      if(name != null
-         && myFilter.isClassAcceptable(element.getClass())
-         && myFilter.isAcceptable(new CandidateInfo(element, state.get(PsiSubstitutor.KEY)), myElement))
-        add(new CompletionElement(myQualifierType, element, state.get(PsiSubstitutor.KEY), myQualifierClass));
+      if (StringUtil.isNotEmpty(name) && (myMatcher == null || myMatcher.prefixMatches(name))) {
+        PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(myElement.getProject()).getResolveHelper();
+        if(!(element instanceof PsiMember) || resolveHelper.isAccessible((PsiMember)element, myElement, myQualifierClass)){
+          add(new CompletionElement(myQualifierType, element, state.get(PsiSubstitutor.KEY), myQualifierClass));
+        }
+      }
     }
     return true;
   }

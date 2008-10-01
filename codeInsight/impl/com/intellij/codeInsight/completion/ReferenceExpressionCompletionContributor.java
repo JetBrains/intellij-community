@@ -442,13 +442,13 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
     return needSpace ? " " : "";
   }
 
-  private static class QualifiedMethodLookupItem extends LookupItem<PsiMethod> {
+  private static class QualifiedMethodLookupItem extends JavaMethodCallElement {
     private final String myQualifier;
 
     public QualifiedMethodLookupItem(final PsiMethod method, @NotNull final String qualifier) {
-      super(method, qualifier + "." + method.getName());
+      super(method);
       myQualifier = qualifier;
-      addLookupStrings(method.getName());
+      setLookupString(qualifier + "." + method.getName());
       setAttribute(JavaCompletionUtil.QUALIFIER_PREFIX_ATTRIBUTE, qualifier + ".");
     }
 

@@ -9,6 +9,7 @@ import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -31,10 +32,8 @@ public class JavaInheritanceWeigher extends ProximityWeigher {
       }
     }
 
-    if (element instanceof PsiClass) {
-      @NonNls final String qname = ((PsiClass)element).getQualifiedName();
-      if (qname == null || qname.startsWith("java.lang.")) return false;
-    }
+    if (element instanceof PsiClass && isTooGeneral((PsiClass)element)) return false;
+    if (element instanceof PsiMethod && isTooGeneral(((PsiMethod)element).getContainingClass())) return false;
 
     PsiClass contextClass = PsiTreeUtil.getContextOfType(position, PsiClass.class, false);
     while (contextClass != null) {
@@ -46,5 +45,12 @@ public class JavaInheritanceWeigher extends ProximityWeigher {
       contextClass = contextClass.getContainingClass();
     }
     return false;
+  }
+
+  private static boolean isTooGeneral(@Nullable final PsiClass element) {
+    if (element == null) return true;
+
+    @NonNls final String qname = element.getQualifiedName();
+    return qname == null || qname.startsWith("java.lang.");
   }
 }

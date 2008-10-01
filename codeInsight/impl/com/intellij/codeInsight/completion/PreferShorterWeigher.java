@@ -22,7 +22,7 @@ public class PreferShorterWeigher extends CompletionWeigher {
     final String name = JavaCompletionUtil.getLookupObjectName(object);
     final ExpectedTypeInfo[] expectedInfos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
 
-    if (name != null && expectedInfos != null && JavaCompletionUtil.getNameEndMatchingDegree(object, name, expectedInfos,
+    if (name != null && expectedInfos != null && JavaCompletionUtil.getNameEndMatchingDegree(name, expectedInfos,
                                                                                              item.getPrefixMatcher().getPrefix()) != 0) {
       return 239 - NameUtil.nameToWords(name).length;
     }

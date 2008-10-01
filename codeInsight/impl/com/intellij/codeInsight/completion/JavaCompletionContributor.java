@@ -19,10 +19,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -37,6 +40,7 @@ import java.util.Set;
  * @author peter
  */
 public class JavaCompletionContributor extends CompletionContributor {
+  public static final Key<PrefixMatcher> PREFIX_MATCHER = Key.create("PREFIX_MATCHER");
   private static final ElementPattern<PsiElement> INSIDE_METHOD_TYPE_ELEMENT = psiElement().inside(
       psiElement(PsiTypeElement.class).withParent(or(psiMethod(), psiElement(PsiVariable.class))));
   private static final ElementPattern<PsiElement> METHOD_START = or(
@@ -57,6 +61,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
       });
       final CompletionResultSet result = _result.withPrefixMatcher(completionData.findPrefix(insertedElement, startOffset));
+      insertedElement.putUserData(PREFIX_MATCHER, result.getPrefixMatcher());
 
       final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
       final PsiReference ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
@@ -75,6 +80,11 @@ public class JavaCompletionContributor extends CompletionContributor {
       for (final LookupElement item : lookupSet) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
+            final Object completion = item.getObject();
+            if (completion instanceof PsiElement &&
+                JavaCompletionUtil.isCompletionOfAnnotationMethod((PsiElement)completion, insertedElement)) {
+              ((LookupItem)item).setTailType(TailType.EQ);
+            }
             JavaCompletionUtil.highlightMemberOfContainer((LookupItem)item);
           }
         });
@@ -275,10 +285,6 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
     }
 
-    if (completion instanceof PsiElement &&
-        JavaCompletionUtil.isCompletionOfAnnotationMethod((PsiElement)completion, position)) {
-      item.setTailType(TailType.EQ);
-    }
   }
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
@@ -286,6 +292,25 @@ public class JavaCompletionContributor extends CompletionContributor {
     final Project project = context.getProject();
 
     JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap());
+
+    PsiReference reference = file.findReferenceAt(context.getStartOffset());
+    if (reference instanceof PsiMultiReference) {
+      for (final PsiReference psiReference : ((PsiMultiReference)reference).getReferences()) {
+        if (psiReference instanceof JavaClassReference) {
+          reference = psiReference;
+          break;
+        }
+      }
+    }
+    if (reference instanceof JavaClassReference) {
+      final JavaClassReference classReference = (JavaClassReference)reference;
+      if (classReference.getExtendClassNames() != null) {
+        final PsiReference[] references = classReference.getJavaClassReferenceSet().getReferences();
+        final PsiReference lastReference = references[references.length - 1];
+        final int endOffset = lastReference.getRangeInElement().getEndOffset() + lastReference.getElement().getTextRange().getStartOffset();
+        context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, endOffset);
+      }
+    }
 
     if (file instanceof PsiJavaFile) {
       final JavaElementVisitor visitor = new JavaRecursiveElementVisitor() {

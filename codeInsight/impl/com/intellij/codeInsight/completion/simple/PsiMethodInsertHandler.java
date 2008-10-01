@@ -51,10 +51,10 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
 
     int offset = editor.getCaretModel().getOffset();
     final boolean needLeftParenth = isToInsertParenth(file.findElementAt(context.getStartOffset()));
-    final boolean hasParams = MethodParenthesesHandler.hasParams(item, allItems, signatureSelected, myMethod);
+    final boolean hasParams = MethodParenthesesHandler.hasParams(item, allItems, !signatureSelected, myMethod);
     if (needLeftParenth) {
       final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(context.getProject());
-      new MethodParenthesesHandler(myMethod, signatureSelected,
+      new MethodParenthesesHandler(myMethod, !signatureSelected,
                                            styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
                                            styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams,
                                            shouldInsertRightParenthesis(item, hasParams, tailType)

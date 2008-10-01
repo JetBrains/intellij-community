@@ -199,6 +199,16 @@ public class ExpectedTypesProvider {
       return myResult;
     }
 
+    @Override
+    public void visitAnnotationMethod(final PsiAnnotationMethod method) {
+      if (myExpr == method.getDefaultValue()) {
+        final PsiType type = method.getReturnType();
+        if (type != null) {
+          myResult = new ExpectedTypeInfo[]{createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.SEMICOLON)};
+        }
+      }
+    }
+
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       if (myForCompletion) {
         final MyParentVisitor visitor = new MyParentVisitor(expression, myForCompletion, myClassProvider);
@@ -506,6 +516,7 @@ public class ExpectedTypesProvider {
       PsiJavaToken sign = expr.getOperationSign();
       if (myForCompletion && op1.equals(myExpr)) {
         final MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider);
+        myExpr = (PsiExpression)myExpr.getParent();
         expr.getParent().accept(visitor);
         myResult = visitor.getResult();
         if (!(expr.getParent() instanceof PsiExpressionList)) {
@@ -691,6 +702,7 @@ public class ExpectedTypesProvider {
 
     @Override public void visitArrayAccessExpression(PsiArrayAccessExpression expr) {
       if (myForCompletion) {
+        myExpr = (PsiExpression)myExpr.getParent();
         expr.getParent().accept(this);
         return;
       }
@@ -703,6 +715,7 @@ public class ExpectedTypesProvider {
       else if (myExpr.equals(expr.getArrayExpression())) {
         PsiElement parent = expr.getParent();
         MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider);
+        myExpr = (PsiExpression)myExpr.getParent();
         parent.accept(visitor);
         ExpectedTypeInfo[] componentTypeInfo = visitor.getResult();
         if (componentTypeInfo.length == 0) {

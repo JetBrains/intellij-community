@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +30,7 @@ import java.util.List;
  * @see PsiJavaFile#getClasses() 
  */
 public interface PsiClass
-  extends PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiMetaOwner, PsiTypeParameterListOwner, PsiMember {
+  extends PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner, PsiMember {
   /**
    * The empty array of PSI classes which can be reused to avoid unnecessary allocations.
    */

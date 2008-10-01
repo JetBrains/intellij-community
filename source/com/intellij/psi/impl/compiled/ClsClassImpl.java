@@ -10,12 +10,10 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
@@ -525,10 +523,6 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<? extends
   public PsiElement getNavigationElement() {
     PsiClass aClass = getSourceMirrorClass();
     return aClass != null ? aClass : this;
-  }
-
-  public PsiMetaData getMetaData() {
-    return MetaRegistry.getMeta(this);
   }
 
   public ItemPresentation getPresentation() {

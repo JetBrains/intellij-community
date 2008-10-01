@@ -29,6 +29,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.SortedList;
 import com.intellij.util.ui.AsyncProcessIcon;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
@@ -52,8 +53,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   private final Project myProject;
   private final Editor myEditor;
-  private final SortedSet<LookupElement> myItems;
-  private final SortedMap<LookupItemWeightComparable, SortedSet<LookupElement>> myItemsMap;
+  private final SortedList<LookupElement> myItems;
+  private final SortedMap<LookupItemWeightComparable, SortedList<LookupElement>> myItemsMap;
   private int myMinPrefixLength;
   private int myPreferredItemsCount;
   private int myInitialOffset;
@@ -76,7 +77,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private String myAdditionalPrefix = "";
   private PsiElement myElement;
   private final AsyncProcessIcon myProcessIcon;
-  private final Comparator<? super LookupElement> myComparator;
+  private final Comparator<LookupElement> myComparator;
   private volatile boolean myCalculating;
   private final JLabel myAdComponent;
 
@@ -111,14 +112,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         int stringCompare = o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
         if (stringCompare != 0) return stringCompare;
 
-        final int proximityCompare = proximityComparator.compare(o1.getObject(), o2.getObject());
-        if (proximityCompare != 0) return proximityCompare;
-
-        return o1.hashCode() - o2.hashCode();
+        return proximityComparator.compare(o1.getObject(), o2.getObject());
       }
     };
-    myItems = new TreeSet<LookupElement>(myComparator);
-    myItemsMap = new TreeMap<LookupItemWeightComparable, SortedSet<LookupElement>>();
+    myItems = new SortedList<LookupElement>(myComparator);
+    myItemsMap = new TreeMap<LookupItemWeightComparable, SortedList<LookupElement>>();
 
     myProcessIcon = new AsyncProcessIcon("Completion progress");
     myProcessIcon.setVisible(false);
@@ -204,8 +202,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private void addItemWeight(final LookupElement item) {
     final Comparable[] weight = getWeight(myItemPreferencePolicy, myElement, item);
     final LookupItemWeightComparable key = new LookupItemWeightComparable(item instanceof LookupItem ? ((LookupItem)item).getPriority() : 0, weight);
-    SortedSet<LookupElement> list = myItemsMap.get(key);
-    if (list == null) myItemsMap.put(key, list = new TreeSet<LookupElement>(myComparator));
+    SortedList<LookupElement> list = myItemsMap.get(key);
+    if (list == null) myItemsMap.put(key, list = new SortedList<LookupElement>(myComparator));
     list.add(item);
   }
 
@@ -237,11 +235,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myItems.toArray(new LookupElement[myItems.size()]);
   }
 
-  public void setAdvertisementText(@Nullable String text) {
+  public synchronized void setAdvertisementText(@Nullable String text) {
     myAdComponent.setText(text);
   }
 
-  public String getAdvertisementText() {
+  public synchronized String getAdvertisementText() {
     return myAdComponent.getText();
   }
 

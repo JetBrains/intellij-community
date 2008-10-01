@@ -209,12 +209,11 @@ public class CompletionData {
     if (object instanceof LookupItem) return (LookupItem)object;
 
     String s = null;
-    LookupItem item = new LookupItem(object, "");
+    TailType tailType = TailType.NONE;
     if (object instanceof PsiElement){
       s = PsiUtilBase.getName((PsiElement) object);
     }
-    TailType tailType = TailType.NONE;
-    if (object instanceof PsiMetaData) {
+    else if (object instanceof PsiMetaData) {
       s = ((PsiMetaData)object).getName();
     }
     else if (object instanceof String) {
@@ -226,18 +225,18 @@ public class CompletionData {
     else if (object instanceof PresentableLookupValue) {
       s = ((PresentableLookupValue)object).getPresentation();
     }
+    else {
+      LOG.assertTrue(false, "Null string for object: " + object + " of class " + (object != null ?object.getClass():null));
+    }
+
+    LookupItem item = new LookupItem(object, s);
 
     if (object instanceof LookupValueWithUIHint && ((LookupValueWithUIHint) object).isBold()) {
       item.setBold();
     }
-
-    if (s == null) {
-      LOG.assertTrue(false, "Null string for object: " + object + " of class " + (object != null ?object.getClass():null));
-    }
     if (object instanceof LookupValueWithTail) {
       item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + ((LookupValueWithTail)object).getTailText());
     }
-    item.setLookupString(s);
     item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, tailType);
     return item;
   }

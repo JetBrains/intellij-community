@@ -5,8 +5,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
-import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,6 +15,16 @@ import org.jetbrains.annotations.NotNull;
 public class PreferEnumConstantsWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
-    return item instanceof MutableLookupElement && ((MutableLookupElement)item).getObject() instanceof PsiEnumConstant;
+    if (item.getObject() instanceof PsiEnumConstant) return 2;
+
+    final CompletionParameters parameters = location.getCompletionParameters();
+    if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return 1;
+
+    if (PsiKeyword.TRUE.equals(item.getLookupString()) || PsiKeyword.FALSE.equals(item.getLookupString())) {
+      boolean inReturn = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiReturnStatement.class, false, PsiMember.class) != null;
+      return inReturn ? 2 : 0;
+    }
+
+    return 1;
   }
 }

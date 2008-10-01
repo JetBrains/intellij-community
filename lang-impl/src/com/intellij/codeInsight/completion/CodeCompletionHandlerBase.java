@@ -39,7 +39,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -134,15 +133,14 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }.execute().getResultObject();
 
     final PsiElement insertedElement = insertedInfo.getSecond();
-    insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, insertedInfo.getFirst());
+    final CompletionContext newContext = insertedInfo.getFirst();
+    insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, newContext);
 
-    final CompletionParameters parameters = new CompletionParameters(insertedInfo.getSecond(), insertedInfo.getFirst().file, myCompletionType, insertedInfo.getFirst().getStartOffset(),
-                                                                             invocationCount);
-    final String adText = getAdvertisementText(parameters);
+    final CompletionParameters parameters = new CompletionParameters(insertedElement, newContext.file, myCompletionType, newContext.getStartOffset(), invocationCount);
 
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
-    final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, adText, this, insertedInfo.getFirst(), context, freezeSemaphore);
+    final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, context, freezeSemaphore);
 
     final Ref<LookupElement[]> data = Ref.create(null);
 
@@ -228,15 +226,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         indicator.fillInCommonPrefix(false);
       }
     }
-  }
-
-  @Nullable
-  private static String getAdvertisementText(final CompletionParameters parameters) {
-    for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
-      final String s = contributor.advertise(parameters);
-      if (s != null) return s;
-    }
-    return null;
   }
 
   private boolean shouldAutoComplete(final LookupElement item, final CompletionContext context) {

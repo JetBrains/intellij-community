@@ -15,14 +15,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Computable;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.io.PrintWriter;
@@ -53,14 +55,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
   private LightweightHint myHint;
   private Semaphore myFreezeSemaphore;
 
-  public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, String adText, CodeCompletionHandlerBase handler, final CompletionContext contextCopy, final CompletionContext contextOriginal, Semaphore freezeSemaphore) {
+  public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler,
+                                     final CompletionContext contextOriginal, Semaphore freezeSemaphore) {
     myEditor = editor;
     myParameters = parameters;
     myHandler = handler;
     myFreezeSemaphore = freezeSemaphore;
 
     myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, new LookupItem[0], "", new CompletionPreferencePolicy(
-        parameters), adText);
+        parameters), null);
 
     myLookup.addLookupListener(new LookupAdapter() {
       public void itemSelected(LookupEvent event) {
@@ -88,6 +91,28 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     registerItself();
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
+          if (!isRunning() || myLookup.getAdvertisementText() != null) return;
+          final String s = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+            public String compute() {
+              return contributor.advertise(myParameters);
+            }
+          });
+          if (s != null) {
+            myLookup.setAdvertisementText(s);
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                updateLookup();
+              }
+            });
+            return;
+          }
+        }
+      }
+    });
   }
 
   public void showLookup() {

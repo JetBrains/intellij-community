@@ -5,7 +5,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,11 +13,8 @@ import org.jetbrains.annotations.NotNull;
 public class NameEndMatchingDegreeWeigher extends CompletionWeigher {
 
   public Integer weigh(@NotNull final LookupElement element, final CompletionLocation location) {
-    if (!(element instanceof MutableLookupElement)) return 0;
-
-    final Object o = ((MutableLookupElement)element).getObject();
-    final String name = JavaCompletionUtil.getLookupObjectName(o);
-    return JavaCompletionUtil.getNameEndMatchingDegree(o, name, JavaCompletionUtil.EXPECTED_TYPES.getValue(location),
+    final String name = JavaCompletionUtil.getLookupObjectName(element.getObject());
+    return JavaCompletionUtil.getNameEndMatchingDegree(name, JavaCompletionUtil.EXPECTED_TYPES.getValue(location),
                                                        element.getPrefixMatcher().getPrefix());
   }
 

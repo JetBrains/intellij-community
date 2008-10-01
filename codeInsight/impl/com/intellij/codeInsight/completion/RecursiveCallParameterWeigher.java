@@ -61,7 +61,7 @@ public class RecursiveCallParameterWeigher extends CompletionWeigher {
       }
     }
 
-    return 1;
+    return 0;
   }
 
   @NotNull

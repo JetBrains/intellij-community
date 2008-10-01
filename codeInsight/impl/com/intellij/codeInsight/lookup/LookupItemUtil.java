@@ -4,6 +4,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
@@ -78,6 +79,9 @@ public class LookupItemUtil{
     if (object instanceof PsiClass) {
       return new JavaPsiClassReferenceElement((PsiClass)object).setTailType(TailType.NONE);
     }
+    if (object instanceof PsiMethod) {
+      return new JavaMethodCallElement((PsiMethod)object);
+    }
 
     String s = null;
     LookupItem item = new LookupItem(object, "");
@@ -88,15 +92,7 @@ public class LookupItemUtil{
       item.addLookupStrings(((PsiEnumConstant)object).getName());
     }
     TailType tailType = TailType.NONE;
-    if (object instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)object;
-      s = method.getName();
-      PsiType type = method.getReturnType();
-      if (type == PsiType.VOID) {
-        tailType = TailType.SEMICOLON;
-      }
-    }
-    else if (object instanceof PsiPackage) {
+    if (object instanceof PsiPackage) {
       tailType = TailType.DOT;
       s = StringUtil.notNullize(s);
     }

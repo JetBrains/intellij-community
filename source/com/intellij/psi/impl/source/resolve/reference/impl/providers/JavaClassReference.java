@@ -200,7 +200,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       context = JavaPsiFacade.getInstance(getElement().getProject()).findPackage("");
     }
     if (context instanceof PsiPackage) {
-      final String[] extendClasses = JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions());
+      final String[] extendClasses = getExtendClassNames();
       if (extendClasses != null) {
         return getSubclassVariants((PsiPackage)context, extendClasses);
       }
@@ -225,6 +225,10 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       }
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  public String[] getExtendClassNames() {
+    return JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions());
   }
 
   private Object[] processPackage(final PsiPackage aPackage) {
@@ -412,7 +416,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
     final List<LocalQuickFix> list = OrderEntryFix.registerFixes(new QuickFixActionRegistrarImpl(info), this);
 
-    final String[] extendClasses = JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions());
+    final String[] extendClasses = getExtendClassNames();
     final String extendClass = extendClasses != null && extendClasses.length > 0 ? extendClasses[0] : null;
     final PsiReference contextReference = getContextReference();
 

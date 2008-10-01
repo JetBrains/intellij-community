@@ -19,14 +19,12 @@ import com.intellij.psi.impl.java.stubs.JavaClassElementType;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.light.LightMethod;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -574,10 +572,6 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<PsiClass>> imp
     else {
       return false;
     }
-  }
-
-  public PsiMetaData getMetaData(){
-    return MetaRegistry.getMeta(this);
   }
 
   // optimization to not load tree when resolving bases of anonymous and locals

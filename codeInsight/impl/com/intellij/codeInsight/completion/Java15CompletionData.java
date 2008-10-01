@@ -76,6 +76,7 @@ public class Java15CompletionData extends JavaCompletionData {
       //Completion of "extends" & "super" inside wildcards
       final CompletionVariant variant = new CompletionVariant(new AndFilter(new LeftNeighbour(new LeftNeighbour(new TextFilter("<"))), new LeftNeighbour(new TextFilter("?"))));
       variant.includeScopeClass(PsiVariable.class, true);
+      variant.includeScopeClass(PsiExpressionStatement.class, true);
       variant.addCompletion(PsiKeyword.SUPER, TailType.SPACE);
       variant.addCompletion(PsiKeyword.EXTENDS, TailType.SPACE);
       registerVariant(variant);

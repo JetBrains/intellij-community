@@ -6,9 +6,9 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.patterns.PsiJavaPatterns;
 import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
@@ -28,16 +28,18 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class BasicExpressionCompletionContributor extends ExpressionSmartCompletionContributor{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.BasicExpressionCompletionContributor");
 
   private static void addKeyword(final CompletionResultSet result, final PsiElement element, final String s) {
+    result.addElement(createKeywordLookupItem(element, s));
+  }
+
+  public static LookupItem createKeywordLookupItem(final PsiElement element, final String s) {
     try {
       final PsiKeyword keyword = JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createKeyword(s);
-      result.addElement(
-            LookupItemUtil.objectToLookupItem(keyword).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE));
+      return LookupItemUtil.objectToLookupItem(keyword).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
     }
     catch (IncorrectOperationException e) {
-      LOG.error(e);
+      throw new RuntimeException(e);
     }
   }
 
