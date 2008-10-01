@@ -95,26 +95,16 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
   }
 
   static class FieldExpression extends Expression {
-    private LookupItem[] myItems;
     private String myDefaultFieldName;
+    private final PsiField myField;
+    private final PsiClass myClass;
+    private final PsiType[] myExpectedTypes;
 
     public FieldExpression(PsiField field, PsiClass aClass, PsiType[] expectedTypes) {
-      String fieldName = field.getName();
-      Set<LookupItem> set = new LinkedHashSet<LookupItem>();
-      LookupItemUtil.addLookupItem(set, field);
-      PsiField[] fields = aClass.getFields();
-      for (PsiField otherField : fields) {
-        if (!fieldName.equals(otherField.getName())) {
-          PsiType otherType = otherField.getType();
-          for (PsiType type : expectedTypes) {
-            if (type.equals(otherType)) {
-              LookupItemUtil.addLookupItem(set, otherField);
-            }
-          }
-        }
-      }
-      myDefaultFieldName = fieldName;
-      myItems = set.toArray(new LookupItem[set.size()]);
+      myField = field;
+      myClass = aClass;
+      myExpectedTypes = expectedTypes;
+      myDefaultFieldName = field.getName();
     }
 
     public Result calculateResult(ExpressionContext context) {
@@ -126,8 +116,22 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     }
 
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      if (myItems.length < 2) return null;
-      return myItems;
+      Set<LookupItem> set = new LinkedHashSet<LookupItem>();
+      LookupItemUtil.addLookupItem(set, myField);
+      PsiField[] fields = myClass.getFields();
+      for (PsiField otherField : fields) {
+        if (!myDefaultFieldName.equals(otherField.getName())) {
+          PsiType otherType = otherField.getType();
+          for (PsiType type : myExpectedTypes) {
+            if (type.equals(otherType)) {
+              LookupItemUtil.addLookupItem(set, otherField);
+            }
+          }
+        }
+      }
+      
+      if (set.size() < 2) return null;
+      return set.toArray(new LookupItem[set.size()]);
     }
   }
 
