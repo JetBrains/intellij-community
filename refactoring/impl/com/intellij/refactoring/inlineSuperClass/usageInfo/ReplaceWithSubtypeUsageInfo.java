@@ -33,7 +33,7 @@ public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
   @Override
   public String getConflictMessage() {
     if (!TypeConversionUtil.isAssignable(myOriginalType, myTargetClassType)) {
-      return "No consistent substitution found for " + getElement().getText();
+      return "No consistent substitution found for " + getElement().getText() +". Expected \'" + myOriginalType.getPresentableText() + "\' but found \'" + myTargetClassType.getPresentableText() + "\'.";
     }
     return super.getConflictMessage();
   }
