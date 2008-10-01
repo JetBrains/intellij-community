@@ -1,8 +1,9 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,9 +54,23 @@ public class UpdateRequestsQueue {
     return myStopped;
   }
 
+  private boolean updateUnversionedFilesEngaged = false;
+  private boolean updateWithoutUnversionedFilesEngaged = false;
+
   public void schedule(final boolean updateUnversionedFiles) {
     synchronized (myLock) {
+      if (! myStarted && ApplicationManager.getApplication().isUnitTestMode()) return;
+
       if (! myStopped) {
+        if (updateUnversionedFiles) {
+          if (updateUnversionedFilesEngaged) return;
+          updateUnversionedFilesEngaged = true;
+        }
+        else {
+          if (updateWithoutUnversionedFilesEngaged) return;
+          updateWithoutUnversionedFilesEngaged = true;
+        }
+
         final MyRunnable runnable = new MyRunnable(myAction, updateUnversionedFiles);
         final ScheduledFuture<?> future = myExecutor.schedule(runnable, 300, TimeUnit.MILLISECONDS);
         final ScheduledData data = new ScheduledData(runnable, future);
@@ -154,6 +169,13 @@ public class UpdateRequestsQueue {
       ScheduledData me = null;
       try {
         synchronized (myLock) {
+          if (myUpdateUnversionedFiles) {
+            updateUnversionedFilesEngaged = false;
+          }
+          else {
+            updateWithoutUnversionedFilesEngaged = false;
+          }
+
           if ((! myStopped) && ((! myStarted) || myPlVcsManager.isBackgroundVcsOperationRunning())) {
             // remove "me"
             mySentRequests.remove(me);
