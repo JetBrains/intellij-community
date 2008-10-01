@@ -1135,8 +1135,8 @@ public class StringUtil {
     return buf.toString();
   }
 
-  @NonNls private static final String[] REPLACES_REFS = new String[]{"&lt;", "&nbsp;", "&gt;", "&amp;", "&apos;", "&quot;"};
-  @NonNls private static final String[] REPLACES_DISP = new String[]{"<", "\u00a0", ">", "&", "'", "\""};
+  @NonNls private static final String[] REPLACES_REFS = new String[]{"&lt;", "&gt;", "&amp;", "&apos;", "&quot;"};
+  @NonNls private static final String[] REPLACES_DISP = new String[]{"<", ">", "&", "'", "\""};
 
   public static String unescapeXml(final String text) {
     if (text == null) return null;
