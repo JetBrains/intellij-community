@@ -68,7 +68,7 @@ public class ProblemsHolder {
 
   public void registerProblem(PsiReference reference) {
     assert reference instanceof EmptyResolveMessageProvider;
-    registerProblem(reference, ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern(), ProblemHighlightType.ERROR);
+    registerProblem(reference, ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern(), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
   }
 
   @Nullable
