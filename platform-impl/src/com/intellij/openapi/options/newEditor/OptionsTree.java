@@ -61,6 +61,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
     myBuilder = new FilteringTreeBuilder(myProject, myTree, myContext.getFilter(), structure, new WeightBasedComparator(false));
+    myBuilder.setFilteringMerge(300);
     Disposer.register(this, myBuilder);
 
     myBuilder.updateFromRoot();

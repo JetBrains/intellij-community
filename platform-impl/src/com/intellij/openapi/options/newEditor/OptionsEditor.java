@@ -21,6 +21,7 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -29,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
@@ -36,6 +39,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class OptionsEditor extends JPanel implements DataProvider, Place.Navigator, Disposable, AWTEventListener {
 
@@ -53,7 +57,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   JTextField mySearch;
   Splitter mySplitter;
   JComponent myToolbar;
-
+                             
   DetailsComponent myDetails = new DetailsComponent().setEmptyContentText("Select configuration element in the tree to edit its settings");
   ContentWrapper myContentWrapper = new ContentWrapper();
 
@@ -66,12 +70,27 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProject = project;
 
-    myContext = new OptionsEditorContext(new Filter<Configurable>());
+    final Filter filter = new Filter();
+    myContext = new OptionsEditorContext(filter);
 
     myTree = new OptionsTree(myProject, groups, getContext());
     getContext().addColleague(myTree);
     Disposer.register(this, myTree);
     mySearch = new JTextField();
+    mySearch.getDocument().addDocumentListener(new DocumentListener() {
+      public void insertUpdate(final DocumentEvent e) {
+        filter.update();
+      }
+
+      public void removeUpdate(final DocumentEvent e) {
+        filter.update();
+      }
+
+      public void changedUpdate(final DocumentEvent e) {
+        filter.update();
+      }
+    });
+
 
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     toolbarActions.add(new BackAction(myTree));
@@ -273,16 +292,38 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
 
-  private class Filter<Configurable> implements ElementFilter {
-    public boolean shouldBeShowing(final Object value) {
-      return true;
+  private class Filter implements ElementFilter.Active<SimpleNode> {
+
+    Set<Listener> myListeners = new CopyOnWriteArraySet<Listener>();
+    SpeedSearch mySpeedSearch = new SpeedSearch();
+
+    public boolean shouldBeShowing(final SimpleNode value) {
+      if (value instanceof OptionsTree.EditorNode) {
+        return mySpeedSearch.shouldBeShowing(((OptionsTree.EditorNode)value).getConfigurable().getDisplayName());        
+      } else {
+        return true;
+      }
     }
 
-    public SpeedSearch getSpeedSearch() {
-      return new SpeedSearch() {
-        protected void update() {
+    public void update() {
+      final String text = mySearch.getText();
+      mySpeedSearch.updatePattern(text != null ? text : "");
+      fireUpdate();
+    }
+
+    public void fireUpdate() {
+      for (Iterator<Listener> iterator = myListeners.iterator(); iterator.hasNext();) {
+        iterator.next().update();
+      }
+    }
+
+    public void addListener(final Listener listener, final Disposable parent) {
+      myListeners.add(listener);
+      Disposer.register(parent, new Disposable() {
+        public void dispose() {
+          myListeners.remove(listener);
         }
-      };
+      });
     }
   }
 

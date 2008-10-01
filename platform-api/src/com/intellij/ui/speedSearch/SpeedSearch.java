@@ -9,7 +9,7 @@ import org.apache.oro.text.regex.*;
 
 import java.awt.event.KeyEvent;
 
-public abstract class SpeedSearch {
+public class SpeedSearch {
   private String myString = "";
   private boolean myEnabled;
   private PatternMatcher myMatcher;
@@ -58,7 +58,9 @@ public abstract class SpeedSearch {
     }
   }
 
-  protected abstract void update();
+  protected void update() {
+
+  }
 
   public void noHits() {
   }

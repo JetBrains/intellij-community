@@ -14,7 +14,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 public class OptionsEditorContext {
 
-  ElementFilter myFilter;
+  ElementFilter.Active myFilter;
 
   CopyOnWriteArraySet<OptionsEditorColleague> myColleagues = new CopyOnWriteArraySet<OptionsEditorColleague>();
 
@@ -22,7 +22,7 @@ public class OptionsEditorContext {
   Set<Configurable> myModified = new CopyOnWriteArraySet<Configurable>();
   Map<Configurable, ConfigurationException> myErrors = new HashMap<Configurable, ConfigurationException>();
 
-  public OptionsEditorContext(ElementFilter filter) {
+  public OptionsEditorContext(ElementFilter.Active filter) {
     myFilter = filter;
   }
 

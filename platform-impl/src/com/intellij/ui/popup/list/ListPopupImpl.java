@@ -169,7 +169,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myMouseMotionListener = new MyMouseMotionListener();
     myMouseListener = new MyMouseListener();
 
-    myListModel = new ListPopupModel(this, getListStep());
+    myListModel = new ListPopupModel(this, getSpeedSearch(), getListStep());
     myList = new MyList();
     if (myStep.getTitle() != null) {
       myList.getAccessibleContext().setAccessibleName(myStep.getTitle());

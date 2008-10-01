@@ -7,6 +7,7 @@ package com.intellij.ui.popup.list;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.ui.speedSearch.ElementFilter;
+import com.intellij.ui.speedSearch.SpeedSearch;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -23,10 +24,12 @@ class ListPopupModel extends AbstractListModel {
 
   private int myFullMatchIndex = -1;
   private int myStartsWithIndex = -1;
+  private SpeedSearch mySpeedSearch;
 
-  public ListPopupModel(ElementFilter filter, ListPopupStep step) {
+  public ListPopupModel(ElementFilter filter, SpeedSearch speedSearch, ListPopupStep step) {
     myFilter = filter;
     myStep = step;
+    mySpeedSearch = speedSearch;
     myOriginalList = Collections.unmodifiableList(step.getValues());
     rebuildLists();
   }
@@ -45,7 +48,7 @@ class ListPopupModel extends AbstractListModel {
 
   private void addToFiltered(Object each) {
     myFilteredList.add(each);
-    String filterString = myFilter.getSpeedSearch().getFilter().toUpperCase();
+    String filterString = mySpeedSearch.getFilter().toUpperCase();
     String candidateString = myStep.getTextFor(each).toUpperCase();
     int index = myFilteredList.size() - 1;
 
@@ -85,7 +88,7 @@ class ListPopupModel extends AbstractListModel {
   public void refilter() {
     rebuildLists();
     if (myFilteredList.isEmpty() && !myOriginalList.isEmpty()) {
-      myFilter.getSpeedSearch().noHits();
+      mySpeedSearch.noHits();
     }
     else {
       fireContentsChanged(this, 0, myFilteredList.size());
