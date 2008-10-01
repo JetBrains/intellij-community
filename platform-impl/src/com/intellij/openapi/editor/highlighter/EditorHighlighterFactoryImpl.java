@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.testFramework.LightVirtualFile;
 
 /**
@@ -36,7 +37,16 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
       return ((LanguageFileType)fileType).getEditorHighlighter(project, vFile, settings);
     }
 
-    SyntaxHighlighter highlighter = SyntaxHighlighter.PROVIDER.create(fileType, project, vFile);
+    final ContentBasedSyntaxHighlighterProvider[] providers = Extensions.getExtensions(ContentBasedSyntaxHighlighterProvider.EP_NAME);
+    SyntaxHighlighter highlighter = null;
+    for (ContentBasedSyntaxHighlighterProvider provider : providers) {
+      if (provider.isApplicable(fileType, project, vFile)) {
+        highlighter = provider.createHighlighter(fileType, project, vFile);
+      }
+    }
+    if (highlighter == null) {
+      highlighter = SyntaxHighlighter.PROVIDER.create(fileType, project, vFile);
+    }
     return createEditorHighlighter(highlighter, settings);
   }
 
