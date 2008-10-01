@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +103,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     }
   }
 
-  private void readList(final List<Element> children, final List<ShelvedChangeList> sink) throws InvalidDataException {
+  private static void readList(final List<Element> children, final List<ShelvedChangeList> sink) throws InvalidDataException {
     for(Element child: children) {
       ShelvedChangeList data = new ShelvedChangeList();
       data.readExternal(child);
@@ -204,25 +205,13 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   }
 
   public static File suggestPatchName(final String commitMessage, final File file) {
-    @NonNls String defaultPath = commitMessage.replace(' ', '_')
-                                              .replace('.', '_')
-                                              .replace(File.separatorChar, '_')
-                                              .replace('\t', '_')
-                                              .replace('\n', '_')
-                                              .replace(':', '_')
-                                              .replace('*', '_')
-                                              .replace('?', '_')
-                                              .replace('<', '_')
-                                              .replace('>', '_')
-                                              .replace('/', '_')
-                                              .replace('"', '_');
+    @NonNls String defaultPath = PathUtil.suggestFileName(commitMessage);
     if (defaultPath.length() == 0) {
       defaultPath = "unnamed";
     }
     return FileUtil.findSequentNonexistentFile(file, defaultPath, PATCH_EXTENSION);
   }
 
-  @Nullable
   public void unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,
                                            @Nullable final List<ShelvedBinaryFile> binaryFiles, final LocalChangeList targetChangeList) {
     List<FilePatch> remainingPatches = new ArrayList<FilePatch>();
@@ -264,7 +253,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     }
   }
 
-  private List<TextFilePatch> loadTextPatches(final ShelvedChangeList changeList, final List<ShelvedChange> changes, final List<FilePatch> remainingPatches)
+  private static List<TextFilePatch> loadTextPatches(final ShelvedChangeList changeList, final List<ShelvedChange> changes, final List<FilePatch> remainingPatches)
       throws IOException, PatchSyntaxException {
     final List<TextFilePatch> textFilePatches;
     textFilePatches = loadPatches(changeList.PATH);
@@ -361,7 +350,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return false;
   }
 
-  private void writePatchesToFile(final String path, final List<FilePatch> remainingPatches) {
+  private static void writePatchesToFile(final String path, final List<FilePatch> remainingPatches) {
     OutputStreamWriter writer;
     try {
       writer = new OutputStreamWriter(new FileOutputStream(path));
@@ -481,7 +470,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     notifyStateChanged();
   }
 
-  private void deleteListImpl(final ShelvedChangeList changeList) {
+  private static void deleteListImpl(final ShelvedChangeList changeList) {
     FileUtil.delete(new File(changeList.PATH));
     for(ShelvedBinaryFile binaryFile: changeList.getBinaryFiles()) {
       final String path = binaryFile.SHELVED_PATH;

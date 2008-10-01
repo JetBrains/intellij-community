@@ -290,7 +290,6 @@
 
     <group id="EditorPopupMenu" configurable="true">
       <reference ref="CutCopyPasteGroup"/>
-      <action id="RefreshRemoteFile" class="com.intellij.ide.actions.RefreshRemoteFileAction" text="Refresh remote file" internal="true"/>
       <separator/>
       <reference ref="CloseEditor"/>
       <separator/>

@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.*;
@@ -150,7 +152,11 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   public XSourcePosition getSourcePosition() {
     if (mySourcePosition == null) {
-      mySourcePosition = XSourcePositionImpl.create(getFile(), getLine());
+      new ReadAction() {
+        protected void run(final Result result) {
+          mySourcePosition = XSourcePositionImpl.create(getFile(), getLine());
+        }
+      }.execute();
     }
     return mySourcePosition;
   }

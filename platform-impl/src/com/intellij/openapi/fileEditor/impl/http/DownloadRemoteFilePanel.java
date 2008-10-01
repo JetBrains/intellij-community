@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.FileDownloadingListener;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.util.net.HTTPProxySettingsDialog;
@@ -23,6 +24,7 @@ import java.awt.event.ActionListener;
  * @author nik
  */
 public class DownloadRemoteFilePanel {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.http.DownloadRemoteFilePanel");
   private static final Icon ERROR_ICON = IconLoader.getIcon("/runConfigurations/configurationWarning.png");
   @NonNls private static final String ERROR_CARD = "error";
   @NonNls private static final String DOWNLOADING_CARD = "downloading";
@@ -46,17 +48,18 @@ public class DownloadRemoteFilePanel {
     myProgressUpdatesQueue = new MergingUpdateQueue("downloading progress updates", 300, false, myMainPanel);
 
     final RemoteFileInfo remoteFileInfo = virtualFile.getFileInfo();
+    myDownloadingListener = new MyDownloadingListener();
+    remoteFileInfo.addDownloadingListener(myDownloadingListener);
     myCancelButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         remoteFileInfo.cancelDownloading();
       }
     });
 
-    myDownloadingListener = new MyDownloadingListener();
     myTryAgainButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         showCard(DOWNLOADING_CARD);
-        remoteFileInfo.restartDownloading(myDownloadingListener);
+        remoteFileInfo.restartDownloading();
       }
     });
     myChangeProxySettingsButton.addActionListener(new ActionListener() {
@@ -65,7 +68,16 @@ public class DownloadRemoteFilePanel {
       }
     });
     showCard(DOWNLOADING_CARD);
-    remoteFileInfo.startDownloading(myDownloadingListener);
+    remoteFileInfo.startDownloading();
+    if (remoteFileInfo.isDownloaded()) {
+      switchEditor();
+    }
+    else {
+      String errorMessage = remoteFileInfo.getErrorMessage();
+      if (errorMessage != null) {
+        myDownloadingListener.errorOccured(errorMessage);
+      }
+    }
   }
 
   private void showCard(final String name) {
@@ -73,11 +85,18 @@ public class DownloadRemoteFilePanel {
   }
 
   private void switchEditor() {
+    LOG.debug("Switching editor...");
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+        final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
         fileEditorManager.closeFile(myVirtualFile);
-        fileEditorManager.openFile(myVirtualFile, true);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            //todo[nik] use ActionCallback
+            fileEditorManager.openFile(myVirtualFile, true);
+            LOG.debug("Editor for downloaded file opened.");
+          }
+        });
       }
     });
   }
@@ -95,6 +114,7 @@ public class DownloadRemoteFilePanel {
   }
 
   public void dispose() {
+    myVirtualFile.getFileInfo().removeDownloadingListener(myDownloadingListener);
     myProgressUpdatesQueue.dispose();
   }
 

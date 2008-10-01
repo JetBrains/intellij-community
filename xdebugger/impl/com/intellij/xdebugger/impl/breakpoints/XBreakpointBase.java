@@ -1,6 +1,5 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -66,7 +65,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   public Navigatable getNavigatable() {
     XSourcePosition position = getSourcePosition();
-    return position != null ? new OpenFileDescriptor(getProject(), position.getFile(), position.getOffset()) : null;
+    if (position == null) {
+      return null;
+    }
+    return position.createNavigatable(getProject());
   }
 
   public boolean isEnabled() {

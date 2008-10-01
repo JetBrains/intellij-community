@@ -16,7 +16,9 @@
 
 package com.intellij.xdebugger;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,4 +35,6 @@ public interface XSourcePosition {
   @NotNull
   VirtualFile getFile();
 
+  @NotNull
+  Navigatable createNavigatable(@NotNull Project project);
 }

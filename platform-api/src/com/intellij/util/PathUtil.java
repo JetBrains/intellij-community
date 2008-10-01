@@ -87,4 +87,18 @@ public class PathUtil {
     return result.toString();
   }
 
+  public static String suggestFileName(final String text) {
+    return text.replace(' ', '_')
+               .replace('.', '_')
+               .replace(File.separatorChar, '_')
+               .replace('\t', '_')
+               .replace('\n', '_')
+               .replace(':', '_')
+               .replace('*', '_')
+               .replace('?', '_')
+               .replace('<', '_')
+               .replace('>', '_')
+               .replace('/', '_')
+               .replace('"', '_');
+  }
 }

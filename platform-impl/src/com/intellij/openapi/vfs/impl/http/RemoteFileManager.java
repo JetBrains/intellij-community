@@ -1,10 +1,10 @@
 package com.intellij.openapi.vfs.impl.http;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -13,24 +13,26 @@ import java.util.Map;
  * @author nik
  */
 public class RemoteFileManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.http.RemoteFileManager");
   private LocalFileStorage myStorage;
   private final HttpFileSystemImpl myHttpFileSystem;
-  private Map<Pair<Boolean, String>, VirtualFileImpl> myRemoteFiles;
+  private Map<Trinity<Boolean, RemoteContentProvider, String>, VirtualFileImpl> myRemoteFiles;
 
   public RemoteFileManager(final HttpFileSystemImpl httpFileSystem) {
     myHttpFileSystem = httpFileSystem;
     myStorage = new LocalFileStorage();
-    myRemoteFiles = new THashMap<Pair<Boolean, String>, VirtualFileImpl>();
+    myRemoteFiles = new THashMap<Trinity<Boolean, RemoteContentProvider, String>, VirtualFileImpl>();
   }
 
 
-  public synchronized VirtualFileImpl getOrCreateFile(final String path, final boolean directory) throws IOException {
-    String url = VirtualFileManager.constructUrl(HttpFileSystem.PROTOCOL, path);
-    Pair<Boolean, String> key = Pair.create(directory, url);
+  public synchronized VirtualFileImpl getOrCreateFile(final @NotNull String url, final @NotNull String path, final boolean directory,
+                                                      final @NotNull RemoteContentProvider provider) throws IOException {
+    Trinity<Boolean, RemoteContentProvider, String> key = Trinity.create(directory, provider, url);
     VirtualFileImpl file = myRemoteFiles.get(key);
+
     if (file == null) {
       if (!directory) {
-        RemoteFileInfo fileInfo = new RemoteFileInfo(url, this);
+        RemoteFileInfo fileInfo = new RemoteFileInfo(url, this, provider);
         file = new VirtualFileImpl(myHttpFileSystem, path, fileInfo);
         fileInfo.addDownloadingListener(new MyDownloadingListener(myHttpFileSystem, file));
       }

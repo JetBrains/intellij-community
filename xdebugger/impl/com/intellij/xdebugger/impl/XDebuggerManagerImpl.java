@@ -16,8 +16,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
@@ -65,13 +71,21 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   };
 
 
-  public XDebuggerManagerImpl(final Project project, final StartupManager startupManager) {
+  public XDebuggerManagerImpl(final Project project, final StartupManager startupManager, MessageBus messageBus) {
     myProject = project;
     myBreakpointManager = new XBreakpointManagerImpl(project, this, startupManager);
     mySessionData = new LinkedHashMap<ProcessHandler, XDebugSessionData>();
     mySessions = new ArrayList<XDebugSessionImpl>();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
     mySessionTabs = new HashMap<ProcessHandler, XDebugSessionTab>();
+    messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+      @Override
+      public void fileOpened(final FileEditorManager source, final VirtualFile file) {
+        if (file instanceof HttpVirtualFile && file.equals(myExecutionPointHighlighter.getCurrentFile())) {
+          myExecutionPointHighlighter.update();
+        }
+      }
+    });
   }
 
   @NotNull

@@ -1,5 +1,7 @@
 package com.intellij.openapi.vfs.impl.http;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
@@ -8,6 +10,8 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nik
@@ -15,9 +19,12 @@ import java.io.IOException;
 public class HttpFileSystemImpl extends HttpFileSystem {
   private RemoteFileManager myRemoteFileManager;
   private EventDispatcher<HttpVirtualFileListener> myDispatcher = EventDispatcher.create(HttpVirtualFileListener.class);
+  private List<RemoteContentProvider> myProviders = new ArrayList<RemoteContentProvider>();
+  private final DefaultRemoteContentProvider myDefaultRemoteContentProvider;
 
   public HttpFileSystemImpl() {
     myRemoteFileManager = new RemoteFileManager(this);
+    myDefaultRemoteContentProvider = new DefaultRemoteContentProvider();
   }
 
   public VirtualFile findFileByPath(@NotNull String path) {
@@ -26,19 +33,58 @@ public class HttpFileSystemImpl extends HttpFileSystem {
 
   public VirtualFile findFileByPath(@NotNull String path, boolean isDirectory) {
     try {
-      return myRemoteFileManager.getOrCreateFile(path, isDirectory);
+      String url = VirtualFileManager.constructUrl(PROTOCOL, path);
+      RemoteContentProvider provider = findContentProvider(url);
+      return myRemoteFileManager.getOrCreateFile(url, path, isDirectory, provider);
     }
     catch (IOException e) {
       return null;
     }
   }
 
+  @NotNull
+  private RemoteContentProvider findContentProvider(final @NotNull String url) {
+    for (RemoteContentProvider provider : myProviders) {
+      if (provider.canProvideContent(url)) {
+        return provider;
+      }
+    }
+    return myDefaultRemoteContentProvider;
+  }
+
   public boolean isFileDownloaded(@NotNull final VirtualFile file) {
     return file instanceof HttpVirtualFile && ((HttpVirtualFile)file).getFileInfo().isDownloaded();
   }
 
+  public void addRemoteContentProvider(@NotNull final RemoteContentProvider provider, @NotNull Disposable parentDisposable) {
+    addRemoteContentProvider(provider);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removeRemoteContentProvider(provider);
+      }
+    });
+  }
+
+  public void addRemoteContentProvider(@NotNull RemoteContentProvider provider) {
+    myProviders.add(provider);
+  }
+
+  public void removeRemoteContentProvider(@NotNull RemoteContentProvider provider) {
+    myProviders.remove(provider);
+  }
+
   public void addFileListener(@NotNull final HttpVirtualFileListener listener) {
     myDispatcher.addListener(listener);
+  }
+
+  @Override
+  public void addFileListener(@NotNull final HttpVirtualFileListener listener, @NotNull final Disposable parentDisposable) {
+    addFileListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removeFileListener(listener);
+      }
+    });
   }
 
   public void removeFileListener(@NotNull final HttpVirtualFileListener listener) {
