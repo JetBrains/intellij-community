@@ -275,11 +275,11 @@ public class PropertyUtil {
     return StringUtil.getPropertyName(methodName);
   }
 
-  public static String suggestGetterName(String propertyName, PsiType propertyType) {
+  public static String suggestGetterName(@NotNull String propertyName, @Nullable PsiType propertyType) {
     return suggestGetterName(propertyName, propertyType, null);
   }
 
-  public static String suggestGetterName(String propertyName, PsiType propertyType, @NonNls String existingGetterName) {
+  public static String suggestGetterName(@NotNull String propertyName, @Nullable PsiType propertyType, @NonNls String existingGetterName) {
     @NonNls StringBuffer name = new StringBuffer(StringUtil.capitalize(propertyName));
     if (propertyType == PsiType.BOOLEAN) {
       if (existingGetterName == null || !existingGetterName.startsWith("get")) {
