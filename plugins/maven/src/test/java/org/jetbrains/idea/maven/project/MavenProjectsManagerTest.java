@@ -1,9 +1,9 @@
 package org.jetbrains.idea.maven.project;
 
-import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 
-public class MavenProjectsManagerTest extends MavenTestCase {
+public class MavenProjectsManagerTest extends MavenImportingTestCase {
   public void testShouldReturnNullForUnprocessedFiles() throws Exception {
     MavenProjectsManager.getInstance(myProject).doInitComponent(false);
 
@@ -15,5 +15,33 @@ public class MavenProjectsManagerTest extends MavenTestCase {
 
     // shouldn't throw
     assertNull(MavenProjectsManager.getInstance(myProject).findProject(myProjectPom));
+  }
+
+  public void testHandingDirectoryWithPomFileDeletion() throws Exception {
+    MavenProjectsManager.getInstance(myProject).initEventsHandling();
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<packaging>pom</packaging>" +
+                  "<version>1</version>");
+
+    createModulePom("dir/module", "<groupId>test</groupId>" +
+                                  "<artifactId>module</artifactId>" +
+                                  "<version>1</version>");
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>dir/module</module>" +
+                     "</modules>");
+
+    assertEquals(2, MavenProjectsManager.getInstance(myProject).getProjects().size());
+
+    VirtualFile dir = myProjectRoot.findChild("dir");
+    dir.delete(null);
+
+    assertEquals(1, MavenProjectsManager.getInstance(myProject).getProjects().size());
   }
 }
