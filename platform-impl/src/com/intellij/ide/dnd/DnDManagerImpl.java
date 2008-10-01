@@ -657,7 +657,16 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     }
 
     public void dragOver(DropTargetDragEvent dtde) {
-      updateCurrentEvent(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), dtde.getDropAction(), dtde.getCurrentDataFlavors(), dtde.getTransferable());
+      final DnDEventImpl event = updateCurrentEvent(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), dtde.getDropAction(),
+                                                    dtde.getCurrentDataFlavors(), dtde.getTransferable());
+      if (myCurrentDragContext == null || myCurrentEvent == null) {
+        if (event != null && event.isDropPossible()) {
+          dtde.acceptDrag(event.getAction().getActionId());
+        }
+        else {
+          dtde.rejectDrag();
+        }
+      }
     }
 
     public void dragExit(DropTargetEvent dte) {
