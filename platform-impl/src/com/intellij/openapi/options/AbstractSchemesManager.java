@@ -1,6 +1,7 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.HashSet;
@@ -25,7 +26,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
 
     for (int i = 0; i < mySchemes.size(); i++) {
       T t = mySchemes.get(i);
-      if (scheme.getName().equals(t.getName()) && newSchemeIsShared == isShared(t)) {
+      if (Comparing.equal(scheme.getName(),t.getName()) && newSchemeIsShared == isShared(t)) {
         toReplace = i;
         break;
       }
@@ -77,7 +78,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   @Nullable
   public T findSchemeByName(final String schemeName) {
     for (T scheme : mySchemes) {
-      if (scheme.getName().equals(schemeName)) {
+      if (Comparing.equal(scheme.getName(),schemeName)) {
         return scheme;
       }
     }
@@ -129,7 +130,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
 
   private Scheme findSchemeToDelete(final String schemeName) {
     for (T scheme : mySchemes) {
-      if (schemeName.equals(scheme.getName())) return scheme;
+      if (Comparing.equal(schemeName,scheme.getName())) return scheme;
     }
 
     return null;
@@ -151,9 +152,9 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   protected abstract void onSchemeAdded(final T scheme);
 
   protected void renameScheme(final E scheme, String newName){
-    if (!newName.equals(scheme.getName())) {
+    if (!Comparing.equal(newName,scheme.getName())) {
       scheme.setName(newName);
-      LOG.assertTrue(newName.equals(scheme.getName()));
+      LOG.assertTrue(Comparing.equal(newName,scheme.getName()));
     }
   }
 
