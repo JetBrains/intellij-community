@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="library" exported="" name="NanoXML" level="project" />
     <orderEntry type="library" name="picocontainer" level="project" />
+    <orderEntry type="module" module-name="platform-resources_eng" />
   </component>
   <component name="copyright">
     <Base>
