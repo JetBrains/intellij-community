@@ -2,7 +2,6 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -13,13 +12,20 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import org.apache.maven.archetype.catalog.Archetype;
+import org.apache.maven.archetype.catalog.ArchetypeCatalog;
+import org.apache.maven.archetype.source.ArchetypeDataSource;
+import org.apache.maven.archetype.source.ArchetypeDataSourceException;
 import org.apache.maven.embedder.MavenEmbedder;
+import org.codehaus.plexus.PlexusContainer;
+import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.*;
@@ -58,21 +64,24 @@ public class MavenIndicesManager implements ApplicationComponent {
   }
 
   private synchronized MavenIndices getIndicesObject() {
-    if (myIndices != null) return myIndices;
+    ensureInitialized();
+    return myIndices;
+  }
+
+  private void ensureInitialized() {
+    if (myIndices != null) return;
 
     MavenCoreSettings settings = MavenCore.getInstance(ProjectManager.getInstance().getDefaultProject()).getState();
 
-    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(settings).getEmbedder();
+    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(settings, null).getEmbedder();
     File dir = myTestIndicesDir == null
-               ? new File(PathManager.getSystemPath(), "Maven/Indices")
+               ? MavenUtil.getPluginSystemDir("Indices")
                : myTestIndicesDir;
     myIndices = new MavenIndices(myEmbedder, dir, new MavenIndex.IndexListener() {
       public void indexIsBroken(MavenIndex index) {
         scheduleUpdate(Collections.singletonList(index), false);
       }
     });
-
-    return myIndices;
   }
 
   public void disposeComponent() {
@@ -242,5 +251,29 @@ public class MavenIndicesManager implements ApplicationComponent {
         }
       }
     });
+  }
+
+  public Set<Archetype> getArchetypes() {
+    ensureInitialized();
+    PlexusContainer container = myEmbedder.getPlexusContainer();
+    Set<Archetype> result = new HashSet<Archetype>();
+    result.addAll(getArchetypesFrom(container, "internal-catalog"));
+    result.addAll(getArchetypesFrom(container, "nexus"));
+    return result;
+  }
+
+  private List<Archetype> getArchetypesFrom(PlexusContainer container, String roleHint) {
+    try {
+      ArchetypeDataSource source = (ArchetypeDataSource)container.lookup(ArchetypeDataSource.class, roleHint);
+      ArchetypeCatalog catalog = source.getArchetypeCatalog(new Properties());
+      return catalog.getArchetypes();
+    }
+    catch (ComponentLookupException e) {
+      MavenLog.LOG.warn(e);
+    }
+    catch (ArchetypeDataSourceException e) {
+      MavenLog.LOG.warn(e);
+    }
+    return Collections.emptyList();
   }
 }

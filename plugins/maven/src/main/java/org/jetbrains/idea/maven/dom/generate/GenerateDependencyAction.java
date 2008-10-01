@@ -2,7 +2,7 @@ package org.jetbrains.idea.maven.dom.generate;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.util.xml.ui.actions.generate.GenerateDomElementAction;
-import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.dom.model.Dependency;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;

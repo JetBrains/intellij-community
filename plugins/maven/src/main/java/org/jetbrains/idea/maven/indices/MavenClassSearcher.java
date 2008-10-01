@@ -2,15 +2,16 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.Pair;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.WildcardQuery;
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.sonatype.nexus.index.ArtifactInfo;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
   protected Pair<String, Query> preparePatternAndQuery(String pattern) {
@@ -28,11 +29,26 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
   }
 
   protected Collection<MavenClassSearchResult> processResults(Set<ArtifactInfo> infos, String pattern, int maxResult) {
-    pattern = "^(.*?/" + pattern.replace(".", "/").replaceAll("\\*", "[^/]*?") + ")$";
-    Pattern p = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+    if (pattern.length() == 0 || pattern.equals("*")) {
+      pattern = "^(.*)$";
+    }
+    else {
+      pattern = pattern.replace(".", "/");
+      pattern = pattern.replaceAll("\\*", "[^/]*?");
+      pattern = "^(.*?/" + pattern + ")$";
+    }
+    Pattern p;
+    try {
+      p = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+    }
+    catch (PatternSyntaxException e) {
+      return Collections.emptyList();
+    }
 
     Map<String, MavenClassSearchResult> result = new HashMap<String, MavenClassSearchResult>();
     for (ArtifactInfo each : infos) {
+      if (each.classNames == null) continue;
+
       Matcher matcher = p.matcher(each.classNames);
       while (matcher.find()) {
         String classFQName = matcher.group();

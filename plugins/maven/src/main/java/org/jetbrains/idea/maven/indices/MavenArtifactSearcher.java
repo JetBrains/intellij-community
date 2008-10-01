@@ -18,26 +18,26 @@ public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResu
       parts.add(each);
     }
 
-    BooleanQuery result = new BooleanQuery();
+    BooleanQuery query = new BooleanQuery();
 
     if (parts.size() == 1) {
-      result.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, "*" + parts.get(0) + "*|*|*|*")), BooleanClause.Occur.SHOULD);
-      result.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, "*|*" + parts.get(0) + "*|*|*")), BooleanClause.Occur.SHOULD);
+      query.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, "*" + parts.get(0) + "*|*|*|*")), BooleanClause.Occur.SHOULD);
+      query.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, "*|*" + parts.get(0) + "*|*|*")), BooleanClause.Occur.SHOULD);
     }
     if (parts.size() == 2) {
-      result.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, "*" + parts.get(0) + "*|*" + parts.get(1) + "*|*|*")),
+      query.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, "*" + parts.get(0) + "*|*" + parts.get(1) + "*|*|*")),
                  BooleanClause.Occur.SHOULD);
-      result.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, "*" + parts.get(0) + "*|*|" + parts.get(1) + "*|*")),
+      query.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, "*" + parts.get(0) + "*|*|" + parts.get(1) + "*|*")),
                  BooleanClause.Occur.SHOULD);
-      result.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, "*|*" + parts.get(0) + "*|" + parts.get(1) + "*|*")),
+      query.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, "*|*" + parts.get(0) + "*|" + parts.get(1) + "*|*")),
                  BooleanClause.Occur.SHOULD);
     }
     if (parts.size() >= 3) {
       String s = "*" + parts.get(0) + "*|*" + parts.get(1) + "*|" + parts.get(2) + "*|*";
-      result.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, s)), BooleanClause.Occur.MUST);
+      query.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, s)), BooleanClause.Occur.MUST);
     }
 
-    return Pair.create(pattern, (Query)result);
+    return Pair.create(pattern, (Query)query);
   }
 
   protected Collection<MavenArtifactSearchResult> processResults(Set<ArtifactInfo> infos, String pattern, int maxResult) {

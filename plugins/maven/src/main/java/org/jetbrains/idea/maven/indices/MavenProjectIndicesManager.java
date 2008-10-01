@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project;
 import org.apache.lucene.search.Query;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
-import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.utils.DummyProjectComponent;
+import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.sonatype.nexus.index.ArtifactInfo;
@@ -33,6 +33,7 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
   @Override
   public void initComponent() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (myProject.isDefault()) return;
 
     doInit();

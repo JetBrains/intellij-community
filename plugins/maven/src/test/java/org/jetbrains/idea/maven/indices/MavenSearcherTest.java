@@ -23,6 +23,8 @@ public class MavenSearcherTest extends MavenTestCase {
   }
 
   public void testClassSearch() throws Exception {
+    assertTrue(!getClassSearchResults("").isEmpty());
+
     assertClassSearchResults("TestCas",
                              "TestCase(junit.framework) junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1",
                              "TestCaseClassLoader(junit.runner) junit:junit:3.8.2 junit:junit:3.8.1");
@@ -49,6 +51,8 @@ public class MavenSearcherTest extends MavenTestCase {
                              "JUnitCore(org.junit.runner) junit:junit:4.0");
 
     //assertClassSearchResults("org.junit.After", "junit:junit:4.0");
+
+    assertClassSearchResults("!@][#$%)(^&*()_"); // shouldn't throw
   }
 
   public void testArtifactSearch() throws Exception {
@@ -71,6 +75,10 @@ public class MavenSearcherTest extends MavenTestCase {
   }
 
   private void assertClassSearchResults(String pattern, String... expected) {
+    assertOrderedElementsAreEqual(getClassSearchResults(pattern), expected);
+  }
+
+  private List<String> getClassSearchResults(String pattern) {
     List<String> actualArtifacts = new ArrayList<String>();
     for (MavenClassSearchResult eachResult : new MavenClassSearcher().search(myProject, pattern, 100)) {
       String s = eachResult.className + "(" + eachResult.packageName + ")";
@@ -80,7 +88,7 @@ public class MavenSearcherTest extends MavenTestCase {
       }
       actualArtifacts.add(s);
     }
-    assertOrderedElementsAreEqual(actualArtifacts, expected);
+    return actualArtifacts;
   }
 
   private void assertArtifactSearchResults(String pattern, String... expected) {

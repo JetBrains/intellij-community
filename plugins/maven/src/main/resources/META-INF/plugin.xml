@@ -20,14 +20,15 @@
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectImportProvider implementation="org.jetbrains.idea.maven.project.open.MavenProjectImportProvider"/>
-    <projectOpenProcessor implementation="org.jetbrains.idea.maven.project.open.MavenProjectOpenProcessor"/>
-    <projectImportBuilder implementation="org.jetbrains.idea.maven.project.open.MavenImportBuilder"/>
+    <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
+    <projectOpenProcessor implementation="org.jetbrains.idea.maven.wizards.MavenProjectOpenProcessor"/>
+    <projectImportBuilder implementation="org.jetbrains.idea.maven.wizards.MavenImportBuilder"/>
+    <moduleType id="MAVEN_MODULE" implementationClass="org.jetbrains.idea.maven.wizards.MavenModuleType"/>
 
     <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.events.MavenStepsBeforeRunProvider"/>
     <keymapExtension implementation="org.jetbrains.idea.maven.events.MavenKeymapExtension"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <configurationType implementation="org.jetbrains.idea.maven.runner.execution.MavenRunConfigurationType"/>
+    <configurationType implementation="org.jetbrains.idea.maven.runner.MavenRunConfigurationType"/>
 
     <compiler implementation="org.jetbrains.idea.maven.compiler.ResourceFilteringCompiler" order="last"/>
 

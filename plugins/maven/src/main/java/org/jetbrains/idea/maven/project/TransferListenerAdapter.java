@@ -30,11 +30,6 @@ public class TransferListenerAdapter implements TransferListener {
 
   public void transferInitiated(TransferEvent event) {
     myIndicator.checkCanceled();
-    myIndicator.setText2(ProjectBundle.message("maven.transfer.start",
-                                               event.getWagon().getRepository().getName(),
-                                               event.getResource().getName()));
-    //System.out.print("Downloading " + event.getResource().getName() + "...");
-    //started = System.currentTimeMillis();
   }
 
   public void transferStarted(TransferEvent event) {
@@ -45,6 +40,11 @@ public class TransferListenerAdapter implements TransferListener {
     mySize = event.getResource().getContentLength();
     myProgress = 0;
 
+    //myIndicator.setText2(ProjectBundle.message("maven.transfer.start",
+    //                                           event.getWagon().getRepository().getName(),
+    //                                           event.getResource().getName()));
+    //System.out.print("Downloading " + event.getResource().getName() + " from [" + event.getWagon().getRepository().getId() + "]...");
+    //started = System.currentTimeMillis();
     updateProgress();
   }
 
@@ -66,25 +66,25 @@ public class TransferListenerAdapter implements TransferListener {
     addArtifactToIndex(event);
     myIndicator.checkCanceled();
     myIndicator.setText2("");
-    //updateTiming(true);
+    updateTiming(true);
   }
 
   public void transferError(TransferEvent event) {
     myIndicator.checkCanceled();
     myIndicator.setText2("");
-    //updateTiming(false);
+    updateTiming(false);
   }
 
   public void debug(String s) {
     myIndicator.checkCanceled();
   }
 
-  //private void updateTiming(boolean ok) {
-  //  long finished = System.currentTimeMillis();
-  //  long time = finished - started;
-  //  total += time;
-  //  System.out.println((ok ? "OK: " : "ERROR: ") + time + " (" + total+  ")");
-  //}
+  private void updateTiming(boolean ok) {
+    //long finished = System.currentTimeMillis();
+    //long time = finished - started;
+    //total += time;
+    //System.out.println((ok ? "OK: " : "ERROR: ") + time + " (" + total + ")");
+  }
 
   private void addArtifactToIndex(TransferEvent event) {
     MavenIndicesManager.getInstance().addArtifact(event.getLocalFile(),

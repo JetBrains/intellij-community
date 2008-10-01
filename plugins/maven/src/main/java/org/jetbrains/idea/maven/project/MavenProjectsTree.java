@@ -9,7 +9,8 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Parent;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenLog;
-import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.dom.model.Dependency;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
@@ -54,7 +55,7 @@ public class MavenProjectsTree {
 
   private void update(Collection<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p, boolean force)
       throws MavenProcessCanceledException {
-    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(mavenSettings, this);
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(mavenSettings, null, this);
 
     try {
       Set<VirtualFile> readFiles = new HashSet<VirtualFile>();
@@ -394,7 +395,7 @@ public class MavenProjectsTree {
   public void resolve(MavenCoreSettings coreSettings,
                       MavenArtifactSettings artifactSettings,
                       MavenProcess p) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, this);
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, null, this);
 
     try {
       List<MavenProjectModel> projects = getProjects();
@@ -416,7 +417,7 @@ public class MavenProjectsTree {
 
   public void generateSources(MavenCoreSettings coreSettings,
                               MavenProcess p) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, this);
+    MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, null, this);
 
     try {
       for (MavenProjectModel each : getProjects()) {
@@ -434,7 +435,7 @@ public class MavenProjectsTree {
   public void download(MavenCoreSettings coreSettings,
                        MavenArtifactSettings artifactSettings,
                        MavenProcess p) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings);
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings, null);
     try {
       doDownload(artifactSettings, p, e, getProjects(), true);
     }
@@ -460,7 +461,7 @@ public class MavenProjectsTree {
   public Artifact downloadArtifact(MavenProjectModel mavenProject,
                                    MavenId id,
                                    MavenCoreSettings coreSettings) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings);
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings, null);
     try {
       Artifact artifact = e.createArtifact(id.groupId,
                                            id.artifactId,

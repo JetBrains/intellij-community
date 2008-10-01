@@ -1,7 +1,7 @@
 package org.jetbrains.idea.maven;
 
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.utils.MavenId;
 import org.apache.maven.artifact.Artifact;
 
 import java.util.List;

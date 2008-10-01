@@ -8,12 +8,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomManager;
+import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
 import org.jetbrains.idea.maven.dom.model.Dependency;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
-import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 public class DependencyCompletionAndResolutionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
   @Override
@@ -552,9 +550,8 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
       CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().XML_TEXT_WRAP = prevValue;
     }
 
-    DomFileElement<MavenModel> model =
-        DomManager.getDomManager(myProject).getFileElement((XmlFile)getPsiFile(myProjectPom), MavenModel.class);
-    Dependency dep = model.getRootElement().getDependencies().getDependencies().get(0);
+    MavenModel model = MavenUtil.getMavenModel(myProject, myProjectPom);
+    Dependency dep = model.getDependencies().getDependencies().get(0);
 
     assertEquals(getPsiFile(libFile), dep.getSystemPath().getValue());
   }

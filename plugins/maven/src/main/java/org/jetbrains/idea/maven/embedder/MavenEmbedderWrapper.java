@@ -1,6 +1,8 @@
 package org.jetbrains.idea.maven.embedder;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.manager.WagonManager;
@@ -10,21 +12,24 @@ import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderException;
 import org.apache.maven.embedder.MavenEmbedderHelper;
+import org.apache.maven.embedder.PlexusLoggerAdapter;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.extension.ExtensionScanningException;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
+import org.apache.maven.monitor.event.EventMonitor;
+import org.apache.maven.monitor.event.DefaultEventMonitor;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.reactor.MavenExecutionException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.jetbrains.idea.maven.core.MavenLog;
-import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.project.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.project.TransferListenerAdapter;
-import org.jetbrains.idea.maven.runner.logger.MavenEmbeddedLogger;
+import org.jetbrains.idea.maven.utils.MavenEmbeddedLogger;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,6 +86,22 @@ public class MavenEmbedderWrapper {
   public MavenExecutionResult execute(MavenExecutionRequest request) throws MavenProcessCanceledException {
     try {
       request.setTransferListener(new TransferListenerAdapter());
+      request.addEventMonitor(new DefaultEventMonitor(new PlexusLoggerAdapter(myEmbedder.getLogger())));
+      request.addEventMonitor(new EventMonitor() {
+        ProgressIndicator i = ProgressManager.getInstance().getProgressIndicator();
+
+        public void startEvent(String eventName, String target, long timestamp) {
+          if (i != null) i.checkCanceled();
+        }
+
+        public void endEvent(String eventName, String target, long timestamp) {
+          if (i != null) i.checkCanceled();
+        }
+
+        public void errorEvent(String eventName, String target, long timestamp, Throwable cause) {
+          if (i != null) i.checkCanceled();
+        }
+      });
       return myEmbedder.execute(request);
     }
     catch (ProcessCanceledException e) {
