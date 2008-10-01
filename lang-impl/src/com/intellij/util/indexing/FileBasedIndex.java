@@ -703,14 +703,6 @@ public class FileBasedIndex implements ApplicationComponent {
     return findLatestKnownPsiForUncomittedDocument(document);
   }
 
-
-  @Nullable
-  private PsiFile findPsiFileForFile(final VirtualFile file) {
-    final Document doc = FileDocumentManager.getInstance().getCachedDocument(file);
-    return doc != null ? findDominantPsiForDocument(doc) : null;
-  }
-
-
   @NotNull
   private AtomicLong getLastIndexedStamp(final Document document) {
     AtomicLong lastStamp;
@@ -1167,9 +1159,7 @@ public class FileBasedIndex implements ApplicationComponent {
       myForceUpdateSemaphore.down();
       try {
         for (VirtualFile file: queryNeededFiles()) {
-          final com.intellij.ide.startup.FileContent fileContent = new com.intellij.ide.startup.FileContent(file);
-          fileContent.putUserData(PSI_FILE, findPsiFileForFile(file));
-          processFileImpl(fileContent);
+          processFileImpl(new com.intellij.ide.startup.FileContent(file));
         }
       }
       finally {
