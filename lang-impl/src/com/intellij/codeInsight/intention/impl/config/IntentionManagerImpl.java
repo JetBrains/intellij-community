@@ -53,30 +53,25 @@ public class IntentionManagerImpl extends IntentionManager {
   }
 
   private void registerIntentionFromBean(final IntentionActionBean extension) {
-    try {
-      final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
-      final String[] categories = extension.getCategories();
-      final IntentionAction instance = createIntentionActionWrapper(extension.instantiate(), categories);
-      if (categories == null) {
+    final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
+    final String[] categories = extension.getCategories();
+    final IntentionAction instance = createIntentionActionWrapper(extension, categories);
+    if (categories == null) {
+      addAction(instance);
+    }
+    else {
+      if (descriptionDirectoryName != null) {
         addAction(instance);
+        mySettings.registerIntentionMetaData(instance, categories, descriptionDirectoryName, extension.getMetadataClassLoader());
       }
       else {
-        if (descriptionDirectoryName != null) {
-          addAction(instance);
-          mySettings.registerIntentionMetaData(instance, categories, descriptionDirectoryName, extension.getMetadataClassLoader());
-        }
-        else {
-          registerIntentionAndMetaData(instance, categories);
-        }
+        registerIntentionAndMetaData(instance, categories);
       }
-    }
-    catch (ClassNotFoundException e) {
-      LOG.error(e);
     }
   }
 
-  private IntentionAction createIntentionActionWrapper(final IntentionAction intentionAction, final String[] categories) {
-    return new IntentionActionWrapper(intentionAction,categories);
+  private static IntentionAction createIntentionActionWrapper(final IntentionActionBean intentionActionBean, final String[] categories) {
+    return new IntentionActionWrapper(intentionActionBean,categories);
   }
 
   public void registerIntentionAndMetaData(IntentionAction action, String... category) {
@@ -86,12 +81,16 @@ public class IntentionManagerImpl extends IntentionManager {
   @NotNull
   private static String getDescriptionDirectoryName(final IntentionAction action) {
     if (action instanceof IntentionActionWrapper) {
-      return  getDescriptionDirectoryName(((IntentionActionWrapper)action).getDelegate());
+      final IntentionActionWrapper wrapper = (IntentionActionWrapper)action;
+      return getDescriptionDirectoryName(wrapper.getImplementationClassName());
     }
     else {
-      final String fqn = action.getClass().getName();
-      return fqn.substring(fqn.lastIndexOf('.') + 1).replaceAll("\\$", "");
+      return getDescriptionDirectoryName(action.getClass().getName());
     }
+  }
+
+  private static String getDescriptionDirectoryName(final String fqn) {
+    return fqn.substring(fqn.lastIndexOf('.') + 1).replaceAll("\\$", "");
   }
 
   public void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String[] category, @NotNull @NonNls String descriptionDirectoryName) {

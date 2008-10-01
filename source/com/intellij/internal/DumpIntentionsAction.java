@@ -36,7 +36,7 @@ public class DumpIntentionsAction extends AnAction {
           dir = new File(dir, rec);
           dir.mkdir();
         }
-        dir = new File(dir, metaData.myFamily);
+        dir = new File(dir, metaData.getFamily());
 
         try {
           FileUtil.copyDir(VfsUtil.virtualToIoFile(VfsUtil.findFileByURL(metaData.getDirURL())), dir);

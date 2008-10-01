@@ -151,7 +151,7 @@ public abstract class IntentionSettingsTree {
         if (result!= 0) {
           return result;
         }
-        return data1.myFamily.compareTo(data2.myFamily);
+        return data1.getFamily().compareTo(data2.getFamily());
       }
     });
     return copy;
@@ -202,7 +202,7 @@ public abstract class IntentionSettingsTree {
       text = (String)userObject;
     }
     else if (userObject instanceof IntentionActionMetaData) {
-      text = ((IntentionActionMetaData)userObject).myFamily;
+      text = ((IntentionActionMetaData)userObject).getFamily();
     }
     else {
       text = "???";

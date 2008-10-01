@@ -83,12 +83,12 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
   }
 
   public synchronized void registerIntentionMetaData(@NotNull IntentionAction intentionAction, @NotNull String[] category, @NotNull String descriptionDirectoryName) {
-    registerMetaData(new IntentionActionMetaData(intentionAction.getFamilyName(), getClassLoader(intentionAction), category, descriptionDirectoryName));
+    registerMetaData(new IntentionActionMetaData(intentionAction, getClassLoader(intentionAction), category, descriptionDirectoryName));
   }
 
   private static ClassLoader getClassLoader(final IntentionAction intentionAction) {
     if (intentionAction instanceof IntentionActionWrapper) {
-      return getClassLoader(((IntentionActionWrapper)intentionAction).getDelegate());
+      return ((IntentionActionWrapper)intentionAction).getImplementationClassLoader();
     }
     else {
       return intentionAction.getClass().getClassLoader();
@@ -97,7 +97,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
 
   public void registerIntentionMetaData(final IntentionAction intentionAction, final String[] category, final String descriptionDirectoryName,
                                         final ClassLoader classLoader) {
-    registerMetaData(new IntentionActionMetaData(intentionAction.getFamilyName(), classLoader, category, descriptionDirectoryName));
+    registerMetaData(new IntentionActionMetaData(intentionAction, classLoader, category, descriptionDirectoryName));
   }
 
   public synchronized boolean isShowLightBulb(@NotNull IntentionAction action) {
@@ -131,7 +131,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
   }
 
   private String getFamilyName(final IntentionActionMetaData metaData) {
-    return StringUtil.join(metaData.myCategory, "/") + "/" + metaData.myFamily;
+    return StringUtil.join(metaData.myCategory, "/") + "/" + metaData.getFamily();
   }
 
   private String getFamilyName(final IntentionAction action) {
@@ -165,7 +165,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
   }
 
   private void registerMetaData(IntentionActionMetaData metaData) {
-    MetaDataKey key = new MetaDataKey(metaData.myCategory, metaData.myFamily);
+    MetaDataKey key = new MetaDataKey(metaData.myCategory, metaData.getFamily());
     //LOG.assertTrue(!myMetaData.containsKey(metaData.myFamily), "Action '"+metaData.myFamily+"' already registered");
     if (!myMetaData.containsKey(key)){
       try {
@@ -186,9 +186,9 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
       @NonNls String descriptionText = ResourceUtil.loadText(description).toLowerCase();
       descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
       final Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
-      words.addAll(registrar.getProcessedWords(metaData.myFamily));
+      words.addAll(registrar.getProcessedWords(metaData.getFamily()));
       for (String word : words) {
-        registrar.addOption(word, metaData.myFamily, metaData.myFamily, IntentionSettingsConfigurable.HELP_ID, IntentionSettingsConfigurable.DISPLAY_NAME);
+        registrar.addOption(word, metaData.getFamily(), metaData.getFamily(), IntentionSettingsConfigurable.HELP_ID, IntentionSettingsConfigurable.DISPLAY_NAME);
       }
     }
   }

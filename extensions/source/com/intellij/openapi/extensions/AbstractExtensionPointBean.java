@@ -31,7 +31,11 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
 
   @NotNull
   public final <T> Class<T> findClass(final String className) throws ClassNotFoundException {
-    return (Class<T>)Class.forName(className, true, myPluginDescriptor == null ? getClass().getClassLoader() : myPluginDescriptor.getPluginClassLoader());
+    return (Class<T>)Class.forName(className, true, getLoaderForClass());
+  }
+
+  public ClassLoader getLoaderForClass() {
+    return myPluginDescriptor == null ? getClass().getClassLoader() : myPluginDescriptor.getPluginClassLoader();
   }
 
   @NotNull

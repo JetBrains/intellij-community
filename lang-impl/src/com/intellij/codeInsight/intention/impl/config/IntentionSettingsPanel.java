@@ -113,7 +113,7 @@ public class IntentionSettingsPanel {
 
   private static boolean isIntentionAccepted(IntentionActionMetaData metaData, @NonNls String filter, boolean forceInclude,
                                              final List<Set<String>> keySetList, final HashSet<String> quoted) {
-    if (StringUtil.containsIgnoreCase(metaData.myFamily, filter)) {
+    if (StringUtil.containsIgnoreCase(metaData.getFamily(), filter)) {
       return true;
     }
     for (String category : metaData.myCategory) {
@@ -122,7 +122,7 @@ public class IntentionSettingsPanel {
       }
     }
     for (String stripped : quoted) {
-      if (StringUtil.containsIgnoreCase(metaData.myFamily, stripped)) {
+      if (StringUtil.containsIgnoreCase(metaData.getFamily(), stripped)) {
         return true;
       }
       for (String category : metaData.myCategory) {
@@ -143,7 +143,7 @@ public class IntentionSettingsPanel {
       }
     }
     for (Set<String> keySet : keySetList) {
-      if (keySet.contains(metaData.myFamily)) {
+      if (keySet.contains(metaData.getFamily())) {
         if (!forceInclude) {
           return true;
         }

@@ -3,6 +3,7 @@
  */
 package com.intellij.codeInsight.intention.impl.config;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -23,7 +24,7 @@ import java.util.List;
 
 public final class IntentionActionMetaData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData");
-  @NotNull public final String myFamily;
+  @NotNull private final IntentionAction myAction;
   private final ClassLoader myIntentionLoader;
   @NotNull private final String myDescriptionDirectoryName;
   @NotNull public final String[] myCategory;
@@ -39,18 +40,18 @@ public final class IntentionActionMetaData {
   @NonNls private static final String DESCRIPTION_FILE_NAME = "description.html";
   @NonNls private static final String INTENTION_DESCRIPTION_FOLDER = "intentionDescriptions";
 
-  public IntentionActionMetaData(@NotNull String family,
+  public IntentionActionMetaData(@NotNull IntentionAction action,
                                  @Nullable ClassLoader loader,
                                  @NotNull String[] category,
                                  @NotNull String descriptionDirectoryName) {
-    myFamily = family;
+    myAction = action;
     myIntentionLoader = loader;
     myCategory = category;
     myDescriptionDirectoryName = descriptionDirectoryName;
   }
 
   public String toString() {
-    return myFamily;
+    return getFamily();
   }
 
   @Nullable
@@ -133,9 +134,10 @@ public final class IntentionActionMetaData {
       myDirURL = getIntentionDescriptionDirURL(myIntentionLoader, myDescriptionDirectoryName);
     }
     if (myDirURL == null) { //plugin compatibility
-      myDirURL = getIntentionDescriptionDirURL(myIntentionLoader, myFamily);
+      myDirURL = getIntentionDescriptionDirURL(myIntentionLoader, getFamily());
     }
-    LOG.assertTrue(myDirURL != null, "Intention Description Dir URL is null: " + myFamily+"; "+myDescriptionDirectoryName + ", " + myIntentionLoader);
+    LOG.assertTrue(myDirURL != null, "Intention Description Dir URL is null: " +
+                                     getFamily() +"; "+myDescriptionDirectoryName + ", " + myIntentionLoader);
     return myDirURL;
   }
 
@@ -144,5 +146,10 @@ public final class IntentionActionMetaData {
       return ((PluginClassLoader)myIntentionLoader).getPluginId();
     }
     return null;
+  }
+
+  @NotNull
+  public String getFamily() {
+    return myAction.getFamilyName();
   }
 }
