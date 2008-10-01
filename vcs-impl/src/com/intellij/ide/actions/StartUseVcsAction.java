@@ -7,6 +7,8 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.impl.VcsEP;
+import com.intellij.openapi.extensions.Extensions;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -47,7 +49,7 @@ public class StartUseVcsAction extends AnAction {
   static class Data {
     private final Project myProject;
     private final ProjectLevelVcsManager myManager;
-    private final Map<String, String> myVcses;
+    private Map<String, String> myVcses;
 
     Data(final AnActionEvent e) {
       final DataContext dataContext = e.getDataContext();
@@ -58,21 +60,16 @@ public class StartUseVcsAction extends AnAction {
         return;
       }
       myManager = ProjectLevelVcsManager.getInstance(myProject);
-      final AbstractVcs[] allVcss = myManager.getAllVcss();
-      myVcses = new HashMap<String, String>(allVcss.length, 1);
-      for (AbstractVcs vcs : allVcss) {
-        myVcses.put(vcs.getDisplayName(), vcs.getName());
-      }
     }
 
     boolean enabled() {
-      if (myProject == null || myManager == null || myVcses == null) {
+      if (myProject == null || myProject.isDefault() || myManager == null) {
         return false;
       }
       if (checkMappings()) {
         return false;
       }
-      if (myVcses.isEmpty()) {
+      if (Extensions.getExtensions(VcsEP.EP_NAME, myProject).length == 0) {
         return false;
       }
       return true;
@@ -98,6 +95,13 @@ public class StartUseVcsAction extends AnAction {
     }
 
     public Map<String, String> getVcses() {
+      if (myVcses == null && myProject != null && !myProject.isDefault()) {
+        final AbstractVcs[] allVcss = myManager.getAllVcss();
+        myVcses = new HashMap<String, String>(allVcss.length, 1);
+        for (AbstractVcs vcs : allVcss) {
+          myVcses.put(vcs.getDisplayName(), vcs.getName());
+        }
+      }
       return myVcses;
     }
   }
