@@ -52,7 +52,7 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
       String result = provider.getQuickNavigateInfo(element);
       if ( result != null ) return result;
     }
-    return null;
+    return super.getQuickNavigateInfo(element);
   }
 
   public String getUrlFor(PsiElement element, PsiElement originalElement) {
@@ -60,7 +60,7 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
       String result = provider.getUrlFor(element,originalElement);
       if ( result != null ) return result;
     }
-    return null;
+    return super.getUrlFor(element, originalElement);
   }
 
   public String generateDoc(PsiElement element, PsiElement originalElement) {
@@ -68,7 +68,7 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
       String result = provider.generateDoc(element,originalElement);
       if ( result != null ) return result;
     }
-    return null;
+    return super.generateDoc(element, originalElement);
   }
 
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
@@ -76,7 +76,7 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
       PsiElement result = provider.getDocumentationElementForLookupItem(psiManager,object,element);
       if ( result != null ) return result;
     }
-    return null;
+    return super.getDocumentationElementForLookupItem(psiManager, object, element);
   }
 
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
@@ -84,7 +84,7 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
       PsiElement result = provider.getDocumentationElementForLink(psiManager,link,context);
       if ( result != null ) return result;
     }
-    return null;
+    return super.getDocumentationElementForLink(psiManager, link, context);
   }
 
   @Override

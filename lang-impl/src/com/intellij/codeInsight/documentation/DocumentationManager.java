@@ -487,8 +487,7 @@ public class DocumentationManager {
       final Language baseLanguage = containingFile.getViewProvider().getBaseLanguage();
       if (!baseLanguage.is(containingFileLanguage)) ContainerUtil.addIfNotNull(LanguageDocumentation.INSTANCE.forLanguage(baseLanguage), result);
     }
-
-    if (result.isEmpty()) return null;
+    // return extensible documentation provider even if the list is empty
     return new CompositeDocumentationProvider(result);
   }
 
