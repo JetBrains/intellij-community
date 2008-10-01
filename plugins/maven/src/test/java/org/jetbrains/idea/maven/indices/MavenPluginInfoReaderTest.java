@@ -1,9 +1,9 @@
 package org.jetbrains.idea.maven.indices;
 
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.core.util.MavenPluginInfo;
-import org.jetbrains.idea.maven.core.util.MavenArtifactUtil;
-import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.utils.MavenPluginInfo;
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
+import org.jetbrains.idea.maven.utils.MavenId;
 
 import java.util.ArrayList;
 import java.util.List;

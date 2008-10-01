@@ -4,7 +4,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
-import org.jetbrains.idea.maven.project.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;

@@ -7,12 +7,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
-import org.jetbrains.idea.maven.core.util.ProjectUtil;
-import org.jetbrains.idea.maven.core.util.Strings;
+import org.jetbrains.idea.maven.utils.IdeaAPIHelper;
+import org.jetbrains.idea.maven.utils.Strings;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 
@@ -86,7 +86,12 @@ public class MavenIgnoreConfigurable implements Configurable {
   }
 
   public void reset() {
-    IdeaAPIHelper.addElements(myFileChooser, myManager.getFiles(), myOriginalFiles, ProjectUtil.ourProjectDirComparator);
+    IdeaAPIHelper.addElements(myFileChooser, myManager.getFiles(), myOriginalFiles, new Comparator<VirtualFile>() {
+      public int compare(VirtualFile o1, VirtualFile o2) {
+        //noinspection ConstantConditions
+        return o1.getParent().getPath().compareTo(o2.getParent().getPath());
+      }
+    });
 
     myMaskEditor.setText(myOriginalMasks);
   }

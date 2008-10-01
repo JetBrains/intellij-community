@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenLog;
-import org.jetbrains.idea.maven.core.util.JDOMReader;
+import org.jetbrains.idea.maven.utils.JDOMReader;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.io.File;
@@ -157,28 +157,32 @@ public class MavenEmbedderFactory {
     return Arrays.asList(standardGoals);
   }
 
-  public static MavenEmbedderWrapper createEmbedderForRead(MavenCoreSettings settings) {
-    return createEmbedderForRead(settings, null);
+  public static MavenEmbedderWrapper createEmbedderForRead(MavenCoreSettings settings,
+                                                           MavenEmbedderLogger logger) {
+    return createEmbedderForRead(settings, logger, null);
   }
 
   public static MavenEmbedderWrapper createEmbedderForRead(MavenCoreSettings settings,
+                                                           MavenEmbedderLogger logger,
                                                            MavenProjectsTree projectsTree) {
-    return createEmbedder(settings, new MyCustomizer(projectsTree, false));
+    return createEmbedder(settings, logger, new MyCustomizer(projectsTree, false));
   }
 
   public static MavenEmbedderWrapper createEmbedderForResolve(MavenCoreSettings settings,
+                                                              MavenEmbedderLogger logger,
                                                               MavenProjectsTree projectsTree) {
-    return createEmbedder(settings, new MyCustomizer(projectsTree, true));
+    return createEmbedder(settings, logger, new MyCustomizer(projectsTree, true));
   }
 
-  public static MavenEmbedderWrapper createEmbedderForExecute(MavenCoreSettings settings) {
-    return createEmbedder(settings, null);
+  public static MavenEmbedderWrapper createEmbedderForExecute(MavenCoreSettings settings, MavenEmbedderLogger logger) {
+    return createEmbedder(settings, logger, null);
   }
 
-  private static MavenEmbedderWrapper createEmbedder(MavenCoreSettings settings, ContainerCustomizer customizer) {
+  private static MavenEmbedderWrapper createEmbedder(MavenCoreSettings settings, MavenEmbedderLogger logger, ContainerCustomizer customizer) {
     return createEmbedder(settings.getMavenHome(),
                           settings.getEffectiveLocalRepository(),
                           settings.getMavenSettingsFile(),
+                          logger,
                           settings.getClass().getClassLoader(),
                           customizer);
   }
@@ -186,6 +190,7 @@ public class MavenEmbedderFactory {
   private static MavenEmbedderWrapper createEmbedder(String mavenHome,
                                                      File localRepo,
                                                      String userSettings,
+                                                     MavenEmbedderLogger logger,
                                                      ClassLoader classLoader,
                                                      ContainerCustomizer customizer) {
     Configuration configuration = new DefaultConfiguration();
@@ -194,9 +199,15 @@ public class MavenEmbedderFactory {
     configuration.setClassLoader(classLoader);
     configuration.setLocalRepository(localRepo);
 
-    MavenEmbedderConsoleLogger l = new MavenEmbedderConsoleLogger();
-    l.setThreshold(MavenEmbedderLogger.LEVEL_WARN);
-    configuration.setMavenEmbedderLogger(l);
+    //MavenEmbedderConsoleLogger l = new MavenEmbedderConsoleLogger();
+    //l.setThreshold(MavenEmbedderLogger.LEVEL_WARN);
+    if (logger == null) {
+      // todo
+      //System.out.println("Do not forget to add a sensible logger here");
+      logger = new MavenEmbedderConsoleLogger();
+      logger.setThreshold(MavenEmbedderLogger.LEVEL_WARN);
+    }
+    configuration.setMavenEmbedderLogger(logger);
 
     File userSettingsFile = resolveUserSettingsFile(userSettings);
     if (userSettingsFile != null) {

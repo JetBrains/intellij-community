@@ -12,9 +12,10 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.core.util.Path;
-import org.jetbrains.idea.maven.core.util.Url;
+import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.utils.Path;
+import org.jetbrains.idea.maven.utils.Url;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import java.io.File;
 import java.io.IOException;

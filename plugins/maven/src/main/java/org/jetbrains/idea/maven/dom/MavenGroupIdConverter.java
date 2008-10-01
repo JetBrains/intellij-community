@@ -2,7 +2,7 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.ConvertContext;
-import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 
 import java.util.Set;

@@ -19,7 +19,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
+import org.jetbrains.idea.maven.utils.IdeaAPIHelper;
 import org.jetbrains.idea.maven.events.MavenEventsManager;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.ProjectBundle;

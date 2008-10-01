@@ -10,13 +10,13 @@ public class ToggleSkipTestsAction extends ToggleAction {
 
   public boolean isSelected(AnActionEvent e){
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    return project != null && project.getComponent(MavenRunner.class).getState().isSkipTests();
+    return project != null && MavenRunner.getInstance(project).getState().isSkipTests();
   }
 
   public void setSelected(AnActionEvent e, boolean state){
     Project project = e.getData(PlatformDataKeys.PROJECT);
     if(project != null){
-      project.getComponent(MavenRunner.class).getState().setSkipTests(state);
+      MavenRunner.getInstance(project).getState().setSkipTests(state);
     }
   }
 }

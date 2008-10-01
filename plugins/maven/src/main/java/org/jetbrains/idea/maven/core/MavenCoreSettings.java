@@ -17,7 +17,7 @@ public class MavenCoreSettings implements Cloneable {
   @NotNull private String mavenHome = "";
   @NotNull private String mavenSettingsFile = "";
   @NotNull private String localRepository = "";
-  private boolean produceExceptionErrorMessages = false;
+  private boolean printErrorStackTraces = false;
   private boolean usePluginRegistry = false;
   private boolean nonRecursive = false;
   private int outputLevel = MavenExecutionRequest.LOGGING_LEVEL_INFO;
@@ -107,12 +107,12 @@ public class MavenCoreSettings implements Cloneable {
     }
   }
 
-  public boolean isProduceExceptionErrorMessages() {
-    return produceExceptionErrorMessages;
+  public boolean isPrintErrorStackTraces() {
+    return printErrorStackTraces;
   }
 
-  public void setProduceExceptionErrorMessages(final boolean produceExceptionErrorMessages) {
-    this.produceExceptionErrorMessages = produceExceptionErrorMessages;
+  public void setPrintErrorStackTraces(boolean value) {
+    printErrorStackTraces = value;
   }
 
   public boolean isUsePluginRegistry() {
@@ -140,7 +140,7 @@ public class MavenCoreSettings implements Cloneable {
     if (nonRecursive != that.nonRecursive) return false;
     if (outputLevel != that.outputLevel) return false;
     if (pluginUpdatePolicy != that.pluginUpdatePolicy) return false;
-    if (produceExceptionErrorMessages != that.produceExceptionErrorMessages) return false;
+    if (printErrorStackTraces != that.printErrorStackTraces) return false;
     if (usePluginRegistry != that.usePluginRegistry) return false;
     if (workOffline != that.workOffline) return false;
     if (!checksumPolicy.equals(that.checksumPolicy)) return false;
@@ -158,7 +158,7 @@ public class MavenCoreSettings implements Cloneable {
     result = 31 * result + mavenHome.hashCode();
     result = 31 * result + mavenSettingsFile.hashCode();
     result = 31 * result + localRepository.hashCode();
-    result = 31 * result + (produceExceptionErrorMessages ? 1 : 0);
+    result = 31 * result + (printErrorStackTraces ? 1 : 0);
     result = 31 * result + (usePluginRegistry ? 1 : 0);
     result = 31 * result + (nonRecursive ? 1 : 0);
     result = 31 * result + outputLevel;

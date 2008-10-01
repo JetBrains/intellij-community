@@ -18,8 +18,12 @@ public class MavenCustomRepositoryHelper {
     myWorkingData = new File(myTempDir, "testData");
 
     for (String each : mySubFolders) {
-      FileUtil.copyDir(new File(getOriginalTestDataPath(), each), new File(myWorkingData, each));
+      addTestData(each);
     }
+  }
+
+  public void addTestData(String relativePath) throws IOException {
+    FileUtil.copyDir(new File(getOriginalTestDataPath(), relativePath), new File(myWorkingData, relativePath));
   }
 
   private String getOriginalTestDataPath() {

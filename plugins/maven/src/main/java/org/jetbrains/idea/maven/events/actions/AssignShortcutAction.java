@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
 import org.jetbrains.idea.maven.events.MavenEventsManager;
-import org.jetbrains.idea.maven.project.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import java.util.List;
 

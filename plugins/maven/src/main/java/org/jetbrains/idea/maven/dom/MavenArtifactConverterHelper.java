@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
-import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.dom.model.Dependency;
 import org.jetbrains.idea.maven.dom.model.MavenParent;
 import org.jetbrains.idea.maven.dom.model.Plugin;

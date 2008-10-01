@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jetbrains.idea.maven.utils.MavenConstants;
+
 public class MavenModuleNameMapper {
   public static void map(MavenProjectsTree mavenTree,
                          Map<MavenProjectModel, Module> mavenProjectToModule,

@@ -4,11 +4,9 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 
 import java.io.File;
-import java.io.IOException;
 
 public class MiscImportingTest extends MavenImportingTestCase {
   private int count;
@@ -122,12 +120,5 @@ public class MiscImportingTest extends MavenImportingTestCase {
 
     resolveProject();
     assertTrue(jarFile.exists());
-  }
-
-  private void setCustomSettingsFile(String content) throws IOException {
-    File file = new File(myDir, "settings.xml");
-    file.createNewFile();
-    FileUtil.writeToFile(file, content.getBytes());
-    getMavenCoreSettings().setMavenSettingsFile(file.getPath());
   }
 }

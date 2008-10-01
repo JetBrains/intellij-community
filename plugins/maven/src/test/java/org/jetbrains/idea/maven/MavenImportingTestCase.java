@@ -6,24 +6,24 @@ package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
+import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsManager;
 import org.jetbrains.idea.maven.navigator.MavenTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
-import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
-import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.apache.maven.project.MavenProject;
+import org.jetbrains.idea.maven.runner.MavenEmbeddedExecutor;
+import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
+import org.jetbrains.idea.maven.runner.TestConsoleAdapter;
 
 import java.io.File;
 import java.io.IOException;
@@ -330,11 +330,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void executeGoal(String relativePath, String goal) {
-    VirtualFile pom = myProjectRoot.findFileByRelativePath(relativePath + "/pom.xml");
+    VirtualFile dir = myProjectRoot.findFileByRelativePath(relativePath);
 
-    MavenRunnerParameters rp = new MavenRunnerParameters(pom.getPath(), Arrays.asList(goal), null);
+    MavenRunnerParameters rp = new MavenRunnerParameters(true, dir.getPath(), Arrays.asList(goal), null);
     MavenRunnerSettings rs = new MavenRunnerSettings();
-    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(rp, getMavenCoreSettings(), rs);
+    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(rp, getMavenCoreSettings(), rs, new TestConsoleAdapter());
 
     e.execute(new ArrayList<MavenProject>(), new EmptyProgressIndicator());
   }

@@ -6,6 +6,7 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.model.Plugin;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import java.io.File;
 import java.util.*;

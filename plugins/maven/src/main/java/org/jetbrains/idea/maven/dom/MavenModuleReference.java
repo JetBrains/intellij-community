@@ -28,9 +28,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
-import org.jetbrains.idea.maven.project.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -89,12 +90,12 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
 
     List<Object> result = new ArrayList<Object>();
 
-    for (DomFileElement<MavenModel> domFile : files) {
-      VirtualFile virtualFile = domFile.getOriginalFile().getVirtualFile();
-      if (virtualFile == myVirtualFile) continue;
+    for (DomFileElement<MavenModel> eachDomFile : files) {
+      VirtualFile eachVFile = eachDomFile.getOriginalFile().getVirtualFile();
+      if (eachVFile == myVirtualFile) continue;
 
-      PsiFile psiFile = domFile.getFile();
-      String modulePath = calcRelativeModulePath(virtualFile);
+      PsiFile psiFile = eachDomFile.getFile();
+      String modulePath = calcRelativeModulePath(myVirtualFile, eachVFile);
 
       MutableLookupElement<PsiFile> lookup = LookupElementFactory.getInstance().createLookupElement(psiFile, modulePath);
       lookup.setPresentableText(modulePath);
@@ -104,8 +105,8 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
     return result.toArray();
   }
 
-  private String calcRelativeModulePath(VirtualFile modulePom) {
-    String result = MavenDomUtil.calcRelativePath(myVirtualFile.getParent(), modulePom);
+  public static String calcRelativeModulePath(VirtualFile parentPom, VirtualFile modulePom) {
+    String result = MavenDomUtil.calcRelativePath(parentPom.getParent(), modulePom);
     return result.substring(0, result.length() - ("/" + MavenConstants.POM_XML).length());
   }
 
@@ -165,29 +166,22 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
     }
 
     private TemplateBuilder buildTemplate(Project project, VirtualFile modulePomFile) {
+      MavenId id = PomDescriptor.describe(PomDescriptor.getPom(myPsiFile));
+
+      if (id.groupId == null) id.groupId = "groupId";
+      if (id.version == null) id.version = "version";
+      id.artifactId = modulePomFile.getParent().getName();
+
       XmlFile psiFile = (XmlFile)PsiFileFactory.getInstance(project).createFileFromText(
           MavenConstants.POM_XML,
           StdLanguages.XML,
-          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-          "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-          "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-          "    <modelVersion>4.0.0</modelVersion>\n" +
-          "    <groupId>xxx</groupId>\n" +
-          "    <artifactId>xxx</artifactId>\n" +
-          "    <version>xxx</version>\n" +
-          "</project>");
+          MavenUtil.makeFileContent(id));
 
-      String artifactId = modulePomFile.getParent().getName();
-
-      MavenId parentId = PomDescriptor.describe(PomDescriptor.getPom(myPsiFile));
-      if (parentId.groupId == null) parentId.groupId = "groupId";
-      if (parentId.version == null) parentId.version = "version";
-      
       TemplateBuilder b = new TemplateBuilder(psiFile);
 
-      b.replaceElement(getTagValueElement(psiFile, "groupId"), new ConstantNode(parentId.groupId));
-      b.replaceElement(getTagValueElement(psiFile, "artifactId"), new ConstantNode(artifactId));
-      b.replaceElement(getTagValueElement(psiFile, "version"), new ConstantNode(parentId.version));
+      b.replaceElement(getTagValueElement(psiFile, "groupId"), new ConstantNode(id.groupId));
+      b.replaceElement(getTagValueElement(psiFile, "artifactId"), new ConstantNode(id.artifactId));
+      b.replaceElement(getTagValueElement(psiFile, "version"), new ConstantNode(id.version));
 
       return b;
     }

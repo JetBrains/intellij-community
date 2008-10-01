@@ -3,8 +3,8 @@ package org.jetbrains.idea.maven.events;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 
 import java.util.Arrays;
 
@@ -55,7 +55,8 @@ public class MavenTask implements Cloneable, Comparable {
   public MavenRunnerParameters createBuildParameters(final MavenProjectsManager projectsManager) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(pomPath);
     if (virtualFile != null) {
-      return new MavenRunnerParameters(pomPath, Arrays.asList(goal), projectsManager.getActiveProfiles());
+      return new MavenRunnerParameters(true, virtualFile.getParent().getPath(),
+                                       Arrays.asList(goal), projectsManager.getActiveProfiles());
     }
     return null;
   }

@@ -37,7 +37,6 @@ public class MavenRunnerSettings implements Cloneable {
   @NonNls public static final String USE_JAVA_HOME = "#JAVA_HOME";
 
   private boolean runMavenInBackground = false;
-  private boolean printStackTrace = false;
   private boolean useMavenEmbedder = true;
   @NotNull private String jreName = "";
   @NotNull private String vmOptions = "";
@@ -50,14 +49,6 @@ public class MavenRunnerSettings implements Cloneable {
 
   public void setRunMavenInBackground(boolean runMavenInBackground) {
     this.runMavenInBackground = runMavenInBackground;
-  }
-
-  public boolean isPrintStackTrace() {
-    return printStackTrace;
-  }
-
-  public void setPrintStackTrace(boolean printStackTrace) {
-    this.printStackTrace = printStackTrace;
   }
 
   public boolean isUseMavenEmbedder() {
@@ -132,7 +123,6 @@ public class MavenRunnerSettings implements Cloneable {
     final MavenRunnerSettings that = (MavenRunnerSettings)o;
 
     if (runMavenInBackground != that.runMavenInBackground) return false;
-    if (printStackTrace != that.printStackTrace) return false;
     if (skipTests != that.skipTests) return false;
     if (useMavenEmbedder != that.useMavenEmbedder) return false;
     if (!jreName.equals(that.jreName)) return false;
@@ -145,7 +135,6 @@ public class MavenRunnerSettings implements Cloneable {
   public int hashCode() {
     int result;
     result = (runMavenInBackground ? 1 : 0);
-    result = 31 * result + (printStackTrace ? 1 : 0);
     result = 31 * result + (useMavenEmbedder ? 1 : 0);
     result = 31 * result + jreName.hashCode();
     result = 31 * result + vmOptions.hashCode();

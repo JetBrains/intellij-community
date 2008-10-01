@@ -9,7 +9,7 @@ import org.apache.maven.wagon.TransferFailedException;
 import org.apache.maven.wagon.WagonException;
 import org.codehaus.plexus.context.Context;
 import org.codehaus.plexus.context.ContextException;
-import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.utils.MavenId;
 
 import java.io.File;
 import java.util.HashSet;

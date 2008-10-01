@@ -11,7 +11,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.project.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import javax.swing.*;
 

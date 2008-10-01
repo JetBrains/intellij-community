@@ -8,7 +8,7 @@ import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.project.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class AddManageFileAction extends AnAction {

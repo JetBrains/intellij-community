@@ -22,7 +22,7 @@ import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.util.ComboBoxUtil;
+import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
 
@@ -97,7 +97,7 @@ public abstract class MavenCoreConfigurable implements Configurable {
     data.setWorkOffline(checkboxWorkOffline.isSelected());
     mavenPathsForm.setData(data);
 
-    data.setProduceExceptionErrorMessages(checkboxProduceExceptionErrorMessages.isSelected());
+    data.setPrintErrorStackTraces(checkboxProduceExceptionErrorMessages.isSelected());
     data.setUsePluginRegistry(checkboxUsePluginRegistry.isSelected());
     data.setNonRecursive(checkboxNonRecursive.isSelected());
 
@@ -118,7 +118,7 @@ public abstract class MavenCoreConfigurable implements Configurable {
 
     mavenPathsForm.getData(data);
 
-    checkboxProduceExceptionErrorMessages.setSelected(data.isProduceExceptionErrorMessages());
+    checkboxProduceExceptionErrorMessages.setSelected(data.isPrintErrorStackTraces());
     checkboxUsePluginRegistry.setSelected(data.isUsePluginRegistry());
     checkboxNonRecursive.setSelected(data.isNonRecursive());
 

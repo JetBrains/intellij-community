@@ -1,10 +1,13 @@
 package org.jetbrains.idea.maven.indices;
 
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.apache.maven.archetype.catalog.Archetype;
 
 import static java.util.Arrays.asList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.ArrayList;
 import java.io.File;
 
 public class MavenIndicesManagerTest extends MavenImportingTestCase {
@@ -54,5 +57,27 @@ public class MavenIndicesManagerTest extends MavenImportingTestCase {
 
     List<MavenIndex> indices3 = myIndicesFixture.getIndicesManager().ensureIndicesExist(local, asList(remote1, remote2, remote3));
     assertEquals(3, indices3.size());
+  }
+
+  public void testDefaultArchetypes() throws Exception {
+    Set<Archetype> achetypes = myIndicesFixture.getIndicesManager().getArchetypes();
+    List<String> actualNames = new ArrayList<String>();
+    for (Archetype each : achetypes) {
+      actualNames.add(each.getGroupId() + ":" + each.getArtifactId() + ":" + each.getVersion());
+    }
+    assertTrue(actualNames.toString(), actualNames.contains("org.apache.maven.archetypes:maven-archetype-quickstart:RELEASE"));
+  }
+  
+  public void testIndexedArchetypes() throws Exception {
+    myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
+    myIndicesFixture.getIndicesManager().ensureIndicesExist(myIndicesFixture.getRepositoryHelper().getTestData("archetypes"),
+                                                            Collections.<String>emptySet());
+
+    Set<Archetype> achetypes = myIndicesFixture.getIndicesManager().getArchetypes();
+    List<String> actualNames = new ArrayList<String>();
+    for (Archetype each : achetypes) {
+      actualNames.add(each.getGroupId() + ":" + each.getArtifactId() + ":" + each.getVersion());
+    }
+    assertTrue(actualNames.toString(), actualNames.contains("org.apache.maven.archetypes:maven-archetype-foobar:1.0"));
   }
 }

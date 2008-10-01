@@ -11,14 +11,14 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.core.util.MavenArtifactUtil;
-import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.core.util.MavenPluginInfo;
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
+import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.utils.MavenPluginInfo;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.runner.MavenRunner;
-import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
+import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 
 import javax.swing.*;
 import java.io.File;
@@ -159,7 +159,7 @@ public class MavenKeymapExtension implements KeymapExtension {
       Project project = e.getData(PlatformDataKeys.PROJECT);
       if (project == null) return;
 
-      MavenRunner runner = project.getComponent(MavenRunner.class);
+      MavenRunner runner = MavenRunner.getInstance(project);
       if (runner.isRunning()) return;
 
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);

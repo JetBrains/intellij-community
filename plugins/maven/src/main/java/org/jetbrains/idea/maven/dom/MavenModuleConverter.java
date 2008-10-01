@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementManipulators;
@@ -15,25 +16,30 @@ import org.jetbrains.idea.maven.dom.model.MavenModel;
 
 public class MavenModuleConverter extends Converter<PsiFile> implements CustomReferenceConverter<PsiFile> {
   public PsiFile fromString(@Nullable @NonNls String s, ConvertContext context) {
-    // let me know if it called
+    // let me know if it is called
     throw new UnsupportedOperationException();
   }
 
   public String toString(@Nullable PsiFile psiFile, ConvertContext context) {
-    // let me know if it called
-    throw new UnsupportedOperationException();
+    VirtualFile file = getFileAndDom(context).first;
+    return MavenModuleReference.calcRelativeModulePath(file, psiFile.getVirtualFile());
   }
 
   @NotNull
   public PsiReference[] createReferences(GenericDomValue value, PsiElement element, ConvertContext context) {
-    DomFileElement<MavenModel> dom = context.getInvocationElement().getRoot();
-    VirtualFile virtualFile = dom.getOriginalFile().getVirtualFile();
+    Pair<VirtualFile, DomFileElement<MavenModel>> fileAndDom = getFileAndDom(context);
 
     String originalText = value.getStringValue();
-    String resolvedText = PropertyResolver.resolve(originalText, dom);
+    String resolvedText = PropertyResolver.resolve(originalText, fileAndDom.second);
 
     XmlFile psiFile = context.getFile();
     TextRange range = ElementManipulators.getValueTextRange(element);
-    return new PsiReference[]{new MavenModuleReference(element, virtualFile, psiFile, originalText, resolvedText, range)};
+    return new PsiReference[]{new MavenModuleReference(element, fileAndDom.first, psiFile, originalText, resolvedText, range)};
+  }
+
+  private Pair<VirtualFile, DomFileElement<MavenModel>> getFileAndDom(ConvertContext context) {
+    DomFileElement<MavenModel> dom = context.getInvocationElement().getRoot();
+    VirtualFile virtualFile = dom.getOriginalFile().getVirtualFile();
+    return Pair.create(virtualFile, dom);
   }
 }

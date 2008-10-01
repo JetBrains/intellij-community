@@ -14,10 +14,10 @@ import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenId;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,7 +36,9 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
   @Override
   public String toString(@Nullable PsiFile f, ConvertContext context) {
     if (f == null) return null;
-    VirtualFile currentFile = context.getFile().getOriginalFile().getVirtualFile();
+    PsiFile currentPsiFile = context.getFile().getOriginalFile();
+    if (currentPsiFile == null) currentPsiFile = context.getFile();
+    VirtualFile currentFile = currentPsiFile.getVirtualFile();
     return MavenDomUtil.calcRelativePath(currentFile.getParent(), f.getVirtualFile());
   }
 

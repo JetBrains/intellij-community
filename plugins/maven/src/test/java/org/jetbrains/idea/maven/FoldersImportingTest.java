@@ -5,7 +5,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.core.util.Path;
+import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.project.RootModelAdapter;
 
 import java.io.File;

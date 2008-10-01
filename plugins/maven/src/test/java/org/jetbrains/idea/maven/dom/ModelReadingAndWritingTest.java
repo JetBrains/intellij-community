@@ -3,16 +3,15 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomManager;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.dom.model.Dependency;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 public class ModelReadingAndWritingTest extends MavenImportingTestCase {
   @Override
@@ -45,15 +44,15 @@ public class ModelReadingAndWritingTest extends MavenImportingTestCase {
       }
     }, null, null);
 
-    assertEquals("<?xml version=\"1.0\"?>\n" +
-                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-                 "    <modelVersion>4.0.0</modelVersion>\n" +
-                 "    <groupId>foo</groupId>\n" +
-                 "    <artifactId>bar</artifactId>\n" +
-                 "    <version>baz</version>\n" +
+    assertEquals("<?xml version=\"1.0\"?>\r\n" +
+                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n" +
+                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\r\n" +
+                 "    <modelVersion>4.0.0</modelVersion>\r\n" +
+                 "    <groupId>foo</groupId>\r\n" +
+                 "    <artifactId>bar</artifactId>\r\n" +
+                 "    <version>baz</version>\r\n" +
                  "</project>",
-                 getProjectPomDocument().getText());
+                 VfsUtil.loadText(myProjectPom));
   }
 
   public void testAddingADependency() throws Exception {
@@ -70,42 +69,33 @@ public class ModelReadingAndWritingTest extends MavenImportingTestCase {
       }
     }, null, null);
 
-    assertEquals("<?xml version=\"1.0\"?>\n" +
-                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-                 "    <modelVersion>4.0.0</modelVersion>\n" +
-                 "    <groupId>test</groupId>\n" +
-                 "    <artifactId>project</artifactId>\n" +
-                 "    <version>1</version>\n" +
-                 "    <dependencies>\n" +
-                 "        <dependency>\n" +
-                 "            <groupId>group</groupId>\n" +
-                 "            <artifactId>artifact</artifactId>\n" +
-                 "            <version>version</version>\n" +
-                 "        </dependency>\n" +
-                 "    </dependencies>\n" +
-                 "</project>", getProjectPomDocument().getText());
+    assertEquals("<?xml version=\"1.0\"?>\r\n" +
+                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n" +
+                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\r\n" +
+                 "    <modelVersion>4.0.0</modelVersion>\r\n" +
+                 "    <groupId>test</groupId>\r\n" +
+                 "    <artifactId>project</artifactId>\r\n" +
+                 "    <version>1</version>\r\n" +
+                 "    <dependencies>\r\n" +
+                 "        <dependency>\r\n" +
+                 "            <groupId>group</groupId>\r\n" +
+                 "            <artifactId>artifact</artifactId>\r\n" +
+                 "            <version>version</version>\r\n" +
+                 "        </dependency>\r\n" +
+                 "    </dependencies>\r\n" +
+                 "</project>", VfsUtil.loadText(myProjectPom));
   }
 
   private MavenModel getDomModel() {
-    PsiFile f = getProjectPomPsiFile();
-    DomFileElement<MavenModel> root = DomManager.getDomManager(myProject).getFileElement((XmlFile)f, MavenModel.class);
-    return root.getRootElement();
-  }
-
-  private PsiFile getProjectPomPsiFile() {
-    Document d = getProjectPomDocument();
-    return PsiDocumentManager.getInstance(myProject).getPsiFile(d);
-  }
-
-  private Document getProjectPomDocument() {
-    return FileDocumentManager.getInstance().getDocument(myProjectPom);
+    return MavenUtil.getMavenModel(myProject, myProjectPom);
   }
 
   private void formatAndSaveProjectPomDocument() {
     try {
-      CodeStyleManager.getInstance(myProject).reformat(getProjectPomPsiFile());
-      FileDocumentManager.getInstance().saveDocument(getProjectPomDocument());
+      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myProjectPom);
+      CodeStyleManager.getInstance(myProject).reformat(psiFile);
+      Document d = FileDocumentManager.getInstance().getDocument(myProjectPom);
+      FileDocumentManager.getInstance().saveDocument(d);
     }
     catch (IncorrectOperationException e) {
       throw new RuntimeException(e);

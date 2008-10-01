@@ -16,15 +16,15 @@ import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
-import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.core.util.MavenPluginInfo;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.events.MavenEventsManager;
-import org.jetbrains.idea.maven.core.util.MavenArtifactUtil;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.IdeaAPIHelper;
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
+import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.utils.MavenPluginInfo;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -76,9 +76,20 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
   protected abstract void updateTreeFrom(@Nullable SimpleNode node);
 
-  protected boolean isMinimalView() {
+  private boolean shouldDisplay(CustomNode node) {
+    Class[] visibles = getVisibleNodesClasses();
+    if (visibles == null) return true;
+
+    for (Class each : visibles) {
+      if (each.isInstance(node)) return true;
+    }
     return false;
   }
+
+  protected Class<? extends CustomNode>[] getVisibleNodesClasses() {
+    return null;
+  }
+
 
   private static final Comparator<SimpleNode> nodeComparator = new Comparator<SimpleNode>() {
     public int compare(SimpleNode o1, SimpleNode o2) {
@@ -167,8 +178,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       return structuralParent;
     }
 
-    public SimpleNode[] getChildren() {
-      return SimpleNode.NO_CHILDREN;
+    public CustomNode[] getChildren() {
+      return new CustomNode[0];
     }
 
     public <T extends CustomNode> T getParent(Class<T> aClass) {
@@ -182,11 +193,11 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       }
     }
 
-    boolean isVisible() {
-      return true;
+    public boolean isVisible() {
+      return shouldDisplay(this);
     }
 
-    void display(DisplayList list) {
+    public void display(DisplayList list) {
       if (isVisible()) {
         list.insert(this);
       }
@@ -329,13 +340,23 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       super(parent);
     }
 
-    public SimpleNode[] getChildren() {
-      displayList.clear();
-      displayChildren(myDisplayList);
-      return displayList.toArray(new SimpleNode[displayList.size()]);
+    @Override
+    public boolean isVisible() {
+      CustomNode[] children = getChildren();
+      
+      for (CustomNode each : children) {
+        if (each.isVisible()) return true;
+      }
+      return super.isVisible();
     }
 
-    void display(DisplayList list) {
+    public CustomNode[] getChildren() {
+      displayList.clear();
+      displayChildren(myDisplayList);
+      return displayList.toArray(new CustomNode[displayList.size()]);
+    }
+
+    public void display(DisplayList list) {
       if (isVisible()) {
         super.display(list);
       } else {
@@ -353,8 +374,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       super(parent);
     }
 
-    boolean isVisible() {
-      return !pomNodes.isEmpty();
+    public boolean isVisible() {
+      return !pomNodes.isEmpty() && super.isVisible();
     }
 
     protected void displayChildren(DisplayList displayList) {
@@ -859,8 +880,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       setIcons(CLOSED_MODULES_ICON, OPEN_MODULES_ICON);
     }
 
-    boolean isVisible() {
-      return super.isVisible() && getTreeViewSettings().groupStructurally;
+    public boolean isVisible() {
+      return getTreeViewSettings().groupStructurally && super.isVisible();
     }
 
     @NotNull
@@ -922,10 +943,6 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       pomNode = parent;
     }
 
-    boolean isVisible() {
-      return !isMinimalView();
-    }
-
     protected void displayChildren(DisplayList displayList) {
       displayList.add(goalNodes);
     }
@@ -949,9 +966,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     protected void updateNameAndDescription() {
       String hint = null;
       actionId = pomNode.actionIdPrefix + goal;
-      if (!isMinimalView()) {
-        hint = myEventsHandler.getActionDescription(pomNode.savedPath, goal);
-      }
+
+      hint = myEventsHandler.getActionDescription(pomNode.savedPath, goal);
 
       setName(goal, hint);
     }
@@ -1015,7 +1031,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     }
 
     public boolean isVisible() {
-      return !getTreeViewSettings().filterStandardPhases || myStandardPhases.contains(getName());
+      return (!getTreeViewSettings().filterStandardPhases
+             || myStandardPhases.contains(getName())) && super.isVisible();
     }
   }
 
@@ -1033,8 +1050,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       setName(NavigatorBundle.message("node.profiles"));
     }
 
-    boolean isVisible() {
-      return !profileNodes.isEmpty() && !isMinimalView();
+    public boolean isVisible() {
+      return !profileNodes.isEmpty() && super.isVisible();
     }
 
     protected void displayChildren(DisplayList displayList) {
@@ -1113,8 +1130,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       setName(NavigatorBundle.message("node.plugins"));
     }
 
-    boolean isVisible() {
-      return !pluginNodes.isEmpty() && !isMinimalView();
+    public boolean isVisible() {
+      return !pluginNodes.isEmpty() && super.isVisible();
     }
 
     protected void displayChildren(DisplayList displayList) {

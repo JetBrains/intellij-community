@@ -51,6 +51,8 @@ public abstract class MavenTestCase extends TestCase {
 
     myProject = myTestFixture.getProject();
 
+    setUpRepositoryMirror();
+
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
@@ -61,6 +63,19 @@ public abstract class MavenTestCase extends TestCase {
         }
       }
     });
+  }
+
+  private void setUpRepositoryMirror() throws IOException {
+    //String mirrorPath = PathManager.getHomePath() + "/svnPlugins/maven/src/test/data/centralMirror";
+    //setCustomSettingsFile("<settings>\n" +
+    //                      "  <mirrors>\n" +
+    //                      "    <mirror>\n" +
+    //                      "      <id>repo1.maven.org</id> \n" +
+    //                      "      <url>file://" + FileUtil.toSystemIndependentName(mirrorPath) + "</url> \n" +
+    //                      "      <mirrorOf>*</mirrorOf> \n" +
+    //                      "    </mirror>\n" +
+    //                      "  </mirrors>\n" +
+    //                      "</settings>");
   }
 
   private void ensureTempDirCreated() {
@@ -106,7 +121,7 @@ public abstract class MavenTestCase extends TestCase {
     for (Field field : fields) {
       final int modifiers = field.getModifiers();
       if ((modifiers & Modifier.FINAL) == 0
-          &&  (modifiers & Modifier.STATIC) == 0
+          && (modifiers & Modifier.STATIC) == 0
           && !field.getType().isPrimitive()) {
         field.setAccessible(true);
         try {
@@ -158,6 +173,13 @@ public abstract class MavenTestCase extends TestCase {
 
   protected String getParentPath() {
     return myProjectRoot.getParent().getPath();
+  }
+
+  protected void setCustomSettingsFile(String content) throws IOException {
+    File file = new File(myDir, "settings.xml");
+    file.createNewFile();
+    FileUtil.writeToFile(file, content.getBytes());
+    getMavenCoreSettings().setMavenSettingsFile(file.getPath());
   }
 
   protected Module createModule(String name) throws IOException {

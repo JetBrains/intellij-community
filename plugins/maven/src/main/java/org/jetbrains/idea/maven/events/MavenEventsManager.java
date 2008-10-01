@@ -32,12 +32,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
-import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
-import org.jetbrains.idea.maven.project.MavenConstants;
+import org.jetbrains.idea.maven.utils.DummyProjectComponent;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.runner.MavenRunner;
-import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
+import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 
 import java.io.File;
 import java.util.*;

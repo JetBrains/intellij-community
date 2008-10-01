@@ -12,7 +12,7 @@ import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.idea.maven.dom.model.Plugin;
 import org.jetbrains.idea.maven.dom.plugin.MavenPluginModel;
-import org.jetbrains.idea.maven.core.util.MavenArtifactUtil;
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
@@ -27,7 +27,7 @@ public class MavenPluginDomUtil {
     VirtualFile pluginXmlFile = getPluginXmlFile(p, pluginElement);
     if (pluginXmlFile == null) return null;
 
-    return getMavenPluginElement(p, pluginXmlFile);
+    return getMavenPluginModel(p, pluginXmlFile);
   }
 
   private static VirtualFile getPluginXmlFile(Project p, Plugin pluginElement) {
@@ -49,7 +49,7 @@ public class MavenPluginDomUtil {
     return PropertyResolver.resolve(value);
   }
 
-  private static MavenPluginModel getMavenPluginElement(Project p, VirtualFile pluginXml) {
+  private static MavenPluginModel getMavenPluginModel(Project p, VirtualFile pluginXml) {
     PsiFile psiFile = PsiManager.getInstance(p).findFile(pluginXml);
     return DomManager.getDomManager(p).getFileElement((XmlFile)psiFile, MavenPluginModel.class).getRootElement();
   }
