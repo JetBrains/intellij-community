@@ -4,6 +4,7 @@
 package com.intellij.ui;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -61,6 +62,10 @@ public class IconDeferrerImpl extends IconDeferrer {
 
   public <T> Icon defer(final Icon base, final T param, final Function<T, Icon> f) {
     synchronized (LOCK) {
+      if (myEvaluationIsInProgress.get().booleanValue()) {
+        return f.fun(param);
+      }
+
       Icon result = myIconsCache.get(param);
       if (result == null) {
         result = new DeferredIcon<T>(base, param, f);
@@ -68,6 +73,23 @@ public class IconDeferrerImpl extends IconDeferrer {
       }
 
       return result;
+    }
+  }
+
+  private final ThreadLocal<Boolean> myEvaluationIsInProgress = new ThreadLocal<Boolean>() {
+    @Override
+    protected Boolean initialValue() {
+      return Boolean.FALSE;
+    }
+  };
+
+  public void evaluateDeferred(final Runnable runnable) {
+    try {
+      myEvaluationIsInProgress.set(Boolean.TRUE);
+      ApplicationManager.getApplication().runReadAction(runnable);
+    }
+    finally {
+      myEvaluationIsInProgress.set(Boolean.FALSE);
     }
   }
 }

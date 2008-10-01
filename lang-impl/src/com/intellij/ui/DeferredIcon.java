@@ -5,7 +5,6 @@ package com.intellij.ui;
 
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
 
@@ -50,7 +49,7 @@ public class DeferredIcon<T> implements Icon {
       final Job<Object> job = JobScheduler.getInstance().createJob("Evaluating deferred icon", Job.DEFAULT_PRIORITY);
       job.addTask(new Runnable() {
         public void run() {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
+          ((IconDeferrerImpl)IconDeferrer.getInstance()).evaluateDeferred(new Runnable() {
             public void run() {
               myDelegateIcon = nonNull(myEvaluator.fun(myParam));
             }
