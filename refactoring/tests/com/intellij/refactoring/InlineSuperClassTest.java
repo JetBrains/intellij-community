@@ -93,4 +93,8 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testMultipleConstructors() throws Exception {
     doTest();
   }
+
+  public void testImplicitChildConstructor() throws Exception {
+    doTest();
+  }
 }

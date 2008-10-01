@@ -24,8 +24,8 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
         myConflict = CONSTRUCTOR_MATCHING_SUPER_NOT_FOUND;
       }
     } else {
-      boolean foundMatchingConstructor = false;
       final PsiParameter[] superParameters = constructor.getParameterList().getParameters();
+      boolean foundMatchingConstructor = constructors.length == 0 && superParameters.length == 0;
       constr: for (PsiMethod method : constructors) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         if (superParameters.length == parameters.length) {
