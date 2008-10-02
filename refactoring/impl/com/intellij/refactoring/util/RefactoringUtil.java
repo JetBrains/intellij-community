@@ -108,14 +108,14 @@ public class RefactoringUtil {
     final PsiVariable psiVariable = facade.getResolveHelper().resolveReferencedVariable(fieldName, occurrence);
     final PsiElementFactory factory = facade.getElementFactory();
     if (psiVariable != null && psiVariable.equals(newField)) {
-      return occurrence.replace(factory.createExpressionFromText(fieldName, null));
+      return IntroduceVariableBase.replace(occurrence, factory.createExpressionFromText(fieldName, null), file);
     }
     else {
       final PsiReferenceExpression ref = (PsiReferenceExpression)factory.createExpressionFromText("this." + fieldName, null);
       if (newField.hasModifierProperty(PsiModifier.STATIC)) {
         ref.setQualifierExpression(factory.createReferenceExpression(destinationClass));
       }
-      return IntroduceVariableBase.replace(occurrence, ref, editor, file);
+      return IntroduceVariableBase.replace(occurrence, ref, file);
     }
   }
 
@@ -1179,9 +1179,15 @@ public class RefactoringUtil {
 
   @Nullable
   public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@NotNull final PsiElement... elements) {
+    return createTypeParameterListWithUsedTypeParameters(null, elements);
+  }
+
+  @Nullable
+  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final PsiTypeParameterList fromList, @NotNull final PsiElement... elements) {
     if (elements.length == 0) return null;
     final Set<PsiTypeParameter> used = new HashSet<PsiTypeParameter>();
     for (final PsiElement element : elements) {
+      if (element == null) continue;
       element.accept(new JavaRecursiveElementVisitor() {
 
         @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
@@ -1196,7 +1202,21 @@ public class RefactoringUtil {
             }
           }
         }
+
+        @Override
+        public void visitExpression(final PsiExpression expression) {
+          super.visitExpression(expression);
+          final PsiType type = expression.getType();
+          final PsiClass resolved = PsiUtil.resolveClassInType(type);
+          if (resolved instanceof PsiTypeParameter && PsiTreeUtil.isAncestor(((PsiTypeParameter)resolved).getOwner(), element, true)){
+            used.add((PsiTypeParameter)resolved);
+          }
+        }
       });
+    }
+
+    if (fromList != null) {
+      used.retainAll(Arrays.asList(fromList.getTypeParameters()));
     }
 
     PsiTypeParameter[] typeParameters = used.toArray(new PsiTypeParameter[used.size()]);

@@ -3,6 +3,7 @@ package com.intellij.refactoring.introduceField;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pass;
@@ -23,8 +24,9 @@ public class ElementToWorkOn {
   public static final Key<PsiElement> PARENT = Key.create("PARENT");
   private final PsiExpression myExpression;
   private final PsiLocalVariable myLocalVariable;
-  public static final Key<PsiElement> PREFIX = Key.create("prefix");
-  public static final Key<PsiElement> SUFFIX = Key.create("suffix");
+  public static final Key<String> PREFIX = Key.create("prefix");
+  public static final Key<String> SUFFIX = Key.create("suffix");
+  public static final Key<RangeMarker> TEXT_RANGE = Key.create("range");
 
   private ElementToWorkOn(PsiLocalVariable localVariable, PsiExpression expr) {
     myLocalVariable = localVariable;

@@ -1,20 +1,28 @@
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindResult;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.constant.title");
@@ -115,7 +123,30 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   }
 
   protected OccurenceManager createOccurenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
-    return new ExpressionOccurenceManager(selectedExpr, parentClass, null);
+    return new ExpressionOccurenceManager(selectedExpr, parentClass, null) {
+      @Override
+      protected PsiExpression[] findExpressionOccurrences() {
+        if (selectedExpr instanceof PsiLiteralExpression && !selectedExpr.isPhysical()) {
+          final FindManager findManager = FindManager.getInstance(selectedExpr.getProject());
+          final FindModel findModel = (FindModel)findManager.getFindInFileModel().clone();
+          findModel.setStringToFind(StringUtil.stripQuotesAroundValue(selectedExpr.getText()));
+          final List<PsiExpression> results = new ArrayList<PsiExpression>();
+          final PsiFile file = getScope().getContainingFile();
+          final String text = file.getText();
+          FindResult result = findManager.findString(text, 0, findModel);
+          while (result.isStringFound()) {
+            final int startOffset = result.getStartOffset();
+            final int endOffset = result.getEndOffset();
+            if (PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), PsiLiteralExpression.class) != null) { //enum. occurrences inside string literals
+              results.add(IntroduceVariableBase.getSelectedExpression(file.getProject(), file, startOffset, endOffset));
+            }
+            result = findManager.findString(text, endOffset, findModel);
+          }
+          return results.toArray(new PsiExpression[results.size()]);
+        }
+        return super.findExpressionOccurrences();
+      }
+    };
   }
 
   private static class IsStaticFinalInitializerExpression extends ClassMemberReferencesVisitor {

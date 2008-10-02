@@ -1,9 +1,9 @@
 package com.intellij.refactoring.util.occurences;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 
@@ -44,7 +44,7 @@ public class ExpressionOccurenceManager extends BaseOccurenceManager {
     if(myFilter != null && !myFilter.isOK(myMainOccurence)) {
       return defaultOccurences();
     }
-    final PsiExpression[] expressionOccurrences = CodeInsightUtil.findExpressionOccurrences(myScope, myMainOccurence);
+    final PsiExpression[] expressionOccurrences = findExpressionOccurrences();
     final PsiClass scopeClass = PsiTreeUtil.getNonStrictParentOfType(myScope, PsiClass.class);
     if (myMaintainStaticContext && expressionOccurrences.length > 1 && !RefactoringUtil.isInStaticContext(myMainOccurence, scopeClass)) {
       final ArrayList<PsiExpression> expressions = new ArrayList<PsiExpression>(Arrays.asList(expressionOccurrences));
@@ -59,6 +59,14 @@ public class ExpressionOccurenceManager extends BaseOccurenceManager {
     else {
       return expressionOccurrences;
     }
+  }
+
+  public PsiElement getScope() {
+    return myScope;
+  }
+
+  protected PsiExpression[] findExpressionOccurrences() {
+    return CodeInsightUtil.findExpressionOccurrences(myScope, myMainOccurence);
   }
 
 }

@@ -14,10 +14,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
@@ -47,9 +45,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
@@ -204,14 +200,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
   public static PsiExpression getSelectedExpression(final Project project, final PsiFile file, final int startOffset, final int endOffset) {
     PsiExpression tempExpr;
-    final PsiElement elementAt = file.findElementAt(startOffset);
+    final PsiElement elementAt = PsiTreeUtil.findCommonParent(file.findElementAt(startOffset), file.findElementAt(endOffset - 1));
     final PsiLiteralExpression literalExpression = PsiTreeUtil.getParentOfType(elementAt, PsiLiteralExpression.class);
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     try {
       String text = file.getText().subSequence(startOffset, endOffset).toString();
-      PsiElement prefix = null;
-      PsiElement suffix = null;
-      if (literalExpression != null && literalExpression == PsiTreeUtil.getParentOfType(file.findElementAt(endOffset), PsiLiteralExpression.class)) {
+      String prefix = null;
+      String suffix = null;
+      if (literalExpression != null) {
 
         final String stripped = StringUtil.stripQuotesAroundValue(text);
 
@@ -232,13 +228,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
         final int offset = literalExpression.getTextOffset();
         if (offset + 1 < startOffset) {
-          prefix = elementFactory.createExpressionFromText(file.getText().substring(offset, startOffset) + "\"", file);
+          prefix = "\" + ";
         }
 
         if (offset + literalExpression.getTextLength() - 1 > endOffset) {
-          suffix =
-            elementFactory.createExpressionFromText("\"" + file.getText().substring(endOffset, offset + literalExpression.getTextLength()), file);
+          suffix = " + \"";
         }
+      } else {
+        text = text.trim();
       }
 
       tempExpr = elementFactory.createExpressionFromText(text, file);
@@ -246,7 +243,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       tempExpr.putUserData(ElementToWorkOn.PREFIX, prefix);
       tempExpr.putUserData(ElementToWorkOn.SUFFIX, suffix);
 
-      tempExpr.putUserData(ElementToWorkOn.PARENT, elementAt);
+      tempExpr.putUserData(ElementToWorkOn.TEXT_RANGE, FileDocumentManager.getInstance().getDocument(file.getVirtualFile()).createRangeMarker(startOffset, endOffset));
+
+      tempExpr.putUserData(ElementToWorkOn.PARENT, literalExpression != null ? literalExpression : elementAt);
     }
     catch (IncorrectOperationException e) {
       tempExpr = null;
@@ -468,7 +467,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
             }
           } else {
             if (!deleteSelf && replaceSelf) {
-              replace(expr1, ref, editor, file);
+              replace(expr1, ref, file);
             }
           }
 
@@ -493,39 +492,30 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     return true;
   }
 
-  public static PsiElement replace(final PsiExpression expr1, final PsiExpression ref, final Editor editor, final PsiFile file)
+  public static PsiElement replace(final PsiExpression expr1, final PsiExpression ref, final PsiFile file)
     throws IncorrectOperationException {
     final PsiExpression expr2 = RefactoringUtil.outermostParenthesizedExpression(expr1);
     if (expr2.isPhysical()) {
       return expr2.replace(ref);
-    } else {
-      int selectionStart = editor.getSelectionModel().getSelectionStart();
-      final int selectionEnd = editor.getSelectionModel().getSelectionEnd();
-      PsiElement last = null;
-      final Set<PsiElement> toReplace = new HashSet<PsiElement>();
-      while (selectionStart < selectionEnd) {
-        final PsiElement at = file.findElementAt(selectionStart++);
-        if (at != null) {
-          last = at;
-          toReplace.add(last);
-        }
-      }
-      PsiElement replacement = null;
-      if (last != null) {
-        final PsiElement prefix = expr1.getUserData(ElementToWorkOn.PREFIX);
-        final PsiElement suffix = expr1.getUserData(ElementToWorkOn.SUFFIX);
+    }
+    else {
+      final String prefix  = expr1.getUserData(ElementToWorkOn.PREFIX);
+      final String suffix  = expr1.getUserData(ElementToWorkOn.SUFFIX);
+      final PsiElement parent = expr1.getUserData(ElementToWorkOn.PARENT);
+      final RangeMarker rangeMarker = expr1.getUserData(ElementToWorkOn.TEXT_RANGE);
 
-        final String text =
-          (prefix != null ? prefix.getText() + " + " : "") + ref.getText() + (suffix != null ? " + " + suffix.getText() : "");
-        final PsiExpression el = JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createExpressionFromText(text, file);
+      final String allText = parent.getContainingFile().getText();
+      final TextRange parentRange = parent.getTextRange();
 
-        replacement = last.getParent().addAfter(el, replacement);
-      }
+      String beg = allText.substring(parentRange.getStartOffset(), rangeMarker.getStartOffset());
+      if (StringUtil.stripQuotesAroundValue(beg).length() == 0) beg = "";
 
-      for (PsiElement element : toReplace) {
-        if (element.isValid()) element.delete();
-      }
-      return replacement;
+      String end = allText.substring(rangeMarker.getEndOffset(), parentRange.getEndOffset());
+      if (StringUtil.stripQuotesAroundValue(end).length() == 0) end = "";
+
+      final String text = beg + (prefix != null ? prefix : "") + ref.getText() + (suffix != null ? suffix : "") + end;
+      final PsiExpression el = JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createExpressionFromText(text, file);
+      return parent.replace(el);
     }
   }
 
