@@ -6,9 +6,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -46,9 +46,10 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
             final MavenTask task = getEventsHandler().getTask(configuration.getType(), configuration);
             result[0] = task != null && getEventsHandler().execute(Arrays.asList(task), indicator);
           }
-        };
+        }.queue();
       }
     }, ModalityState.NON_MODAL);
+
     return result[0];
   }
 

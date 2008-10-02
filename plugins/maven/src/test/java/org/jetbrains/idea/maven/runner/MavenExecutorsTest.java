@@ -34,7 +34,6 @@ public class MavenExecutorsTest extends MavenTestCase {
     MavenRunnerParameters params = new MavenRunnerParameters(true, getProjectPath(), Arrays.asList("compile"), null);
     MavenRunnerSettings settings = new MavenRunnerSettings();
 
-    settings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA);
     MavenExecutor e;
     if (useEmbedder) {
       e = new MavenEmbeddedExecutor(params, getMavenCoreSettings(), settings, new TestConsoleAdapter());

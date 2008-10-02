@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.runner;
 
 import com.intellij.execution.filters.*;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -13,11 +14,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.wm.ToolWindowAnchor;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -203,21 +203,40 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
       return new TestConsoleAdapter();
     }
     
-    if (myMavenOutputWindowPanel == null) {
-      myMavenOutputWindowPanel = new MavenRunnerOutputPanel();
-      Disposer.register(myProject, myMavenOutputWindowPanel);
-    }
+    final ConsoleView consoleView = createConsoleView();
 
-    if (!isToolWindowOpen()) {
-      ToolWindowManager.getInstance(myProject)
-          .registerToolWindow(OUTPUT_TOOL_WINDOW_ID, myMavenOutputWindowPanel.getRootComponent(), ToolWindowAnchor.BOTTOM).show(null);
-    }
-
-    ConsoleView consoleView = createConsoleView();
-    myMavenOutputWindowPanel.attachConsole(consoleView);
     return new ConsoleAdapterImpl(consoleView,
                                   coreSettings.getOutputLevel(),
-                                  coreSettings.isPrintErrorStackTraces());
+                                  coreSettings.isPrintErrorStackTraces()) {
+      private boolean isConsoleOpened = false;
+
+      @Override
+      protected void doPrint(String text, OutputType type) {
+        if (!isConsoleOpened) {
+          attachToToolWindow(consoleView);
+          isConsoleOpened = true;
+        }
+        super.doPrint(text, type);
+      }
+    };
+  }
+
+  private void attachToToolWindow(final ConsoleView view) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (myMavenOutputWindowPanel == null) {
+          myMavenOutputWindowPanel = new MavenRunnerOutputPanel();
+          Disposer.register(myProject, myMavenOutputWindowPanel);
+        }
+
+        if (!isToolWindowOpen()) {
+          ToolWindowManager.getInstance(myProject)
+              .registerToolWindow(OUTPUT_TOOL_WINDOW_ID, myMavenOutputWindowPanel.getRootComponent(), ToolWindowAnchor.BOTTOM).show(null);
+        }
+
+        myMavenOutputWindowPanel.attachConsole(view);
+      }
+    });
   }
 
   private ConsoleView createConsoleView() {
