@@ -2,6 +2,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -85,7 +86,9 @@ public class TargetElementUtil extends TargetElementUtilBase {
     }
 
     if (refElement == null) {
-      DaemonCodeAnalyzer.getInstance(manager.getProject()).updateVisibleHighlighters(editor);
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        DaemonCodeAnalyzer.getInstance(manager.getProject()).updateVisibleHighlighters(editor);
+      }
       return null;
     }
     else {

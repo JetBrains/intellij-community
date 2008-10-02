@@ -111,6 +111,8 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public boolean USE_INSTANCEOF_ON_EQUALS_PARAMETER = false;
 
+  public boolean HIGHLIGHT_IDENTIFIER_UNDER_CARET = false;
+
   @Property(surroundWithTag = false)
   @AbstractCollection(
     surroundWithTag = false,

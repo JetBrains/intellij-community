@@ -209,13 +209,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
     setupFindModel(project);
 
-    ReadWriteAccessDetector detector = null;
-    for(ReadWriteAccessDetector accessDetector: Extensions.getExtensions(ReadWriteAccessDetector.EP_NAME)) {
-      if (accessDetector.isReadWriteAccessible(element)) {
-        detector = accessDetector;
-        break;
-      }
-    }
+    ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(element);
 
     if (detector != null) {
       List<PsiReference> readRefs = new ArrayList<PsiReference>();
@@ -327,14 +321,19 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
                                       TextAttributes attributes, boolean clearHighlights) {
     List<TextRange> textRanges = new ArrayList<TextRange>(refs.size());
     for (PsiReference ref : refs) {
-      PsiElement element = ref.getElement();
-      TextRange rangeInElement = ref.getRangeInElement();
-      TextRange range = element.getTextRange().cutOut(rangeInElement);
-      // injection occurs
-      range = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range);
+      TextRange range = getRangeToHighlight(ref);
       textRanges.add(range);
     }
     highlightRanges(highlightManager, editor, attributes, clearHighlights, textRanges);
+  }
+
+  public static TextRange getRangeToHighlight(final PsiReference ref) {
+    PsiElement element = ref.getElement();
+    TextRange rangeInElement = ref.getRangeInElement();
+    TextRange range = element.getTextRange().cutOut(rangeInElement);
+    // injection occurs
+    range = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range);
+    return range;
   }
 
   @Nullable

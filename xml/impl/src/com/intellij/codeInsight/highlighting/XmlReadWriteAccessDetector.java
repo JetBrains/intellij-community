@@ -10,7 +10,7 @@ import com.intellij.psi.xml.XmlComment;
 /**
  * @author yole
  */
-public class XmlReadWriteAccessDetector implements ReadWriteAccessDetector {
+public class XmlReadWriteAccessDetector extends ReadWriteAccessDetector {
   public boolean isReadWriteAccessible(final PsiElement element) {
     return element instanceof XmlAttributeValue ||
         element instanceof XmlTag ||

@@ -7,7 +7,7 @@ import com.intellij.psi.util.PropertyUtil;
 /**
  * @author yole
  */
-public class JavaReadWriteAccessDetector implements ReadWriteAccessDetector {
+public class JavaReadWriteAccessDetector extends ReadWriteAccessDetector {
   public boolean isReadWriteAccessible(final PsiElement element) {
     return element instanceof PsiVariable && !(element instanceof ImplicitVariable);
   }

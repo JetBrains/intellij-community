@@ -60,15 +60,15 @@ public class TargetElementUtilBase {
 
   @Nullable
   public static PsiReference findReference(Editor editor, int offset) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
     Project project = editor.getProject();
     if (project == null) return null;
 
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+    }
 
     offset = adjustOffset(document, offset);
 
@@ -97,14 +97,13 @@ public class TargetElementUtilBase {
 
   @Nullable
   public static PsiElement findTargetElement(Editor editor, int flags) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     int offset = editor.getCaretModel().getOffset();
     return getInstance().findTargetElement(editor, flags, offset);
   }
 
   @Nullable
   public PsiElement findTargetElement(Editor editor, int flags, int offset) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
     Project project = editor.getProject();
     if (project == null) return null;
 
@@ -115,7 +114,9 @@ public class TargetElementUtilBase {
     }
 
     Document document = editor.getDocument();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+    }
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
 

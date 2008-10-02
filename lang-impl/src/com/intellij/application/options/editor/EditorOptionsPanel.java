@@ -47,6 +47,7 @@ public class EditorOptionsPanel {
   private JRadioButton myRbPreferScrolling;
   private JRadioButton myRbPreferMovingCaret;
   private JCheckBox myCbRenameLocalVariablesInplace;
+  private JCheckBox myCbHighlightIdentifierUnderCaret;
   private ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
 
   private TabbedPaneWrapper myTabbedPaneWrapper;
@@ -97,6 +98,7 @@ public class EditorOptionsPanel {
 
     myCbHighlightBraces.setSelected(codeInsightSettings.HIGHLIGHT_BRACES);
     myCbHighlightScope.setSelected(codeInsightSettings.HIGHLIGHT_SCOPE);
+    myCbHighlightIdentifierUnderCaret.setSelected(codeInsightSettings.HIGHLIGHT_IDENTIFIER_UNDER_CARET);
 
     // Virtual space
 
@@ -153,6 +155,7 @@ public class EditorOptionsPanel {
 
     codeInsightSettings.HIGHLIGHT_BRACES = myCbHighlightBraces.isSelected();
     codeInsightSettings.HIGHLIGHT_SCOPE = myCbHighlightScope.isSelected();
+    codeInsightSettings.HIGHLIGHT_IDENTIFIER_UNDER_CARET = myCbHighlightIdentifierUnderCaret.isSelected();
 
     // Virtual space
 
@@ -245,6 +248,7 @@ public class EditorOptionsPanel {
     // Brace highlighting
     isModified |= isModified(myCbHighlightBraces, codeInsightSettings.HIGHLIGHT_BRACES);
     isModified |= isModified(myCbHighlightScope, codeInsightSettings.HIGHLIGHT_SCOPE);
+    isModified |= isModified(myCbHighlightIdentifierUnderCaret, codeInsightSettings.HIGHLIGHT_IDENTIFIER_UNDER_CARET);
 
     // Virtual space
     isModified |= isModified(myCbVirtualSpace, editorSettings.isVirtualSpace());

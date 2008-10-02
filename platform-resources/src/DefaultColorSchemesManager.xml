@@ -544,6 +544,24 @@
         </value>
       </option>
 
+      <option name="IDENTIFIER_UNDER_CARET_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND" value="e4e4ff"/>
+          <option name="ERROR_STRIPE_COLOR" value="ccccff"/>
+          <option name="EFFECT_COLOR"/>
+        </value>
+      </option>
+
+      <option name="WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND" value="ffe4ff"/>
+          <option name="ERROR_STRIPE_COLOR" value="ffcdff"/>
+          <option name="EFFECT_COLOR"/>
+        </value>
+      </option>
+
       <option name="TEXT_SEARCH_RESULT_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
