@@ -73,4 +73,5 @@
 
   <extensionPoint name="editorActionHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorActionHandlerBean"/>
   <extensionPoint name="editorTypedHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorTypedHandlerBean"/>
+  <extensionPoint name="contentBasedSyntaxHighlighterProvider" interface="com.intellij.openapi.fileTypes.ContentBasedSyntaxHighlighterProvider"/>
 </extensionPoints>
