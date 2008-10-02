@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2007 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.git4idea.ssh;
 
 import org.apache.xmlrpc.XmlRpcClientLite;
@@ -39,6 +54,7 @@ public class GitSSHIdeaClient implements GitSSHHandler {
   /**
    * {@inheritDoc}
    */
+  @SuppressWarnings("unchecked")
   public boolean verifyServerHostKey(final int handler,
                                      final String hostname,
                                      final int port,
@@ -67,6 +83,7 @@ public class GitSSHIdeaClient implements GitSSHHandler {
    * {@inheritDoc}
    */
   @Nullable
+  @SuppressWarnings("unchecked")
   public String askPassphrase(final int handler, final String username, final String keyPath, final String lastError) {
     Vector params = new Vector();
     params.add(handler);
@@ -88,6 +105,7 @@ public class GitSSHIdeaClient implements GitSSHHandler {
    * {@inheritDoc}
    */
   @Nullable
+  @SuppressWarnings("unchecked")
   public Vector<String> replyToChallenge(final int handlerNo,
                                          final String username,
                                          final String name,
@@ -106,7 +124,7 @@ public class GitSSHIdeaClient implements GitSSHHandler {
     params.add(echo);
     params.add(lastError);
     try {
-      return adjustNull((Vector)myClient.execute(HANDLER_NAME + ".replyToChallenge", params));
+      return adjustNull((Vector<String>)myClient.execute(HANDLER_NAME + ".replyToChallenge", params));
     }
     catch (XmlRpcException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
@@ -120,6 +138,7 @@ public class GitSSHIdeaClient implements GitSSHHandler {
    * {@inheritDoc}
    */
   @Nullable
+  @SuppressWarnings("unchecked")
   public String askPassword(final int handlerNo, final String username, final String lastError) {
     Vector params = new Vector();
     params.add(handlerNo);
