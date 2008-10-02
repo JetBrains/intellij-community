@@ -83,20 +83,21 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
           if (isByInstance()) flags.add(Flag.IMPLICIT_FIRST_ARG);
           if (resolved instanceof PyClass) { // constructor call
             final PyClass cls = (PyClass)resolved;
-            resolved = cls.findMethodByName("__init__");
+            resolved = cls.findMethodByName("__init__");  // XXX move this name to PyNames
             //is_inst |= true;
             flags.add(Flag.IMPLICIT_FIRST_ARG);
           }
           if (resolved != null) {
             // look for closest decorator
             // TODO: look for all decorators
+            // XXX disuse PyDecoratedFunction, use PyDecorator
             PsiElement parent = resolved.getParent();
             if (parent instanceof PyDecoratedFunction) {
               final PyDecoratedFunction decorated = (PyDecoratedFunction)parent;
               PsiElement decorator = PsiTreeUtil.getChildOfType(decorated, PyReferenceExpression.class);
               if (decorator != null) { // just in case
                 String deco_name = decorator.getText();
-                @NonNls final String STATICMETHOD = "staticmethod";
+                @NonNls final String STATICMETHOD = "staticmethod"; // TODO: must go to function
                 @NonNls final String CLASSMETHOD = "classmethod";
                 if (STATICMETHOD.equals(deco_name)) {
                   flags.add(Flag.STATICMETHOD);
@@ -139,7 +140,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
 
   @Override
   public String toString() {
-    return "PyCallExpression: "; // + PyResolveUtil.getReadableRepr(getCallee()); //getCalledFunctionReference().getReferencedName();
+    return "PyCallExpression: " + PyUtil.getReadableRepr(getCallee(), true); //getCalledFunctionReference().getReferencedName();
   }
 
   public PyType getType() {
