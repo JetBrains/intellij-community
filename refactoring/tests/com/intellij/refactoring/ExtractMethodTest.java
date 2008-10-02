@@ -316,22 +316,9 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  public void testGenericsParameters() throws Exception {
+    doTest();
+  }
 
   private void doChainedConstructorTest(final boolean replaceAllDuplicates) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
