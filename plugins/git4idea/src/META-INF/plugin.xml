@@ -88,6 +88,9 @@
     <projectService
         serviceInterface="git4idea.GitVcsSettings"
         serviceImplementation="git4idea.GitVcsSettings"/>
+    <applicationService
+        serviceInterface="git4idea.GitSSHService"
+        serviceImplementation="git4idea.GitSSHService"/>
     <fileEditorProvider implementation="git4idea.GitRevisionGraphEditorProvider"/>
 
   </extensions>

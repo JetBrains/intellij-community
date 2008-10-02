@@ -16,12 +16,14 @@
 package git4idea;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandRunnable;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NonNls;
 
@@ -45,14 +47,16 @@ public class GitCheckoutDialog extends DialogWrapper {
    * The parttern for SSH urls in form [user@]host:path
    */
   private static final Pattern SSH_URL_PATTERN;
+
   static {
     // TODO make real URL pattern
     @NonNls final String ch = "[\\p{ASCII}&&[\\p{Graph}]&&[^@:/]]";
-    @NonNls final String host = ch+"+(?:\\."+ch+"+)*";
-    @NonNls final String path = "/?"+ch+"+(?:/"+ch+"+)*/?";
-    @NonNls final String all = "(?:"+ch+"+@)?"+host+":"+path;
+    @NonNls final String host = ch + "+(?:\\." + ch + "+)*";
+    @NonNls final String path = "/?" + ch + "+(?:/" + ch + "+)*/?";
+    @NonNls final String all = "(?:" + ch + "+@)?" + host + ":" + path;
     SSH_URL_PATTERN = Pattern.compile(all);
   }
+
   /**
    * repository URL
    */
@@ -92,11 +96,11 @@ public class GitCheckoutDialog extends DialogWrapper {
   /**
    * the project for checkout
    */
-  private Project myProject;
+  private final Project myProject;
   /**
    * the settings for the git
    */
-  private GitVcsSettings mySettings;
+  private final GitVcsSettings mySettings;
 
   /**
    * A constructor
@@ -203,23 +207,34 @@ public class GitCheckoutDialog extends DialogWrapper {
     });
     myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
+        myTestURL = myRepositoryURL.getText();
+        GitCommandRunnable cmdr;
         try {
-          myTestURL = myRepositoryURL.getText();
-          try {
-            GitCommand command = new GitCommand(myProject, mySettings, GitUtil.getTempDir());
-            command.checkRepository(myTestURL);
-            Messages.showInfoMessage(myTestButton, GitBundle.message("clone.test.success.message", myTestURL),
-                                     GitBundle.getString("clone.test.success"));
-            myTestResult = Boolean.TRUE;
-          }
-          catch (VcsException ex) {
-            myTestResult = Boolean.FALSE;
-            GitUtil.showOperationError(myProject, ex, "connection test");
-          }
+          cmdr = new GitCommandRunnable(myProject, mySettings, GitUtil.getTempDir());
         }
-        finally {
-          updateOkButton();
+        catch (VcsException ex) {
+          myTestURL = null;
+          myTestResult = null;
+          GitUtil.showOperationError(myProject, ex, "connection test");
+          return;
         }
+        cmdr.setCommand(GitCommand.LS_REMOTE_CMD);
+        cmdr.setArgs(new String[]{myTestURL, "master"});
+
+        ProgressManager manager = ProgressManager.getInstance();
+        manager.runProcessWithProgressSynchronously(cmdr, GitBundle.message("clone.testing", myTestURL), false, myProject);
+
+        VcsException ex = cmdr.getException();
+        if (ex != null) {
+          myTestResult = Boolean.FALSE;
+          GitUtil.showOperationError(myProject, ex, "connection test");
+        }
+        else {
+          Messages.showInfoMessage(myTestButton, GitBundle.message("clone.test.success.message", myTestURL),
+                                   GitBundle.getString("clone.test.success"));
+          myTestResult = Boolean.TRUE;
+        }
+        updateOkButton();
       }
     });
     setOKActionEnabled(false);
@@ -296,11 +311,12 @@ public class GitCheckoutDialog extends DialogWrapper {
       return false;
     }
     if (myTestResult != null && repository.equals(myTestURL)) {
-      if( !myTestResult.booleanValue()) {
+      if (!myTestResult.booleanValue()) {
         setErrorText(GitBundle.getString("clone.test.failed.error"));
         setOKActionEnabled(false);
         return false;
-      } else {
+      }
+      else {
         return true;
       }
     }
@@ -313,7 +329,7 @@ public class GitCheckoutDialog extends DialogWrapper {
       // do nothing
     }
     // check if ssh url pattern
-    if(SSH_URL_PATTERN.matcher(repository).matches()) {
+    if (SSH_URL_PATTERN.matcher(repository).matches()) {
       return true;
     }
     try {

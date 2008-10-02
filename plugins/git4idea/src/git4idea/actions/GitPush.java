@@ -44,9 +44,6 @@ public class GitPush extends BasicAction {
 
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
     for (VirtualFile root : roots) {
-      GitCommand command = new GitCommand(project, vcs.getSettings(), root);
-      command.push();
-
       GitCommandRunnable cmdr = new GitCommandRunnable(project, vcs.getSettings(), root);
       cmdr.setCommand(GitCommand.PUSH_CMD);
       cmdr.setArgs(new String[]{"--mirror"});
