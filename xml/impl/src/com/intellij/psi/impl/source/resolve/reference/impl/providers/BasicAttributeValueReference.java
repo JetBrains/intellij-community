@@ -18,7 +18,7 @@ public abstract class BasicAttributeValueReference implements PsiReference {
   protected TextRange myRange;
 
   public BasicAttributeValueReference(final PsiElement element) {
-    this ( element, 1);
+    this ( element, ElementManipulators.getValueTextRange(element));
   }
 
   public BasicAttributeValueReference(final PsiElement element, int offset) {

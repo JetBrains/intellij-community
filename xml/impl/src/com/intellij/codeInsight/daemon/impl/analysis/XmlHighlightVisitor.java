@@ -543,9 +543,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
           // logging for IDEADEV-29655
           if (referenceRange.getStartOffset() > referenceRange.getEndOffset()) {
-            final PsiElement element = reference.getElement();
-            final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-            LOG.error("Reference range start offset > end offset for element:  " + element.getText() + ", within tag: " + (tag != null ? tag.getText() : "NULL") +
+            LOG.error("Reference range start offset > end offset:  " + reference +
             ", start offset: " + referenceRange.getStartOffset() + ", end offset: " + referenceRange.getEndOffset());
           }
 
