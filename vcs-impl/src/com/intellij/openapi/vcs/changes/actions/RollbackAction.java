@@ -35,12 +35,14 @@ import java.util.List;
 public class RollbackAction extends AnAction {
   public void update(AnActionEvent e) {
     final boolean isEnabled = isEnabled(e);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    e.getPresentation().setVisible(project != null && ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length > 0);
     e.getPresentation().setEnabled(isEnabled);
     if (isEnabled) {
       VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
       if (files != null) {
         for(VirtualFile file: files) {
-          final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(e.getData(PlatformDataKeys.PROJECT)).getVcsFor(file);
+          final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
           if (vcs != null) {
             final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
             if (rollbackEnvironment != null) {

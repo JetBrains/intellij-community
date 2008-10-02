@@ -11,7 +11,7 @@
     <action id="CheckStatusForFiles" class="com.intellij.openapi.vcs.update.CommonStatusFileOrDirectoryAction"/>
     <action id="IntegrateFiles" class="com.intellij.openapi.vcs.update.CommonIntegrateFileOrDirectoryAction"/>
     <action id="Annotate" class="com.intellij.openapi.vcs.actions.AnnotateToggleAction"/>
-    <action id="Compare.SameVersion" class="com.intellij.openapi.vcs.actions.CompareWithTheSameVersionAction"/>
+    <action id="Compare.SameVersion" class="com.intellij.openapi.vcs.actions.CompareWithTheSameVersionAction" icon="/actions/diff.png"/>
     <action id="Compare.LastVersion" class="com.intellij.openapi.vcs.actions.CompareWithLastVersion"/>
     <action id="Compare.Selected" class="com.intellij.openapi.vcs.actions.CompareWithSelectedRevisionAction" popup="true"/>
     <action id="Compare.Specified" class="com.intellij.openapi.vcs.actions.SelectAndCompareWithSelectedRevisionAction"
@@ -182,6 +182,16 @@
       <action id="Vcs.ShowMessageHistory"
               class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"
               icon="/debugger/console.png"/>
+    </group>
+
+    <group id="VcsToobarActions">
+      <reference ref="Vcs.UpdateProject"/>
+      <reference ref="CheckinProject"/>
+      <reference ref="Compare.SameVersion"/>
+      <reference ref="Vcs.ShowTabbedFileHistory"/>
+      <reference ref="ChangesView.Rollback"/>
+      <separator/>
+      <add-to-group group-id="MainToolBar" relative-to-action="ShowSettings" anchor="before"/>
     </group>
 
     <!-- Window -->

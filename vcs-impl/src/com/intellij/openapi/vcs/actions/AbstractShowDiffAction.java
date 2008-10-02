@@ -27,22 +27,13 @@ public class AbstractShowDiffAction extends AbstractVcsAction{
   protected static boolean isVisible(final VcsContext vcsContext) {
     final Project project = vcsContext.getProject();
     if (project == null) return false;
-    final VirtualFile[] selectedFilePaths = vcsContext.getSelectedFiles();
-    if (selectedFilePaths == null || selectedFilePaths.length != 1) return false;
-
-    final VirtualFile selectedFile = selectedFilePaths[0];
-
-    if (selectedFile.isDirectory()) return false;
-
-    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(selectedFile);
-    if (vcs == null) return false;
-
-    final DiffProvider diffProvider = vcs.getDiffProvider();
-
-    if (diffProvider == null) return false;
-
-    return true;
-
+    final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
+    for (AbstractVcs vcs : vcss) {
+      if (vcs.getDiffProvider() != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   protected static boolean isEnabled(final VcsContext vcsContext) {

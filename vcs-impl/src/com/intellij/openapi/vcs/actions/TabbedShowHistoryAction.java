@@ -15,6 +15,8 @@ import java.util.ArrayList;
 public class TabbedShowHistoryAction extends AbstractVcsAction {
   protected void update(VcsContext context, Presentation presentation) {
     presentation.setEnabled(isEnabled(context));
+    final Project project = context.getProject();
+    presentation.setVisible(project != null && ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length > 0);
   }
 
   protected VcsHistoryProvider getProvider(AbstractVcs activeVcs) {
