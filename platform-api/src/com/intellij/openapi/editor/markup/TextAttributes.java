@@ -60,6 +60,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     private static final int EFFECT_LINE = 1;
     private static final int EFFECT_WAVE = 2;
     private static final int EFFECT_STRIKEOUT = 3;
+    private static final int EFFECT_BOLD_LINE = 4;
 
     public Object clone() throws CloneNotSupportedException {
       return super.clone();
@@ -133,6 +134,8 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     switch (myExternalizable.EFFECT_TYPE) {
       case Externalizable.EFFECT_BORDER:
         return EffectType.BOXED;
+      case Externalizable.EFFECT_BOLD_LINE:
+        return EffectType.BOLD_LINE_UNDERSCORE;
       case Externalizable.EFFECT_LINE:
         return EffectType.LINE_UNDERSCORE;
       case Externalizable.EFFECT_STRIKEOUT:
@@ -149,6 +152,8 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
       myExternalizable.EFFECT_TYPE = Externalizable.EFFECT_BORDER;
     } else if (effectType == EffectType.LINE_UNDERSCORE) {
       myExternalizable.EFFECT_TYPE = Externalizable.EFFECT_LINE;
+    } else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
+      myExternalizable.EFFECT_TYPE = Externalizable.EFFECT_BOLD_LINE;
     } else if (effectType == EffectType.STRIKEOUT) {
       myExternalizable.EFFECT_TYPE = Externalizable.EFFECT_STRIKEOUT;
     } else if (effectType == EffectType.WAVE_UNDERSCORE) {

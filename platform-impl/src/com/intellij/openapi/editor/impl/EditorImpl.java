@@ -1766,20 +1766,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         UIUtil.drawLine(g, xStart, y + 1, xEnd, y + 1);
         g.setColor(savedColor);
       }
-      else {
-        if (effectType == EffectType.STRIKEOUT) {
-          g.setColor(effectColor);
-          int y1 = y - getCharHeight() / 2;
-          UIUtil.drawLine(g, xStart, y1, xEnd, y1);
-          g.setColor(savedColor);
-        }
-        else {
-          if (effectType == EffectType.WAVE_UNDERSCORE) {
-            g.setColor(effectColor);
-            drawWave(g, xStart, xEnd, y + 1);
-            g.setColor(savedColor);
-          }
-        }
+      else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
+        g.setColor(effectColor);
+        UIUtil.drawLine(g, xStart, y, xEnd, y);
+        UIUtil.drawLine(g, xStart, y + 1, xEnd, y + 1);
+        g.setColor(savedColor);
+      }
+      else if (effectType == EffectType.STRIKEOUT) {
+        g.setColor(effectColor);
+        int y1 = y - getCharHeight() / 2;
+        UIUtil.drawLine(g, xStart, y1, xEnd, y1);
+        g.setColor(savedColor);
+      }
+      else if (effectType == EffectType.WAVE_UNDERSCORE) {
+        g.setColor(effectColor);
+        drawWave(g, xStart, xEnd, y + 1);
+        g.setColor(savedColor);
       }
     }
 

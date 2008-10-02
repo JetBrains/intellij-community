@@ -3,10 +3,10 @@
  */
 package com.intellij.application.options.colors;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.ui.ColorPanel;
 
 import javax.swing.*;
@@ -29,11 +29,12 @@ public class ColorAndFontDescriptionPanel extends JPanel {
 
   private static final String BORDERED_EFFECT = ApplicationBundle.message("combobox.effect.bordered");
   private static final String UNDERSCORED_EFFECT = ApplicationBundle.message("combobox.effect.underscored");
+  private static final String BOLD_UNDERSCORED_EFFECT = ApplicationBundle.message("combobox.effect.boldunderscored");
   private static final String UNDERWAVED_EFFECT = ApplicationBundle.message("combobox.effect.underwaved");
   private static final String STRIKEOUT_EFFECT = ApplicationBundle.message("combobox.effect.strikeout");
 
   private JComboBox myEffectsCombo = new JComboBox(
-    new String[]{UNDERSCORED_EFFECT, UNDERWAVED_EFFECT, BORDERED_EFFECT, STRIKEOUT_EFFECT});
+    new String[]{UNDERSCORED_EFFECT, BOLD_UNDERSCORED_EFFECT, UNDERWAVED_EFFECT, BORDERED_EFFECT, STRIKEOUT_EFFECT});
 
   private JCheckBox myCbBold = new JCheckBox(ApplicationBundle.message("checkbox.font.bold"));
   private JCheckBox myCbItalic = new JCheckBox(ApplicationBundle.message("checkbox.font.italic"));
@@ -327,6 +328,9 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       else if (effectType == EffectType.WAVE_UNDERSCORE) {
         myEffectsCombo.setSelectedItem(UNDERWAVED_EFFECT);
       }
+      else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
+        myEffectsCombo.setSelectedItem(BOLD_UNDERSCORED_EFFECT);
+      }
       else if (effectType == EffectType.STRIKEOUT) {
         myEffectsCombo.setSelectedItem(STRIKEOUT_EFFECT);
       }
@@ -366,6 +370,9 @@ public class ColorAndFontDescriptionPanel extends JPanel {
         }
         else if (UNDERSCORED_EFFECT.equals(effectType)) {
           description.setEffectType(EffectType.LINE_UNDERSCORE);
+        }
+        else if (BOLD_UNDERSCORED_EFFECT.equals(effectType)) {
+          description.setEffectType(EffectType.BOLD_LINE_UNDERSCORE);
         }
         else if (STRIKEOUT_EFFECT.equals(effectType)) {
           description.setEffectType(EffectType.STRIKEOUT);

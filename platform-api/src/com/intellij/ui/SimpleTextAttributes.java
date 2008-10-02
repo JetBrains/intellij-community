@@ -140,7 +140,7 @@ public final class SimpleTextAttributes {
       else if (effectType == EffectType.WAVE_UNDERSCORE){
         style |= STYLE_WAVED;
       }
-      else if (effectType == EffectType.LINE_UNDERSCORE) {
+      else if (effectType == EffectType.LINE_UNDERSCORE || effectType == EffectType.BOLD_LINE_UNDERSCORE) {
         style |= STYLE_UNDERLINE;
       }
       else{
