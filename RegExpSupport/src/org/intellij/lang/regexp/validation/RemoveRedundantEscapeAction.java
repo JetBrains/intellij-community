@@ -55,7 +55,7 @@ class RemoveRedundantEscapeAction implements IntentionAction {
         final Character v = myChar.getValue();
         assert v != null;
 
-        final ASTNode node = myChar.getNode();
+        final ASTNode node = myChar.getNode().getFirstChildNode();
         final ASTNode parent = node.getTreeParent();
         parent.addLeaf(RegExpTT.CHARACTER, replacement(v), node);
         parent.removeChild(node);
