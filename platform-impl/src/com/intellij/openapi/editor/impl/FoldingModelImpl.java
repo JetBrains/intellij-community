@@ -31,8 +31,8 @@ import java.util.Comparator;
 public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
   private boolean myIsFoldingEnabled;
-  private EditorImpl myEditor;
-  private FoldRegionsTree myFoldTree;
+  private final EditorImpl myEditor;
+  private final FoldRegionsTree myFoldTree;
   private TextAttributes myFoldTextAttributes;
   private boolean myIsBatchFoldingProcessing;
   private boolean myDoNotCollapseCaret;
@@ -460,7 +460,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
         final FoldRegion region = myRegions.get(i);
 
         if (range.getStartOffset() < region.getStartOffset() ||
-            (range.getStartOffset() == region.getStartOffset() && range.getEndOffset() > region.getEndOffset())) {
+            range.getStartOffset() == region.getStartOffset() && range.getEndOffset() > region.getEndOffset()) {
           for (int j = i + 1; j < myRegions.size(); j++) {
             final FoldRegion next = myRegions.get(j);
             if (next.getEndOffset() >= range.getEndOffset() && next.isValid()) {
@@ -550,7 +550,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       for (FoldRegion region : myRegions) {
         boolean contains1 = contains(region, startOffset);
         boolean contains2 = contains(region, endOffset);
-        if ((contains1 && !contains2) || (!contains1 && contains2)) {
+        if (contains1 != contains2) {
           return true;
         }
       }

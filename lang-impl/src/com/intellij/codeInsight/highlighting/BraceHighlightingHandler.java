@@ -52,7 +52,7 @@ public class BraceHighlightingHandler {
 
   private final DocumentEx myDocument;
   private final PsiFile myPsiFile;
-  private FileType myFileType;
+  private final FileType myFileType;
   private final CodeInsightSettings myCodeInsightSettings;
 
   private BraceHighlightingHandler(@NotNull Project project, @NotNull Editor editor, @NotNull Alarm alarm, PsiFile psiFile) {
@@ -64,9 +64,7 @@ public class BraceHighlightingHandler {
 
     myPsiFile = psiFile;
     myCodeInsightSettings = CodeInsightSettings.getInstance();
-    if (myPsiFile != null) {
-      myFileType = myPsiFile.getFileType();
-    }
+    myFileType = myPsiFile == null ? null : myPsiFile.getFileType();
   }
 
   public static void lookForInjectedAndMatchBracesInOtherThread(@NotNull final Editor editor, @NotNull final Alarm alarm, final Processor<BraceHighlightingHandler> processor) {

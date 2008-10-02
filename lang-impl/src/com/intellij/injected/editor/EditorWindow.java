@@ -13,10 +13,7 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -51,6 +48,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
   private static final WeakList<EditorWindow> allEditors = new WeakList<EditorWindow>();
   private boolean myDisposed;
   private final MarkupModelWindow myMarkupModelDelegate;
+  private final FoldingModelWindow myFoldingModelWindow;
 
   public static Editor create(@NotNull final DocumentWindowImpl documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
     for (EditorWindow editorWindow : allEditors) {
@@ -72,6 +70,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     myCaretModelDelegate = new CaretModelWindow(myDelegate.getCaretModel(), this);
     mySelectionModelDelegate = new SelectionModelWindow(myDelegate, myDocumentWindow,this);
     myMarkupModelDelegate = new MarkupModelWindow((MarkupModelEx)myDelegate.getMarkupModel(), myDocumentWindow);
+    myFoldingModelWindow = new FoldingModelWindow((FoldingModelEx)delegate.getFoldingModel(), documentWindow);
 
     disposeInvalidEditors();
     allEditors.add(this);
@@ -165,7 +164,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
 
   @NotNull
   public FoldingModel getFoldingModel() {
-    return myDelegate.getFoldingModel();
+    return myFoldingModelWindow;
   }
 
   @NotNull
