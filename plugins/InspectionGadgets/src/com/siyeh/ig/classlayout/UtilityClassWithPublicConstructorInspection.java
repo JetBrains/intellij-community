@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class UtilityClassWithPublicConstructorInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -36,12 +37,14 @@ public class UtilityClassWithPublicConstructorInspection
     }
 
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "utility.class.with.public.constructor.problem.descriptor");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiClass psiClass = (PsiClass)infos[0];
         if (psiClass.getConstructors().length > 1) {
@@ -65,9 +68,10 @@ public class UtilityClassWithPublicConstructorInspection
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "utility.class.with.public.constructor.make.quickfix",
-                    m_multipleConstructors ? 1 : 2);
+                    Integer.valueOf(m_multipleConstructors ? 1 : 2));
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement classNameIdentifer = descriptor.getPsiElement();
@@ -84,6 +88,7 @@ public class UtilityClassWithPublicConstructorInspection
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StaticClassWithPublicConstructorVisitor();
     }

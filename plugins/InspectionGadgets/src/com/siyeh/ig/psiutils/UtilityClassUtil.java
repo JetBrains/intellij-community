@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,35 +41,42 @@ public class UtilityClassUtil {
                 && implementsList.getReferenceElements().length > 0) {
             return false;
         }
-        if (!allMethodsStatic(aClass)) {
+        final PsiMethod[] methods = aClass.getMethods();
+        final int staticMethodCount = countStaticMethods(methods);
+        if (staticMethodCount < 0) {
             return false;
         }
-        if (!allFieldsStatic(aClass)) {
+        final PsiField[] fields = aClass.getFields();
+        if (!allFieldsStatic(fields)) {
             return false;
         }
-        return !(aClass.getMethods().length == 0 &&
-                aClass.getFields().length == 0);
+        return staticMethodCount != 0 || fields.length != 0;
     }
 
-    private static boolean allFieldsStatic(@NotNull PsiClass aClass) {
-        boolean allFieldsStatic = true;
-        final PsiField[] fields = aClass.getFields();
+    private static boolean allFieldsStatic(PsiField[] fields) {
         for(final PsiField field : fields){
             if(!field.hasModifierProperty(PsiModifier.STATIC)){
-                allFieldsStatic = false;
-            }
-        }
-        return allFieldsStatic;
-    }
-
-    private static boolean allMethodsStatic(@NotNull PsiClass aClass) {
-        final PsiMethod[] methods = aClass.getMethods();
-        for(final PsiMethod method : methods){
-            if(!(method.isConstructor() ||
-                    method.hasModifierProperty(PsiModifier.STATIC))){
                 return false;
             }
         }
         return true;
+    }
+
+    /**
+     * @return -1 if an instance method was found, else the number of static
+     * methods in the class
+     */
+    private static int countStaticMethods(PsiMethod[] methods) {
+        int staticCount = 0;
+        for(final PsiMethod method : methods){
+            if (method.isConstructor()) {
+                continue;
+            }
+            if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+                return -1;
+            }
+            staticCount++;
+        }
+        return staticCount;
     }
 }
