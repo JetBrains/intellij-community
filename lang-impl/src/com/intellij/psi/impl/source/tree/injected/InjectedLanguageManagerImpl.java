@@ -245,9 +245,27 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
 
   static final Key<String> UNESCAPED_TEXT = Key.create("INJECTED_UNESCAPED_TEXT");
   public String getUnescapedText(@NotNull final PsiElement injectedNode) {
-    String text = injectedNode.getUserData(UNESCAPED_TEXT);
-    if (text != null) return text;
-    return injectedNode.getText();
+    final StringBuilder text = new StringBuilder(injectedNode.getTextLength());
+    // gather text from (patched) leaves
+    injectedNode.accept(new PsiRecursiveElementVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        String unescaped = element.getUserData(UNESCAPED_TEXT);
+        if (unescaped != null) {
+          text.append(unescaped);
+          return;
+        }
+        if (element.getFirstChild() == null) {
+          text.append(element.getText());
+          return;
+        }
+        super.visitElement(element);
+      }
+    });
+    return text.toString();
+    //String text = injectedNode.getUserData(UNESCAPED_TEXT);
+    //if (text != null) return text;
+    //return injectedNode.getText();
   }
 
   /**
@@ -298,7 +316,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     return count == 0 ? Collections.<TextRange>emptyList() : count == 1 ? Collections.singletonList((TextRange)result) : (List<TextRange>)result;
   }
 
-  public static interface InjProcessor {
+  public interface InjProcessor {
     boolean process(PsiElement element, MultiHostInjector injector);
   }
   public void processInPlaceInjectorsFor(@NotNull PsiElement element, @NotNull InjProcessor processor) {

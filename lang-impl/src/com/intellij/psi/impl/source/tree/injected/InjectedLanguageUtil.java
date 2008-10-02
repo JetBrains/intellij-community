@@ -160,12 +160,12 @@ public class InjectedLanguageUtil {
     private final PsiFile myInjectedPsi;
     private final List<PsiLanguageInjectionHost.Shred> myShreds;
 
-    public Place(PsiFile injectedPsi, List<PsiLanguageInjectionHost.Shred> shreds) {
+    public Place(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> shreds) {
       myShreds = shreds;
       myInjectedPsi = injectedPsi;
     }
   }
-  private static interface Places extends List<Place> {}
+  private interface Places extends List<Place> {}
   private static class PlacesImpl extends SmartList<Place> implements Places {}
 
   public static void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
@@ -454,25 +454,37 @@ public class InjectedLanguageUtil {
     for (PsiElement current = element; current != null && current != hostPsiFile; current = current.getParent()) {
       if ("EL".equals(current.getLanguage().getID())) break;
       ParameterizedCachedValue<Places,PsiElement> data = current.getUserData(INJECTED_PSI_KEY);
-      if (data != null) {
-        Places value = data.getValue(current);
-        if (value != null) {
-          return value;
+      Places places;
+      if (data == null) {
+        places = InjectedPsiProvider.doCompute(current, injectedManager, project, hostPsiFile);
+        if (places != null) {
+          ParameterizedCachedValue<Places, PsiElement> cachedValue =
+              psiManager.getCachedValuesManager().createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
+          Document hostDocument = hostPsiFile.getViewProvider().getDocument();
+          CachedValueProvider.Result<Places> result =
+              new CachedValueProvider.Result<Places>(places, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
+          ((ParameterizedCachedValueImpl<Places, PsiElement>)cachedValue).setValue(result);
+          for (Place place : places) {
+            for (PsiLanguageInjectionHost.Shred pair : place.myShreds) {
+              pair.host.putUserData(INJECTED_PSI_KEY, cachedValue);
+            }
+          }
+          current.putUserData(INJECTED_PSI_KEY, cachedValue);
         }
       }
-      Places places = InjectedPsiProvider.doCompute(current, injectedManager, project, hostPsiFile);
+      else {
+        places = data.getValue(current);
+      }
       if (places != null) {
-        ParameterizedCachedValue<Places,PsiElement> cachedValue = psiManager.getCachedValuesManager().createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
-        Document hostDocument = hostPsiFile.getViewProvider().getDocument();
-        CachedValueProvider.Result<Places> result = new CachedValueProvider.Result<Places>(places, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
-        ((ParameterizedCachedValueImpl<Places,PsiElement>)cachedValue).setValue(result);
+        // check that injections found intersect with queried element
+        TextRange elementRange = element.getTextRange();
         for (Place place : places) {
-          for (PsiLanguageInjectionHost.Shred pair : place.myShreds) {
-            pair.host.putUserData(INJECTED_PSI_KEY, cachedValue);
+          for (PsiLanguageInjectionHost.Shred shred : place.myShreds) {
+            if (shred.host.getTextRange().intersects(elementRange)) {
+              return places;
+            }
           }
         }
-        current.putUserData(INJECTED_PSI_KEY, cachedValue);
-        return places;
       }
       if (!probeUp) break;
     }
@@ -833,9 +845,13 @@ public class InjectedLanguageUtil {
       PsiFileImpl oldFile = (PsiFileImpl)documentManager.getCachedPsiFile(oldDocument);
       FileViewProvider oldViewProvider;
 
-      if (oldFile == null || !oldFile.isValid() || !((oldViewProvider = oldFile.getViewProvider()) instanceof MyFileViewProvider) || !((MyFileViewProvider)oldViewProvider).isValid()) {
+      if (oldFile == null ||
+          !oldFile.isValid() ||
+          !((oldViewProvider = oldFile.getViewProvider()) instanceof MyFileViewProvider) ||
+          !((MyFileViewProvider)oldViewProvider).isValid()
+          ) {
         injected.remove(i);
-        oldDocument.dispose();
+        Disposer.dispose(oldDocument);
         continue;
       }
 
@@ -846,11 +862,11 @@ public class InjectedLanguageUtil {
       if (oldDocument.areRangesEqual(documentWindow)) {
         if (oldFile.getFileType() != injectedPsi.getFileType() || oldFile.getLanguage() != injectedPsi.getLanguage()) {
           injected.remove(i);
-          oldDocument.dispose();
+          Disposer.dispose(oldDocument);
           continue;
         }
         oldFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, injectedPsi.getUserData(FileContextUtil.INJECTED_IN_ELEMENT));
-        if (!injectedNode.getText().equals(oldFileNode.getText())) {
+        if (!isPSItheSame(injectedNode, oldFileNode)) {
           // replace psi
           FileElement newFileElement = (FileElement)injectedNode;
           FileElement oldFileElement = oldFile.getTreeElement();
@@ -893,6 +909,36 @@ public class InjectedLanguageUtil {
       injectedRegions.add(newMarker);
     }
     return injectedPsi;
+  }
+
+  private static boolean isPSItheSame(ASTNode injectedNode, ASTNode oldFileNode) {
+    boolean textSame = injectedNode.getText().equals(oldFileNode.getText());
+
+    //boolean psiSame = comparePSI(injectedNode, oldFileNode);
+    //if (psiSame != textSame) {
+    //  throw new RuntimeException(textSame + ";" + psiSame);
+    //}
+    return textSame;
+  }
+
+  private static boolean comparePSI(ASTNode injectedNode, ASTNode oldFileNode) {
+    if (injectedNode instanceof LeafElement) {
+      return oldFileNode instanceof LeafElement &&
+             injectedNode.getElementType().equals(oldFileNode.getElementType()) &&
+             injectedNode.getText().equals(oldFileNode.getText());
+    }
+    if (!(injectedNode instanceof CompositeElement) || !(oldFileNode instanceof CompositeElement)) return false;
+    CompositeElement element1 = (CompositeElement)injectedNode;
+    CompositeElement element2 = (CompositeElement)oldFileNode;
+    TreeElement child1 = element1.getFirstChildNode();
+    TreeElement child2 = element2.getFirstChildNode();
+    while (child1  != null && child2 != null) {
+      if (!comparePSI(child1, child2)) return false;
+      child1 = child1.getTreeNext();
+      child2 = child2.getTreeNext();
+    }
+
+    return child1 == null && child2 == null;
   }
 
   private static List<RangeMarker> getCachedInjectedRegions(Document hostDocument) {
