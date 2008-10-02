@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -59,9 +60,7 @@ public class SimpleTree extends JTree implements CellEditorListener {
     setModel(new DefaultTreeModel(new PatchedDefaultMutableTreeNode()));
     TreeUtil.installActions(this);
 
-    final TreeUIHelper helper = TreeUIHelper.getInstance();
-    helper.installTreeSpeedSearch(this);
-    helper.installToolTipHandler(this);
+    configureUiHelper(TreeUIHelper.getInstance());
 
     addMouseListener(myMouseListener);
     setCellRenderer(new SimpleNodeRenderer());
@@ -90,7 +89,14 @@ public class SimpleTree extends JTree implements CellEditorListener {
     });
 
     putClientProperty("JTree.lineStyle", "Angled");
-    setUI(new BasicTreeUI());   // In WindowsXP UI handles are not shown :(
+    if (SystemInfo.isWindowsXP) {
+      setUI(new BasicTreeUI());   // In WindowsXP UI handles are not shown :(
+    }
+  }
+
+  protected void configureUiHelper(final TreeUIHelper helper) {
+    helper.installTreeSpeedSearch(this);
+    helper.installToolTipHandler(this);
   }
 
   public SimpleTree(TreeModel aModel) {
@@ -551,4 +557,8 @@ public class SimpleTree extends JTree implements CellEditorListener {
     return super.getToggleClickCount();
   }
 
+  @Override
+  public void processKeyEvent(final KeyEvent e) {
+    super.processKeyEvent(e);
+  }
 }

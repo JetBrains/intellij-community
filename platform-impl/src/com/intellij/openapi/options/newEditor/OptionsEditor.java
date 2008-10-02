@@ -1,5 +1,6 @@
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -20,7 +21,6 @@ import com.intellij.ui.navigation.ForwardAction;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.speedSearch.ElementFilter;
-import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -33,10 +33,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.AWTEventListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -54,7 +51,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   History myHistory = new History(this);
 
   OptionsTree myTree;
-  JTextField mySearch;
+  MySearchField mySearch;
   Splitter mySplitter;
   JComponent myToolbar;
                              
@@ -66,28 +63,40 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private MyColleague myColleague;
 
   MergingUpdateQueue myModificationChecker;
+  private ConfigurableGroup[] myGroups;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProject = project;
+    myGroups = groups;
 
     final Filter filter = new Filter();
     myContext = new OptionsEditorContext(filter);
 
-    myTree = new OptionsTree(myProject, groups, getContext());
+    mySearch = new MySearchField() {
+      @Override
+      protected void onTextKeyEvent(final KeyEvent e) {
+        myTree.processTextEvent(e);
+      }
+    };
+    myTree = new OptionsTree(myProject, groups, getContext()) {
+      @Override
+      protected void onTreeKeyEvent(final KeyEvent e) {
+        mySearch.processKeyEvent(e);
+      }
+    };
     getContext().addColleague(myTree);
     Disposer.register(this, myTree);
-    mySearch = new JTextField();
     mySearch.getDocument().addDocumentListener(new DocumentListener() {
       public void insertUpdate(final DocumentEvent e) {
-        filter.update();
+        filter.update(e);
       }
 
       public void removeUpdate(final DocumentEvent e) {
-        filter.update();
+        filter.update(e);
       }
 
       public void changedUpdate(final DocumentEvent e) {
-        filter.update();
+        filter.update(e);
       }
     });
 
@@ -295,19 +304,35 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private class Filter implements ElementFilter.Active<SimpleNode> {
 
     Set<Listener> myListeners = new CopyOnWriteArraySet<Listener>();
-    SpeedSearch mySpeedSearch = new SpeedSearch();
+
+    SearchableOptionsRegistrar myIndex = SearchableOptionsRegistrar.getInstance();
+    Set<Configurable> myOptionContainers = null;
+
 
     public boolean shouldBeShowing(final SimpleNode value) {
+      if (myOptionContainers == null) return true;
+      
       if (value instanceof OptionsTree.EditorNode) {
-        return mySpeedSearch.shouldBeShowing(((OptionsTree.EditorNode)value).getConfigurable().getDisplayName());        
+        return myOptionContainers.contains(((OptionsTree.EditorNode)value).getConfigurable());
       } else {
         return true;
       }
     }
 
-    public void update() {
+    public void update(DocumentEvent e) {
       final String text = mySearch.getText();
-      mySpeedSearch.updatePattern(text != null ? text : "");
+      if (text == null || text.length() == 0) {
+        myOptionContainers = null;
+      } else {
+        myOptionContainers = myIndex.getConfigurables(myGroups, e.getType(), myOptionContainers, text, myProject);
+      }
+
+      if (myOptionContainers != null && myOptionContainers.size() == 0) {
+        mySearch.setBackground(LightColors.RED);
+      } else {
+        mySearch.setBackground(UIUtil.getTextFieldBackground());
+      }
+
       fireUpdate();
     }
 
@@ -337,6 +362,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   public void dispose() {
     PropertiesComponent.getInstance(myProject).setValue(SPLITTER_PROPORTION, String.valueOf(mySplitter.getProportion()));
     Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+
 
 
     final Set<Configurable> configurables = myConfigurable2Componenet.keySet();
@@ -414,4 +440,38 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       }
     });
   }
+
+  private static class MySearchField extends JTextField {
+
+    private boolean myDelegatingNow;
+
+    private MySearchField() {
+      addKeyListener(new KeyAdapter() {});
+    }
+
+    @Override
+    protected void processKeyEvent(final KeyEvent e) {
+      if (isFocusOwner() && !myDelegatingNow) {
+        try {
+          myDelegatingNow = true;
+          final KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
+          final Object action = getInputMap().get(stroke);
+          if (action == null) {
+            onTextKeyEvent(e);
+            return;
+          }
+        }
+        finally {
+          myDelegatingNow = false;
+        }
+      }
+
+      super.processKeyEvent(e);
+    }
+
+    protected void onTextKeyEvent(final KeyEvent e) {
+
+    }
+  }
+
 }

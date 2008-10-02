@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.LoadingNode;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
@@ -17,6 +18,7 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.Position;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -26,6 +28,8 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -54,13 +58,29 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       }
     };
 
-    myTree = new SimpleTree();
+    myTree = new SimpleTree() {
+      @Override
+      protected void configureUiHelper(final TreeUIHelper helper) {
+        helper.installToolTipHandler(this);
+      }
+
+      @Override
+      public TreePath getNextMatch(final String prefix, final int startingRow, final Position.Bias bias) {
+        return null;
+      }
+    };
+
     myTree.setRowHeight(-1);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myTree.setCellRenderer(new Renderer());
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
-    myBuilder = new FilteringTreeBuilder(myProject, myTree, myContext.getFilter(), structure, new WeightBasedComparator(false));
+    myBuilder = new FilteringTreeBuilder(myProject, myTree, myContext.getFilter(), structure, new WeightBasedComparator(false)) {
+      @Override
+      protected boolean isSelectable(final Object nodeObject) {
+        return nodeObject instanceof EditorNode;
+      }
+    };
     myBuilder.setFilteringMerge(300);
     Disposer.register(this, myBuilder);
 
@@ -100,6 +120,32 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         }
       }
     });
+    myTree.addKeyListener(new KeyListener() {
+      public void keyTyped(final KeyEvent e) {
+        _onTreeKeyEvent(e);
+      }
+
+      public void keyPressed(final KeyEvent e) {
+        _onTreeKeyEvent(e);
+      }
+
+      public void keyReleased(final KeyEvent e) {
+        _onTreeKeyEvent(e);
+      }
+    });
+  }
+
+  protected void _onTreeKeyEvent(KeyEvent e) {
+    final KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
+
+    final Object action = myTree.getInputMap().get(stroke);
+    if (action == null) {
+      onTreeKeyEvent(e);
+    }
+  }
+
+  protected void onTreeKeyEvent(KeyEvent e) {
+
   }
 
   void select(@Nullable Configurable configurable) {
@@ -363,5 +409,9 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
   }
 
   public void onErrorsChanged() {
+  }
+
+  public void processTextEvent(KeyEvent e) {
+    myTree.processKeyEvent(e);
   }
 }
