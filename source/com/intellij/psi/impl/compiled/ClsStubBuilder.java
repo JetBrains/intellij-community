@@ -7,6 +7,7 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiNameHelper;
@@ -37,6 +38,13 @@ public class ClsStubBuilder {
 
   @Nullable
   public static PsiFileStub build(final VirtualFile vFile, byte[] bytes) throws ClsFormatException {
+    final ClsStubBuilderFactory[] factories = Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME);
+    for (ClsStubBuilderFactory factory : factories) { 
+      if (factory.canBeProcessed(vFile, bytes)) {
+        return factory.buildFileStub(vFile, bytes);
+      }
+    }
+
     final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("dont.know.yet", true);
     try {
       final PsiClassStub result = buildClass(vFile, bytes, file, 0);
@@ -124,8 +132,7 @@ public class ClsStubBuilder {
         catch (ClsFormatException e) {
           signatureIterator = null;
         }
-      }
-      else {
+      } else {
         new PsiTypeParameterListStubImpl(myResult);
       }
 
@@ -133,8 +140,7 @@ public class ClsStubBuilder {
       List<String> convertedInterfaces = new ArrayList<String>();
       if (signatureIterator == null) {
         convertedSuper = parseClassDescription(superName, interfaces, convertedInterfaces);
-      }
-      else {
+      } else {
         try {
           convertedSuper = parseClassSignature(signatureIterator, convertedInterfaces);
         }
@@ -149,13 +155,11 @@ public class ClsStubBuilder {
         new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, interfacesArray, PsiReferenceList.Role.EXTENDS_LIST);
         new PsiClassReferenceListStubImpl(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, EMPTY_STRINGS,
                                           PsiReferenceList.Role.IMPLEMENTS_LIST);
-      }
-      else {
+      } else {
         if (convertedSuper != null && !"java.lang.Object".equals(convertedSuper)) {
           new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, new String[]{convertedSuper},
                                             PsiReferenceList.Role.EXTENDS_LIST);
-        }
-        else {
+        } else {
           new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, EMPTY_STRINGS, PsiReferenceList.Role.EXTENDS_LIST);
         }
         new PsiClassReferenceListStubImpl(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, interfacesArray,
@@ -174,7 +178,7 @@ public class ClsStubBuilder {
 
     @Nullable
     private static String parseClassSignature(final CharacterIterator signatureIterator, final List<String> convertedInterfaces)
-        throws ClsFormatException {
+      throws ClsFormatException {
       final String convertedSuper = SignatureParsing.parseToplevelClassRefSignature(signatureIterator);
       while (signatureIterator.current() != CharacterIterator.DONE) {
         final String ifs = SignatureParsing.parseToplevelClassRefSignature(signatureIterator);
@@ -206,14 +210,11 @@ public class ClsStubBuilder {
 
       if ((access & Opcodes.ACC_PRIVATE) != 0) {
         flags |= ModifierFlags.PRIVATE_MASK;
-      }
-      else if ((access & Opcodes.ACC_PROTECTED) != 0) {
+      } else if ((access & Opcodes.ACC_PROTECTED) != 0) {
         flags |= ModifierFlags.PROTECTED_MASK;
-      }
-      else if ((access & Opcodes.ACC_PUBLIC) != 0) {
+      } else if ((access & Opcodes.ACC_PUBLIC) != 0) {
         flags |= ModifierFlags.PUBLIC_MASK;
-      }
-      else {
+      } else {
         flags |= ModifierFlags.PACKAGE_LOCAL_MASK;
       }
 
@@ -308,8 +309,7 @@ public class ClsStubBuilder {
         catch (ClsFormatException e) {
           return fieldTypeViaDescription(desc);
         }
-      }
-      else {
+      } else {
         return fieldTypeViaDescription(desc);
       }
     }
@@ -351,8 +351,7 @@ public class ClsStubBuilder {
       List<String> args = new ArrayList<String>();
       if (signature == null) {
         returnType = parseMethodViaDescription(desc, stub, args);
-      }
-      else {
+      } else {
         try {
           returnType = parseMethodViaGenericSignature(signature, stub, args);
         }
@@ -363,7 +362,7 @@ public class ClsStubBuilder {
       stub.setReturnType(TypeInfo.fromString(returnType));
 
       boolean nonStaticInnerClassConstructor =
-          isConstructor && !(myParent instanceof PsiFileStub) && (myModlist.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
+        isConstructor && !(myParent instanceof PsiFileStub) && (myModlist.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
 
       final PsiParameterListStubImpl parameterList = new PsiParameterListStubImpl(stub);
       final int paramCount = args.size();
@@ -384,8 +383,7 @@ public class ClsStubBuilder {
           converted[i] = getClassName(exceptions[i]);
         }
         new PsiClassReferenceListStubImpl(JavaStubElementTypes.THROWS_LIST, stub, converted, PsiReferenceList.Role.THROWS_LIST);
-      }
-      else {
+      } else {
         new PsiClassReferenceListStubImpl(JavaStubElementTypes.THROWS_LIST, stub, EMPTY_STRINGS, PsiReferenceList.Role.THROWS_LIST);
       }
 
@@ -412,7 +410,7 @@ public class ClsStubBuilder {
     }
 
     private static String parseMethodViaGenericSignature(final String signature, final PsiMethodStubImpl stub, final List<String> args)
-        throws ClsFormatException {
+      throws ClsFormatException {
       StringCharacterIterator iterator = new StringCharacterIterator(signature);
       SignatureParsing.parseTypeParametersDeclaration(iterator, stub);
 
@@ -468,8 +466,7 @@ public class ClsStubBuilder {
         if (myDesc != null) {
           myBuilder.append('(');
         }
-      }
-      else {
+      } else {
         myBuilder.append(',');
       }
 
@@ -552,8 +549,7 @@ public class ClsStubBuilder {
       final double d = ((Double)value).doubleValue();
       if (Double.isInfinite(d)) {
         return d > 0 ? "1.0 / 0.0" : "-1.0 / 0.0";
-      }
-      else if (Double.isNaN(d)) {
+      } else if (Double.isNaN(d)) {
         return "0.0d / 0.0";
       }
       return Double.toString(d);
@@ -564,11 +560,9 @@ public class ClsStubBuilder {
 
       if (Float.isInfinite(v)) {
         return v > 0 ? "1.0f / 0.0" : "-1.0f / 0.0";
-      }
-      else if (Float.isNaN(v)) {
+      } else if (Float.isNaN(v)) {
         return "0.0f / 0.0";
-      }
-      else {
+      } else {
         return Float.toString(v) + "f";
       }
     }
