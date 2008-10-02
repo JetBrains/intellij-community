@@ -4,11 +4,13 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.projectRoots.impl.MockJdkWrapper;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -122,6 +124,8 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
       }
       model.setSdk(projectJdk);
     }
+    model.setSdk(new MockJdkWrapper(CompilerConfigurationImpl.getTestsExternalCompilerHome(), model.getSdk()));
+
     if (myMockJdkLevel == MockJdkLevel.jdk15) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5);
     }

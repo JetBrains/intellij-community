@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
@@ -184,15 +185,22 @@ public abstract class JspSpiUtil {
   }
 
   public static List<URL> buildUrls(@Nullable final VirtualFile virtualFile, @Nullable final Module module) {
-    List<URL> urls = new ArrayList<URL>();
+    final List<URL> urls = new ArrayList<URL>();
+    processClassPathItems(virtualFile, module, new Consumer<VirtualFile>() {
+      public void consume(final VirtualFile file) {
+        addUrl(urls, file);
+      }
+    });
+    return urls;
+  }
 
+  public static void processClassPathItems(final VirtualFile virtualFile, final Module module, final Consumer<VirtualFile> consumer) {
     if (isJarFile(virtualFile)){
-      addUrl(urls, virtualFile);
+      consumer.consume(virtualFile);
     }
 
     if (module != null) {
-      final VirtualFile[] files = ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES_AND_OUTPUT);
-      for (VirtualFile file1 : files) {
+      for (VirtualFile file1 : ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES_AND_OUTPUT)) {
         final VirtualFile file;
         if (file1.getFileSystem().getProtocol().equals(JarFileSystem.PROTOCOL)) {
           file = JarFileSystem.getInstance().getVirtualFileForJar(file1);
@@ -200,10 +208,9 @@ public abstract class JspSpiUtil {
         else {
           file = file1;
         }
-        addUrl(urls, file);
+        consumer.consume(file);
       }
     }
-    return urls;
   }
 
   private static void addUrl(List<URL> urls, VirtualFile file) {
