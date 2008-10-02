@@ -1,4 +1,4 @@
-package git4idea.actions;
+package git4idea;
 /*
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at:
@@ -18,21 +18,39 @@ package git4idea.actions;
  */
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.actions.StandardVcsGroup;
-import git4idea.GitVcs;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Git VCS menu
+ * This data class represents a Git branch
  */
-public class GitMenu extends StandardVcsGroup {
-  @Override
-  public AbstractVcs getVcs(Project project) {
-    return GitVcs.getInstance(project);
+public class GitBranch {
+  private final Project project;
+  private final String name;
+  private final boolean remote;
+  private final boolean active;
+
+  public GitBranch(@NotNull Project project, @NotNull String name, boolean active, boolean remote) {
+    this.project = project;
+    this.name = name;
+    this.remote = remote;
+    this.active = active;
   }
 
-  @Override
-  public String getVcsName(final Project project) {
-    return GitVcs.NAME;
+  @NotNull
+  public Project getProject() {
+    return project;
+  }
+
+  @NotNull
+  public String getName() {
+    return name;
+  }
+
+  public boolean isRemote() {
+    return remote;
+  }
+
+  public boolean isActive() {
+    return active;
   }
 }

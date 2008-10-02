@@ -12,139 +12,134 @@ package git4idea;
  * Copyright 2007 Decentrix Inc
  * Copyright 2007 Aspiro AS
  * Copyright 2008 MQSoftware
+ * Copyright 2008 JetBrains s.r.o.
+ * 
  * Authors: gevession, Erlend Simonsen & Mark Scott
  *
  * This code was originally derived from the MKS & Mercurial IDEA VCS plugins
  */
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
 import java.io.File;
-
-import git4idea.vfs.GitFileSystem;
-import git4idea.i18n.GitBundle;
+import java.util.*;
 
 /**
  * Git utility/helper methods
  */
 public class GitUtil {
 
-    @NotNull
-    public static VirtualFile getVcsRoot(@NotNull final Project project, @NotNull final FilePath filePath) {
-        VirtualFile vfile = VcsUtil.getVcsRootFor(project, filePath);
-        if (vfile == null)
-            vfile = GitFileSystem.getInstance().findFileByPath(project, filePath.getPath());
+  /**
+   * A private constructor to suppress instance creation
+   */
+  private GitUtil() {
+    // do nothink
+  }
 
-        return vfile;
+  @NotNull
+  public static VirtualFile getVcsRoot(@NotNull final Project project, @NotNull final FilePath filePath) {
+    VirtualFile vfile = VcsUtil.getVcsRootFor(project, filePath);
+    if (vfile == null) vfile = GitFileSystem.getInstance().findFileByPath(project, filePath.getPath());
+
+    return vfile;
+  }
+
+  @NotNull
+  public static VirtualFile getVcsRoot(@NotNull final Project project, final VirtualFile virtualFile) {
+    VirtualFile vfile = VcsUtil.getVcsRootFor(project, virtualFile);
+    if (vfile == null) vfile = project.getBaseDir();
+    return vfile;
+  }
+
+  @NotNull
+  private static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(@NotNull Project project, @NotNull List<VirtualFile> virtualFiles) {
+    Map<VirtualFile, List<VirtualFile>> result = new HashMap<VirtualFile, List<VirtualFile>>();
+
+    for (VirtualFile file : virtualFiles) {
+      final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
+      assert vcsRoot != null;
+
+      List<VirtualFile> files = result.get(vcsRoot);
+      if (files == null) {
+        files = new ArrayList<VirtualFile>();
+        result.put(vcsRoot, files);
+      }
+      files.add(file);
     }
 
-    @NotNull
-    public static VirtualFile getVcsRoot(@NotNull final Project project, @NotNull final VirtualFile virtualFile) {
-        String vpath = virtualFile.getPath();
-        ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance(project);
-        VcsRoot[] vroots = mgr.getAllVcsRoots();
-        for (VcsRoot vroot : vroots) {
-            if (vroot == null) continue;
-            String rootpath = vroot.path.getPath();
-            if (vpath.startsWith(rootpath))
-                return vroot.path;
+    return result;
+  }
+
+  @NotNull
+  public static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(Project project, VirtualFile[] affectedFiles) {
+    return sortFilesByVcsRoot(project, Arrays.asList(affectedFiles));
+  }
+
+  public static String getRelativeFilePath(VirtualFile file, @NotNull final VirtualFile baseDir) {
+    return getRelativeFilePath(file.getPath(), baseDir);
+  }
+
+  public static String getRelativeFilePath(FilePath file, @NotNull final VirtualFile baseDir) {
+    return getRelativeFilePath(file.getPath(), baseDir);
+  }
+
+  public static String getRelativeFilePath(String file, @NotNull final VirtualFile baseDir) {
+    if (SystemInfo.isWindows) {
+      file = file.replace('\\', '/');
+    }
+    final String basePath = baseDir.getPath();
+    if (!file.startsWith(basePath)) {
+      return file;
+    }
+    else if (file.equals(basePath)) return ".";
+    return file.substring(baseDir.getPath().length() + 1);
+  }
+
+  /**
+   * Show error associated with the specified operation
+   *
+   * @param project   the project
+   * @param ex        an exception
+   * @param operation the operation name
+   */
+  public static void showOperationError(final Project project, final VcsException ex, @NonNls final String operation) {
+    Messages.showErrorDialog(project, ex.getMessage(), GitBundle.message("error.occurred.during", operation));
+  }
+
+  /**
+   * @return a temporary directory to use
+   */
+  @NotNull
+  public static VirtualFile getTempDir() throws VcsException {
+    try {
+      @SuppressWarnings({"HardCodedStringLiteral"}) File temp = File.createTempFile("git-temp-file", "txt");
+      try {
+        final File parentFile = temp.getParentFile();
+        if (parentFile == null) {
+          throw new Exception("Missing parent in " + temp);
         }
-
-        // best guess....
-        return vroots[0].path;
-    }
-
-    @NotNull
-    public static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(
-            @NotNull Project project,
-            @NotNull List<VirtualFile> virtualFiles) {
-        Map<VirtualFile, List<VirtualFile>> result = new HashMap<VirtualFile, List<VirtualFile>>();
-
-        for (VirtualFile file : virtualFiles) {
-            final VirtualFile vcsRoot = getVcsRoot(project, file);
-
-            List<VirtualFile> files = result.get(vcsRoot);
-            if (files == null) {
-                files = new ArrayList<VirtualFile>();
-                result.put(vcsRoot, files);
-            }
-            files.add(file);
+        final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(parentFile);
+        if (vFile == null) {
+          throw new Exception("Missing virtual file for dir " + parentFile);
         }
-
-        return result;
+        return vFile;
+      }
+      finally {
+        //noinspection ResultOfMethodCallIgnored
+        temp.delete();
+      }
     }
-
-    @NotNull
-    public static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(
-            @NotNull Project project,
-            @NotNull Collection<VirtualFile> virtualFiles) {
-        return sortFilesByVcsRoot(project, new LinkedList<VirtualFile>(virtualFiles));
+    catch (Exception e) {
+      throw new VcsException("Unable to locate temporary directory", e);
     }
-
-    @NotNull
-    public static Set<VirtualFile> getVcsRootsForFiles(Project project, VirtualFile[] affectedFiles) {
-        Set<VirtualFile> roots = new HashSet<VirtualFile>();
-        for (VirtualFile file : affectedFiles) {
-            if (file == null) continue;
-            roots.add(getVcsRoot(project, file));
-        }
-        return roots;
-    }
-
-    @NotNull
-    public static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(Project project, VirtualFile[] affectedFiles) {
-        return sortFilesByVcsRoot(project, Arrays.asList(affectedFiles));
-    }
-
-    /**
-     * Show error associated with the specified operation
-     *
-     * @param project   the project
-     * @param ex        an exception
-     * @param operation the operation name
-     */
-    public static void showOperationError(final Project project, final VcsException ex, @NonNls final String operation) {
-        Messages.showErrorDialog(project, ex.getMessage(), GitBundle.message("error.occurred.during", operation));
-    }
-
-    /**
-     * @return a temporary directory to use
-     * @throws VcsException if an error occurs
-     */
-    @NotNull
-    public static VirtualFile getTempDir() throws VcsException {
-        try {
-            @SuppressWarnings({"HardCodedStringLiteral"}) File temp = File.createTempFile("git-temp-file", "txt");
-            try {
-                final File parentFile = temp.getParentFile();
-                if (parentFile == null) {
-                    throw new Exception(GitBundle.message("missing.parent", temp));
-                }
-                final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(parentFile);
-                if (vFile == null) {
-                    throw new Exception(GitBundle.message("missing.virtual.file.for.dir",parentFile));
-                }
-                return vFile;
-            }
-            finally {
-                //noinspection ResultOfMethodCallIgnored
-                temp.delete();
-            }
-        }
-        catch (Exception e) {
-            throw new VcsException(GitBundle.message("cannot.locate.tempdir"), e);
-        }
-    }
-
+  }
 }
