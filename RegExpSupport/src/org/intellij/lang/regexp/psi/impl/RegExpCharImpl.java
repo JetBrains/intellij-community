@@ -80,6 +80,10 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                         return '\r';
                     case't':
                         return '\t';
+                    case'a':
+                        return '\u0007';
+                    case'e':
+                        return '\u001b';
                     case'f':
                         return '\f';
                     case'c':
