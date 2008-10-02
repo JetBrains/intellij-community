@@ -54,7 +54,12 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
 
   @PsiCached
   public PyElementType getOperator() {
-    return (PyElementType)getNode().findChildByType(PyElementTypes.BINARY_OPS).getElementType();
+    ASTNode node = getNode();
+    if (node != null) {
+      final ASTNode child = node.findChildByType(PyElementTypes.BINARY_OPS);
+      if (child != null) return (PyElementType)child.getElementType();
+    }
+    return null;
   }
 
   @PsiCached
