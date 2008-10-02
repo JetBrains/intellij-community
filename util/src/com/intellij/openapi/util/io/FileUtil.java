@@ -22,7 +22,6 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -787,6 +786,53 @@ public class FileUtil {
       process.waitFor();
     }
     catch (InterruptedException e) {
+    }
+  }
+
+  /**
+   * The method File.setExecutalbe() (which is avaialable since java 6.0)
+   */
+  private static final Method IO_FILE_SET_EXECUTABLE_METHOD;
+  static {
+    Method method;
+    try {
+      method = File.class.getDeclaredMethod("setExecutable", boolean.class);
+    }
+    catch (NoSuchMethodException e) {
+      method = null;
+    }
+    IO_FILE_SET_EXECUTABLE_METHOD = method;
+  }
+
+  /**
+   * Set executable attibute, it makes sense only on non-windows platforms.
+   *
+   * @param path the path to use
+   * @param executableFlag new value of executable attribute
+   * @throws IOException if there is a problem with setting the flag
+   */
+  public static void setExectuableAttribute(String path, boolean executableFlag) throws IOException {
+    if (IO_FILE_SET_EXECUTABLE_METHOD != null) {
+      try {
+        IO_FILE_SET_EXECUTABLE_METHOD.invoke(new File(path), !executableFlag);
+        return;
+      }
+      catch (IllegalAccessException e) {
+        LOG.error(e);
+      }
+      catch (InvocationTargetException e) {
+        LOG.error(e);
+      }
+    }
+    Process process;
+    if (!SystemInfo.isWindows) {
+      // UNIXes go here
+      process = Runtime.getRuntime().exec(new String[]{"chmod", executableFlag ? "u-x" : "u+x", path});
+      try {
+        process.waitFor();
+      }
+      catch (InterruptedException e) {
+      }
     }
   }
 

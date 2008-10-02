@@ -21,6 +21,7 @@ import java.net.ServerSocket;
 public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.XmlRpcServerImpl");
   public static final int PORT_NUMBER = 63342;
+  public static int detectedPortNumber = -1;
   private WebServer myWebServer;
   @NonNls private static final String PROPERTY_RPC_PORT = "rpc.port";
 
@@ -44,7 +45,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
   }
 
   public int getPortNumber() {
-    return getPortImpl();
+    return detectedPortNumber == -1 ? getPortImpl() : detectedPortNumber;
   }
 
   private static int getPortImpl() {
@@ -54,12 +55,21 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
 
   private static boolean checkPort() {
     ServerSocket socket = null;
-
     try {
-      socket = new ServerSocket(getPortImpl());
-    }
-    catch (BindException e) {
-      return false;
+      try {
+        socket = new ServerSocket(getPortImpl());
+      }
+      catch (BindException e) {
+        try {
+          // try any port
+          socket = new ServerSocket(0);
+          detectedPortNumber = socket.getLocalPort();
+          return true;
+        } catch (BindException e1) {
+          // fallthrow
+        }
+        return false;
+      }
     }
     catch (IOException e) {
       LOG.info(e);
@@ -76,7 +86,6 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
         }
       }
     }
-
     return true;
   }
 
