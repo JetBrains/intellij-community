@@ -12,6 +12,7 @@ public interface Lookup extends UserDataHolder{
   char NORMAL_SELECT_CHAR = '\n';
   char REPLACE_SELECT_CHAR = '\t';
   char COMPLETE_STATEMENT_SELECT_CHAR = '\r';
+  char AUTO_INSERT_SELECT_CHAR = (char) 0;
 
   @Nullable
   LookupElement getCurrentItem();

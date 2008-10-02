@@ -126,7 +126,7 @@ public class CompletionUtil {
 
 
   static boolean isOverwrite(final LookupElement item, final char completionChar) {
-    return completionChar != 0
+    return completionChar != Lookup.AUTO_INSERT_SELECT_CHAR
       ? completionChar == Lookup.REPLACE_SELECT_CHAR
       : item instanceof LookupItem && ((LookupItem)item).getAttribute(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
   }

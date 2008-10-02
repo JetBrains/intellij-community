@@ -226,6 +226,8 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
         template.addEndVariable();
         template.addTextSegment("\"");
       }
+    } else if ((completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR) && WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && HtmlUtil.isSingleHtmlTag(tag.getName())) {
+      template.addTextSegment(tag instanceof HtmlTag ? ">" : "/>");
     }
 
     final boolean weInsertedSomeCodeThatCouldBeInvalidated1 = weInsertedSomeCodeThatCouldBeInvalidated;

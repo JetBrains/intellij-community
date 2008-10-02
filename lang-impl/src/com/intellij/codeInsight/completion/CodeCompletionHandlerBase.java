@@ -263,7 +263,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         insertLookupString(context, offset2, uniqueText);
         context.editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
-        lookupItemSelected(context, item, (char)0, false, items);
+        lookupItemSelected(context, item, Lookup.AUTO_INSERT_SELECT_CHAR, false, items);
       }
     }.execute();
   }
@@ -411,7 +411,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         item.handleInsert(context1);
 
         if (context1.shouldAddCompletionChar() &&
-            completionChar != 0 && completionChar != Lookup.REPLACE_SELECT_CHAR &&
+            completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
             completionChar != Lookup.NORMAL_SELECT_CHAR && completionChar != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
           TailType.insertChar(editor, context1.getTailOffset(), completionChar);
         }
