@@ -410,6 +410,7 @@ public class XDebugSessionImpl implements XDebugSession {
     if (myCurrentPosition != null) {
       myDebuggerManager.updateExecutionPosition(this, myCurrentPosition, false);
     }
+    mySessionTab.toFront();
     myDispatcher.getMulticaster().sessionPaused();
   }
 
