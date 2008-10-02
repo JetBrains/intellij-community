@@ -8,11 +8,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl;
 import com.intellij.refactoring.util.JavaDocPolicy;
@@ -24,7 +25,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Set;
 
 public class PushDownProcessor extends BaseRefactoringProcessor {
@@ -237,7 +237,22 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
 
 
   private void pushDownToClass(PsiClass targetClass) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+    final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(myClass, targetClass, PsiSubstitutor.EMPTY);
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(myClass)) {
+      for (PsiReference reference : ReferencesSearch.search(parameter)) {
+        final PsiElement element = reference.getElement();
+        final PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
+        if (member != null) {
+          for (MemberInfo memberInfo : myMemberInfos) {
+            if (PsiTreeUtil.isAncestor(memberInfo.getMember(), member, false)) {
+              element.replace(factory.createTypeElement(substitutor.substitute(parameter)));
+              break;
+            }
+          }
+        }
+      }
+    }
     for (MemberInfo memberInfo : myMemberInfos) {
       final PsiMember member = memberInfo.getMember();
       PsiMember newMember = null;
@@ -249,18 +264,6 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         PsiMethod method = (PsiMethod)member;
 
         if (targetClass.findMethodBySignature(method, false) == null) {
-          final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(myClass, targetClass, PsiSubstitutor.EMPTY);
-          final ArrayList<ParameterInfo> newParameters = new ArrayList<ParameterInfo>();
-          final PsiParameter[] oldParameters = method.getParameterList().getParameters();
-          for (int i = 0; i < oldParameters.length; i++) {
-            final PsiParameter oldParameter = oldParameters[i];
-            newParameters.add(new ParameterInfo(i, oldParameter.getName(), substitutor.substitute(oldParameter.getType())));
-          }
-          final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(method.getProject(), method, false, null, method.getName(),
-                                                                            substitutor.substitute(method.getReturnType()),
-                                                                            newParameters.toArray(new ParameterInfo[newParameters.size()]));
-
-          csp.run();
           newMember = (PsiMethod)targetClass.add(method);
           if (memberInfo.isToAbstract()) {
             if (newMember.hasModifierProperty(PsiModifier.PRIVATE)) {

@@ -44,6 +44,16 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
       }
 
     }
+
+    if (!TypeConversionUtil.isAssignable(element.getType(), newType)) {
+      final String conflict = "Type parameters do not agree in " + element.getText() + ". " +
+                              "Expected " + newType.getPresentableText() + " but found " + element.getType().getPresentableText();
+      if (myConflict == null) {
+        myConflict = conflict;
+      } else {
+        myConflict += "\n" + conflict;
+      }
+    }
   }
 
   public void fixUsage() throws IncorrectOperationException {
