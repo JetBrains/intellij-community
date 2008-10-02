@@ -28,38 +28,39 @@ public class DebugUtil {
 
   public static /*final*/ boolean CHECK = false;
   public static final boolean CHECK_INSIDE_ATOMIC_ACTION_ENABLED = false;
-  public static final Key<Boolean> TRACK_INVALIDATION = new Key<Boolean>("TRACK_INVALIDATION");
+  public static final Key<Boolean> TRACK_INVALIDATION_KEY = new Key<Boolean>("TRACK_INVALIDATION_KEY");
+  public static final boolean TRACK_INVALIDATION = false;
 
   public static String psiTreeToString(PsiElement element, boolean skipWhitespaces) {
     return treeToString(SourceTreeToPsiMap.psiElementToTree(element), skipWhitespaces);
   }
 
   public static String treeToString(ASTNode root, boolean skipWhitespaces) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     treeToBuffer(buffer, root, 0, skipWhitespaces, false, false);
     return buffer.toString();
   }
 
   public static String treeToString(ASTNode root, boolean skipWhitespaces, boolean showRanges) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     treeToBuffer(buffer, root, 0, skipWhitespaces, showRanges, false);
     return buffer.toString();
   }
 
 
   public static String treeToStringWithUserData(TreeElement root, boolean skipWhitespaces) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     treeToBufferWithUserData(buffer, root, 0, skipWhitespaces);
     return buffer.toString();
   }
 
   public static String treeToStringWithUserData(PsiElement root, boolean skipWhitespaces) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     treeToBufferWithUserData(buffer, root, 0, skipWhitespaces);
     return buffer.toString();
   }
 
-  public static void treeToBuffer(StringBuffer buffer,
+  public static void treeToBuffer(StringBuilder buffer,
                                   ASTNode root,
                                   int indent,
                                   boolean skipWhiteSpaces,
@@ -84,7 +85,7 @@ public class DebugUtil {
       text = StringUtil.replace(text, "\n", "\\n");
       text = StringUtil.replace(text, "\r", "\\r");
       text = StringUtil.replace(text, "\t", "\\t");
-      buffer.append(root.toString() + "('" + text + "')");
+      buffer.append(root.toString()).append("('").append(text).append("')");
     }
     if (showRanges) buffer.append(root.getTextRange());
     buffer.append("\n");
@@ -107,7 +108,7 @@ public class DebugUtil {
     }
   }
 
-  private static void treeToBufferWithUserData(StringBuffer buffer, TreeElement root, int indent, boolean skipWhiteSpaces) {
+  private static void treeToBufferWithUserData(StringBuilder buffer, TreeElement root, int indent, boolean skipWhiteSpaces) {
     if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) return;
 
     for (int i = 0; i < indent; i++) {
@@ -121,7 +122,7 @@ public class DebugUtil {
       text = StringUtil.replace(text, "\n", "\\n");
       text = StringUtil.replace(text, "\r", "\\r");
       text = StringUtil.replace(text, "\t", "\\t");
-      buffer.append(root.toString() + "('" + text + "')");
+      buffer.append(root.toString()).append("('").append(text).append("')");
     }
     buffer.append(root.getUserDataString());
     buffer.append("\n");
@@ -141,7 +142,7 @@ public class DebugUtil {
     }
   }
 
-  private static void treeToBufferWithUserData(StringBuffer buffer, PsiElement root, int indent, boolean skipWhiteSpaces) {
+  private static void treeToBufferWithUserData(StringBuilder buffer, PsiElement root, int indent, boolean skipWhiteSpaces) {
     if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
 
     for (int i = 0; i < indent; i++) {
@@ -155,7 +156,7 @@ public class DebugUtil {
       text = StringUtil.replace(text, "\n", "\\n");
       text = StringUtil.replace(text, "\r", "\\r");
       text = StringUtil.replace(text, "\t", "\\t");
-      buffer.append(root.toString() + "('" + text + "')");
+      buffer.append(root.toString()).append("('").append(text).append("')");
     }
     buffer.append(((UserDataHolderBase)root).getUserDataString());
     buffer.append("\n");
@@ -240,7 +241,7 @@ public class DebugUtil {
   }
 
   public static String psiToString(final PsiElement file, final boolean skipWhitespaces) {
-    final StringBuffer stringBuffer = new StringBuffer(file.getTextLength() * 5);
+    final StringBuilder stringBuffer = new StringBuilder(file.getTextLength() * 5);
     if (file.getNode() == null) {
       psiToBuffer(stringBuffer, file, 0, skipWhitespaces, false, false);
     }
@@ -253,12 +254,12 @@ public class DebugUtil {
   public static String psiToString(@NotNull PsiElement root,
                                  boolean skipWhiteSpaces,
                                  boolean showRanges) {
-    final StringBuffer result = new StringBuffer();
+    final StringBuilder result = new StringBuilder();
     psiToBuffer(result, root, 0, skipWhiteSpaces, showRanges, showRanges);
     return result.toString();
   }
   
-  public static void psiToBuffer(StringBuffer buffer,
+  public static void psiToBuffer(StringBuilder buffer,
                                  PsiElement root,
                                  int indent,
                                  boolean skipWhiteSpaces,
@@ -307,10 +308,10 @@ public class DebugUtil {
 
   public static void trackInvalidation(PsiElement element) {
     if (element == null) return;
-    element.putUserData(TRACK_INVALIDATION, Boolean.TRUE);
+    element.putUserData(TRACK_INVALIDATION_KEY, Boolean.TRUE);
     final ASTNode node = element.getNode();
     if (node != null) {
-      node.putUserData(TRACK_INVALIDATION, Boolean.TRUE);
+      node.putUserData(TRACK_INVALIDATION_KEY, Boolean.TRUE);
     }
     trackInvalidation(element.getParent());
   }

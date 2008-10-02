@@ -19,9 +19,9 @@ class InitialInfoBuilder {
 
   private WhiteSpace myCurrentWhiteSpace;
   private final FormattingDocumentModel myModel;
-  private TextRange myAffectedRange;
+  private final TextRange myAffectedRange;
   private final int myPositionOfInterest;
-  private boolean myProcessHeadingWhitespace;
+  private final boolean myProcessHeadingWhitespace;
   private final Map<AbstractBlockWrapper, Block> myResult = new THashMap<AbstractBlockWrapper, Block>();
   private CompositeBlockWrapper myRootBlockWrapper;
   private LeafBlockWrapper myPreviousBlock;
@@ -107,7 +107,7 @@ class InitialInfoBuilder {
         if (subBlocks.isEmpty() || myReadOnlyBlockInformationProvider != null &&
               myReadOnlyBlockInformationProvider.isReadOnly(rootBlock)) {
           final AbstractBlockWrapper wrapper = processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index, parentBlock);
-          if (subBlocks.size() > 0) {
+          if (!subBlocks.isEmpty()) {
             wrapper.setIndent((IndentImpl)subBlocks.get(0).getIndent());
           }
           return wrapper;
@@ -254,8 +254,7 @@ class InitialInfoBuilder {
     if (myAffectedRange.getStartOffset() >= textRange.getEndOffset() && rootIsRightBlock) {
       return false;
     }
-    if (textRange.getStartOffset() > myAffectedRange.getEndOffset()) return true;
-    return textRange.getEndOffset() < myAffectedRange.getStartOffset();
+    return textRange.getStartOffset() > myAffectedRange.getEndOffset() || textRange.getEndOffset() < myAffectedRange.getStartOffset();
   }
 
   public Map<AbstractBlockWrapper,Block> getBlockToInfoMap() {
@@ -275,7 +274,7 @@ class InitialInfoBuilder {
   }
 
   public static void assertInvalidRanges(final int startOffset, final int newEndOffset, FormattingDocumentModel model, String message) {
-    @NonNls final StringBuffer buffer = new StringBuffer();
+    @NonNls final StringBuilder buffer = new StringBuilder();
     buffer.append("Invalid formatting blocks:").append(message).append("\n");
     buffer.append("Start offset:");
     buffer.append(startOffset);

@@ -18,17 +18,17 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CompositeElement extends TreeElement implements Cloneable {
+public class CompositeElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
 
   public volatile TreeElement firstChild = null; // might be modified by transforming chameleons
   public volatile TreeElement lastChild = null; // might be modified by transforming chameleons
   private final IElementType type;
-  private int myParentModifications = -1;
-  private int myStartOffset = 0;
-  private int myModificationsCount = 0;
-  private int myCachedLength = -1;
-  private int myHC = -1;
+  private volatile int myParentModifications = -1;
+  private volatile int myStartOffset = 0;
+  private volatile int myModificationsCount = 0;
+  private volatile int myCachedLength = -1;
+  private volatile int myHC = -1;
   private volatile PsiElement myWrapper = null;
 
   public CompositeElement(@NotNull IElementType type) {
@@ -320,8 +320,9 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public int getTextLength() {
-    if (myCachedLength < 0) {
-      myCachedLength = getLengthInner();
+    int cachedLength = myCachedLength;
+    if (cachedLength < 0) {
+      myCachedLength = cachedLength = getLengthInner();
     }
     if (DebugUtil.CHECK) {
       int trueLength = getLengthInner();
@@ -330,12 +331,13 @@ public class CompositeElement extends TreeElement implements Cloneable {
         myCachedLength = trueLength;
       }
     }
-    return myCachedLength;
+    return cachedLength;
   }
 
   public int hc() {
-    if (myHC == -1) {
-      int hc = 0;
+    int hc = myHC;
+    if (hc == -1) {
+      hc = 0;
       TreeElement child = firstChild;
       while (child != null) {
         hc += child.hc();
@@ -343,8 +345,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
       }
       myHC = hc;
     }
-
-    return myHC;
+    return hc;
   }
 
   private int getLengthInner() {

@@ -118,7 +118,7 @@ public class ChangeUtil {
         destinationTreeChange.addElementaryChange(newChildrenParent, ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, newChildrenParent));
         TreeUtil.removeRange((TreeElement)newChildrenParent.getFirstChildNode(), null);
       }
-    }, (CompositeElement)newChildrenParent);
+    }, (TreeElement)newChildrenParent);
 
     if (firstChild != null) {
       registerLeafsInCharTab(newCharTab, firstChild, oldCharTab);
@@ -264,7 +264,7 @@ public class ChangeUtil {
     }
   }
 
-  public static interface ChangeAction{
+  public interface ChangeAction{
     void makeChange(TreeChangeEvent destinationTreeChange);
   }
 
