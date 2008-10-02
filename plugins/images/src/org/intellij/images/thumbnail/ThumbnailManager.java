@@ -16,18 +16,26 @@
 package org.intellij.images.thumbnail;
 
 import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.ServiceManager;
 
 /**
  * Thumbnail manager.
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-public interface ThumbnailManager {
-    /**
-     * Create thumbnail view
-     *
-     * @return Return thumbnail view
-     */
-    @NotNull
-    ThumbnailView getThumbnailView();
+public abstract class ThumbnailManager {
+
+  public static ThumbnailManager getManager(final Project project) {
+    return ServiceManager.getService(project, ThumbnailManager.class);
+  }
+
+  /**
+   * Create thumbnail view
+   *
+   * @return Return thumbnail view
+   */
+  @NotNull
+  public abstract ThumbnailView getThumbnailView();
+
 }

@@ -2,8 +2,8 @@ package org.intellij.images.thumbnail.impl;
 
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.thumbnail.ThumbnailManager;
 import org.intellij.images.thumbnail.ThumbnailView;
@@ -21,7 +21,8 @@ final class ThumbnailSelectInTarget implements SelectInTarget {
     VirtualFile virtualFile = context.getVirtualFile();
     VirtualFile parent = virtualFile.getParent();
     if (parent != null) {
-      ThumbnailView thumbnailView = ServiceManager.getService(context.getProject(), ThumbnailManager.class).getThumbnailView();
+      final Project project = context.getProject();
+      ThumbnailView thumbnailView = ThumbnailManager.getManager(project).getThumbnailView();
       thumbnailView.setRoot(parent);
       thumbnailView.setVisible(true);
       thumbnailView.setSelected(virtualFile, true);

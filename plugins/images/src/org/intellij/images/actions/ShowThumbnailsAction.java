@@ -34,7 +34,7 @@ public final class ShowThumbnailsAction extends AnAction {
         Project project = e.getData(PlatformDataKeys.PROJECT);
         VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
         if (project != null && file != null && file.isDirectory()) {
-            ThumbnailManager thumbnailManager = project.getComponent(ThumbnailManager.class);
+            ThumbnailManager thumbnailManager = ThumbnailManager.getManager(project);
             ThumbnailView thumbnailView = thumbnailManager.getThumbnailView();
             thumbnailView.setRoot(file);
             thumbnailView.setVisible(true);

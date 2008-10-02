@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ThumbnailManagerImpl implements ThumbnailManager, Disposable {
+final class ThumbnailManagerImpl extends ThumbnailManager implements Disposable {
   private final Project project;
   private ThumbnailView thumbnailView;
 
