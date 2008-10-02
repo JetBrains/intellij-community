@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<? extends PsiClass>> implements PsiClass {
+public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub> implements PsiClass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsClassImpl");
 
   private volatile Map<String, PsiField> myCachedFieldsMap = null;
@@ -193,7 +193,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<? extends
 
   @NotNull
   public PsiClass[] getInnerClasses() {
-    return getStub().getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
+    return getStub().getChildrenByType(JavaStubElementTypes.CLASS, ARRAY_FACTORY);
   }
 
   @NotNull
@@ -261,7 +261,8 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<? extends
           list.add(method);
         }
         for (final String methodName : cachedMethodsMap.keySet()) {
-          methodsMap.put(methodName, cachedMethodsMap.get(methodName).toArray(PsiMethod.EMPTY_ARRAY));
+          List<PsiMethod> methodList = cachedMethodsMap.get(methodName);
+          methodsMap.put(methodName, methodList.toArray(new PsiMethod[methodList.size()]));
         }
         myCachedMethodsMap = methodsMap;
       }
@@ -359,7 +360,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<? extends
     ((ClsElementImpl)getModifierList()).appendMirrorText(indentLevel, buffer);
     buffer.append(isEnum() ? "enum " : isAnnotationType() ? "@interface " : isInterface() ? "interface " : "class ");
     ((ClsElementImpl)getNameIdentifier()).appendMirrorText(indentLevel, buffer);
-    ((ClsTypeParametersListImpl)getTypeParameterList()).appendMirrorText(indentLevel, buffer);
+    ((ClsElementImpl)getTypeParameterList()).appendMirrorText(indentLevel, buffer);
     buffer.append(' ');
     if (!isEnum() && !isAnnotationType()) {
       ((ClsElementImpl)getExtendsList()).appendMirrorText(indentLevel, buffer);

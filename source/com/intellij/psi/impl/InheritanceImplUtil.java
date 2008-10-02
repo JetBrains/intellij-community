@@ -59,25 +59,22 @@ public class InheritanceImplUtil {
 
         GlobalSearchScope scope = candidateClass.getResolveScope();
         if (cInt == bInt && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getExtendsList(), manager, scope)) return true;
-        if (cInt != bInt && !cInt && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getImplementsList(), manager, scope)) return true;
-        return false;
+        return bInt && !cInt && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getImplementsList(), manager, scope);
       }
-      else {
-        if (cInt == bInt) {
-          for (PsiClassType type : candidateClass.getExtendsListTypes()) {
-            if (Comparing.equal(type.getClassName(), baseName)) {
-              if (manager.areElementsEquivalent(baseClass, type.resolve())) {
-                return true;
-              }
+      if (cInt == bInt) {
+        for (PsiClassType type : candidateClass.getExtendsListTypes()) {
+          if (Comparing.equal(type.getClassName(), baseName)) {
+            if (manager.areElementsEquivalent(baseClass, type.resolve())) {
+              return true;
             }
           }
         }
-        else if (!cInt) {
-          for (PsiClassType type : candidateClass.getImplementsListTypes()) {
-            if (Comparing.equal(type.getClassName(), baseName)) {
-              if (manager.areElementsEquivalent(baseClass, type.resolve())) {
-                return true;
-              }
+      }
+      else if (!cInt) {
+        for (PsiClassType type : candidateClass.getImplementsListTypes()) {
+          if (Comparing.equal(type.getClassName(), baseName)) {
+            if (manager.areElementsEquivalent(baseClass, type.resolve())) {
+              return true;
             }
           }
         }

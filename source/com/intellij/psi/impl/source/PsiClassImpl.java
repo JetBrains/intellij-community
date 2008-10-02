@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<PsiClass>> implements PsiClass {
+public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub> implements PsiClass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassImpl");
 
   private volatile Map<String, PsiField> myCachedFieldsMap = null;
@@ -263,8 +263,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<PsiClass>> imp
       }
 
       if (parent != null) {
-        return ((PsiClassStub<? extends PsiClass>)parent).getPsi();
-      }      
+        return ((PsiClassStub)parent).getPsi();
+      }
     }
 
     PsiElement parent = getParent();
@@ -465,7 +465,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<PsiClass>> imp
     }
 
     ASTNode keyword = getNode().findChildByRole(ChildRole.CLASS_OR_INTERFACE_KEYWORD);
-    return keyword.getElementType() == Constants.INTERFACE_KEYWORD;
+    return keyword.getElementType() == JavaTokenType.INTERFACE_KEYWORD;
   }
 
   public boolean isAnnotationType() {
@@ -484,7 +484,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<PsiClass>> imp
     }
 
     final ASTNode keyword = getNode().findChildByRole(ChildRole.CLASS_OR_INTERFACE_KEYWORD);
-    return keyword != null && keyword.getElementType() == Constants.ENUM_KEYWORD;
+    return keyword != null && keyword.getElementType() == JavaTokenType.ENUM_KEYWORD;
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
@@ -563,7 +563,6 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<PsiClass>> imp
     if (parent instanceof PsiFile) {
       PsiFile file = (PsiFile)parent;
       String fileName = file.getName();
-      if (fileName == null) return false;
       int dotIndex = fileName.lastIndexOf('.');
       String name = dotIndex >= 0 ? fileName.substring(0, dotIndex) : fileName;
       String oldName = getName();

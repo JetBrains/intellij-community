@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.cache.ModifierFlags;
@@ -40,7 +39,7 @@ public class ClsStubBuilder {
   public static PsiFileStub build(final VirtualFile vFile, byte[] bytes) throws ClsFormatException {
     final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("dont.know.yet", true);
     try {
-      final PsiClassStub<? extends PsiClass> result = buildClass(vFile, bytes, file, 0);
+      final PsiClassStub result = buildClass(vFile, bytes, file, 0);
       if (result == null) return null;
 
       file.setPackageName(getPackageName(result));
@@ -74,7 +73,7 @@ public class ClsStubBuilder {
     private final int myAccess;
     private final VirtualFile myVFile;
     private PsiModifierListStub myModlist;
-    private PsiClassStub<? extends PsiClass> myResult;
+    private PsiClassStub myResult;
     private static final String[] EMPTY_STRINGS = new String[0];
     @NonNls private static final String SYNTHETIC_CLINIT_METHOD = "<clinit>";
     @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";

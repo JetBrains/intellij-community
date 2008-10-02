@@ -11,20 +11,20 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
 
-public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub<PsiClass> {
+public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub {
   private final StringRef myQualifiedName;
   private final StringRef myName;
   private final StringRef myBaseRefText;
   private final byte myFlags;
 
-  private final static int DEPRECATED = 0x01;
-  private final static int INTERFACE = 0x02;
-  private final static int ENUM = 0x04;
-  private final static int ENUM_CONSTANT_INITIALIZER = 0x08;
-  private final static int ANONYMOUS = 0x10;
-  private final static int ANON_TYPE = 0x20;
-  private final static int IN_QUALIFIED_NEW = 0x40;
-  private final static int DEPRECATED_ANNOTATION = 0x80;
+  private static final int DEPRECATED = 0x01;
+  private static final int INTERFACE = 0x02;
+  private static final int ENUM = 0x04;
+  private static final int ENUM_CONSTANT_INITIALIZER = 0x08;
+  private static final int ANONYMOUS = 0x10;
+  private static final int ANON_TYPE = 0x20;
+  private static final int IN_QUALIFIED_NEW = 0x40;
+  private static final int DEPRECATED_ANNOTATION = 0x80;
 
   private LanguageLevel myLanguageLevel = null;
   private StringRef mySourceFileName = null;

@@ -9,7 +9,7 @@ import com.intellij.psi.stubs.NamedStub;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-public interface PsiClassStub<T extends PsiClass> extends NamedStub<T> {
+public interface PsiClassStub extends NamedStub<PsiClass> {
   @NonNls
   @Nullable
   String getQualifiedName();

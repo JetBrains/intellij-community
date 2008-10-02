@@ -34,7 +34,7 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
   public PsiExpressionList getArgumentList() {
     PsiElement parent = getParent();
     LOG.assertTrue(parent instanceof PsiEnumConstant);
-    return ((PsiEnumConstant)parent).getArgumentList();
+    return ((PsiCall)parent).getArgumentList();
   }
 
   public boolean isInQualifiedNew() {
