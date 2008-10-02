@@ -260,6 +260,15 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   public void addTemplate(Template template) {
     clearPreviouslyRegistered(template);
     addTemplateImpl(template);
+
+    TemplateImpl templateImpl = (TemplateImpl)template;
+    String groupName = templateImpl.getGroupName();
+    TemplateGroup group = mySchemesManager.findSchemeByName(groupName);
+    if (group == null) {
+      group = new TemplateGroup(groupName);
+      mySchemesManager.addNewScheme(group, true);
+    }
+    group.addElement(templateImpl);
   }
 
   private void clearPreviouslyRegistered(final Template template) {
@@ -456,7 +465,8 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
     for (TemplateImpl template : created.values()) {
       if (registerTemplate) {
-        addTemplate(template);
+        clearPreviouslyRegistered(template);
+        addTemplateImpl(template);
       }
 
       result.addElement(template);
@@ -528,7 +538,8 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       if (!group.isEmpty()) {
         mySchemesManager.addNewScheme(group, true);
         for (TemplateImpl template : group.getElements()) {
-          addTemplate(template);
+          clearPreviouslyRegistered(template);
+          addTemplateImpl(template);
         }
       }
     }
