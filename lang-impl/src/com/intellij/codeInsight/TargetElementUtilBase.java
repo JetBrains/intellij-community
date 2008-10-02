@@ -205,7 +205,9 @@ public class TargetElementUtilBase {
     PsiManager manager = file.getManager();
     PsiElement refElement = ref.resolve();
     if (refElement == null) {
-      DaemonCodeAnalyzer.getInstance(manager.getProject()).updateVisibleHighlighters(editor);
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        DaemonCodeAnalyzer.getInstance(manager.getProject()).updateVisibleHighlighters(editor);
+      }
       return null;
     }
     else {
