@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub> implements PsiClass {
+public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements PsiClass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassImpl");
 
   private volatile Map<String, PsiField> myCachedFieldsMap = null;
@@ -263,7 +263,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub> implements Ps
       }
 
       if (parent != null) {
-        return ((PsiClassStub)parent).getPsi();
+        return ((PsiClassStub<? extends PsiClass>)parent).getPsi();
       }
     }
 

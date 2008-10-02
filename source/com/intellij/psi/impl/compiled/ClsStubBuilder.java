@@ -58,7 +58,7 @@ public class ClsStubBuilder {
     return file;
   }
 
-  private static PsiClassStub buildClass(final VirtualFile vFile, final byte[] bytes, final StubElement parent, final int access) {
+  private static PsiClassStub<?> buildClass(final VirtualFile vFile, final byte[] bytes, final StubElement parent, final int access) {
     ClassReader reader = new ClassReader(bytes);
 
     final MyClassVisitor classVisitor = new MyClassVisitor(vFile, parent, access);
@@ -93,7 +93,7 @@ public class ClsStubBuilder {
       myAccess = access;
     }
 
-    public PsiClassStub getResult() {
+    public PsiClassStub<?> getResult() {
       return myResult;
     }
 

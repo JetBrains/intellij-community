@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -132,9 +133,19 @@ public class FileManagerImpl implements FileManager {
   @Nullable
   private Language getLanguage(final VirtualFile file) {
     final FileType fileType = file.getFileType();
+    Project project = myManager.getProject();
     if (fileType instanceof LanguageFileType) {
-      return LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), file, myManager.getProject());
+      return LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), file, project);
     }
+    // Define language for binary file
+    final ContentBasedClassFileProcessor[] processors = Extensions.getExtensions(ContentBasedClassFileProcessor.EP_NAME);
+    for (ContentBasedClassFileProcessor processor : processors) {
+      Language language = processor.obtainLanguageForFile(file);
+      if (language != null) {
+        return language;
+      }
+    }
+
     return null;
   }
 
@@ -486,7 +497,7 @@ public class FileManagerImpl implements FileManager {
         if (file instanceof PsiFileEx) {
           ((PsiFileEx)file).onContentReload();
         }
-        
+
         myManager.childrenChanged(event);
       }
     }

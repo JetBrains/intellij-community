@@ -14,5 +14,5 @@ public interface PsiFileWithStubSupport extends PsiFile {
   StubTree getStubTree();
 
   @Nullable
-  ASTNode findTreeForStub(StubTree tree, StubElement stub);
+  ASTNode findTreeForStub(StubTree tree, StubElement<?> stub);
 }

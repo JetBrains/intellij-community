@@ -166,7 +166,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return getClassStub().getLanguageLevel();
   }
 
-  private PsiClassStub getClassStub() {
+  private PsiClassStub<?> getClassStub() {
     return (PsiClassStub)getStub().getChildrenStubs().get(0);
   }
 
@@ -372,7 +372,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return stubHolder;
   }
 
-  public ASTNode findTreeForStub(final StubTree tree, final StubElement stub) {
+  public ASTNode findTreeForStub(final StubTree tree, final StubElement<?> stub) {
     return null;
   }
 

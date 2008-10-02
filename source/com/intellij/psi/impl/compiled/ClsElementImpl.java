@@ -14,7 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledElement {
+public abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsElementImpl");
   protected static final boolean CHECK_MIRROR_ENABLED = false;
 
