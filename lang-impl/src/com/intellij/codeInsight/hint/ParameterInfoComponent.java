@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
-import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
+import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SideBorder;
@@ -14,6 +14,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.util.EnumSet;
 
 class ParameterInfoComponent extends JPanel{
   private Object[] myObjects;
@@ -64,7 +65,7 @@ class ParameterInfoComponent extends JPanel{
     myCurrentParameterIndex = -1;
   }
 
-  class MyParameterContext implements ParameterInfoUIContext {
+  class MyParameterContext implements ParameterInfoUIContextEx {
     private int i;
     public void setupUIComponentPresentation(String text,
                                              int highlightStartOffset,
@@ -74,6 +75,11 @@ class ParameterInfoComponent extends JPanel{
                                              boolean isDisabledBeforeHighlight,
                                              Color background) {
       myPanels[i].setup(text, highlightStartOffset, highlightEndOffset, isDisabled, strikeout, isDisabledBeforeHighlight, background);
+      myPanels[i].setBorder(isLastParameterOwner() ? BACKGROUND_BORDER : BOTTOM_BORDER);
+    }
+
+    public void setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
+      myPanels[i].setup(texts, flags, background);
       myPanels[i].setBorder(isLastParameterOwner() ? BACKGROUND_BORDER : BOTTOM_BORDER);
     }
 
@@ -189,6 +195,24 @@ class ParameterInfoComponent extends JPanel{
         add(myOneLineComponents[i], new GridBagConstraints(0,i,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0));
 
         lineOffset += line.length();
+      }
+    }
+
+    public void setup(final String[] texts, final EnumSet<ParameterInfoUIContextEx.Flag>[] flags, final Color background) {
+      removeAll();
+
+      myOneLineComponents = new OneLineComponent[texts.length];
+      for (int i = 0; i < texts.length; i++) {
+        String line = texts[i];
+        final EnumSet<ParameterInfoUIContextEx.Flag> flag = flags[i];
+        myOneLineComponents[i] = new OneLineComponent();
+        boolean highlighed = flag.contains(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+        myOneLineComponents[i].setup(
+          line, 0, highlighed ?  line.length() : 0,
+          flag.contains(ParameterInfoUIContextEx.Flag.DISABLE), flags[i].contains(ParameterInfoUIContextEx.Flag.STRIKEOUT),
+          background
+        );
+        add(myOneLineComponents[i], new GridBagConstraints(i,0,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0));
       }
     }
 

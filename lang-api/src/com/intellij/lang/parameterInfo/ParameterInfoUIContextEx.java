@@ -11,13 +11,12 @@ import java.util.EnumSet;
 public interface ParameterInfoUIContextEx extends ParameterInfoUIContext {
 
   /**
-   * Set the contents and formatting of a popup hint.
+   * Set the contents and formatting of a one-line, multi-formatted popup hint.
    * @param texts pieces ot text to be put together, each individually formattable.
    * @param flags a set of Flags; flags[i] describes formatting of texts[i].
-   * @param isDisabledBeforeHighlight disable the hint before highlighting.
    * @param background background color of the hint.
    */
-  void setupUIComponentPresentation(String[] texts, EnumSet<Flag>[] flags, boolean isDisabledBeforeHighlight, Color background);
+  void setupUIComponentPresentation(String[] texts, EnumSet<Flag>[] flags, Color background);
 
   enum Flag {
     HIGHLIGHT, DISABLE, STRIKEOUT // more to come
