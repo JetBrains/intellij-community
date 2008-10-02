@@ -244,10 +244,13 @@ public class WeakestTypeFinder {
         if (!(referenceElement instanceof PsiExpression)) {
             return false;
         }
-        final PsiMethod method = methodCallExpression.resolveMethod();
+        final JavaResolveResult resolveResult =
+                methodCallExpression.resolveMethodGenerics();
+        final PsiMethod method = (PsiMethod) resolveResult.getElement();
         if (method == null) {
             return false;
         }
+        final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
         final PsiExpressionList expressionList =
                 methodCallExpression.getArgumentList();
         final PsiExpression[] expressions = expressionList.getExpressions();
@@ -275,7 +278,7 @@ public class WeakestTypeFinder {
             }
         }
         if (!useParameterizedTypeForCollectionMethods) {
-            return checkType(type, weakestTypeClasses);
+            return checkType(type, substitutor, weakestTypeClasses);
         }
         final String methodName = method.getName();
         if (HardcodedMethodConstants.REMOVE.equals(methodName) ||
@@ -309,13 +312,34 @@ public class WeakestTypeFinder {
                                             expressionType)) {
                                 return false;
                             }
-                            return checkType(parameterType, weakestTypeClasses);
+                            return checkType(parameterType, substitutor,
+                                    weakestTypeClasses);
                         }
                     }
                 }
             }
         }
-        return checkType(type, weakestTypeClasses);
+        return checkType(type, substitutor, weakestTypeClasses);
+    }
+
+    private static boolean checkType(
+            @Nullable PsiType type, @NotNull PsiSubstitutor substitutor,
+            @NotNull Collection<PsiClass> weakestTypeClasses) {
+        if (!(type instanceof PsiClassType)) {
+            return false;
+        }
+        final PsiClassType classType = (PsiClassType) type;
+        final PsiClass aClass = classType.resolve();
+        if (aClass == null) {
+            return false;
+        }
+        if (aClass instanceof PsiTypeParameter) {
+            final PsiType substitution = substitutor.substitute(
+                    (PsiTypeParameter) aClass);
+            return checkType(substitution, weakestTypeClasses);
+        }
+        checkClass(aClass, weakestTypeClasses);
+        return true;
     }
 
     private static boolean findWeakestType(

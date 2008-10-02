@@ -92,4 +92,14 @@ public class TypeMayBeWeakened {
         final TypeMayBeWeakened var = new TypeMayBeWeakened();
         var.new Test();
     }
+
+    class Param2Weak<T> {
+        public void method(T p) {}
+    }
+
+    public class Weak2Null extends Param2Weak<String> {
+        public void context(String p) {
+            method(p);
+        }
+    }
 }

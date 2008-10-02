@@ -202,19 +202,22 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 } else if (declarationScope instanceof PsiMethod) {
                     final PsiMethod method = (PsiMethod)declarationScope;
                     final PsiClass containingClass = method.getContainingClass();
-                    if (containingClass.isInterface()) {
+                    if (containingClass == null ||
+                            containingClass.isInterface()) {
                         return;
                     }
                     final Query<MethodSignatureBackedByPsiMethod> superSearch =
                             SuperMethodsSearch.search(method, null, true, false);
                     if (superSearch.findFirst() != null) {
-                        // do not try to weaken parameters of methods with super methods
+                        // do not try to weaken parameters of methods with
+                        // super methods
                         return;
                     }
                     final Query<PsiMethod> overridingSearch =
                             OverridingMethodsSearch.search(method);
                     if (overridingSearch.findFirst() != null) {
-                        // do not try to weaken parameters of methods with overriding methods.
+                        // do not try to weaken parameters of methods with
+                        // overriding methods.
                         return;
                     }
                 }
@@ -235,7 +238,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                         final PsiExpression iteratedValue =
                                 foreachStatement.getIteratedValue();
                         if (!(iteratedValue instanceof PsiNewExpression) &&
-                                !(iteratedValue instanceof PsiTypeCastExpression)) {
+                                !(iteratedValue instanceof
+                                        PsiTypeCastExpression)) {
                             return;
                         }
                     }
