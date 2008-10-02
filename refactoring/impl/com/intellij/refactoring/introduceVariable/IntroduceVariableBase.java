@@ -400,7 +400,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     final int line = editor != null ? editor.getCaretModel().getLogicalPosition().line : 0;
     if (deleteSelf) {
       if (editor != null) {
-        LogicalPosition pos = new LogicalPosition(0, 0);
+        LogicalPosition pos = new LogicalPosition(line, col);
         editor.getCaretModel().moveToLogicalPosition(pos);
       }
     }
