@@ -1,6 +1,6 @@
 package com.intellij.refactoring.rename;
 
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -19,5 +19,5 @@ public interface NameSuggestionProvider {
   SuggestedNameInfo getSuggestedNames(PsiElement element, PsiElement nameSuggestionContext, List<String> result);
 
   @Nullable
-  Collection<LookupItem> completeName(PsiElement element, final PsiElement nameSuggestionContext, final String prefix);
+  Collection<LookupElement> completeName(PsiElement element, final PsiElement nameSuggestionContext, final String prefix);
 }

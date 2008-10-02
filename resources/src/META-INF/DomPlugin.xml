@@ -39,5 +39,7 @@
     <psi.referenceContributor implementation="com.intellij.util.xml.impl.DomReferenceContributor"/>
 
     <xml.elementDescriptorProvider implementation="com.intellij.util.xml.impl.DomDescriptorProvider"/>
+
+    <nameSuggestionProvider implementation="com.intellij.util.xml.DomNameSuggestionProvider" id="dom" order="first, before java"/>
   </extensions>
 </idea-plugin>

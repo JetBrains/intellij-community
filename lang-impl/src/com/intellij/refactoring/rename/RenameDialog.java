@@ -1,6 +1,6 @@
 package com.intellij.refactoring.rename;
 
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -129,15 +129,15 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   private void completeVariable(Editor editor) {
-    String prefix = myNameSuggestionsField.getEnteredName();
-    Collection<LookupItem> items = null;
+    final String prefix = myNameSuggestionsField.getEnteredName();
+    Collection<LookupElement> items = null;
     for(NameSuggestionProvider provider: Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
       items = provider.completeName(myPsiElement, myNameSuggestionContext, prefix);
       if (items != null) break;
     }
 
     if (items != null) {
-      LookupItem[] lookupItems = items.toArray(new LookupItem[items.size()]);
+      final LookupElement[] lookupItems = items.toArray(new LookupElement[items.size()]);
       editor.getCaretModel().moveToOffset(prefix.length());
       editor.getSelectionModel().removeSelection();
       LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, null, null);

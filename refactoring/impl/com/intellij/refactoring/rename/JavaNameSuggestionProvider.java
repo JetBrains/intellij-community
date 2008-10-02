@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
@@ -102,7 +103,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
   }
 
   @Nullable
-  public Collection<LookupItem> completeName(final PsiElement element, final PsiElement nameSuggestionContext, final String prefix) {
+  public Collection<LookupElement> completeName(final PsiElement element, final PsiElement nameSuggestionContext, final String prefix) {
     if (element instanceof PsiVariable) {
       PsiVariable var = (PsiVariable)element;
       VariableKind kind = JavaCodeStyleManager.getInstance(element.getProject()).getVariableKind(var);
