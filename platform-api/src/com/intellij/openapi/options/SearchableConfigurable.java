@@ -27,4 +27,8 @@ public interface SearchableConfigurable extends Configurable {
   @NonNls String getId();
   boolean clearSearch();
   @Nullable Runnable enableSearch(String option);
+
+  interface Parent extends SearchableConfigurable, Composite {
+    boolean isResponsibleForChildren();
+  }
 }

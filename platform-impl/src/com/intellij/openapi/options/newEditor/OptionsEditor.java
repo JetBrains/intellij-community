@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.NullableComponent;
@@ -15,6 +16,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.LightColors;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.BackAction;
 import com.intellij.ui.navigation.ForwardAction;
@@ -81,12 +83,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     myTree = new OptionsTree(myProject, groups, getContext()) {
       @Override
       protected void onTreeKeyEvent(final KeyEvent e) {
-        mySearch.processKeyEvent(e);
+        mySearch.keyEventToTextField(e);
       }
     };
     getContext().addColleague(myTree);
     Disposer.register(this, myTree);
-    mySearch.getDocument().addDocumentListener(new DocumentListener() {
+    mySearch.addDocumentListener(new DocumentListener() {
       public void insertUpdate(final DocumentEvent e) {
         filter.update(e);
       }
@@ -313,7 +315,24 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       if (myOptionContainers == null) return true;
       
       if (value instanceof OptionsTree.EditorNode) {
-        return myOptionContainers.contains(((OptionsTree.EditorNode)value).getConfigurable());
+        final OptionsTree.EditorNode node = (OptionsTree.EditorNode)value;
+        if (myOptionContainers.contains(node.getConfigurable())) return true;
+
+        SimpleNode eachParent = node.getParent();
+        while (eachParent != null) {
+          if (eachParent instanceof OptionsTree.EditorNode) {
+            final OptionsTree.EditorNode eachParentEditor = (OptionsTree.EditorNode)eachParent;
+            final Configurable eachParentConfigurable = eachParentEditor.getConfigurable();
+            if (myOptionContainers.contains(eachParentConfigurable) && eachParentConfigurable instanceof SearchableConfigurable.Parent) {
+              final SearchableConfigurable.Parent eachParentSearchable = (SearchableConfigurable.Parent)eachParentConfigurable;
+              if (eachParentSearchable.isResponsibleForChildren()) return true;
+            }
+          }
+
+          eachParent = eachParent.getParent();
+        }
+
+        return false;
       } else {
         return true;
       }
@@ -328,9 +347,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       }
 
       if (myOptionContainers != null && myOptionContainers.size() == 0) {
-        mySearch.setBackground(LightColors.RED);
+        mySearch.getTextEditor().setBackground(LightColors.RED);
       } else {
-        mySearch.setBackground(UIUtil.getTextFieldBackground());
+        mySearch.getTextEditor().setBackground(UIUtil.getTextFieldBackground());
       }
 
       fireUpdate();
@@ -441,24 +460,25 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     });
   }
 
-  private static class MySearchField extends JTextField {
+  private static class MySearchField extends SearchTextField {
 
     private boolean myDelegatingNow;
 
     private MySearchField() {
+      super(false);
       addKeyListener(new KeyAdapter() {});
     }
 
     @Override
-    protected void processKeyEvent(final KeyEvent e) {
-      if (isFocusOwner() && !myDelegatingNow) {
+    protected boolean preprocessEventForTextField(final KeyEvent e) {
+      if (getTextEditor().isFocusOwner() && !myDelegatingNow) {
         try {
           myDelegatingNow = true;
           final KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
-          final Object action = getInputMap().get(stroke);
+          final Object action = getTextEditor().getInputMap().get(stroke);
           if (action == null) {
             onTextKeyEvent(e);
-            return;
+            return true;
           }
         }
         finally {
@@ -466,8 +486,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         }
       }
 
-      super.processKeyEvent(e);
+      return false;
     }
+
+
 
     protected void onTextKeyEvent(final KeyEvent e) {
 

@@ -36,11 +36,33 @@ public class SearchTextField extends JPanel {
   private JMenuItem myNoItems;
 
   public SearchTextField() {
+    this(true);
+  }
+
+  public SearchTextField(boolean historyEnabled) {
     super(new BorderLayout());
 
     myModel = new MyModel();
 
-    myTextField = new TextFieldWithProcessing();
+    myTextField = new TextFieldWithProcessing() {
+      @Override
+      public void processKeyEvent(final KeyEvent e) {
+        if (preprocessEventForTextField(e)) return;
+        super.processKeyEvent(e);
+      }
+
+      @Override
+      public void setBackground(final Color bg) {
+        super.setBackground(bg);
+        if (myClearFieldLabel != null) {
+          myClearFieldLabel.setBackground(bg);
+        }
+
+        if (myToggleHistoryLabel != null) {
+          myToggleHistoryLabel.setBackground(bg);
+        }
+      }
+    };
     myTextField.setColumns(15);
     add(myTextField, BorderLayout.CENTER);
 
@@ -51,7 +73,9 @@ public class SearchTextField extends JPanel {
       myNoItems.setEnabled(false);
 
       updateMenu();
-      myTextField.putClientProperty("JTextField.Search.FindPopup", myNativeSearchPopup);
+      if (historyEnabled) {
+        myTextField.putClientProperty("JTextField.Search.FindPopup", myNativeSearchPopup);
+      }
     }
     else {
       myToggleHistoryLabel = new JLabel(IconLoader.findIcon("/actions/search.png"));
@@ -62,9 +86,11 @@ public class SearchTextField extends JPanel {
           togglePopup();
         }
       });
-      add(myToggleHistoryLabel, BorderLayout.WEST);
+      if (historyEnabled) {
+        add(myToggleHistoryLabel, BorderLayout.WEST);
+      }
 
-      myClearFieldLabel = new JLabel(IconLoader.findIcon("/actions/clean.png"));
+      myClearFieldLabel = new JLabel(IconLoader.findIcon("/actions/cleanLight.png"));
       myClearFieldLabel.setOpaque(true);
       myClearFieldLabel.setBackground(myTextField.getBackground());
       add(myClearFieldLabel, BorderLayout.EAST);
@@ -328,5 +354,13 @@ public class SearchTextField extends JPanel {
     public void processKeyEvent(KeyEvent e) {
       super.processKeyEvent(e);
     }
+  }
+
+  public final void keyEventToTextField(KeyEvent e) {
+    myTextField.processKeyEvent(e);
+  }
+
+  protected boolean preprocessEventForTextField(KeyEvent e) {
+    return false;
   }
 }

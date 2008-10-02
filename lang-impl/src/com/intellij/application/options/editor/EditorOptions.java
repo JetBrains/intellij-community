@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class EditorOptions implements SearchableConfigurable, Configurable.Composite {
+public class EditorOptions implements SearchableConfigurable.Parent {
 
   private EditorOptionsPanel myPanel;
   private Wrapper myComponentWrapper = new Wrapper();
@@ -130,5 +130,7 @@ public class EditorOptions implements SearchableConfigurable, Configurable.Compo
     }
   }
 
-
+  public boolean isResponsibleForChildren() {
+    return true;
+  }
 }
