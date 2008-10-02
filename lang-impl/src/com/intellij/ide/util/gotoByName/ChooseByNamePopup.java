@@ -26,7 +26,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
   }
 
-  protected void initUI(final ChooseByNamePopupComponent.Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
+  protected void initUI(final Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
     super.initUI(callback, modalityState, allowMultipleSelection);
     //LaterInvocator.enterModal(myTextFieldPanel);
     if (myInitialText != null) {
@@ -217,7 +217,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
           if (group != null) return Integer.parseInt(group) - 1;
         }
         if (!line && getLineOrColumn(true) != -1) return 0;
-      } catch (NumberFormatException ex) {}
+      }
+      catch (NumberFormatException ignored) {}
     }
 
     return -1;

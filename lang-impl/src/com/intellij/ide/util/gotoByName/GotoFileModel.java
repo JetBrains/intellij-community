@@ -51,12 +51,13 @@ public class GotoFileModel extends ContributorsBasedGotoByModel{
 
   @Override
   protected boolean acceptItem(final NavigationItem item) {
-    if(item instanceof PsiFile) {
+    if (item instanceof PsiFile) {
       final PsiFile file = (PsiFile)item;
       final Set<FileType> types = getFileTypes();
       return types == null || types.contains(file.getFileType());
-    } else {
-      return super.acceptItem(item);    //To change body of overridden methods use File | Settings | File Templates.
+    }
+    else {
+      return super.acceptItem(item);
     }
   }
 

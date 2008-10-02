@@ -25,7 +25,6 @@ import com.intellij.psi.search.GlobalSearchScope;
  * Date: Jan 24, 2005
  */
 public interface TreeClassChooser{
-
   ClassFilter INSTANTIATABLE = new ClassFilter() {
     public boolean isAccepted(PsiClass aClass) {
       return PsiUtil.isInstantiatable(aClass);
@@ -44,6 +43,11 @@ public interface TreeClassChooser{
 
   interface ClassFilter {
     boolean isAccepted(PsiClass aClass);
+    ClassFilter ALL = new ClassFilter() {
+      public boolean isAccepted(PsiClass aClass) {
+        return true;
+      }
+    };
   }
 
   interface ClassFilterWithScope extends ClassFilter {
@@ -52,5 +56,4 @@ public interface TreeClassChooser{
 
   interface InheritanceClassFilter extends ClassFilter{
   }
-
 }

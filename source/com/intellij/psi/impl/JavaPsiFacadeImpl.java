@@ -198,6 +198,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
   public void registerShortNamesCache(@NotNull PsiShortNamesCache cache) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assert !(cache instanceof CompositeShortNamesCache) : cache;
     if (myShortNamesCache instanceof CompositeShortNamesCache) {
       ((CompositeShortNamesCache)myShortNamesCache).addCache(cache);
     }

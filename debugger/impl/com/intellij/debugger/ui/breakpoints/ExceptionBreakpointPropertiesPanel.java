@@ -27,14 +27,12 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
   }
 
   protected JComponent createSpecialBox() {
-    JPanel _panel;
-    JPanel _panel0;
 
     myNotifyCaughtCheckBox = new JCheckBox(DebuggerBundle.message("label.exception.breakpoint.properties.panel.caught.exception"));
     myNotifyUncaughtCheckBox = new JCheckBox(DebuggerBundle.message("label.exception.breakpoint.properties.panel.uncaught.exception"));
 
     Box notificationsBox = Box.createVerticalBox();
-    _panel = new JPanel(new BorderLayout());
+    JPanel _panel = new JPanel(new BorderLayout());
     _panel.add(myNotifyCaughtCheckBox, BorderLayout.NORTH);
     notificationsBox.add(_panel);
     _panel = new JPanel(new BorderLayout());
@@ -42,7 +40,7 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
     notificationsBox.add(_panel);
 
     _panel = new JPanel(new BorderLayout());
-    _panel0 = new JPanel(new BorderLayout());
+    JPanel _panel0 = new JPanel(new BorderLayout());
     _panel0.add(notificationsBox, BorderLayout.CENTER);
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
@@ -51,9 +49,9 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        JCheckBox toCheck = null;
         if (!myNotifyCaughtCheckBox.isSelected() && !myNotifyUncaughtCheckBox.isSelected()) {
           Object source = e.getSource();
+          JCheckBox toCheck = null;
           if (myNotifyCaughtCheckBox.equals(source)) {
             toCheck = myNotifyUncaughtCheckBox;
           }

@@ -26,7 +26,7 @@ public interface ChooseByNamePopupComponent {
 
   Object getChosenElement();
 
-  static abstract class Callback {
+  abstract class Callback {
     public abstract void elementChosen(Object element);
     public void onClose() { }
   }

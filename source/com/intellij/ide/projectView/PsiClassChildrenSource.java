@@ -31,8 +31,5 @@ public interface PsiClassChildrenSource {
     }
   };
 
-  PsiClassChildrenSource DEFAULT_CHILDREN = new CompositePsiClasChildrenSource(
-      new PsiClassChildrenSource[]{CLASSES,
-                                   METHODS,
-                                   FIELDS});
+  PsiClassChildrenSource DEFAULT_CHILDREN = new CompositePsiClasChildrenSource(new PsiClassChildrenSource[]{CLASSES, METHODS, FIELDS});
 }

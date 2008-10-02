@@ -13,8 +13,7 @@ public class CompositePsiClasChildrenSource implements PsiClassChildrenSource {
   }
 
   public void addChildren(PsiClass psiClass, List<PsiElement> children) {
-    for (int i = 0; i < mySources.length; i++) {
-      PsiClassChildrenSource source = mySources[i];
+    for (PsiClassChildrenSource source : mySources) {
       source.addChildren(psiClass, children);
     }
   }

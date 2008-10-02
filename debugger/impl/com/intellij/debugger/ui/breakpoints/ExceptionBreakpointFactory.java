@@ -104,7 +104,7 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
           throwableClass, true, true, null);
       chooser.showDialog();
       PsiClass selectedClass = chooser.getSelectedClass();
-      String qName = (selectedClass != null)? JVMNameUtil.getNonAnonymousClassName(selectedClass) : null;
+      String qName = selectedClass == null ? null : JVMNameUtil.getNonAnonymousClassName(selectedClass);
 
       if (qName != null && qName.length() > 0) {
         ExceptionBreakpoint breakpoint = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addExceptionBreakpoint(qName, ((PsiJavaFile)selectedClass.getContainingFile()).getPackageName());

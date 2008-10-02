@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * Date: Jan 25, 2005
  */
 public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
-  private Project myProject;
+  private final Project myProject;
 
   public TreeClassChooserFactoryImpl(final Project project) {
     myProject = project;
@@ -58,12 +58,8 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                                         boolean acceptsSelf,
                                                         boolean acceptInner,
                                                         Condition<? super PsiClass> additionalCondition) {
-    return new TreeClassChooserDialog(title, myProject, scope, new TreeClassChooserDialog.InheritanceClassFilterImpl(base, acceptsSelf,
-                                                                                                                     acceptInner,
-                                                                                                                     additionalCondition),
-                                                               base,
-                                                               null,
-                                                               null);
+    TreeClassChooser.ClassFilter classFilter = new TreeClassChooserDialog.InheritanceClassFilterImpl(base, acceptsSelf, acceptInner, additionalCondition);
+    return new TreeClassChooserDialog(title, myProject, scope, classFilter, base, null, null);
   }
 
   @NotNull
@@ -78,15 +74,15 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
   }
 
   @NotNull
-  public TreeFileChooser createFileChooser(String title,
+  public TreeFileChooser createFileChooser(@NotNull String title,
                                            final PsiFile initialFile,
                                            FileType fileType,
                                            TreeFileChooser.PsiFileFilter filter) {
     return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, false, false);
   }
 
-  public
   @NotNull
+  public
   TreeFileChooser createFileChooser(@NotNull String title,
                                     @Nullable PsiFile initialFile,
                                     @Nullable FileType fileType,

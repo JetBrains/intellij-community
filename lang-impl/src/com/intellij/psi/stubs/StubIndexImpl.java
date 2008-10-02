@@ -280,11 +280,11 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
-  public <Key> Collection<Key> getAllKeys(final StubIndexKey<Key, ?> indexKey) {
+  public <K> Collection<K> getAllKeys(final StubIndexKey<K, ?> indexKey) {
     checkRebuild();
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID);
 
-    final MyIndex<Key> index = (MyIndex<Key>)myIndices.get(indexKey);
+    final MyIndex<K> index = (MyIndex<K>)myIndices.get(indexKey);
     try {
       return index.getAllKeys();
     }
@@ -311,7 +311,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   public void disposeComponent() {
     // This index must be disposed only after StubUpdatingIndex is disposed
-    // To ensure this, disposing is done explicitly form StubUpdatingIndex by calling dispose() method
+    // To ensure this, disposing is done explicitly from StubUpdatingIndex by calling dispose() method
     // do not call this method here to avoid double-disposal
   }
 

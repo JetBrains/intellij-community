@@ -46,8 +46,6 @@ import java.util.*;
 
 public class DefaultSymbolNavigationContributor implements ChooseByNameContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor");
-  public DefaultSymbolNavigationContributor() {
-  }
 
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     PsiShortNamesCache cache = JavaPsiFacade.getInstance(project).getShortNamesCache();

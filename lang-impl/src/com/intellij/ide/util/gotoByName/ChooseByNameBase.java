@@ -99,9 +99,11 @@ public abstract class ChooseByNameBase{
     }
 
     public int compare(final String a, final String b) {
-      if (a.startsWith(myOriginalPattern) && b.startsWith(myOriginalPattern)) return a.compareToIgnoreCase(b);
-      if (a.startsWith(myOriginalPattern) && !b.startsWith(myOriginalPattern)) return -1;
-      if (b.startsWith(myOriginalPattern) && !a.startsWith(myOriginalPattern)) return 1;
+      boolean aStarts = a.startsWith(myOriginalPattern);
+      boolean bStarts = b.startsWith(myOriginalPattern);
+      if (aStarts && bStarts) return a.compareToIgnoreCase(b);
+      if (aStarts && !bStarts) return -1;
+      if (bStarts && !aStarts) return 1;
       return a.compareToIgnoreCase(b);
     }
   }
@@ -572,7 +574,7 @@ public abstract class ChooseByNameBase{
                     return;
                   }
 
-                  setElementsToList(pos, elements, text);
+                  setElementsToList(pos, elements);
 
                   myListIsUpToDate = true;
                   choosenElementMightChange();
@@ -609,7 +611,7 @@ public abstract class ChooseByNameBase{
     }
   }
 
-  private void setElementsToList(int pos, Set<?> elements, final String patternText) {
+  private void setElementsToList(int pos, Set<?> elements) {
     myListUpdater.cancelAll();
     if (myDisposedFlag) return;
     if (elements.isEmpty()) {
@@ -701,7 +703,7 @@ public abstract class ChooseByNameBase{
     int lastSeparatorOccurence = 0;
     for (String separator : separators) {
       final int idx = pattern.lastIndexOf(separator);
-      lastSeparatorOccurence = Math.max(lastSeparatorOccurence, idx != -1 ? idx + separator.length() : idx);
+      lastSeparatorOccurence = Math.max(lastSeparatorOccurence, idx == -1 ? idx : idx + separator.length());
     }
 
     return pattern.substring(lastSeparatorOccurence);
@@ -770,7 +772,7 @@ public abstract class ChooseByNameBase{
           }
 
           myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
-          if (myListModel.size() > 0) {
+          if (!myListModel.isEmpty()) {
             int pos = selectionPos == 0 ? detectBestStatisticalPosition() : selectionPos;
             ListScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
           }
@@ -1062,18 +1064,27 @@ public abstract class ChooseByNameBase{
           throw new ProcessCanceledException();
         }
         final Object[] elements = myModel.getElementsByName(name, myCheckboxState, namePattern);
-        sameNameElements.clear();
-        for (final Object element : elements) {
-          if (matchesQualifier(element, qualifierPattern)) {
-            sameNameElements.add(element);
+        if (elements.length > 1) {
+          sameNameElements.clear();
+          for (final Object element : elements) {
+            if (matchesQualifier(element, qualifierPattern)) {
+              sameNameElements.add(element);
+            }
+          }
+          sortByProximity(sameNameElements);
+          for (Object element : sameNameElements) {
+            elementsArray.add(element);
+            if (elementsArray.size() >= myMaximumListSizeLimit) {
+              overflow = true;
+              break All;
+            }
           }
         }
-        sortByProximity(sameNameElements);
-        for (Object element : sameNameElements) {
-          elementsArray.add(element);
+        else if (elements.length == 1 && matchesQualifier(elements[0], qualifierPattern)) {
+          elementsArray.add(elements[0]);
           if (elementsArray.size() >= myMaximumListSizeLimit) {
             overflow = true;
-            break All;
+            break;
           }
         }
       }
@@ -1159,7 +1170,7 @@ patterns:
               list.add(name);
             }
           }
-          else if (matcher.matches(name, compiledPattern)) {
+          else if (pattern.length() == 0 || matcher.matches(name, compiledPattern)) {
             list.add(name);
           }
         }
@@ -1170,7 +1181,7 @@ patterns:
     }
   }
 
-  private static interface CalcElementsCallback {
+  private interface CalcElementsCallback {
     void run(Set<?> elements);
   }
 

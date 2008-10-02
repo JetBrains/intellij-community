@@ -42,9 +42,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import java.util.ArrayList;
 
 public class DefaultClassNavigationContributor implements GotoClassContributor {
-  public DefaultClassNavigationContributor() {
-  }
-
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     return JavaPsiFacade.getInstance(project).getShortNamesCache().getAllClassNames();
   }

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class JavaPsiFacade {
-  private final static NotNullLazyKey<JavaPsiFacade, Project> INSTANCE_KEY = NotNullLazyKey.create("JavaPsiFacade.Instance.Cache", new NotNullFunction<Project, JavaPsiFacade>() {
+  private static final NotNullLazyKey<JavaPsiFacade, Project> INSTANCE_KEY = NotNullLazyKey.create("JavaPsiFacade.Instance.Cache", new NotNullFunction<Project, JavaPsiFacade>() {
     @NotNull
     public JavaPsiFacade fun(final Project project) {
       return ServiceManager.getService(project, JavaPsiFacade.class);

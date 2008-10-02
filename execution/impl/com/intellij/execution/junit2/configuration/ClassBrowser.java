@@ -78,17 +78,15 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
                                                       final ConfigurationModuleSelector moduleSelector) {
     return new MainClassBrowser(project, moduleSelector, ExecutionBundle.message("choose.applet.class.dialog.title")) {
       protected TreeClassChooser.ClassFilter createFilter(final Module module) {
-        final GlobalSearchScope scope = module != null ?
-                                  GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) :
-                                  GlobalSearchScope.allScope(myProject);
+        final GlobalSearchScope scope =
+            module == null ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
         final PsiClass appletClass = JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", scope);
-        return new TreeClassChooserDialog.InheritanceClassFilterImpl(appletClass, false, false,
-                                                                     ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS);
+        return new TreeClassChooserDialog.InheritanceClassFilterImpl(appletClass, false, false, ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS);
       }
     };
   }
 
-  private static abstract class MainClassBrowser extends ClassBrowser {
+  private abstract static class MainClassBrowser extends ClassBrowser {
     protected final Project myProject;
     private final ConfigurationModuleSelector myModuleSelector;
 

@@ -35,8 +35,9 @@ import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import java.util.*;
@@ -87,11 +88,14 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
    *
    */
   public Object[] getElementsByName(String name, boolean checkBoxState, final String pattern) {
-    List<NavigationItem> items = new ArrayList<NavigationItem>();
+    List<NavigationItem> items = null;
     for (ChooseByNameContributor contributor : myContributors) {
       try {
         for(NavigationItem item : contributor.getItemsByName(name, pattern, myProject, checkBoxState)) {
           if(acceptItem(item)) {
+            if (items == null) {
+              items = new ArrayList<NavigationItem>(2);
+            }
             items.add(item);
           }
         }
@@ -103,7 +107,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
         LOG.error(ex);
       }
     }
-    return items.toArray();
+    return items == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : items.toArray(new Object[items.size()]);
   }
 
   public String getElementName(Object element) {
