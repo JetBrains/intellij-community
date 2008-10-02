@@ -99,7 +99,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
 
     if (marked.getFlags().contains(Flag.IMPLICIT_FIRST_ARG)) {
       //arg_index -= 1; // argument 0 is parameter 1, thus kipping para,eter 0 which is 'self'
-      flags[0].add(ParameterInfoUIContextEx.Flag.STRIKEOUT); // show but mark as absent
+      flags[0].add(ParameterInfoUIContextEx.Flag.DISABLE); // show but mark as absent
     }
     int cur_arg_index = 0;
     for (PyExpression arg : arglist.getArguments()) {
@@ -130,14 +130,23 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       cur_arg_index += 1;
     }
 
-
+    final String NO_PARAMS_MSG = "<No parameters>";
     if (context instanceof ParameterInfoUIContextEx) {
       final ParameterInfoUIContextEx pic = (ParameterInfoUIContextEx)context;
-      pic.setupUIComponentPresentation(param_texts, flags, false, context.getDefaultParameterColor());
+      if (param_texts.length < 1) {
+        param_texts = new String[]{NO_PARAMS_MSG};
+        flags = new EnumSet[]{EnumSet.of(ParameterInfoUIContextEx.Flag.DISABLE)};
+      }
+      pic.setupUIComponentPresentation(param_texts, flags, context.getDefaultParameterColor());
     }
-    /*
-    context.setupUIComponentPresentation(signatureBuilder.toString(), highlightStartOffset, highlightEndOffset, false, false, false,
-                                         context.getDefaultParameterColor());
-    */
+    else { // fallback, no hilite
+      StringBuffer signatureBuilder = new StringBuffer();
+      if (param_texts.length > 1) {
+        for (String s : param_texts) signatureBuilder.append(s);
+      }
+      else signatureBuilder.append(NO_PARAMS_MSG);
+      context.setupUIComponentPresentation(signatureBuilder.toString(), -1, 0, false, false, false,
+                                           context.getDefaultParameterColor());
+    }
   }
 }
