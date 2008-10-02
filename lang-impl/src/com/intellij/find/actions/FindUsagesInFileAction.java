@@ -74,7 +74,7 @@ public class FindUsagesInFileAction extends AnAction {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     boolean enabled = isEnabled(dataContext);
-    presentation.setVisible(true);
+    presentation.setVisible(ActionPlaces.isPopupPlace(event.getPlace()) ? enabled : true);
     presentation.setEnabled(enabled);
   }
 }
