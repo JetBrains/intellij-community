@@ -33,7 +33,9 @@ import org.jetbrains.annotations.NotNull;
 import org.intellij.lang.regexp.psi.impl.*;
 
 class RegExpParserDefinition implements ParserDefinition {
-    @NotNull
+  private static final TokenSet COMMENT_TOKENS = TokenSet.create(RegExpTT.COMMENT);
+
+  @NotNull
     public Lexer createLexer(Project project) {
         return new RegExpLexer(false);
     }
@@ -59,7 +61,7 @@ class RegExpParserDefinition implements ParserDefinition {
 
     @NotNull
     public TokenSet getCommentTokens() {
-        return TokenSet.create(RegExpTT.COMMENT);
+        return COMMENT_TOKENS;
     }
 
     @NotNull
