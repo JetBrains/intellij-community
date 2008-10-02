@@ -101,4 +101,16 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testStaticMembers() throws Exception {
     doTest();
   }
+
+  public void testSuperReference() throws Exception {
+    doTest();
+  }
+
+  public void testInnerclassReference() throws Exception {
+    doTest();
+  }
+
+  public void testStaticImport() throws Exception {
+    doTest();
+  }
 }

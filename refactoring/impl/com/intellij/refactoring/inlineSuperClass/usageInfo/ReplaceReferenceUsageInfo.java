@@ -7,17 +7,17 @@ package com.intellij.refactoring.inlineSuperClass.usageInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiExpression;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
 public class ReplaceReferenceUsageInfo extends FixableUsageInfo {
   public static final Logger LOG = Logger.getInstance("#" + ReplaceReferenceUsageInfo.class.getName());
-  private final PsiExpression myReferenceExpression;
+  private final PsiElement myReferenceExpression;
   private final PsiClass myTargetClass;
 
-  public ReplaceReferenceUsageInfo(PsiExpression referenceExpression, PsiClass targetClass) {
+  public ReplaceReferenceUsageInfo(PsiElement referenceExpression, PsiClass targetClass) {
     super(referenceExpression);
     myReferenceExpression = referenceExpression;
     myTargetClass = targetClass;
