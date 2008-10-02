@@ -19,14 +19,12 @@ package com.jetbrains.python.psi;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.impl.PyScopeProcessor;
 import com.jetbrains.python.psi.impl.ResolveImportUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,20 +38,6 @@ import java.util.*;
 public class PyResolveUtil {
 
   private PyResolveUtil() {
-  }
-
-
-  @NotNull @NonNls
-  public static String getReadableRepr(PsiElement elt) {
-    if (elt == null) return "null!";
-    ASTNode node = elt.getNode();
-    if (node == null) return "null";
-    else {
-      String s = node.getText(); 
-      int cut_pos = s.indexOf('\n');
-      if (cut_pos < 0)  cut_pos = s.length();
-      return s.substring(0, Math.min(cut_pos, s.length()));
-    }
   }
 
 

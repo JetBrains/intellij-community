@@ -85,7 +85,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       else if (param.isPositionalContainer()) strb.append("*");
       strb.append(param.getName());
       PyExpression default_v = param.getDefaultValue(); 
-      if (default_v != null) strb.append("=").append(PyResolveUtil.getReadableRepr(default_v));
+      if (default_v != null) strb.append("=").append(PyUtil.getReadableRepr(default_v, true));
       if (i < param_texts.length-1) strb.append(",");
       param_texts[i] = strb.toString();
     }

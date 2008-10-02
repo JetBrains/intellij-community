@@ -28,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -242,4 +243,22 @@ public class PyUtil {
     return false;
   }
 
+  @NotNull @NonNls
+  public static String getReadableRepr(PsiElement elt, final boolean cutAtEOL) {
+    if (elt == null) return "null!";
+    ASTNode node = elt.getNode();
+    if (node == null) return "null";
+    else {
+      String s = node.getText();
+      int cut_pos;
+      if (cutAtEOL) {
+        cut_pos = s.indexOf('\n');
+      }
+      else {
+        cut_pos = -1;
+      }
+      if (cut_pos < 0)  cut_pos = s.length();
+      return s.substring(0, Math.min(cut_pos, s.length()));
+    }
+  }
 }
