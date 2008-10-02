@@ -52,6 +52,7 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
   }
 
   public boolean isSafeDelete() {
+    if (getElement() == null) return false;
     final PsiClass refClass = getReferencedElement();
     if (refClass.getExtendsListTypes().length > 0) {
       final PsiReferenceList listToAddExtends = refClass.isInterface() == myExtendingClass.isInterface() ? myExtendingClass.getExtendsList() :
