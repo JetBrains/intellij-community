@@ -139,7 +139,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
 
   @Override
   public String toString() {
-    return "PyCallExpression: " + PyResolveUtil.getReadableRepr(getCallee()); //getCalledFunctionReference().getReferencedName();
+    return "PyCallExpression: "; // + PyResolveUtil.getReadableRepr(getCallee()); //getCalledFunctionReference().getReferencedName();
   }
 
   public PyType getType() {
