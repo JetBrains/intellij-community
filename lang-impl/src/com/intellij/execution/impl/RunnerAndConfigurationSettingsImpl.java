@@ -1,6 +1,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.*;
@@ -199,6 +200,10 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   }
 
   public void checkSettings() throws RuntimeConfigurationException {
+    checkSettings(null);
+  }
+
+  public void checkSettings(@Nullable Executor executor) throws RuntimeConfigurationException {
     myConfiguration.checkConfiguration();
     if (myConfiguration instanceof RunConfigurationBase) {
       final RunConfigurationBase runConfigurationBase = (RunConfigurationBase)myConfiguration;
@@ -206,7 +211,9 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       runners.addAll(myRunnerSettings.keySet());
       runners.addAll(myConfigurationPerRunnerSettings.keySet());
       for (ProgramRunner runner : runners) {
-        runConfigurationBase.checkRunnerSettings(runner, myRunnerSettings.get(runner), myConfigurationPerRunnerSettings.get(runner));
+        if (executor == null || runner.canRun(executor.getId(), myConfiguration)) {
+          runConfigurationBase.checkRunnerSettings(runner, myRunnerSettings.get(runner), myConfigurationPerRunnerSettings.get(runner));
+        }
       }
     }
   }

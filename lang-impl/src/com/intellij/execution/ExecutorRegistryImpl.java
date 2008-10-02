@@ -128,7 +128,6 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
 
     private ExecutorAction(@NotNull final Executor executor) {
       super(executor.getStartActionText(), executor.getActionName(), executor.getIcon());
-
       myExecutor = executor;
     }
 
@@ -145,7 +144,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       }
 
       final RunnerAndConfigurationSettingsImpl selectedConfiguration = getConfiguration(project);
-      if (selectedConfiguration != null && RunManagerImpl.canRunConfiguration(selectedConfiguration)) {
+      if (selectedConfiguration != null && RunManagerImpl.canRunConfiguration(selectedConfiguration, myExecutor)) {
         final ProgramRunner runner =
           RunnerRegistry.getInstance().getRunner(myExecutor.getId(), selectedConfiguration.getConfiguration());
         enabled = runner != null;

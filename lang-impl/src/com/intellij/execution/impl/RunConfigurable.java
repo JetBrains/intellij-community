@@ -538,13 +538,14 @@ class RunConfigurable extends BaseConfigurable {
   private void updateDialog() {
     if (myRunDialog == null) return;
     final StringBuilder buffer = new StringBuilder();
-    buffer.append(myRunDialog.getExecutor().getId());
+    Executor executor = myRunDialog.getExecutor();
+    buffer.append(executor.getId());
     final SingleConfigurationConfigurable<RunConfiguration> configuration = getSelectedConfiguration();
     if (configuration != null) {
       buffer.append(" - ");
       buffer.append(configuration.getNameText());
     }
-    myRunDialog.setOKActionEnabled(canRunConfiguration(configuration));
+    myRunDialog.setOKActionEnabled(canRunConfiguration(configuration, executor));
     myRunDialog.setTitle(buffer.toString());
   }
 
@@ -569,9 +570,9 @@ class RunConfigurable extends BaseConfigurable {
     return null;
   }
 
-  private static boolean canRunConfiguration(SingleConfigurationConfigurable<RunConfiguration> configuration) {
+  private static boolean canRunConfiguration(@Nullable SingleConfigurationConfigurable<RunConfiguration> configuration, final @NotNull Executor executor) {
     try {
-      return configuration != null && RunManagerImpl.canRunConfiguration(configuration.getSnapshot());
+      return configuration != null && RunManagerImpl.canRunConfiguration(configuration.getSnapshot(), executor);
     }
     catch (ConfigurationException e) {
       return false;
