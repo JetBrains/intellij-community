@@ -218,14 +218,16 @@ public class DetectedFacetManager implements Disposable {
     showImplicitFacetsDialog();
   }
 
-  public void showImplicitFacetsDialog() {
+  public boolean showImplicitFacetsDialog() {
     List<DetectedFacetInfo<Module>> detectedFacets = new ArrayList<DetectedFacetInfo<Module>>(myDetectedFacetSet.getAllDetectedFacets());
     HashMap<DetectedFacetInfo<Module>, List<VirtualFile>> filesMap = getFilesMap(detectedFacets);
 
-    if (!detectedFacets.isEmpty()) {
-      DetectedFacetsDialog dialog = new DetectedFacetsDialog(myProject, this, detectedFacets, filesMap);
-      dialog.show();
+    if (detectedFacets.isEmpty()) {
+      return false;
     }
+    DetectedFacetsDialog dialog = new DetectedFacetsDialog(myProject, this, detectedFacets, filesMap);
+    dialog.show();
+    return true;
   }
 
   private HashMap<DetectedFacetInfo<Module>, List<VirtualFile>> getFilesMap(final List<DetectedFacetInfo<Module>> detectedFacets) {
@@ -355,7 +357,10 @@ public class DetectedFacetManager implements Disposable {
       addMouseListener(new MouseAdapter() {
         public void mouseClicked(final MouseEvent e) {
           if (myActive && !e.isPopupTrigger() && myManager != null) {
-            myManager.showImplicitFacetsDialog();
+            boolean valid = myManager.showImplicitFacetsDialog();
+            if (!valid) {
+              stopBlinking();
+            }
           }
         }
       });
