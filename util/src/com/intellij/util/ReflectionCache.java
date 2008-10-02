@@ -15,25 +15,18 @@
  */
 package com.intellij.util;
 
-import com.intellij.util.concurrency.JBLock;
-import com.intellij.util.concurrency.JBReentrantReadWriteLock;
-import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-import java.util.Map;
 
 /**
  * @author peter
  */
 public class ReflectionCache {
-  private static final boolean CACHE_DISABLED = System.getProperty("java.version", "1.5").indexOf("1.5") < 0 || Runtime.getRuntime().availableProcessors() > 4;
-
   private static final ConcurrentFactoryMap<Class,Class> ourSuperClasses = new ConcurrentFactoryMap<Class, Class>() {
     protected Class create(final Class key) {
       return key.getSuperclass();
@@ -51,11 +44,6 @@ public class ReflectionCache {
       return key.getMethods();
     }
   };
-
-  private static final Map<Class, Map<Class,Boolean>> ourAssignables = new THashMap<Class, Map<Class, Boolean>>();
-  private static final JBReentrantReadWriteLock cacheLock = LockFactory.createReadWriteLock();
-  private static final JBLock cacheRead = cacheLock.readLock();
-  private static final JBLock cacheWrite = cacheLock.writeLock();
 
   private static final ConcurrentFactoryMap<Class,Boolean> ourIsInterfaces = new ConcurrentFactoryMap<Class, Boolean>() {
     @NotNull
@@ -98,47 +86,7 @@ public class ReflectionCache {
   }
 
   public static boolean isAssignable(Class ancestor, Class descendant) {
-    if (ancestor == descendant) return true;
-    if (CACHE_DISABLED) {
-      return ancestor.isAssignableFrom(descendant);
-    }
-
-    cacheRead.lock();
-    try {
-      Map<Class, Boolean> map = ourAssignables.get(ancestor);
-      if (map == null) {
-        cacheRead.unlock();
-        cacheWrite.lock();
-        try {
-          map = new THashMap<Class, Boolean>();
-          ourAssignables.put(ancestor, map);
-        }
-        finally {
-          cacheWrite.unlock();
-          cacheRead.lock();
-        }
-      }
-
-      Boolean result = map.get(descendant);
-      if (result != null) {
-        return result.booleanValue();
-      }
-
-      cacheRead.unlock();
-      cacheWrite.lock();
-      try {
-        result = ancestor.isAssignableFrom(descendant);
-        map.put(descendant, result);
-        return result.booleanValue();
-      }
-      finally {
-        cacheWrite.unlock();
-        cacheRead.lock();
-      }
-    }
-    finally {
-      cacheRead.unlock();
-    }
+    return ancestor == descendant || ancestor.isAssignableFrom(descendant);
   }
 
   public static boolean isInstance(Object instance, Class clazz) {
