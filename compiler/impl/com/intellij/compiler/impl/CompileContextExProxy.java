@@ -131,4 +131,8 @@ public class CompileContextExProxy implements CompileContextEx {
   public <T> void putUserData(final Key<T> key, final T value) {
     myDelegate.putUserData(key, value);
   }
+
+  public void recalculateOutputDirs() {
+    myDelegate.recalculateOutputDirs();
+  }
 }

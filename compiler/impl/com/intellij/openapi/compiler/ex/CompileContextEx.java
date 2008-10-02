@@ -31,4 +31,6 @@ public interface CompileContextEx extends CompileContext {
   void addScope(CompileScope additionalScope);
 
   long getStartCompilationStamp();
+
+  void recalculateOutputDirs();
 }

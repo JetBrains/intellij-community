@@ -510,9 +510,28 @@ public class CompileDriver {
       }
       
       // need this to make sure the VFS is built
+      boolean needRecalcOutputDirs = false;
       final List<VirtualFile> outputsToRefresh = new ArrayList<VirtualFile>();
       for (VirtualFile output : context.getAllOutputDirectories()) {
-        walkChildren(output, context);
+        if (output.isValid()) {
+          walkChildren(output, context);
+        }
+        else {
+          needRecalcOutputDirs = true;
+          final File file = new File(output.getPath());
+          if (!file.exists()) {
+            final boolean created = file.mkdirs();
+            if (!created) {
+              context.addMessage(CompilerMessageCategory.ERROR, "Failed to create output directory " + file.getPath(), null, 0, 0);
+              return ExitStatus.ERRORS;
+            }
+          }
+          output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+          if (output == null) {
+            context.addMessage(CompilerMessageCategory.ERROR, "Failed to locate output directory " + file.getPath(), null, 0, 0);
+            return ExitStatus.ERRORS;
+          }
+        }
         outputsToRefresh.add(output);
       }
       for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
@@ -523,7 +542,10 @@ public class CompileDriver {
         outputsToRefresh.add(generated.getSecond());
       }
       RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh.toArray(new VirtualFile[outputsToRefresh.size()]));
-      
+      if (needRecalcOutputDirs) {
+        context.recalculateOutputDirs();
+      }
+
       boolean didSomething = false;
 
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);

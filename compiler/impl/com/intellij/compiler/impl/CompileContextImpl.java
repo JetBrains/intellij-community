@@ -50,8 +50,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final Map<VirtualFile, Module> myRootToModuleMap = new HashMap<VirtualFile, Module>();
   private final Map<Module, Set<VirtualFile>> myModuleToRootsMap = new HashMap<Module, Set<VirtualFile>>();
   private final Set<VirtualFile> myGeneratedTestRoots = new java.util.HashSet<VirtualFile>();
-  private final VirtualFile[] myOutputDirectories;
-  private final Set<VirtualFile> myTestOutputDirectories;
+  private VirtualFile[] myOutputDirectories;
+  private Set<VirtualFile> myTestOutputDirectories;
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
   private final ProjectCompileScope myProjectCompileScope;
   private final long myStartCompilationStamp;
@@ -66,7 +66,14 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myDependencyCache = dependencyCache;
     myMake = isMake;
     myStartCompilationStamp = System.currentTimeMillis();
-    final Module[] allModules = ModuleManager.getInstance(project).getModules();
+    myProjectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    myProjectCompileScope = new ProjectCompileScope(myProject);
+
+    recalculateOutputDirs();
+  }
+
+  public void recalculateOutputDirs() {
+    final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
 
     final Set<VirtualFile> allDirs = new OrderedSet<VirtualFile>((TObjectHashingStrategy<VirtualFile>)TObjectHashingStrategy.CANONICAL);
     final Set<VirtualFile> testOutputDirs = new java.util.HashSet<VirtualFile>();
@@ -88,10 +95,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myOutputDirectories = allDirs.toArray(new VirtualFile[allDirs.size()]);
     // need this to ensure that the sent contains only _dedicated_ test output dirs
     // Directories that are configured for both test and production classes must not be added in the resulting set
-    testOutputDirs.removeAll(productionOutputDirs);  
+    testOutputDirs.removeAll(productionOutputDirs);
     myTestOutputDirectories = Collections.unmodifiableSet(testOutputDirs);
-    myProjectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    myProjectCompileScope = new ProjectCompileScope(myProject);
   }
 
   public long getStartCompilationStamp() {
