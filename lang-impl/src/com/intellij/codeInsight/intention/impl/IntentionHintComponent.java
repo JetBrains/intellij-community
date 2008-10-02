@@ -53,9 +53,10 @@ import java.util.List;
 public class IntentionHintComponent extends JPanel implements Disposable, ScrollAwareHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");
 
-  private static final Icon ourIntentionIcon = IconLoader.getIcon("/actions/intentionBulb.png");
+  private static final Icon ourIntentionIcon = IconLoader.getIcon("/actions/realIntentionBulb.png");
+  private static final Icon ourBulbIcon = IconLoader.getIcon("/actions/intentionBulb.png");
   private static final Icon ourQuickFixIcon = IconLoader.getIcon("/actions/quickfixBulb.png");
-  private static final Icon ourIntentionOffIcon = IconLoader.getIcon("/actions/intentionOffBulb.png");
+  private static final Icon ourIntentionOffIcon = IconLoader.getIcon("/actions/realIntentionOffBulb.png");
   private static final Icon ourQuickFixOffIcon = IconLoader.getIcon("/actions/quickfixOffBulb.png");
   private static final Icon ourArrowIcon = IconLoader.getIcon("/general/arrowDown.png");
   private static final Border INACTIVE_BORDER = null;
@@ -239,6 +240,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       if (mySettings.isShowLightBulb(action)) {
         if (myCachedErrorFixes.contains(value)) {
           return ourQuickFixIcon;
+        } else if (myCachedInspectionFixes.contains(value)) {
+          return ourBulbIcon;
         }
         else {
           return ourIntentionIcon;
@@ -482,7 +485,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
         break;
       }
     }
-    mySmartTagIcon = showFix ? ourQuickFixIcon : ourIntentionIcon;
+    mySmartTagIcon = showFix ? ourQuickFixIcon : ourBulbIcon;
 
     myHighlightedIcon = new RowIcon(2);
     myHighlightedIcon.setIcon(mySmartTagIcon, 0);
