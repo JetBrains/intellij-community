@@ -442,6 +442,31 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
           ret.my_tuple_mapped_params.add(tuple_slot);
           unmatched_args.remove(tuple_arg);
         }
+        // maybe we did not map a star arg because all eligible params have defaults; time to be less picky now. 
+        if (tuple_arg != null && ret.my_tuple_mapped_params.isEmpty()) { // link remaining params to *arg if nothing else is mapped to it
+          for (PyParameter param : params) {
+            final String param_name = param.getName();
+            if (
+                param_slots.containsKey(param_name) && // known as a slot
+                (param_slots.get(param_name) == null)  // the slot yet unfilled
+            ) {
+              param_slots.put(param_name, tuple_arg);
+              unmatched_args.remove(tuple_arg);
+            }
+          }
+        }
+        if (kwd_arg != null && ret.my_kwd_mapped_params.isEmpty()) { // link remaining params to **kwarg if nothing else is mapped to it
+          for (PyParameter param : params) {
+            final String param_name = param.getName();
+            if (
+                param_slots.containsKey(param_name) && // known as a slot
+                (param_slots.get(param_name) == null)  // the slot yet unfilled
+            ) {
+              param_slots.put(param_name, kwd_arg);
+              unmatched_args.remove(kwd_arg);
+            }
+          }
+        }
         // any args left?
         for (PyExpression arg : unmatched_args) {
           //getHolder().createErrorAnnotation(arg, "unexpected arg");
