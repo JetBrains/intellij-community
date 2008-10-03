@@ -14,11 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
@@ -40,6 +36,8 @@ public class TestNGOrderEntryFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+    if (!(file instanceof PsiJavaFile)) return false;
+
     final PsiReference reference = TargetElementUtil.findReference(editor);
     if (!(reference instanceof PsiJavaCodeReferenceElement)) return false;
     if (reference.resolve() != null) return false;
