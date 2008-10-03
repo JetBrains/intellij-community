@@ -271,6 +271,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
     catch (Exception e) {
       LOG.info(e);
       context.addMessage(CompilerMessageCategory.ERROR, e.getLocalizedMessage(), null, -1, -1);
+      return false;
     }
     return true;
   }
