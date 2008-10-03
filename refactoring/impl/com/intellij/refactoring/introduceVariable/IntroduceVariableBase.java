@@ -128,7 +128,35 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
           } else {
             buf.append("()");
           }
-        } else {
+        } else if (expr instanceof PsiAssignmentExpression) {
+          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expr;
+          appendText(assignmentExpression.getLExpression(), buf);
+          buf.append(assignmentExpression.getOperationSign().getText());
+          appendText(assignmentExpression.getRExpression(), buf);
+        }
+        else if (expr instanceof PsiConditionalExpression) {
+          final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expr;
+          appendText(conditionalExpression.getCondition(), buf);
+          buf.append(" ? ");
+          appendText(conditionalExpression.getThenExpression(), buf);
+          buf.append(" : ");
+          appendText(conditionalExpression.getElseExpression(), buf);
+        }
+        else if (expr instanceof PsiBinaryExpression) {
+          final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expr;
+          appendText(binaryExpression.getLOperand(), buf);
+          buf.append(binaryExpression.getOperationSign().getText());
+          appendText(binaryExpression.getROperand(), buf);
+        }
+        else if (expr instanceof PsiPostfixExpression) {
+          appendText(((PsiPostfixExpression)expr).getOperand(), buf);
+          buf.append(((PsiPostfixExpression)expr).getOperationSign().getText());
+        }
+        else if (expr instanceof PsiPrefixExpression) {
+          buf.append(((PsiPrefixExpression)expr).getOperationSign().getText());
+          appendText(((PsiPrefixExpression)expr).getOperand(), buf);
+        }
+        else {
           buf.append(expr.getText());
         }
       }
