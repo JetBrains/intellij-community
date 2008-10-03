@@ -633,7 +633,7 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
           }
         }).showInBestPositionFor(DataManager.getInstance().getDataContext());
       }
-      else if (urls.size() == 1){
+      else if (set.size() == 1){
         BrowserUtil.launchBrowser(urls.get(0));
       }
     }
