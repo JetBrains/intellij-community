@@ -128,12 +128,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       final PsiMember member = info.getMember();
       pushDownConflicts.checkMemberPlacementInTargetClassConflict(myTargetClass, member);
     }
-    for (UsageInfo info : refUsages.get()) {
-      final String conflict = ((FixableUsageInfo)info).getConflictMessage();
-      if (conflict != null) {
-        conflicts.add(conflict);
-      }
-    }
+    checkConflicts(refUsages, conflicts);
     conflicts.addAll(pushDownConflicts.getConflicts());
     return showConflicts(conflicts);
   }

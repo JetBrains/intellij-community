@@ -2,10 +2,12 @@ package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -45,4 +47,12 @@ public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringP
 
   protected abstract void findUsages(@NotNull List<FixableUsageInfo> usages);
 
+  protected static void checkConflicts(final Ref<UsageInfo[]> refUsages, final List<String> conflicts) {
+    for (UsageInfo info : refUsages.get()) {
+      final String conflict = ((FixableUsageInfo)info).getConflictMessage();
+      if (conflict != null) {
+        conflicts.add(XmlUtil.escape(conflict));
+      }
+    }
+  }
 }
