@@ -139,6 +139,8 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     DefaultActionGroup group = new DefaultActionGroup();
     List<Charset> favorites = new ArrayList<Charset>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);
+    Charset current = charsetFromContent(myVirtualFile);
+    favorites.remove(current);
 
     if (showClear) {
       group.add(new ClearThisFileEncodingAction(myVirtualFile));

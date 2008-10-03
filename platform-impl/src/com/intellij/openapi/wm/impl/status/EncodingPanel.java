@@ -96,7 +96,9 @@ public class EncodingPanel extends TextPanel implements StatusBarPatch {
         EncodingManager.getInstance().setEncoding(virtualFile, charset);
       }
     };
-    DataContext dataContext = SimpleDataContext.getSimpleContext(DataConstants.VIRTUAL_FILE, virtualFile, SimpleDataContext.getSimpleContext(DataConstants.PROJECT, getProject(), DataManager.getInstance().getDataContext(statusBar)));
+    DataContext context = DataManager.getInstance().getDataContext(statusBar);
+    DataContext dataContext = SimpleDataContext.getSimpleContext(DataConstants.VIRTUAL_FILE, virtualFile,
+                              SimpleDataContext.getSimpleContext(DataConstants.PROJECT, getProject(), context));
     Presentation presentation = changeAction.getTemplatePresentation();
     AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, presentation, ActionManager.getInstance(), 0);
     changeAction.update(event);
