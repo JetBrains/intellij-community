@@ -288,7 +288,8 @@ public class FileWatcher {
 
       for (String root : myFlatWatchRoots) {
         if (FileUtil.pathsEqual(path, root)) return true;
-        if (FileUtil.pathsEqual(new File(path).getParentFile().getPath(), root)) return true;
+        final File parentFile = new File(path).getParentFile();
+        if (parentFile != null && FileUtil.pathsEqual(parentFile.getPath(), root)) return true;
       }
     }
 
