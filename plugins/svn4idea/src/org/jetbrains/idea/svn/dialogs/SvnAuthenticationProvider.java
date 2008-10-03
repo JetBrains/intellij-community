@@ -15,15 +15,15 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
 
-import javax.swing.*;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.security.cert.X509Certificate;
@@ -123,19 +123,14 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
     }
 
     if (command != null) {
-      if (SwingUtilities.isEventDispatchThread()) {
-        command.run();
+      try {
+        GuiUtils.runOrInvokeAndWait(command);
       }
-      else {
-        try {
-          SwingUtilities.invokeAndWait(command);
-        }
-        catch (InterruptedException e) {
-          //
-        }
-        catch (InvocationTargetException e) {
-          //
-        }
+      catch (InterruptedException e) {
+        //
+      }
+      catch (InvocationTargetException e) {
+        //
       }
     }
     return result[0];
@@ -154,19 +149,14 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
 
       }
     };
-    if (SwingUtilities.isEventDispatchThread()) {
-      command.run();
+    try {
+      GuiUtils.runOrInvokeAndWait(command);
     }
-    else {
-      try {
-        SwingUtilities.invokeAndWait(command);
-      }
-      catch (InterruptedException e) {
-        //
-      }
-      catch (InvocationTargetException e) {
-        //
-      }
+    catch (InterruptedException e) {
+      //
+    }
+    catch (InvocationTargetException e) {
+      //
     }
     return result[0];
   }

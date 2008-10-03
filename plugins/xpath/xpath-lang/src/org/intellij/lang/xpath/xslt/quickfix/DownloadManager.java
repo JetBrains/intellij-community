@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
+import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,10 +26,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.net.HttpConfigurable;
-import com.intellij.javaee.ExternalResourceManager;
 
-import javax.swing.*;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -86,38 +86,39 @@ public abstract class DownloadManager {
             out.close();
 
             try {
-                final File _file = file;
+              final File _file = file;
 
-                //noinspection unchecked
-                final Set<String>[] resourceDependencies = new Set[1];
-                Runnable runnable = new Runnable() {
+              //noinspection unchecked
+              final Set<String>[] resourceDependencies = new Set[1];
+              Runnable runnable = new Runnable() {
+                public void run() {
+                  Runnable runnable = new Runnable() {
                     public void run() {
-                        Runnable runnable = new Runnable() {
-                            public void run() {
-                                final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(_file);
-                                if (vf != null) {
-                                    final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vf);
-                                    if (psiFile != null && isAccepted(psiFile)) {
-                                        resourceDependencies[0] = getResourceDependencies(psiFile);
-                                        resourceManager.addResource(location, _file.getAbsolutePath());
-                                    } else {
-                                        Messages.showErrorDialog(myProject, "Not a valid file: " + vf.getPresentableUrl(), "Download Problem");
-                                    }
-                                }
-                            }
-                        };
-                        ApplicationManager.getApplication().runWriteAction(runnable);
+                      final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(_file);
+                      if (vf != null) {
+                        final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vf);
+                        if (psiFile != null && isAccepted(psiFile)) {
+                          resourceDependencies[0] = getResourceDependencies(psiFile);
+                          resourceManager.addResource(location, _file.getAbsolutePath());
+                        }
+                        else {
+                          Messages.showErrorDialog(myProject, "Not a valid file: " + vf.getPresentableUrl(), "Download Problem");
+                        }
+                      }
                     }
-                };
-                SwingUtilities.invokeAndWait(runnable);
-
-                if (resourceDependencies[0] != null) {
-                    for (String s : resourceDependencies[0]) {
-                        myProgress.checkCanceled();
-                        myProgress.setFraction(0);
-                        fetch(s);
-                    }
+                  };
+                  ApplicationManager.getApplication().runWriteAction(runnable);
                 }
+              };
+              GuiUtils.invokeAndWait(runnable);
+
+              if (resourceDependencies[0] != null) {
+                for (String s : resourceDependencies[0]) {
+                  myProgress.checkCanceled();
+                  myProgress.setFraction(0);
+                  fetch(s);
+                }
+              }
             } catch (InterruptedException e) {
                 // OK
             } catch (InvocationTargetException e) {
