@@ -12,6 +12,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -70,8 +73,17 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
           final PsiType paramType = psiParameters[idx].getType();
           if (paramType instanceof PsiArrayType) {
             final PsiType expressionType = expression.getType();
-            if (expressionType != null && expressionType.isAssignableFrom(((PsiArrayType)paramType).getComponentType())) {
-              return expression;
+            if (expressionType != null) {
+              final PsiType componentType = ((PsiArrayType)paramType).getComponentType();
+              if (expressionType.isAssignableFrom(componentType)) {
+                return expression;
+              }
+              final PsiClass psiClass = PsiUtil.resolveClassInType(componentType);
+              if (ArrayUtil.find(psiMethod.getTypeParameters(), psiClass) != -1) {
+                for (PsiClassType superType : psiClass.getSuperTypes()) {
+                  if (TypeConversionUtil.isAssignable(superType, expressionType)) return expression;
+                }
+              }
             }
           }
         }
