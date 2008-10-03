@@ -254,7 +254,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
       context.putUserData(AFFECTED_PARTICIPANTS_KEY, affectedParticipants.toArray(new BuildParticipant[affectedParticipants.size()]));
       for (BuildParticipant participant : affectedParticipants) {
         BuildConfiguration buildConfiguration = participant.getBuildConfiguration();
-        if (buildConfiguration.willBuildExploded()) {
+        if (participant.willBuildExploded()) {
           participant.afterExplodedCreated(new File(FileUtil.toSystemDependentName(DeploymentUtilImpl.getOrCreateExplodedDir(participant))),
                                            context);
         }

@@ -33,6 +33,7 @@ public abstract class BuildConfiguration {
 
   public abstract boolean isExplodedEnabled();
 
+  @Deprecated
   public boolean willBuildExploded() {
     return isExplodedEnabled() && getExplodedPath() != null;
   }

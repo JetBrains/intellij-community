@@ -46,4 +46,9 @@ public abstract class BuildParticipant {
   }
 
   public abstract Module getModule();
+
+  public boolean willBuildExploded() {
+    BuildConfiguration configuration = getBuildConfiguration();
+    return configuration.isExplodedEnabled() && configuration.getExplodedPath() != null;
+  }
 }

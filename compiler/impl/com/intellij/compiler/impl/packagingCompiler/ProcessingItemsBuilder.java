@@ -70,7 +70,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
   private void buildItems(final BuildRecipe instructions) {
     instructions.visitInstructions(this, false);
 
-    if (myBuildConfiguration.willBuildExploded()) {
+    if (myBuildParticipant.willBuildExploded()) {
       List<String> classpath = DeploymentUtilImpl.getExternalDependenciesClasspath(instructions);
       if (!classpath.isEmpty()) {
         String outputRoot = DeploymentUtilImpl.getOrCreateExplodedDir(myBuildParticipant);
@@ -92,7 +92,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
     PackagingFileFilter fileFilter = instruction.getFileFilter();
 
     String outputRelativePath = instruction.getOutputRelativePath();
-    if (myBuildConfiguration.willBuildExploded()) {
+    if (myBuildParticipant.willBuildExploded()) {
       String outputRoot = DeploymentUtilImpl.getOrCreateExplodedDir(myBuildParticipant);
       String fullOutputPath = getCanonicalConcat(outputRoot, output, outputRelativePath);
 
@@ -168,7 +168,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
 
     PackagingFileFilter fileFilter = instruction.getFileFilter();
 
-    if (myBuildConfiguration.willBuildExploded()) {
+    if (myBuildParticipant.willBuildExploded()) {
       String outputRoot = DeploymentUtilImpl.getOrCreateExplodedDir(myBuildParticipant);
       String jarPath = getCanonicalConcat(outputRoot, myOutputPaths.peek(), instruction.getOutputRelativePath());
 
