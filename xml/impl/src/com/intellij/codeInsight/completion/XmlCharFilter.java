@@ -12,7 +12,7 @@ import com.intellij.codeInsight.editorActions.XmlAutoPopupHandler;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -38,7 +38,7 @@ public class XmlCharFilter extends CharFilter {
         }
 
         final Language language = elementToTest.getLanguage();
-        if (StdLanguages.JAVA.equals(language) || language.getID().equals("JavaScript")) {
+        if (!(language instanceof XMLLanguage)) {
           return false;
         }
         return true;
