@@ -91,8 +91,9 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     if (comment == null) {
       comment = commenter.getBlockCommentPrefix();
     }
+    
     // "quick fix action text to perform" "should be available"
-    Pattern pattern = Pattern.compile("^" + comment + actionPattern, Pattern.DOTALL);
+    Pattern pattern = Pattern.compile("^" + comment.replace("*", "\\*") + actionPattern, Pattern.DOTALL);
     Matcher matcher = pattern.matcher(contents);
     assertTrue(matcher.matches());
     final String text = matcher.group(1);
@@ -145,6 +146,8 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   protected void doAllTests() throws Exception {
+    assertNotNull("getBasePath() should not return null!", getBasePath());
+
     final String testDirPath = getTestDataPath().replace(File.separatorChar, '/') + getBasePath();
     File testDir = new File(testDirPath);
     final File[] files = testDir.listFiles(new FilenameFilter() {
@@ -152,6 +155,11 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         return name.startsWith(BEFORE_PREFIX);
       }
     });
+
+    if (files == null) {
+      assertTrue("Test files not foundin " + testDirPath, false);
+    }
+
     for (File file : files) {
       final String testName = file.getName().substring(BEFORE_PREFIX.length());
       doTestFor(testName);

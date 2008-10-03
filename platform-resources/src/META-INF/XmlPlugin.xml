@@ -222,6 +222,10 @@
     <refactoring.extractIncludeHandler language="XHTML" implementationClass="com.intellij.refactoring.lang.html.ExtractIncludeFromHTMLHandler"/>
 
     <metaDataContributor implementation="com.intellij.xml.util.XmlApplicationComponent"/>
-  </extensions>                                   
-  
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.xml.actions.SplitTagAction</className>
+    </intentionAction>
+  </extensions>
+
 </idea-plugin>
