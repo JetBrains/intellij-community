@@ -159,7 +159,7 @@ public class ShowRecentFilesAction extends AnAction {
       }
     };
 
-    footerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    footerPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
     footerPanel.add(pathLabel);
 
     new PopupChooserBuilder(list).
