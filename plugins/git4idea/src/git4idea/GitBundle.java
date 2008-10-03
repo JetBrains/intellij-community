@@ -27,7 +27,7 @@ public class GitBundle {
   private static Reference<ResourceBundle> ourBundle;
 
   @NonNls
-  private static final String BUNDLE = "git4idea.GitBundle";
+  private static final String BUNDLE = "git4idea.i18n.GitBundle";
 
   private GitBundle() {
   }

@@ -16,6 +16,7 @@
 package git4idea;
 
 import com.intellij.ide.XmlRpcServer;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -142,6 +143,7 @@ public class GitSSHService implements ApplicationComponent {
         String sshPath = PathUtil.getJarPathForClass(KnownHosts.class);
         String xmlRcpPath = PathUtil.getJarPathForClass(XmlRpcClientLite.class);
         String codecPath = PathUtil.getJarPathForClass(DecoderException.class);
+        String resPath = getJarForResource(GitBundle.class, "/git4idea/i18n/GitBundle.properties");
         String utilPath = PathUtil.getJarPathForClass(FileUtil.class);
         // six parameters are enough for the git case (actually 4 are enough)
         out.println("java -cp \"" +
@@ -152,6 +154,8 @@ public class GitSSHService implements ApplicationComponent {
                     codecPath +
                     File.pathSeparator +
                     xmlRcpPath +
+                    File.pathSeparator +
+                    resPath +
                     File.pathSeparator +
                     utilPath +
                     "\" " +
@@ -166,6 +170,18 @@ public class GitSSHService implements ApplicationComponent {
       FileUtil.setExectuableAttribute(myScriptPath.getAbsolutePath(), true);
     }
     return myScriptPath;
+  }
+
+  /**
+   * Get path for resources.jar
+   *
+   * @param context a context class
+   * @param res     a resource
+   * @return a path to classpath entry
+   */
+  private static String getJarForResource(Class context, String res) {
+    String resourceRoot = PathManager.getResourceRoot(context, res);
+    return new File(resourceRoot).getAbsoluteFile().getAbsolutePath();
   }
 
   /**

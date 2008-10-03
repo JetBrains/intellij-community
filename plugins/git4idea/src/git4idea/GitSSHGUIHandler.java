@@ -117,7 +117,7 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
   /**
    * {@inheritDoc}
    */
-  @SuppressWarnings({"UseOfObsoleteCollectionType","unchecked"})
+  @SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked"})
   public Vector<String> replyToChallenge(final String username,
                                          final String name,
                                          final String instruction,
@@ -281,14 +281,22 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
           c.fill = GridBagConstraints.HORIZONTAL;
           c.anchor = GridBagConstraints.WEST;
           if (myEcho.get(i).booleanValue()) {
-            inputs[i] = new JTextField(10);
+            inputs[i] = new JTextField(32);
           }
           else {
-            inputs[i] = new JPasswordField(10);
+            inputs[i] = new JPasswordField(32);
           }
           contents.add(inputs[i], c);
           line++;
         }
+        c = new GridBagConstraints();
+        c.gridx = 0;
+        c.gridy = line;
+        c.gridwidth = 1;
+        c.weighty = 1;
+        c.fill = GridBagConstraints.VERTICAL;
+        c.anchor = GridBagConstraints.CENTER;
+        contents.add(new JPanel(), c);
       }
       return contents;
     }
@@ -299,14 +307,6 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
     @Override
     protected Action[] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected String getDimensionServiceKey() {
-      return "GitSSHKeyboardInteractiveDialog";
     }
 
     /**
