@@ -720,6 +720,8 @@
       <separator/>
       <reference ref="Graph.Show.Edge.Labels"/>
       <reference ref="Graph.Current.Node.Dependencies.Filter"/>
+      <separator/>
+      <reference ref="ContextHelp"/>
     </group>
 
     <action id="AddFrameworkSupport" class="com.intellij.ide.util.frameworkSupport.AddFrameworkSupportAction">

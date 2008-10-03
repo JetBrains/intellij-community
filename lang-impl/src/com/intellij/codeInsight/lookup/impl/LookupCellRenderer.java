@@ -283,9 +283,11 @@ class LookupCellRenderer implements ListCellRenderer {
     }
 
     public void setTailText(final String text, final Color foreground, final boolean bold, final boolean strikeout) {
-      final Color fg = foreground == null
-                       ? mySelected ? SELECTED_FOREGROUND_COLOR : myForeground
-                       : foreground;
+      final Color fg = mySelected
+                       ? SELECTED_FOREGROUND_COLOR
+                       : foreground == null
+                         ? myForeground
+                         : foreground;
       setTailTextLabel(myBackground, fg, mySelected, text, bold ? BOLD_FONT : NORMAL_FONT, strikeout);
     }
 
