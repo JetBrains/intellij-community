@@ -8,7 +8,6 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.RequestHint;
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -51,12 +50,12 @@ public class SmartStepIntoActionHandler extends DebuggerActionHandler {
       final List<PsiMethod> methods = findReferencedMethods(position);
       if (methods.size() > 0) {
         if (methods.size() == 1) {
-          session.stepInto(false, createSmartStepFilter(methods.get(0), session));
+          session.stepInto(false, createSmartStepFilter(methods.get(0)));
         }
         else {
           final PsiMethodListPopupStep popupStep = new PsiMethodListPopupStep(methods, new PsiMethodListPopupStep.OnChooseRunnable() {
             public void execute(PsiMethod chosenMethod) {
-              session.stepInto(false, createSmartStepFilter(chosenMethod, session));
+              session.stepInto(false, createSmartStepFilter(chosenMethod));
             }
           });
           final ListPopup popup = JBPopupFactory.getInstance().createListPopup(popupStep);
@@ -70,13 +69,8 @@ public class SmartStepIntoActionHandler extends DebuggerActionHandler {
   }
 
   @Nullable
-  private static RequestHint.SmartStepFilter createSmartStepFilter(final PsiMethod method, final DebuggerSession session) {
-    try {
-      return new RequestHint.SmartStepFilter(method, session.getProcess());
-    }
-    catch (EvaluateException e) {
-      return null;
-    }
+  private static RequestHint.SmartStepFilter createSmartStepFilter(final PsiMethod method) {
+    return new RequestHint.SmartStepFilter(method);
   }
 
 

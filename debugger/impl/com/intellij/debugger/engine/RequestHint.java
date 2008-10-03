@@ -18,7 +18,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
@@ -42,40 +41,33 @@ public class RequestHint {
   private boolean mySkipThisMethod = false;
 
   public static final class SmartStepFilter {
-    private final String myDeclaringClassName;
-    private final String myTargetMethodSignature;
+    private final JVMName myDeclaringClassName;
+    private final @NonNls String myTargetMethodName;
+    private final JVMName myTargetMethodSignature;
 
-    public SmartStepFilter(PsiMethod psiMethod, final DebugProcessImpl debugProcess) throws EvaluateException {
-      myDeclaringClassName = JVMNameUtil.getJVMQualifiedName(psiMethod.getContainingClass()).getName(debugProcess);
-      final JVMName methodSignature = JVMNameUtil.getJVMSignature(psiMethod);
-      @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-        builder.append(psiMethod.isConstructor()? "<init>" : psiMethod.getName());
-        builder.append(methodSignature.getName(debugProcess));
-        myTargetMethodSignature = builder.toString();
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
-      }
+    public SmartStepFilter(PsiMethod psiMethod) {
+      myDeclaringClassName = JVMNameUtil.getJVMQualifiedName(psiMethod.getContainingClass());
+      myTargetMethodName = psiMethod.isConstructor()? "<init>" : psiMethod.getName();
+      myTargetMethodSignature = JVMNameUtil.getJVMSignature(psiMethod);
     }
-
-    public boolean shouldStopAtLocation(Location location) {
-      final Method method = location.method();
-      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+                  
+    public boolean shouldStopAtLocation(Location location, final DebugProcessImpl debugProcess) {
       try {
-        builder.append(method.name());
-        builder.append(method.signature());
-        if (!myTargetMethodSignature.equals(builder.toString())) {
+        final Method method = location.method();
+        if (!myTargetMethodName.equals(method.name())) {
           return false;
         }
+        if (!myTargetMethodSignature.getName(debugProcess).equals(method.signature())) {
+          return false;
+        }
+        final ReferenceType declaringType = method.declaringType();
+        return DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(debugProcess), declaringType);
       }
-      finally{
-        StringBuilderSpinAllocator.dispose(builder);
+      catch (EvaluateException e) {
+        LOG.info(e);
       }
-      final ReferenceType declaringType = method.declaringType();
-      return DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName, declaringType);
+      return true;
     }
-
   }
 
   public RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, @NotNull SmartStepFilter smartStepFilter) {
@@ -219,7 +211,7 @@ public class RequestHint {
         // smart step feature
         if (myTargetMethodSignature != null) {
           final Location location = context.getFrameProxy().location();
-          if (!myTargetMethodSignature.shouldStopAtLocation(location)) {
+          if (!myTargetMethodSignature.shouldStopAtLocation(location, context.getDebugProcess())) {
             return StepRequest.STEP_OUT;
           }
         }
