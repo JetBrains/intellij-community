@@ -35,9 +35,9 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 public interface GrTypeDefinition extends GrTopStatement, NavigatablePsiElement, PsiClass, GrTopLevelDefintion, GrMemberOwner, StubBasedPsiElement<GrTypeDefinitionStub> {
   String DEFAULT_BASE_CLASS_NAME = "groovy.lang.GroovyObjectSupport";
 
-  public GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
+  GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
 
-  public GrTypeDefinitionBody getBody();
+  GrTypeDefinitionBody getBody();
 
   @NotNull
   GrField[] getFields();
@@ -46,10 +46,10 @@ public interface GrTypeDefinition extends GrTopStatement, NavigatablePsiElement,
   GrClassInitializer[] getInitializersGroovy();
 
   @NotNull
-  public GrMembersDeclaration[] getMemberDeclarations();
+  GrMembersDeclaration[] getMemberDeclarations();
 
   @Nullable
-  public String getQualifiedName();
+  String getQualifiedName();
 
   GrWildcardTypeArgument[] getTypeParametersGroovy();
 

@@ -20,8 +20,10 @@ import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -125,28 +127,47 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
       if (selectedLibrary != null && !myFacetEditor.addNewSdk()) {
         selectedName = selectedLibrary.getName();
         LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(selectedLibrary));
+        GroovyFacetSupportProvider.this.addSupport(module, rootModel, selectedName, selectedLibrary);
       } else if (myFacetEditor.getNewSdkPath() != null) {
         final String path = myFacetEditor.getNewSdkPath();
         ValidationResult result = GroovyConfigUtils.isGroovySdkHome(path);
         if (path != null && ValidationResult.OK == result) {
           final Project project = module.getProject();
           selectedName = GroovyConfigUtils.generateNewGroovyLibName(GroovyConfigUtils.getGroovyVersion(path), project);
-          final CreateLibraryDialog dialog = new CreateLibraryDialog(project, selectedName);
-          dialog.show();
-          if (dialog.isOK()) {
-            final Library lib = GroovyConfigUtils.createGroovyLibrary(path, selectedName, project, false, dialog.isInProject());
-            LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(lib));
-          }
+          final String selected = selectedName;
+          final Library selectedLib = selectedLibrary;
+
+          //Delayed modal dialog to add Groovy library
+          final CreateLibraryDialog dialog = new CreateLibraryDialog(project, selectedName) {
+            @Override
+            protected void doOKAction() {
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  ModuleRootManager manager = ModuleRootManager.getInstance(module);
+                  ModifiableRootModel rootModel = manager.getModifiableModel();
+                  final Library lib = GroovyConfigUtils.createGroovyLibrary(path, selected, project, false, isInProject());
+                  LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(lib));
+                  if (selectedLib != null) {
+                    GroovyConfigUtils.saveGroovyDefaultLibName(selected);
+                  }
+                  GroovyFacetSupportProvider.this.addSupport(module, rootModel, selected, selectedLib);
+                }
+              });
+              super.doOKAction();
+            }
+          };
+
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              dialog.show();
+            }
+          });
         } else {
           Messages
             .showErrorDialog(GroovyBundle.message("invalid.groovy.sdk.path.message"), GroovyBundle.message("invalid.groovy.sdk.path.text"));
           selectedLibrary = null;
         }
       }
-      if (selectedLibrary != null) {
-        GroovyConfigUtils.saveGroovyDefaultLibName(selectedName);
-      }
-      GroovyFacetSupportProvider.this.addSupport(module, rootModel, selectedName, selectedLibrary);
     }
 
     public GroovyVersionConfigurable(Project project, String defaultVersion) {

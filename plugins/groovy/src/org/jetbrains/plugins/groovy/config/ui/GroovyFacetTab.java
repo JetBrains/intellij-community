@@ -170,6 +170,7 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   public void reset() {
     Module module = myEditorContext.getModule();
+    if (module != null && module.isDisposed()) return;
     if (module != null && FacetManager.getInstance(module).getFacetByType(GroovyFacet.ID) != null) {
       Library[] libraries = GroovyConfigUtils.getGroovyLibrariesByModule(myEditorContext.getModule());
       if (libraries.length == 0) {

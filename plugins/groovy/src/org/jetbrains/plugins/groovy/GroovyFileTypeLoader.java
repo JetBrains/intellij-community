@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gant.GantFileType;
 import org.jetbrains.plugins.grails.fileType.GspFileType;
 
 /**
@@ -27,5 +28,6 @@ public class GroovyFileTypeLoader extends FileTypeFactory{
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
     consumer.consume(GroovyFileType.GROOVY_FILE_TYPE, GroovyFileType.DEFAULT_EXTENSION);
     consumer.consume(GspFileType.GSP_FILE_TYPE, GspFileType.GSP_EXTENSION);
+    consumer.consume(GantFileType.GANT_FILE_TYPE, GantFileType.DEFAULT_EXTENSION);
   }
 }

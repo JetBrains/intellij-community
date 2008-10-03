@@ -6,10 +6,12 @@ package org.jetbrains.plugins.groovy;
 
 import com.intellij.ide.IconProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.gant.GantFileType;
 
 import javax.swing.*;
 
@@ -22,6 +24,10 @@ public class GroovyIconProvider extends IconProvider {
   public Icon getIcon(@NotNull PsiElement element, int flags) {
     if (element instanceof GroovyFile) {
       GroovyFile file = (GroovyFile) element;
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null && virtualFile.getFileType() instanceof GantFileType) {
+        return GantFileType.GANT_LOGO;
+      }
       if (!file.isScript()) {
         GrTypeDefinition[] typeDefinitions = file.getTypeDefinitions();
         if (typeDefinitions.length > 0) {
