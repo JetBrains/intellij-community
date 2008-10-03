@@ -7,6 +7,7 @@ package com.intellij.refactoring.inlineSuperClass;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 import java.util.Collection;
@@ -23,6 +24,13 @@ public class InlineSuperClassRefactoringHandler {
       return;
     }
 
-    new InlineSuperClassRefactoringDialog(project, superClass, inheritors.iterator().next()).show();
+    final PsiClass inheritor = inheritors.iterator().next();
+
+    if (PsiTreeUtil.isAncestor(superClass, inheritor, false)) {
+      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot inline into the inner class. Move \'" + inheritor.getName() + "\' to upper level", REFACTORING_NAME, null);
+      return;
+    }
+
+    new InlineSuperClassRefactoringDialog(project, superClass, inheritor).show();
   }
 }
