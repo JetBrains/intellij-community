@@ -12,18 +12,16 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.LightColors;
 import com.intellij.ui.ListSpeedSearch;
-import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -125,7 +123,13 @@ public class ShowRecentFilesAction extends AnAction {
       private void updatePathLabel() {
         final Object[] values = list.getSelectedValues();
         if (values != null && values.length == 1) {
-          pathLabel.setText(getTitle2Text(((VirtualFile)values[0]).getPresentableUrl()));
+          final VirtualFile parent = ((VirtualFile)values[0]).getParent();
+          if (parent != null) {
+            pathLabel.setText(getTitle2Text(parent.getPresentableUrl()));
+          }
+          else {
+            pathLabel.setText(" ");
+          }
         }
         else {
           pathLabel.setText(" ");
@@ -195,9 +199,6 @@ public class ShowRecentFilesAction extends AnAction {
 
   private static class RecentFilesRenderer extends ColoredListCellRenderer {
     private final Project myProject;
-    private static final Icon IN_TAB = IconLoader.findIcon("/ide/tab.png");
-    private static final EmptyIcon NOT_IN_TAB = new EmptyIcon(IN_TAB.getIconWidth(), IN_TAB.getIconHeight());
-
     public RecentFilesRenderer(Project project) {
       myProject = project;
     }
@@ -206,19 +207,16 @@ public class ShowRecentFilesAction extends AnAction {
       if (value instanceof VirtualFile) {
         VirtualFile virtualFile = (VirtualFile)value;
         String name = virtualFile.getName();
-
-        Icon baseIcon = IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject);
-
-        final RowIcon row = new RowIcon(2);
-        row.setIcon(baseIcon, 1);
-        row.setIcon(FileEditorManager.getInstance(myProject).isFileOpen(virtualFile) ? IN_TAB : NOT_IN_TAB, 0);
-
-        setIcon(row);
+        setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
 
         FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
-        TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null, null, EffectType.LINE_UNDERSCORE,
+        TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null , null, EffectType.LINE_UNDERSCORE,
                                                        Font.PLAIN);
         append(name, SimpleTextAttributes.fromTextAttributes(attributes));
+
+        if (!selected && FileEditorManager.getInstance(myProject).isFileOpen(virtualFile)) {
+          setBackground(LightColors.SLIGHTLY_GREEN);
+        }
       }
     }
   }
