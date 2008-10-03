@@ -162,6 +162,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
 
   private void updateLookup() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myEditor.isDisposed()) return;
+
     myFreezeSemaphore.up();
     myLookup.updateList();
     if (!myInitialized) {
