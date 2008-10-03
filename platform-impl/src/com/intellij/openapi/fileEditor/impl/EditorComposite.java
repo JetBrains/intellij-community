@@ -355,10 +355,10 @@ public abstract class EditorComposite implements Disposable {
         return getSelectedEditor();
       }
       else if(DataConstants.VIRTUAL_FILE.equals(dataId)){
-        return myFile;
+        return myFile.isValid() ? myFile : null;
       }
       else if(DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)){
-        return new VirtualFile[] {myFile};
+        return myFile.isValid() ? new VirtualFile[] {myFile} : null;
       }
       else{
         JComponent component = getPreferredFocusedComponent();
