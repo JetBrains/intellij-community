@@ -814,7 +814,7 @@ public class FileUtil {
   public static void setExectuableAttribute(String path, boolean executableFlag) throws IOException {
     if (IO_FILE_SET_EXECUTABLE_METHOD != null) {
       try {
-        IO_FILE_SET_EXECUTABLE_METHOD.invoke(new File(path), !executableFlag);
+        IO_FILE_SET_EXECUTABLE_METHOD.invoke(new File(path), executableFlag);
         return;
       }
       catch (IllegalAccessException e) {
@@ -827,7 +827,7 @@ public class FileUtil {
     Process process;
     if (!SystemInfo.isWindows) {
       // UNIXes go here
-      process = Runtime.getRuntime().exec(new String[]{"chmod", executableFlag ? "u-x" : "u+x", path});
+      process = Runtime.getRuntime().exec(new String[]{"chmod", executableFlag ? "u+x" : "u-x", path});
       try {
         process.waitFor();
       }
