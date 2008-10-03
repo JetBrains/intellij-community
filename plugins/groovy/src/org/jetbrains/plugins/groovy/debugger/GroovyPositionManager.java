@@ -186,6 +186,8 @@ public class GroovyPositionManager implements PositionManager {
     final String originalQName = refType.name().replace('/', '.');
     int dollar = originalQName.indexOf('$');
     final String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
+    //todo implement for gant
+    // String qName = "test";
     final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
     final PsiClass[] classes = GroovyPsiManager.getInstance(project).getNamesCache().getClassesByFQName(qName, searchScope);
     PsiClass clazz = classes.length == 1 ? classes[0] : null;
@@ -200,6 +202,8 @@ public class GroovyPositionManager implements PositionManager {
     for (final String extention : GroovyLoader.GROOVY_EXTENSIONS) {
       fileNames.add(fileNameWithoutExtension + "." + extention);
     }
+    //todo implement 4 gant
+    //fileNames.add(fileNameWithoutExtension + "." + "gant");
     final Ref<PsiFile> result = new Ref<PsiFile>();
     query.forEach(new Processor<VirtualFile>() {
       public boolean process(VirtualFile vDir) {
@@ -265,6 +269,8 @@ public class GroovyPositionManager implements PositionManager {
     String packageName = groovyFile.getPackageName();
     String fileName = vFile.getNameWithoutExtension();
     qName = packageName.length() > 0 ? packageName + "." + fileName : fileName;
+    //todo implement 4 Gant
+    //return "test_gant";
     return qName;
   }
 

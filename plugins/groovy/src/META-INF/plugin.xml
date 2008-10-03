@@ -394,6 +394,11 @@
             text="Groovy @Interface" description="Create new Groovy annotation">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewEnum"/>
     </action>
+    <action id="Gant.NewScript" class="org.jetbrains.plugins.gant.actions.NewGantScriptAction"
+            text="Gant Script" description="Create new Gant script">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewAnnotation"/>
+    </action>
+
 
     <action id="RenameJavaFileToGroovyFileAction"
             class="org.jetbrains.plugins.groovy.refactoring.javaToGrovyRename.RenameJavaFileToGroovyFileAction"

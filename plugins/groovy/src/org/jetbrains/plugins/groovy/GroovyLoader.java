@@ -54,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.gant.GantFileType;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -85,6 +86,7 @@ public class GroovyLoader implements ApplicationComponent {
     GROOVY_EXTENSIONS.add(GVY_EXTENSION);
     GROOVY_EXTENSIONS.add(GY_EXTENSION);
     GROOVY_EXTENSIONS.add(GROOVY_SCRIPT_EXTENSION);
+    GROOVY_EXTENSIONS.add(GantFileType.DEFAULT_EXTENSION);
   }
 
   public GroovyLoader(GrailsLoader loader) {
