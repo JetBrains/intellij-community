@@ -23,9 +23,12 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.File;
 
 public class ShowRecentFilesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
@@ -56,6 +59,15 @@ public class ShowRecentFilesAction extends AnAction {
         model.addElement(file);
       }
     }
+
+    final JLabel pathLabel = new JLabel(" ");
+    pathLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+
+    if (true /*SystemInfo.isMac*/) {
+      final Font font = pathLabel.getFont();
+      pathLabel.setFont(font.deriveFont((float)10));
+    }
+
     final JList list = new JList(model);
     list.addKeyListener(
       new KeyAdapter() {
@@ -84,6 +96,31 @@ public class ShowRecentFilesAction extends AnAction {
         }
       }
     );
+
+    list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      private String getTitle2Text(String fullText) {
+        int labelWidth = pathLabel.getWidth();
+        if (fullText == null || fullText.length() == 0) return " ";
+        while (pathLabel.getFontMetrics(pathLabel.getFont()).stringWidth(fullText) > labelWidth) {
+          int sep = fullText.indexOf(File.separatorChar, 4);
+          if (sep < 0) return fullText;
+          fullText = "..." + fullText.substring(sep);
+        }
+
+        return fullText;
+      }
+
+      public void valueChanged(final ListSelectionEvent e) {
+        final Object[] values = list.getSelectedValues();
+        if (values != null && values.length == 1) {
+          pathLabel.setText(getTitle2Text(((VirtualFile)values[0]).getPresentableUrl()));
+        }
+        else {
+          pathLabel.setText(" ");
+        }
+      }
+    });
+
     Runnable runnable = new Runnable() {
       public void run() {
         Object[] values = list.getSelectedValues();
@@ -110,13 +147,28 @@ public class ShowRecentFilesAction extends AnAction {
     }
     */
 
+    JPanel footerPanel = new JPanel(new BorderLayout()) {
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        g.setColor(BORDER_COLOR);
+        g.drawLine(0, 0, getWidth(), 0);
+      }
+    };
+
+    footerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    footerPanel.add(pathLabel);
+
     new PopupChooserBuilder(list).
-      setTitle(IdeBundle.message("title.popup.recent.files")).
-      setMovable(true).
-      setItemChoosenCallback(runnable).
-      addAdditionalChooseKeystroke(getAdditionalSelectKeystroke()).
-      createPopup().showCenteredInCurrentWindow(project);
+        setTitle(IdeBundle.message("title.popup.recent.files")).
+        setMovable(true).
+        setSouthComponent(footerPanel).
+        setItemChoosenCallback(runnable).
+        addAdditionalChooseKeystroke(getAdditionalSelectKeystroke()).
+        createPopup().showCenteredInCurrentWindow(project);
   }
+
+  private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
 
   private static KeyStroke getAdditionalSelectKeystroke() {
     Shortcut[] shortcuts=KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EDIT_SOURCE);
