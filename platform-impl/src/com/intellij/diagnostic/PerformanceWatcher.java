@@ -178,7 +178,9 @@ public class PerformanceWatcher implements ApplicationComponent {
         try {
           ThreadInfo[] threads = (ThreadInfo[])myDumpAllThreadsMethod.invoke(myThreadMXBean, false, false);
           for(ThreadInfo info: threads) {
-            dumpThreadInfo(info, f);
+            if (info != null) {
+              dumpThreadInfo(info, f);
+            }
           }
           dumpSuccessful = true;
         }
