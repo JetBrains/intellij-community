@@ -780,7 +780,9 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
       final VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(root);
       if (virtualFile != null) {
         if (virtualFile.getFileSystem() instanceof HttpFileSystem) {
-          result.add(virtualFile.getUrl() + relPath);
+          String url = virtualFile.getUrl();
+          if (!url.endsWith("/")) url += "/";
+          result.add(url + relPath);
         }
         else {
           VirtualFile file = virtualFile.findFileByRelativePath(relPath);
