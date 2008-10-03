@@ -906,6 +906,8 @@ public class LibraryTableEditor implements Disposable {
       myAttachJavadocsButton.setEnabled(attachActionsEnabled);
       myAttachUrlJavadocsButton.setEnabled(attachActionsEnabled);
       myAttachSourcesButton.setEnabled(attachActionsEnabled);
+      myAttachAnnotationsButton.setEnabled(attachActionsEnabled);
+      myAttachJarDirectoriesButton.setEnabled(attachActionsEnabled);
     }
 
     @Nullable
