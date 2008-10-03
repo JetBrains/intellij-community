@@ -143,7 +143,7 @@ public abstract class BaseRefactoringProcessor {
       return;
     }
 
-    assert !refUsages.isNull();
+    assert !refUsages.isNull(): "Null usages from processor " + this;
     if (!preprocessUsages(refUsages)) return;
     final UsageInfo[] usages = refUsages.get();
     assert usages != null;
