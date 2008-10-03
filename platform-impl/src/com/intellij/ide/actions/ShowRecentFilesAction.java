@@ -114,6 +114,15 @@ public class ShowRecentFilesAction extends AnAction {
       }
 
       public void valueChanged(final ListSelectionEvent e) {
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            updatePathLabel();
+          }
+        });
+      }
+
+      private void updatePathLabel() {
         final Object[] values = list.getSelectedValues();
         if (values != null && values.length == 1) {
           pathLabel.setText(getTitle2Text(((VirtualFile)values[0]).getPresentableUrl()));
