@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -54,11 +55,16 @@ public class CheckEmptyScriptTagInspection extends XmlSuppressableInspectionTool
               public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
                 final XmlTag tag = (XmlTag)descriptor.getPsiElement();
                 if (tag == null) return;
+                final PsiFile psiFile = tag.getContainingFile();
+
+                if (psiFile == null) return;
+                ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(psiFile.getVirtualFile());
+
                 final StringBuilder builder = new StringBuilder(tag.getText());
                 builder.replace(builder.length() - 2, builder.length(), "></" + SCRIPT_TAG_NAME + ">");
 
                 try {
-                  final FileType fileType = tag.getContainingFile().getFileType();
+                  final FileType fileType = psiFile.getFileType();
                   PsiFile file = PsiFileFactory.getInstance(tag.getProject()).createFileFromText(
                     "dummy." + (fileType == StdFileTypes.JSP || tag.getContainingFile().getLanguage() == HTMLLanguage.INSTANCE ? "html" : "xml"), builder.toString());
 
