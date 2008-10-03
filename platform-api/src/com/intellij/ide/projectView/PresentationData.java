@@ -17,6 +17,7 @@ package com.intellij.ide.projectView;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -44,7 +45,8 @@ public class PresentationData implements ItemPresentation {
    *                        in a non-tree view.
    * @param attributesKey   the attributes for rendering the item text.
    */
-  public PresentationData(String presentableText, String locationString, Icon openIcon, Icon closedIcon,TextAttributesKey attributesKey) {
+  public PresentationData(String presentableText, String locationString, Icon openIcon, Icon closedIcon,
+                          @Nullable TextAttributesKey attributesKey) {
     myClosedIcon = closedIcon;
     myLocationString = locationString;
     myOpenIcon = openIcon;
