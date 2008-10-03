@@ -23,6 +23,7 @@ import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.ui.GuiUtils;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -34,7 +35,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -361,21 +361,15 @@ public abstract class BaseRefactoringProcessor {
   protected void prepareSuccessful() {
     if (myPrepareSuccessfulSwingThreadCallback != null) {
       // make sure that dialog is closed in swing thread
-      if (!ApplicationManager.getApplication().isDispatchThread()) {
-        try {
-          SwingUtilities.invokeAndWait(myPrepareSuccessfulSwingThreadCallback);
-        }
-        catch (InterruptedException e) {
-          LOG.error(e);
-        }
-        catch (InvocationTargetException e) {
-          LOG.error(e);
-        }
+      try {
+        GuiUtils.runOrInvokeAndWait(myPrepareSuccessfulSwingThreadCallback);
       }
-      else {
-        myPrepareSuccessfulSwingThreadCallback.run();
+      catch (InterruptedException e) {
+        LOG.error(e);
       }
-//      ToolWindowManager.getInstance(myProject).invokeLater(myPrepareSuccessfulSwingThreadCallback);
+      catch (InvocationTargetException e) {
+        LOG.error(e);
+      }
     }
   }
 

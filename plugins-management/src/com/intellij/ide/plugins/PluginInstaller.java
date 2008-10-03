@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -90,12 +91,10 @@ public class PluginInstaller {
           buf.append(depend.getName()).append(",");
         }
         try {
-          SwingUtilities.invokeAndWait(new Runnable(){
+          GuiUtils.invokeAndWait(new Runnable() {
             public void run() {
               proceed[0] = Messages.showYesNoDialog(IdeBundle.message("plugin.manager.dependencies.detected.message", depends.size(), buf.substring(0, buf.length() - 1)),
-                                                    IdeBundle.message("plugin.manager.dependencies.detected.title"),
-                                                    Messages.getWarningIcon())
-                           == DialogWrapper.OK_EXIT_CODE;
+                                                    IdeBundle.message("plugin.manager.dependencies.detected.title"), Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE;
             }
           });
         }
@@ -118,12 +117,11 @@ public class PluginInstaller {
         }
         final boolean [] proceed = new boolean[1];
         try {
-          SwingUtilities.invokeAndWait(new Runnable(){
+          GuiUtils.invokeAndWait(new Runnable() {
             public void run() {
-              proceed[0] = Messages.showYesNoDialog(IdeBundle.message("plugin.manager.optional.dependencies.detected.message", optionalDeps.size(), buf.substring(0, buf.length() - 1)),
-                                                    IdeBundle.message("plugin.manager.dependencies.detected.title"), 
-                                                    Messages.getWarningIcon())
-                           == DialogWrapper.OK_EXIT_CODE;
+              proceed[0] = Messages.showYesNoDialog(IdeBundle.message("plugin.manager.optional.dependencies.detected.message", optionalDeps.size(),
+                                                                      buf.substring(0, buf.length() - 1)), IdeBundle.message("plugin.manager.dependencies.detected.title"),
+                                                    Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE;
             }
           });
         }

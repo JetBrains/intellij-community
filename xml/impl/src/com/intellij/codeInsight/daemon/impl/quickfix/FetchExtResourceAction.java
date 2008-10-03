@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
@@ -285,23 +286,23 @@ public class FetchExtResourceAction extends BaseExtResourceAction {
 
   private void cleanup(final List<String> resourceUrls, final List<String> downloadedResources) {
     try {
-      SwingUtilities.invokeAndWait( new Runnable() {
+      GuiUtils.invokeAndWait(new Runnable() {
         public void run() {
-          ApplicationManager.getApplication().runWriteAction(
-            new Runnable() {
-              public void run() {
-                for(String resourcesUrl:resourceUrls) {
-                  ExternalResourceManagerImpl.getInstance().removeResource(resourcesUrl);
-                }
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              for (String resourcesUrl : resourceUrls) {
+                ExternalResourceManagerImpl.getInstance().removeResource(resourcesUrl);
+              }
 
-                for(String downloadedResource:downloadedResources) {
-                  try {
-                    LocalFileSystem.getInstance().findFileByIoFile(new File(downloadedResource)).delete(this);
-                  } catch(IOException ex) {}
+              for (String downloadedResource : downloadedResources) {
+                try {
+                  LocalFileSystem.getInstance().findFileByIoFile(new File(downloadedResource)).delete(this);
+                }
+                catch (IOException ex) {
                 }
               }
             }
-          );
+          });
         }
       });
     }

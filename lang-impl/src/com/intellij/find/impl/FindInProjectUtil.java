@@ -38,6 +38,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.ui.GuiUtils;
 import com.intellij.usageView.AsyncFindUsagesProcessListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -332,7 +333,7 @@ public class FindInProjectUtil {
   private static int invokeAndWait(final Computable<Integer> f) {
     final int[] answer = new int[1];
     try {
-      SwingUtilities.invokeAndWait(new Runnable() {
+      GuiUtils.invokeAndWait(new Runnable() {
         public void run() {
           answer[0] = f.compute();
         }

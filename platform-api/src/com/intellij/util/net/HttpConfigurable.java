@@ -21,10 +21,10 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.ui.GuiUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.jdom.Element;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.net.*;
 
@@ -92,16 +92,11 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
           dlg.show();
         }
       };
-      if (SwingUtilities.isEventDispatchThread()) {
-        runnable.run();
+      try {
+        GuiUtils.runOrInvokeAndWait(runnable);
       }
-      else {
-        try {
-          SwingUtilities.invokeAndWait(runnable);
-        }
-        catch (Exception e) {
-          // ignore
-        }
+      catch (Exception e) {
+        // ignore
       }
     }
     return new PasswordAuthentication(PROXY_LOGIN, getPlainProxyPassword().toCharArray());

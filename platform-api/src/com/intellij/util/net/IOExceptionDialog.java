@@ -16,7 +16,7 @@
 package com.intellij.util.net;
 
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ui.GuiUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -108,12 +108,7 @@ public class IOExceptionDialog extends JDialog {
           dlg.setVisible(true);
         }
       };
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        doRun.run();
-      }
-      else {
-        SwingUtilities.invokeAndWait(doRun);
-      }
+      GuiUtils.runOrInvokeAndWait(doRun);
     }
     catch (InterruptedException e1) {
       e1.printStackTrace();
@@ -127,6 +122,6 @@ public class IOExceptionDialog extends JDialog {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void main(String[] args) {
-    IOExceptionDialog.showErrorDialog("Test", "Something failed");
+    showErrorDialog("Test", "Something failed");
   }
 }

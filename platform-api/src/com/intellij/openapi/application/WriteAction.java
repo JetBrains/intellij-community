@@ -15,8 +15,7 @@
  */
 package com.intellij.openapi.application;
 
-import javax.swing.*;
-import java.awt.*;
+import com.intellij.ui.GuiUtils;
 
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
@@ -29,24 +28,15 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     }
 
     try {
-      if (EventQueue.isDispatchThread()) {
-        getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            result.run();
-          }
-        });
-      }
-      else {
-        SwingUtilities.invokeAndWait(new Runnable() {
-          public void run() {
-            getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                result.run();
-              }
-            });
-          }
-        });
-      }
+      GuiUtils.runOrInvokeAndWait(new Runnable() {
+        public void run() {
+          getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              result.run();
+            }
+          });
+        }
+      });
     }
     catch (Exception e) {
       if (isSilentExecution()) {

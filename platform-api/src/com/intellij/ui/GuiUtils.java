@@ -24,10 +24,13 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -38,6 +41,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.MalformedURLException;
+import java.lang.reflect.InvocationTargetException;
 
 public class GuiUtils {
 
@@ -348,4 +352,19 @@ public class GuiUtils {
     return s;
   }
 
+  public static void invokeAndWait(@NotNull Runnable runnable) throws InvocationTargetException, InterruptedException {
+    Application application = ApplicationManager.getApplication();
+    assert !application.isDispatchThread() : "Must not be invoked from AWT dispatch thread";
+    assert !application.isReadAccessAllowed() : "Must not be invoked from within read action, will lead to deadlock";
+    SwingUtilities.invokeAndWait(runnable);
+  }
+  public static void runOrInvokeAndWait(@NotNull Runnable runnable) throws InvocationTargetException, InterruptedException {
+    Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      invokeAndWait(runnable);
+    }
+  }
 }

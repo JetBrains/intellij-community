@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JScrollPane2;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
@@ -3318,7 +3319,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       final Rectangle[] r = new Rectangle[1];
       try {
-        SwingUtilities.invokeAndWait(new Runnable() {
+        GuiUtils.invokeAndWait(new Runnable() {
           public void run() {
             r[0] = myDelegate.getTextLocation(offset);
           }
@@ -3338,7 +3339,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       final TextHitInfo[] r = new TextHitInfo[1];
       try {
-        SwingUtilities.invokeAndWait(new Runnable() {
+        GuiUtils.invokeAndWait(new Runnable() {
           public void run() {
             r[0] = myDelegate.getLocationOffset(x, y);
           }
@@ -3358,7 +3359,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       final int[] r = new int[1];
       try {
-        SwingUtilities.invokeAndWait(new Runnable() {
+        GuiUtils.invokeAndWait(new Runnable() {
           public void run() {
             r[0] = myDelegate.getInsertPositionOffset();
           }
@@ -3381,7 +3382,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       final AttributedCharacterIterator[] r = new AttributedCharacterIterator[1];
       try {
-        SwingUtilities.invokeAndWait(new Runnable() {
+        GuiUtils.invokeAndWait(new Runnable() {
           public void run() {
             r[0] = myDelegate.getCommittedText(beginIndex, endIndex, attributes);
           }
@@ -3400,7 +3401,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (ApplicationManager.getApplication().isDispatchThread()) return myDelegate.getCommittedTextLength();
       final int[] r = new int[1];
       try {
-        SwingUtilities.invokeAndWait(new Runnable() {
+        GuiUtils.invokeAndWait(new Runnable() {
           public void run() {
             r[0] = myDelegate.getCommittedTextLength();
           }
@@ -3424,7 +3425,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       final AttributedCharacterIterator[] r = new AttributedCharacterIterator[1];
       try {
-        SwingUtilities.invokeAndWait(new Runnable() {
+        GuiUtils.invokeAndWait(new Runnable() {
           public void run() {
             r[0] = myDelegate.getSelectedText(attributes);
           }

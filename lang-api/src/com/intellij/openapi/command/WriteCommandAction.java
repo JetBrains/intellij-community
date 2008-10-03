@@ -22,11 +22,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,15 +69,11 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     final RunResult<T> result = new RunResult<T>(this);
 
     try {
-      if (EventQueue.isDispatchThread()) {
-        performWriteCommandAction(result);
-      } else {
-        SwingUtilities.invokeAndWait(new Runnable() {
-          public void run() {
-            performWriteCommandAction(result);
-          }
-        });
-      }
+      GuiUtils.runOrInvokeAndWait(new Runnable() {
+        public void run() {
+          performWriteCommandAction(result);
+        }
+      });
     } catch (Throwable e) {
       if (e instanceof InvocationTargetException) e = e.getCause();
       if (e instanceof Error) throw (Error)e;
