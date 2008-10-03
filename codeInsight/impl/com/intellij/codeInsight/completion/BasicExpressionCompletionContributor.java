@@ -21,6 +21,8 @@ import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.getters.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,13 +36,17 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
   }
 
   public static LookupItem createKeywordLookupItem(final PsiElement element, final String s) {
-    try {
-      final PsiKeyword keyword = JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createKeyword(s);
-      return LookupItemUtil.objectToLookupItem(keyword).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
-    }
-    catch (IncorrectOperationException e) {
-      throw new RuntimeException(e);
-    }
+    return ApplicationManager.getApplication().runReadAction(new Computable<LookupItem>() {
+      public LookupItem compute() {
+        try {
+          final PsiKeyword keyword = JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createKeyword(s);
+          return LookupItemUtil.objectToLookupItem(keyword).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
+        }
+        catch (IncorrectOperationException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
 
@@ -88,8 +94,8 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
           final PsiMethod[] methods = collectionsClass.findMethodsByName(method, false);
           if (methods.length != 0) {
             result.addElement(JavaAwareCompletionData.qualify(
-            LookupItemUtil.objectToLookupItem(methods[0]).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE).setTailType(
-                TailType.NONE)));
+                LookupItemUtil.objectToLookupItem(methods[0]).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE).setTailType(
+                    TailType.NONE)));
           }
         }
       }
