@@ -39,10 +39,11 @@ public class PrefixBasedPropertyReference extends PropertyReference {
     String key = ((Property)property).getUnescapedKey();
     final String keyPrefix = getKeyPrefix();
     if (keyPrefix != null && key != null) {
-      if(!key.startsWith(keyPrefix)) return;
+      if (!key.startsWith(keyPrefix)) return;
       key = key.substring(keyPrefix.length());
+      super.addKey(key, variants);
     }
-    super.addKey(key, variants);
+    super.addKey(property, variants);
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
