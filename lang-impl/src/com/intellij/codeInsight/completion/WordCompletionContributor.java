@@ -31,7 +31,11 @@ public class WordCompletionContributor extends CompletionContributor{
 
     final PsiFile file = parameters.getOriginalFile();
     final int startOffset = parameters.getOffset();
-    final PsiElement element = file.findElementAt(startOffset - 1);
+    final PsiElement element = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+      public PsiElement compute() {
+        return file.findElementAt(startOffset - 1);
+      }
+    });
     final PsiElement insertedElement = parameters.getPosition();
 
     Set<CompletionVariant> toAdd = new HashSet<CompletionVariant>();
