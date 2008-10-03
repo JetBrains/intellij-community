@@ -12,10 +12,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actions.EnterAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -75,12 +77,14 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
     int col = editor.getCaretModel().getLogicalPosition().column;
     int line = editor.getCaretModel().getLogicalPosition().line;
-    int lineStartOffset = editor.getDocument().getLineStartOffset(line);
-    CharSequence docText = editor.getDocument().getCharsSequence();
-    String textBeforeCaret = docText.subSequence(lineStartOffset, offset).toString().trim();
-    if (textBeforeCaret.length() > 0 && Character.isWhitespace(docText.charAt(offset))) {
+    final Document document = editor.getDocument();
+    int lineStartOffset = document.getLineStartOffset(line);
+    CharSequence docText = document.getCharsSequence();
+    String textBeforeCaret = docText.subSequence(lineStartOffset, offset).toString();
+    final String afterCaret = docText.subSequence(offset, document.getLineEndOffset(line)).toString();
+    if (textBeforeCaret.trim().length() > 0 && StringUtil.isEmptyOrSpaces(afterCaret) && !editor.getSelectionModel().hasSelection()) {
       EnterAction.insertNewLineAtCaret(editor);
-      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      PsiDocumentManager.getInstance(project).commitDocument(document);
       offset = editor.getCaretModel().getOffset();
       col = editor.getCaretModel().getLogicalPosition().column;
       line = editor.getCaretModel().getLogicalPosition().line;
@@ -109,7 +113,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     }
 
     if (!templates.isEmpty()){
-      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
       runTemplates(project, editor, templates, 0);
     }
     else if (!newMembers.isEmpty()){
