@@ -66,7 +66,7 @@ public class UpdateRequestsQueue {
         final ScheduledData data = new ScheduledData(runnable, future);
         LOG.debug("Scheduled for project: " + myProject.getName() + ", runnable: " + runnable.hashCode());
         mySentRequests.add(data);
-        myUpdateUnversionedRequested = updateUnversionedFiles;
+        myUpdateUnversionedRequested |= updateUnversionedFiles;
       }
     }
   }
