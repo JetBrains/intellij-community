@@ -58,4 +58,6 @@ public abstract class CompletionService {
    * @return
    */
   public abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<LookupElement> consumer);
+
+  public abstract CompletionProcess getCurrentCompletion();
 }

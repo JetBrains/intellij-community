@@ -6,7 +6,7 @@ public class DotAutoLookupHandler extends CodeCompletionHandlerBase{
     super(CompletionType.BASIC);
   }
 
-  protected boolean isAutocompleteOnInvocation() {
+  protected boolean mayAutocompleteOnInvocation() {
     return false;
   }
 

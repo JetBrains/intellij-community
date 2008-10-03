@@ -2,6 +2,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.DotAutoLookupHandler;
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
@@ -85,7 +86,7 @@ public class AutoPopupController implements Disposable {
 
   public void invokeAutoPopupRunnable(final Runnable request, final int delay) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    final CompletionProgressIndicator currentCompletion = CompletionProgressIndicator.getCurrentCompletion();
+    final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (currentCompletion != null) {
       currentCompletion.closeAndFinish();
     }

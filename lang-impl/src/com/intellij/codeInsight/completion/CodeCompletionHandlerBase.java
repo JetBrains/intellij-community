@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
@@ -69,7 +70,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       return;
     }
 
-    CompletionProgressIndicator indicator = CompletionProgressIndicator.getCurrentCompletion();
+    CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (indicator != null) {
       if (indicator.getHandler().getClass().equals(getClass())) {
         if (!indicator.isRunning() && (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix(true))) {
@@ -170,15 +171,15 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
               if (items.length == 0) {
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   public void run() {
-                    if (indicator != CompletionProgressIndicator.getCurrentCompletion()) return;
+                    if (indicator != CompletionServiceImpl.getCompletionService().getCurrentCompletion()) return;
                     final Lookup lookup = LookupManager.getActiveLookup(editor);
                     assert lookup == indicator.getLookup() : lookup;
 
                     indicator.closeAndFinish();
-                    CompletionProgressIndicator completion = CompletionProgressIndicator.getCurrentCompletion();
+                    CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
                     assert completion == null : "1 this=" + indicator + "\ncurrent=" + completion;
                     HintManager.getInstance().hideAllHints();
-                    completion = CompletionProgressIndicator.getCurrentCompletion();
+                    completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
                     assert completion == null : "2 this=" + indicator + "\ncurrent=" + completion;
                     handleEmptyLookup(context, parameters, indicator);
                   }
@@ -216,7 +217,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (items.length == 0) return;
 
     LookupElement item = items[0];
-    if (items.length == 1 && shouldAutoComplete(item, context)) {
+    if (items.length == 1 && indicator.willAutoInsert(item.getAutoCompletionPolicy(), item.getPrefixMatcher())) {
       indicator.closeAndFinish();
       context.setStartOffset(offset1 - item.getPrefixMatcher().getPrefix().length());
       handleSingleItem(offset2, context, items, item.getLookupString(), item);
@@ -226,20 +227,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         indicator.fillInCommonPrefix(false);
       }
     }
-  }
-
-  private boolean shouldAutoComplete(final LookupElement item, final CompletionContext context) {
-    final AutoCompletionPolicy policy = item.getAutoCompletionPolicy();
-    if (policy == AutoCompletionPolicy.NEVER_AUTOCOMPLETE) return false;
-    if (policy == AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE) return true;
-
-    if (!isAutocompleteOnInvocation()) return false;
-
-    if (context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != context.getSelectionEndOffset()) return false;
-    if (policy == AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE) return true;
-
-    if (StringUtil.isEmpty(item.getPrefixMatcher().getPrefix()) && myCompletionType != CompletionType.SMART) return false;
-    return true;
   }
 
   protected static void handleSingleItem(final int offset2, final CompletionContext context, final LookupElement[] items, final String _uniqueText, final LookupElement item) {
@@ -350,17 +337,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
 
-  protected boolean isAutocompleteOnInvocation() {
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    switch (myCompletionType) {
-      case CLASS_NAME:
-        return settings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION;
-      case SMART:
-        return settings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION;
-      case BASIC:
-        default:
-        return settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
-    }
+  protected boolean mayAutocompleteOnInvocation() {
+    return true;
   }
 
   protected boolean isAutocompleteCommonPrefixOnInvocation() {

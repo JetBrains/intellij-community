@@ -7,6 +7,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.Consumer;
@@ -21,15 +22,10 @@ import java.util.Map;
  */
 public class JavaMethodMergingContributor extends CompletionContributor {
   public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    if (parameters.getCompletionType() == CompletionType.BASIC) {
-      if (!CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION) return true;
-    }
-    else if (parameters.getCompletionType() == CompletionType.SMART) {
-      if (!CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION) return true;
-    }
-    else {
-      return true;
-    }
+    if (parameters.getCompletionType() != CompletionType.SMART && parameters.getCompletionType() != CompletionType.BASIC) return true;
+
+    final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
+    if (!process.willAutoInsert(AutoCompletionPolicy.SETTINGS_DEPENDENT, result.getPrefixMatcher())) return true;
 
     final Ref<Boolean> wereNonGrouped = Ref.create(false);
     final Map<String, LookupItem<PsiMethod>> methodNameToItem = new LinkedHashMap<String, LookupItem<PsiMethod>>();

@@ -5,40 +5,34 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.EventObject;
 
 /**
  * @author peter
  */
-public class CompletionProgressIndicator extends ProgressIndicatorBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionProgressIndicator");
-  private static CompletionProgressIndicator ourCurrentCompletion = null;
-  private static Throwable ourTrace = null;
-
+public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcess{
   private final Editor myEditor;
   private final CompletionParameters myParameters;
   private final CodeCompletionHandlerBase myHandler;
@@ -53,6 +47,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
     }
   };
   private LightweightHint myHint;
+  private final CompletionContext myContextOriginal;
   private Semaphore myFreezeSemaphore;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler,
@@ -60,6 +55,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
     myEditor = editor;
     myParameters = parameters;
     myHandler = handler;
+    myContextOriginal = contextOriginal;
     myFreezeSemaphore = freezeSemaphore;
 
     myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, new LookupItem[0], "", new CompletionPreferencePolicy(
@@ -129,15 +125,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
   }
 
   private void registerItself() {
-    final CompletionProgressIndicator oldCompletion = ourCurrentCompletion;
-    final Throwable oldTrace = ourTrace;
-    ourCurrentCompletion = this;
-    ourTrace = new Throwable();
-    if (oldCompletion != null) {
-      final StringWriter writer = new StringWriter();
-      oldTrace.printStackTrace(new PrintWriter(writer));
-      throw new RuntimeException("SHe's not dead yet!\nthis=" + this + "\ncurrent=" + oldCompletion + "\ntrace=" + writer.toString());
-    }
+    CompletionServiceImpl.getCompletionService().setCurrentCompletion(this);
   }
 
   public void liveAfterDeath(LightweightHint hint) {
@@ -182,10 +170,34 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
     return myCount;
   }
 
-  @Nullable
-  public static CompletionProgressIndicator getCurrentCompletion() {
-    return ourCurrentCompletion;
+  public boolean willAutoInsert(final AutoCompletionPolicy policy, final PrefixMatcher matcher) {
+    if (policy == AutoCompletionPolicy.NEVER_AUTOCOMPLETE) return false;
+    if (policy == AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE) return true;
+
+    if (myHandler.mayAutocompleteOnInvocation()) {
+      if (!isAutocompleteOnInvocation()) return false;
+    }
+
+    if (myContextOriginal.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != myContextOriginal.getSelectionEndOffset()) return false;
+    if (policy == AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE) return true;
+
+    if (StringUtil.isEmpty(matcher.getPrefix()) && myParameters.getCompletionType() != CompletionType.SMART) return false;
+    return true;
   }
+
+  private boolean isAutocompleteOnInvocation() {
+    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    switch (myParameters.getCompletionType()) {
+      case CLASS_NAME:
+        return settings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION;
+      case SMART:
+        return settings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION;
+      case BASIC:
+        default:
+        return settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
+    }
+  }
+
 
   public synchronized void addItem(final LookupElement item) {
     if (!isRunning()) return;
@@ -222,17 +234,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase {
 
   @TestOnly
   public static void cleanupForNextTest() {
-    CompletionProgressIndicator currentCompletion = getCurrentCompletion();
+    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (currentCompletion != null) {
       currentCompletion.finishCompletion();
     }
   }
 
   private void cleanup() {
-    final boolean wasThis = ourCurrentCompletion == this;
-    ourCurrentCompletion = null;
     myHint = null;
-    assert wasThis;
+    CompletionServiceImpl.getCompletionService().setCurrentCompletion(null);
   }
 
   public void stop() {
