@@ -72,6 +72,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
 
   private boolean myDisposed = false;
+  private boolean myHidden = false;
   private LookupElement myPreselectedItem = EMPTY_LOOKUP_ITEM;
   private boolean myDirty;
   private String myAdditionalPrefix = "";
@@ -716,6 +717,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   private void doHide(final boolean fireCanceled) {
     assert !myDisposed;
+    myHidden = true;
 
     super.hide();
 
@@ -740,6 +742,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void dispose() {
+    assert myHidden;
     assert !myDisposed;
     myDisposed = true;
     myProcessIcon.dispose();
