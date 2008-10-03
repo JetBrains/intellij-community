@@ -163,8 +163,12 @@ public class TypedHandler implements TypedActionHandler {
 
     for(TypedHandlerDelegate delegate: delegates) {
       final TypedHandlerDelegate.Result result = delegate.beforeCharTyped(charTyped, project, editor, file, fileType);
-      if (result == TypedHandlerDelegate.Result.STOP) return;
-      if (result == TypedHandlerDelegate.Result.DEFAULT) break;
+      if (result == TypedHandlerDelegate.Result.STOP) {
+        return;
+      }
+      if (result == TypedHandlerDelegate.Result.DEFAULT) {
+        break;
+      }
     }
 
     if (')' == charTyped){
@@ -191,8 +195,12 @@ public class TypedHandler implements TypedActionHandler {
 
     for(TypedHandlerDelegate delegate: delegates) {
       final TypedHandlerDelegate.Result result = delegate.charTyped(charTyped, project, editor, file);
-      if (result == TypedHandlerDelegate.Result.STOP) return;
-      if (result == TypedHandlerDelegate.Result.DEFAULT) break;
+      if (result == TypedHandlerDelegate.Result.STOP) {
+        return;
+      }
+      if (result == TypedHandlerDelegate.Result.DEFAULT) {
+        break;
+      }
     }
     if ('{' == charTyped) {
       indentOpenedBrace(project, editor);
