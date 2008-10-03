@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -8,10 +9,7 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +20,7 @@ import java.util.concurrent.TimeUnit;
  * own inner synchronization
  */
 public class UpdateRequestsQueue {
+  private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdateRequestsQueue");
   private final Project myProject;
   private final ScheduledExecutorService myExecutor;
   private final Consumer<Boolean> myAction;
@@ -32,6 +31,7 @@ public class UpdateRequestsQueue {
   private final LinkedList<ScheduledData> mySentRequests;
   private final List<Runnable> myWaitingUpdateCompletionQueue;
   private final ProjectLevelVcsManager myPlVcsManager;
+  private boolean myUpdateUnversionedRequested;
 
   public UpdateRequestsQueue(final Project project, final ScheduledExecutorService executor, final Consumer<Boolean> action) {
     myExecutor = executor;
@@ -44,9 +44,11 @@ public class UpdateRequestsQueue {
     // not initialized
     myStarted = false;
     myStopped = false;
+    myUpdateUnversionedRequested = false;
   }
 
   public void initialized() {
+    LOG.debug("Initialized for project: " + myProject.getName());
     myStarted = true;
   }
 
@@ -54,32 +56,23 @@ public class UpdateRequestsQueue {
     return myStopped;
   }
 
-  private boolean updateUnversionedFilesEngaged = false;
-  private boolean updateWithoutUnversionedFilesEngaged = false;
-
   public void schedule(final boolean updateUnversionedFiles) {
     synchronized (myLock) {
       if (! myStarted && ApplicationManager.getApplication().isUnitTestMode()) return;
 
       if (! myStopped) {
-        if (updateUnversionedFiles) {
-          if (updateUnversionedFilesEngaged) return;
-          updateUnversionedFilesEngaged = true;
-        }
-        else {
-          if (updateWithoutUnversionedFilesEngaged) return;
-          updateWithoutUnversionedFilesEngaged = true;
-        }
-
-        final MyRunnable runnable = new MyRunnable(myAction, updateUnversionedFiles);
+        final MyRunnable runnable = new MyRunnable();
         final ScheduledFuture<?> future = myExecutor.schedule(runnable, 300, TimeUnit.MILLISECONDS);
         final ScheduledData data = new ScheduledData(runnable, future);
+        LOG.debug("Scheduled for project: " + myProject.getName() + ", runnable: " + runnable.hashCode());
         mySentRequests.add(data);
+        myUpdateUnversionedRequested = updateUnversionedFiles;
       }
     }
   }
 
   public void stop() {
+    LOG.debug("Calling stop for project: " + myProject.getName());
     final List<Runnable> waiters = new ArrayList<Runnable>(myWaitingUpdateCompletionQueue.size());
     synchronized (myLock) {
       myStopped = true;
@@ -90,13 +83,16 @@ public class UpdateRequestsQueue {
       waiters.addAll(myWaitingUpdateCompletionQueue);
       myWaitingUpdateCompletionQueue.clear();
     }
+    LOG.debug("Calling runnables in stop for project: " + myProject.getName());
     // do not run under lock
     for (Runnable runnable : waiters) {
       runnable.run();
     }
+    LOG.debug("Stop finished for project: " + myProject.getName());
   }
 
   public void invokeAfterUpdate(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title) {
+    LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
     final Runnable runnable = createCallbackWrapperRunnable(afterUpdate, cancellable, silently, title);
     synchronized (myLock) {
       if (! myStopped) {
@@ -106,9 +102,11 @@ public class UpdateRequestsQueue {
     }
     // do not run under lock
     if (myStopped) {
+      LOG.debug("invokeAfterUpdate: stopped, invoke right now for project: " + myProject.getName());
       runnable.run();
       return;
     }
+    LOG.debug("invokeAfterUpdate: exit for project: " + myProject.getName());
   }
 
   private Runnable createCallbackWrapperRunnable(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title) {
@@ -117,6 +115,7 @@ public class UpdateRequestsQueue {
         public void run() {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
+              LOG.debug("invokeAfterUpdate: silent wrapper called for project: " + myProject.getName());
               if (myProject.isDisposed()) return;
               afterUpdate.run();
               ChangesViewManager.getInstance(myProject).refreshView();
@@ -129,70 +128,70 @@ public class UpdateRequestsQueue {
       ProgressManager.getInstance().run(fictiveBackgroundable);
       return new Runnable() {
         public void run() {
+          LOG.debug("invokeAfterUpdate: NOT silent wrapper called for project: " + myProject.getName());
           fictiveBackgroundable.done();
         }
       };
     }
   }
 
-  // checks whether request is actual (was not deleted from requests queue); 
+  // checks whether request is actual (was not deleted from requests queue);
   // if actual, removes duplicate requests
   @Nullable
   private ScheduledData takeMeRemoveDuplicates(final Runnable key) {
+    LOG.debug("takeMeRemoveDuplicates: start for project: " + myProject.getName() + ", runnable: " + key.hashCode());
     synchronized (myLock) {
-      ScheduledData found = null;
       for (ScheduledData sentRequest : mySentRequests) {
         if (sentRequest.isMe(key)) {
-          found = sentRequest;
-          break;
+          LOG.debug("takeMeRemoveDuplicates: FOUND project: " + myProject.getName() + ", runnable: " + key.hashCode());
+          // remove duplicates, left "me" - for cancel
+          mySentRequests.retainAll(Collections.singletonList(sentRequest));
+          return sentRequest;
         }
       }
-      if (found != null) {
-        // remove duplicates, left "me" - for cancel
-        mySentRequests.retainAll(Collections.singletonList(found));
-      }
-      return found;
+      LOG.debug("takeMeRemoveDuplicates: not found, project: " + myProject.getName() + ", runnable: " + key.hashCode());
+      return null;
     }
   }
 
   private class MyRunnable implements Runnable {
-    private final Consumer<Boolean> myDelegate;
-    private final boolean myUpdateUnversionedFiles;
-
-    private MyRunnable(final Consumer<Boolean> delegate, final boolean updateUnversionedFiles) {
-      myDelegate = delegate;
-      myUpdateUnversionedFiles = updateUnversionedFiles;
-    }
-
     public void run() {
       final List<Runnable> copy = new ArrayList<Runnable>(myWaitingUpdateCompletionQueue.size());
       ScheduledData me = null;
       try {
+        boolean updateUnversioned;
         synchronized (myLock) {
-          if (myUpdateUnversionedFiles) {
-            updateUnversionedFilesEngaged = false;
-          }
-          else {
-            updateWithoutUnversionedFilesEngaged = false;
-          }
-
           if ((! myStopped) && ((! myStarted) || myPlVcsManager.isBackgroundVcsOperationRunning())) {
-            // remove "me"
-            mySentRequests.remove(me);
+            LOG.debug("MyRunnable: not started, not stopped, reschedule, project: " + myProject.getName() + ", runnable: " + hashCode());
+            mySentRequests.clear();
             // try again after time
-            schedule(myUpdateUnversionedFiles);
+            schedule(myUpdateUnversionedRequested);
+            return;
+          }
+          if (myStopped) {
+            LOG.debug("MyRunnable: STOPPED, project: " + myProject.getName() + ", runnable: " + hashCode());
+            mySentRequests.clear();
             return;
           }
           me = takeMeRemoveDuplicates(this);
-          if (myStopped || (me == null)) {
+          if (me == null) {
+            LOG.debug("MyRunnable: me == null, project: " + myProject.getName() + ", runnable: " + hashCode());
             return;
           }
           copy.addAll(myWaitingUpdateCompletionQueue);
+
+          // take it under lock
+          updateUnversioned = myUpdateUnversionedRequested;
+          // for concurrent schedules to tigger flag correctly
+          myUpdateUnversionedRequested = false;
         }
-        myDelegate.consume(myUpdateUnversionedFiles);
+        LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
+        myAction.consume(updateUnversioned);
+        LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", runnable: " + hashCode());
       } finally {
         if (me != null) {
           synchronized (myLock) {
+            LOG.debug("MyRunnable: delete executed, project: " + myProject.getName() + ", runnable: " + hashCode());
             // remove "me"
             mySentRequests.remove(me);
             if (! copy.isEmpty()) {
@@ -203,6 +202,7 @@ public class UpdateRequestsQueue {
           for (Runnable runnable : copy) {
             runnable.run();
           }
+          LOG.debug("MyRunnable: Runnables executed, project: " + myProject.getName() + ", runnable: " + hashCode());
         }
       }
     }
