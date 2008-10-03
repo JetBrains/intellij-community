@@ -95,6 +95,10 @@ public class GitSSHService implements ApplicationComponent {
    * Name of environment variable for SSH handler
    */
   @NonNls public static final String SSH_HANDLER_ENV = "GIT4IDEA_SSH_HANDLER";
+  /**
+   * Name of environment variable for SSH executable
+   */
+  @NonNls public static final String GIT_SSH_ENV = "GIT_SSH";
 
 
   /**

@@ -108,11 +108,22 @@ public class GitUtil {
    * Show error associated with the specified operation
    *
    * @param project   the project
-   * @param ex        an exception
+   * @param ex        the exception
    * @param operation the operation name
    */
-  public static void showOperationError(final Project project, final VcsException ex, @NonNls final String operation) {
-    Messages.showErrorDialog(project, ex.getMessage(), GitBundle.message("error.occurred.during", operation));
+  public static void showOperationError(final Project project, final VcsException ex, @NonNls @NotNull final String operation) {
+    showOperationError(project, operation, ex.getMessage());
+  }
+
+  /**
+   * Show error associated with the specified operation
+   *
+   * @param project   the project
+   * @param message   the error description
+   * @param operation the operation name
+   */
+  public static void showOperationError(final Project project, final String operation, final String message) {
+    Messages.showErrorDialog(project, message, GitBundle.message("error.occurred.during", operation));
   }
 
   /**

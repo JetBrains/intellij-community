@@ -44,7 +44,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
     // TODO: implement remote repository login/password - setup remote repos in Git config,
     // TODO: then just reference repo name here
     GitVcsSettings settings = GitVcsSettings.getInstance(project);
-    GitCheckoutDialog dialog = new GitCheckoutDialog(project, settings);
+    GitCheckoutDialog dialog = new GitCheckoutDialog(project);
     dialog.show();
     if (!dialog.isOK()) {
       return;

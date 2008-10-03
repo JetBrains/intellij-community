@@ -16,14 +16,12 @@
 package git4idea;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vcs.VcsException;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitCommandRunnable;
+import git4idea.commands.GitHandlerUtil;
+import git4idea.commands.GitSimpleHandler;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NonNls;
 
@@ -97,21 +95,15 @@ public class GitCheckoutDialog extends DialogWrapper {
    * the project for checkout
    */
   private final Project myProject;
-  /**
-   * the settings for the git
-   */
-  private final GitVcsSettings mySettings;
 
   /**
    * A constructor
    *
-   * @param project  a project for checkout action
-   * @param settings a Git settings
+   * @param project a project for checkout action
    */
-  public GitCheckoutDialog(Project project, GitVcsSettings settings) {
+  public GitCheckoutDialog(Project project) {
     super(project, true);
     myProject = project;
-    mySettings = settings;
     init();
     initListeners();
     setTitle(GitBundle.getString("clone.title"));
@@ -208,31 +200,16 @@ public class GitCheckoutDialog extends DialogWrapper {
     myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         myTestURL = myRepositoryURL.getText();
-        GitCommandRunnable cmdr;
-        try {
-          cmdr = new GitCommandRunnable(myProject, mySettings, GitUtil.getTempDir());
-        }
-        catch (VcsException ex) {
-          myTestURL = null;
-          myTestResult = null;
-          GitUtil.showOperationError(myProject, ex, "connection test");
-          return;
-        }
-        cmdr.setCommand(GitCommand.LS_REMOTE_CMD);
-        cmdr.setArgs(new String[]{myTestURL, "master"});
-
-        ProgressManager manager = ProgressManager.getInstance();
-        manager.runProcessWithProgressSynchronously(cmdr, GitBundle.message("clone.testing", myTestURL), false, myProject);
-
-        VcsException ex = cmdr.getException();
-        if (ex != null) {
-          myTestResult = Boolean.FALSE;
-          GitUtil.showOperationError(myProject, ex, "connection test");
-        }
-        else {
+        String stdout = GitHandlerUtil
+            .doSynchronously(GitSimpleHandler.checkRepository(myProject, myTestURL), GitBundle.message("clone.testing", myTestURL),
+                             "connection test");
+        if (stdout != null) {
           Messages.showInfoMessage(myTestButton, GitBundle.message("clone.test.success.message", myTestURL),
                                    GitBundle.getString("clone.test.success"));
           myTestResult = Boolean.TRUE;
+        }
+        else {
+          myTestResult = Boolean.FALSE;
         }
         updateOkButton();
       }
