@@ -39,7 +39,7 @@ public class TableLayout extends TabLayout {
         data.requiredRows++;
         eachX = data.toFitRec.x;
       }
-      eachLabel.setBounds(eachX, 0, size.width, 1);
+      myTabs.layout(eachLabel, eachX, 0, size.width, 1);
       eachX += size.width;
       data.requiredWidth += size.width;
     }
@@ -127,7 +127,7 @@ public class TableLayout extends TabLayout {
         }
 
 
-        label.setBounds(eachX, eachY, width, myTabs.myHeaderFitSize.height);
+        myTabs.layout(label, eachX, eachY, width, myTabs.myHeaderFitSize.height);
         label.setAligmentToCenter(deltaToFit > 0);
 
         eachX += width;
@@ -141,8 +141,7 @@ public class TableLayout extends TabLayout {
       int xAddin = 0;
       if (!myTabs.myHorizontalSide && selectedToolbar != null) {
         xAddin = selectedToolbar.getPreferredSize().width + 1;
-        selectedToolbar
-            .setBounds(insets.left + 1, eachY + 1, selectedToolbar.getPreferredSize().width, myTabs.getHeight() - eachY - insets.bottom - 2);
+        myTabs.layout(selectedToolbar, insets.left + 1, eachY + 1, selectedToolbar.getPreferredSize().width, myTabs.getHeight() - eachY - insets.bottom - 2);
       }
 
       myTabs.layoutComp(xAddin, eachY + 2, myTabs.getSelectedInfo().getComponent());

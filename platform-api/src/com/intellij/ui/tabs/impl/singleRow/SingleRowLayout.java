@@ -95,10 +95,10 @@ public class SingleRowLayout extends TabLayout {
     if (selectedToolbar != null) {
       if (!myTabs.isSideComponentVertical() && !myTabs.isHideTabs()) {
         int toolbarX = data.eachX + myTabs.getToolbarInset() + (data.moreRect != null ? data.moreRect.width : 0);
-        selectedToolbar.setBounds(toolbarX, data.insets.top, myTabs.getSize().width - data.insets.left - toolbarX, myTabs.myHeaderFitSize.height - 1);
+        myTabs.layout(selectedToolbar, toolbarX, data.insets.top, myTabs.getSize().width - data.insets.left - toolbarX, myTabs.myHeaderFitSize.height - 1);
       }
       else if (myTabs.isSideComponentVertical()) {
-        selectedToolbar.setBounds(data.insets.left + 1, data.yComp + 1, selectedToolbar.getPreferredSize().width,
+        myTabs.layout(selectedToolbar, data.insets.left + 1, data.yComp + 1, selectedToolbar.getPreferredSize().width,
                                   myTabs.getSize().height - data.yComp - data.insets.bottom - 2);
       }
     }
@@ -131,7 +131,7 @@ public class SingleRowLayout extends TabLayout {
 
     if (data.leftGhostVisible || myTabs.isGhostsAlwaysVisible()) {
       data.leftGhost = new Rectangle(data.eachX, y, myTabs.getGhostTabWidth(), myTabs.myHeaderFitSize.height);
-      myLeftGhost.setBounds(data.leftGhost);
+      myTabs.layout(myLeftGhost, data.leftGhost);
       data.eachX += data.leftGhost.width;
     }
 
@@ -151,11 +151,11 @@ public class SingleRowLayout extends TabLayout {
       boolean isLast = data.toLayout.indexOf(eachInfo) == data.toLayout.size() - 1;
 
       if (!isLast || deltaToFit == 0) {
-        label.setBounds(data.eachX, y, eachSize.width + deltaToFit, myTabs.myHeaderFitSize.height);
+        myTabs.layout(label, data.eachX, y, eachSize.width + deltaToFit, myTabs.myHeaderFitSize.height);
       }
       else {
         int width = data.toFitWidth - totalWidth;
-        label.setBounds(data.eachX, y, width, myTabs.myHeaderFitSize.height);
+        myTabs.layout(label, data.eachX, y, width, myTabs.myHeaderFitSize.height);
       }
 
       label.setAligmentToCenter(deltaToFit > 0);
@@ -167,12 +167,12 @@ public class SingleRowLayout extends TabLayout {
     }
 
     for (TabInfo eachInfo : data.toDrop) {
-      myTabs.myInfo2Label.get(eachInfo).setBounds(0, 0, 0, 0);
+      myTabs.resetLayout(myTabs.myInfo2Label.get(eachInfo));
     }
 
     if (data.rightGhostVisible || myTabs.isGhostsAlwaysVisible()) {
       data.rightGhost = new Rectangle(data.eachX, y, myTabs.getGhostTabWidth(), myTabs.myHeaderFitSize.height);
-      myRightGhost.setBounds(data.rightGhost);
+      myTabs.layout(myRightGhost, data.rightGhost);
     }
   }
 
@@ -264,7 +264,7 @@ public class SingleRowLayout extends TabLayout {
     }
 
     public void reset() {
-      setBounds(0, 0, 0, 0);
+      myTabs.resetLayout(this);
       setInfo(null);
     }
   }

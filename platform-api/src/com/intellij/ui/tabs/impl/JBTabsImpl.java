@@ -10,8 +10,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.tabs.*;
@@ -116,6 +116,7 @@ public class JBTabsImpl extends JComponent
 
   private TabActionsAutoHideListener myTabActionsAutoHideListener = new TabActionsAutoHideListener();
   private IdeGlassPane myGlassPane;
+  @NonNls private static final String LAYOUT_DONE = "Layout.done";
 
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
     myProject = project;
@@ -158,7 +159,9 @@ public class JBTabsImpl extends JComponent
 
     addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
-        if (mySingleRowLayout.myLastSingRowLayout != null && mySingleRowLayout.myLastSingRowLayout.moreRect != null && mySingleRowLayout.myLastSingRowLayout.moreRect.contains(e.getPoint())) {
+        if (mySingleRowLayout.myLastSingRowLayout != null &&
+            mySingleRowLayout.myLastSingRowLayout.moreRect != null &&
+            mySingleRowLayout.myLastSingRowLayout.moreRect.contains(e.getPoint())) {
           showMorePopup(e);
         }
       }
@@ -266,12 +269,16 @@ public class JBTabsImpl extends JComponent
 
     @Override
     public void mouseMoved(final MouseEvent e) {
+      if (!myTabLabelActionsAutoHide) return;
+
       final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getX(), e.getY(), JBTabsImpl.this);
       myLastOverPoint = point;
       processMouseOver();
     }
 
     void processMouseOver() {
+      if (!myTabLabelActionsAutoHide) return;
+
       if (myLastOverPoint == null) return;
 
       if (myLastOverPoint.x >= 0 && myLastOverPoint.x < getWidth() && myLastOverPoint.y > 0 && myLastOverPoint.y < getHeight()) {
@@ -559,7 +566,8 @@ public class JBTabsImpl extends JComponent
           public void run() {
             if (myDisposed) {
               result.setRejected();
-            } else {
+            }
+            else {
               removeDeferred(deferredRemove).notifyWhenDone(result);
             }
           }
@@ -590,6 +598,8 @@ public class JBTabsImpl extends JComponent
   private ActionCallback removeDeferred(final Component deferredRemove) {
     final ActionCallback callback = new ActionCallback();
     if (deferredRemove != null) {
+      //avoid flickering
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (isForDeferredRemove(deferredRemove)) {
@@ -624,8 +634,9 @@ public class JBTabsImpl extends JComponent
 
   private void setForDeferredRemove(Component c, boolean toRemove) {
     if (c instanceof JComponent) {
-      ((JComponent)c).putClientProperty(DEFERRED_REMOVE_FLAG, toRemove ? Boolean.TRUE : null);
-      c.setBounds(0, 0, 0, 0);
+      final JComponent jc = (JComponent)c;
+      jc.putClientProperty(DEFERRED_REMOVE_FLAG, toRemove ? Boolean.TRUE : null);
+      layout(jc, 0, 0, 0, 0);
       if (toRemove) {
         removeCurrentDeferred();
         setDeferredToRemove(c);
@@ -898,7 +909,8 @@ public class JBTabsImpl extends JComponent
 
       if (group != null && myTabs.myActionManager != null) {
         final String place = info.getPlace();
-        ActionToolbar toolbar = myTabs.myActionManager.createActionToolbar(place != null ? place : ActionPlaces.UNKNOWN, group, myTabs.myHorizontalSide);
+        ActionToolbar toolbar =
+            myTabs.myActionManager.createActionToolbar(place != null ? place : ActionPlaces.UNKNOWN, group, myTabs.myHorizontalSide);
         toolbar.setTargetComponent(info.getActionsContextComponent());
         final JComponent actionToolbar = toolbar.getComponent();
         add(actionToolbar, BorderLayout.CENTER);
@@ -914,8 +926,6 @@ public class JBTabsImpl extends JComponent
       }
     }
   }
-
-
 
 
   public void doLayout() {
@@ -945,7 +955,7 @@ public class JBTabsImpl extends JComponent
         final TabLabel label = myInfo2Label.get(getSelectedInfo());
         final Rectangle bounds = label.getBounds();
         final Insets insets = getLayoutInsets();
-        label.setBounds(bounds.x, bounds.y, getWidth() - insets.right - insets.left, bounds.height);
+        layout(label, bounds.x, bounds.y, getWidth() - insets.right - insets.left, bounds.height);
       }
 
       myTabActionsAutoHideListener.processMouseOver();
@@ -953,14 +963,15 @@ public class JBTabsImpl extends JComponent
     finally {
       myForcedRelayout = false;
     }
+
+    applyResetComponents();
   }
 
 
   public void layoutComp(int xAddin, int yComp, final JComponent comp) {
     final Insets insets = getLayoutInsets();
 
-    final Insets border =
-        isHideTabs() ? new Insets(0, 0, 0, 0) : (Insets)myBorderSize.clone();
+    final Insets border = isHideTabs() ? new Insets(0, 0, 0, 0) : (Insets)myBorderSize.clone();
     if (isStealthModeEffective() || isHideTabs()) {
       border.top = getBorder(-1);
       border.bottom = getBorder(-1);
@@ -974,9 +985,9 @@ public class JBTabsImpl extends JComponent
     border.left += inner.left;
     border.right += inner.right;
 
-    comp.setBounds(insets.left + xAddin + border.left, yComp + border.top,
-                   getWidth() - insets.left - insets.right - xAddin - border.left - border.right,
-                   getHeight() - insets.bottom - yComp - border.top - border.bottom);
+    layout(comp, insets.left + xAddin + border.left, yComp + border.top,
+           getWidth() - insets.left - insets.right - xAddin - border.left - border.right,
+           getHeight() - insets.bottom - yComp - border.top - border.bottom);
   }
 
 
@@ -1002,7 +1013,6 @@ public class JBTabsImpl extends JComponent
   }
 
 
-
   public int getToolbarInset() {
     return getArcSize() + 1;
   }
@@ -1025,16 +1035,16 @@ public class JBTabsImpl extends JComponent
   private void reset(final TabInfo each, final boolean resetLabels) {
     final JComponent c = each.getComponent();
     if (c != null) {
-      c.setBounds(0, 0, 0, 0);
+      resetLayout(c);
     }
 
     final JComponent toolbar = myInfo2Toolbar.get(each);
     if (toolbar != null) {
-      toolbar.setBounds(0, 0, 0, 0);
+      resetLayout(toolbar);
     }
 
     if (resetLabels) {
-      myInfo2Label.get(each).setBounds(0, 0, 0, 0);
+      resetLayout(myInfo2Label.get(each));
     }
   }
 
@@ -1130,7 +1140,7 @@ public class JBTabsImpl extends JComponent
         path.lineTo(bottomX, bottomY);
         path.lineTo(topX, bottomY);
 
-        path.quadTo(topX - curveArc * 2 + 1, bottomY - (bottomY - topY) / 4, topX, (bottomY - topY) / 2);
+        path.quadTo(topX - curveArc * 2 + 1, bottomY - (bottomY - topY) / 4, topX, bottomY - (bottomY - topY) / 2);
 
         path.quadTo(topX + curveArc - 1, topY + (bottomY - topY) / 4, topX, topY);
 
@@ -1185,7 +1195,8 @@ public class JBTabsImpl extends JComponent
       if (myLastLayoutPass.hasCurveSpaceFor(selected)) {
         path.lineTo(rightX, bottomY - arc);
         path.quadTo(rightX, bottomY, rightX + arc, bottomY);
-      } else {
+      }
+      else {
         path.lineTo(rightX, bottomY);
       }
     }
@@ -1217,7 +1228,8 @@ public class JBTabsImpl extends JComponent
       if (getActiveTabFillIn() == null) {
         from = UIUtil.getFocusedFillColor();
         to = UIUtil.getFocusedFillColor();
-      } else {
+      }
+      else {
         bgPreFill = getActiveTabFillIn();
         alpha = 255;
         paintBottomY = topY + getArcSize() - 2;
@@ -1231,7 +1243,8 @@ public class JBTabsImpl extends JComponent
           alpha = 150;
           from = UIUtil.toAlpha(UIUtil.getPanelBackgound().brighter(), alpha);
           to = UIUtil.toAlpha(UIUtil.getPanelBackgound(), alpha);
-        } else {
+        }
+        else {
           alpha = 255;
           from = UIUtil.toAlpha(getActiveTabFillIn(), alpha);
           to = UIUtil.toAlpha(getActiveTabFillIn(), alpha);
@@ -1426,7 +1439,8 @@ public class JBTabsImpl extends JComponent
           g2d.setColor(borderColor);
           g2d.drawLine(x, y, x + width - 1, y);
         }
-      } else {
+      }
+      else {
         g2d.setColor(getActiveTabFillIn());
         g2d.fillRect(x, topY, width, myBorderSize.top);
         if (myBorderSize.top > 1) {
@@ -1793,9 +1807,11 @@ public class JBTabsImpl extends JComponent
       for (EventListener eachListener : myTabMouseListeners) {
         if (eachListener instanceof MouseListener) {
           label.addMouseListener(((MouseListener)eachListener));
-        } else if (eachListener instanceof MouseMotionListener) {
+        }
+        else if (eachListener instanceof MouseMotionListener) {
           label.addMouseMotionListener(((MouseMotionListener)eachListener));
-        } else {
+        }
+        else {
           assert false;
         }
       }
@@ -1808,9 +1824,11 @@ public class JBTabsImpl extends JComponent
       for (EventListener eachListener : myTabMouseListeners) {
         if (eachListener instanceof MouseListener) {
           label.removeMouseListener(((MouseListener)eachListener));
-        } else if (eachListener instanceof MouseMotionListener) {
+        }
+        else if (eachListener instanceof MouseMotionListener) {
           label.removeMouseMotionListener(((MouseMotionListener)eachListener));
-        } else {
+        }
+        else {
           assert false;
         }
       }
@@ -2137,5 +2155,32 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+  public static void layout(JComponent c, Rectangle bounds) {
+    final Rectangle now = c.getBounds();
+    if (!bounds.equals(now)) {
+      c.setBounds(bounds);
+    }
+    c.putClientProperty(LAYOUT_DONE, Boolean.TRUE);
+  }
+
+  public static void layout(JComponent c, int x, int y, int width, int height) {
+    layout(c, new Rectangle(x, y, width, height));
+  }
+
+  public static void resetLayout(JComponent c) {
+    c.putClientProperty(LAYOUT_DONE, null);
+  }
+
+  private void applyResetComponents() {
+    for (int i = 0; i < getComponentCount(); i++) {
+      final Component each = getComponent(i);
+      if (each instanceof JComponent) {
+        final Object done = ((JComponent)each).getClientProperty(LAYOUT_DONE);
+        if (!Boolean.TRUE.equals(done)) {
+          each.setBounds(0, 0, 0, 0);
+        }
+      }
+    }
+  }
 
 }
