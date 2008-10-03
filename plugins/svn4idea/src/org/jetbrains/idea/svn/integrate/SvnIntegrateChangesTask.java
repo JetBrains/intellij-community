@@ -252,7 +252,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
         CommitChangeListDialog.commitPaths(myProject, files, null, null, myMerger.getComment());
         prepareAndShowResults();
       }
-    }, true, false, SvnBundle.message("action.Subversion.integrate.changes.messages.title"));
+    }, true, false, SvnBundle.message("action.Subversion.integrate.changes.messages.title"), true);
   }
 
   private void showAlienCommit() {
