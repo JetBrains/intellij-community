@@ -35,6 +35,7 @@ import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.structuralsearch.plugin.replace.ui.NavigateSearchResultsDialog;
 import com.intellij.structuralsearch.plugin.ui.actions.DoSearchAction;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
@@ -178,24 +179,21 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
       public void run() {
         try {
-          SwingUtilities.invokeAndWait(
-            new Runnable() {
-              public void run() {
-                ApplicationManager.getApplication().runWriteAction(
-                  new Runnable() {
-                    public void run() {
-                      if (!doValidate()) {
-                        getOKAction().setEnabled(false);
-                      } else {
-                        getOKAction().setEnabled(true);
-                        reportMessage(null,null);
-                      }
-                    }
+          GuiUtils.invokeAndWait(new Runnable() {
+            public void run() {
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  if (!doValidate()) {
+                    getOKAction().setEnabled(false);
                   }
-                );
-              }
+                  else {
+                    getOKAction().setEnabled(true);
+                    reportMessage(null, null);
+                  }
+                }
+              });
             }
-          );
+          });
         }
         catch (Exception e) {
           e.printStackTrace();
