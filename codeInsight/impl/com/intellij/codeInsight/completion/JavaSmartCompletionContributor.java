@@ -13,9 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -87,7 +84,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
     //new xxx.yyy
     if (psiElement().afterLeaf(psiElement().withText(".")).withSuperParent(2, psiElement(PsiNewExpression.class)).accepts(element)) {
-      return new Pair<ElementFilter, TailType>(new GeneratorFilter(AssignableGroupFilter.class, new ExpectedTypesGetter()), TailType.UNKNOWN);
+      if (((PsiNewExpression)element.getParent().getParent()).getClassReference() == element.getParent()) {
+        return new Pair<ElementFilter, TailType>(new GeneratorFilter(AssignableGroupFilter.class, new ExpectedTypesGetter()),
+                                                 TailType.UNKNOWN);
+      }
     }
 
     //new HashMap<xxx,>
