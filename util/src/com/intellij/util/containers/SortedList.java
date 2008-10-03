@@ -24,6 +24,11 @@ public class SortedList<T> extends AbstractList<T>{
     myDelegate.add(index, element);
   }
 
+  @Override
+  public T remove(final int index) {
+    return myDelegate.remove(index);
+  }
+
   public T get(final int index) {
     if (!mySorted) {
       Collections.sort(myDelegate, myComparator);
@@ -34,7 +39,6 @@ public class SortedList<T> extends AbstractList<T>{
 
   @Override
   public void clear() {
-    mySorted = false;
     myDelegate.clear();
   }
 
