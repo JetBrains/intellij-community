@@ -60,7 +60,7 @@ public class LibraryCompositionSettings {
     return myAddedJars;
   }
 
-  public void setAddedJars(final List<VirtualFile> addedJars) {
+  public void setAddedJars(final Collection<VirtualFile> addedJars) {
     myAddedJars.clear();
     myAddedJars.addAll(addedJars);
   }
@@ -73,7 +73,7 @@ public class LibraryCompositionSettings {
     myDownloadLibraries = downloadLibraries;
   }
 
-  public void setUsedLibraries(List<Library> addedLibraries) {
+  public void setUsedLibraries(Collection<Library> addedLibraries) {
     myUsedLibraries.clear();
     myUsedLibraries.addAll(addedLibraries);
   }
@@ -126,7 +126,7 @@ public class LibraryCompositionSettings {
   }
 
   @Nullable
-  public Library createLibrary(final ModifiableRootModel rootModel, @Nullable LibrariesContainer additionalContainer) {
+  private Library createLibrary(final ModifiableRootModel rootModel, @Nullable LibrariesContainer additionalContainer) {
     if (!myAddedJars.isEmpty()) {
       VirtualFile[] roots = myAddedJars.toArray(new VirtualFile[myAddedJars.size()]);
       return LibrariesContainerFactory.createLibrary(additionalContainer, LibrariesContainerFactory.createContainer(rootModel),

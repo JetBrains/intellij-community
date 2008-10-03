@@ -14,8 +14,10 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +61,12 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
 
   protected void doOKAction() {
     if (!myAddSupportPanel.downloadLibraries()) {
-      return;
+      int answer = Messages.showYesNoDialog(myAddSupportPanel.getMainPanel(),
+                                            ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
+                                            CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+      if (answer != 0) {
+        return;
+      }
     }
 
     new WriteAction() {

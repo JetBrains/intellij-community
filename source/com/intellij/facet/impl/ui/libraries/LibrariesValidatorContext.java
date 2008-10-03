@@ -4,7 +4,7 @@
 
 package com.intellij.facet.impl.ui.libraries;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -25,8 +25,8 @@ public interface LibrariesValidatorContext {
   @NotNull
   ModulesProvider getModulesProvider();
 
-  @Nullable
-  Project getProject();
+  @NotNull
+  Module getModule();
 
   LibrariesContainer getLibrariesContainer();
 

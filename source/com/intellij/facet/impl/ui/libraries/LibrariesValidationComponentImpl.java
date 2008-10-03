@@ -57,6 +57,5 @@ public class LibrariesValidationComponentImpl implements LibrariesValidationComp
   }
 
   public void setupLibraries() {
-    myLibrariesValidator.setupLibraries(myModule);
   }
 }

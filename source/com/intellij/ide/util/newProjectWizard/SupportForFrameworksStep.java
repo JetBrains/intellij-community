@@ -14,6 +14,9 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +28,7 @@ import java.util.List;
  */
 public class SupportForFrameworksStep extends ModuleWizardStep {
   private AddSupportForFrameworksPanel mySupportForFrameworksPanel;
+  private boolean myCommitted;
 
   public SupportForFrameworksStep(final ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {
     List<FrameworkSupportProvider> providers = FrameworkSupportUtil.getProviders(builder.getModuleType());
@@ -61,11 +65,17 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
   }
 
   public void _commit(final boolean finishChosen) throws CommitStepException {
-    if (finishChosen) {
+    if (finishChosen && !myCommitted) {
       boolean ok = mySupportForFrameworksPanel.downloadLibraries();
       if (!ok) {
-        throw new CommitStepException(null);
+        int answer = Messages.showYesNoDialog(getComponent(),
+                                              ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
+                                              CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+        if (answer != 0) {
+          throw new CommitStepException(null);
+        }
       }
+      myCommitted = true;
     }
   }
 

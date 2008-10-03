@@ -15,7 +15,6 @@ import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.module.Module;
 
 /**
@@ -49,9 +48,9 @@ public class LibrariesValidatorContextImpl implements LibrariesValidatorContext 
     return new DefaultModulesProvider(myModule.getProject());
   }
 
-  @Nullable
-  public Project getProject() {
-    return myModule.getProject();
+  @NotNull
+  public Module getModule() {
+    return myModule;
   }
 
   public LibrariesContainer getLibrariesContainer() {
