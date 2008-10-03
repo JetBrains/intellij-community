@@ -154,7 +154,7 @@ public class RollbackChangesDialog extends DialogWrapper {
               pathsToRefresh.addAll(ChangesUtil.getPaths(changes));
 
               final List<VcsException> exceptions = environment.rollbackChanges(changes);
-              if (exceptions.size() > 0) {
+              if (exceptions != null && exceptions.size() > 0) {
                 vcsExceptions.addAll(exceptions);
               }
               else if (deleteLocallyAddedFiles) {
