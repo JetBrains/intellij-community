@@ -1280,6 +1280,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public void removeIndexableSet(IndexableFileSet set) {
+    myChangedFilesUpdater.forceUpdate();
     myIndexableSets.remove(set);
   }
 
