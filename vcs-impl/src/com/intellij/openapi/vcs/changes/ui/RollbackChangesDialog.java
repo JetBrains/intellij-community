@@ -141,7 +141,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     final Runnable notifier = changeListManager.prepareForChangeDeletion(changes);
     final Runnable afterRefresh = new Runnable() {
       public void run() {
-        changeListManager.invokeAfterUpdate(notifier, false, true, "Refresh change lists after update");
+        changeListManager.invokeAfterUpdate(notifier, false, true, "Refresh change lists after update", false);
       }
     };
 

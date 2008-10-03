@@ -158,8 +158,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
    *
    * runnable is invoked on AWT thread
    */
-  public void invokeAfterUpdate(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title) {
-    myUpdater.invokeAfterUpdate(afterUpdate, cancellable, silently, title);
+  public void invokeAfterUpdate(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title,
+                                final boolean synchronous) {
+    myUpdater.invokeAfterUpdate(afterUpdate, cancellable, silently, title, synchronous);
   }
 
   static class DisposedException extends RuntimeException {}
@@ -653,7 +654,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
           ChangesViewManager.getInstance(myProject).scheduleRefresh();
         }
-      }, false, false, VcsBundle.message("change.lists.manager.add.unversioned"));
+      }, false, false, VcsBundle.message("change.lists.manager.add.unversioned"), false);
     } else {
       ChangesViewManager.getInstance(myProject).scheduleRefresh();
     }

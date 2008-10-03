@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 
@@ -51,6 +52,6 @@ public class CommitAction extends AnAction {
         CommitChangeListDialog.commitChanges(project, Arrays.asList(changes), (LocalChangeList) list,
                                              ChangeListManager.getInstance(project).getRegisteredExecutors(), true, null);
       }
-    }, false, true, "common checkin");
+    }, false, false, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"), true);
   }
 }

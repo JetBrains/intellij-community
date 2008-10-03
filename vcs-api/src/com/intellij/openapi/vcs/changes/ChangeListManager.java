@@ -49,7 +49,8 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract void scheduleUpdate();
   public abstract void scheduleUpdate(boolean updateUnversionedFiles);
-  public abstract void invokeAfterUpdate(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title);
+  public abstract void invokeAfterUpdate(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title,
+                                         final boolean synchronous);
   public abstract boolean ensureUpToDate(boolean canBeCanceled);
 
   public abstract List<LocalChangeList> getChangeListsCopy();

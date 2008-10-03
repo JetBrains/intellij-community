@@ -5,11 +5,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -91,27 +96,46 @@ public class UpdateRequestsQueue {
     LOG.debug("Stop finished for project: " + myProject.getName());
   }
 
-  public void invokeAfterUpdate(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title) {
+  private static class CallbackData {
+    private final Runnable myCallback;
+    private final Runnable myWrapperStarter;
+
+    private CallbackData(@NotNull final Runnable callback, @Nullable final Runnable wrapperStarter) {
+      myCallback = callback;
+      myWrapperStarter = wrapperStarter;
+    }
+  }
+
+  public void invokeAfterUpdate(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title, final boolean synchronously) {
     LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
-    final Runnable runnable = createCallbackWrapperRunnable(afterUpdate, cancellable, silently, title);
+    final CallbackData data = createCallbackWrapperRunnable(afterUpdate, cancellable, silently, title, synchronously);
     synchronized (myLock) {
       if (! myStopped) {
-        myWaitingUpdateCompletionQueue.add(runnable);
+        myWaitingUpdateCompletionQueue.add(data.myCallback);
         schedule(true);
       }
     }
-    // do not run under lock
+    // do not run under lock; stopped cannot be switched into not stopped - can check without lock
     if (myStopped) {
       LOG.debug("invokeAfterUpdate: stopped, invoke right now for project: " + myProject.getName());
-      runnable.run();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          afterUpdate.run();
+        }
+      });
       return;
+    } else {
+      // invoke progress if needed
+      if (data.myWrapperStarter != null) {
+        data.myWrapperStarter.run();
+      }
     }
     LOG.debug("invokeAfterUpdate: exit for project: " + myProject.getName());
   }
 
-  private Runnable createCallbackWrapperRunnable(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title) {
+  private CallbackData createCallbackWrapperRunnable(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title, final boolean synchronously) {
     if (silently) {
-      return new Runnable() {
+      return new CallbackData(new Runnable() {
         public void run() {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -122,16 +146,37 @@ public class UpdateRequestsQueue {
             }
           });
         }
-      };
+      }, null);
     } else {
-      final FictiveBackgroundable fictiveBackgroundable = new FictiveBackgroundable(myProject, afterUpdate, cancellable, title);
-      ProgressManager.getInstance().run(fictiveBackgroundable);
-      return new Runnable() {
-        public void run() {
-          LOG.debug("invokeAfterUpdate: NOT silent wrapper called for project: " + myProject.getName());
-          fictiveBackgroundable.done();
-        }
-      };
+      if (synchronously) {
+        final Waiter waiter = new Waiter(myProject, afterUpdate);
+        return new CallbackData(
+          new Runnable() {
+            public void run() {
+              LOG.debug("invokeAfterUpdate: NOT silent SYNCHRONOUS wrapper called for project: " + myProject.getName());
+              waiter.done();
+            }
+          }, new Runnable() {
+            public void run() {
+              ProgressManager.getInstance().runProcessWithProgressSynchronously(waiter,
+                VcsBundle.message("change.list.manager.wait.lists.synchronization", title), false, myProject);
+            }
+          }
+        );
+      } else {
+        final FictiveBackgroundable fictiveBackgroundable = new FictiveBackgroundable(myProject, afterUpdate, cancellable, title);
+        return new CallbackData(
+          new Runnable() {
+            public void run() {
+              LOG.debug("invokeAfterUpdate: NOT silent wrapper called for project: " + myProject.getName());
+              fictiveBackgroundable.done();
+            }
+          }, new Runnable() {
+            public void run() {
+              ProgressManager.getInstance().run(fictiveBackgroundable);
+            }
+          });
+      }
     }
   }
 

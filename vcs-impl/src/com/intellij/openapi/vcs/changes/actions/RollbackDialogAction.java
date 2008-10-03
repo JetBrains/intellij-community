@@ -36,7 +36,7 @@ public class RollbackDialogAction extends AnAction {
           browser.rebuildList();
         }
       }
-    }, false, false, VcsBundle.message("changes.action.rollback.text"));
+    }, false, false, VcsBundle.message("changes.action.rollback.text"), false);
   }
 
   public void update(AnActionEvent e) {

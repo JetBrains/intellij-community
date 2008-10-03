@@ -106,7 +106,7 @@ public class ShowDiffAction extends AnAction {
     };
 
     if (needsConvertion) {
-      ChangeListManager.getInstance(project).invokeAfterUpdate(performer, true, false, ourText);
+      ChangeListManager.getInstance(project).invokeAfterUpdate(performer, true, false, ourText, false);
     }  else {
       performer.run();
     }
