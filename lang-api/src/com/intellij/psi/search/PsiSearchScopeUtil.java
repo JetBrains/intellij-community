@@ -73,14 +73,14 @@ public class PsiSearchScopeUtil {
       return false;
     }
     else {
-      GlobalSearchScope _scope = (GlobalSearchScope)scope;
-
+      GlobalSearchScope globalScope = (GlobalSearchScope)scope;
       PsiFile file = element.getContainingFile();
       if (file != null) {
         final PsiElement context = file.getContext();
         if (context != null) file = context.getContainingFile();
-        if (file.getVirtualFile() == null) return true; //?
-        return _scope.contains(file.getVirtualFile());
+        if (file == null) return false;
+        VirtualFile virtualFile = file.getVirtualFile();
+        return virtualFile == null || globalScope.contains(file.getVirtualFile());
       }
       else {
         return true;
