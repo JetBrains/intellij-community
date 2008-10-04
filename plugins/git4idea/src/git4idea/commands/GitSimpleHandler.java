@@ -34,11 +34,11 @@ public class GitSimpleHandler extends GitHandler {
   /**
    * Stderr output
    */
-  private final StringBuilder stderr = new StringBuilder();
+  private final StringBuilder myStderr = new StringBuilder();
   /**
    * Stdout output
    */
-  private final StringBuilder stdout = new StringBuilder();
+  private final StringBuilder myStdout = new StringBuilder();
 
   /**
    * A constructor
@@ -56,10 +56,10 @@ public class GitSimpleHandler extends GitHandler {
    */
   protected void onTextAvailable(final String text, final Key outputType) {
     if (ProcessOutputTypes.STDOUT == outputType) {
-      stdout.append(text);
+      myStdout.append(text);
     }
     else if (ProcessOutputTypes.STDERR == outputType) {
-      stderr.append(text);
+      myStderr.append(text);
     }
   }
 
@@ -67,14 +67,14 @@ public class GitSimpleHandler extends GitHandler {
    * @return stderr contents
    */
   public String getStderr() {
-    return stderr.toString();
+    return myStderr.toString();
   }
 
   /**
    * @return stdout contents
    */
   public String getStdout() {
-    return stdout.toString();
+    return myStdout.toString();
   }
 
   /**
@@ -90,13 +90,5 @@ public class GitSimpleHandler extends GitHandler {
     GitSimpleHandler handler = new GitSimpleHandler(project, new File("."), "ls-remote");
     handler.addParameters(url, "master");
     return handler;
-  }
-
-  /**
-   * Wait for process termination
-   */
-  public void waitFor() {
-    checkStarted();
-    myHandler.waitFor();
   }
 }

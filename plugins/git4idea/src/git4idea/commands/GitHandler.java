@@ -53,7 +53,8 @@ public abstract class GitHandler {
   /**
    * wrapped process handler
    */
-  protected OSProcessHandler myHandler;
+  // note that access is safe beacause it accessed in unsychronized block only after process is started, and it does not change after that
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private OSProcessHandler myHandler;
   /**
    * process
    */
@@ -61,7 +62,7 @@ public abstract class GitHandler {
   /**
    * the contenxt project (might be a default project)
    */
-  protected final Project myProject;
+  private final Project myProject;
   /**
    * the working directory
    */
@@ -77,7 +78,8 @@ public abstract class GitHandler {
   /**
    * if true process might be cancelled
    */
-  private boolean myIsCancellable = true;
+  // note that access is safe beacause it accessed in unsychronized block only after process is started, and it does not change after that
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private boolean myIsCancellable = true;
   /**
    * exit code or null if exit code is not yet availale
    */
@@ -85,7 +87,7 @@ public abstract class GitHandler {
   /**
    * listeners
    */
-  protected final EventDispatcher<GitHandlerListener> myListeners = EventDispatcher.create(GitHandlerListener.class);
+  private final EventDispatcher<GitHandlerListener> myListeners = EventDispatcher.create(GitHandlerListener.class);
 
   /**
    * A constructor
@@ -94,7 +96,7 @@ public abstract class GitHandler {
    * @param directory a process directory
    * @param command   a command to execute
    */
-  public GitHandler(@NotNull Project project, @NotNull File directory, @NotNull String command) {
+  protected GitHandler(@NotNull Project project, @NotNull File directory, @NotNull String command) {
     myProject = project;
     GitVcsSettings settings = GitVcsSettings.getInstance(project);
     myWorkingDirectory = directory;
@@ -183,7 +185,7 @@ public abstract class GitHandler {
    *
    * @throws IllegalStateException if process has been already started
    */
-  private final void checkNotStarted() {
+  private void checkNotStarted() {
     if (isStarted()) {
       throw new IllegalStateException("The process has been already started");
     }
@@ -233,9 +235,7 @@ public abstract class GitHandler {
     try {
       // setup environment
       if (!myProject.isDefault()) {
-        final GeneralCommandLine line = myCommandLine.clone();
-        line.setExePath("git");
-        GitVcs.getInstance(myProject).showMessages(line.getCommandLineString());
+        GitVcs.getInstance(myProject).showMessages(printCommandLine());
       }
       if (log.isDebugEnabled()) {
         log.debug("running git: " + myCommandLine.getCommandLineString() + " in " + myWorkingDirectory);
@@ -277,6 +277,15 @@ public abstract class GitHandler {
       cleanupEnv();
       myListeners.getMulticaster().startFailed(t);
     }
+  }
+
+  /**
+   * @return a command line with full path to executable replace to "git"
+   */
+  public String printCommandLine() {
+    final GeneralCommandLine line = myCommandLine.clone();
+    line.setExePath("git");
+    return line.getCommandLineString();
   }
 
   /**
@@ -329,6 +338,14 @@ public abstract class GitHandler {
       myEnvironmentCleanedUp = true;
       ssh.unregisterHander(myHandlerNo);
     }
+  }
+
+  /**
+   * Wait for process termination
+   */
+  public void waitFor() {
+    checkStarted();
+    myHandler.waitFor();
   }
 
 }

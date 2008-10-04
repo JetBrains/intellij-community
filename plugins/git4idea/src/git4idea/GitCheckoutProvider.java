@@ -15,22 +15,18 @@
  */
 package git4idea;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckoutProvider;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.actions.BasicAction;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitCommandRunnable;
-import org.jetbrains.annotations.NonNls;
+import git4idea.commands.GitHandlerUtil;
+import git4idea.commands.GitLineHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
 
 /**
  * Checkout provider fo the Git
@@ -41,9 +37,6 @@ public class GitCheckoutProvider implements CheckoutProvider {
    */
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
     BasicAction.saveAll();
-    // TODO: implement remote repository login/password - setup remote repos in Git config,
-    // TODO: then just reference repo name here
-    GitVcsSettings settings = GitVcsSettings.getInstance(project);
     GitCheckoutDialog dialog = new GitCheckoutDialog(project);
     dialog.show();
     if (!dialog.isOK()) {
@@ -54,27 +47,11 @@ public class GitCheckoutProvider implements CheckoutProvider {
       // TODO message
       return;
     }
-    GitCommandRunnable cmdr = new GitCommandRunnable(project, settings, destinationParent);
-    cmdr.setCommand(GitCommand.CLONE_CMD);
-    @NonNls ArrayList<String> args = new ArrayList<String>();
-    args.add(dialog.getSourceRepositoryURL());
-    if (dialog.getOriginName().length() != 0) {
-      args.add("-o");
-      args.add(dialog.getOriginName());
-    }
-    args.add(dialog.getDirectoryName());
     final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
-    cmdr.setArgs(args.toArray(new String[args.size()]));
-
-    ProgressManager manager = ProgressManager.getInstance();
-    //TODO: make this async so the git command output can be seen in the version control window as it happens...
-    manager.runProcessWithProgressSynchronously(cmdr, GitBundle.message("cloning.repository", sourceRepositoryURL), false, project);
-
-    @SuppressWarnings({"ThrowableResultOfMethodCallIgnored"}) VcsException ex = cmdr.getException();
-    if (ex != null) {
-      GitUtil.showOperationError(project, ex, "git clone");
-    }
-    else {
+    GitLineHandler handler = GitLineHandler
+        .clone(project, sourceRepositoryURL, new File(dialog.getParentDirectory()), dialog.getDirectoryName(), dialog.getOriginName());
+    int code = GitHandlerUtil.doSynchronously(handler, GitBundle.message("cloning.repository", sourceRepositoryURL), "git clone");
+    if (code == 0) {
       if (listener != null) {
         listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()));
       }
