@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.options.SettingsEditor;
@@ -70,8 +71,9 @@ public class PythonRunConfiguration extends RunConfigurationBase implements Loca
         }
         commandLine.setEnvParams(getEnvs());
         commandLine.setPassParentEnvs(PASS_PARENT_ENVS);
-
-        return new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
+        final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
+        ProcessTerminatedListener.attach(processHandler);
+        return processHandler;
       }
     };
     TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(getProject());
