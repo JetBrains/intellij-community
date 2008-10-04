@@ -302,7 +302,7 @@ public class PyResolveUtil {
     
     static String _nvl(Object s) {
       if (s != null) return "'" + s.toString() + "'";
-      else return "null";
+      else return "null";  // TODO: move to PyNames
     }
     
     public Set<String> getSeen() {
@@ -373,21 +373,6 @@ public class PyResolveUtil {
     }
 
 
-    // NOTE: unused now
-    /**
-     * Looks at an element and says if looking at it worthy.
-     * Used to break circular attempts to resolve names imported into __init__.py inside it again.
-     * @param element to be analyzed and probably remembered.
-     * @return true if execute() may be tried with this element; else treeWalkUp and the like should immediately return negative result.
-     */
-    public boolean approve(PsiElement element) {
-      if ((element instanceof PyFile) && (ResolveImportUtil.INIT_PY.equals(((PyFile)element).getName()))) {
-        String fname = ((PyFile)element).getUrl();
-        if (mySeen.contains(fname)) return false; // already seen it, may not try again
-        else mySeen.add(fname);
-      }
-      return true;
-    }
   }
 
   public static class MultiResolveProcessor implements PsiScopeProcessor {
@@ -432,6 +417,16 @@ public class PyResolveUtil {
 
     protected String my_notice;
 
+    public VariantsProcessor() {
+      // empty
+    }
+
+    public VariantsProcessor(final Filter filter) {
+      my_filter = filter;
+    }
+
+    protected Filter my_filter;
+
     public void setNotice(@Nullable String notice) {
       my_notice = notice;
     }
@@ -457,6 +452,7 @@ public class PyResolveUtil {
     }
 
     public boolean execute(PsiElement element, ResolveState substitutor) {
+      if (my_filter != null && !my_filter.accept(element)) return true; // skip whatever the filter rejects
       // TODO: refactor to look saner; much code duplication
       if (element instanceof PsiNamedElement) {
         final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
@@ -509,6 +505,29 @@ public class PyResolveUtil {
     }
 
     public void handleEvent(Event event, Object associated) {
+    }
+  }
+
+  /**
+   * A simple interface allowing to filter processor results.
+   */
+  public interface Filter {
+    /**
+     * @param target the object a processor is currently looking at.
+     * @return true if the object is acceptable as a processor result.
+     */
+    boolean accept(Object target);
+  }
+
+  public static class FilterNotInstance implements Filter {
+    Object instance;
+
+    public FilterNotInstance(Object instance) {
+      this.instance = instance;
+    }
+
+    public boolean accept(final Object target) {
+      return (instance != target);
     }
   }
 }

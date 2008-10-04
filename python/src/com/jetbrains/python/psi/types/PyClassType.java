@@ -94,7 +94,7 @@ public class PyClassType implements PyType {
   }
 
   public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression) {
-    final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();
+    final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor(new PyResolveUtil.FilterNotInstance(myClass));
     myClass.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
     List<Object> ret = new ArrayList<Object>();
     ret.addAll(processor.getResultList());
