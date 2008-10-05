@@ -427,6 +427,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void show(){
+    assert !myDisposed;
+
     int lookupStart = calcLookupStart();
     myLookupStartMarker = myEditor.getDocument().createRangeMarker(lookupStart, lookupStart);
     myLookupStartMarker.setGreedyToLeft(true);

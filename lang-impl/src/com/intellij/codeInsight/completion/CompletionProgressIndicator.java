@@ -91,12 +91,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
-          if (!isRunning() || myLookup.getAdvertisementText() != null) return;
-          final String s = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+          if (myLookup.getAdvertisementText() != null) return;
+          if (!myLookup.isCalculating() && !myLookup.isVisible()) return;
+
+          String s = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
             public String compute() {
               return contributor.advertise(myParameters);
             }
           });
+          if (myLookup.getAdvertisementText() != null) return;
+
           if (s != null) {
             myLookup.setAdvertisementText(s);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -150,7 +154,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void updateLookup() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myEditor.isDisposed()) return;
+    if (myEditor.isDisposed() || myDisposed) return;
 
     myFreezeSemaphore.up();
     myLookup.updateList();
