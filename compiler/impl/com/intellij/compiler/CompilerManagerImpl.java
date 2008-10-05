@@ -138,6 +138,8 @@ public class CompilerManagerImpl extends CompilerManager {
     else {
       myCompilers.remove(compiler);
     }
+    myCompilerToInputTypes.remove(compiler);
+    myCompilerToOutputTypes.remove(compiler);
   }
 
   public <T  extends Compiler> T[] getCompilers(Class<T> compilerClass) {
