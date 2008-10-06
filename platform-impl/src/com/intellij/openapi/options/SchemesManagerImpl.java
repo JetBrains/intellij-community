@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.Alarm;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -58,6 +59,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private static final String USER = "user";
 
   private boolean myListenerAdded = false;
+  private Alarm myRefreshAlarm;
 
   public SchemesManagerImpl(final String fileSpec,
                             final SchemeProcessor<E> processor,
@@ -133,21 +135,18 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private void addVFSListener() {
     if (ApplicationManager.getApplication() == null || myListenerAdded) return;
 
-    LocalFileSystem system = LocalFileSystem.getInstance();
-    myVFSBaseDir = new WriteAction<VirtualFile>() {
-      protected void run(final Result<VirtualFile> result) {
-        VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myBaseDir);
-        result.setResult(dir);
-        if (dir != null) {
-          dir.getChildren();
-          ((NewVirtualFile)dir).markDirtyRecursively();
-          dir.refresh(false, true);
+    final LocalFileSystem system = LocalFileSystem.getInstance();
+    myVFSBaseDir = system.findFileByIoFile(myBaseDir);
+
+    if (myVFSBaseDir == null) {
+      myRefreshAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+      myRefreshAlarm.addRequest(new Runnable(){
+        public void run() {
+          ensureVFSBaseDir();
         }
-      }
-    }.execute().getResultObject();
-
-
-
+      },
+                                                           60 * 1000);
+    }
 
     system.addVirtualFileListener(new VirtualFileAdapter() {
       @Override
@@ -707,6 +706,16 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   public void save() throws WriteExternalException {
+
+    if (myRefreshAlarm != null) {
+      myRefreshAlarm.cancelAllRequests();
+      myRefreshAlarm = null;
+    }
+
+    if (myVFSBaseDir == null) {
+      ensureVFSBaseDir();
+    }
+
     if (myVFSBaseDir != null) {
       final WriteExternalException[] ex = new WriteExternalException[1];
       ApplicationManager.getApplication().runWriteAction(new Runnable(){
@@ -722,6 +731,21 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
       if (ex[0] != null) throw ex[0];
     }
+  }
+
+  private void ensureVFSBaseDir() {
+    myBaseDir.mkdirs();
+    myVFSBaseDir = new WriteAction<VirtualFile>() {
+      protected void run(final Result<VirtualFile> result) {
+        VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myBaseDir);
+        result.setResult(dir);
+        if (dir != null) {
+          dir.getChildren();
+          ((NewVirtualFile)dir).markDirtyRecursively();
+          dir.refresh(false, true);
+        }
+      }
+    }.execute().getResultObject();
   }
 
   private boolean myInsideSave = false;
