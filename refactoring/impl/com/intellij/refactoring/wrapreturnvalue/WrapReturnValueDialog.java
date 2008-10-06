@@ -1,11 +1,11 @@
 package com.intellij.refactoring.wrapreturnvalue;
 
-import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -156,7 +157,22 @@ class WrapReturnValueDialog extends RefactoringDialog {
     
     final DefaultComboBoxModel model = new DefaultComboBoxModel();
     myFieldsCombo.setModel(model);
-    myFieldsCombo.setRenderer(new DefaultPsiElementCellRenderer());
+    myFieldsCombo.setRenderer(new DefaultListCellRenderer(){
+      @Override
+      public Component getListCellRendererComponent(final JList list,
+                                                    final Object value,
+                                                    final int index,
+                                                    final boolean isSelected,
+                                                    final boolean cellHasFocus) {
+        final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (value instanceof PsiField) {
+          final PsiField field = (PsiField)value;
+          setText(field.getName());
+          setIcon(field.getIcon(Iconable.ICON_FLAG_VISIBILITY));
+        }
+        return rendererComponent;
+      }
+    });
     existingClassField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(final DocumentEvent e) {
