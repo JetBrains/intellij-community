@@ -122,9 +122,16 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     if (myChangesToDisplay == null) {
       final ChangeListManager manager = ChangeListManager.getInstance(myProject);
       myChangeListsMap = new HashMap<Change, LocalChangeList>();
-      for (Change change : myAllChanges) {
-        myChangeListsMap.put(change, manager.getChangeList(change));
+      final List<LocalChangeList> lists = manager.getChangeListsCopy();
+      Collection<Change> allChanges = new ArrayList<Change>();
+      for (LocalChangeList list : lists) {
+        final Collection<Change> changes = list.getChanges();
+        allChanges.addAll(changes);
+        for (Change change : changes) {
+          myChangeListsMap.put(change, list);
+        }
       }
+      myAllChanges = allChanges;
     }
 
     super.rebuildList();
@@ -146,7 +153,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   private List<Change> filterBySelectedChangeList(final Collection<Change> changes) {
     List<Change> filtered = new ArrayList<Change>();
     for (Change change : changes) {
-      if (getList(change).equals(mySelectedChangeList)) {
+      if (Comparing.equal(getList(change), mySelectedChangeList)) {
         filtered.add(change);
       }
     }
