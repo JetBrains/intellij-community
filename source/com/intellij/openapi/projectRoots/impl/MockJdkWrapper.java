@@ -15,6 +15,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * used to override JdkHome location in order to provide correct paths
  */
@@ -22,7 +24,7 @@ public final class MockJdkWrapper implements Sdk {
   private final String myHomePath;
   private final Sdk myDelegate;
 
-  public MockJdkWrapper(String homePath, Sdk delegate) {
+  public MockJdkWrapper(String homePath, @NotNull Sdk delegate) {
     myHomePath = homePath;
     myDelegate = delegate;
   }

@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Model of roots that should be used by clients to modify module roots.
@@ -128,7 +129,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
    *
    * @param jdk
    */
-  void setSdk(Sdk jdk);
+  void setSdk(@Nullable Sdk jdk);
 
   /**
    * Sets JDK name and type for this module.
