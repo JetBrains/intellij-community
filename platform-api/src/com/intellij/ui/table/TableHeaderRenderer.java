@@ -84,7 +84,7 @@ public class TableHeaderRenderer extends JPanel implements TableCellRenderer{
 
     setText(labelString);
     setIcon(icon);
-
+    setToolTipText(columnInfo.getTooltipText());
 
     final boolean hasError = columnInfo.hasError();
     JTableHeader header = table.getTableHeader();
