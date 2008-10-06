@@ -1029,6 +1029,8 @@ public class FileBasedIndex implements ApplicationComponent {
                       LOG.info(e);
                       requestRebuild(indexId);
                     }
+                    catch (ProcessCanceledException ignored) {
+                    }
                     catch (Throwable e) {
                       LOG.info(e);
                       if (unexpectedError == null) {
