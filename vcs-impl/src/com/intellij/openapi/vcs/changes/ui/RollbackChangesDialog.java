@@ -32,7 +32,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   @Nullable private JCheckBox myDeleteLocallyAddedFiles;
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes) {
-    rollbackChanges(project, changes, false);
+    rollbackChanges(project, changes, true);
   }
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes, boolean refreshSynchronously) {
