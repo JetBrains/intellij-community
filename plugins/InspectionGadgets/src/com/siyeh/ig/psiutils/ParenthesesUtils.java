@@ -475,4 +475,43 @@ public class ParenthesesUtils{
             removeParentheses(argument, ignoreClarifyingParentheses);
         }
     }
+
+    public static boolean areParenthesesNeeded(
+            PsiParenthesizedExpression expression,
+            boolean ignoreClarifyingParentheses) {
+        final PsiElement parent = expression.getParent();
+        final PsiElement child = expression.getExpression();
+        if (parent instanceof PsiBinaryExpression &&
+                child instanceof PsiBinaryExpression) {
+            final PsiBinaryExpression parentBinaryExpression =
+                    (PsiBinaryExpression)parent;
+            final PsiBinaryExpression childBinaryExpression =
+                    (PsiBinaryExpression)child;
+            final IElementType childOperator =
+                    childBinaryExpression.getOperationTokenType();
+            final IElementType parentOperator =
+                    parentBinaryExpression.getOperationTokenType();
+            if (ignoreClarifyingParentheses &&
+                    !childOperator.equals(parentOperator)) {
+                return true;
+            }
+            final PsiType parentType =
+                    parentBinaryExpression.getType();
+            if (parentType == null) {
+                return true;
+            }
+            final PsiType childType = childBinaryExpression.getType();
+            if (!parentType.equals(childType)) {
+                return true;
+            }
+            if (parentBinaryExpression.getROperand() == expression) {
+                if (!isCommutativeBinaryOperator(
+                        childOperator)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return false;
+    }
 }

@@ -18,7 +18,6 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -114,50 +113,13 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
                 return;
             }
             if (parentPrecedence == childPrecedence) {
-                if (!areParenthesesNeeded(expression)) {
+                if (!ParenthesesUtils.areParenthesesNeeded(expression,
+                        ignoreClarifyingParentheses)) {
                     registerError(expression);
                     return;
                 }
             }
             super.visitParenthesizedExpression(expression);
-        }
-
-        private boolean areParenthesesNeeded(
-                PsiParenthesizedExpression expression) {
-            final PsiElement parent = expression.getParent();
-            final PsiElement child = expression.getExpression();
-            if (parent instanceof PsiBinaryExpression &&
-                    child instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression parentBinaryExpression =
-                        (PsiBinaryExpression)parent;
-                final PsiBinaryExpression childBinaryExpression =
-                        (PsiBinaryExpression)child;
-                final IElementType childOperator =
-                        childBinaryExpression.getOperationTokenType();
-                final IElementType parentOperator =
-                        parentBinaryExpression.getOperationTokenType();
-                if (ignoreClarifyingParentheses &&
-                        !childOperator.equals(parentOperator)) {
-                    return true;
-                }
-                final PsiType parentType =
-                        parentBinaryExpression.getType();
-                if (parentType == null) {
-                    return true;
-                }
-                final PsiType childType = childBinaryExpression.getType();
-                if (!parentType.equals(childType)) {
-                    return true;
-                }
-                if (parentBinaryExpression.getROperand() == expression) {
-                    if (!ParenthesesUtils.isCommutativeBinaryOperator(
-                            childOperator)) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-            return false;
         }
     }
 }
