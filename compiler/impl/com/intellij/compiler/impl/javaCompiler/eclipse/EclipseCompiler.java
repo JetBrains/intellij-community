@@ -18,7 +18,6 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,7 +119,7 @@ public class EclipseCompiler extends ExternalCompiler {
     commandLine.add(vmExePath);
     commandLine.add("-Xmx" + compilerSettings.MAXIMUM_HEAP_SIZE + "m");
 
-    CompilerUtil.addLocaleOptions(commandLine, false, EncodingProjectManager.getInstance(myProject).getDefaultCharset().name());
+    CompilerUtil.addLocaleOptions(commandLine, false);
 
     commandLine.add("-classpath");
     commandLine.add(PATH_TO_COMPILER_JAR);

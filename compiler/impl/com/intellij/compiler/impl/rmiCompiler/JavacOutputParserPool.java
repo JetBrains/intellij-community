@@ -29,7 +29,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.rt.compiler.JavacResourcesReader;
 
 import java.io.File;
@@ -104,7 +103,7 @@ public class JavacOutputParserPool {
     final List<String> commandLine = new ArrayList<String>();
     commandLine.add(((JavaSdkType)jdk.getSdkType()).getVMExecutablePath(jdk));
 
-    CompilerUtil.addLocaleOptions(commandLine, false, EncodingProjectManager.getInstance(myProject).getDefaultCharset().name());
+    CompilerUtil.addLocaleOptions(commandLine, false);
 
     //noinspection HardCodedStringLiteral
     commandLine.add("-classpath");

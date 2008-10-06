@@ -110,10 +110,10 @@ public class CompilerUtil {
     }
   }
 
-  public static void addLocaleOptions(final List<String> commandLine, final boolean launcherUsed, String encoding) {
+  public static void addLocaleOptions(final List<String> commandLine, final boolean launcherUsed) {
     // need to specify default encoding so that javac outputs messages in 'correct' language
     //noinspection HardCodedStringLiteral
-    commandLine.add((launcherUsed? "-J" : "") + "-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + encoding);
+    commandLine.add((launcherUsed? "-J" : "") + "-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + CharsetToolkit.getDefaultSystemCharset().name());
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     //noinspection HardCodedStringLiteral
     final String lang = System.getProperty("user.language");

@@ -25,7 +25,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
@@ -274,7 +273,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     @NonNls final List<String> commandLine = new ArrayList<String>();
     commandLine.add(compilerPath);
 
-    CompilerUtil.addLocaleOptions(commandLine, true, EncodingProjectManager.getInstance(myProject).getDefaultCharset().name());
+    CompilerUtil.addLocaleOptions(commandLine, true);
 
     commandLine.add("-verbose");
 

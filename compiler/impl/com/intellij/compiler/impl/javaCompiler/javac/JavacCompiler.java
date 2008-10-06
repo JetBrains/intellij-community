@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.rt.compiler.JavacRunner;
 import org.jetbrains.annotations.NonNls;
@@ -209,7 +208,7 @@ public class JavacCompiler extends ExternalCompiler {
       }
     }
 
-    CompilerUtil.addLocaleOptions(commandLine, false, EncodingProjectManager.getInstance(myProject).getDefaultCharset().name());
+    CompilerUtil.addLocaleOptions(commandLine, false);
 
     commandLine.add("-classpath");
 

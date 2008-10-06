@@ -83,6 +83,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
 
   @Nullable("returns null if charset set cannot be determined from content")
   public static Charset charsetFromContent(final VirtualFile virtualFile) {
+    if (virtualFile == null) return null;
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     if (document == null) return null;
 

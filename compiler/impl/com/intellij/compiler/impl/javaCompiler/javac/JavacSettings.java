@@ -8,7 +8,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -32,6 +32,11 @@ public class JavacSettings implements PersistentStateComponent<Element> {
   public int MAXIMUM_HEAP_SIZE = 128;
 
   private boolean myTestsUseExternalCompiler = false;
+  private final Project myProject;
+
+  public JavacSettings(Project project) {
+    myProject = project;
+  }
 
   public Element getState() {
     try {
@@ -93,7 +98,7 @@ public class JavacSettings implements PersistentStateComponent<Element> {
       }
     }
     if (!isEncodingSet) {
-      final Charset ideCharset = EncodingManager.getInstance().getDefaultCharset();
+      final Charset ideCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
       if (!Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset)) {
         options.append("-encoding ");
         options.append(ideCharset.name());
