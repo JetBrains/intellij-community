@@ -6,7 +6,13 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
+import com.intellij.ide.dnd.DnDAction;
+import com.intellij.ide.dnd.DnDDragStartBean;
+import com.intellij.ide.dnd.DnDManager;
+import com.intellij.ide.dnd.DnDSource;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.hierarchy.*;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -17,6 +23,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
@@ -26,17 +33,13 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.text.MessageFormat;
 import java.util.*;
@@ -156,7 +159,33 @@ public final class TypeHierarchyBrowser extends HierarchyBrowserBase implements 
   }
 
   private JTree createTree() {
-    final Tree tree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode("")));
+    final DnDAwareTree tree = new DnDAwareTree(new DefaultTreeModel(new DefaultMutableTreeNode("")));
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      tree.enableDnd(this);
+      DnDManager.getInstance().registerSource(new DnDSource() {
+        public boolean canStartDragging(final DnDAction action, final Point dragOrigin) {
+          return getSelectedElements().length > 0;
+        }
+
+        public DnDDragStartBean startDragging(final DnDAction action, final Point dragOrigin) {
+          return new DnDDragStartBean(new AbstractProjectViewPane.TransferableWrapper(){
+            public TreeNode[] getTreeNodes() {
+              return tree.getSelectedNodes(TreeNode.class, null);
+            }
+
+            public PsiElement[] getPsiElements() {
+              return getSelectedElements();
+            }
+          });
+        }
+
+        public Pair<Image, Point> createDraggedImage(final DnDAction action, final Point dragOrigin) {
+          return null;
+        }
+        public void dragDropEnd() {}
+        public void dropActionChanged(final int gestureModifiers) {}
+      }, tree);
+    }
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     tree.setToggleClickCount(-1);
     tree.setCellRenderer(new HierarchyNodeRenderer());
