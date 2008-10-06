@@ -695,6 +695,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   boolean isEscapeHandlerEnabled() {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     for (int i = myHintsStack.size() - 1; i >= 0; i--) {
       final HintInfo info = myHintsStack.get(i);
       if (!info.hint.isVisible()) {
