@@ -207,9 +207,12 @@ public class FileReferenceSet {
       final Function<PsiFile, Collection<PsiFileSystemItem>> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);
 
       if (value != null) {
-        final Collection<PsiFileSystemItem> items = value.fun(file);
-        if (items != null) {
-          return items;
+        final Collection<PsiFileSystemItem> roots = value.fun(file);
+        if (roots != null) {
+          for (PsiFileSystemItem root : roots) {
+            LOG.assertTrue(root != null, "Default path evaluator " + value + " produced a null root for " + file);
+          }
+          return roots;
         }
       }
     }
@@ -328,7 +331,11 @@ public class FileReferenceSet {
     final ArrayList<PsiFileSystemItem> list = new ArrayList<PsiFileSystemItem>();
     for (FileReferenceHelper helper : helpers) {
       if (helper.isMine(project, virtualFile)) {
-        list.addAll(helper.getRoots(module));
+        final Collection<PsiFileSystemItem> roots = helper.getRoots(module);
+        for (PsiFileSystemItem root : roots) {
+          LOG.assertTrue(root != null, "Helper " + helper + " produced a null root for " + file);
+        }
+        list.addAll(roots);
       }
     }
     return list;
