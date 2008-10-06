@@ -63,6 +63,20 @@ public abstract class ProgressManager {
                                                               Project project);
 
   /**
+   * Runs the specified operation in a background thread and shows a modal progress dialog in the
+   * main thread while the operation is executing.
+   *
+   * @param process         the operation to execute.
+   * @param progressTitle   the title of the progress window.
+   * @param canBeCanceled   whether "Cancel" button is shown on the progress window.
+   * @param project         the project in the context of which the operation is executed.
+   * @param parentComponent the component which will be used to calculate the progress window ancestor
+   * @return true if the operation completed successfully, false if it was cancelled.
+   */
+  public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process, String progressTitle, boolean canBeCanceled,
+                                                              Project project, JComponent parentComponent);
+
+  /**
    * Runs a specified <code>process</code> in a background thread and shows a progress dialog, which can be made non-modal by pressing
    * background button. Upon successfull termination of the process a <code>successRunnable</code> will be called in Swing UI thread and
    * <code>canceledRunnable</code> will be called if terminated on behalf of the user by pressing either cancel button, while running in

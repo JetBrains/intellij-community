@@ -5,7 +5,9 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -50,6 +52,15 @@ public interface ApplicationEx extends Application {
                                               String progressTitle,
                                               boolean canBeCanceled,
                                               Project project);
+
+  /**
+   * Runs modal process. For internal use only, see {@link Task}
+   */
+  boolean runProcessWithProgressSynchronously(final Runnable process,
+                                              String progressTitle,
+                                              boolean canBeCanceled,
+                                              @Nullable Project project, JComponent parentComponent);
+
 
   boolean isInModalProgressThread();
 

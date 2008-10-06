@@ -15,7 +15,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Collection;
@@ -148,6 +150,11 @@ public class MockApplication extends MockComponentManager implements Application
 
   public boolean isDoNotSave() {
     return false; 
+  }
+
+  public boolean runProcessWithProgressSynchronously(final Runnable process, final String progressTitle, final boolean canBeCanceled, @Nullable final Project project,
+                                                     final JComponent parentComponent) {
+    return false;
   }
 
   public boolean runProcessWithProgressSynchronously(Runnable process,

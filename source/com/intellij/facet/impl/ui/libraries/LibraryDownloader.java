@@ -134,7 +134,7 @@ public class LibraryDownloader {
           exceptionRef.set(e);
         }
       }
-    }, dialogTitle, true, myProject);
+    }, dialogTitle, true, myProject, myParent);
 
     Exception exception = exceptionRef.get();
     if (exception == null) {

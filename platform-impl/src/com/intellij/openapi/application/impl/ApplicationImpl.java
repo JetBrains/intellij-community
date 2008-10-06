@@ -423,7 +423,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       lock.hashCode();
     }
   }
+
   public boolean runProcessWithProgressSynchronously(final Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
+    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, null);
+  }
+
+  public boolean runProcessWithProgressSynchronously(final Runnable process, final String progressTitle, final boolean canBeCanceled, @Nullable final Project project,
+                                                     final JComponent parentComponent) {
+
+
     assertIsDispatchThread();
 
     if (myExceptionalThreadWithReadAccessRunnable != null ||
@@ -438,7 +446,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       return true;
     }
 
-    final ProgressWindow progress = new ProgressWindow(canBeCanceled, project);
+    final ProgressWindow progress;
+    if (parentComponent != null) {
+      progress = new ProgressWindow(canBeCanceled, false, project, parentComponent, null);
+    }
+    else {
+      progress = new ProgressWindow(canBeCanceled, project);
+    }
     progress.setTitle(progressTitle);
 
     try {

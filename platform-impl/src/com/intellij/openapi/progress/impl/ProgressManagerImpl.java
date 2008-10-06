@@ -166,21 +166,25 @@ public class ProgressManagerImpl extends ProgressManager {
   }
 
   public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
+    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, null);
+  }
+
+  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process, String progressTitle, boolean canBeCanceled, Project project, JComponent parentComponent) {
     Task.Modal task = new Task.Modal(project, progressTitle, canBeCanceled) {
       public void run(@NotNull ProgressIndicator indicator) {
         process.run();
       }
     };
-    return runProcessWithProgressSynchronously(task);
+    return runProcessWithProgressSynchronously(task, parentComponent);
   }
 
-  private static boolean runProcessWithProgressSynchronously(final Task task) {
+  private static boolean runProcessWithProgressSynchronously(final Task task, final JComponent parentComponent) {
     final boolean result = ((ApplicationEx)ApplicationManager.getApplication())
         .runProcessWithProgressSynchronously(new TaskContainer(task) {
           public void run() {
             new TaskRunnable(task, ProgressManager.getInstance().getProgressIndicator()).run();
           }
-        }, task.getTitle(), task.isCancellable(), task.getProject());
+        }, task.getTitle(), task.isCancellable(), task.getProject(), parentComponent);
     if (result) {
       final Task.NotificationInfo notificationInfo = task.getNotificationInfo();
       if (notificationInfo != null) {
@@ -299,12 +303,12 @@ public class ProgressManagerImpl extends ProgressManager {
     }
 
     if (task.isModal()) {
-      runProcessWithProgressSynchronously(task.asModal());
+      runProcessWithProgressSynchronously(task.asModal(), null);
     }
     else {
       final Task.Backgroundable backgroundable = task.asBackgroundable();
       if (backgroundable.isConditionalModal() && !backgroundable.shouldStartInBackground()) {
-        runProcessWithProgressSynchronously(task);
+        runProcessWithProgressSynchronously(task, null);
       }
       else {
         runProcessWithProgressAsynchronously(backgroundable);
