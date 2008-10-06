@@ -1,5 +1,6 @@
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
@@ -59,7 +60,8 @@ public class UpgradeFormatDialog extends DialogWrapper  {
   }
 
   protected String getTopMessage(final String label) {
-    return SvnBundle.message(new StringBuilder().append("label.configure.").append(label).append(".label").toString());
+    return SvnBundle.message(new StringBuilder().append("label.configure.").append(label).append(".label").toString(),
+                             ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
   @Nullable
