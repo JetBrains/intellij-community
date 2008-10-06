@@ -41,7 +41,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
-  private static final int VERSION = 13;
+  private static final int VERSION = 14;
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     public void save(final DataOutput out, final SerializedStubTree v) throws IOException {
       byte[] value = v.getBytes();
