@@ -58,18 +58,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return element;
   }
 
-  protected boolean isAcceptableReferencedElement(final PsiElement element, final PsiElement referenceOrReferencedElement) {
-    return super.isAcceptableReferencedElement(element, referenceOrReferencedElement) &&
-           !isEnumConstantReference(element, referenceOrReferencedElement);
-  }
-
-  private static boolean isEnumConstantReference(final PsiElement element, final PsiElement referenceOrReferencedElement) {
-    return element != null &&
-           element.getParent() instanceof PsiEnumConstant &&
-           referenceOrReferencedElement instanceof PsiMethod &&
-           ((PsiMethod)referenceOrReferencedElement).isConstructor();
-  }
-
   @Nullable
   protected PsiElement getReferenceOrReferencedElement(PsiFile file, Editor editor, int flags, int offset) {
     PsiReference ref = TargetElementUtilBase.findReference(editor, offset);

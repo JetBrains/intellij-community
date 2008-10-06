@@ -343,4 +343,6 @@
   <extensionPoint name="optionsApplicabilityFilter" interface="com.intellij.application.options.OptionsApplicabilityFilter"/>
 
   <extensionPoint name="metaDataContributor" interface="com.intellij.psi.meta.MetaDataContributor"/>
+
+  <extensionPoint name="acceptableTargetProvider" interface="com.intellij.codeInsight.AcceptableTargetProvider"/>
 </extensionPoints>
