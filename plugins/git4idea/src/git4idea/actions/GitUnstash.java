@@ -42,15 +42,16 @@ public class GitUnstash extends BasicAction {
 
     final Map<VirtualFile, List<VirtualFile>> roots = GitUtil.sortFilesByVcsRoot(project, affectedFiles);
 
+    boolean stashesFound = false;
     for (VirtualFile root : roots.keySet()) {
       GitCommand command = new GitCommand(project, vcs.getSettings(), root);
       String[] stashList = command.stashList();
       if (stashList == null || stashList.length == 0) continue;
+      stashesFound = true;
       int stashIndex = Messages
           .showChooseDialog(GitBundle.getString("unstash.message"), GitBundle.getString("unstash.title"), stashList, stashList[0],
                             Messages.getQuestionIcon());
       if (stashIndex < 0) continue;
-
       GitCommandRunnable cmdr = new GitCommandRunnable(project, vcs.getSettings(), root);
       cmdr.setCommand(GitCommand.STASH_CMD);
       String stashName = stashList[stashIndex].split(":")[0];
@@ -66,6 +67,9 @@ public class GitUnstash extends BasicAction {
         break;
       }
     }
+    if(!stashesFound) {
+      Messages.showInfoMessage(project, GitBundle.getString("unstash.notfound.message"), GitBundle.getString("unstash.notfound.title"));
+    }
   }
 
   @NotNull
@@ -73,22 +77,10 @@ public class GitUnstash extends BasicAction {
     return GitBundle.getString("unstash.action.name");
   }
 
+  /**
+   * {@inheritDoc}
+   */
   protected boolean isEnabled(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile... vFiles) {
-    if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(GitVcs.getInstance(project), vFiles)) return false;
-
-    final Map<VirtualFile, List<VirtualFile>> roots = GitUtil.sortFilesByVcsRoot(project, vFiles);
-
-    try {
-      for (VirtualFile root : roots.keySet()) {
-        GitCommand command = new GitCommand(project, vcs.getSettings(), root);
-        String[] slist = command.stashList();
-        if (slist != null && slist.length > 0) return true;
-      }
-    }
-    catch (VcsException e) {
-      return false;
-    }
-
-    return false;
+    return true;
   }
 }
