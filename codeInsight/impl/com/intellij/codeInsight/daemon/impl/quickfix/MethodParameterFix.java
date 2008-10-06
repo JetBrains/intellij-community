@@ -17,11 +17,10 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class MethodParameterFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnFix");
@@ -98,6 +97,9 @@ public class MethodParameterFix implements IntentionAction {
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myMethod.getProject());
     SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, myParameterType);
     PsiParameter newParameter = factory.createParameter(nameInfo.names[0], myParameterType);
+    if (myMethod.getContainingClass().isInterface()) {
+        newParameter.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+      }
 
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];

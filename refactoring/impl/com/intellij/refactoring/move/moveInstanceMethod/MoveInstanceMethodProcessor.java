@@ -450,15 +450,18 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       methodCopy.getParameterList().getParameters()[index].delete();
     }
 
-    addParameters(JavaPsiFacade.getInstance(myProject).getElementFactory(), methodCopy);
+    addParameters(JavaPsiFacade.getInstance(myProject).getElementFactory(), methodCopy, myTargetClass.isInterface());
     return methodCopy;
   }
 
-  private void addParameters(final PsiElementFactory factory, final PsiMethod methodCopy) throws IncorrectOperationException {
+  private void addParameters(final PsiElementFactory factory, final PsiMethod methodCopy, final boolean isInterface) throws IncorrectOperationException {
     final Set<Map.Entry<PsiClass, String>> entries = myOldClassParameterNames.entrySet();
     for (final Map.Entry<PsiClass, String> entry : entries) {
       final PsiClassType type = factory.createType(entry.getKey());
       final PsiParameter parameter = factory.createParameter(entry.getValue(), type);
+      if (isInterface) {
+        parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+      }
       methodCopy.getParameterList().add(parameter);
     }
   }

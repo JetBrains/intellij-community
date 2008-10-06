@@ -5,9 +5,9 @@ import com.intellij.codeInsight.completion.proc.VariablesProcessor;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.*;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -46,7 +46,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-
 
 import java.util.*;
 
@@ -199,6 +198,7 @@ public class CreateFromUsageUtils {
 
     GuessTypeParameters guesser = new GuessTypeParameters(factory);
 
+    final boolean isInterface = method.getContainingClass().isInterface();
     for (int i = 0; i < arguments.length; i++) {
       PsiExpression arg = arguments[i];
 
@@ -216,6 +216,9 @@ public class CreateFromUsageUtils {
       }
 
       PsiParameter parameter = factory.createParameter(names[0], argType);
+      if (isInterface) {
+        parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+      }
       parameter = (PsiParameter) parameterList.add(parameter);
 
       ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE);

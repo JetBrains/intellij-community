@@ -148,12 +148,14 @@ public class GenerateMembersUtil {
 
   public static PsiElement insert(PsiClass aClass, PsiMember member, PsiElement anchor, boolean before) throws IncorrectOperationException {
     if (member instanceof PsiMethod) {
-      final PsiParameter[] parameters = ((PsiMethod)member).getParameterList().getParameters();
-      final boolean generateFinals = CodeStyleSettingsManager.getSettings(aClass.getProject()).GENERATE_FINAL_PARAMETERS;
-      for (final PsiParameter parameter : parameters) {
-        final PsiModifierList modifierList = parameter.getModifierList();
-        assert modifierList != null;
-        modifierList.setModifierProperty(PsiModifier.FINAL, generateFinals);
+      if (!aClass.isInterface()) {
+        final PsiParameter[] parameters = ((PsiMethod)member).getParameterList().getParameters();
+        final boolean generateFinals = CodeStyleSettingsManager.getSettings(aClass.getProject()).GENERATE_FINAL_PARAMETERS;
+        for (final PsiParameter parameter : parameters) {
+          final PsiModifierList modifierList = parameter.getModifierList();
+          assert modifierList != null;
+          modifierList.setModifierProperty(PsiModifier.FINAL, generateFinals);
+        }
       }
     }
 
