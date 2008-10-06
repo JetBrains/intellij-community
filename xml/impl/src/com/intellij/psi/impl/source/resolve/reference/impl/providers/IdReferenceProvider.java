@@ -78,11 +78,11 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
 
       if (FOR_ATTR_NAME.equals(name)) {
         return new PsiReference[]{
-          jsfNs && element.getText().indexOf(':') != -1 ? new IdRefReference(element, 1) {
+          jsfNs && element.getText().indexOf(':') != -1 ? new IdRefReference(element) {
             public boolean isSoft() {
               return true;
             }
-          } :new IdRefReference(element, 1)
+          } :new IdRefReference(element)
         };
       }
       else {

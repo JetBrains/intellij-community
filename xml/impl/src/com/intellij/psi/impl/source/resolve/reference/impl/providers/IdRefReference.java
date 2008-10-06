@@ -30,6 +30,10 @@ public class IdRefReference extends BasicAttributeValueReference {
     super(element, offset);
   }
 
+  public IdRefReference(final PsiElement element) {
+    super(element);
+  }
+
   @Nullable
   protected static PsiElement getIdValueElement(PsiElement element) {
     if (element instanceof XmlTag) {
