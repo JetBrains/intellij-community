@@ -8,6 +8,7 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -124,7 +125,8 @@ public class CommitHelper {
 
   private void generalCommit(final GeneralCommitProcessor processor) {
     try {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
+      final Application appManager = ApplicationManager.getApplication();
+      appManager.runReadAction(new Runnable() {
         public void run() {
           markCommittingDocuments();
         }
@@ -132,14 +134,22 @@ public class CommitHelper {
 
       processor.callSelf();
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
+      appManager.runReadAction(new Runnable() {
         public void run() {
           unmarkCommittingDocuments();
         }
       });
 
       processor.doBeforeRefresh();
-      VirtualFileManager.getInstance().refresh(true, processor.postRefresh());
+      if (appManager.isDispatchThread()) {
+        VirtualFileManager.getInstance().refresh(false, processor.postRefresh());
+      } else {
+        appManager.invokeLater(new Runnable() {
+          public void run() {
+            VirtualFileManager.getInstance().refresh(false, processor.postRefresh());
+          }
+        });
+      }
 
       AbstractVcsHelper.getInstanceChecked(myProject).showErrors(processor.getVcsExceptions(), myActionName);
     }
