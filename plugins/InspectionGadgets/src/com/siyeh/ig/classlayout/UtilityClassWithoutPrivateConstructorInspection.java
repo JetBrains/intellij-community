@@ -42,18 +42,21 @@ public class UtilityClassWithoutPrivateConstructorInspection
     /** @noinspection PublicField for externalization*/
     public boolean ignoreClassesWithOnlyMain = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "utility.class.without.private.constructor.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "utility.class.without.private.constructor.problem.descriptor");
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
@@ -61,6 +64,7 @@ public class UtilityClassWithoutPrivateConstructorInspection
                 "ignoreClassesWithOnlyMain");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiClass aClass = (PsiClass)infos[0];
         if (hasNullArgConstructor(aClass)) {
@@ -79,6 +83,7 @@ public class UtilityClassWithoutPrivateConstructorInspection
                     "utility.class.without.private.constructor.create.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement classNameIdentifier = descriptor.getPsiElement();
@@ -107,6 +112,7 @@ public class UtilityClassWithoutPrivateConstructorInspection
                     "utility.class.without.private.constructor.make.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement classNameIdentifier = descriptor.getPsiElement();
@@ -129,6 +135,7 @@ public class UtilityClassWithoutPrivateConstructorInspection
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UtilityClassWithoutPrivateConstructorVisitor();
     }
@@ -170,12 +177,17 @@ public class UtilityClassWithoutPrivateConstructorInspection
                 if (method.isConstructor()) {
                     continue;
                 }
-                final String name = method.getName();
-                if (!name.equals(HardcodedMethodConstants.MAIN)) {
+                if (!method.hasModifierProperty(PsiModifier.STATIC)) {
                     return false;
                 }
-                if (!method.hasModifierProperty(PsiModifier.PUBLIC) ||
-                        !method.hasModifierProperty(PsiModifier.STATIC)) {
+                if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
+                    continue;
+                }
+                if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
+                    return false;
+                }
+                final String name = method.getName();
+                if (!name.equals(HardcodedMethodConstants.MAIN)) {
                     return false;
                 }
                 final PsiType returnType = method.getReturnType();

@@ -75,6 +75,9 @@ public class UtilityClassUtil {
             if (!method.hasModifierProperty(PsiModifier.STATIC)) {
                 return -1;
             }
+            if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
+                continue;
+            }
             staticCount++;
         }
         return staticCount;

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  
+  <problem>
+    <file>UtilityClassWithoutPrivateConstructorInspection.java</file>
+    <line>4</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Utility class without private constructor</problem_class>
+    <description>Class &lt;code&gt;UtilityClassWithoutPrivateConstructorInspection&lt;/code&gt; has only 'static' members, and lacks a 'private' constructor #loc</description>
+  </problem>
+
+</problems>
