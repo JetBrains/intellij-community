@@ -26,8 +26,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
@@ -906,13 +906,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   @NotNull
   public Set<Usage> getExcludedUsages() {
     Set<Usage> result = new THashSet<Usage>();
-    Collection<UsageNode> usageNodes = myUsageNodes.values();
-    for (final UsageNode node : usageNodes) {
+    for (Usage usage : myUsageNodes.keySet()) {
+      final UsageNode node = myUsageNodes.get(usage);
       if (node == NULL_NODE || node == null) {
         continue;
       }
       if (node.isExcluded()) {
-        result.add(node.getUsage());
+        result.add(usage);
       }
     }
 
