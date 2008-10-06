@@ -214,7 +214,7 @@ public class SvnChangeProvider implements ChangeProvider {
     if (ApplicationManager.getApplication().isUnitTestMode() || (change != null && (change.isRenamed() || change.isMoved()))) {
       try {
         final SVNStatus svnStatus = context.getClient().doStatus(parentPath.getIOFile(), false, false);
-        if (svnStatus.getCopyFromURL() != null) {
+        if ((svnStatus != null) && (svnStatus.getCopyFromURL() != null)) {
           context.addCopyFromURL(parentPath, svnStatus.getCopyFromURL());
         }
       }
