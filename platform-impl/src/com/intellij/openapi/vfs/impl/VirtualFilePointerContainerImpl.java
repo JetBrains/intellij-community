@@ -27,7 +27,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   private final List<VirtualFilePointer> myReadOnlyList = Collections.unmodifiableList(myList);
   private final VirtualFilePointerManagerImpl myVirtualFilePointerManager;
   private final Disposable myParent;
-  private VirtualFilePointerListener myListener;
+  private final VirtualFilePointerListener myListener;
   private VirtualFile[] myCachedDirectories;
   @NonNls private static final String URL_ATTR = "url";
   private boolean myDisposed;

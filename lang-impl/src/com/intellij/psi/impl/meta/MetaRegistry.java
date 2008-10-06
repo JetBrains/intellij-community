@@ -8,16 +8,16 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,12 +27,12 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class MetaRegistry extends MetaDataRegistrar {
-  private static final List<MyBinding> ourBindings = new ArrayList<MyBinding>();
+  private static final List<MyBinding> ourBindings = new CopyOnWriteArrayList<MyBinding>();
   private static boolean ourContributorsLoaded = false;
 
   private static final Key<CachedValue<PsiMetaData>> META_DATA_KEY = Key.create("META DATA KEY");
 
-  public static void bindDataToElement(final PsiElement element, final PsiMetaData data){
+  public static void bindDataToElement(final PsiElement element, final PsiMetaData data) {
     CachedValue<PsiMetaData> value =
       element.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiMetaData>() {
       public Result<PsiMetaData> compute() {
@@ -48,7 +48,7 @@ public class MetaRegistry extends MetaDataRegistrar {
     return base != null ? base : null;
   }
 
-  private static UserDataCache<CachedValue<PsiMetaData>, PsiElement, Object> ourCachedMetaCache =
+  private static final UserDataCache<CachedValue<PsiMetaData>, PsiElement, Object> ourCachedMetaCache =
     new UserDataCache<CachedValue<PsiMetaData>, PsiElement, Object>() {
       protected CachedValue<PsiMetaData> compute(final PsiElement element, Object p) {
         return element.getManager().getCachedValuesManager()
@@ -63,7 +63,8 @@ public class MetaRegistry extends MetaDataRegistrar {
                   return new Result<PsiMetaData>(data, data.getDependences());
                 }
               }
-            } catch (IllegalAccessException iae) {
+            }
+            catch (IllegalAccessException iae) {
               throw new RuntimeException(iae);
             }
             catch (InstantiationException ie) {
@@ -114,12 +115,12 @@ public class MetaRegistry extends MetaDataRegistrar {
   }
 
   private static class MyBinding {
-    ElementFilter myFilter;
-    Class<PsiMetaData> myDataClass;
+    private final ElementFilter myFilter;
+    private final Class<? extends PsiMetaData> myDataClass;
 
-    public <T extends PsiMetaData> MyBinding(@NotNull ElementFilter filter, @NotNull Class<T> dataClass) {
+    public MyBinding(@NotNull ElementFilter filter, @NotNull Class<? extends PsiMetaData> dataClass) {
       myFilter = filter;
-      myDataClass = (Class)dataClass;
+      myDataClass = dataClass;
     }
   }
 }

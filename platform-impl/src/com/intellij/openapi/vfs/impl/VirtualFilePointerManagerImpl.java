@@ -239,13 +239,14 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     //if (myListenerToPointersMap.isEmpty()) {
     //  System.err.println("All pointers are disposed");
     //}
-    for (VirtualFilePointerContainerImpl container : myContainers) {
-      throw new RuntimeException("Not disposed container " + container);
+    synchronized (myContainers) {
+      if (!myContainers.isEmpty()) {
+        throw new RuntimeException("Not disposed container " + myContainers.get(0));
+      }
     }
   }
 
   public void dispose() {
-    int i = 0;
   }
 
   @NotNull
@@ -254,8 +255,10 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   private void cleanContainerCaches() {
-    for (VirtualFilePointerContainerImpl container : myContainers) {
-      container.dropCaches();
+    synchronized (myContainers) {
+      for (VirtualFilePointerContainerImpl container : myContainers) {
+        container.dropCaches();
+      }
     }
   }
 
@@ -296,18 +299,22 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   private VirtualFilePointerContainer registerContainer(Disposable parent, @NotNull final VirtualFilePointerContainerImpl virtualFilePointerContainer) {
-    myContainers.add(virtualFilePointerContainer);
+    synchronized (myContainers) {
+      myContainers.add(virtualFilePointerContainer);
+    }
     Disposer.register(parent, new Disposable() {
       public void dispose() {
         virtualFilePointerContainer.dispose();
         boolean removed = false;
         // compare by identity since VirtualFilePointerContainer has too smart equals
-        for (int i = 0; i < myContainers.size(); i++) {
-          VirtualFilePointerContainerImpl container = myContainers.get(i);
-          if (container == virtualFilePointerContainer) {
-            myContainers.remove(i);
-            removed = true;
-            break;
+        synchronized (myContainers) {
+          for (int i = 0; i < myContainers.size(); i++) {
+            VirtualFilePointerContainerImpl container = myContainers.get(i);
+            if (container == virtualFilePointerContainer) {
+              myContainers.remove(i);
+              removed = true;
+              break;
+            }
           }
         }
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
