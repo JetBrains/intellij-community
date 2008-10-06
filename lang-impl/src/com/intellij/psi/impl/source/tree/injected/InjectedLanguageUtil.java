@@ -540,7 +540,6 @@ public class InjectedLanguageUtil {
       if (injectedManager == null) return null; //for tests
       final Places result = doCompute(element, injectedManager, project, hostPsiFile);
 
-      if (result == null) return null;
       return new CachedValueProvider.Result<Places>(result, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
     }
 
