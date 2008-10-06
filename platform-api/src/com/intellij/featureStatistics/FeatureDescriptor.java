@@ -68,7 +68,7 @@ public class FeatureDescriptor{
 
   public FeatureDescriptor(String id,
                        String groupId,
-                       String tipFileName,
+                       @NonNls String tipFileName,
                        String displayName,
                        int daysBeforeFirstShowUp,
                        int daysBetweenSuccesiveShowUps,
