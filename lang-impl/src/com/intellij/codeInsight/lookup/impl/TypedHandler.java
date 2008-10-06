@@ -72,7 +72,7 @@ public class TypedHandler implements TypedActionHandler {
   private static CharFilter.Result getLookupAction(final char charTyped, final LookupElement currentItem, final LookupImpl lookup) {
     if (currentItem != null && charTyped != ' ') {
       final PrefixMatcher matcher = currentItem.getPrefixMatcher();
-      if (matcher.cloneWithPrefix(matcher.getPrefix() + charTyped).prefixMatches(currentItem)) {
+      if (matcher.cloneWithPrefix(matcher.getPrefix() + lookup.getAdditionalPrefix() + charTyped).prefixMatches(currentItem)) {
         return CharFilter.Result.ADD_TO_PREFIX;
       }
     }
