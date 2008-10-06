@@ -17,6 +17,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -278,6 +280,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     catch (IncorrectOperationException e) {
       tempExpr = null;
     }
+
+    if (tempExpr != null && !(tempExpr instanceof PsiLiteralExpression)) {
+      if (Messages.showOkCancelDialog("Introduce variable would break sematics of the initial expression", "Warning", Messages.getWarningIcon()) !=
+          DialogWrapper.OK_EXIT_CODE) {
+        tempExpr = null;
+      }
+    }
+
     return tempExpr;
   }
 
