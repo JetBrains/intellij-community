@@ -38,6 +38,6 @@ public class RemoveUnnecessaryParenthesesIntention extends Intention {
             expression = (PsiExpression)expression.getParent();
             assert expression != null;
         }
-        ParenthesesUtils.removeParentheses(expression);
+        ParenthesesUtils.removeParentheses(expression, false);
     }
 }

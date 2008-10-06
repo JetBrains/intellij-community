@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,13 @@ import org.jetbrains.annotations.Nullable;
 
 public class ReplaceConditionalWithIfIntention extends Intention {
 
+    @Override
     @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new ReplaceConditionalWithIfPredicate();
     }
 
+    @Override
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiConditionalExpression expression =
@@ -56,19 +58,7 @@ public class ReplaceConditionalWithIfIntention extends Intention {
             variable = null;
         }
         final PsiExpression thenExpression = expression.getThenExpression();
-        final String thenExpressionText;
-        if (thenExpression != null) {
-            thenExpressionText = thenExpression.getText();
-        } else {
-            thenExpressionText = "";
-        }
         final PsiExpression elseExpression = expression.getElseExpression();
-        final String elseExpressionText;
-        if (elseExpression != null) {
-            elseExpressionText = elseExpression.getText();
-        } else {
-            elseExpressionText = "";
-        }
         final PsiExpression condition = expression.getCondition();
         final PsiExpression strippedCondition =
                 ParenthesesUtils.stripParentheses(condition);
@@ -86,13 +76,13 @@ public class ReplaceConditionalWithIfIntention extends Intention {
             if (initializer == null) {
                 return;
             }
-            appendElementText(initializer, expression, thenExpressionText,
-                    newStatement);
+            appendElementTextWithoutParentheses(initializer, expression,
+                    thenExpression, newStatement);
             newStatement.append("; else ");
             newStatement.append(name);
             newStatement.append('=');
-            appendElementText(initializer, expression, elseExpressionText,
-                    newStatement);
+            appendElementTextWithoutParentheses(initializer, expression,
+                    elseExpression, newStatement);
             newStatement.append(';');
             initializer.delete();
             final PsiManager manager = statement.getManager();
@@ -107,20 +97,21 @@ public class ReplaceConditionalWithIfIntention extends Intention {
             final CodeStyleManager styleManager = manager.getCodeStyleManager();
             styleManager.reformat(addedElement);
         } else {
+            final PsiElement expressionParent = expression.getParent();
             final boolean addBraces =
-                    expression.getParent() instanceof PsiIfStatement;
+                    expressionParent instanceof PsiIfStatement;
             if (addBraces) {
                 newStatement.append('{');
             }
-            appendElementText(statement, expression, thenExpressionText,
-                    newStatement);
+            appendElementTextWithoutParentheses(statement, expression,
+                    thenExpression, newStatement);
             if (addBraces) {
                 newStatement.append("} else {");
             } else {
                 newStatement.append(" else ");
             }
-            appendElementText(statement, expression, elseExpressionText,
-                    newStatement);
+            appendElementTextWithoutParentheses(statement, expression,
+                    elseExpression, newStatement);
             if (addBraces) {
                 newStatement.append('}');
             }
@@ -128,13 +119,34 @@ public class ReplaceConditionalWithIfIntention extends Intention {
         }
     }
 
+    private static void appendElementTextWithoutParentheses(
+            @NotNull PsiElement element,
+            @NotNull PsiElement elementToReplace,
+            @Nullable PsiExpression replacementExpression,
+            @NotNull StringBuilder out) {
+        final PsiElement expressionParent = elementToReplace.getParent();
+        if (expressionParent instanceof PsiParenthesizedExpression) {
+            final PsiElement grandParent = expressionParent.getParent();
+            if (!ParenthesesUtils.areParenthesesNeeded(replacementExpression,
+                    grandParent, true)) {
+                appendElementText(element, expressionParent,
+                        replacementExpression, out);
+                return;
+            }
+        }
+        appendElementText(element, elementToReplace, replacementExpression,
+                out);
+    }
+
     private static void appendElementText(
             @NotNull PsiElement element,
-            @Nullable PsiElement elementToReplace,
-            @Nullable String replacement,
+            @NotNull PsiElement elementToReplace,
+            @Nullable PsiExpression replacementExpression,
             @NotNull StringBuilder out) {
         if (element.equals(elementToReplace)) {
-            out.append(replacement);
+            final String replacementText = (replacementExpression == null) ?
+                    "" : replacementExpression.getText();
+            out.append(replacementText);
             return;
         }
         final PsiElement[] children = element.getChildren();
@@ -143,7 +155,8 @@ public class ReplaceConditionalWithIfIntention extends Intention {
             return;
         }
         for (PsiElement child : children) {
-            appendElementText(child, elementToReplace, replacement, out);
+            appendElementText(child, elementToReplace, replacementExpression,
+                    out);
         }
     }
 }
