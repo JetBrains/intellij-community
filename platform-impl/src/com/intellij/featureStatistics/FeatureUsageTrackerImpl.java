@@ -6,13 +6,13 @@ package com.intellij.featureStatistics;
 import com.intellij.featureStatistics.ui.ProgressTipPanel;
 import com.intellij.ide.TipOfTheDayManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressFunComponentProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements ApplicationComponent, NamedJDOMExternalizable {
+@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
+@State(
+    name = "FeatureUsageStatistics",
+    storages = {@Storage(
+        id = "other",
+        file = "$APP_CONFIG$/feature.usage.statistics.xml")})
+public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements ApplicationComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.FeatureUsageTracker");
 
   private static final long DAY = 1000 * 60 * 60 * 24;
@@ -102,7 +108,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
     return "feature.usage.statistics";
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public void loadState(final Element element) {
     List featuresList = element.getChildren(FEATURE_TAG);
     for (int i = 0; i < featuresList.size(); i++) {
       Element featureElement = (Element)featuresList.get(i);
@@ -124,13 +130,14 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
     SHOW_IN_COMPILATION_PROGRESS = Boolean.valueOf(element.getAttributeValue(ATT_SHOW_IN_COMPILATION, Boolean.toString(true))).booleanValue();
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public Element getState() {
+    Element element = new Element("state");
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
     Set<String> ids = registry.getFeatureIds();
     for (String id: ids) {
       Element featureElement = new Element(FEATURE_TAG);
       featureElement.setAttribute(ATT_ID, id);
-      FeatureDescriptor descriptor = (FeatureDescriptor)registry.getFeatureDescriptor(id);
+      FeatureDescriptor descriptor = registry.getFeatureDescriptor(id);
       descriptor.writeStatistics(featureElement);
       element.addContent(featureElement);
     }
@@ -139,6 +146,8 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
     element.setAttribute(ATT_HAVE_BEEN_SHOWN, String.valueOf(HAVE_BEEN_SHOWN));
     element.setAttribute(ATT_SHOW_IN_OTHER, String.valueOf(SHOW_IN_OTHER_PROGRESS));
     element.setAttribute(ATT_SHOW_IN_COMPILATION, String.valueOf(SHOW_IN_COMPILATION_PROGRESS));
+
+    return element;
   }
 
   public void triggerFeatureUsed(String featureId) {

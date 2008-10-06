@@ -14,6 +14,7 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
+import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -426,7 +427,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
 
       public void afterRefreshFinish(boolean asynchonous) {
-        tryToReloadApplication();
+        if (!tryToReloadApplication()) return;
         askToReloadProjectIfConfigFilesChangedExternally();
       }
     });
@@ -455,20 +456,22 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }, ModalityState.NON_MODAL);
   }
 
-  private void tryToReloadApplication(){
+  private boolean tryToReloadApplication(){
     try {
       final Application app = ApplicationManager.getApplication();
 
-      if (app.isDisposed()) return;
+      if (app.isDisposed()) return false;
       final HashSet<Pair<VirtualFile, StateStorage>> causes = new HashSet<Pair<VirtualFile, StateStorage>>(myChangedApplicationFiles);
-      if (causes.isEmpty()) return;
+      if (causes.isEmpty()) return true;
 
       final boolean[] reloadOk = new boolean[]{false};
+      final LinkedHashSet<String> components = new LinkedHashSet<String>();
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           try {
-            reloadOk[0] = ((ApplicationImpl)app).getStateStore().reload(causes);
+
+            reloadOk[0] = ((ApplicationImpl)app).getStateStore().reload(causes, components);
           }
           catch (StateStorage.StateStorageException e) {
             Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
@@ -480,6 +483,28 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           }
         }
       });
+
+      if (!reloadOk[0] && !components.isEmpty()) {
+        String message = "Application components were changed externally and cannot be reaload:\n";
+        for (String component : components) {
+          message += component + "\n";
+        }
+        message += "Shutdown IDEA?";
+
+        if (Messages.showYesNoDialog(message,
+                                     "Application Configuration Reload", Messages.getQuestionIcon()) == 0) {
+          for (Pair<VirtualFile, StateStorage> cause : causes) {
+            StateStorage stateStorage = cause.getSecond();
+            if (stateStorage instanceof XmlElementStorage) {
+              ((XmlElementStorage)stateStorage).disableSaving();
+            }
+          }
+          ApplicationManagerEx.getApplicationEx().exit(true);
+        }
+
+      }
+
+      return reloadOk[0];
     }
     finally {
       myChangedApplicationFiles.clear();
@@ -538,7 +563,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   public void unblockReloadingProjectOnExternalChanges() {
     myReloadBlockCount--;
-    tryToReloadApplication();
+    if (!tryToReloadApplication()) return;
     askToReloadProjectIfConfigFilesChangedExternally();
   }
 

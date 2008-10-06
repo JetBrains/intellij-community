@@ -5,6 +5,7 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.util.Pair;
 
 import java.util.Set;
+import java.util.Collection;
 import java.io.IOException;
 
 public interface IApplicationStore extends IComponentStore {
@@ -14,5 +15,5 @@ public interface IApplicationStore extends IComponentStore {
 
   void setConfigPath(final String configPath);
 
-  boolean reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles) throws StateStorage.StateStorageException, IOException;
+  boolean reload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, final Collection<String> notReloadableComponents) throws StateStorage.StateStorageException, IOException;
 }

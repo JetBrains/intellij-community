@@ -17,6 +17,9 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -38,7 +41,12 @@ import java.util.Map;
  * sizes of window, dialogs, etc.
  */
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
-public class DimensionService implements JDOMExternalizable, ApplicationComponent {
+@State(
+    name = "DimensionService",
+    storages = {@Storage(
+        id = "other",
+        file = "$APP_CONFIG$/options.xml")})
+public class DimensionService implements PersistentStateComponent<Element>, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.DimensionService");
 
   private final Map<String,Point> myKey2Location;
@@ -165,39 +173,8 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
     }
   }
 
-  public synchronized void readExternal(Element element) throws InvalidDataException {
-    for (final Object o : element.getChildren()) {
-      Element e = (Element)o;
-      if (ELEMENT_LOCATION.equals(e.getName())) {
-        try {
-          myKey2Location.put(e.getAttributeValue(KEY), new Point(Integer.parseInt(e.getAttributeValue(ATTRIBUTE_X)),
-                                                                 Integer.parseInt(e.getAttributeValue(ATTRIBUTE_Y))));
-        }
-        catch (NumberFormatException ignored) {
-          // ignored
-        }
-      }
-      else if (ELEMENT_SIZE.equals(e.getName())) {
-        try {
-          myKey2Size.put(e.getAttributeValue(KEY), new Dimension(Integer.parseInt(e.getAttributeValue(ATTRIBUTE_WIDTH)),
-                                                                 Integer.parseInt(e.getAttributeValue(ATTRIBUTE_HEIGHT))));
-        }
-        catch (NumberFormatException ignored) {
-          // ignored
-        }
-      }
-      else if (EXTENDED_STATE.equals(e.getName())) {
-        try {
-          myKey2ExtendedState.put(e.getAttributeValue(KEY), Integer.parseInt(e.getAttributeValue(STATE)));
-        }
-        catch (NumberFormatException ignored) {
-          // ignored
-        }
-      }
-    }
-  }
-
-  public synchronized void writeExternal(Element element) throws WriteExternalException {
+  public Element getState() {
+    Element element = new Element("state");
     // Save locations
     for (String key : myKey2Location.keySet()) {
       Point point = myKey2Location.get(key);
@@ -227,6 +204,43 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
       e.setAttribute(KEY, key);
       e.setAttribute(STATE, String.valueOf(myKey2ExtendedState.get(key)));
       element.addContent(e);
+    }
+    return element;
+  }
+
+  public void loadState(final Element element) {
+    myKey2Location.clear();
+    myKey2Size.clear();
+    myKey2ExtendedState.clear();
+
+    for (final Object o : element.getChildren()) {
+      Element e = (Element)o;
+      if (ELEMENT_LOCATION.equals(e.getName())) {
+        try {
+          myKey2Location.put(e.getAttributeValue(KEY), new Point(Integer.parseInt(e.getAttributeValue(ATTRIBUTE_X)),
+                                                                 Integer.parseInt(e.getAttributeValue(ATTRIBUTE_Y))));
+        }
+        catch (NumberFormatException ignored) {
+          // ignored
+        }
+      }
+      else if (ELEMENT_SIZE.equals(e.getName())) {
+        try {
+          myKey2Size.put(e.getAttributeValue(KEY), new Dimension(Integer.parseInt(e.getAttributeValue(ATTRIBUTE_WIDTH)),
+                                                                 Integer.parseInt(e.getAttributeValue(ATTRIBUTE_HEIGHT))));
+        }
+        catch (NumberFormatException ignored) {
+          // ignored
+        }
+      }
+      else if (EXTENDED_STATE.equals(e.getName())) {
+        try {
+          myKey2ExtendedState.put(e.getAttributeValue(KEY), Integer.parseInt(e.getAttributeValue(STATE)));
+        }
+        catch (NumberFormatException ignored) {
+          // ignored
+        }
+      }
     }
   }
 

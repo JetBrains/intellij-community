@@ -1,18 +1,18 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.RoamingType;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 public interface StreamProvider {
   StreamProvider DEFAULT = new StreamProvider(){
-    public void saveContent(final String fileSpec, final byte[] content, final RoamingType roamingType) throws IOException {
+    public void saveContent(final String fileSpec, final InputStream content, final long size, final RoamingType roamingType) throws IOException {
 
     }
 
-    public byte[] loadContent(final String fileSpec, final RoamingType roamingType) throws IOException, JDOMException {
+    public InputStream loadContent(final String fileSpec, final RoamingType roamingType) throws IOException {
       return null;
     }
 
@@ -29,10 +29,10 @@ public interface StreamProvider {
     }
   };
 
-  void saveContent(String fileSpec, byte[] content, final RoamingType roamingType) throws IOException;
+  void saveContent(String fileSpec, InputStream content, final long size, final RoamingType roamingType) throws IOException;
 
   @Nullable
-  byte[] loadContent(final String fileSpec, final RoamingType roamingType) throws IOException, JDOMException;
+  InputStream loadContent(final String fileSpec, final RoamingType roamingType) throws IOException;
 
   String[] listSubFiles(final String fileSpec);
 

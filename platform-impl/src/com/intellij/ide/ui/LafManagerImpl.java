@@ -5,9 +5,15 @@ import com.incors.plaf.alloy.AlloyIdea;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.RoamingTypePerPlatform;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.IdeaBlueMetalTheme;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SideBorder2;
@@ -35,7 +41,12 @@ import java.util.HashMap;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public final class LafManagerImpl extends LafManager implements ApplicationComponent,JDOMExternalizable, RoamingTypePerPlatform {
+@State(
+    name = "LafManager",
+    storages = {@Storage(
+        id = "other",
+        file = "$APP_CONFIG$/options.xml")})
+public final class LafManagerImpl extends LafManager implements ApplicationComponent, PersistentStateComponent<Element>, RoamingTypePerPlatform {
   private static final Logger LOG=Logger.getInstance("#com.intellij.ide.ui.LafManager");
 
   @NonNls private static final String IDEA_LAF_CLASSNAME = "idea.laf.classname";
@@ -125,7 +136,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
   public void disposeComponent(){}
 
-  public void readExternal(Element element) {
+  public void loadState(final Element element) {
+
+    boolean updateUI = myCurrentLaf != null;
+
     String className=null;
     for (final Object o : element.getChildren()) {
       Element child = (Element)o;
@@ -142,14 +156,21 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
 
     myCurrentLaf=laf;
+
+    if (updateUI) {
+      setCurrentLookAndFeel(laf);
+      updateUI();
+    }
   }
 
-  public void writeExternal(Element element) {
+  public Element getState() {
+    Element element = new Element("state");
     if(myCurrentLaf.getClassName()!=null){
       Element child=new Element(ELEMENT_LAF);
       child.setAttribute(ATTRIBUTE_CLASS_NAME,myCurrentLaf.getClassName());
       element.addContent(child);
     }
+    return element;
   }
 
   public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels(){

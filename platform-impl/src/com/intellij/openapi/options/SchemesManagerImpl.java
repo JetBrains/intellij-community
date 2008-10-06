@@ -152,7 +152,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     system.addVirtualFileListener(new VirtualFileAdapter() {
       @Override
       public void contentsChanged(final VirtualFileEvent event) {
-        onFileContentChanged(event, myVFSBaseDir);
+        onFileContentChanged(event);
       }
 
       @Override
@@ -208,10 +208,10 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     myListenerAdded = true;
   }
 
-  private void onFileContentChanged(final VirtualFileEvent event, final VirtualFile baseDirFile) {
+  private void onFileContentChanged(final VirtualFileEvent event) {
     VirtualFile file = event.getFile();
 
-    if (event.getRequestor() == null && isFileUnder(file, baseDirFile) && !myInsideSave) {
+    if (event.getRequestor() == null && isFileUnder(file, myVFSBaseDir) && !myInsideSave) {
       File ioFile = new File(file.getPath());
       E scheme = findSchemeFor(ioFile.getName());
       ArrayList<E> read = new ArrayList<E>();
@@ -665,7 +665,8 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
             }
           }
           try {
-            provider.saveContent(getFileFullPath(UniqueFileNamesProvider.convertName(scheme.getName())) + EXT, StorageUtil.printDocument(wrapped), RoamingType.GLOBAL);
+            StorageUtil.sendContent(provider, getFileFullPath(UniqueFileNamesProvider.convertName(scheme.getName())) + EXT,
+                                    wrapped, RoamingType.GLOBAL);
           }
           catch (IOException e) {
             LOG.debug(e);
@@ -755,7 +756,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       if (myDeletedNames.size() > 0) {
         for (StreamProvider provider : getEnabledProviders()) {
           try {
-            provider.saveContent(getFileFullPath(DELETED_XML), StorageUtil.printDocument(createDeletedDocument()), myRoamingType);
+            StorageUtil.sendContent(provider, getFileFullPath(DELETED_XML), createDeletedDocument(), myRoamingType);
           }
           catch (IOException e) {
             LOG.debug(e);
@@ -886,7 +887,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private void saveOnServer(final String fileName, final Document document) {
     for (StreamProvider provider : getEnabledProviders()) {
       try {
-        provider.saveContent(getFileFullPath(fileName), StorageUtil.printDocument(document), myRoamingType);
+        StorageUtil.sendContent(provider, getFileFullPath(fileName), document, myRoamingType);
       }
       catch (IOException e) {
         LOG.debug(e);

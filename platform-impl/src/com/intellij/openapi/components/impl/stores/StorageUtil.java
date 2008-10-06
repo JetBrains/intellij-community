@@ -1,8 +1,10 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
@@ -17,8 +19,9 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 
 /**
@@ -142,5 +145,41 @@ public class StorageUtil {
     catch (IOException e) {
       return null;
     }
+  }
+
+  @Nullable
+  public static Document loadDocument(final InputStream stream) {
+    if (stream == null) return null;
+
+    try {
+      return JDOMUtil.loadDocument(stream);
+    }
+    catch (JDOMException e) {
+      return null;
+    }
+    catch (IOException e) {
+      return null;
+    }
+    finally {
+      try {
+        stream.close();
+      }
+      catch (IOException e) {
+        //ignore
+      }
+    }
+  }
+
+  public static void sendContent(final StreamProvider streamProvider, final String fileSpec, final Document copy, final RoamingType roamingType)
+      throws IOException {
+    byte[] content = printDocument(copy);
+    ByteArrayInputStream in = new ByteArrayInputStream(content);
+    try {
+      streamProvider.saveContent(fileSpec, in, content.length, roamingType);
+    }
+    finally {
+      in.close();
+    }
+
   }
 }

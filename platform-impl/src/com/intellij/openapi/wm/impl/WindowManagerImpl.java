@@ -18,9 +18,11 @@ import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
+import com.intellij.util.EventDispatcher;
 import com.sun.jna.examples.WindowUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -55,6 +57,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   @NonNls private static final String HEIGHT_ATTR = "height";
   @NonNls private static final String EXTENDED_STATE_ATTR = "extended-state";
   private Boolean myAlphaModeSupported = null;
+
+  private final EventDispatcher<WindowManagerListener> myEventDispatcher = EventDispatcher.create(WindowManagerListener.class);
 
   static {
     initialize();
@@ -170,6 +174,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   public IdeFrameImpl[] getAllFrames() {
     final Collection<IdeFrameImpl> ideFrames = myProject2Frame.values();
     return ideFrames.toArray(new IdeFrameImpl[ideFrames.size()]);
+  }
+
+  @Override
+  public void addListener(final WindowManagerListener listener) {
+    myEventDispatcher.addListener(listener);
+  }
+
+  public void removeListener(final WindowManagerListener listener) {
+    myEventDispatcher.removeListener(listener);
   }
 
   public final Rectangle getScreenBounds() {
@@ -383,6 +396,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
     frame.addWindowListener(myActivationListener);
 
+    myEventDispatcher.getMulticaster().frameCreated(frame);
+
     return frame;
   }
 
@@ -405,6 +420,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   }
 
   public final void releaseFrame(final IdeFrameImpl frame) {
+
+    myEventDispatcher.getMulticaster().beforeFrameReleased(frame);
+
     final Project project = frame.getProject();
     LOG.assertTrue(project != null);
 

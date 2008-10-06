@@ -11,6 +11,7 @@ import com.intellij.util.io.fs.IFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -25,6 +26,8 @@ public interface StateStorageManager {
 
   @Nullable
   StateStorage getFileStateStorage(String fileName);
+
+  Collection<String> getStorageFileNames();
 
   void clearStateStorage(@NotNull String file);
 

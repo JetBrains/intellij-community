@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.formove.CustomBinaryPatchApplier;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -54,10 +55,9 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   private final MessageBus myBus;
   private final List<ShelvedChangeList> myShelvedChangeLists = new ArrayList<ShelvedChangeList>();
   private final List<ShelvedChangeList> myRecycledShelvedChangeLists = new ArrayList<ShelvedChangeList>();
-  @NonNls private static final String ELEMENT_CHANGELIST = "changelist";
-  @NonNls private static final String ELEMENT_RECYCLED_CHANGELIST = "recycled_changelist";
+
   @NonNls private static final String ATTRIBUTE_SHOW_RECYCLED = "show_recycled";
-  @NonNls private String myShelfPath;
+  private final CompoundShelfFileProcesor myFileProcessor;
 
   public static final Topic<ChangeListener> SHELF_TOPIC = new Topic<ChangeListener>("shelf updates", ChangeListener.class);
   private boolean myShowRecycled;
@@ -65,10 +65,15 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   public ShelveChangesManager(final Project project, final MessageBus bus) {
     myProject = project;
     myBus = bus;
+    if (!project.isDefault()) {
+      myFileProcessor = new CompoundShelfFileProcesor("shelf");
+    }
+    else {
+      myFileProcessor = new CompoundShelfFileProcesor(new StreamProvider[]{}, PathManager.getConfigPath() + File.separator + "shelf");
+    }
   }
 
   public void projectOpened() {
-    myShelfPath = PathManager.getConfigPath() + File.separator + "shelf";
   }
 
   public void projectClosed() {
@@ -88,19 +93,17 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
   public void readExternal(Element element) throws InvalidDataException {
     //noinspection unchecked
-    final List<Element> children = (List<Element>)element.getChildren(ELEMENT_CHANGELIST);
+
     final String showRecycled = element.getAttributeValue(ATTRIBUTE_SHOW_RECYCLED);
     if (showRecycled != null) {
       myShowRecycled = Boolean.parseBoolean(showRecycled);
     } else {
       myShowRecycled = true;
     }
-    readList(children, myShelvedChangeLists);
-    final List<Element> childrenRecycled = (List<Element>)element.getChildren(ELEMENT_RECYCLED_CHANGELIST);
-    readList(childrenRecycled, myRecycledShelvedChangeLists);
-    for (ShelvedChangeList list : myRecycledShelvedChangeLists) {
-      list.setRecycled(true);
-    }
+
+    readExternal(element, myShelvedChangeLists, myRecycledShelvedChangeLists);
+
+
   }
 
   private static void readList(final List<Element> children, final List<ShelvedChangeList> sink) throws InvalidDataException {
@@ -113,18 +116,16 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     }
   }
 
+  public static void readExternal(final Element element, final List<ShelvedChangeList> changes, final List<ShelvedChangeList> recycled) throws InvalidDataException {
+    changes.addAll(ShelvedChangeList.readChanges(element, false, true));
+
+    recycled.addAll(ShelvedChangeList.readChanges(element, true, true));
+  }
+
   public void writeExternal(Element element) throws WriteExternalException {
     element.setAttribute(ATTRIBUTE_SHOW_RECYCLED, Boolean.toString(myShowRecycled));
-    for(ShelvedChangeList data: myShelvedChangeLists) {
-      Element child = new Element(ELEMENT_CHANGELIST);
-      data.writeExternal(child);
-      element.addContent(child);
-    }
-    for(ShelvedChangeList data: myRecycledShelvedChangeLists) {
-      Element child = new Element(ELEMENT_RECYCLED_CHANGELIST);
-      data.writeExternal(child);
-      element.addContent(child);
-    }
+    ShelvedChangeList.writeChanges(myShelvedChangeLists, myRecycledShelvedChangeLists, element);
+
   }
 
   public List<ShelvedChangeList> getShelvedChangeLists() {
@@ -147,21 +148,15 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     }
 
     File patchPath = getPatchPath(commitMessage);
-    Writer writer;
-    try {
-      writer = new OutputStreamWriter(new FileOutputStream(patchPath));
-    }
-    catch(IOException ex) {
-      patchPath = getPatchPath("shelved_change");
-      writer = new OutputStreamWriter(new FileOutputStream(patchPath));
-    }
-    try {
-      List<FilePatch> patches = PatchBuilder.buildPatch(textChanges, myProject.getBaseDir().getPresentableUrl(), true, false);
-      UnifiedDiffWriter.write(patches, writer, "\n");
-    }
-    finally {
-      writer.close();
-    }
+    final List<FilePatch> patches = PatchBuilder.buildPatch(textChanges, myProject.getBaseDir().getPresentableUrl(), true, false);
+
+    myFileProcessor.savePathFile(
+        new CompoundShelfFileProcesor.ContentProvider(){
+          public void writeContentTo(final Writer writer) throws IOException {
+            UnifiedDiffWriter.write(patches, writer, "\n");
+          }
+        },
+        patchPath);
 
     RollbackChangesDialog.doRollback(myProject, changes, true, false);
 
@@ -180,9 +175,10 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     if (afterFile != null) {
       String shelvedName = FileUtil.getNameWithoutExtension(afterFile.getName());
       String shelvedExt = FileUtil.getExtension(afterFile.getName());
-      File shelvedFile = FileUtil.findSequentNonexistentFile(new File(myShelfPath), shelvedName, shelvedExt);
+      File shelvedFile = FileUtil.findSequentNonexistentFile(myFileProcessor.getBaseIODir(), shelvedName, shelvedExt);
 
-      FileUtil.copy(afterRevision.getFile().getIOFile(), shelvedFile);
+      myFileProcessor.saveFile(afterRevision.getFile().getIOFile(), shelvedFile);
+
       shelvedPath = shelvedFile.getPath();
     }
     String beforePath = ChangesUtil.getProjectRelativePath(myProject, beforeFile);
@@ -195,7 +191,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   }
 
   private File getPatchPath(@NonNls final String commitMessage) {
-    File file = new File(myShelfPath);
+    File file = myFileProcessor.getBaseIODir();
     if (!file.exists()) {
       file.mkdirs();
     }
@@ -317,7 +313,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     final Ref<IOException> ex = new Ref<IOException>();
     final Ref<VirtualFile> patchedFileRef = new Ref<VirtualFile>();
     final File shelvedFile = file.SHELVED_PATH == null ? null : new File(file.SHELVED_PATH);
-    
+
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
@@ -470,12 +466,15 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     notifyStateChanged();
   }
 
-  private static void deleteListImpl(final ShelvedChangeList changeList) {
-    FileUtil.delete(new File(changeList.PATH));
+  private void deleteListImpl(final ShelvedChangeList changeList) {
+    File file = new File(changeList.PATH);
+    myFileProcessor.delete(file.getName());
+
     for(ShelvedBinaryFile binaryFile: changeList.getBinaryFiles()) {
       final String path = binaryFile.SHELVED_PATH;
       if (path != null) {
-        FileUtil.delete(new File(path));
+        File binFile = new File(path);
+        myFileProcessor.delete(binFile.getName());
       }
     }
   }

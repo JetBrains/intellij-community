@@ -142,6 +142,10 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       public StreamProvider[] getStreamProviders(final RoamingType roamingType) {
         throw new UnsupportedOperationException("Method getStreamProviders not implemented in " + getClass());
       }
+
+      public Collection<String> getStorageFileNames() {
+        throw new UnsupportedOperationException("Method getStorageFileNames not implemented in " + getClass());
+      }
     };
   }
 

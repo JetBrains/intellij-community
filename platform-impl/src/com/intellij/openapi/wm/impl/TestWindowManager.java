@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.impl.status.StatusBarPatch;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -184,5 +185,12 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
   public final void initComponent() { }
 
   public final void disposeComponent() {
+  }
+
+  public void addListener(final WindowManagerListener listener) {
+
+  }
+
+  public void removeListener(final WindowManagerListener listener) {
   }
 }

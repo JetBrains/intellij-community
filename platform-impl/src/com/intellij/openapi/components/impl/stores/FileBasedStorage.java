@@ -79,6 +79,11 @@ public class FileBasedStorage extends XmlElementStorage {
     return new FileSaveSession(externalizationSession);
   }
 
+  public void resetCache() {
+    myUpToDateHash = null;
+  }
+
+
   protected class FileSaveSession extends MySaveSession {
     public FileSaveSession(MyExternalizationSession externalizationSession) {
       super(externalizationSession);
@@ -98,6 +103,8 @@ public class FileBasedStorage extends XmlElementStorage {
         return true;
       }
     }
+
+
 
     @Override
     protected Integer calcHash() {
@@ -352,4 +359,31 @@ VirtualFile result = LocalFileSystem.getInstance().findFileByIoFile(myFile);
     super.setDefaultState(element);
   }
 
+  protected boolean phisicalContentNeedsSave(final Document doc) {
+    if (!myFile.exists()) return true;
+
+    final byte[] text = StorageUtil.printDocument(doc);
+
+    try {
+      return !Arrays.equals(myFile.loadBytes(), text);
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+      return true;
+    }
+  }
+
+  @Nullable
+  public File updateFileExternallyFromStreamProviders() throws IOException {
+    StorageData loadedData = loadData(true);
+    Document document = getDocument(loadedData);
+    if (phisicalContentNeedsSave(document)) {
+      File file = new File(myFile.getAbsolutePath());
+      JDOMUtil.writeDocument(document, file, "\n");
+      return file;
+
+    }
+
+    return null;
+  }
 }

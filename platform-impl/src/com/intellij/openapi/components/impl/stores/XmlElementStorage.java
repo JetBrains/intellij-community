@@ -1,15 +1,17 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.StreamProvider;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.StringInterner;
+import com.intellij.util.io.fs.IFile;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -20,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 
-abstract class XmlElementStorage implements StateStorage, Disposable {
+public abstract class XmlElementStorage implements StateStorage, Disposable {
   @NonNls private static final Set<String> OBSOLETE_COMPONENT_NAMES = new HashSet<String>(Arrays.asList(
     "Palette"
   ));
@@ -40,6 +42,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   private final ComponentRoamingManager myComponentRoamingManager;
   private final boolean myIsProjectSettings;
   protected Integer myUpToDateHash;
+  private boolean mySavingDisabled = false;
 
 
   protected XmlElementStorage(@Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
@@ -87,13 +90,13 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   protected StorageData getStorageData() throws StateStorageException {
     if (myLoadedData != null) return myLoadedData;
 
-    myLoadedData = loadData();
+    myLoadedData = loadData(true);
 
     return myLoadedData;
   }
 
   @NotNull
-  private StorageData loadData() throws StateStorageException {
+  protected StorageData loadData(final boolean useProvidersData) throws StateStorageException {
     StorageData result = createStorageData();
 
     Document document = loadDocument();
@@ -102,7 +105,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
       loadState(result, document.getRootElement());
     }
 
-    if (!myIsProjectSettings) {
+    if (!myIsProjectSettings && useProvidersData) {
       for (RoamingType roamingType : RoamingType.values()) {
         if (roamingType != RoamingType.DISABLED) {
           try {
@@ -174,9 +177,33 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   public SaveSession startSave(final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
 
-    final SaveSession saveSession = createSaveSession((MyExternalizationSession)externalizationSession);
+    final SaveSession saveSession = mySavingDisabled ? createNullSession() : createSaveSession((MyExternalizationSession)externalizationSession);
     mySession = saveSession;
     return saveSession;
+  }
+
+  private SaveSession createNullSession() {
+    return new SaveSession(){
+      public void save() throws StateStorageException {
+
+      }
+
+      public Set<String> getUsedMacros() {
+        return Collections.emptySet();
+      }
+
+      public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+        return Collections.emptySet();
+      }
+
+      public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
+        return Collections.emptySet();
+      }
+
+      public List<IFile> getAllStorageFiles() {
+        return Collections.emptyList();
+      }
+    };
   }
 
   protected abstract MySaveSession createSaveSession(final MyExternalizationSession externalizationSession);
@@ -184,6 +211,10 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   public void finishSave(final SaveSession saveSession) {
     assert mySession == saveSession;
     mySession = null;
+  }
+
+  public void disableSaving() {
+    mySavingDisabled = true;
   }
 
   protected class MyExternalizationSession implements ExternalizationSession {
@@ -209,6 +240,24 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
 
       myStorageData.setState(componentName, element);
     }
+  }
+
+  protected Document getDocument(StorageData data)  {
+
+    final Element element = data.save();
+
+    if (myPathMacroSubstitutor != null) {
+      Set<String> usedMacros = myPathMacroSubstitutor.getUsedMacros();
+      try {
+        myPathMacroSubstitutor.reset();
+        myPathMacroSubstitutor.collapsePaths(element);
+      }
+      finally {
+        myPathMacroSubstitutor.reset(usedMacros);
+      }
+    }
+
+    return new Document(element);
   }
 
   protected abstract class MySaveSession implements SaveSession {
@@ -266,6 +315,8 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
       return true;
     }
 
+
+
     protected abstract void doSave() throws StateStorageException;
 
     public void clearHash() {
@@ -292,7 +343,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
                     filterComponentsDisabledForRoaming(copy.getRootElement(), roamingType);
 
                     if (copy.getRootElement().getChildren().size() > 0) {
-                      myStreamProvider.saveContent(myFileSpec, StorageUtil.printDocument(copy), roamingType);
+                      StorageUtil.sendContent(myStreamProvider, myFileSpec, copy, roamingType);
                     }
                   }
                   catch (IOException e) {
@@ -370,7 +421,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
     @Nullable
     public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
       try {
-        final StorageData storageData = loadData();
+        final StorageData storageData = loadData(false);
 
         return storageData.getDifference(myStorageData);
       }
@@ -417,10 +468,28 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
 
           if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
             assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
+
+            Element existingElement = myComponentStates.get(name);
+
+            if (existingElement != null) {
+              element = mergeElements(name, element, existingElement);
+            }
+
             myComponentStates.put(name, element);
           }
         }
       }
+    }
+
+    private Element mergeElements(final String name, final Element element1, final Element element2) {
+      Object[] mergers = Extensions.getRootArea().getExtensionPoint("com.intellij.componentConfigurationMerger").getExtensions();
+      for (Object merger : mergers) {
+        XmlConfigurationMerger mergerObj = (XmlConfigurationMerger)merger;
+        if (mergerObj.getComponentName().equals(name)) {
+          return mergerObj.merge(element1, element2);
+        }
+      }
+      return element1;
     }
 
     @NotNull
@@ -532,7 +601,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
-    final StorageData storageData = loadData();
+    final StorageData storageData = loadData(false);
 
     final StorageData oldLoadedData = myLoadedData;
 

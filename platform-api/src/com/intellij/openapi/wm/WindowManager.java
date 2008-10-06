@@ -60,4 +60,7 @@ public abstract class WindowManager {
   public abstract boolean isInsideScreenBounds(int x,int y);
 
   public abstract IdeFrame[] getAllFrames();
+
+  public abstract void addListener(WindowManagerListener listener);
+  public abstract void removeListener(WindowManagerListener listener);
 }

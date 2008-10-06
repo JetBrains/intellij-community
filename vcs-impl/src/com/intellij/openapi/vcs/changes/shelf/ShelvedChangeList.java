@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NonNls;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Collection;
+import java.io.File;
 
 public class ShelvedChangeList implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList");
@@ -63,7 +65,7 @@ public class ShelvedChangeList implements JDOMExternalizable {
     myBinaryFiles = new ArrayList<ShelvedBinaryFile>();
     //noinspection unchecked
     final List<Element> children = (List<Element>)element.getChildren(ELEMENT_BINARY);
-    for(Element child: children) {
+    for (Element child : children) {
       ShelvedBinaryFile binaryFile = new ShelvedBinaryFile();
       binaryFile.readExternal(child);
       myBinaryFiles.add(binaryFile);
@@ -73,7 +75,7 @@ public class ShelvedChangeList implements JDOMExternalizable {
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
     element.setAttribute(ATTRIBUTE_DATE, Long.toString(DATE.getTime()));
-    for(ShelvedBinaryFile file: myBinaryFiles) {
+    for (ShelvedBinaryFile file : myBinaryFiles) {
       Element child = new Element(ELEMENT_BINARY);
       file.writeExternal(child);
       element.addContent(child);
@@ -90,7 +92,7 @@ public class ShelvedChangeList implements JDOMExternalizable {
       try {
         final List<TextFilePatch> list = ShelveChangesManager.loadPatches(PATH);
         myChanges = new ArrayList<ShelvedChange>();
-        for(FilePatch patch: list) {
+        for (FilePatch patch : list) {
           FileStatus status;
           if (patch.isNewFile()) {
             status = FileStatus.ADDED;
@@ -118,4 +120,49 @@ public class ShelvedChangeList implements JDOMExternalizable {
   public List<ShelvedBinaryFile> getBinaryFiles() {
     return myBinaryFiles;
   }
+
+  @NonNls private static final String ELEMENT_CHANGELIST = "changelist";
+  @NonNls private static final String ELEMENT_RECYCLED_CHANGELIST = "recycled_changelist";
+
+  public static Collection<ShelvedChangeList> readChanges(final Element element, final boolean recycled, final boolean checkForFileExistance) throws InvalidDataException {
+    final List<Element> children = (List<Element>)element.getChildren(recycled ? ELEMENT_RECYCLED_CHANGELIST : ELEMENT_CHANGELIST);
+
+    final List<ShelvedChangeList> result = new ArrayList<ShelvedChangeList>();
+
+    readList(children, result, checkForFileExistance);
+
+    if (recycled) {
+      for (ShelvedChangeList list : result) {
+        list.setRecycled(true);
+      }
+    }
+    return result;
+  }
+
+
+
+  private static void readList(final List<Element> children, final List<ShelvedChangeList> sink, boolean checkForFileExistance) throws InvalidDataException {
+    for (Element child : children) {
+      ShelvedChangeList data = new ShelvedChangeList();
+      data.readExternal(child);
+      if (!checkForFileExistance || new File(data.PATH).exists()) {
+        sink.add(data);
+      }
+    }
+  }
+
+  public static void writeChanges(final Collection<ShelvedChangeList> shelvedChangeLists, final Collection<ShelvedChangeList> recycledShelvedChangeLists,
+                                  Element element) throws WriteExternalException {
+    for(ShelvedChangeList data: shelvedChangeLists) {
+      Element child = new Element(ELEMENT_CHANGELIST);
+      data.writeExternal(child);
+      element.addContent(child);
+    }
+    for(ShelvedChangeList data: recycledShelvedChangeLists) {
+      Element child = new Element(ELEMENT_RECYCLED_CHANGELIST);
+      data.writeExternal(child);
+      element.addContent(child);
+    }
+  }
+
 }

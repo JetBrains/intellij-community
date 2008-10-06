@@ -7,7 +7,7 @@
 
     <component>
       <interface-class>com.intellij.ide.util.PropertiesComponent</interface-class>
-      <implementation-class>com.intellij.ide.util.PropertiesComponentImpl</implementation-class>
+      <implementation-class>com.intellij.ide.util.AppPropertiesComponentImpl</implementation-class>
     </component>
 
     <component>
@@ -119,7 +119,7 @@
 
     <component>
       <interface-class>com.intellij.ide.util.PropertiesComponent</interface-class>
-      <implementation-class>com.intellij.ide.util.PropertiesComponentImpl</implementation-class>
+      <implementation-class>com.intellij.ide.util.ProjectPropertiesComponentImpl</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>

@@ -197,6 +197,18 @@ public class FileUtil {
     return bytes;
   }
 
+  public static byte[] loadBytes(InputStream stream) throws IOException{
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    final byte[] bytes = BUFFER.get();
+    while(true) {
+      int n = stream.read(bytes, 0, bytes.length);
+      if (n <= 0) break;
+      buffer.write(bytes, 0, n);
+    }
+    buffer.close();
+    return buffer.toByteArray();
+  }
+
   @NotNull public static String loadTextAndClose(Reader reader) throws IOException {
     try {
       return new String(adaptiveLoadText(reader));
@@ -326,7 +338,7 @@ public class FileUtil {
     }
     startDeletionThread(tempFile);
   }
-  
+
   public static void asyncDelete(Collection<File> files) {
     List<File> tempFiles = new ArrayList<File>();
     for (File file : files) {
@@ -392,7 +404,7 @@ public class FileUtil {
     }
 
     delete(file);
-    
+
     return null;
   }
 
@@ -483,6 +495,17 @@ public class FileUtil {
     while (true) {
       int read = inputStream.read(buffer);
       if (read < 0) break;
+      outputStream.write(buffer, 0, read);
+    }
+  }
+
+  public static void copy(InputStream inputStream, int size, OutputStream outputStream) throws IOException {
+    final byte[] buffer = BUFFER.get();
+    int toRead = size;
+    while (toRead > 0) {
+      int read = inputStream.read(buffer, 0, Math.min(buffer.length, toRead));
+      if (read < 0) break;
+      toRead -= read;
       outputStream.write(buffer, 0, read);
     }
   }

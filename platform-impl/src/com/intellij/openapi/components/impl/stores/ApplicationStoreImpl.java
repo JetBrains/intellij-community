@@ -3,7 +3,10 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StateStorageOperation;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.Pair;
@@ -12,7 +15,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Set;
+import java.util.Collection;
 
 class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ApplicationStoreImpl");
@@ -74,15 +79,22 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
     myStateStorageManager.addMacro(CONFIG_MACRO, configPath);
   }
 
-  public boolean reload(final Set<Pair<VirtualFile, StateStorage>> changedFiles) throws StateStorage.StateStorageException, IOException {
+  public boolean reload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, final Collection<String> notReloadableComponents) throws StateStorage.StateStorageException, IOException {
+
     final SaveSession saveSession = startSave();
     final Set<String> componentNames = saveSession.analyzeExternalChanges(changedFiles);
+
     try {
       if (componentNames == null) return false;
 
-      // TODO[mike]: This is a hack to prevent NPE (assert != null) in StateStorageManagerImpl.reload, storage is null for...
       for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
         if (pair.second == null) return false;
+      }
+
+      for (String name : componentNames) {
+        if (!isReloadPossible(Collections.singleton(name))) {
+          notReloadableComponents.add(name);
+        }
       }
 
       if (!isReloadPossible(componentNames)) return false;

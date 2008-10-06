@@ -15,6 +15,10 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.ConnectException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -74,6 +78,10 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
     }
 
     return myStorages.get(fileName);
+  }
+
+  public Collection<String> getStorageFileNames() {
+    return myStorages.keySet();
   }
 
   private void putStorageToMap(final String key, final StateStorage stateStorage) {
@@ -173,11 +181,11 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
     };
   }
 
-  public void saveContent(final String fileSpec, final byte[] content, final RoamingType roamingType) {
+  public void saveContent(final String fileSpec, final InputStream content, final long size, final RoamingType roamingType) {
 
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
-        streamProvider.saveContent(fileSpec, content, roamingType);
+        streamProvider.saveContent(fileSpec, content, size, roamingType);
       }
       catch (ConnectException e) {
         LOG.debug("Cannot send user profile to server: " + e.getLocalizedMessage());
@@ -215,12 +223,12 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
     }
   }
 
-  public byte[] loadContent(final String fileSpec, final RoamingType roamingType) {
+  public InputStream loadContent(final String fileSpec, final RoamingType roamingType) throws IOException {
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
-        byte[] content = streamProvider.loadContent(fileSpec, roamingType);
+        InputStream content = streamProvider.loadContent(fileSpec, roamingType);
 
-        if (content != null && content.length > 0) return content;
+        if (content != null) return content;
       }
       catch (ConnectException e) {
         LOG.debug("Cannot send user profile o server: " + e.getLocalizedMessage());
@@ -347,9 +355,26 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
 
   protected class MySaveSession implements SaveSession {
     CompoundSaveSession myCompoundSaveSession;
+    private final String myCreationPoint;
+
+    @Override
+    public String toString() {
+      return super.toString() + " " + myCreationPoint;
+    }
 
     public MySaveSession(final MyExternalizationSession externalizationSession) {
       myCompoundSaveSession = new CompoundSaveSession(externalizationSession.myCompoundExternalizationSession);
+
+      RuntimeException creationPoint = new RuntimeException();
+      StringWriter stringWriter = new StringWriter();
+      PrintWriter writer = new PrintWriter(stringWriter);
+      try {
+        creationPoint.printStackTrace(writer);
+      }
+      finally {
+        writer.close();
+      }
+      myCreationPoint = stringWriter.toString();
 
       Map<IFile, StateStorage> fileToStorage = new HashMap<IFile, StateStorage>();
       fileToStorage.clear();
@@ -359,6 +384,9 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
           fileToStorage.put(storageFile, storage);
         }
       }
+
+
+
     }
 
     public List<IFile> getAllStorageFilesToSave() throws StateStorage.StateStorageException {

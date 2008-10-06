@@ -31,17 +31,15 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.components.*;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class PropertiesComponentImpl extends PropertiesComponent implements JDOMExternalizable, ProjectComponent, ApplicationComponent {
+
+public class PropertiesComponentImpl extends PropertiesComponent
+    implements PersistentStateComponent<Element> {
   private HashMap<String, String> myMap = new HashMap<String, String>();
   @NonNls private static final String ELEMENT_PROPERTY = "property";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
@@ -53,14 +51,27 @@ public class PropertiesComponentImpl extends PropertiesComponent implements JDOM
     return "PropertiesComponent";
   }
 
-  PropertiesComponentImpl() {}
+  PropertiesComponentImpl() {
+  }
 
-  public void disposeComponent() {}
-  public void initComponent() {}
-  public void projectClosed() {}
-  public void projectOpened() {}
 
-  public void readExternal(Element parentNode) throws InvalidDataException {
+
+  public Element getState() {
+    Element parentNode = new Element("state");
+    for (final String key : myMap.keySet()) {
+      String value = myMap.get(key);
+      if (value != null) {
+        Element element = new Element(ELEMENT_PROPERTY);
+        element.setAttribute(ATTRIBUTE_NAME, key);
+        element.setAttribute(ATTRIBUTE_VALUE, value);
+        parentNode.addContent(element);
+      }
+    }
+    return parentNode;
+  }
+
+  public void loadState(final Element parentNode) {
+    myMap.clear();
     for (final Object o : parentNode.getChildren(ELEMENT_PROPERTY)) {
       Element e = (Element)o;
 
@@ -69,18 +80,6 @@ public class PropertiesComponentImpl extends PropertiesComponent implements JDOM
 
       if (name != null) {
         myMap.put(name, value);
-      }
-    }
-  }
-
-  public void writeExternal(Element parentNode) throws WriteExternalException {
-    for (final String key : myMap.keySet()) {
-      String value = myMap.get(key);
-      if (value != null) {
-        Element element = new Element(ELEMENT_PROPERTY);
-        element.setAttribute(ATTRIBUTE_NAME, key);
-        element.setAttribute(ATTRIBUTE_VALUE, value);
-        parentNode.addContent(element);
       }
     }
   }
