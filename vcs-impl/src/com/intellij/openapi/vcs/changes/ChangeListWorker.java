@@ -269,8 +269,26 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return myIdx.getAffectedFiles();
   }
 
+  // should be tested
   public String getListName(final VirtualFile file) {
-    return myIdx.getListName(file);
+    final String listName = myIdx.getListName(file);
+    if (listName == null || ((listName != null) && myMap.containsKey(listName))) {
+      return listName;
+    }
+    LOG.info("Error: index does not coinside with change lists map. list name: " + listName + " for file: " + file.getPath());
+    for (LocalChangeList list : myMap.values()) {
+      for (Change change : list.getChanges()) {
+        if (change.getAfterRevision() != null &&
+            Comparing.equal(change.getAfterRevision().getFile().getVirtualFile(), file)) {
+          return listName;
+        }
+        if (change.getBeforeRevision() != null &&
+            Comparing.equal(change.getBeforeRevision().getFile().getVirtualFile(), file)) {
+          return listName;
+        }
+      }
+    }
+    return null;
   }
 
   public FileStatus getStatus(final VirtualFile file) {
