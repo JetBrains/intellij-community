@@ -33,6 +33,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   private Collection<Change> myOutdatedChanges;
   private boolean myIsInUpdate = false;
   private ChangeHashSet myChangesBeforeUpdate;
+  private ChangeListWorker.LocalListListener myLocalListener;
 
   public static LocalChangeListImpl createEmptyChangeListImpl(Project project, String name) {
     return new LocalChangeListImpl(project, name);
@@ -119,6 +120,9 @@ public class LocalChangeListImpl extends LocalChangeList {
   synchronized void addChange(Change change) {
     if (!myIsInUpdate) myReadChangesCache = null;
     myChanges.add(change);
+    if (myLocalListener != null) {
+      myLocalListener.changeAdded(myName, change);
+    }
   }
 
   synchronized Change removeChange(Change change) {
@@ -127,6 +131,9 @@ public class LocalChangeListImpl extends LocalChangeList {
         myChanges.remove(localChange);
         if (! myIsInUpdate) {
           myReadChangesCache = null;
+        }
+        if (myLocalListener != null) {
+          myLocalListener.changeRemoved(myName, localChange);
         }
         return localChange;
       }
@@ -283,5 +290,9 @@ public class LocalChangeListImpl extends LocalChangeList {
       if (aIndex >= 0) return (Change)_set [aIndex];
       return null;
     }
+  }
+
+  void setLocalListener(final ChangeListWorker.LocalListListener localListener) {
+    myLocalListener = localListener;
   }
 }

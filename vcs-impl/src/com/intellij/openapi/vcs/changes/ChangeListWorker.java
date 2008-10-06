@@ -3,6 +3,9 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
@@ -10,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.io.File;
 
 /** should work under _external_ lock
 * just logic here: do modifications to group of change lists
@@ -21,19 +25,28 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   private final Map<String, LocalChangeList> myMap;
   private LocalChangeList myDefault;
 
+  private ChangeListsIndexes myIdx;
+
   public ChangeListWorker(final Project project) {
     myProject = project;
     myMap = new HashMap<String, LocalChangeList>();
+    myIdx = new ChangeListsIndexes();
   }
 
-  private ChangeListWorker(final Project project, @NotNull final Collection<LocalChangeList> lists, @NotNull final String defaultName) {
-    myProject = project;
+  private ChangeListWorker(final ChangeListWorker worker) {
+    myProject = worker.myProject;
     myMap = new HashMap<String, LocalChangeList>();
+    myIdx = new ChangeListsIndexes(worker.myIdx);
+    
     LocalChangeList defaultList = null;
-    for (LocalChangeList changeList : lists) {
-      myMap.put(changeList.getName(), changeList);
-      if (defaultName.equals(changeList.getName())) {
-        defaultList = changeList;
+    for (LocalChangeList changeList : worker.myMap.values()) {
+      final LocalChangeList copy = changeList.copy();
+      ((LocalChangeListImpl) copy).setLocalListener(myIdx);
+      
+      final String changeListName = copy.getName();
+      myMap.put(changeListName, copy);
+      if (copy.isDefault()) {
+        defaultList = copy;
       }
     }
     assert defaultList != null;
@@ -44,14 +57,11 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myMap.clear();
     myMap.putAll(worker.myMap);
     myDefault = worker.myDefault;
+    myIdx = new ChangeListsIndexes(worker.myIdx);
   }
 
   public ChangeListWorker copy() {
-    List<LocalChangeList> copy = new ArrayList<LocalChangeList>(myMap.size());
-    for (LocalChangeList list : myMap.values()) {
-      copy.add(list.copy());
-    }
-    return new ChangeListWorker(myProject, copy, myDefault.getName());
+    return new ChangeListWorker(this);
   }
 
   public boolean findListByName(@NotNull final String name) {
@@ -108,6 +118,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     LOG.assertTrue(! contains, "Attempt to create duplicate changelist " + name);
     if (! contains) {
       final LocalChangeListImpl newList = (LocalChangeListImpl) LocalChangeList.createEmptyChangeList(myProject, name);
+      newList.setLocalListener(myIdx);
+      
       if (description != null) {
         newList.setComment(description);
       }
@@ -181,6 +193,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       ((LocalChangeListImpl) list).setNameImpl(toName);
       myMap.remove(fromName);
       myMap.put(toName, list);
+      myIdx.renamed(toName, list.getChanges());
     }
     return list != null;
   }
@@ -196,17 +209,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       return oldComment;
     }
     return null;
-  }
-
-  public boolean editChangeList(@NotNull final String fromName, @NotNull final String toName, @Nullable final String comment) {
-    final LocalChangeList list = myMap.get(fromName);
-    if (list != null) {
-      list.setName(toName);
-      list.setComment(comment);
-      myMap.remove(fromName);
-      myMap.put(toName, list);
-    }
-    return list != null;
   }
 
   public boolean isEmpty() {
@@ -250,5 +252,56 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   public String getDefaultListName() {
     return myDefault == null ? null : myDefault.getName();
+  }
+
+  public interface LocalListListener {
+    void changeAdded(final String listName, final Change change);
+    void changeRemoved(final String listName, final Change change);
+  }
+
+
+  public List<File> getAffectedPaths() {
+    return myIdx.getAffectedPaths();
+  }
+
+  @NotNull
+  public List<VirtualFile> getAffectedFiles() {
+    return myIdx.getAffectedFiles();
+  }
+
+  public String getListName(final VirtualFile file) {
+    return myIdx.getListName(file);
+  }
+
+  public FileStatus getStatus(final VirtualFile file) {
+    return myIdx.getStatus(file);
+  }
+
+  @Nullable
+  public LocalChangeList listForChange(final Change change) {
+    for (LocalChangeList list : myMap.values()) {
+      if (list.getChanges().contains(change)) return list.copy();
+    }
+    return null;
+  }
+
+  @NotNull
+  public Collection<Change> getChangesIn(final FilePath dirPath) {
+    List<Change> changes = new ArrayList<Change>();
+    for (ChangeList list : myMap.values()) {
+      for (Change change : list.getChanges()) {
+        final ContentRevision afterRevision = change.getAfterRevision();
+        if (afterRevision != null && afterRevision.getFile().isUnder(dirPath, false)) {
+          changes.add(change);
+          continue;
+        }
+
+        final ContentRevision beforeRevision = change.getBeforeRevision();
+        if (beforeRevision != null && beforeRevision.getFile().isUnder(dirPath, false)) {
+          changes.add(change);
+        }
+      }
+    }
+    return changes;
   }
 }

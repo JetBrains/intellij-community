@@ -345,12 +345,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   public List<File> getAffectedPaths() {
-    return ChangeListManagerUtilityMethods.getAffectedPaths(getChangeListsCopy());
+    synchronized (myDataLock) {
+      return myWorker.getAffectedPaths();
+    }
   }
 
   @NotNull
   public List<VirtualFile> getAffectedFiles() {
-    return ChangeListManagerUtilityMethods.getAffectedFiles(getChangeListsCopy());
+    synchronized (myDataLock) {
+      return myWorker.getAffectedFiles();
+    }
   }
 
   List<VirtualFile> getUnversionedFiles() {
@@ -383,15 +387,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public boolean isFileAffected(final VirtualFile file) {
     synchronized (myDataLock) {
-      final List<LocalChangeList> lists = myWorker.getListsCopy();
-      for (ChangeList list : lists) {
-        for (Change change : list.getChanges()) {
-          final ContentRevision afterRevision = change.getAfterRevision();
-          if (afterRevision != null && afterRevision.getFile().getVirtualFile() == file) return true;
-        }
-      }
-
-      return myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).containsFile(file);
+      return myWorker.getStatus(file) != null;
     }
   }
 
@@ -476,11 +472,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Nullable
   public LocalChangeList getChangeList(Change change) {
     synchronized (myDataLock) {
-      final List<LocalChangeList> lists = myWorker.getListsCopy();
-      for (LocalChangeList list : lists) {
-        if (list.getChanges().contains(change)) return list.copy();
-      }
-      return null;
+      return myWorker.listForChange(change);
     }
   }
 
@@ -513,8 +505,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Nullable
   public Change getChange(VirtualFile file) {
     synchronized (myDataLock) {
-      final List<LocalChangeList> lists = myWorker.getListsCopy();
-      for (ChangeList list : lists) {
+      final String name = myWorker.getListName(file);
+      if (name != null) {
+        final LocalChangeList list = myWorker.getCopyByName(name);
         for (Change change : list.getChanges()) {
           final ContentRevision afterRevision = change.getAfterRevision();
           if (afterRevision != null) {
@@ -536,8 +529,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Nullable
   public Change getChange(final FilePath file) {
     synchronized (myDataLock) {
-      final List<LocalChangeList> lists = myWorker.getListsCopy();
-      for (ChangeList list : lists) {
+      final String name = myWorker.getListName(file.getVirtualFile());
+      if (name != null) {
+        final LocalChangeList list = myWorker.getCopyByName(name);
         for (Change change : list.getChanges()) {
           final ContentRevision afterRevision = change.getAfterRevision();
           if (afterRevision != null && afterRevision.getFile().equals(file)) {
@@ -564,18 +558,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       if (myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).containsFile(file)) return FileStatus.UNKNOWN;
       if (myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).containsFile(file)) return FileStatus.HIJACKED;
       if (myComposite.getVFHolder(FileHolder.HolderType.IGNORED).containsFile(file)) return FileStatus.IGNORED;
-      final Change change = getChange(file);
-      if (change != null) {
-        // moved/renamed dir, both old and new paths are present in filesystem - return "deleted" status for old path
-        final FilePath beforePath = ChangesUtil.getBeforePath(change);
-        final FilePath afterPath = ChangesUtil.getAfterPath(change);
-        if (afterPath != null && beforePath != null && !beforePath.equals(afterPath)) {
-          String revisionPath = FileUtil.toSystemIndependentName(beforePath.getPath());
-          if (FileUtil.pathsEqual(revisionPath, file.getPath())) {
-            return FileStatus.DELETED;
-          }
-        }
-        return change.getFileStatus();
+
+      final FileStatus status = myWorker.getStatus(file);
+      if (status != null) {
+        return status;
       }
       if (myComposite.getSwitchedFileHolder().containsFile(file)) return FileStatus.SWITCHED;
       return FileStatus.NOT_CHANGED;
@@ -589,7 +575,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @NotNull
   public Collection<Change> getChangesIn(final FilePath dirPath) {
-    return ChangeListManagerUtilityMethods.getChangesIn(getChangeListsCopy(), dirPath);
+    synchronized (myDataLock) {
+      return myWorker.getChangesIn(dirPath);
+    }
   }
 
   public void moveChangesTo(LocalChangeList list, final Change[] changes) {
