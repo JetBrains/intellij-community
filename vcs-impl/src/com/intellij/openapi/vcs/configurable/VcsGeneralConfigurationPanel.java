@@ -94,6 +94,7 @@ public class VcsGeneralConfigurationPanel {
         CacheSettingsDialog.showSettingsDialog(myProject);
       }
     });
+    myConfigureHistoryCacheButton.setEnabled(! project.isDefault());
   }
 
   public void apply() throws ConfigurationException {
