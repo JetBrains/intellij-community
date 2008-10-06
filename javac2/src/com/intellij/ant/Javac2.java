@@ -41,21 +41,27 @@ public class Javac2 extends Javac{
   public Javac2(){
   }
 
-  protected void compile(){
+  protected void compile() {
     // compile java
     super.compile();
 
-    ClassLoader loader = buildClasspathClassLoader();
-    if (loader == null) return;
-    instrumentForms(loader);
+    try {
+      ClassLoader loader = buildClasspathClassLoader();
+      if (loader == null) return;
+      instrumentForms(loader);
 
-    //NotNull instrumentation
-    if (isJdkVersion(5) || isJdkVersion(6)) {
-      final int instrumented = instrumentNotNull(getDestdir(), loader);
-      log("Added @NotNull assertions to " + instrumented + " files", Project.MSG_INFO);
+      //NotNull instrumentation
+      if (isJdkVersion(5) || isJdkVersion(6)) {
+        final int instrumented = instrumentNotNull(getDestdir(), loader);
+        log("Added @NotNull assertions to " + instrumented + " files", Project.MSG_INFO);
+      }
+      else {
+        log("Skipped @NotNull instrumentation because target JDK is not 1.5 or 1.6", Project.MSG_INFO);
+      }
     }
-    else {
-      log("Skipped @NotNull instrumentation because target JDK is not 1.5 or 1.6", Project.MSG_INFO);
+    catch (ArrayIndexOutOfBoundsException e) {
+      e.printStackTrace();
+      throw e;
     }
   }
 
