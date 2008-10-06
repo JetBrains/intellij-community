@@ -115,7 +115,8 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
     }
     catch (VcsException e1) {
-      Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences"), CommonBundle.message("title.error"));
+      Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e1.getMessage()),
+                               CommonBundle.message("title.error"));
     }
 
 
