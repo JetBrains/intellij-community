@@ -51,7 +51,7 @@ public class TabImpl extends AbstractTab implements Tab {
   }
 
   public void setLeftProportion(final float leftProportion) {
-    if (leftProportion <= 0 || leftProportion >= 1.0) return;
+    if (leftProportion < 0 || leftProportion > 1.0) return;
     myLeftProportion = leftProportion;
   }
 
@@ -60,7 +60,7 @@ public class TabImpl extends AbstractTab implements Tab {
   }
 
   public void setRightProportion(final float rightProportion) {
-    if (rightProportion <= 0 || rightProportion >= 1.0) return;
+    if (rightProportion < 0 || rightProportion > 1.0) return;
     myRightProportion = rightProportion;
   }
 
@@ -69,7 +69,7 @@ public class TabImpl extends AbstractTab implements Tab {
   }
 
   public void setBottomProportion(final float bottomProportion) {
-    if (bottomProportion <= 0 || bottomProportion >= 1.0) return;
+    if (bottomProportion < 0 || bottomProportion > 1.0) return;
     myBottomProportion = bottomProportion;
   }
 
