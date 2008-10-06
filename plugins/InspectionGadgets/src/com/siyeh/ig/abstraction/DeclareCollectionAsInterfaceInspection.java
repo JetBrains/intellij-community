@@ -17,12 +17,9 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -37,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -115,6 +111,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             final PsiReferenceParameterList parameterList =
                     referenceElement.getParameterList();
             if (parameterList != null) {
+                newElementText.append('<');
                 final PsiTypeElement[] typeParameterElements =
                         parameterList.getTypeParameterElements();
                 if (typeParameterElements.length > 0) {
@@ -128,6 +125,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
                         newElementText.append(typeParameterElement.getText());
                     }
                 }
+                newElementText.append('>');
             }
             final PsiElement grandParent = parent.getParent();
             if (!(grandParent instanceof PsiTypeElement)) {
