@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -29,10 +30,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLock;
-import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.ArrayUtil;
@@ -1293,8 +1291,17 @@ public class FileBasedIndex implements ApplicationComponent {
       final PsiDocumentManager pdm = PsiDocumentManager.getInstance(project);
       final PsiFile file = pdm.getCachedPsiFile(doc);
       if (file != null && file.getModificationStamp() > modStamp) {
-        target = file;
-        modStamp = file.getModificationStamp();
+        final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+        final VirtualFile vFile = file.getVirtualFile();
+        if (vFile != null && (index.isInContent(vFile) || index.isInLibrarySource(vFile))) {
+          target = file;
+          modStamp = file.getModificationStamp();
+        }
+      }
+      else if (file != null && file.getModificationStamp() == modStamp) {
+        if (target instanceof PsiPlainTextFile && !(file instanceof PsiPlainTextFile)) {
+          target = file;
+        }
       }
     }
 

@@ -184,7 +184,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public void performForCommittedDocument(@NotNull final Document doc, @NotNull final Runnable action) {
     final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
     if (isUncommited(document)) {
-      synchronized (myListeners) {
+      synchronized (ACTION_AFTER_COMMIT) {
         List<Runnable> list = document.getUserData(ACTION_AFTER_COMMIT);
         if (list == null) {
           document.putUserData(ACTION_AFTER_COMMIT, list = new SmartList<Runnable>());
@@ -233,7 +233,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         }
       }
     );
-    synchronized (myListeners) {
+    synchronized (ACTION_AFTER_COMMIT) {
       final List<Runnable> list = document.getUserData(ACTION_AFTER_COMMIT);
       if (list != null) {
         document.putUserData(ACTION_AFTER_COMMIT, null);
