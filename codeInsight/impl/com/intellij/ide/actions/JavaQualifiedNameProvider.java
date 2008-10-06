@@ -79,13 +79,12 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
 
     final int offset = editor.getCaretModel().getOffset();
     PsiElement elementAtCaret = file.findElementAt(offset);
-    if (elementAtCaret == null) return;
 
     fqn = fqn.replace('#', '.');
     String toInsert;
     String suffix = "";
     PsiElement elementToInsert = targetElement;
-    if (targetElement instanceof PsiMethod && PsiUtil.isInsideJavadocComment(elementAtCaret)) {
+    if (elementAtCaret != null && targetElement instanceof PsiMethod && PsiUtil.isInsideJavadocComment(elementAtCaret)) {
       // use fqn#methodName(ParamType)
       PsiMethod method = (PsiMethod)targetElement;
       PsiClass aClass = method.getContainingClass();
@@ -101,7 +100,8 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
       }
       toInsert += ")";
     }
-    else if (PsiTreeUtil.getNonStrictParentOfType(elementAtCaret, PsiLiteralExpression.class, PsiComment.class) != null ||
+    else if (elementAtCaret == null ||
+             PsiTreeUtil.getNonStrictParentOfType(elementAtCaret, PsiLiteralExpression.class, PsiComment.class) != null ||
              PsiTreeUtil.getNonStrictParentOfType(elementAtCaret, PsiJavaFile.class) == null) {
       toInsert = fqn;
     }
