@@ -224,7 +224,7 @@
     <metaDataContributor implementation="com.intellij.xml.util.XmlApplicationComponent"/>
     <intentionAction>
       <category>XML</category>
-      <className>com.intellij.xml.actions.SplitTagAction</className>
+      <className>com.intellij.xml.actions.XmlSplitTagAction</className>
     </intentionAction>
   </extensions>
 

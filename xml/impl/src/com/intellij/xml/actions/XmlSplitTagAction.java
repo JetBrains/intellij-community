@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author spleaner
  */
-public class SplitTagAction implements IntentionAction {
+public class XmlSplitTagAction implements IntentionAction {
 
   @NotNull
   public String getText() {
