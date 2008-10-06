@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.MergingCharSequence;
 import org.jetbrains.annotations.Nullable;
@@ -214,6 +215,8 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
       final int start = oldMapping.range.getStartOffset();
       final int end = oldMapping.range.getEndOffset();
+      if (Comparing.equal(doc.getCharsSequence().subSequence(start, end), tokenText)) return;
+
       doc.replaceString(start, end, tokenText);
 
       final int newEnd = start + tokenText.length();
