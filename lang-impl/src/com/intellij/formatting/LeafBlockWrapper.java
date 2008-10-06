@@ -6,7 +6,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import java.util.ArrayList;
 
 class LeafBlockWrapper extends AbstractBlockWrapper {
-  //TODO remove text!!!
   private static int CONTAIN_LINE_FEEDS = 4;
   private static int READ_ONLY = 8;
   private static int LEAF = 16;
@@ -16,7 +15,6 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   private LeafBlockWrapper myNextBlock;
   private SpacingImpl mySpaceProperty;
   private IndentInside myLastLineIndent;
-  private CharSequence myText;
 
   public LeafBlockWrapper(final Block block,
                           CompositeBlockWrapper parent,
@@ -42,8 +40,6 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     } else {
       myLastLineIndent = null;
     }
-
-    myText = model.getText(getTextRange());
 
     myFlags = flagsValue;
   }
@@ -148,9 +144,4 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return new TextRange(myStart, myEnd);
   }
 
-
-  @Override
-  public String toString() {
-    return myText.toString();
-  } 
 }
