@@ -47,7 +47,7 @@ public class ExternalJavaDocAction extends AnAction {
     return (context!=null && editor!=null)? context.findElementAt(editor.getCaretModel().getOffset()):null;
   }
 
-  public void update(AnActionEvent event){
+  public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
@@ -59,14 +59,15 @@ public class ExternalJavaDocAction extends AnAction {
     if (editor != null) {
       presentation.setEnabled(enabled);
       if (event.getPlace().equals(ActionPlaces.MAIN_MENU)) {
-        presentation.setEnabled(true);
+        presentation.setVisible(true);
       }
       else {
-        presentation.setEnabled(enabled);
+        presentation.setVisible(enabled);
       }
     }
     else{
       presentation.setEnabled(enabled);
+      presentation.setVisible(true);
     }
   }
 }
