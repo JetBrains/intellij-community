@@ -93,6 +93,9 @@
         serviceImplementation="git4idea.GitSSHService"/>
     <fileEditorProvider implementation="git4idea.GitRevisionGraphEditorProvider"/>
 
+    <ComponentRoamingType component="Git.Settings" type="DISABLED"/>
+
+
   </extensions>
 
 </idea-plugin>

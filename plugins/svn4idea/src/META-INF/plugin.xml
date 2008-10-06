@@ -120,5 +120,7 @@
 
     <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs"/>
 
+    <ComponentRoamingType component="SvnConfiguration" type="DISABLED"/>
+
   </extensions>
 </idea-plugin>
