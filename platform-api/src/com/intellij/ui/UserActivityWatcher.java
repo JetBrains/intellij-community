@@ -173,6 +173,10 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     if (parentComponent instanceof JSlider) {
       ((JSlider)parentComponent).addChangeListener(myChangeListener);
     }
+
+    if (parentComponent instanceof UserActivityProviderComponent) {
+      ((UserActivityProviderComponent)parentComponent).addChangeListener(myChangeListener);
+    }
   }
 
   protected void unprocessComponent(final Component component) {
@@ -197,6 +201,10 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
 
     if (component instanceof JSlider){
       ((JSlider)component).removeChangeListener(myChangeListener);
+    }
+
+    if (component instanceof UserActivityProviderComponent) {
+      ((UserActivityProviderComponent)component).removeChangeListener(myChangeListener);
     }
   }
 

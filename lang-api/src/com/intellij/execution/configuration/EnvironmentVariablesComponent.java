@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jdom.Element;
@@ -19,7 +20,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -27,7 +30,7 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
-public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton> {
+public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton> implements UserActivityProviderComponent {
   private boolean myPassParentEnvs;
   private Map<String, String> myEnvs;
   @NonNls private static final String ENVS = "envs";
@@ -36,6 +39,8 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   @NonNls private static final String VALUE = "value";
   @NonNls private static final String OPTION = "option";
   @NonNls private static final String ENV_VARIABLES = "ENV_VARIABLES";
+
+  private ArrayList<ChangeListener> myListeners = new ArrayList<ChangeListener>(2);
 
   public EnvironmentVariablesComponent() {
     super();
@@ -78,7 +83,10 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   }
 
   public void setPassParentEnvs(final boolean passDefaultVariables) {
-    myPassParentEnvs = passDefaultVariables;
+    if (myPassParentEnvs != passDefaultVariables) {
+      myPassParentEnvs = passDefaultVariables;
+      fireStateChanged();
+    }
   }
 
   public static void readExternal(Element element, Map<String, String> envs) {
@@ -137,6 +145,20 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
           envs.put(envKey, val.replace("$" + envKey + "$", parentVal));
         }
       }
+    }
+  }
+
+  public void addChangeListener(final ChangeListener changeListener) {
+    myListeners.add(changeListener);
+  }
+
+  public void removeChangeListener(final ChangeListener changeListener) {
+    myListeners.remove(changeListener);
+  }
+
+  private void fireStateChanged() {
+    for (ChangeListener listener : myListeners) {
+      listener.stateChanged(new ChangeEvent(this));
     }
   }
 
