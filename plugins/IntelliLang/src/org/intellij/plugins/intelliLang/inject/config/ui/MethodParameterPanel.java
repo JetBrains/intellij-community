@@ -49,7 +49,6 @@ import gnu.trove.THashMap;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -190,9 +189,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       }
     });
     for (PsiMethod method : methods) {
-      final String signature = buildSignature(method);
-      myData.put(method, new MethodParameterInjection.MethodInfo(
-          signature, new boolean[method.getParameterList().getParametersCount()], false));
+      myData.put(method, MethodParameterInjection.createMethodInfo(method));
     }
   }
 
@@ -268,12 +265,6 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       PsiMethod method = (PsiMethod)((DefaultMutableTreeNode)enumeration.nextElement()).getUserObject();
       assert myData.containsKey(method);
     }
-  }
-
-  @NotNull
-  private static String buildSignature(@NotNull PsiMethod method) {
-    return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                      PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES);
   }
 
   @Nullable

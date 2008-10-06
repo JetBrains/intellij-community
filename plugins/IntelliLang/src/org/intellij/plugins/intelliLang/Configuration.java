@@ -311,6 +311,42 @@ public final class Configuration implements PersistentStateComponent<Element> {
     myResolveReferences = resolveReferences;
   }
 
+  @Nullable
+  public <T extends BaseInjection> T findExistingInjection(final T injection) {
+    if (injection instanceof XmlAttributeInjection) {
+      final XmlAttributeInjection template = (XmlAttributeInjection)injection;
+      for (XmlAttributeInjection cur : myAttributeInjections) {
+        if (Comparing.equal(cur.getInjectedLanguageId(), template.getInjectedLanguageId()) &&
+            Comparing.equal(cur.getAttributeName(), template.getAttributeName()) &&
+            Comparing.equal(cur.getAttributeNamespace(), template.getAttributeNamespace()) &&
+            Comparing.equal(cur.getTagName(), template.getTagName()) &&
+            Comparing.equal(cur.getTagNamespace(), template.getTagNamespace())) {
+          return (T)cur;
+        }
+      }
+    }
+    else if (injection instanceof XmlTagInjection) {
+      final XmlTagInjection template = (XmlTagInjection)injection;
+      for (XmlTagInjection cur : myTagInjections) {
+        if (Comparing.equal(cur.getInjectedLanguageId(), template.getInjectedLanguageId()) &&
+            Comparing.equal(cur.getTagName(), template.getTagName()) &&
+            Comparing.equal(cur.getTagNamespace(), template.getTagNamespace())) {
+          return (T)cur;
+        }
+      }
+    }
+    else if (injection instanceof MethodParameterInjection) {
+      final MethodParameterInjection template = (MethodParameterInjection)injection;
+      for (MethodParameterInjection cur : myParameterInjections) {
+        if (Comparing.equal(cur.getInjectedLanguageId(), template.getInjectedLanguageId()) &&
+            Comparing.equal(cur.getClassName(), template.getClassName())) {
+          return (T)cur;
+        }
+      }
+    }
+    return null;
+  }
+
   public enum InstrumentationType {
     NONE, ASSERT, EXCEPTION
   }

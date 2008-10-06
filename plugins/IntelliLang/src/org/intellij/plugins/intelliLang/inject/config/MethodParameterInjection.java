@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiFormatUtil;
 import gnu.trove.THashMap;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jdom.Element;
@@ -271,6 +272,18 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     }
     if (method == null) return null;
     return Pair.create(Trinity.create(method.getName(), curParameterCount, parameterIndex), method);
+  }
+
+
+  @NotNull
+  private static String buildSignature(@NotNull PsiMethod method) {
+    return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+                                      PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES);
+  }
+
+  public static MethodInfo createMethodInfo(final PsiMethod method) {
+    final String signature = buildSignature(method);
+    return new MethodInfo(signature, new boolean[method.getParameterList().getParametersCount()], false);
   }
 
   public static class MethodInfo {
