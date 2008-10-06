@@ -12,6 +12,7 @@ import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -297,7 +298,9 @@ public class CvsEntriesManager extends VirtualFileAdapter {
   }
 
   private CvsInfo getCvsInfo(VirtualFile parent) {
-    LOG.assertTrue(isActive());
+    if (! isActive()) {
+      throw new ProcessCanceledException();
+    }
     if (parent == null) return CvsInfo.getDummyCvsInfo();
     return getInfoFor(parent);
   }
