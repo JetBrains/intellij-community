@@ -56,15 +56,8 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
 
     ++ gb.gridy;
 
-    myCombo = new JComboBox(myPreviousLocations.toArray(new Object[myPreviousLocations.size()])) {
-      @Override
-      public void processKeyEvent(final KeyEvent e) {
-        super.processKeyEvent(e);
-        validateMe();
-      }
-    };
+    myCombo = new JComboBox(myPreviousLocations.toArray(new Object[myPreviousLocations.size()]));
     myCombo.setEditable(true);
-    myCombo.setSelectedIndex(0);
     myCombo.setMinimumSize(new Dimension(250, 20));
 
     mainPanel.add(myCombo, gb);
