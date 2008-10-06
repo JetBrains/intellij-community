@@ -5,6 +5,7 @@
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -23,6 +24,7 @@ import java.util.List;
  * @author spleaner
  */
 public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent implements Disposable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.breadcrumbs.BreadcrumbsComponent");
   private static final Painter DEFAULT_PAINTER = new DefaultPainter(new ButtonSettings());
 
   private List<BreadcrumbsItemListener<T>> myListeners = new ArrayList<BreadcrumbsItemListener<T>>();
@@ -458,7 +460,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
 
     public int getOffset() {
-      assert myOffset != -1;
+      LOG.assertTrue(myOffset != -1, "Negative offet for crumb: " + myString);
       return myOffset;
     }
 
