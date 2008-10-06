@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,36 +15,64 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class ConditionalExpressionInspection extends BaseInspection {
 
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreSimpleAssignmentsAndReturns = false;
+
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "conditional.expression.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "conditional.expression.problem.descriptor");
     }
 
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message("conditional.expression.option"),
+                this, "ignoreSimpleAssignmentsAndReturns");
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ConditionalExpressionVisitor();
     }
 
-    private static class ConditionalExpressionVisitor
+    private class ConditionalExpressionVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitConditionalExpression(PsiConditionalExpression exp) {
-            super.visitConditionalExpression(exp);
-            registerError(exp);
+        @Override public void visitConditionalExpression(
+                PsiConditionalExpression expression) {
+            super.visitConditionalExpression(expression);
+            if (ignoreSimpleAssignmentsAndReturns) {
+                PsiElement parent = expression.getParent();
+                while (parent instanceof PsiParenthesizedExpression) {
+                    parent = parent.getParent();
+                }
+                if (parent instanceof PsiAssignmentExpression ||
+                        parent instanceof PsiReturnStatement ||
+                        parent instanceof PsiLocalVariable) {
+                    return;
+                }
+            }
+            registerError(expression);
         }
     }
 }
