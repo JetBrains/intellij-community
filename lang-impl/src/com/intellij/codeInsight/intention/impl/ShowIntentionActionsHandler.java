@@ -42,7 +42,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) return;
 
-    //intentions check isWritable before modification: if (!file.isWritable()) return;if (!file.isWritable()) return;
+    //intentions check isWritable before modification: if (!file.isWritable()) return;
     if (file instanceof PsiCodeFragment) return;
 
     TemplateState state = TemplateManagerImpl.getTemplateState(editor);
@@ -73,8 +73,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               final TextRange textRange = element.getTextRange();
-              final LocalInspectionsPass pass =
-                  new LocalInspectionsPass(file, document, textRange.getStartOffset(), textRange.getEndOffset());
+              final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, textRange.getStartOffset(), textRange.getEndOffset());
               pass.collectInformation(indicator);
               for (HighlightInfo info : pass.getHighlights()) {
                 if (info.quickFixActionRanges != null) {
@@ -97,20 +96,17 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
           SwingUtilities.invokeLater(new Runnable(){
             public void run() {
               if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
-                IntentionHintComponent
-                    .showIntentionHint(project, file, editor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, true);
+                IntentionHintComponent.showIntentionHint(project, file, editor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, true);
               }
             }
           });
         }
       };
       ProgressManager.getInstance().run(task);
-    } else {
-
-      if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
+    }
+    else if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
         IntentionHintComponent.showIntentionHint(project, file, editor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, true);
       }
-    }
   }
 
   public boolean startInWriteAction() {
