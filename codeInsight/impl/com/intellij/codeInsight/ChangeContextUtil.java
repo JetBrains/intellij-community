@@ -2,16 +2,13 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public class ChangeContextUtil {
@@ -171,7 +168,6 @@ public class ChangeContextUtil {
                                                                   PsiClass thisClass) throws IncorrectOperationException {
     PsiManager manager = refExpr.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    Project project = refExpr.getProject();
 
     PsiExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null){
@@ -183,11 +179,7 @@ public class ChangeContextUtil {
         if (refMember.hasModifierProperty(PsiModifier.STATIC)){
           PsiElement refElement = refExpr.resolve();
           if (!manager.areElementsEquivalent(refMember, refElement)){
-            PsiReferenceExpression qualifiedExpr = (PsiReferenceExpression)factory.createExpressionFromText("q." + refExpr.getText(), null);
-            qualifiedExpr = (PsiReferenceExpression)CodeStyleManager.getInstance(project).reformat(qualifiedExpr);
-            PsiExpression newQualifier = factory.createReferenceExpression(containingClass);
-            qualifiedExpr.getQualifierExpression().replace(newQualifier);
-            refExpr = (PsiReferenceExpression)refExpr.replace(qualifiedExpr);
+            refExpr.setQualifierExpression(factory.createReferenceExpression(containingClass));
           }
         }
         else if (thisAccessExpr != null){
@@ -217,10 +209,7 @@ public class ChangeContextUtil {
             }
 
             if (needQualifier){
-              final @NonNls String text = "q." + refExpr.getText();
-              final PsiReferenceExpression qualifiedExpr = (PsiReferenceExpression)factory.createExpressionFromText(text, null);
-              qualifiedExpr.getQualifierExpression().replace(thisAccessExpr);
-              refExpr = (PsiReferenceExpression)refExpr.replace(qualifiedExpr);
+              refExpr.setQualifierExpression(thisAccessExpr);
             }
           }
           else if (thisClass != null && realParentClass != null && PsiTreeUtil.isAncestor(realParentClass, thisClass, true)) {

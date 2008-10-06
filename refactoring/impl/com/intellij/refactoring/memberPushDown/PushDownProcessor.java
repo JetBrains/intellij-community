@@ -133,6 +133,15 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           }
           super.visitNewExpression(expression);
         }
+
+        @Override
+        public void visitTypeElement(final PsiTypeElement type) {
+          final PsiJavaCodeReferenceElement referenceElement = type.getInnermostComponentReferenceElement();
+          if (referenceElement != null) {
+            encodeRef(referenceElement, movedMembers, type);
+          }
+          super.visitTypeElement(type);
+        }
       });
       ChangeContextUtil.encodeContextInfo(member, false);
     }
@@ -172,6 +181,13 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
         if (classReference != null) decodeRef(classReference, factory, targetClass, expression);
         super.visitNewExpression(expression);
+      }
+
+      @Override
+      public void visitTypeElement(final PsiTypeElement type) {
+        final PsiJavaCodeReferenceElement referenceElement = type.getInnermostComponentReferenceElement();
+        if (referenceElement != null)  decodeRef(referenceElement, factory, targetClass, type);
+        super.visitTypeElement(type);
       }
     });
   }

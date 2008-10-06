@@ -6,5 +6,7 @@ class Test {
     Test.foo();
   }
 
-    static void foo(){}
+    static void foo(){
+       System.out.println(S);
+    }
 }
