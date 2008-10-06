@@ -107,8 +107,11 @@ abstract class ComponentStoreImpl implements IComponentStore {
                                              @NotNull StateStorageManager.ExternalizationSession session) {
     Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StateStorageOperation.WRITE);
 
-    session
-        .setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), persistentStateComponent.getState());
+    T state = persistentStateComponent.getState();
+    if (state != null) {
+      session
+        .setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), state);
+    }
   }
 
   private static void commitJdomExternalizable(@NotNull final JDOMExternalizable component,
@@ -181,9 +184,9 @@ abstract class ComponentStoreImpl implements IComponentStore {
       else if (component instanceof RoamingTypePerPlatform) {
         roamingManager.setRoamingType(componentName, RoamingType.PER_PLATFORM);
       }
-      else {
+      /*else {
         roamingManager.setRoamingType(componentName, RoamingType.PER_USER);
-      }
+      }*/
     }
     return defaultsStorage.getState(component, componentName, Element.class, null);
   }

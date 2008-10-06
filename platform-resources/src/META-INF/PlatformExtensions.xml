@@ -127,4 +127,7 @@
   <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
   <componentConfigurationMerger implementation="com.intellij.openapi.vcs.changes.shelf.ShelfManagerConfigurationMerger"/>
   <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler"/>
+  <ComponentRoamingType component="ChangeListManager" type="DISABLED"/>
+  <ComponentRoamingType component="RestoreUpdateTree" type="DISABLED"/>
+  
 </extensions>
