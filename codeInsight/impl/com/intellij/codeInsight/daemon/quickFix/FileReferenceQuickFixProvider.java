@@ -55,10 +55,12 @@ public class FileReferenceQuickFixProvider {
       }
 
       for (PsiFileSystemItem defaultContext : defaultContexts) {
-        final VirtualFile virtualFile = defaultContext.getVirtualFile();
-        if (virtualFile != null && defaultContext.isDirectory() && virtualFile.isInLocalFileSystem()) {
-          context = defaultContext;
-          break;
+        if (defaultContext != null) {
+          final VirtualFile virtualFile = defaultContext.getVirtualFile();
+          if (virtualFile != null && defaultContext.isDirectory() && virtualFile.isInLocalFileSystem()) {
+            context = defaultContext;
+            break;
+          }
         }
       }
       if (context == null && ApplicationManager.getApplication().isUnitTestMode()) {
