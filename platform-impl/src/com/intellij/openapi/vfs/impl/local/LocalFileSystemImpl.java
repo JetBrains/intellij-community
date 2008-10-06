@@ -450,6 +450,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       if (existingFile != null) {
         if (!isAlreadyWatched(result)) {
           existingFile.refresh(true, toWatchRecursively);
+          if (existingFile.isDirectory() && !toWatchRecursively && existingFile instanceof NewVirtualFile) {
+            for (VirtualFile child : ((NewVirtualFile)existingFile).getCachedChildren()) {
+              child.refresh(true, false);
+            }
+          }
         }
       }
       myRootsToWatch.add(result);
