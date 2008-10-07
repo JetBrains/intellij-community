@@ -104,7 +104,7 @@
 
     <group id="CoverageMenu">
       <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction"/>
-      <action id="GenerateCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction"/>
+      <!--<action id="GenerateCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction"/>-->
       <separator/>
 
       <add-to-group group-id="AnalyzeMenu" anchor="before" relative-to-action="ShowPackageDeps"/>
