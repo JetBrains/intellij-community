@@ -31,7 +31,7 @@ public class FileStatusMap {
   }
 
   @Nullable
-  static TextRange getDirtyTextRange(Editor editor, int part) {
+  static TextRange getDirtyTextRange(@NotNull Editor editor, int part) {
     Document document = editor.getDocument();
     TextRange documentRange = TextRange.from(0, document.getTextLength());
 
@@ -42,13 +42,14 @@ public class FileStatusMap {
     return documentRange.intersection(dirtyScope);
   }
 
-  public void setErrorFoundFlag(Document document, boolean errorFound) {
+  public void setErrorFoundFlag(@NotNull Document document, boolean errorFound) {
     //GHP has found error. Flag is used by ExternalToolPass to decide whether to run itself or not
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
         if (!errorFound) return;
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        assert file != null : document;
         status = new FileStatus(file);
         myDocumentToStatusMap.put(document, status);
       }
@@ -56,7 +57,7 @@ public class FileStatusMap {
     }
   }
   
-  public boolean wasErrorFound(Document document) {
+  public boolean wasErrorFound(@NotNull Document document) {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null && status.errorFound;
@@ -72,7 +73,7 @@ public class FileStatusMap {
     private final TIntObjectHashMap<TextRange> customPassDirtyScopes = new TIntObjectHashMap<TextRange>();
     private boolean errorFound;
 
-    private FileStatus(PsiFile file) {
+    private FileStatus(@NotNull PsiFile file) {
       TextRange range = file.getTextRange();
       dirtyScope = range;
       localInspectionsDirtyScope = range;
@@ -205,7 +206,7 @@ public class FileStatusMap {
     return scope1.union(scope2);
   }
 
-  public boolean allDirtyScopesAreNull(final Document document) {
+  public boolean allDirtyScopesAreNull(@NotNull Document document) {
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null
