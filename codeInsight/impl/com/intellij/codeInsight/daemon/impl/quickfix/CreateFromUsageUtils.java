@@ -233,10 +233,9 @@ public class CreateFromUsageUtils {
   }
 
   @Nullable
-  public static PsiClass createClass(
-    final PsiJavaCodeReferenceElement referenceElement,
-    final CreateClassKind classKind,
-    final String superClassName) {
+  public static PsiClass createClass(final PsiJavaCodeReferenceElement referenceElement,
+                                     final CreateClassKind classKind,
+                                     final String superClassName) {
     final String name = referenceElement.getReferenceName();
 
     final PsiElement qualifierElement;

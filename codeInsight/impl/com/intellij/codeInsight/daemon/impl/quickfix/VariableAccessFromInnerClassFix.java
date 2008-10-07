@@ -78,8 +78,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
-    if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
+    if (!CodeInsightUtilBase.preparePsiElementsForWrite(myClass, myVariable)) return;
     try {
       switch (myFixType) {
         case MAKE_FINAL:

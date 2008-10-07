@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class DeleteMethodBodyFix implements IntentionAction {
-  private PsiMethod myMethod;
+  private final PsiMethod myMethod;
 
   public DeleteMethodBodyFix(PsiMethod method) {
     myMethod = method;
@@ -35,6 +36,7 @@ public class DeleteMethodBodyFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(myMethod)) return;
     final PsiCodeBlock body = myMethod.getBody();
     assert body != null;
     body.delete();

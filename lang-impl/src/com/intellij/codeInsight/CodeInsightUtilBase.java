@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ReflectionCache;
 import gnu.trove.THashSet;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
@@ -101,6 +102,9 @@ public class CodeInsightUtilBase {
     return prepareFileForWrite(file);
   }
 
+  public static boolean preparePsiElementsForWrite(PsiElement... elements) {
+    return preparePsiElementsForWrite(Arrays.asList(elements));
+  }
   public static boolean preparePsiElementsForWrite(Collection<? extends PsiElement> elements) {
     if (elements.isEmpty()) return true;
     Set<VirtualFile> files = new THashSet<VirtualFile>();

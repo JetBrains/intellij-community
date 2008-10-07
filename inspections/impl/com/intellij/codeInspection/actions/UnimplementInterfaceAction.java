@@ -1,12 +1,10 @@
 package com.intellij.codeInspection.actions;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -27,7 +25,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
-    final PsiReference psiReference = TargetElementUtil.findReference(editor);
+    final PsiReference psiReference = TargetElementUtilBase.findReference(editor);
     if (psiReference == null) return false;
 
     final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiReferenceList.class);
@@ -53,38 +51,33 @@ public class UnimplementInterfaceAction implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    new WriteCommandAction(project, "Unimplement Interface", file) {
-      protected void run(Result result) throws Throwable {
-        final PsiReference psiReference = file.findReferenceAt(editor.getCaretModel().getOffset());
-        if (psiReference == null) return;
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
 
-        final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiReferenceList.class);
-        if (referenceList == null) return;
+    final PsiReference psiReference = file.findReferenceAt(editor.getCaretModel().getOffset());
+    if (psiReference == null) return;
 
-        final PsiClass psiClass = PsiTreeUtil.getParentOfType(referenceList, PsiClass.class);
-        if (psiClass == null) return;
+    final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiReferenceList.class);
+    if (referenceList == null) return;
 
-        if (psiClass.getExtendsList() != referenceList && psiClass.getImplementsList() != referenceList) return;
+    final PsiClass psiClass = PsiTreeUtil.getParentOfType(referenceList, PsiClass.class);
+    if (psiClass == null) return;
 
-        final PsiElement target = psiReference.resolve();
-        if (target == null || !(target instanceof PsiClass)) return;
+    if (psiClass.getExtendsList() != referenceList && psiClass.getImplementsList() != referenceList) return;
 
-        if (ReadonlyStatusHandler.getInstance(project)
-          .ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) return;
+    final PsiElement target = psiReference.resolve();
+    if (target == null || !(target instanceof PsiClass)) return;
 
-        PsiClass targetClass = (PsiClass)target;
+    PsiClass targetClass = (PsiClass)target;
 
-        psiReference.getElement().delete();
+    psiReference.getElement().delete();
 
-        final PsiMethod[] psiMethods = targetClass.getAllMethods();
-        for (PsiMethod psiMethod : psiMethods) {
-          final PsiMethod[] implementingMethods = psiClass.findMethodsBySignature(psiMethod, false);
-          for (PsiMethod implementingMethod : implementingMethods) {
-            implementingMethod.delete();
-          }
-        }
+    final PsiMethod[] psiMethods = targetClass.getAllMethods();
+    for (PsiMethod psiMethod : psiMethods) {
+      final PsiMethod[] implementingMethods = psiClass.findMethodsBySignature(psiMethod, false);
+      for (PsiMethod implementingMethod : implementingMethods) {
+        implementingMethod.delete();
       }
-    }.execute();
+    }
   }
 
   public boolean startInWriteAction() {

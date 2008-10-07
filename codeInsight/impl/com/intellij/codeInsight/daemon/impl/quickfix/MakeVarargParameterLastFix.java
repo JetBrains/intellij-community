@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -17,7 +18,7 @@ public class MakeVarargParameterLastFix implements IntentionAction {
     myParameter = parameter;
   }
 
-  private PsiParameter myParameter;
+  private final PsiParameter myParameter;
 
   @NotNull
   public String getText() {
@@ -34,6 +35,7 @@ public class MakeVarargParameterLastFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(myParameter)) return;
     myParameter.getParent().add(myParameter);
     myParameter.delete();
   }

@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class AddNewArrayExpressionFix implements IntentionAction {
-  private PsiArrayInitializerExpression myInitializer;
+  private final PsiArrayInitializerExpression myInitializer;
 
   public AddNewArrayExpressionFix(PsiArrayInitializerExpression initializer) {
     myInitializer = initializer;
@@ -38,6 +39,7 @@ public class AddNewArrayExpressionFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!CodeInsightUtilBase.preparePsiElementsForWrite(myInitializer, file)) return;
     PsiManager manager = file.getManager();
     PsiExpression expr = myInitializer.getInitializers()[0];
     PsiType type = expr.getType();
