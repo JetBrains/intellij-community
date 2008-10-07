@@ -495,7 +495,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                 occurrence = RefactoringUtil.outermostParenthesizedExpression(occurrence);
               }
               if (replaceWrite || !RefactoringUtil.isAssignmentLHS(occurrence)) {
-                array.add(occurrence.replace(ref));
+                array.add(replace(occurrence, ref, file));
               }
             }
 

@@ -15,7 +15,9 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -33,11 +35,11 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.Function;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -605,7 +607,7 @@ public final class PsiUtil extends PsiUtilBase {
    */
   @Nullable
   public static PsiModifierListOwner getEnclosingStaticElement(PsiElement place, PsiClass aClass) {
-    LOG.assertTrue(aClass == null || PsiTreeUtil.isAncestor(aClass, place, false));
+    LOG.assertTrue(aClass == null || !place.isPhysical() || PsiTreeUtil.isAncestor(aClass, place, false));
     PsiElement parent = place;
     while (parent != aClass) {
       if (parent instanceof PsiFile) break;

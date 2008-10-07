@@ -30,6 +30,7 @@ import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.usageView.UsageInfo;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -139,7 +140,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
 
     PsiExpression[] occurences;
     if (expr != null) {
-      occurences = CodeInsightUtil.findExpressionOccurrences(method, expr);
+      occurences = new ExpressionOccurenceManager(expr, method, null).findExpressionOccurrences();
     }
     else { // local variable
       occurences = CodeInsightUtil.findReferenceExpressions(method, localVar);

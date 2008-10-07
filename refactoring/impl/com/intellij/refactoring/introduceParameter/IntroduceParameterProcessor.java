@@ -25,6 +25,8 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.introduceField.ElementToWorkOn;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
@@ -380,8 +382,10 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
             element.getParent().delete();
           }
           else {
-            PsiElement newExpr = factory.createExpressionFromText(myParameterName, element);
-            element.replace(newExpr);
+            PsiExpression newExpr = factory.createExpressionFromText(myParameterName, element);
+            PsiElement parent = element.getUserData(ElementToWorkOn.PARENT);
+            PsiFile file = parent != null ? parent.getContainingFile() : element.getContainingFile();
+            IntroduceVariableBase.replace((PsiExpression)element, newExpr, file);
           }
         }
       }

@@ -16,14 +16,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -114,21 +112,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     final PsiExpression[] occurrences = occurenceManager.getOccurences();
     final PsiElement anchorStatementIfAll = occurenceManager.getAnchorStatementForAll();
 
-    ArrayList<RangeHighlighter> highlighters = null;
+    List<RangeHighlighter> highlighters = null;
     if (editor != null) {
-      highlighters = new ArrayList<RangeHighlighter>();
-      final HighlightManager highlightManager = HighlightManager.getInstance(project);
-      if (occurrences.length > 1) {
-        for (PsiExpression occurrence : occurrences) {
-          final RangeMarker rangeMarker = occurrence.getUserData(ElementToWorkOn.TEXT_RANGE);
-          if (rangeMarker != null) {
-            highlightManager.addRangeHighlight(editor, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), highlightAttributes(), true, highlighters);
-          } else {
-            final TextRange textRange = occurrence.getTextRange();
-            highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), highlightAttributes(), true, highlighters);
-          }
-        }
-      }
+      highlighters = RefactoringUtil.highlightAllOccurences(project, occurrences, editor);
     }
 
 
