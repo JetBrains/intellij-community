@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.TargetElementUtil;
 
 /**
  * @author yole
@@ -21,6 +22,12 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null) return null;
+
+      final PsiElement targetElement = TargetElementUtil
+          .findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+      if (targetElement instanceof PsiClass) {
+        return targetElement;
+      }
 
       final int offset = editor.getCaretModel().getOffset();
       PsiElement element = file.findElementAt(offset);
