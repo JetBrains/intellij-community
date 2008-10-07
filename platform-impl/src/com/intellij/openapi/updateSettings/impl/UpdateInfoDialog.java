@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.util.List;
 
 /**
@@ -21,9 +20,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private UpdateInfoPanel myUpdateInfoPanel;
   private UpdateChecker.NewVersion myNewVersion;
 
-  protected UpdateInfoDialog(final boolean canBeParent,
-                             UpdateChecker.NewVersion newVersion,
-                             final List<PluginDownloader> uploadedPlugins,
+  protected UpdateInfoDialog(final boolean canBeParent, UpdateChecker.NewVersion newVersion, final List<PluginDownloader> uploadedPlugins,
                              final boolean enableLink) {
     super(canBeParent, enableLink, uploadedPlugins);
     myNewVersion = newVersion;
@@ -31,19 +28,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     init();
   }
 
-  @Override
-  protected Action[] createActions() {
-    AbstractAction moreInfo = new AbstractAction(IdeBundle.message("updates.more.info.button")) {
-      public void actionPerformed(ActionEvent e) {
-        BrowserUtil.launchBrowser(ApplicationInfoEx.getInstanceEx().getUpdateUrls().getDownloadUrl());
-        UpdateInfoDialog.super.doCancelAction();
-      }
-    };
-    return new Action[] {getOKAction(), moreInfo, getCancelAction()};
-  }
-
   protected String getOkButtonText() {
-    return IdeBundle.message("updates.download.and.install.patch.button");
+    return IdeBundle.message("updates.more.info.button");
   }
 
   protected JComponent createCenterPanel() {
@@ -51,9 +37,9 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     return myUpdateInfoPanel.myPanel;
   }
 
-  @Override
-  protected boolean doDownloadAndPrepare() {
-    return UpdateChecker.downloadAndInstallPatch(myNewVersion) || super.doDownloadAndPrepare();
+  protected void doOKAction() {
+    BrowserUtil.launchBrowser(ApplicationInfoEx.getInstanceEx().getUpdateUrls().getDownloadUrl());
+    super.doOKAction();
   }
 
   private class UpdateInfoPanel {
@@ -65,8 +51,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     private JPanel myUpdatedPluginsPanel;
     private JEditorPane myEditorPane;
     private JPanel myWholePluginsPanel;
-    private JLabel myPatchAvailableLabel;
-    private JLabel myPatchSizeLabel;
 
     public UpdateInfoPanel() {
 
@@ -90,14 +74,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       myVersionNumber.setText(version);
       myNewBuildNumber.setText(Integer.toString(myNewVersion.getLatestBuild()) + ")");
       myNewVersionNumber.setText(myNewVersion.getLatestVersion());
-
-      UpdateChecker.PatchInfo patch = myNewVersion.findPatchFor(build);
-      if (patch == null) {
-        myPatchAvailableLabel.setVisible(false);
-        myPatchSizeLabel.setVisible(false);
-      } else {
-        myPatchSizeLabel.setText(patch.getSize() + "MB");
-      }
 
       initPluginsPanel(myPanel, myUpdatedPluginsPanel, myWholePluginsPanel, myEditorPane);
     }

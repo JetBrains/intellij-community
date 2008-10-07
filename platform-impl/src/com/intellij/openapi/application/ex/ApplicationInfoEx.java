@@ -44,7 +44,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public static interface UpdateUrls {
     String getCheckingUrl();
-    String getPatchesUrl();
     String getDownloadUrl();
   }
 

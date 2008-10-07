@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.updateSettings.impl.UpdateInfoDialog.UpdateInfoPanel">
   <grid id="18751" binding="myPanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="122" y="38" width="478" height="357"/>
+      <xy x="122" y="38" width="572" height="357"/>
     </constraints>
     <properties/>
     <border type="etched"/>
@@ -16,7 +16,7 @@
           <text value=""/>
         </properties>
       </component>
-      <grid id="3b4cd" layout-manager="GridLayoutManager" row-count="3" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="3b4cd" layout-manager="GridLayoutManager" row-count="2" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="3" column="1" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -87,22 +87,6 @@
             </constraints>
             <properties>
               <text value="4.5.5"/>
-            </properties>
-          </component>
-          <component id="56242" class="javax.swing.JLabel" binding="myPatchAvailableLabel">
-            <constraints>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="&lt;html&gt;&lt;b&gt;Patch is available to install.&lt;/b&gt; Total size is:&lt;/html&gt;"/>
-            </properties>
-          </component>
-          <component id="59b69" class="javax.swing.JLabel" binding="myPatchSizeLabel">
-            <constraints>
-              <grid row="2" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="0 mb"/>
             </properties>
           </component>
         </children>

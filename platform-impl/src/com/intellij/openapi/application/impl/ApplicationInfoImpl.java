@@ -80,8 +80,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   }
 
   public String getBuildNumber() {
-    //return myBuildNumber;
-    return "0";
+    return myBuildNumber;
   }
 
   public String getMajorVersion() {
@@ -282,26 +281,19 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   private static class UpdateUrlsImpl implements UpdateUrls {
     private String myCheckingUrl;
-    private String myPatchesUrl;
     private String myDownloadUrl;
     @NonNls private static final String CHECK_ATTR = "check";
-    @NonNls private static final String PATCHES_ATTR = "patches";
     @NonNls private static final String DOWNLOAD_ATTR = "download";
 
     public UpdateUrlsImpl(Element element) {
       if (element != null) {
         myCheckingUrl = element.getAttributeValue(CHECK_ATTR);
-        myPatchesUrl = element.getAttributeValue(PATCHES_ATTR);
         myDownloadUrl = element.getAttributeValue(DOWNLOAD_ATTR);
       }
     }
 
     public String getCheckingUrl() {
       return myCheckingUrl;
-    }
-
-    public String getPatchesUrl() {
-      return myPatchesUrl;
     }
 
     public String getDownloadUrl() {
