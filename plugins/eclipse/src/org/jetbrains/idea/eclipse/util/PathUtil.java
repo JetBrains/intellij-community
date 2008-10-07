@@ -174,8 +174,4 @@ public class PathUtil {
     return path.startsWith(UNRESOLVED_PREFIX);
   }
 
-  public static boolean isPathVariableUsed(final String path) {
-    return path.startsWith("$");
-  }
-
 }

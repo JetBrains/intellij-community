@@ -12,6 +12,9 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -23,6 +26,7 @@ import org.jetbrains.idea.eclipse.action.EclipseBundle;
 import org.jetbrains.idea.eclipse.util.JDOM;
 import org.jetbrains.idea.eclipse.util.XmlDocumentSet;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -77,11 +81,11 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     };
   }
 
-  static void registerFiles(final CachedFileSet fileCache, final String moduleRoot, final String storageRoot) {
+  static void registerFiles(final CachedFileSet fileCache, final Module module, final String moduleRoot, final String storageRoot) {
     fileCache.register(EclipseXml.CLASSPATH_FILE, storageRoot);
     fileCache.register(EclipseXml.PROJECT_FILE, storageRoot);
     fileCache.register(EclipseXml.PLUGIN_XML_FILE, storageRoot);
-    fileCache.register(EclipseXml.IDEA_SETTINGS_POSTFIX, moduleRoot);
+    fileCache.register(module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX, moduleRoot);
   }
 
   static XmlDocumentSet getDocumentSet(final Module module) {
@@ -116,7 +120,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     if (fileCache == null) {
       fileCache = new CachedXmlDocumentSet();
       EclipseModuleManager.getInstance(module).setDocumentSet(fileCache);
-      registerFiles(fileCache, ClasspathStorage.getModuleDir(module), ClasspathStorage.getStorageRootFromOptions(module));
+      registerFiles(fileCache, module, ClasspathStorage.getModuleDir(module), ClasspathStorage.getStorageRootFromOptions(module));
       fileCache.preload();
     }
     return fileCache;
@@ -127,8 +131,23 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       try {
         final XmlDocumentSet documentSet = getDocumentSet(module);
         final Document document = documentSet.read(EclipseXml.PROJECT_FILE);
-        JDOM.getOrCreateChild(document.getRootElement(), EclipseXml.NAME_TAG).setText(module.getName());
+        final Element projectNameElement = JDOM.getOrCreateChild(document.getRootElement(), EclipseXml.NAME_TAG);
+        final String oldModuleName = projectNameElement.getText();
+        projectNameElement.setText(module.getName());
         documentSet.write(document, EclipseXml.PROJECT_FILE);
+        final String oldEmlName = oldModuleName + EclipseXml.IDEA_SETTINGS_POSTFIX;
+        if (documentSet.exists(oldEmlName)) {
+          final String root = documentSet.getParent(oldEmlName);
+          final File source = new File(root, oldEmlName);
+          final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(source);
+          VfsUtil.copyFile(null, virtualFile, virtualFile.getParent(), module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
+          virtualFile.delete(null);
+
+          final CachedXmlDocumentSet fileCache = getFileCache(module);
+          fileCache.delete(oldEmlName);
+          registerFiles(fileCache, module, ClasspathStorage.getModuleDir(module), ClasspathStorage.getStorageRootFromOptions(module));
+          fileCache.preload();
+        }
       }
       catch (IOException ignore) {
       }
@@ -179,7 +198,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       try {
         IdeaToEclipseConverter
           .convert(ClasspathStorage.getModuleDir(module), module.getName(), element, true, ClasspathStorage.getStorageRootMap(module.getProject(), null),
-                   getDocumentSet(module), module);
+                   getDocumentSet(module));
       }
       catch (ConversionException e) {
         throw new WriteExternalException(e.getMessage());
