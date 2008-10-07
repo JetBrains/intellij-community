@@ -392,11 +392,6 @@ public class InjectedLanguageUtil {
           CachedValueProvider.Result<Places> result =
               new CachedValueProvider.Result<Places>(places, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
           ((ParameterizedCachedValueImpl<Places, PsiElement>)cachedValue).setValue(result);
-          for (Place place : places) {
-            for (PsiLanguageInjectionHost.Shred pair : place.myShreds) {
-              pair.host.putUserData(INJECTED_PSI_KEY, cachedValue);
-            }
-          }
           current.putUserData(INJECTED_PSI_KEY, cachedValue);
         }
       }

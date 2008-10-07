@@ -45,8 +45,7 @@ public class ParameterizedCachedValueImpl<T,P> implements ParameterizedCachedVal
 
   private final MyTimedReference<T> myData = new MyTimedReference<T>();
 
-
-  private long myLastPsiTimeStamp = -1;
+  private volatile long myLastPsiTimeStamp = -1;
   private final JBReentrantReadWriteLock rw = LockFactory.createReadWriteLock();
   private final JBLock r = rw.readLock();
   private final JBLock w = rw.writeLock();
@@ -74,7 +73,6 @@ public class ParameterizedCachedValueImpl<T,P> implements ParameterizedCachedVal
       }
     }
   }
-
 
   @Nullable
   public T getValue(P param) {
@@ -187,7 +185,7 @@ public class ParameterizedCachedValueImpl<T,P> implements ParameterizedCachedVal
 
     myLastPsiTimeStamp = myManager.getModificationTracker().getModificationCount();
 
-    return  new Data<T>(value, deps.toArray(new Object[deps.size()]), timeStamps.toNativeArray());
+    return new Data<T>(value, deps.toArray(new Object[deps.size()]), timeStamps.toNativeArray());
   }
 
   private void collectDependencies(TLongArrayList timeStamps, List<Object> resultingDeps, Object[] dependencies) {

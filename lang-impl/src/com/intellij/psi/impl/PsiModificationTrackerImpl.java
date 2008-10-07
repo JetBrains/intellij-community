@@ -14,9 +14,9 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.util.PsiModificationTracker;
 
 public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTreeChangePreprocessor {
-  private long myModificationCount = 0;
-  private long myOutOfCodeBlockModificationCount = 0;
-  private long myJavaStructureModificationCount = 0;
+  private volatile long myModificationCount = 0;
+  private volatile long myOutOfCodeBlockModificationCount = 0;
+  private volatile long myJavaStructureModificationCount = 0;
   private final Listener myPublisher;
 
   public PsiModificationTrackerImpl(Project project) {
