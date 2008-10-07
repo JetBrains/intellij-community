@@ -63,7 +63,6 @@ public interface Action extends DomElement {
 	 * @return the value of the text child.
 	 */
 	@NotNull
-	@Required
 	GenericAttributeValue<String> getText();
 
 
