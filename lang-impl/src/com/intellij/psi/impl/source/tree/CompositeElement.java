@@ -259,18 +259,15 @@ public class CompositeElement extends TreeElement {
   @NotNull
   public <T extends PsiElement> T[] getChildrenAsPsiElements(TokenSet filter, PsiElementArrayConstructor<T> constructor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-
     int count = countChildren(filter);
-
-    if (count == 0) {
-      return constructor.newPsiElementArray(0);
-    }
-
     T[] result = constructor.newPsiElementArray(count);
+    if (count == 0) {
+      return result;
+    }
     int idx = 0;
     for (ASTNode child = getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
       if (filter == null || filter.contains(child.getElementType())) {
-        T element = (T)SourceTreeToPsiMap.treeElementToPsi(child);
+        T element = (T)child.getPsi();
         assert element != null;
         result[idx++] = element;
       }

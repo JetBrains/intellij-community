@@ -204,35 +204,34 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   private void doCommit(final Document document, final PsiFile excludeFile) {
-    ApplicationManager.getApplication().runWriteAction(
-      new CommitToPsiFileAction(document) {
-        public void run() {
-          if (isCommittingDocument(document)) return;
-          document.putUserData(KEY_COMMITING, Boolean.TRUE);
+    assert !(document instanceof DocumentWindow);
+    ApplicationManager.getApplication().runWriteAction(new CommitToPsiFileAction(document) {
+      public void run() {
+        if (isCommittingDocument(document)) return;
+        document.putUserData(KEY_COMMITING, Boolean.TRUE);
 
-          try {
-            boolean hasCommits = false;
-            final FileViewProvider viewProvider = getCachedViewProvider(document);
-            if (viewProvider != null) {
-              final List<PsiFile> psiFiles = viewProvider.getAllFiles();
-              for (PsiFile file : psiFiles) {
-                if (file.isValid() && file != excludeFile) {
-                  hasCommits |= commit(document, file);
-                }
+        try {
+          boolean hasCommits = false;
+          final FileViewProvider viewProvider = getCachedViewProvider(document);
+          if (viewProvider != null) {
+            final List<PsiFile> psiFiles = viewProvider.getAllFiles();
+            for (PsiFile file : psiFiles) {
+              if (file.isValid() && file != excludeFile) {
+                hasCommits |= commit(document, file);
               }
-              viewProvider.contentsSynchronized();
             }
-            myUncommittedDocuments.remove(document);
-            if (hasCommits) {
-              InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
-            }
+            viewProvider.contentsSynchronized();
           }
-          finally {
-            document.putUserData(KEY_COMMITING, null);
+          myUncommittedDocuments.remove(document);
+          if (hasCommits) {
+            InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
           }
         }
+        finally {
+          document.putUserData(KEY_COMMITING, null);
+        }
       }
-    );
+    });
     synchronized (ACTION_AFTER_COMMIT) {
       final List<Runnable> list = document.getUserData(ACTION_AFTER_COMMIT);
       if (list != null) {
@@ -397,15 +396,21 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
       }
 
+      int startOffset;
+      int endOffset;
+      int lengthShift;
       if (file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
-        int startOffset = textBlock.getStartOffset();
-        int endOffset = textBlock.getTextEndOffset();
+        startOffset = textBlock.getStartOffset();
         int psiEndOffset = textBlock.getPsiEndOffset();
-        myBlockSupport.reparseRange(file, startOffset, psiEndOffset, endOffset - psiEndOffset, chars);
+        endOffset = psiEndOffset;
+        lengthShift = textBlock.getTextEndOffset() - psiEndOffset;
       }
       else {
-        myBlockSupport.reparseRange(file, 0, document.getTextLength(), document.getTextLength() - file.getTextLength(), chars);
+        startOffset = 0;
+        endOffset = document.getTextLength();
+        lengthShift = document.getTextLength() - file.getTextLength();
       }
+      myBlockSupport.reparseRange(file, startOffset, endOffset, lengthShift, chars);
 
       textBlock.unlock();
       textBlock.clear();

@@ -40,9 +40,6 @@ public class BlockSupportImpl extends BlockSupport {
       public void updateStarted(final Document doc) {
         doc.putUserData(DO_NOT_REPARSE_INCREMENTALLY,  Boolean.TRUE);
       }
-
-      public void updateFinished(final Document doc) {
-      }
     });
   }
 
@@ -122,14 +119,13 @@ public class BlockSupportImpl extends BlockSupport {
             languageChanged = prevReparseable.getElementType().getLanguage() != reparseable.getLanguage();
           }
 
-          final String newTextStr = newFileText.subSequence(textRange.getStartOffset(), textRange.getStartOffset() + textRange.getLength() + lengthShift).toString();
+          CharSequence newTextStr = newFileText.subSequence(textRange.getStartOffset(), textRange.getStartOffset() + textRange.getLength() + lengthShift);
           if (reparseable.isParsable(newTextStr, project)) {
             final ChameleonElement chameleon = (ChameleonElement)Factory.createSingleLeafElement(reparseable, newFileText,
                                                                                                  textRange.getStartOffset(),
                                                                                                  textRange.getEndOffset() + lengthShift,
                                                                                                  charTable, file.getManager(), fileImpl);
             mergeTrees(fileImpl, parent, reparseable.parseContents(chameleon).getTreeParent());
-            //ChangeUtil.replaceAllChildren((CompositeElement)parent, reparseable.parseContents(chameleon).getTreeParent());
             return;
           }
           else if (reparseable instanceof IErrorCounterChameleonElementType) {
@@ -153,16 +149,14 @@ public class BlockSupportImpl extends BlockSupport {
 
     if (bestReparseable != null && !theOnlyReparseable) {
       // best reparseable available
-      final ASTNode treeElement = bestReparseable;
-      final TextRange textRange = treeElement.getTextRange();
+      final TextRange textRange = bestReparseable.getTextRange();
       final ChameleonElement chameleon = (ChameleonElement)ASTFactory.leaf(bestReparseable.getElementType(), newFileText,
                                                                            textRange.getStartOffset(),
                                                                            textRange.getEndOffset() + lengthShift,
                                                                            treeFileElement.getCharTable());
       chameleon.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
       chameleon.setTreeParent((CompositeElement)parent);
-      treeElement.replaceAllChildrenToChildrenOf(
-        chameleon.transform(treeFileElement.getCharTable()).getTreeParent());
+      bestReparseable.replaceAllChildrenToChildrenOf(chameleon.transform(treeFileElement.getCharTable()).getTreeParent());
     }
     else {
       //boolean leafChangeOptimized = false;

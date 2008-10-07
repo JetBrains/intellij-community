@@ -328,10 +328,10 @@ public class TreeUtil {
     // optimization
     if(one == two) return one;
     final Set<ASTNode> parents = new HashSet<ASTNode>(20);
-    do{
+    while (one != null) {
       parents.add(one);
-    } while((one = one.getTreeParent()) != null);
-
+      one = one.getTreeParent();
+    }
     while(two != null){
       if(parents.contains(two)) return two;
       two = two.getTreeParent();

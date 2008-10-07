@@ -311,7 +311,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
       myDocument = new SoftReference<Document>(document);
     }
-    if (document != null && getContent()instanceof VirtualFileContent) {
+    if (document != null && getContent() instanceof VirtualFileContent) {
       setContent(new DocumentContent());
     }
     return document;

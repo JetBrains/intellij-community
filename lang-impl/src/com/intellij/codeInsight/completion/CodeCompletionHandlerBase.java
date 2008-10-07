@@ -184,7 +184,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                     handleEmptyLookup(context, parameters, indicator);
                   }
                 });
-                return;
               }
             }
             catch (ProcessCanceledException e) {
@@ -288,6 +287,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     Document document = oldFileCopy.getViewProvider().getDocument();
     assert document != null;
     patcher.patchFileCopy(oldFileCopy, document, context.getOffsetMap());
+    String s = document.getText();
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiFile fileCopy = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostStartOffset);
     if (fileCopy == null) {
@@ -420,6 +420,4 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   protected PsiFile createFileCopy(PsiFile file) {
     return (PsiFile)file.copy();
   }
-
-
 }

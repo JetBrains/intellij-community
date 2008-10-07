@@ -14,12 +14,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -36,24 +38,20 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   private final int myPrefixLineCount;
   private final int mySuffixLineCount;
 
-  public DocumentWindowImpl(@NotNull DocumentEx delegate,
-                        boolean oneLine,
-                        @NotNull List<String> prefixes,
-                        @NotNull List<String> suffixes,
-                        @NotNull List<TextRange> ranges) {
+  public DocumentWindowImpl(@NotNull DocumentEx delegate, boolean oneLine, List<PsiLanguageInjectionHost.Shred> shreds) {
     myDelegate = delegate;
     myOneLine = oneLine;
-    myPrefixes = prefixes.toArray(new String[prefixes.size()]);
-    mySuffixes = suffixes.toArray(new String[suffixes.size()]);
-    myRelevantRangesInHostDocument = new RangeMarker[ranges.size()];
-    assert myPrefixes.length == mySuffixes.length : prefixes + " " + suffixes + " " + ranges;
-    assert myPrefixes.length == myRelevantRangesInHostDocument.length : prefixes + " " + suffixes + " " + ranges;
-    for (int i = 0; i < ranges.size(); i++) {
-      TextRange range = ranges.get(i);
-      RangeMarker rangeMarker = delegate.createRangeMarker(range);
-      rangeMarker.setGreedyToLeft(true);
-      rangeMarker.setGreedyToRight(true);
-      myRelevantRangesInHostDocument[i] = rangeMarker;
+    myPrefixes = new String[shreds.size()];
+    mySuffixes = new String[shreds.size()];
+    myRelevantRangesInHostDocument = new RangeMarker[shreds.size()];
+    for (int i = 0; i < shreds.size(); i++) {
+      PsiLanguageInjectionHost.Shred shred = shreds.get(i);
+      myPrefixes[i] = shred.prefix;
+      mySuffixes[i] = shred.suffix;
+      myRelevantRangesInHostDocument[i] = shred.getHostRangeMarker();
+      if (i != 0) {
+        assert myRelevantRangesInHostDocument[i].getStartOffset() >= myRelevantRangesInHostDocument[i - 1].getStartOffset() : Arrays.asList(myRelevantRangesInHostDocument);
+      }
     }
     myPrefixLineCount = Math.max(1, 1 + StringUtil.countNewLines(myPrefixes[0]));
     mySuffixLineCount = Math.max(1, 1 + StringUtil.countNewLines(mySuffixes[mySuffixes.length - 1]));
@@ -131,7 +129,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     for (RangeMarker currentRange : myRelevantRangesInHostDocument) {
       TextRange textRange = InjectedLanguageUtil.toTextRange(currentRange);
       if (textRange.grown(1).contains(hostOffset)) return textRange;
-    }
+    }                              
     return null;
   }
 
@@ -599,8 +597,5 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public void dispose() {
-    for (RangeMarker hostRange : myRelevantRangesInHostDocument) {
-      myDelegate.removeRangeMarker((RangeMarkerEx)hostRange);
-    }
   }
 }

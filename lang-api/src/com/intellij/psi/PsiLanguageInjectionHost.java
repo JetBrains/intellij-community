@@ -74,8 +74,16 @@ public interface PsiLanguageInjectionHost extends PsiElement {
       this.range = range;
     }
 
+    public RangeMarker getHostRangeMarker() {
+      return relevantRangeInHost;
+    }
+
     public TextRange getRangeInsideHost() {
       return new TextRange(relevantRangeInHost.getStartOffset(), relevantRangeInHost.getEndOffset()).shiftRight(-host.getTextRange().getStartOffset());
+    }
+
+    public String toString() {
+      return "Shred: "+ host+"("+ relevantRangeInHost.getStartOffset()+","+relevantRangeInHost.getEndOffset()+"); PSI range:"+range;
     }
   }
 }

@@ -71,8 +71,10 @@ public class ChameleonTransforming {
   }
 
   public static void transformChildren(ASTNode element, boolean recursive) {
+    ASTNode child = element.getFirstChildNode(); //it is valid since com.intellij.psi.impl.source.tree.CompositeElement.firstChild is volatile
+    if (child == null) return;
     synchronized (PsiLock.LOCK) {
-      ASTNode child = element.getFirstChildNode();
+      child = element.getFirstChildNode();
       while (child != null) {
         if (child instanceof ChameleonElement) {
           ASTNode next = child.getTreeNext();
