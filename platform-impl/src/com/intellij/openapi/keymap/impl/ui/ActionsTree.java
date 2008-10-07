@@ -10,6 +10,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ScrollPaneFactory;
@@ -33,6 +34,8 @@ public class ActionsTree {
   private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
   private static final Icon OPEN_ICON = new DefaultTreeCellRenderer().getOpenIcon();
   private static final Icon CLOSE_ICON = new DefaultTreeCellRenderer().getClosedIcon();
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.ui.ActionsTree");
 
   private JTree myTree;
   private DefaultMutableTreeNode myRoot;
@@ -70,12 +73,18 @@ public class ActionsTree {
           else if (userObject instanceof String) {
             String actionId = (String)userObject;
             AnAction action = ActionManager.getInstance().getActionOrStub(actionId);
-            text = action != null ? action.getTemplatePresentation().getText() : actionId;
             if (action != null) {
+              text = action.getTemplatePresentation().getText();
+              if (text.isEmpty()) {
+                LOG.info("No text for action " + actionId);
+              }
               Icon actionIcon = action.getTemplatePresentation().getIcon();
               if (actionIcon != null) {
                 icon = actionIcon;
               }
+            }
+            else {
+              text = actionId;
             }
             changed = originalKeymap != null && isActionChanged(actionId, originalKeymap, myKeymap);
           }
