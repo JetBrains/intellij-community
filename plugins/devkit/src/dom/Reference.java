@@ -5,7 +5,6 @@ package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -22,8 +21,10 @@ public interface Reference extends DomElement {
    * @return the value of the id child.
    */
   @NotNull
-  @Required
   GenericAttributeValue<String> getRef();
+
+  @NotNull
+  GenericAttributeValue<String> getId();
 
   @NotNull
   Collection<AddToGroup> getAddToGroups();
