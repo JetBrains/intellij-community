@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import static com.intellij.patterns.StandardPatterns.character;
 import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
@@ -257,7 +258,7 @@ public class JavaAwareCompletionData extends CompletionData{
 
   public static LookupItem setShowFQN(final LookupItem ret) {
     final PsiClass psiClass = (PsiClass)ret.getObject();
-    @NonNls String packageName = getPackageDisplayName(psiClass);
+    @NonNls String packageName = PsiFormatUtil.getPackageDisplayName(psiClass);
 
     final String tailText = (String)ret.getAttribute(LookupItem.TAIL_TEXT_ATTR);
     ret.setAttribute(LookupItem.TAIL_TEXT_ATTR, StringUtil.notNullize(tailText) + " (" + packageName + ")");
@@ -265,17 +266,4 @@ public class JavaAwareCompletionData extends CompletionData{
     return ret;
   }
 
-  public static String getPackageDisplayName(@NotNull final PsiClass psiClass) {
-    @NonNls String packageName = psiClass.getQualifiedName();
-    if (packageName != null && packageName.lastIndexOf('.') > 0) {
-      packageName = packageName.substring(0, packageName.lastIndexOf('.'));
-    }
-    else {
-      packageName = "";
-    }
-    if (packageName.length() == 0) {
-      packageName = "default package";
-    }
-    return packageName;
-  }
 }

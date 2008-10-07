@@ -2,11 +2,9 @@
  * Copyright (c) 2000-2005 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package com.intellij.freemarker;
+package com.intellij.codeInsight.completion.util;
 
-import com.intellij.codeInsight.completion.BasicInsertHandler;
 import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.JavaAwareCompletionData;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -15,6 +13,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +27,7 @@ public class PsiTypeCanonicalLookupElement extends LookupElement {
       final PsiClass psiClass = element.getPsiClass();
       if (psiClass != null) {
         presentation.setIcon(psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY));
-        presentation.setTailText(" (" + JavaAwareCompletionData.getPackageDisplayName(psiClass) + ")", true, false, false);
+        presentation.setTailText(" (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", true, false, false);
       }
       final PsiType type = element.getPsiType();
       presentation.setItemText(type.getPresentableText(), false, type instanceof PsiPrimitiveType);
@@ -67,10 +66,8 @@ public class PsiTypeCanonicalLookupElement extends LookupElement {
   }
 
   public InsertHandler<PsiTypeCanonicalLookupElement> getInsertHandler() {
-    return new BasicInsertHandler<PsiTypeCanonicalLookupElement>() {
-      @Override
+    return new InsertHandler<PsiTypeCanonicalLookupElement>() {
       public void handleInsert(final InsertionContext context, final PsiTypeCanonicalLookupElement item) {
-        super.handleInsert(context, item);
         context.getEditor().getDocument().replaceString(context.getStartOffset(), context.getStartOffset() + item.getLookupString().length(), item.getPsiType().getCanonicalText());
       }
     };

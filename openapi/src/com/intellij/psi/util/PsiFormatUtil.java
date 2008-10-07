@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  *
@@ -451,5 +452,19 @@ public class PsiFormatUtil {
       StringBuilderSpinAllocator.dispose(builder);
     }
     return null;
+  }
+
+  public static String getPackageDisplayName(@NotNull final PsiClass psiClass) {
+    @NonNls String packageName = psiClass.getQualifiedName();
+    if (packageName != null && packageName.lastIndexOf('.') > 0) {
+      packageName = packageName.substring(0, packageName.lastIndexOf('.'));
+    }
+    else {
+      packageName = "";
+    }
+    if (packageName.length() == 0) {
+      packageName = "default package";
+    }
+    return packageName;
   }
 }
