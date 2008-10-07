@@ -101,15 +101,15 @@ public class RefactoringUtil {
     }).booleanValue();
   }
 
-  public static PsiElement replaceOccurenceWithFieldRef(PsiExpression occurrence, PsiField newField, PsiClass destinationClass,
-                                                        final Editor editor, final PsiFile file)
+  public static PsiElement replaceOccurenceWithFieldRef(PsiExpression occurrence, PsiField newField, PsiClass destinationClass, final PsiFile file)
     throws IncorrectOperationException {
     final PsiManager manager = occurrence.getManager();
     final String fieldName = newField.getName();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiVariable psiVariable = facade.getResolveHelper().resolveReferencedVariable(fieldName, occurrence);
     final PsiElementFactory factory = facade.getElementFactory();
-    if (psiVariable != null && psiVariable.equals(newField)) {
+    final PsiElement element = occurrence.getUserData(ElementToWorkOn.PARENT);
+    if (psiVariable != null && psiVariable.equals(newField) || PsiUtil.isAccessible(newField, element != null ? element : occurrence, null)) {
       return IntroduceVariableBase.replace(occurrence, factory.createExpressionFromText(fieldName, null), file);
     }
     else {

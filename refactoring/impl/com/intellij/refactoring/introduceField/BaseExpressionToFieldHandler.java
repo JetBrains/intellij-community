@@ -256,7 +256,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                 occurrence = RefactoringUtil.outermostParenthesizedExpression(occurrence);
               }
               if (deleteSelf && occurrence.equals(expr)) continue;
-              array.add(RefactoringUtil.replaceOccurenceWithFieldRef(occurrence, field, destClass, editor, file));
+              array.add(RefactoringUtil.replaceOccurenceWithFieldRef(occurrence, field, destClass, file));
             }
 
             if (editor != null) {
@@ -271,7 +271,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           else {
             if (!deleteSelf) {
               expr = RefactoringUtil.outermostParenthesizedExpression(expr);
-              RefactoringUtil.replaceOccurenceWithFieldRef(expr, field, destClass, editor, file);
+              RefactoringUtil.replaceOccurenceWithFieldRef(expr, field, destClass, file);
             }
           }
 

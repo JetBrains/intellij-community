@@ -204,7 +204,7 @@ public class LocalToFieldHandler {
             for (final PsiReference reference : refs) {
               if (reference != null) {
                 //expr = RefactoringUtil.outermostParenthesizedExpression(expr);
-                RefactoringUtil.replaceOccurenceWithFieldRef((PsiExpression)reference, field, aaClass, editor, field.getContainingFile());
+                RefactoringUtil.replaceOccurenceWithFieldRef((PsiExpression)reference, field, aaClass, field.getContainingFile());
                 //replaceOccurenceWithFieldRef((PsiExpression)reference, field, aaClass);
               }
             }
