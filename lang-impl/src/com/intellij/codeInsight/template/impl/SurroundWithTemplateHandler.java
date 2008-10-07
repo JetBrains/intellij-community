@@ -42,7 +42,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       }
     }
     if (array.isEmpty()) {
-      HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.no.defined"));
+      HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.surround.no.defined"));
       return;
     }
 
