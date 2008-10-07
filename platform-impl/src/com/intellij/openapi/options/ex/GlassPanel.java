@@ -7,8 +7,8 @@ package com.intellij.openapi.options.ex;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Area;
-import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.Kernel;
 import java.util.HashSet;
 import java.util.Set;
@@ -38,22 +38,27 @@ public class GlassPanel extends JComponent {
   }
 
   protected void paintSpotlights(Graphics g) {
+    paintSpotlight(g, this);
+  }
+
+  public void paintSpotlight(final Graphics g, final JComponent surfaceComponent) {
+    Dimension size = surfaceComponent.getSize();
     if (myLightComponents.size() > 0) {
-      int width = getWidth();
-      int height = getHeight();
+      int width = size.width;
+      int height = size.height;
 
       Rectangle2D screen = new Rectangle2D.Double(0, 0, width, height);
       final Rectangle visibleRect = myPanel.getVisibleRect();
-      final Point leftPoint = SwingUtilities.convertPoint(myPanel, new Point(visibleRect.x, visibleRect.y), this);
+      final Point leftPoint = SwingUtilities.convertPoint(myPanel, new Point(visibleRect.x, visibleRect.y), surfaceComponent);
       Area innerPanel = new Area(new Rectangle2D.Double(leftPoint.x, leftPoint.y, visibleRect.width, visibleRect.height));
       Area mask = new Area(screen);
 
       for (JComponent lightComponent : myLightComponents) {
         if (!lightComponent.isShowing()) continue;
-        final Point panelPoint = SwingUtilities.convertPoint(lightComponent, new Point(0, 0), this);
+        final Point panelPoint = SwingUtilities.convertPoint(lightComponent, new Point(0, 0), surfaceComponent);
         final int x = panelPoint.x;
         final int y = panelPoint.y;
-        final Area area = new Area(new Ellipse2D.Double(x, y, lightComponent.getWidth(), lightComponent.getHeight()));
+        final Area area = new Area(new RoundRectangle2D.Double(x, y, lightComponent.getWidth(), lightComponent.getHeight(), 6, 6));
         area.intersect(innerPanel);
         mask.subtract(area);
       }

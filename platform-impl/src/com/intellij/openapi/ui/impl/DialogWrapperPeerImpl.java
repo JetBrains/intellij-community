@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SpeedSearchBase;
@@ -490,7 +491,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     protected JRootPane createRootPane() {
-      return new JRootPane();
+      return new DialogRootPane();
     }
 
     public void show() {
@@ -777,6 +778,26 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
             }
           });
         }
+      }
+    }
+
+    private static class DialogRootPane extends JRootPane {
+
+      private boolean myGlassPaneIsSet;
+
+      private DialogRootPane() {
+        setGlassPane(new IdeGlassPaneImpl(this));
+        myGlassPaneIsSet = true;
+      }
+
+      @Override
+      public void setGlassPane(final Component glass) {
+        if (myGlassPaneIsSet) {
+          LOG.warn("Setting of glass pane for DialogWrapper is prohibited", new Exception());
+          return;
+        }
+
+        super.setGlassPane(glass);
       }
     }
   }

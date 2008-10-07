@@ -1,5 +1,6 @@
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -9,12 +10,16 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -38,7 +43,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 public class OptionsEditor extends JPanel implements DataProvider, Place.Navigator, Disposable, AWTEventListener {
 
@@ -66,6 +70,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   MergingUpdateQueue myModificationChecker;
   private ConfigurableGroup[] myGroups;
+  private IdeGlassPane myGlassPane;
+
+  private SpotlightPainter mySpotlightPainter = new SpotlightPainter();
+  private MergingUpdateQueue mySpotlightUpdate;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProject = project;
@@ -153,6 +161,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     Toolkit.getDefaultToolkit().addAWTEventListener(this, MouseEvent.MOUSE_EVENT_MASK | KeyEvent.KEY_EVENT_MASK);
 
     myModificationChecker = new MergingUpdateQueue("OptionsModificationChecker", 1000, false, this, this, this);
+    mySpotlightUpdate = new MergingUpdateQueue("OptionsSplotlight", 500, false, this, this, this);
+
+    IdeGlassPaneUtil.installPainter(myContentWrapper, mySpotlightPainter, this);
   }
 
   private void processSelected(final Configurable configurable, Configurable oldConfigurable) {
@@ -181,6 +192,20 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       myDetails.setBannerActions(new Action[] {new ResetAction(configurable)});
       myDetails.updateBannerActions();
+    }
+
+    updateSpotlight(true);
+  }
+
+  private void updateSpotlight(boolean now) {
+    if (now) {
+      mySpotlightPainter.updateForCurrentConfigurable();
+    } else {
+      mySpotlightUpdate.queue(new Update(this) {
+        public void run() {
+          mySpotlightPainter.updateForCurrentConfigurable();
+        }
+      });
     }
   }
 
@@ -303,9 +328,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
 
-  private class Filter implements ElementFilter.Active<SimpleNode> {
-
-    Set<Listener> myListeners = new CopyOnWriteArraySet<Listener>();
+  private class Filter extends ElementFilter.Active.Impl<SimpleNode> {
 
     SearchableOptionsRegistrar myIndex = SearchableOptionsRegistrar.getInstance();
     Set<Configurable> myOptionContainers = null;
@@ -352,22 +375,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         mySearch.getTextEditor().setBackground(UIUtil.getTextFieldBackground());
       }
 
+      updateSpotlight(false);
+
       fireUpdate();
-    }
-
-    public void fireUpdate() {
-      for (Iterator<Listener> iterator = myListeners.iterator(); iterator.hasNext();) {
-        iterator.next().update();
-      }
-    }
-
-    public void addListener(final Listener listener, final Disposable parent) {
-      myListeners.add(listener);
-      Disposer.register(parent, new Disposable() {
-        public void dispose() {
-          myListeners.remove(listener);
-        }
-      });
     }
   }
 
@@ -475,8 +485,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         try {
           myDelegatingNow = true;
           final KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
+          boolean treeNavigation = stroke.getModifiers() == 0 && (stroke.getKeyCode() == KeyEvent.VK_UP || stroke.getKeyCode() == KeyEvent.VK_DOWN);
+
           final Object action = getTextEditor().getInputMap().get(stroke);
-          if (action == null) {
+          if (action == null || treeNavigation) {
             onTextKeyEvent(e);
             return true;
           }
@@ -490,9 +502,64 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
 
 
-
     protected void onTextKeyEvent(final KeyEvent e) {
 
+    }
+  }
+
+  class SpotlightPainter extends AbstractPainter {
+
+    Configurable myLastConfigurable;
+    String myLastText;
+
+    GlassPanel myGP = new GlassPanel(myContentWrapper);
+    boolean myVisible;
+
+    public void executePaint(final Component component, final Graphics2D g) {
+      if (myVisible && myGP.isVisible()) {
+        myGP.paintSpotlight(g, myContentWrapper);
+      }
+    }
+
+    public void updateForCurrentConfigurable() {
+      final Configurable current = getContext().getCurrentConfigurable();
+      final String text = mySearch.getText();
+
+      try {
+        if (myLastConfigurable == current && myLastText != null && myLastText.equals(text)) return;
+
+        if (!(current instanceof SearchableConfigurable)) {
+          myVisible = false;
+          myGP.clear();
+          return;
+        }
+
+        myGP.clear();
+
+        final SearchableConfigurable searchable = (SearchableConfigurable)current;
+        final Runnable runnable = SearchUtil.lightOptions(searchable, myContentWrapper, text, myGP);
+        if (runnable != null) {
+          myVisible = true;
+          runnable.run();
+
+          final Runnable ownSearch = searchable.enableSearch(text);
+          if (ownSearch != null) {
+            ownSearch.run();
+          }
+          fireNeedsRepaint(myContentWrapper);
+        } else {
+          myVisible = false;
+        }
+      }
+      finally {
+        myLastConfigurable = current;
+        myContentWrapper.repaint();
+      }
+    }
+
+    @Override
+    public boolean needsRepaint() {
+      return true;
     }
   }
 
