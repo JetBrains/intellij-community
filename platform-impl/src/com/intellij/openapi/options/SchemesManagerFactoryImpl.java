@@ -17,7 +17,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.SchemesManagerFactoryImpl");
 
-  private final Collection<SchemesManager> myRegisteredManagers = new ArrayList<SchemesManager>();
+  private final Collection<SchemesManagerImpl> myRegisteredManagers = new ArrayList<SchemesManagerImpl>();
 
   public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(final String fileSpec,
                                                                    final SchemeProcessor<E> processor, final RoamingType roamingType) {
@@ -71,6 +71,18 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
           return null;
         }
       };
+    }
+  }
+
+  @Override
+  public void updateConfigFilesFromStreamProviders() {
+    for (SchemesManagerImpl registeredManager : myRegisteredManagers) {
+      try {
+        registeredManager.updateConfigFilesFromStreamProviders();
+      }
+      catch (Throwable e) {
+        LOG.info("Cannot save settings for " + registeredManager.getClass().getName(), e);
+      }
     }
   }
 

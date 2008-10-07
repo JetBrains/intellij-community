@@ -12,5 +12,6 @@ public abstract class SchemesManagerFactory {
     return ApplicationManager.getApplication().getComponent(SchemesManagerFactory.class);
   }
 
-  
+
+  public abstract void updateConfigFilesFromStreamProviders();
 }
