@@ -53,8 +53,8 @@ public class IconDeferrerImpl extends IconDeferrer {
   private void invalidateAllIcons() {
     synchronized (LOCK) {
       for (Icon icon : myIconsCache.values()) {
-        if (icon instanceof DeferredIcon) {
-          ((DeferredIcon)icon).invalidate();
+        if (icon instanceof DeferredIconImpl) {
+          ((DeferredIconImpl)icon).invalidate();
         }
       }
     }
@@ -68,7 +68,7 @@ public class IconDeferrerImpl extends IconDeferrer {
 
       Icon result = myIconsCache.get(param);
       if (result == null) {
-        result = new DeferredIcon<T>(base, param, f);
+        result = new DeferredIconImpl<T>(base, param, f);
         myIconsCache.put(param, result);
       }
 
