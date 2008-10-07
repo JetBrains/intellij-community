@@ -114,4 +114,18 @@
     <problem_class>Unnecessary parentheses</problem_class>
     <description>Parentheses around &lt;code&gt;(1 - 2)&lt;/code&gt; are unnecessary #loc</description>
   </problem>
+
+  <problem>
+    <file>UnnecessaryParenthesesInspection.java</file>
+    <line>53</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary parentheses</problem_class>
+    <description>Parentheses around &lt;code&gt;(o instanceof String)&lt;/code&gt; are unnecessary #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryParenthesesInspection.java</file>
+    <line>54</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary parentheses</problem_class>
+    <description>Parentheses around &lt;code&gt;(true)&lt;/code&gt; are unnecessary #loc</description>
+  </problem>
 </problems>

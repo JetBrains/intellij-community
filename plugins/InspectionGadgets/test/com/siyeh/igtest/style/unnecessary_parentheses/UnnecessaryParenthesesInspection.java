@@ -47,4 +47,10 @@ public class UnnecessaryParenthesesInspection
         final int b = (1 - 2) - 3; // warn;
         System.out.println(1 << (1 << 2)); // no warn
     }
+
+    public void instanceofTest(Object o) {
+        boolean b;
+        b = (o instanceof String);
+        final boolean b1 = (b) ? (true) : false;
+    }
 }

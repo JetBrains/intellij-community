@@ -23,16 +23,19 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class UnnecessaryParenthesesInspection extends BaseInspection {
 
     @SuppressWarnings({"PublicField"})
     public boolean ignoreClarifyingParentheses = false;
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreParenthesesOnConditionals = false;
 
     @Override
     @NotNull
@@ -50,9 +53,15 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
 
     @Override
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+        final MultipleCheckboxOptionsPanel optionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
                 "unnecessary.parentheses.option"),
-                this, "ignoreClarifyingParentheses");
+                "ignoreClarifyingParentheses");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "unnecessary.parentheses.conditional.option"),
+                "ignoreParenthesesOnConditionals");
+        return optionsPanel;
     }
 
     @Override
@@ -107,6 +116,17 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
                         return;
                     } else if (child instanceof PsiInstanceOfExpression) {
                         return;
+                    }
+                }
+                if (ignoreParenthesesOnConditionals) {
+                    if (parent instanceof PsiConditionalExpression) {
+                        final PsiConditionalExpression conditionalExpression =
+                                (PsiConditionalExpression) parent;
+                        final PsiExpression condition =
+                                conditionalExpression.getCondition();
+                        if (expression == condition) {
+                            return;
+                        }
                     }
                 }
                 registerError(expression);
