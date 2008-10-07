@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
  * also instances of LookupValueWithPriority and LookupValueWithUIHint  
  */
 public class TextFieldWithAutoCompletion extends EditorTextField {
-  private List<LookupItem<PresentableLookupValue>> myLookupItems;
+  private List<PresentableLookupValue> myVariants;
 
   public TextFieldWithAutoCompletion() {
     super();
@@ -84,31 +84,24 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
   }
 
   public void setVariants(@Nullable final List<PresentableLookupValue> variants) {
-    if (variants == null) {
-      myLookupItems = Collections.emptyList();
-    } else {
-      myLookupItems = new ArrayList<LookupItem<PresentableLookupValue>>(variants.size());
-      for (PresentableLookupValue variant : variants) {
-        myLookupItems.add(new LookupItem<PresentableLookupValue>(variant, variant.getPresentation()));
-      }
-    }
+    myVariants = (variants != null) ? variants : Collections.<PresentableLookupValue>emptyList();
   }
 
   private LookupItem<PresentableLookupValue>[] calcLookupItems(final String prefix) {
     final List<LookupItem<PresentableLookupValue>> items = new ArrayList<LookupItem<PresentableLookupValue>>();
     if (prefix == null || prefix.length() == 0) {
-      for (LookupItem<PresentableLookupValue> lookupItem : myLookupItems) {
-        items.add(lookupItem);
+      for (PresentableLookupValue variant : myVariants) {
+        items.add(new LookupItem<PresentableLookupValue>(variant, variant.getPresentation()));
       }
     } else {
       final String regexp = NameUtil.buildRegexp(prefix, 0, true, true);
       final Pattern pattern = Pattern.compile(regexp);
       final Matcher matcher = pattern.matcher("");
 
-      for (LookupItem<PresentableLookupValue> lookupItem : myLookupItems) {
-        matcher.reset(lookupItem.getLookupString());
+      for (PresentableLookupValue variant : myVariants) {
+        matcher.reset(variant.getPresentation());
         if (matcher.matches()) {
-          items.add(lookupItem);
+          items.add(new LookupItem<PresentableLookupValue>(variant, variant.getPresentation()));
         }
       }
     }
