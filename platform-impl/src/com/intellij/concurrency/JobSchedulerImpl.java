@@ -6,10 +6,7 @@ package com.intellij.concurrency;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -18,8 +15,9 @@ public class JobSchedulerImpl extends JobScheduler {
   public static final int CORES_COUNT = Runtime.getRuntime().availableProcessors();
 
   private static final ThreadFactory WORKERS_FACTORY = new ThreadFactory() {
+    int i;
     public Thread newThread(final Runnable r) {
-      return new Thread(r, "JobScheduler pool");
+      return new Thread(r, "JobScheduler pool "+i++);
     }
   };
 
