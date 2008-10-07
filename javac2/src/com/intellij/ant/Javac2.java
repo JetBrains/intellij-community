@@ -45,23 +45,17 @@ public class Javac2 extends Javac{
     // compile java
     super.compile();
 
-    try {
-      ClassLoader loader = buildClasspathClassLoader();
-      if (loader == null) return;
-      instrumentForms(loader);
+    ClassLoader loader = buildClasspathClassLoader();
+    if (loader == null) return;
+    instrumentForms(loader);
 
-      //NotNull instrumentation
-      if (isJdkVersion(5) || isJdkVersion(6)) {
-        final int instrumented = instrumentNotNull(getDestdir(), loader);
-        log("Added @NotNull assertions to " + instrumented + " files", Project.MSG_INFO);
-      }
-      else {
-        log("Skipped @NotNull instrumentation because target JDK is not 1.5 or 1.6", Project.MSG_INFO);
-      }
+    //NotNull instrumentation
+    if (isJdkVersion(5) || isJdkVersion(6)) {
+      final int instrumented = instrumentNotNull(getDestdir(), loader);
+      log("Added @NotNull assertions to " + instrumented + " files", Project.MSG_INFO);
     }
-    catch (ArrayIndexOutOfBoundsException e) {
-      e.printStackTrace();
-      throw e;
+    else {
+      log("Skipped @NotNull instrumentation because target JDK is not 1.5 or 1.6", Project.MSG_INFO);
     }
   }
 
@@ -137,25 +131,30 @@ public class Javac2 extends Javac{
       }
       class2form.put(classToBind, formFile);
 
-      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
-                                                                  new AntNestedFormLoader(loader), false,
-                                                                  new AntClassWriter(getAsmClassWriterFlags(), loader));
-      codeGenerator.patchFile(classFile);
-      final FormErrorInfo[] warnings = codeGenerator.getWarnings();
+      try {
+        final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
+                                                                    new AntNestedFormLoader(loader), false,
+                                                                    new AntClassWriter(getAsmClassWriterFlags(), loader));
+        codeGenerator.patchFile(classFile);
+        final FormErrorInfo[] warnings = codeGenerator.getWarnings();
 
-      for (int j = 0; j < warnings.length; j++) {
-        log(formFile.getAbsolutePath() + ": " + warnings[j].getErrorMessage(), Project.MSG_WARN);
-      }
-      final FormErrorInfo[] errors = codeGenerator.getErrors();
-      if (errors.length > 0) {
-        StringBuffer message = new StringBuffer();
-        for (int j = 0; j < errors.length; j++) {
-          if (message.length() > 0) {
-            message.append("\n");
-          }
-          message.append(formFile.getAbsolutePath()).append(": ").append(errors[j].getErrorMessage());
+        for (int j = 0; j < warnings.length; j++) {
+          log(formFile.getAbsolutePath() + ": " + warnings[j].getErrorMessage(), Project.MSG_WARN);
         }
-        fireError(message.toString());
+        final FormErrorInfo[] errors = codeGenerator.getErrors();
+        if (errors.length > 0) {
+          StringBuffer message = new StringBuffer();
+          for (int j = 0; j < errors.length; j++) {
+            if (message.length() > 0) {
+              message.append("\n");
+            }
+            message.append(formFile.getAbsolutePath()).append(": ").append(errors[j].getErrorMessage());
+          }
+          fireError(message.toString());
+        }
+      }
+      catch (Exception e) {
+        fireError("Forms instrumentation failed for " + formFile.getAbsolutePath() + ": " + e.toString());
       }
     }
   }
@@ -248,6 +247,9 @@ public class Javac2 extends Javac{
         }
         catch (IOException e) {
           log("Failed to instrument @NotNull assertion for " + path + ": " + e.getMessage(), Project.MSG_WARN);
+        }
+        catch (Exception e) {
+          fireError("@NotNull instrumentation failed for " + path + ": " + e.toString());
         }
       } else if (file.isDirectory()) {
         instrumented += instrumentNotNull(file, loader);
