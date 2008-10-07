@@ -135,7 +135,7 @@
     icon CDATA #IMPLIED>
 <!ELEMENT reference EMPTY>
 <!ATTLIST reference
-    id CDATA #REQUIRED>
+    ref CDATA #REQUIRED>
 <!ELEMENT add-to-group EMPTY>
 <!--
     <add-to-group> tag use an 'id' attribute
