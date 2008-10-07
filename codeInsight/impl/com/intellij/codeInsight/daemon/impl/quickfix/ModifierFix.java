@@ -51,37 +51,28 @@ public class ModifierFix implements IntentionAction {
     if (parent instanceof PsiClass) {
       name = ((PsiClass)parent).getName();
     }
-    else if (parent instanceof PsiMethod) {
-      name = PsiFormatUtil.formatMethod((PsiMethod)parent,
-                                        PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME |
-                                                              (myShowContainingClass
-                                                               ? PsiFormatUtil.SHOW_CONTAINING_CLASS
-                                                               : 0),
-                                        0);
-    }
-    else if (parent instanceof PsiVariable) {
-      name =
-      PsiFormatUtil.formatVariable((PsiVariable)parent,
-                                   PsiFormatUtil.SHOW_NAME |
-                                   (myShowContainingClass ? PsiFormatUtil.SHOW_CONTAINING_CLASS : 0),
-                                   PsiSubstitutor.EMPTY);
-    }
-    else if (parent instanceof PsiClassInitializer) {
-      PsiClass containingClass = ((PsiClassInitializer)parent).getContainingClass();
-      String className = containingClass instanceof PsiAnonymousClass ?
-                         QuickFixBundle.message("anonymous.class.presentation",
-                                                ((PsiAnonymousClass)containingClass).getBaseClassType().getPresentableText())
-                         : containingClass.getName();
-      name = QuickFixBundle.message("class.initializer.presentation", className);
+    else {
+      int options = PsiFormatUtil.SHOW_NAME | (myShowContainingClass ? PsiFormatUtil.SHOW_CONTAINING_CLASS : 0);
+      if (parent instanceof PsiMethod) {
+        name = PsiFormatUtil.formatMethod((PsiMethod)parent, PsiSubstitutor.EMPTY, options, 0);
+      }
+      else if (parent instanceof PsiVariable) {
+        name = PsiFormatUtil.formatVariable((PsiVariable)parent, options, PsiSubstitutor.EMPTY);
+      }
+      else if (parent instanceof PsiClassInitializer) {
+        PsiClass containingClass = ((PsiClassInitializer)parent).getContainingClass();
+        String className = containingClass instanceof PsiAnonymousClass
+                           ? QuickFixBundle.message("anonymous.class.presentation", ((PsiAnonymousClass)containingClass).getBaseClassType().getPresentableText())
+                           : containingClass.getName();
+        name = QuickFixBundle.message("class.initializer.presentation", className);
+      }
     }
 
     final String modifierText = myModifier.equals(PsiModifier.PACKAGE_LOCAL)
                                 ? QuickFixBundle.message("package.local.visibility.presentation")
                                 : myModifier;
 
-    return QuickFixBundle.message(myShouldHave ? "add.modifier.fix" : "remove.modifier.fix",
-                                  name,
-                                  modifierText);
+    return QuickFixBundle.message(myShouldHave ? "add.modifier.fix" : "remove.modifier.fix", name, modifierText);
   }
 
   @NotNull
@@ -90,11 +81,10 @@ public class ModifierFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myModifierList != null
-           && myModifierList.isValid()
-           && myModifierList.getManager().isInProject(myModifierList)
-        && (myVariable == null || myVariable.isValid())
-           ;
+    return myModifierList != null &&
+           myModifierList.isValid() &&
+           myModifierList.getManager().isInProject(myModifierList) &&
+           (myVariable == null || myVariable.isValid());
   }
 
   private void changeModifierList (PsiModifierList modifierList) {
@@ -107,6 +97,7 @@ public class ModifierFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(myModifierList)) return;
     final List<PsiModifierList> modifierLists = new ArrayList<PsiModifierList>();
     final PsiFile containingFile = myModifierList.getContainingFile();
     final PsiModifierList modifierList;
