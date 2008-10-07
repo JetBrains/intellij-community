@@ -1,11 +1,15 @@
 package com.intellij.util.ui;
 
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 public final class TimedDeadzone {
 
+  public static final Length DEFAULT = new Length(200);
+  public static final Length NULL = new Length(-1);
+  
   private Alarm myAlarm;
-  private int myLength = -1;
+  private Length myLength = NULL;
 
   private boolean myWithin;
 
@@ -15,17 +19,17 @@ public final class TimedDeadzone {
     }
   };
 
-  public TimedDeadzone(int zoneLength, Alarm.ThreadToUse thread) {
+  public TimedDeadzone(Length zoneLength, Alarm.ThreadToUse thread) {
     myLength = zoneLength;
     myAlarm = new Alarm(thread);
   }
 
-  public TimedDeadzone(int zoneLength) {
+  public TimedDeadzone(Length zoneLength) {
     this(zoneLength, Alarm.ThreadToUse.SWING_THREAD);
   }
 
   public int getLength() {
-    return myLength;
+    return myLength.getLength();
   }
 
   public void enter() {
@@ -35,7 +39,7 @@ public final class TimedDeadzone {
   }
 
   public void reEnter() {
-    if (myLength == -1) {
+    if (myLength == NULL) {
       clear();
       return;
     }
@@ -52,5 +56,22 @@ public final class TimedDeadzone {
 
   public boolean isWithin() {
     return myWithin;
+  }
+
+  public void setLength(@NotNull final Length deadZone) {
+    myLength = deadZone;
+  }
+
+  public static class Length {
+
+    private int myLength;
+
+    public Length(int length) {
+      myLength = length;
+    }
+
+    public int getLength() {
+      return myLength;
+    }
   }
 }

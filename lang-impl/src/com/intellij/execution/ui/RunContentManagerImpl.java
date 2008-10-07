@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -263,11 +264,19 @@ public class RunContentManagerImpl implements RunContentManager {
     if (processHandler != null) {
       final ProcessAdapter processAdapter = new ProcessAdapter() {
         public void startNotified(final ProcessEvent event) {
-          content.setIcon(executor.getToolWindowIcon());
+          LaterInvocator.invokeLater(new Runnable() {
+            public void run() {
+              content.setIcon(executor.getToolWindowIcon());
+            }
+          });
         }
 
         public void processTerminated(final ProcessEvent event) {
-          content.setIcon(executor.getDisabledIcon());
+          LaterInvocator.invokeLater(new Runnable() {
+            public void run() {
+              content.setIcon(executor.getDisabledIcon());
+            }
+          });
         }
       };
       processHandler.addProcessListener(processAdapter);

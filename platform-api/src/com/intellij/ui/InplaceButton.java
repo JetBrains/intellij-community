@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.CenteredIcon;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.TimedDeadzone;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +41,11 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
   }
 
   public InplaceButton(IconButton source, final ActionListener listener, final Pass<MouseEvent> me) {
-    myBehavior = new BaseButtonBehavior(this) {
+    this(source, listener, me, TimedDeadzone.DEFAULT);
+  }
+
+  public InplaceButton(IconButton source, final ActionListener listener, final Pass<MouseEvent> me, TimedDeadzone.Length mouseDeadzone) {
+    myBehavior = new BaseButtonBehavior(this, mouseDeadzone) {
       protected void execute(final MouseEvent e) {
         listener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "execute"));
       }
@@ -59,6 +64,11 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
     setToolTipText(source.getTooltip());
     setOpaque(false);
   }
+
+  public void setMouseDeadzone(final TimedDeadzone.Length deadZone) {
+    myBehavior.setMouseDeadzone(deadZone);
+  }
+
 
   public void setIcons(IconButton source) {
     setIcons(source.getRegular(), source.getInactive(), source.getHovered());

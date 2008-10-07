@@ -910,8 +910,5 @@ public class UIUtil {
     return "<table border=0 hspace=" + hPadding + "><tr><td>" + html + "</td></tr></table>";
   }
 
-  public static int getButtonMouseDeadzoneLength() {
-    return 200;
-  }
 }
 

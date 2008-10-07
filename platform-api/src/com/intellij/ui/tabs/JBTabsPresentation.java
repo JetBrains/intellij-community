@@ -1,5 +1,6 @@
 package com.intellij.ui.tabs;
 
+import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,5 +65,7 @@ public interface JBTabsPresentation {
   JBTabsPresentation setActiveTabFillIn(@Nullable Color color);
 
   JBTabsPresentation setTabLabelActionsAutoHide(boolean autoHide);
+  
+  JBTabsPresentation setTabLabelActionsMouseDeadzone(TimedDeadzone.Length length);
 
 }

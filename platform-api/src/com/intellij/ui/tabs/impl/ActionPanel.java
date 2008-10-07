@@ -34,7 +34,7 @@ class ActionPanel extends NonOpaquePanel {
     final NonOpaquePanel wrapper = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
     wrapper.add(Box.createHorizontalStrut(myGap));
     for (AnAction each : children) {
-      ActionButton eachButton = new ActionButton(myTabs, tabInfo, each, tabInfo.getTabActionPlace(), pass);
+      ActionButton eachButton = new ActionButton(myTabs, tabInfo, each, tabInfo.getTabActionPlace(), pass, tabs.getTabActionsMouseDeadzone());
       myButtons.add(eachButton);
       wrapper.add(eachButton.getComponent());
     }
@@ -47,6 +47,7 @@ class ActionPanel extends NonOpaquePanel {
     boolean changed = false;
     for (ActionButton each : myButtons) {
       changed |= each.update();
+      each.setMouseDeadZone(myTabs.getTabActionsMouseDeadzone());
     }
 
     return changed;

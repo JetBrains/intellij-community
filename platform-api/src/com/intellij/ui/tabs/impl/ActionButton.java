@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionEvent;
@@ -25,19 +26,23 @@ class ActionButton extends IconButton implements ActionListener {
   private boolean myAutoHide;
   private boolean myToShow;
 
-  public ActionButton(JBTabsImpl tabs, TabInfo tabInfo, AnAction action, String place, Pass<MouseEvent> pass) {
+  public ActionButton(JBTabsImpl tabs, TabInfo tabInfo, AnAction action, String place, Pass<MouseEvent> pass, TimedDeadzone.Length deadzone) {
     super(null, action.getTemplatePresentation().getIcon());
     myTabs = tabs;
     myTabInfo = tabInfo;
     myAction = action;
     myPlace = place;
 
-    myButton = new InplaceButton(this, this, pass);
+    myButton = new InplaceButton(this, this, pass, deadzone);
     myButton.setVisible(false);
   }
 
   public InplaceButton getComponent() {
     return myButton;
+  }
+
+  public void setMouseDeadZone(TimedDeadzone.Length deadZone) {
+    myButton.setMouseDeadzone(deadZone);    
   }
 
   public boolean update() {

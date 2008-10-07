@@ -20,6 +20,7 @@ import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.ui.tabs.impl.table.TablePassInfo;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,6 +118,8 @@ public class JBTabsImpl extends JComponent
   private TabActionsAutoHideListener myTabActionsAutoHideListener = new TabActionsAutoHideListener();
   private IdeGlassPane myGlassPane;
   @NonNls private static final String LAYOUT_DONE = "Layout.done";
+
+  private TimedDeadzone.Length myTabActionsMouseDeadzone = TimedDeadzone.DEFAULT;
 
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
     myProject = project;
@@ -453,16 +456,13 @@ public class JBTabsImpl extends JComponent
     updateSideComponent(info);
     updateTabActions(info);
 
+    adjust(info);
+
     updateAll(false, true);
 
     if (info.isHidden()) {
       updateHiding();
     }
-
-
-    adjust(info);
-
-    revalidateAndRepaint(false);
 
     return info;
   }
@@ -533,7 +533,7 @@ public class JBTabsImpl extends JComponent
         return new ActionCallback.Done();
       }
       else {
-        requestFocus(getToFocus());
+        return requestFocus(getToFocus());
       }
     }
 
@@ -659,6 +659,7 @@ public class JBTabsImpl extends JComponent
     final TabInfo tabInfo = (TabInfo)evt.getSource();
     if (TabInfo.ACTION_GROUP.equals(evt.getPropertyName())) {
       updateSideComponent(tabInfo);
+      relayout(false, false);
     }
     else if (TabInfo.TEXT.equals(evt.getPropertyName())) {
       updateText(tabInfo);
@@ -672,12 +673,12 @@ public class JBTabsImpl extends JComponent
     }
     else if (TabInfo.TAB_ACTION_GROUP.equals(evt.getPropertyName())) {
       updateTabActions(tabInfo);
+      relayout(false, false);
     }
     else if (TabInfo.HIDDEN.equals(evt.getPropertyName())) {
       updateHiding();
+      relayout(false, false);
     }
-
-    relayout(false, false);
   }
 
   private void updateHiding() {
@@ -715,11 +716,27 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateIcon(final TabInfo tabInfo) {
-    myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
-    revalidateAndRepaint(false);
+    updateTab(new Runnable() {
+      public void run() {
+        myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
+      }
+    }, tabInfo);
+  }
+
+  private void updateTab(Runnable update, TabInfo info) {
+    final TabLabel label = myInfo2Label.get(info);
+    final Dimension before = label.getPreferredSize();
+    update.run();
+    final Dimension after = label.getPreferredSize();
+    if (after.equals(before)) {
+      label.repaint();
+    } else {
+      revalidateAndRepaint(false);
+    }
   }
 
   void revalidateAndRepaint(final boolean layoutNow) {
+
     if (myVisibleInfos.size() == 0) {
       setOpaque(false);
       final Component nonOpaque = UIUtil.findUltimateParent(this);
@@ -762,10 +779,13 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateText(final TabInfo tabInfo) {
-    final TabLabel label = myInfo2Label.get(tabInfo);
-    label.setText(tabInfo.getColoredText());
-    label.setToolTipText(tabInfo.getTooltipText());
-    revalidateAndRepaint(false);
+    updateTab(new Runnable() {
+      public void run() {
+        final TabLabel label = myInfo2Label.get(tabInfo);
+        label.setText(tabInfo.getColoredText());
+        label.setToolTipText(tabInfo.getTooltipText());
+      }
+    }, tabInfo);
   }
 
   private void updateSideComponent(final TabInfo tabInfo) {
@@ -1620,7 +1640,7 @@ public class JBTabsImpl extends JComponent
 
     JComponent tabComponent = info.getComponent();
 
-    if (!isFocused(tabComponent) || forcedNow) {
+    if (!isForDeferredRemove(tabComponent) || forcedNow) {
       remove(tabComponent);
       tabComponent = null;
     }
@@ -1727,7 +1747,7 @@ public class JBTabsImpl extends JComponent
       }
       else {
         if (eachComponent.getParent() == null) continue;
-        if (isFocused(eachComponent)) {
+        if (isForDeferredRemove(eachComponent)) {
           deferredRemove = eachComponent;
         }
         else {
@@ -1756,9 +1776,8 @@ public class JBTabsImpl extends JComponent
     super.addImpl(comp, constraints, index);
   }
 
-  private boolean isFocused(JComponent c) {
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    return focusOwner != null && (focusOwner == c || SwingUtilities.isDescendingFrom(focusOwner, c));
+  private boolean isForDeferredRemove(JComponent c) {
+    return true;
   }
 
   private void relayout(boolean forced, final boolean layoutNow) {
@@ -1877,9 +1896,10 @@ public class JBTabsImpl extends JComponent
   }
 
   public JBTabsPresentation setPaintBorder(int top, int left, int right, int bottom) {
-    if (myBorderSize.top == top && myBorderSize.left == left && myBorderSize.right == right && myBorderSize.bottom == bottom) return this;
+    final Insets newBorder = new Insets(getBorder(top), getBorder(left), getBorder(bottom), getBorder(right));
+    if (newBorder.equals(myBorderSize)) return this;
 
-    myBorderSize = new Insets(getBorder(top), getBorder(left), getBorder(bottom), getBorder(right));
+    myBorderSize = newBorder;
 
     revalidateAndRepaint(false);
 
@@ -1902,9 +1922,16 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   public JBTabsPresentation setActiveTabFillIn(@Nullable final Color color) {
+    if (!isChanged(myActiveTabFillIn, color)) return this;
+
     myActiveTabFillIn = color;
     revalidateAndRepaint(false);
     return this;
+  }
+
+  private boolean isChanged(Object oldObject, Object newObject) {
+    if (oldObject == null && newObject == null) return false;
+    return (oldObject != null && !oldObject.equals(newObject)) || (newObject != null && !newObject.equals(oldObject));
   }
 
   public JBTabsPresentation setTabLabelActionsAutoHide(final boolean autoHide) {
@@ -2183,4 +2210,18 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+
+  public JBTabsPresentation setTabLabelActionsMouseDeadzone(final TimedDeadzone.Length length) {
+    myTabActionsMouseDeadzone = length;
+    final List<TabInfo> all = getTabs();
+    for (TabInfo each : all) {
+      final TabLabel eachLabel = myInfo2Label.get(each);
+      eachLabel.updateTabActions();
+    }
+    return this;
+  }
+
+  public TimedDeadzone.Length getTabActionsMouseDeadzone() {
+    return myTabActionsMouseDeadzone;
+  }
 }

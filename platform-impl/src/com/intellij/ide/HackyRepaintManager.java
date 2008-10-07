@@ -6,6 +6,8 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 
@@ -48,6 +50,45 @@ public class HackyRepaintManager extends RepaintManager {
         image.flush();
       }
       myImagesMap.clear();
+    }
+  }
+
+  @Override
+  public void addInvalidComponent(final JComponent invalidComponent) {
+    checkThreadViolations(invalidComponent);
+
+    super.addInvalidComponent(invalidComponent);
+  }
+
+  @Override
+  public void addDirtyRegion(final JComponent c, final int x, final int y, final int w, final int h) {
+    checkThreadViolations(c);
+
+    super.addDirtyRegion(c, x, y, w, h);
+  }
+
+  private void checkThreadViolations(JComponent c) {
+    final ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
+    if (app == null || app.isHeadlessEnvironment() || !app.isInternal()) return;
+
+    if (!SwingUtilities.isEventDispatchThread() && c.isShowing()) {
+      Exception exception = new Exception();
+      boolean repaint = false;
+      boolean fromSwing = false;
+      StackTraceElement[] stackTrace = exception.getStackTrace();
+      for (StackTraceElement st : stackTrace) {
+        if (repaint && st.getClassName().startsWith("javax.swing.")) {
+          fromSwing = true;
+        }
+        if ("repaint".equals(st.getMethodName())) {
+          repaint = true;
+        }
+      }
+      if (repaint && !fromSwing) {
+        //no problems here, since repaint() is thread safe
+        return;
+      }
+      LOG.warn("Access to realized UI components should be done only from AWT event dispatch thread, revalidate() and repaint() is ok from any thread", exception);
     }
   }
 }

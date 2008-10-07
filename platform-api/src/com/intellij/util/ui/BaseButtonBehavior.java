@@ -36,10 +36,10 @@ public abstract class BaseButtonBehavior {
   private TimedDeadzone myMouseDeadzone;
 
   public BaseButtonBehavior(JComponent component) {
-    this(component, UIUtil.getButtonMouseDeadzoneLength());
+    this(component, TimedDeadzone.DEFAULT);
   }
 
-  public BaseButtonBehavior(JComponent component, int mouseDeadzoneTime) {
+  public BaseButtonBehavior(JComponent component, TimedDeadzone.Length mouseDeadzoneTime) {
     myComponent = component;
     myMouseDeadzone = new TimedDeadzone(mouseDeadzoneTime, Alarm.ThreadToUse.SWING_THREAD);
     myComponent.addMouseListener(new MyMouseListener());
@@ -74,6 +74,10 @@ public abstract class BaseButtonBehavior {
 
   private boolean isPressed() {
     return isSelected() || isPressedByMouse();
+  }
+
+  public void setMouseDeadzone(final TimedDeadzone.Length deadZone) {
+    myMouseDeadzone.setLength(deadZone);
   }
 
   private class MyMouseListener extends MouseAdapter {

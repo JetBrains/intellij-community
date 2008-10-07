@@ -27,6 +27,7 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +100,8 @@ final class EditorTabbedContainer implements Disposable {
       public UiDecoration getDecoration() {
         return new UiDecoration(null, new Insets(1, 6, 1, 6));
       }
-    }).setGhostsAlwaysVisible(true)
+    }).setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL)
+        .setGhostsAlwaysVisible(true)
         .setTabLabelActionsAutoHide(false)
         .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground())
         .setPaintFocus(false).getJBTabs().addListener(new TabsListener() {
