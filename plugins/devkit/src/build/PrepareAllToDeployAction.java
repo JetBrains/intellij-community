@@ -46,7 +46,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
                                                          DevKitBundle.message("select.plugin.modules.description"));
     dialog.show();
     if (dialog.isOK()) {
-      doPrepare(dialog.getSelectedModules());
+      doPrepare(dialog.getSelectedModules(), project);
     }
   }
 
