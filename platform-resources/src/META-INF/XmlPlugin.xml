@@ -227,5 +227,10 @@
       <className>com.intellij.xml.actions.XmlSplitTagAction</className>
     </intentionAction>
   </extensions>
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.featureStatistics.XmlProductivityFeatureProvider</implementation-class>
 
+    </component>
+  </application-components>
 </idea-plugin>

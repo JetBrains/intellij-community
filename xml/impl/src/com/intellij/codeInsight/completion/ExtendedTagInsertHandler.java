@@ -17,6 +17,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -41,9 +42,12 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
 
   public void handleInsert(final InsertionContext context, final LookupElement item) {
 
-    final XmlFile file = (XmlFile)context.getFile();
+    final XmlFile contextfile = (XmlFile)context.getFile();
+    final XmlExtension extension = XmlExtension.getExtension(contextfile);
+    final XmlFile file = extension.getContainingFile(contextfile);
     final Project project = context.getProject();
 
+    assert file != null;
     final PsiElement psiElement = file.findElementAt(context.getStartOffset());
     assert psiElement != null;
     if (isNamespaceBound(psiElement)) {
@@ -79,7 +83,8 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
       final String prefixByNamespace = getPrefixByNamespace(file);
       if (myNamespacePrefix != null || StringUtil.isEmpty(prefixByNamespace)) {
         final String nsPrefix = myNamespacePrefix == null ? suggestPrefix(file) : myNamespacePrefix;
-        XmlExtension.getExtension(file).insertNamespaceDeclaration(file, editor, Collections.singleton(myNamespace), nsPrefix, runAfter);
+        extension.insertNamespaceDeclaration(file, editor, Collections.singleton(myNamespace), nsPrefix, runAfter);
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(XmlCompletionContributor.TAG_NAME_COMPLETION_FEATURE);
       } else {
         runAfter.run(prefixByNamespace);    // qualify && complete
       }
@@ -97,7 +102,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     final XmlTag tag = (XmlTag)psiElement.getParent();
     final XmlElementDescriptor tagDescriptor = tag.getDescriptor();
     final String tagNamespace = tag.getNamespace();
-    return (tagDescriptor != null && !(tagDescriptor instanceof AnyXmlElementDescriptor) && !StringUtil.isEmpty(tagNamespace));
+    return tagDescriptor != null && !(tagDescriptor instanceof AnyXmlElementDescriptor) && myNamespace.equals(tagNamespace);
   }
 
   @Nullable
