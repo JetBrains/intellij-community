@@ -80,15 +80,22 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
+    if (doDownloadAndPrepare()) {
+      final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+      app.saveAll();
+      app.exit(true);
+    }
+    super.doOKAction();
+  }
+
+  protected boolean doDownloadAndPrepare() {
     if (myUploadedPlugins != null) {
       UpdateChecker.saveDisabledToUpdatePlugins();
       if (UpdateChecker.install(myUploadedPlugins)) {
-        final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-        app.saveAll();
-        app.exit(true);
+        return true;
       }
     }
-    super.doOKAction();
+    return false;
   }
 
   public void doCancelAction() {
