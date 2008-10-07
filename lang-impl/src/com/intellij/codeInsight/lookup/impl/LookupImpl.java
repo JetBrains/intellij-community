@@ -189,7 +189,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public synchronized void addItem(LookupElement item) {
     if (item.getUserData(USED_LOOKUP_ELEMENT) != null) {
-      LOG.assertTrue(false, "An attempt to reuse lookup item detected, this is prohibited: item=" + item);
+      LOG.assertTrue(false, "An attempt to reuse lookup item detected. Giving the same lookup element instance to more than one lookup or completion process is prohibited: item=" + item);
     }
 
     item.putUserData(USED_LOOKUP_ELEMENT, Boolean.TRUE);
