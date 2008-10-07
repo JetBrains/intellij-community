@@ -60,32 +60,32 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs"/>
-    <checkoutProvider implementation="git4idea.GitCheckoutProvider"/>
+    <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
 
     <projectService
-        serviceInterface="git4idea.GitAnnotationProvider"
-        serviceImplementation="git4idea.GitAnnotationProvider"/>
+        serviceInterface="git4idea.annotate.GitAnnotationProvider"
+        serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>
     <projectService
-        serviceInterface="git4idea.GitDiffProvider"
-        serviceImplementation="git4idea.GitDiffProvider"/>
+        serviceInterface="git4idea.diff.GitDiffProvider"
+        serviceImplementation="git4idea.diff.GitDiffProvider"/>
     <projectService
-        serviceInterface="git4idea.GitCheckinEnvironment"
-        serviceImplementation="git4idea.GitCheckinEnvironment"/>
+        serviceInterface="git4idea.checkin.GitCheckinEnvironment"
+        serviceImplementation="git4idea.checkin.GitCheckinEnvironment"/>
     <projectService
-        serviceInterface="git4idea.GitChangeProvider"
-        serviceImplementation="git4idea.GitChangeProvider"/>
+        serviceInterface="git4idea.changes.GitChangeProvider"
+        serviceImplementation="git4idea.changes.GitChangeProvider"/>
     <projectService
-        serviceInterface="git4idea.GitHistoryProvider"
-        serviceImplementation="git4idea.GitHistoryProvider"/>
+        serviceInterface="git4idea.history.GitHistoryProvider"
+        serviceImplementation="git4idea.history.GitHistoryProvider"/>
     <projectService
-        serviceInterface="git4idea.GitRollbackEnvironment"
-        serviceImplementation="git4idea.GitRollbackEnvironment"/>
+        serviceInterface="git4idea.rollback.GitRollbackEnvironment"
+        serviceImplementation="git4idea.rollback.GitRollbackEnvironment"/>
     <projectService
         serviceInterface="git4idea.config.GitVcsSettings"
         serviceImplementation="git4idea.config.GitVcsSettings"/>
     <applicationService
-        serviceInterface="git4idea.GitSSHService"
-        serviceImplementation="git4idea.GitSSHService"/>
+        serviceInterface="org.jetbrains.git4idea.ssh.GitSSHService"
+        serviceImplementation="org.jetbrains.git4idea.ssh.GitSSHService"/>
     <ComponentRoamingType component="Git.Settings" type="DISABLED"/>
   </extensions>
 

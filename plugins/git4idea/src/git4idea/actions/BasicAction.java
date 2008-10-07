@@ -23,7 +23,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitBundle;
+import git4idea.i18n.GitBundle;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 

@@ -18,8 +18,7 @@ package org.jetbrains.git4idea.ssh;
 import com.intellij.openapi.util.io.FileUtil;
 import com.trilead.ssh2.*;
 import com.trilead.ssh2.crypto.PEMDecoder;
-import git4idea.GitBundle;
-import git4idea.GitSSHService;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 

@@ -1,4 +1,4 @@
-package git4idea;
+package git4idea.vfs;
 /*
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at:
@@ -27,6 +27,8 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vfs.*;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.commands.GitCommand;
+import git4idea.i18n.GitBundle;
+import git4idea.GitVcs;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

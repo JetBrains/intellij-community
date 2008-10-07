@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea;
+package git4idea.checkout;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.validators.GitBranchNameValidator;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;

@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitBundle;
+import git4idea.i18n.GitBundle;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;

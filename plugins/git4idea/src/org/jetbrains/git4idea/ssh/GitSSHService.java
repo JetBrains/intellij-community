@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea;
+package org.jetbrains.git4idea.ssh;
 
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.application.PathManager;
@@ -38,6 +38,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Random;
 import java.util.Vector;
+
+import git4idea.i18n.GitBundle;
 
 /**
  * The provider of SSH scripts for the Git

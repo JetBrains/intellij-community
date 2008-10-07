@@ -22,7 +22,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitBundle;
+import git4idea.i18n.GitBundle;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.config.GitVcsSettings;

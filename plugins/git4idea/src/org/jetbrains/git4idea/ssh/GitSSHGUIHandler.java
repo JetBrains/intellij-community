@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea;
+package org.jetbrains.git4idea.ssh;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.PasswordPromptDialog;
+import git4idea.i18n.GitBundle;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;

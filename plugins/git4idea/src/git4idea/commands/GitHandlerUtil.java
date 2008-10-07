@@ -18,7 +18,7 @@ package git4idea.commands;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
-import git4idea.GitBundle;
+import git4idea.i18n.GitBundle;
 import git4idea.GitUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;

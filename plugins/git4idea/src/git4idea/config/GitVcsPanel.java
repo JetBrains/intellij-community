@@ -23,7 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitBundle;
+import git4idea.i18n.GitBundle;
 import git4idea.commands.GitCommand;
 import org.jetbrains.annotations.NotNull;
 
