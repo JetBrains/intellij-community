@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.actions.GitAdd;
 import git4idea.actions.GitDelete;
 import git4idea.commands.GitCommand;
+import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -1,4 +1,4 @@
-package git4idea;
+package git4idea.config;
 /*
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at:
@@ -28,6 +28,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
+
 /**
  * Git VCS settings
  */
@@ -37,9 +39,26 @@ import org.jetbrains.annotations.NonNls;
         id = "ws",
         file = "$WORKSPACE_FILE$")})
 public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> {
-  @NonNls private static final String DEFAULT_WIN_GIT_EXEC = "C:\\cygwin\\bin\\git.exe";
-  @NonNls private static final String DEFAULT_MAC_GIT_EXEC = "/usr/local/bin/git";
-  @NonNls private static final String DEFAULT_UNIX_GIT_EXEC = "git";
+  /**
+   * the default cygwin executable
+   */
+  @NonNls private static final String[] DEFAULT_WINDOWS_PATHS = {"C:\\cygwin\\bin", "C:\\Program Files\\Git\\bin"};
+  /**
+   * Windows executable name
+   */
+  @NonNls private static final String DEFAULT_WINDOWS_GIT = "git.exe";
+  /**
+   * Default unix paths
+   */
+  @NonNls private static final String[] DEFAULT_UNIX_PATHS = {"/usr/local/bin", "/usr/bin", "/opt/local/bin", "/opt/bin"};
+  /**
+   * Unix executable name
+   */
+  @NonNls private static final String DEFAULT_UNIX_GIT = "git";
+
+  /**
+   * The default executable for GIT
+   */
   public String GIT_EXECUTABLE = defaultGit();
 
   /**
@@ -56,6 +75,12 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
     XmlSerializerUtil.copyBean(gitVcsSettings, this);
   }
 
+  /**
+   * Get git setting for the project
+   *
+   * @param project a context project
+   * @return the git settigns
+   */
   public static GitVcsSettings getInstance(Project project) {
     return ServiceManager.getService(project, GitVcsSettings.class);
   }
@@ -64,8 +89,22 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
    * @return the default executable name depending on the platform
    */
   private static String defaultGit() {
-    if (SystemInfo.isWindows) return DEFAULT_WIN_GIT_EXEC;
-    if (SystemInfo.isMac) return DEFAULT_MAC_GIT_EXEC;
-    return DEFAULT_UNIX_GIT_EXEC;
+    String[] paths;
+    String exe;
+    if (SystemInfo.isWindows) {
+      exe = DEFAULT_WINDOWS_GIT;
+      paths = DEFAULT_WINDOWS_PATHS;
+    }
+    else {
+      exe = DEFAULT_UNIX_GIT;
+      paths = DEFAULT_UNIX_PATHS;
+    }
+    for (String p : paths) {
+      File f = new File(p, exe);
+      if (f.exists()) {
+        return f.getAbsolutePath();
+      }
+    }
+    return exe;     // otherwise, hope it's in $PATH
   }
 }

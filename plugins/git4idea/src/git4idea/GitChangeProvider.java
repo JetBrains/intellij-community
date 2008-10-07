@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.commands.GitCommand;
+import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

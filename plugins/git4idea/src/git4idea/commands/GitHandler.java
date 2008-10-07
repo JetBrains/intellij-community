@@ -28,7 +28,7 @@ import com.intellij.util.EventDispatcher;
 import git4idea.GitSSHGUIHandler;
 import git4idea.GitSSHService;
 import git4idea.GitVcs;
-import git4idea.GitVcsSettings;
+import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

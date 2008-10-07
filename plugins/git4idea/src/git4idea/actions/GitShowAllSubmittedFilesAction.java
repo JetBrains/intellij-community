@@ -24,8 +24,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBundle;
 import git4idea.GitUtil;
-import git4idea.GitVcsSettings;
 import git4idea.commands.GitCommand;
+import git4idea.config.GitVcsSettings;
 
 /**
  * Initial code for show submitted files action

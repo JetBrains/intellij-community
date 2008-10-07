@@ -67,7 +67,7 @@ public class GitUnstash extends BasicAction {
         break;
       }
     }
-    if(!stashesFound) {
+    if (!stashesFound) {
       Messages.showInfoMessage(project, GitBundle.getString("unstash.notfound.message"), GitBundle.getString("unstash.notfound.title"));
     }
   }
