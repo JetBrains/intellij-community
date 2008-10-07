@@ -262,10 +262,10 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       protected void run(final Result result) throws Throwable {
         if (annotationsXml[0] == null) {
           annotationsXml[0] = createAnnotationsXml(file, packageName);
-          annotationFiles.add(annotationsXml[0]);
-          myExternalAnotations.put(virtualFile, annotationFiles);
         }
         if (annotationsXml[0] != null) {
+          annotationFiles.add(annotationsXml[0]);
+          myExternalAnotations.put(virtualFile, annotationFiles);
           annotateExternally(listOwner, annotationFQName, annotationsXml[0], fromFile);
         }
       }
