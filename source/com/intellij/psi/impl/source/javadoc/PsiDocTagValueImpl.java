@@ -33,7 +33,7 @@ public class PsiDocTagValueImpl extends CompositePsiElement implements PsiDocTag
   public PsiReference getReference() {
     PsiDocTag docTag = PsiTreeUtil.getParentOfType(this, PsiDocTag.class);
     final String name = docTag.getName();
-    final JavadocManager manager = JavaPsiFacade.getInstance(getManager().getProject()).getJavadocManager();
+    final JavadocManager manager = JavaPsiFacade.getInstance(getProject()).getJavadocManager();
     final JavadocTagInfo info = manager.getTagInfo(name);
     if (info == null) return null;
 

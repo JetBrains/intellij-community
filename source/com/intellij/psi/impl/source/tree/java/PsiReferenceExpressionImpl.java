@@ -77,9 +77,10 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         String qName = qualifierClass.getQualifiedName() + "." + staticName;
         if (qName.equals(singleImportStatement.getImportReference().getQualifiedName())) return this;
       }
-      PsiReferenceExpression classRef = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createReferenceExpression(qualifierClass);
+      PsiManagerEx manager = getManager();
+      PsiReferenceExpression classRef = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createReferenceExpression(qualifierClass);
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-      LeafElement dot = Factory.createSingleLeafElement(DOT, ".", 0, 1, treeCharTab, getManager());
+      LeafElement dot = Factory.createSingleLeafElement(DOT, ".", 0, 1, treeCharTab, manager);
       addInternal(dot, dot, SourceTreeToPsiMap.psiElementToTree(getParameterList()), Boolean.TRUE);
       addBefore(classRef, SourceTreeToPsiMap.treeElementToPsi(dot));
     }
@@ -427,7 +428,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
     final PsiClass psiClass = importStaticStatement.resolveTargetClass();
     if (psiClass == null) return renameDirectly(newElementName);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
     final PsiReferenceExpression expression = (PsiReferenceExpression)factory.createExpressionFromText("X." + newElementName, this);
     final PsiReferenceExpression result = (PsiReferenceExpression)replace(expression);
     ((PsiReferenceExpression)result.getQualifierExpression()).bindToElement(psiClass);
@@ -441,7 +442,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
     final String oldRefName = oldIdentifier.getText();
     if (PsiKeyword.THIS.equals(oldRefName) || PsiKeyword.SUPER.equals(oldRefName)) return this;
-    PsiIdentifier identifier = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createIdentifier(newElementName);
+    PsiIdentifier identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
   }
@@ -455,7 +456,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     if (element instanceof PsiClass) {
       String qName = ((PsiClass)element).getQualifiedName();
       if (qName == null) throw new IncorrectOperationException("Cannot bind to unqualified class: "+element);
-      if (JavaPsiFacade.getInstance(getManager().getProject()).findClass(qName, getResolveScope()) == null) {
+      if (JavaPsiFacade.getInstance(manager.getProject()).findClass(qName, getResolveScope()) == null) {
         return this;
       }
       boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified(this);

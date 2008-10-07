@@ -2,20 +2,21 @@ package com.intellij.psi.impl.source.html;
 
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.XmlTagImpl;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 
 /**
  * @author Maxim.Mossienko
  */
 public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
   public HtmlTagImpl() {
-    super(HTML_TAG);
+    super(XmlElementType.HTML_TAG);
   }
 
   @NotNull
@@ -47,7 +48,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
       }
     }
 
-    return result == null ? XmlTag.EMPTY : result.toArray(new XmlTag[result.size()]);
+    return result == null ? EMPTY : result.toArray(new XmlTag[result.size()]);
   }
 
   protected boolean isCaseSensitive() {

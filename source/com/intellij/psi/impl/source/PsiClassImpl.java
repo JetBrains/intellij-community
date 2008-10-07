@@ -507,9 +507,10 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
         try {
           if (myValuesMethod == null || myValueOfMethod == null || !name.equals(myCachedForLongName)) {
             myCachedForLongName = name;
-            final PsiMethod valuesMethod = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createMethodFromText("public static " + name + "[] values() {}", this);
+            PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+            final PsiMethod valuesMethod = elementFactory.createMethodFromText("public static " + name + "[] values() {}", this);
             myValuesMethod = new LightMethod(getManager(), valuesMethod, this);
-            final PsiMethod valueOfMethod = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createMethodFromText("public static " + name + " valueOf(String name) throws IllegalArgumentException {}", this);
+            final PsiMethod valueOfMethod = elementFactory.createMethodFromText("public static " + name + " valueOf(String name) throws IllegalArgumentException {}", this);
             myValueOfMethod = new LightMethod(getManager(), valueOfMethod, this);
           }
           final NameHint nameHint = processor.getHint(NameHint.class);

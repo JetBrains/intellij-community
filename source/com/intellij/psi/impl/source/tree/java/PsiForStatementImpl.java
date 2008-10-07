@@ -153,7 +153,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
 
     if (isForInitialization) {
       try {
-        final PsiStatement emptyStatement = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createStatementFromText(";", null);
+        final PsiStatement emptyStatement = JavaPsiFacade.getInstance(getProject()).getElementFactory().createStatementFromText(";", null);
         super.replaceChildInternal(child, (TreeElement)SourceTreeToPsiMap.psiElementToTree(emptyStatement));
       }
       catch (IncorrectOperationException e) {

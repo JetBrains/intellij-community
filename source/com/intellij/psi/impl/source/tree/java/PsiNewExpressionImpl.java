@@ -33,14 +33,14 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       }
       else if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)){
         LOG.assertTrue(type == null);
-        type = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createPrimitiveType(child.getText());
+        type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createPrimitiveType(child.getText());
       }
       else if (elementType == JavaTokenType.LBRACKET){
         LOG.assertTrue(type != null);
         type = type.createArrayType();
       }
       else if (elementType == JavaElementType.ANONYMOUS_CLASS){
-        PsiElementFactory factory = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
         type = factory.createType((PsiClass) SourceTreeToPsiMap.treeElementToPsi(child));
       }
     }

@@ -152,7 +152,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiTypeParameterListOwner)element)) {
       if (myQualifiedName.equals(parameter.getName())) return parameter;
     }
-    return JavaPsiFacade.getInstance(getManager().getProject()).findClass(myQualifiedName, getResolveScope());
+    return JavaPsiFacade.getInstance(getProject()).findClass(myQualifiedName, getResolveScope());
   }
 
   public void processVariants(PsiScopeProcessor processor) {

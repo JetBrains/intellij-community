@@ -29,12 +29,12 @@ import java.util.List;
 /**
  * @author dsl
  */
-public class PsiImportStaticReferenceElementImpl extends CompositePsiElement implements PsiImportStaticReferenceElement, Constants {
+public class PsiImportStaticReferenceElementImpl extends CompositePsiElement implements PsiImportStaticReferenceElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiImportStaticReferenceElementImpl");
   private volatile String myCanonicalText;
 
   public PsiImportStaticReferenceElementImpl() {
-    super(IMPORT_STATIC_REFERENCE);
+    super(JavaElementType.IMPORT_STATIC_REFERENCE);
   }
 
   public int getTextOffset() {
@@ -59,7 +59,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
         return null;
 
       case ChildRole.REFERENCE_NAME:
-        if (getLastChildNode().getElementType() == IDENTIFIER){
+        if (getLastChildNode().getElementType() == JavaTokenType.IDENTIFIER){
           return getLastChildNode();
         }
         else{
@@ -67,7 +67,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
         }
 
       case ChildRole.QUALIFIER:
-        if (getFirstChildNode().getElementType() == JAVA_CODE_REFERENCE){
+        if (getFirstChildNode().getElementType() == JavaElementType.JAVA_CODE_REFERENCE){
           return getFirstChildNode();
         }
         else{
@@ -75,20 +75,20 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
         }
 
       case ChildRole.DOT:
-        return TreeUtil.findChild(this, DOT);
+        return TreeUtil.findChild(this, JavaTokenType.DOT);
     }
   }
 
   public final int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == JAVA_CODE_REFERENCE) {
+    if (i == JavaElementType.JAVA_CODE_REFERENCE) {
       return ChildRole.QUALIFIER;
     }
-    else if (i == DOT) {
+    else if (i == JavaTokenType.DOT) {
       return ChildRole.DOT;
     }
-    else if (i == IDENTIFIER) {
+    else if (i == JavaTokenType.IDENTIFIER) {
       return ChildRole.REFERENCE_NAME;
     }
     else {
@@ -127,7 +127,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
       return (PsiImportStaticStatement)getParent();
     }
     else {
-      final LeafElement dot = Factory.createSingleLeafElement(DOT, ".", 0, 1, SharedImplUtil.findCharTableByTree(newRef), getManager());
+      final LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, SharedImplUtil.findCharTableByTree(newRef), getManager());
       TreeUtil.insertAfter(newRef, dot);
       final CompositeElement errorElement =
         Factory.createErrorElement(JavaErrorMessages.message("import.statement.identifier.or.asterisk.expected."));
@@ -226,7 +226,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
 
     public boolean isAccessible() {
       if (myAccessible == null) {
-        myAccessible = JavaPsiFacade.getInstance(getManager().getProject()).getResolveHelper().isAccessible(myTarget, PsiImportStaticReferenceElementImpl.this, null);
+        myAccessible = JavaPsiFacade.getInstance(getProject()).getResolveHelper().isAccessible(myTarget, PsiImportStaticReferenceElementImpl.this, null);
       }
       return myAccessible.booleanValue();
     }
@@ -284,9 +284,6 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
       return true;
     }
 
-    public void handleEvent(Event event, Object associated) {
-    }
-
     public String getName(ResolveState state) {
       return getReferenceName();
     }
@@ -313,7 +310,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     if (oldIdentifier == null){
       throw new IncorrectOperationException();
     }
-    PsiIdentifier identifier = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createIdentifier(newElementName);
+    PsiIdentifier identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
   }
@@ -338,14 +335,14 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     if (qualifier == null) {
       throw new IncorrectOperationException();
     }
-    ((PsiJavaCodeReferenceElement)qualifier).bindToElement(containingClass);
+    ((PsiReference)qualifier).bindToElement(containingClass);
 
     PsiElement oldIdentifier = findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
     if (oldIdentifier == null){
       throw new IncorrectOperationException();
     }
 
-    PsiIdentifier identifier = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createIdentifier(((PsiNamedElement)element).getName());
+    PsiIdentifier identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(((PsiNamedElement)element).getName());
     oldIdentifier.replace(identifier);
     return this;
   }

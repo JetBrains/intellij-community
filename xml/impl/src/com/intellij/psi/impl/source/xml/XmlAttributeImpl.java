@@ -71,7 +71,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   public void setValue(String valueText) throws IncorrectOperationException{
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
     final PomModel model = PomManager.getModel(getProject());
-    final XmlAttribute attribute = XmlElementFactory.getInstance(getManager().getProject()).createXmlAttribute("a", valueText);
+    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createXmlAttribute("a", valueText);
     final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
@@ -260,7 +260,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     final String oldName = name.getText();
     final PomModel model = PomManager.getModel(getProject());
-    final XmlAttribute attribute = XmlElementFactory.getInstance(getManager().getProject()).createXmlAttribute(nameText, "");
+    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createXmlAttribute(nameText, "");
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(getParent(), aspect) {

@@ -37,7 +37,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
-import com.intellij.xml.util.XmlTagTextUtil;
+import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -51,7 +51,7 @@ import java.util.*;
  * @author Mike
  */
 
-public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType {
+public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTagImpl");
 
   private volatile String myName = null;
@@ -71,7 +71,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   @NonNls private static final String XML_NS_PREFIX = "xml";
 
   public XmlTagImpl() {
-    this(XML_TAG);
+    this(XmlElementType.XML_TAG);
   }
 
   protected XmlTagImpl(IElementType type) {
@@ -157,7 +157,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
 
   public void collapseIfEmpty() {
     final XmlTag[] tags = getSubTags();
-    if (tags == null || tags.length > 0) {
+    if (tags.length > 0) {
       return;
     }
     final ASTNode closingName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(this);
@@ -170,7 +170,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     final PomTransactionBase transaction = new PomTransactionBase(this, pomModel.getModelAspect(XmlAspect.class)) {
 
       @Nullable
-      public PomModelEvent runInner() throws IncorrectOperationException {
+      public PomModelEvent runInner() {
         final ASTNode closingBracket = closingName.getTreeNext();
         removeRange(startTagEnd, closingBracket);
         final LeafElement emptyTagEnd = Factory.createSingleLeafElement(XmlTokenType.XML_EMPTY_ELEMENT_END, "/>", 0, 2, null, getManager());
@@ -246,7 +246,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     return map;
   }
 
-  private static @Nullable String getNSVersion(String ns, final XmlTagImpl xmlTag) {
+  @Nullable
+  private static String getNSVersion(String ns, final XmlTagImpl xmlTag) {
     String versionValue = xmlTag.getAttributeValue("version");
     if (versionValue != null && xmlTag.getNamespace().equals(ns)) {
       return versionValue;
@@ -379,10 +380,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == XML_NAME || i == XML_TAG_NAME) {
+    if (i == XmlTokenType.XML_NAME || i == XmlTokenType.XML_TAG_NAME) {
       return XmlChildRole.XML_TAG_NAME;
     }
-    else if (i == XML_ATTRIBUTE) {
+    else if (i == XmlElementType.XML_ATTRIBUTE) {
       return XmlChildRole.XML_ATTRIBUTE;
     }
     else {
@@ -412,7 +413,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     model.runTransaction(new PomTransactionBase(this, aspect) {
       public PomModelEvent runInner() throws IncorrectOperationException{
         final String oldName = getName();
-        final XmlTagImpl dummyTag = (XmlTagImpl)XmlElementFactory.getInstance(getManager().getProject()).createTagFromText(XmlTagTextUtil.composeTagText(name, "aa"));
+        final XmlTagImpl dummyTag = (XmlTagImpl)XmlElementFactory.getInstance(getProject()).createTagFromText(XmlTagUtil.composeTagText(name, "aa"));
         final XmlTagImpl tag = XmlTagImpl.this;
         final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(tag);
         ChangeUtil.replaceChild(tag, (TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(tag), ChangeUtil.copyElement((TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
@@ -496,7 +497,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
           
           for(String prefix:keysByValue) {
             if (prefix != null && prefix.length() > 0) {
-              final String value = getAttributeValue(prefix.concat(":").concat(_name));
+              final String value = getAttributeValue(prefix + ":" + _name);
               if (value != null) return value;
             }
           }
@@ -507,9 +508,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
       parent = parent.getParent();
     }
 
-    if (namespace.length() == 0 ||
-        getNamespace().equals(namespace)
-       ) {
+    if (namespace.length() == 0 || getNamespace().equals(namespace)) {
       return getAttributeValue(_name);
     }
     return null;
@@ -581,10 +580,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
 
     for (final XmlAttribute attribute : attributes) {
       final LeafElement attrNameElement = (LeafElement)XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute.getNode());
-      if (attrNameElement != null &&
-          ((caseSensitive && attrNameElement.getInternedText().equals(charTableIndex)) ||
-           (!caseSensitive && Comparing.equal(attrNameElement.getInternedText(), charTableIndex, false))
-          )) {
+      if (attrNameElement != null && (caseSensitive && attrNameElement.getInternedText().equals(charTableIndex) ||
+                                      !caseSensitive && Comparing.equal(attrNameElement.getInternedText(), charTableIndex, false)
+      )) {
         return attribute;
       }
     }
@@ -613,7 +611,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     return XmlUtil.findPrefixByQualifiedName(getName());
   }
 
-  private static ThreadLocal<Boolean> ourGetNsByPrefixRecursionLock = new ThreadLocal<Boolean>();
+  private static final ThreadLocal<Boolean> ourGetNsByPrefixRecursionLock = new ThreadLocal<Boolean>();
 
   @NotNull
   public String getNamespaceByPrefix(String prefix){
@@ -765,7 +763,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
       return null;
     }
     else {
-      PsiElement xmlAttribute = add(XmlElementFactory.getInstance(getManager().getProject()).createXmlAttribute(qname, value));
+      PsiElement xmlAttribute = add(XmlElementFactory.getInstance(getProject()).createXmlAttribute(qname, value));
       while(!(xmlAttribute instanceof XmlAttribute)) xmlAttribute = xmlAttribute.getNextSibling();
       return (XmlAttribute)xmlAttribute;
     }
@@ -801,7 +799,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
         else if (treeElement.getElementType() == XmlTokenType.XML_TAG_END) insideBody = true;
       }
 
-      return myValue = tagValue = new XmlTagValueImpl(bodyElements.toArray(XmlTagChild.EMPTY_ARRAY), this);
+      XmlTagChild[] tagChildren = bodyElements.toArray(new XmlTagChild[bodyElements.size()]);
+      myValue = tagValue = new XmlTagValueImpl(tagChildren, this);
     }
     return tagValue;
   }
@@ -853,7 +852,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
       }
       while (first != last && (first = next) != null);
     }
-    catch(IncorrectOperationException ioe){}
+    catch (IncorrectOperationException ignored) {
+    }
     finally{
       clearCaches();
     }
@@ -941,7 +941,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   private ASTNode expandTag() throws IncorrectOperationException{
     ASTNode endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(this);
     if(endTagStart == null){
-      final XmlTagImpl tagFromText = (XmlTagImpl)XmlElementFactory.getInstance(getManager().getProject()).createTagFromText("<" + getName() + "></" + getName() + ">");
+      final XmlTagImpl tagFromText = (XmlTagImpl)XmlElementFactory.getInstance(getProject()).createTagFromText("<" + getName() + "></" + getName() + ">");
       final ASTNode startTagStart = XmlChildRole.START_TAG_END_FINDER.findChild(tagFromText);
       endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(tagFromText);
       final LeafElement emptyTagEnd = (LeafElement)XmlChildRole.EMPTY_TAG_END_FINDER.findChild(this);

@@ -74,12 +74,12 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   }
 
   public boolean hasModifierProperty(@NotNull String name) {
-    return (PsiModifier.PUBLIC.equals(name) || PsiModifier.STATIC.equals(name) || PsiModifier.FINAL.equals(name));
+    return PsiModifier.PUBLIC.equals(name) || PsiModifier.STATIC.equals(name) || PsiModifier.FINAL.equals(name);
   }
 
   @NotNull
   public PsiType getType() {
-    return JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createType(getContainingClass());
+    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getContainingClass());
   }
 
   public PsiTypeElement getTypeElement() {
@@ -117,6 +117,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     return facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType(containingClass), getArgumentList(), this);
   }
 
+  @NotNull
   public PsiIdentifier getNameIdentifier() {
     return (PsiIdentifier)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.NAME);
   }
@@ -169,7 +170,6 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
 
     public TextRange getRangeInElement() {
       PsiIdentifier nameIdentifier = getNameIdentifier();
-      LOG.assertTrue(nameIdentifier != null, getText());
       int startOffsetInParent = nameIdentifier.getStartOffsetInParent();
       return new TextRange(startOffsetInParent, startOffsetInParent + nameIdentifier.getTextLength());
     }

@@ -444,7 +444,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
         for (PsiPackage pack : packs) {
           final String packageName = pack.getName();
           if (packageName == null) continue;
-          if (!JavaPsiFacade.getInstance(getManager().getProject()).getNameHelper().isIdentifier(packageName, PsiUtil.getLanguageLevel(this))) {
+          if (!JavaPsiFacade.getInstance(getProject()).getNameHelper().isIdentifier(packageName, PsiUtil.getLanguageLevel(this))) {
             continue;
           }
           if (!processor.execute(pack, state)) {

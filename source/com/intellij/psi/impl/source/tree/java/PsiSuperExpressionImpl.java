@@ -46,8 +46,8 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
 
   private PsiType getSuperType(PsiClass aClass) {
     if (aClass.isInterface()) {
-      return JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createType(JavaPsiFacade.getInstance(getManager().getProject()).findClass("java.lang.Object",
-                                                                                                                        getResolveScope()));
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      return facade.getElementFactory().createType(facade.findClass("java.lang.Object", getResolveScope()));
     }
 
     if (aClass instanceof PsiAnonymousClass) {
@@ -63,9 +63,10 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
     if ("java.lang.Object".equals(aClass.getQualifiedName())) return null;
     PsiClassType[] superTypes = aClass.getExtendsListTypes();
     if (superTypes.length == 0) {
-      final PsiClass javaLangObject = JavaPsiFacade.getInstance(getManager().getProject()).findClass("java.lang.Object", getResolveScope());
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiClass javaLangObject = facade.findClass("java.lang.Object", getResolveScope());
       if (javaLangObject != null) {
-        return JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createType(javaLangObject);
+        return facade.getElementFactory().createType(javaLangObject);
       }
       else {
         return null;

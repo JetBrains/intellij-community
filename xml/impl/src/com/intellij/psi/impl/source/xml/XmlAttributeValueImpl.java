@@ -98,7 +98,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   public void fixText(@NotNull String text) {
     try {
       String contents = StringUtil.trimEnd(StringUtil.trimStart(text, "\""), "\"");
-      XmlAttribute newAttribute = XmlElementFactory.getInstance(getManager().getProject()).createXmlAttribute("q", contents);
+      XmlAttribute newAttribute = XmlElementFactory.getInstance(getProject()).createXmlAttribute("q", contents);
       XmlAttributeValue newValue = newAttribute.getValueElement();
 
       CheckUtil.checkWritable(this);

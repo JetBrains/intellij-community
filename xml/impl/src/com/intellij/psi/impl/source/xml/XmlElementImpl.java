@@ -113,7 +113,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
 
   @NotNull
   public SearchScope getUseScope() {
-    return GlobalSearchScope.allScope(getManager().getProject());
+    return GlobalSearchScope.allScope(getProject());
   }
 
   @Override

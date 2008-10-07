@@ -163,7 +163,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
           PsiImplUtil.setName(nameIdentifier, newElementName);
         }
         else if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(getFirstChildNode().getElementType())) {
-          PsiElementFactory factory = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory();
+          PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
           nameIdentifier = factory.createIdentifier(newElementName);
           addBefore(nameIdentifier, SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode()));
         }

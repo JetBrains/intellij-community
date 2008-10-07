@@ -351,7 +351,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         final String textSkipWhiteSpaceAndComments = getTextSkipWhiteSpaceAndComments();
         if (textSkipWhiteSpaceAndComments == null || textSkipWhiteSpaceAndComments.length() == 0) return JavaResolveResult.EMPTY_ARRAY;
         final PsiClass aClass =
-          JavaPsiFacade.getInstance(getManager().getProject()).findClass(textSkipWhiteSpaceAndComments, getResolveScope());
+          JavaPsiFacade.getInstance(getProject()).findClass(textSkipWhiteSpaceAndComments, getResolveScope());
         if (aClass == null) return JavaResolveResult.EMPTY_ARRAY;
         return new JavaResolveResult[]{new CandidateInfo(aClass, updateSubstitutor(PsiSubstitutor.EMPTY, aClass), this, false)};
 
@@ -442,7 +442,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (oldIdentifier == null) {
       throw new IncorrectOperationException();
     }
-    final PsiElement identifier = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createIdentifier(newElementName);
+    final PsiElement identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
   }
@@ -506,7 +506,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   private PsiElement bindToClass(final PsiClass aClass) throws IncorrectOperationException {
     String qName = aClass.getQualifiedName();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getManager().getProject());
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     if (qName == null) {
       qName = aClass.getName();
       final PsiClass psiClass = facade.getResolveHelper().resolveReferencedClass(qName, this);
@@ -535,19 +535,19 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   private boolean isFullyQualified() {
     switch (getKind()) {
-    case CLASS_OR_PACKAGE_NAME_KIND:
-           if (resolve() instanceof PsiPackage) return true;
-    case CLASS_NAME_KIND:
-           break;
+      case CLASS_OR_PACKAGE_NAME_KIND:
+        if (resolve() instanceof PsiPackage) return true;
+      case CLASS_NAME_KIND:
+        break;
 
-    case PACKAGE_NAME_KIND:
-    case CLASS_FQ_NAME_KIND:
-    case CLASS_FQ_OR_PACKAGE_NAME_KIND:
-           return true;
+      case PACKAGE_NAME_KIND:
+      case CLASS_FQ_NAME_KIND:
+      case CLASS_FQ_OR_PACKAGE_NAME_KIND:
+        return true;
 
-    default:
-           LOG.assertTrue(false);
-           return true;
+      default:
+        LOG.assertTrue(false);
+        return true;
     }
 
     final ASTNode qualifier = findChildByRole(ChildRole.QUALIFIER);

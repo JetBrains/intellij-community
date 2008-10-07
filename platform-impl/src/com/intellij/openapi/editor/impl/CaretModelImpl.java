@@ -28,8 +28,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.CaretModelImpl");
-  private EditorImpl myEditor;
-  private CopyOnWriteArrayList<CaretListener> myCaretListeners = new CopyOnWriteArrayList<CaretListener>();
+  private final EditorImpl myEditor;
+  private final CopyOnWriteArrayList<CaretListener> myCaretListeners = new CopyOnWriteArrayList<CaretListener>();
   private LogicalPosition myLogicalCaret;
   private VisualPosition myVisibleCaret;
   private int myOffset;

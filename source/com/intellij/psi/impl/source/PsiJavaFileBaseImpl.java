@@ -312,7 +312,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
 
     if(classHint == null || classHint.shouldProcess(PsiPackage.class)){
-      final PsiPackage rootPackage = JavaPsiFacade.getInstance(getManager().getProject()).findPackage("");
+      final PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
       processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, rootPackage);
       if(rootPackage != null) rootPackage.processDeclarations(processor, state, null, place);
     }
@@ -460,7 +460,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private LanguageLevel getLanguageLevel(final VirtualFile dirFile) {
     final VirtualFile[] children = dirFile.getChildren();
-    final LanguageLevel defaultLanguageLevel = LanguageLevelProjectExtension.getInstance(getManager().getProject()).getLanguageLevel();
+    final LanguageLevel defaultLanguageLevel = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel();
     for (VirtualFile child : children) {
       if (StdFileTypes.CLASS.equals(child.getFileType())) {
         final PsiFile psiFile = getManager().findFile(child);
