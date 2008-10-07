@@ -15,10 +15,10 @@
  */
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 
 public class ClassMapCachingNulls<T> {
-  private static final Object[] NULL = ArrayUtil.EMPTY_OBJECT_ARRAY;
   private final Map<Class, T[]> myBackingMap;
   private final T[] myEmptyArray;
   private final Map<Class, T[]> myMap = new ConcurrentHashMap<Class, T[]>();
@@ -36,10 +35,11 @@ public class ClassMapCachingNulls<T> {
     myEmptyArray = emptyArray;
   }
 
+  @Nullable
   public T[] get(Class aClass) {
     T[] value = myMap.get(aClass);
     if (value != null) {
-      if (value == NULL) {
+      if (value == myEmptyArray) {
         return null;
       }
       else {
@@ -47,7 +47,26 @@ public class ClassMapCachingNulls<T> {
         return value;
       }
     }
-    value = myBackingMap.get(aClass);
+    List<T> result = getFromBackingMap(aClass);
+    return cache(aClass, result);
+  }
+
+  private T[] cache(Class aClass, List<T> result) {
+    T[] value;
+    if (result == null) {
+      myMap.put(aClass, myEmptyArray);
+      value = null;
+    }
+    else {
+      assert !result.isEmpty();
+      value = result.toArray(myEmptyArray);
+      myMap.put(aClass, value);
+    }
+    return value;
+  }
+
+  private List<T> getFromBackingMap(Class aClass) {
+    T[] value = myBackingMap.get(aClass);
     List<T> result = null;
     if (value != null) {
       assert value.length != 0;
@@ -60,15 +79,7 @@ public class ClassMapCachingNulls<T> {
     if (superclass != null) {
       result = addFromUpper(result, superclass);
     }
-    if (result == null) {
-      myMap.put(aClass, (T[])NULL);
-      value = null;
-    }
-    else {
-      value = result.toArray(myEmptyArray);
-      myMap.put(aClass, value);
-    }
-    return value;
+    return result;
   }
 
   private List<T> addFromUpper(List<T> value, Class superclass) {

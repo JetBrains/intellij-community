@@ -26,6 +26,7 @@ import java.lang.reflect.TypeVariable;
 /**
  * @author peter
  */
+@SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
 public class ReflectionCache {
   private static final ConcurrentFactoryMap<Class,Class> ourSuperClasses = new ConcurrentFactoryMap<Class, Class>() {
     protected Class create(final Class key) {
