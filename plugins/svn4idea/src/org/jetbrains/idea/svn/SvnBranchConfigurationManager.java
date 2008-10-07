@@ -22,8 +22,10 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -126,12 +128,32 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   @NonNls private static final String DEFAULT_BRANCHES_NAME = "branches";
   @NonNls private static final String DEFAULT_TAGS_NAME = "tags";
 
-  public SvnBranchConfiguration get(@NotNull VirtualFile vcsRoot) throws VcsException {
+  public SvnBranchConfiguration get(@NotNull final VirtualFile vcsRoot) throws VcsException {
     SvnBranchConfiguration configuration = myConfigurationBean.myConfigurationMap.get(vcsRoot.getPath());
     if (configuration == null) {
-      configuration = load(vcsRoot);
-
-      setConfiguration(vcsRoot, configuration, false);
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        final Ref<VcsException> exceptionRef = new Ref<VcsException>();
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          public void run() {
+            try {
+              ProgressManager.getInstance().getProgressIndicator().setText(
+                SvnBundle.message("loading.data.for.root.text", vcsRoot.getPresentableUrl()));
+              final SvnBranchConfiguration loadedConfiguration = load(vcsRoot);
+              setConfiguration(vcsRoot, loadedConfiguration, false);
+            }
+            catch (VcsException e) {
+              exceptionRef.set(e);
+            }
+          }
+        }, SvnBundle.message("loading.default.branches.configuration.text"), false, myProject);
+        if (! exceptionRef.isNull()) {
+          throw exceptionRef.get();
+        }
+        configuration = myConfigurationBean.myConfigurationMap.get(vcsRoot.getPath());
+      } else {
+        configuration = load(vcsRoot);
+        setConfiguration(vcsRoot, configuration, false);
+      }
     }
     return configuration;
   }
