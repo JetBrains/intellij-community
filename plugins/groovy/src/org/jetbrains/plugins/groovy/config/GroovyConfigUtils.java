@@ -189,6 +189,9 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
       if (!inModuleSettings) {
         model.commit();
       }
+      if (modifiableModel != null) {
+        modifiableModel.commit();
+      }
       return library;
     }
     return null;

@@ -48,7 +48,7 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
   }
 
   public Icon getIcon() {
-    return GroovyIcons.FILE_TYPE;
+    return GroovyIcons.GROOVY_ICON_16x16;
   }
 
   @NonNls
