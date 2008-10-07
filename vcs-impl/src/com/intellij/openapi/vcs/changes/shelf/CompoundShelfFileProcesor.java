@@ -118,34 +118,47 @@ public class CompoundShelfFileProcesor {
     String oldFilePath = FILE_SPEC + serverFileName;
     String newFilePath = FILE_SPEC + newName;
     for (StreamProvider serverStreamProvider : myServerStreamProviders) {
-      try {
-        InputStream stream = serverStreamProvider.loadContent(oldFilePath, PER_USER);
-        if (stream != null) {
-          File file = new File(myShelfPath + "/" + newName);
-          FileOutputStream out = new FileOutputStream(file);
-          try {
-            FileUtil.copy(stream, out);
-          }
-          finally {
-            out.close();
-          }
-          serverStreamProvider.deleteFile(oldFilePath,PER_USER);
-          FileInputStream input = new FileInputStream(file);
-          try {
-            serverStreamProvider.saveContent(newFilePath, input, file.length(), PER_USER);
-          }
-          finally {
-            input.close();
-          }
-        }
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
+      renameFileOnProvider(newName, oldFilePath, newFilePath, serverStreamProvider);
     }
 
     return newName;
 
+  }
+
+  private void renameFileOnProvider(final String newName, final String oldFilePath, final String newFilePath, final StreamProvider serverStreamProvider) {
+    try {
+      InputStream stream = serverStreamProvider.loadContent(oldFilePath, PER_USER);
+      if (stream != null) {
+        File file = new File(myShelfPath + "/" + newName);
+        copyFileToStream(stream, file);
+        serverStreamProvider.deleteFile(oldFilePath,PER_USER);
+        copyFileContentToProviders(newFilePath, serverStreamProvider, file);
+      }
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+  }
+
+  private void copyFileContentToProviders(final String newFilePath, final StreamProvider serverStreamProvider, final File file)
+      throws IOException {
+    FileInputStream input = new FileInputStream(file);
+    try {
+      serverStreamProvider.saveContent(newFilePath, input, file.length(), PER_USER);
+    }
+    finally {
+      input.close();
+    }
+  }
+
+  private void copyFileToStream(final InputStream stream, final File file) throws IOException {
+    FileOutputStream out = new FileOutputStream(file);
+    try {
+      FileUtil.copy(stream, out);
+    }
+    finally {
+      out.close();
+    }
   }
 
   private String getNewFileName(final String serverFileName, final List<String> serverFileNames, final List<String> localFileNames) {
@@ -178,13 +191,7 @@ public class CompoundShelfFileProcesor {
 
 
     for (StreamProvider serverStreamProvider : myServerStreamProviders) {
-      FileInputStream input = new FileInputStream(patchPath);
-      try {
-        serverStreamProvider.saveContent(FILE_SPEC + patchPath.getName(), input, patchPath.length(), PER_USER);
-      }
-      finally {
-        input.close();
-      }
+      copyFileContentToProviders(FILE_SPEC + patchPath.getName(), serverStreamProvider, patchPath);
     }
 
 
@@ -196,13 +203,7 @@ public class CompoundShelfFileProcesor {
 
   public void saveFile(final File from, final File to) throws IOException {
     for (StreamProvider serverStreamProvider : myServerStreamProviders) {
-      FileInputStream input = new FileInputStream(from);
-      try {
-        serverStreamProvider.saveContent(FILE_SPEC + to.getName(), input, from.length(), PER_USER);
-      }
-      finally {
-        input.close();
-      }
+      copyFileContentToProviders(FILE_SPEC + to.getName(), serverStreamProvider, from);
     }
 
 
