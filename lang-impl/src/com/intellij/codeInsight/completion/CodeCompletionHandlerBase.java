@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.EditorHintListener;
@@ -61,6 +62,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   public void invokeCompletion(final Project project, final Editor editor, final PsiFile psiFile, int time) {
+    TemplateSettings.getInstance(); //deadlock fix
+
     final Document document = editor.getDocument();
     if (editor.isViewer()) {
       document.fireReadOnlyModificationAttempt();
