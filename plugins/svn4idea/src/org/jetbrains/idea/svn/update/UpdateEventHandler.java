@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.SVNLogType;
 
+import javax.swing.*;
 import java.io.File;
 
 /**
@@ -40,7 +41,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
     myUpdatedFiles = updatedFiles;
   }
 
-  public void handleEvent(SVNEvent event, double progress) {
+  public void handleEvent(final SVNEvent event, double progress) {
     if (event == null || event.getFile() == null) {
       return;
     }
@@ -121,8 +122,14 @@ public class UpdateEventHandler implements ISVNEventHandler {
       myText2 = SvnBundle.message("progres.text2.updated.to.revision", event.getRevision());
       if (myExternalsCount == 0) {
         myExternalsCount = 1;
-        WindowManager.getInstance().getStatusBar(myVCS.getProject()).setInfo(
+
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            WindowManager.getInstance().getStatusBar(myVCS.getProject()).setInfo(
           SvnBundle.message("status.text.updated.to.revision", event.getRevision()));
+          }
+        });
       }
     }
     else if (event.getAction() == SVNEventAction.SKIP) {
