@@ -75,9 +75,6 @@ public class ActionsTree {
             AnAction action = ActionManager.getInstance().getActionOrStub(actionId);
             if (action != null) {
               text = action.getTemplatePresentation().getText();
-              if (text.isEmpty()) {
-                LOG.info("No text for action " + actionId);
-              }
               Icon actionIcon = action.getTemplatePresentation().getIcon();
               if (actionIcon != null) {
                 icon = actionIcon;
