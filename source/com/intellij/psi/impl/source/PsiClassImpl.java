@@ -605,39 +605,43 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
                                                     String className,
                                                     boolean isInitialClass,
                                                     final PsiElement defaultResolveContext) {
-    final PsiClassStub stub = ((PsiClassImpl)aClass).getStub();
-    if (stub == null || stub.isAnonymousInQualifiedNew()) {
-      return aClass.getParent();
-    }
+    boolean needPreciseContext;
+    final StubBasedPsiElementBase<?> context;
+    synchronized (PsiLock.LOCK) {
+      final PsiClassStub stub = ((PsiClassImpl)aClass).getStub();
+      if (stub == null || stub.isAnonymousInQualifiedNew()) {
+        return aClass.getParent();
+      }
 
-    boolean isAnonOrLocal = isAnonymousOrLocal(aClass);
+      boolean isAnonOrLocal = isAnonymousOrLocal(aClass);
 
-    if (!isAnonOrLocal) {
-      return isInitialClass ? defaultResolveContext : aClass;
-    }
+      if (!isAnonOrLocal) {
+        return isInitialClass ? defaultResolveContext : aClass;
+      }
 
-    if (!isInitialClass) {
-      if (aClass.findInnerClassByName(className, true) != null) return aClass;
-    }
+      if (!isInitialClass) {
+        if (aClass.findInnerClassByName(className, true) != null) return aClass;
+      }
 
-    final StubElement parentStub = stub.getParentStub();
-    final StubBasedPsiElementBase<?> context = (StubBasedPsiElementBase)parentStub.getPsi();
-    PsiClass[] classesInScope = context.getStubOrPsiChildren(Constants.CLASS_BIT_SET, ARRAY_FACTORY);
+      final StubElement parentStub = stub.getParentStub();
+      context = (StubBasedPsiElementBase)parentStub.getPsi();
+      PsiClass[] classesInScope = context.getStubOrPsiChildren(Constants.CLASS_BIT_SET, ARRAY_FACTORY);
 
-    boolean needPreciseContext = false;
-    if (classesInScope.length > 1) {
-      for (PsiClass scopeClass : classesInScope) {
-        if (scopeClass == aClass) continue;
-        String className1 = scopeClass.getName();
-        if (className.equals(className1)) {
-          needPreciseContext = true;
-          break;
+      needPreciseContext = false;
+      if (classesInScope.length > 1) {
+        for (PsiClass scopeClass : classesInScope) {
+          if (scopeClass == aClass) continue;
+          String className1 = scopeClass.getName();
+          if (className.equals(className1)) {
+            needPreciseContext = true;
+            break;
+          }
         }
       }
-    }
-    else {
-      LOG.assertTrue(classesInScope.length == 1);
-      LOG.assertTrue(classesInScope[0] == aClass);
+      else {
+        LOG.assertTrue(classesInScope.length == 1);
+        LOG.assertTrue(classesInScope[0] == aClass);
+      }
     }
 
     if (needPreciseContext) {
