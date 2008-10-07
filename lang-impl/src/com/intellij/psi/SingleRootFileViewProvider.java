@@ -9,6 +9,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
@@ -18,7 +19,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -209,13 +209,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private PsiFile createFile() {
-    final VirtualFile vFile = getVirtualFile();
 
     try {
+      final VirtualFile vFile = getVirtualFile();
       if (vFile.isDirectory()) return null;
-      final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-      final String name = vFile.getName();
-      if (fileTypeManager.isFileIgnored(name)) return null; // cannot use ProjectFileIndex because of "name"!
+      if (isIgnored()) return null;
 
       final Project project = myManager.getProject();
       if (isPhysical()) { // check directories consistency
@@ -234,6 +232,12 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       LOG.error(e);
       return null;
     }
+  }
+
+  protected boolean isIgnored() {
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    if (fileTypeManager.isFileIgnored(getVirtualFile().getName())) return true;
+    return false;
   }
 
   @Nullable
