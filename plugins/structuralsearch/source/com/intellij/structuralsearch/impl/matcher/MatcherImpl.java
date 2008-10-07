@@ -526,6 +526,7 @@ public class MatcherImpl {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
+                if (project.isDisposed()) return;
                 final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
                 manager.commitDocument(manager.getDocument(psiFile));
               }
@@ -542,6 +543,8 @@ public class MatcherImpl {
           );
         }
       }
+
+      if (project.isDisposed()) return;
 
       if (file instanceof PsiFile) {
         matchContext.getSink().processFile((PsiFile)file);
