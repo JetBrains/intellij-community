@@ -71,7 +71,7 @@ public class GroovyFacetEditor {
   }
 
   private static Library[] getGroovyLibraries(final Project project) {
-    final Library[] versions = GroovyConfigUtils.getAllGroovyLibraries(project);
+    final Library[] versions = GroovyConfigUtils.getInstance().getAllSDKLibraries(project);
     Arrays.sort(versions, new Comparator<Library>() {
       public int compare(Library o1, Library o2) {
         final String name1 = o1.getName();
@@ -175,7 +175,7 @@ public class GroovyFacetEditor {
       public void actionPerformed(final ActionEvent e) {
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
           public boolean isFileSelectable(VirtualFile file) {
-            return super.isFileSelectable(file) && GroovyConfigUtils.isGroovySdkHome(file);
+            return super.isFileSelectable(file) && GroovyConfigUtils.getInstance().isSDKHome(file);
           }
         };
         final FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
@@ -211,7 +211,7 @@ public class GroovyFacetEditor {
 
   private class MyLibraryListener implements LibraryTable.Listener {
     public void afterLibraryAdded(Library library) {
-      for (Library groovyLib : GroovyConfigUtils.getGlobalGroovyLibraries()) {
+      for (Library groovyLib : GroovyConfigUtils.getInstance().getGlobalSDKLibraries()) {
         if (groovyLib == library) {
           myComboBox.addItem(new MyLibraryStruct(library));
         }
@@ -219,7 +219,7 @@ public class GroovyFacetEditor {
     }
 
     public void afterLibraryRenamed(Library library) {
-      for (Library groovyLib : GroovyConfigUtils.getGlobalGroovyLibraries()) {
+      for (Library groovyLib : GroovyConfigUtils.getInstance().getGlobalSDKLibraries()) {
         if (groovyLib == library) {
           myComboBox.addItem(new MyLibraryStruct(library));
         }
@@ -227,7 +227,7 @@ public class GroovyFacetEditor {
     }
 
     public void beforeLibraryRemoved(Library library) {
-      for (Library groovyLib : GroovyConfigUtils.getGlobalGroovyLibraries()) {
+      for (Library groovyLib : GroovyConfigUtils.getInstance().getGlobalSDKLibraries()) {
         if (groovyLib == library) {
           myComboBox.removeItem(new MyLibraryStruct(library));
         }

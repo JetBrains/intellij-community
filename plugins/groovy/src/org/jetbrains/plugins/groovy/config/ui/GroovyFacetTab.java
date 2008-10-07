@@ -90,7 +90,7 @@ public class GroovyFacetTab extends FacetEditorTab {
     if (o instanceof GroovySDKComboBox.DefaultGroovySDKComboBoxItem) {
       GroovySDKComboBox.DefaultGroovySDKComboBoxItem item = (GroovySDKComboBox.DefaultGroovySDKComboBoxItem)o;
       oldGroovyLibName = newGroovyLibName = item.getName();
-    } else if (o == null){
+    } else if (o == null) {
       myComboBox.setSelectedIndex(0);
     }
   }
@@ -139,14 +139,14 @@ public class GroovyFacetTab extends FacetEditorTab {
             final GroovySDKPointer pointer = pointerItem.getPointer();
             String name = pointerItem.getName();
             String path = pointerItem.getPath();
-            Library library = GroovyConfigUtils.createGroovyLibrary(path, name, project, true, pointer.isProjectLib());
+            Library library = GroovyConfigUtils.getInstance().createSDKLibrary(path, name, project, true, pointer.isProjectLib());
             if (library != null) {
               sdk = new GroovySDK(library, myModule, pointer.isProjectLib());
             }
           } else {
             sdk = selectedItem.getGroovySDK();
           }
-          GroovyConfigUtils.updateGroovyLibInModule(module, sdk);
+          GroovyConfigUtils.getInstance().updateSDKLibInModule(module, sdk);
 
           // create other libraries by their pointers
           for (int i = 0; i < myComboBox.getItemCount(); i++) {
@@ -156,7 +156,7 @@ public class GroovyFacetTab extends FacetEditorTab {
               final GroovySDKPointer pointer = pointerItem.getPointer();
               String name = pointerItem.getName();
               String path = pointerItem.getPath();
-              GroovyConfigUtils.createGroovyLibrary(path, name, project, true, pointer.isProjectLib());
+              GroovyConfigUtils.getInstance().createSDKLibrary(path, name, project, true, pointer.isProjectLib());
             }
           }
         }
@@ -172,7 +172,7 @@ public class GroovyFacetTab extends FacetEditorTab {
     Module module = myEditorContext.getModule();
     if (module != null && module.isDisposed()) return;
     if (module != null && FacetManager.getInstance(module).getFacetByType(GroovyFacet.ID) != null) {
-      Library[] libraries = GroovyConfigUtils.getGroovyLibrariesByModule(myEditorContext.getModule());
+      Library[] libraries = GroovyConfigUtils.getInstance().getSDKLibrariesByModule(myEditorContext.getModule());
       if (libraries.length == 0) {
         myComboBox.setSelectedIndex(0);
         oldGroovyLibName = newGroovyLibName;
@@ -209,24 +209,26 @@ public class GroovyFacetTab extends FacetEditorTab {
         public void actionPerformed(final ActionEvent e) {
           final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
             public boolean isFileSelectable(VirtualFile file) {
-              return super.isFileSelectable(file) && GroovyConfigUtils.isGroovySdkHome(file);
+              return super.isFileSelectable(file) && GroovyConfigUtils.getInstance().isSDKHome(file);
             }
           };
           final FileChooserDialog fileChooserDialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
           final VirtualFile[] files = fileChooserDialog.choose(null, project);
           if (files.length > 0) {
             String path = files[0].getPath();
-            if (ValidationResult.OK == GroovyConfigUtils.isGroovySdkHome(path)) {
-              Collection<String> versions = GroovyConfigUtils.getGroovyVersions(myModule);
-              String version = GroovyConfigUtils.getGroovyVersion(path);
+            if (ValidationResult.OK == GroovyConfigUtils.getInstance().isSDKHome(path)) {
+              Collection<String> versions = GroovyConfigUtils.getInstance().getSDKVersions(myModule.getProject());
+              String version = GroovyConfigUtils.getInstance().getSDKVersion(path);
               boolean addVersion = !versions.contains(version) ||
                                    Messages.showOkCancelDialog(GroovyBundle.message("duplicate.groovy.lib.version.add", version),
                                                                GroovyBundle.message("duplicate.groovy.lib.version"),
                                                                GroovyIcons.GROOVY_ICON_32x32) == 0;
 
-              if (addVersion && !GroovyConfigUtils.UNDEFINED_VERSION.equals(version)) {
+              if (addVersion && !GroovyConfigUtils.getInstance().UNDEFINED_VERSION.equals(version)) {
                 String name = myComboBox.generatePointerName(version);
-                final CreateLibraryDialog dialog = new CreateLibraryDialog(project, name);
+                final CreateLibraryDialog dialog = new CreateLibraryDialog(project, GroovyBundle.message("facet.create.lib.title"),
+                                                                           GroovyBundle.message("facet.create.project.lib", name),
+                                                                           GroovyBundle.message("facet.create.application.lib", name));
                 dialog.show();
                 if (dialog.isOK()) {
                   myComboBox.addSdk(new GroovySDKPointer(name, path, version, dialog.isInProject()));

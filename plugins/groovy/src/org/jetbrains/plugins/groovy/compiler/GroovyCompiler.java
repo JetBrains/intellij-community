@@ -102,8 +102,8 @@ public class GroovyCompiler implements TranslatingCompiler {
 
       Module module = entry.getKey();
       ModuleType moduleType = module.getModuleType();
-      String groovyPath = GroovyConfigUtils.getGroovyInstallPath(module);
-      String grailsPath = GrailsConfigUtils.getGrailsInstallPath(module);
+      String groovyPath = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
+      String grailsPath = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
 
       String libPath = (moduleType instanceof GrailsModuleType && grailsPath != null && grailsPath.length() > 0 || groovyPath.length() == 0
                         ? grailsPath
@@ -315,7 +315,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
     //Grails injections  support
     printer.println(GroovycRunner.IS_GRAILS);
-    printer.println(GrailsConfigUtils.isGrailsConfigured(module) && module.getModuleType() instanceof GrailsModuleType);
+    printer.println(GrailsConfigUtils.getInstance().isSDKConfigured(module) && module.getModuleType() instanceof GrailsModuleType);
 
     //production output
     printer.println(GroovycRunner.OUTPUTPATH);
@@ -349,10 +349,10 @@ public class GroovyCompiler implements TranslatingCompiler {
     }
 
     for (Module module : modules) {
-      final String groovyInstallPath = GroovyConfigUtils.getGroovyInstallPath(module);
-      final String grailsInstallPath = GrailsConfigUtils.getGrailsInstallPath(module);
+      final String groovyInstallPath = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
+      final String grailsInstallPath = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
       if (groovyInstallPath.length() == 0 && (grailsInstallPath == null || grailsInstallPath.length() == 0)) {
-        if (!GroovyConfigUtils.tryToSetUpGroovyFacetOntheFly(module)) {
+        if (!GroovyConfigUtils.getInstance().tryToSetUpGroovyFacetOntheFly(module)) {
           Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet", module.getName()),
                                    GroovyBundle.message("cannot.compile"));
           int result = Messages.showOkCancelDialog(GroovyBundle.message("groovy.configure.facet.question.text"),

@@ -142,6 +142,10 @@
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsTagBodySelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.grails.editor.selection.GrailsHtmlTagBodySelectioner"/>
 
+    <!--Gant-->
+    <facetType implementation="org.jetbrains.plugins.gant.config.GantFacetType"/>
+    <frameworkSupport implementation="org.jetbrains.plugins.gant.config.GantSupportProvider"/>
+
     <!-- control flow -->
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>

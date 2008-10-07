@@ -20,7 +20,7 @@ public class NewGantScriptAction extends NewGroovyActionBase {
 
   public NewGantScriptAction() {
     super(GantBundle.message("newscript.menu.action.text"), GantBundle.message("newscript.menu.action.description"),
-          GroovyIcons.GANT_FILE_ICON);
+          GroovyIcons.GANT_ICON_16x16);
   }
 
   protected String getActionName(PsiDirectory directory, String newName) {

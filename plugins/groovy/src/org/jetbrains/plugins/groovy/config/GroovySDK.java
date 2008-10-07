@@ -19,14 +19,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.config.util.AbstractSDK;
+import org.jetbrains.plugins.groovy.config.util.LibrarySDK;
 
 import javax.swing.*;
 
 /**
  * @author ilyas
  */
-public class GroovySDK implements AbstractSDK {
+public class GroovySDK implements LibrarySDK {
 
   protected Library myLibrary;
   private final boolean myProjectLib;
@@ -37,7 +37,7 @@ public class GroovySDK implements AbstractSDK {
     myModule = module;
     myLibrary = library;
     myProjectLib = isProjectLib;
-    mySdkVersion = GroovyConfigUtils.getGroovyLibVersion(library);
+    mySdkVersion = GroovyConfigUtils.getInstance().getSDKLibVersion(library);
   }
 
   public Module getModule() {

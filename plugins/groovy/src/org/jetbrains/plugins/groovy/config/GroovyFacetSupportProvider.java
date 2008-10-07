@@ -62,7 +62,7 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
   @NotNull
   public String[] getVersions() {
     String[] versions =
-      ContainerUtil.map2Array(GroovyConfigUtils.getGlobalGroovyLibraries(), String.class, new Function<Library, String>() {
+      ContainerUtil.map2Array(GroovyConfigUtils.getInstance().getGlobalSDKLibraries(), String.class, new Function<Library, String>() {
         public String fun(Library library) {
           return library.getName();
         }
@@ -122,35 +122,36 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
     }
 
     public void addSupport(final Module module, final ModifiableRootModel rootModel, @Nullable Library library) {
-      Library selectedLibrary = myFacetEditor.getSelectedLibrary();
       String selectedName = null;
+      Library selectedLibrary = myFacetEditor.getSelectedLibrary();
       if (selectedLibrary != null && !myFacetEditor.addNewSdk()) {
         selectedName = selectedLibrary.getName();
         LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(selectedLibrary));
         GroovyFacetSupportProvider.this.addSupport(module, rootModel, selectedName, selectedLibrary);
       } else if (myFacetEditor.getNewSdkPath() != null) {
         final String path = myFacetEditor.getNewSdkPath();
-        ValidationResult result = GroovyConfigUtils.isGroovySdkHome(path);
+        ValidationResult result = GroovyConfigUtils.getInstance().isSDKHome(path);
         if (path != null && ValidationResult.OK == result) {
           final Project project = module.getProject();
-          selectedName = GroovyConfigUtils.generateNewGroovyLibName(GroovyConfigUtils.getGroovyVersion(path), project);
+          selectedName = GroovyConfigUtils.getInstance().generateNewSDKLibName(GroovyConfigUtils.getInstance().getSDKVersion(path), project);
           final String selected = selectedName;
-          final Library selectedLib = selectedLibrary;
-
           //Delayed modal dialog to add Groovy library
-          final CreateLibraryDialog dialog = new CreateLibraryDialog(project, selectedName) {
+          final CreateLibraryDialog dialog = new CreateLibraryDialog(project, GroovyBundle.message("facet.create.lib.title"),
+                                                                     GroovyBundle.message("facet.create.project.lib", selectedName),
+                                                                     GroovyBundle.message("facet.create.application.lib", selectedName)) {
             @Override
             protected void doOKAction() {
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
                 public void run() {
                   ModuleRootManager manager = ModuleRootManager.getInstance(module);
                   ModifiableRootModel rootModel = manager.getModifiableModel();
-                  final Library lib = GroovyConfigUtils.createGroovyLibrary(path, selected, project, false, isInProject());
+                  final Library lib = GroovyConfigUtils.getInstance().createSDKLibrary(path, selected, project, false, isInProject());
                   LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(lib));
-                  if (selectedLib != null) {
-                    GroovyConfigUtils.saveGroovyDefaultLibName(selected);
+                  if (lib != null) {
+                    GroovyConfigUtils.getInstance().saveSDKDefaultLibName(selected);
                   }
-                  GroovyFacetSupportProvider.this.addSupport(module, rootModel, selected, selectedLib);
+                  GroovyFacetSupportProvider.this.addSupport(module, rootModel, selected, lib);
+                  rootModel.commit();
                 }
               });
               super.doOKAction();

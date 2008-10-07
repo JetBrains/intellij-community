@@ -137,7 +137,7 @@ public abstract class LibrariesUtil {
   }
 
   public static String generateNewLibraryName(String version, String prefix, final Project project) {
-    List<Object> libNames = ContainerUtil.map(GroovyConfigUtils.getAllGroovyLibraries(project), new Function<Library, Object>() {
+    List<Object> libNames = ContainerUtil.map(GroovyConfigUtils.getInstance().getAllSDKLibraries(project), new Function<Library, Object>() {
       public Object fun(Library library) {
         return library.getName();
       }

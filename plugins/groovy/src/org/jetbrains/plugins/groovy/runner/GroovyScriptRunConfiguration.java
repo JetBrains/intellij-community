@@ -121,7 +121,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     params.setWorkingDirectory(getAbsoluteWorkDir());
 
     //add starter configuration parameters
-    String groovyHome = GroovyConfigUtils.getGroovyInstallPath(module);
+    String groovyHome = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
     params.getVMParametersList().addParametersString("-Dgroovy.home=" + "\"" + groovyHome + "\"");
 
     // add user parameters
@@ -165,7 +165,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
       throw new ExecutionException("Module is not specified");
     }
 
-    if (!GroovyConfigUtils.isGroovyConfigured(module)) {
+    if (!GroovyConfigUtils.getInstance().isSDKConfigured(module)) {
       //throw new ExecutionException("Groovy is not configured");
       Messages.showErrorDialog(module.getProject(), ExecutionBundle.message("error.running.configuration.with.error.error.message",
                                                                   getName(), "Groovy is not configured"),
