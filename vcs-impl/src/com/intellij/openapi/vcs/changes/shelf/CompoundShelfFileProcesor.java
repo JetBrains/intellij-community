@@ -121,28 +121,22 @@ public class CompoundShelfFileProcesor {
       try {
         InputStream stream = serverStreamProvider.loadContent(oldFilePath, PER_USER);
         if (stream != null) {
+          File file = new File(myShelfPath + "/" + newName);
+          FileOutputStream out = new FileOutputStream(file);
           try {
-            File file = new File(myShelfPath + "/" + newName);
-            FileOutputStream out = new FileOutputStream(file);
-            try {
-              FileUtil.copy(stream, out);
-            }
-            finally {
-              out.close();
-            }
-            serverStreamProvider.deleteFile(oldFilePath,PER_USER);
-            FileInputStream input = new FileInputStream(file);
-            try {
-              serverStreamProvider.saveContent(newFilePath, input, file.length(), PER_USER);
-            }
-            finally {
-              input.close();
-            }
+            FileUtil.copy(stream, out);
           }
-          catch (IOException e) {
-            LOG.info(e);
+          finally {
+            out.close();
           }
-
+          serverStreamProvider.deleteFile(oldFilePath,PER_USER);
+          FileInputStream input = new FileInputStream(file);
+          try {
+            serverStreamProvider.saveContent(newFilePath, input, file.length(), PER_USER);
+          }
+          finally {
+            input.close();
+          }
         }
       }
       catch (IOException e) {
