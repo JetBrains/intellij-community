@@ -153,6 +153,15 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
 
         myIsModification = true;
       }
+
+      public void visitMaxs(final int maxStack, final int maxLocals) {
+        try {
+          super.visitMaxs(maxStack, maxLocals);
+        }
+        catch (ArrayIndexOutOfBoundsException e) {
+          throw new ArrayIndexOutOfBoundsException("maxs processing failed for method " + name + ": " + e.getMessage());
+        }
+      }
     };
   }
 
