@@ -219,15 +219,19 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     if (!myProject.isOpen()) return;
 
     pass.setProgressLimit(myCheckingQueue.size());
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     String oldInfo = null;
     try {
       if (statusBar instanceof StatusBarEx) {
         oldInfo = ((StatusBarEx)statusBar).getInfo();
       }
-      for (VirtualFile virtualFile : myCheckingQueue) {
+      for (final VirtualFile virtualFile : myCheckingQueue) {
         progress.checkCanceled();
-        statusBar.setInfo("Checking '" + virtualFile.getPresentableUrl() + "'");
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            statusBar.setInfo("Checking '" + virtualFile.getPresentableUrl() + "'");
+          }
+        });
         if (!virtualFile.isValid() || orderVincentToCleanTheCar(virtualFile, progress)) {
           doRemove(virtualFile);
         }
