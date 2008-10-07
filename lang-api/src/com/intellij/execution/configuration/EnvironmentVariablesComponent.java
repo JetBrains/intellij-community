@@ -141,11 +141,15 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
       final String val = envs.get(envKey);
       if (val != null) {
         final String parentVal = parentParams.get(envKey);
-        if (parentVal != null && ArrayUtil.find(val.split(File.pathSeparator), "$" + envKey + "$") != -1) {
+        if (parentVal != null && containsEnvKeySubstitution(envKey, val)) {
           envs.put(envKey, val.replace("$" + envKey + "$", parentVal));
         }
       }
     }
+  }
+
+  public static boolean containsEnvKeySubstitution(final String envKey, final String val) {
+    return ArrayUtil.find(val.split(File.pathSeparator), "$" + envKey + "$") != -1;
   }
 
   public void addChangeListener(final ChangeListener changeListener) {
