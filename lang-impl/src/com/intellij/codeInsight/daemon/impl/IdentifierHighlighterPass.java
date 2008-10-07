@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -44,6 +45,9 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(final ProgressIndicator progress) {
+    if (!CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET) {
+      return;
+    }
     myTarget = TargetElementUtilBase.getInstance().findTargetElement(myEditor,
                                                                      TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
                                                                      TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED,

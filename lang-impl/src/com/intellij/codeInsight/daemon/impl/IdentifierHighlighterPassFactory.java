@@ -1,14 +1,13 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.codeInsight.CodeInsightSettings;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,9 +22,6 @@ public class IdentifierHighlighterPassFactory extends AbstractProjectComponent i
   }
 
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
-    if (CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET) {
-      return new IdentifierHighlighterPass(file.getProject(), file, editor);
-    }
-    return null;
+    return new IdentifierHighlighterPass(file.getProject(), file, editor);
   }
 }
