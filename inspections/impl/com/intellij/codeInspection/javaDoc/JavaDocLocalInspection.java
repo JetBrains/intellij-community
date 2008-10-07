@@ -4,11 +4,11 @@
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.ExtensionPoints;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.reference.RefJavaUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -17,8 +17,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -99,7 +99,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.javaDoc.JavaDocLocalInspection");
 
   private class OptionsPanel extends JPanel {
-    private JPanel createOptionsPanel(String[] modifiers, String[] tags, JavaDocLocalInspection.Options options) {
+    private JPanel createOptionsPanel(String[] modifiers, String[] tags, Options options) {
       JPanel pane = new JPanel(new GridLayout(1, tags == null ? 1 : 2));
 
       pane.add(createScopePanel(modifiers, options));
@@ -112,7 +112,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       return pane;
     }
 
-    private JPanel createTagsPanel(String[] tags, JavaDocLocalInspection.Options options) {
+    private JPanel createTagsPanel(String[] tags, Options options) {
       JPanel panel = new JPanel(new GridBagLayout());
       panel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.javadoc.required.tags.option.title")),
                                                          BorderFactory.createEmptyBorder(0, 3, 3, 3)));
@@ -130,7 +130,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         if (i == tags.length - 1) gc.weighty = 1;
         panel.add(box, gc);
         box.setSelected(isTagRequired(options, tags[i]));
-        box.addChangeListener(new JavaDocLocalInspection.OptionsPanel.MyChangeListener(box, options, tags[i]));
+        box.addChangeListener(new MyChangeListener(box, options, tags[i]));
       }
 
       return panel;
@@ -138,10 +138,10 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
     private class MyChangeListener implements ChangeListener {
       private final JCheckBox myCheckBox;
-      private final JavaDocLocalInspection.Options myOptions;
+      private final Options myOptions;
       private final String myTagName;
 
-      public MyChangeListener(JCheckBox checkBox, JavaDocLocalInspection.Options options, String tagName) {
+      public MyChangeListener(JCheckBox checkBox, Options options, String tagName) {
         myCheckBox = checkBox;
         myOptions = options;
         myTagName = tagName;
@@ -150,7 +150,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       public void stateChanged(ChangeEvent e) {
         if (myCheckBox.isSelected()) {
           if (!isTagRequired(myOptions,myTagName)) {
-            myOptions.REQUIRED_TAGS = myOptions.REQUIRED_TAGS.concat(myTagName);
+            myOptions.REQUIRED_TAGS += myTagName;
           }
         }
         else {
@@ -159,7 +159,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       }
     }
 
-    private JPanel createScopePanel(final String[] modifiers, final JavaDocLocalInspection.Options options) {
+    private JPanel createScopePanel(final String[] modifiers, final Options options) {
       JPanel panel = new JPanel(new BorderLayout());
       panel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.scope.for.title")),
                                                          BorderFactory.createEmptyBorder(0, 3, 3, 3)));
@@ -169,7 +169,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         sliderLabels.put(i + 1, new JLabel(modifiers[i]));
       }
 
-      final JSlider slider = new JSlider(JSlider.VERTICAL, 1, modifiers.length, 1);
+      final JSlider slider = new JSlider(SwingConstants.VERTICAL, 1, modifiers.length, 1);
 
       slider.setLabelTable(sliderLabels);
       slider.putClientProperty(UIUtil.JSLIDER_ISFILLED, Boolean.TRUE);
@@ -180,8 +180,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         public void stateChanged(ChangeEvent e) {
           int value = slider.getValue();
           options.ACCESS_JAVADOC_REQUIRED_FOR = modifiers[value - 1];
-          for (Enumeration<Integer> enumeration = sliderLabels.keys(); enumeration.hasMoreElements();) {
-            Integer key = enumeration.nextElement();
+          for (Integer key : sliderLabels.keySet()) {
             sliderLabels.get(key).setForeground(key.intValue() <= value ? Color.black : new Color(100, 100, 100));
           }
         }
@@ -207,19 +206,19 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0,0,0,0),0,0 );
       gc.weighty = 0;
       add(createAdditionalJavadocTagsPanel(), gc);
-      JTabbedPane tabs = new JTabbedPane(JTabbedPane.BOTTOM);
+      JTabbedPane tabs = new JTabbedPane(SwingConstants.BOTTOM);
       @NonNls String[] tags = new String[]{"@author", "@version", "@since", "@param"};
-      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title"), createOptionsPanel(new String[]{JavaDocLocalInspection.NONE, JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PACKAGE_LOCAL},
+      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title"), createOptionsPanel(new String[]{NONE, PUBLIC, PACKAGE_LOCAL},
                                                                                                     tags,
                                                                                                     TOP_LEVEL_CLASS_OPTIONS));
       tags = new String[]{"@return", "@param", InspectionsBundle.message("inspection.javadoc.throws.or.exception.option")};
-      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.method"), createOptionsPanel(new String[]{JavaDocLocalInspection.NONE, JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED, JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE},
+      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.method"), createOptionsPanel(new String[]{NONE, PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE},
                                                                                                            tags,
                                                                                                            METHOD_OPTIONS));
-      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.field"), createOptionsPanel(new String[]{JavaDocLocalInspection.NONE, JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED, JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE},
+      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.field"), createOptionsPanel(new String[]{NONE, PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE},
                                                                                                           null,
                                                                                                           FIELD_OPTIONS));
-      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.inner.class"), createOptionsPanel(new String[]{JavaDocLocalInspection.NONE, JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED, JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE},
+      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.inner.class"), createOptionsPanel(new String[]{NONE, PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE},
                                                                                                                 null,
                                                                                                                 INNER_CLASS_OPTIONS));
       add(tabs, gc);
@@ -299,6 +298,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       try {
         final PsiDocCommentOwner owner = PsiTreeUtil.getParentOfType(descriptor.getEndElement(), PsiDocCommentOwner.class);
         if (owner != null) {
+          if (!CodeInsightUtil.preparePsiElementsForWrite(owner)) return;
           final PsiDocComment docComment = owner.getDocComment();
           final PsiDocTag tag = factory.createDocTagFromText("@" + myTag+" "+myValue, docComment);
           if (docComment != null) {
@@ -306,7 +306,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
             final PsiElement anchor = getAnchor();
             if (anchor != null) {
               addedTag = docComment.addBefore(tag, anchor);
-            } else {
+            }
+            else {
               addedTag = docComment.add(tag);
             }
             moveCaretTo(addedTag);
@@ -354,7 +355,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     final PsiElement elementToHighlight = nameIdentifier != null ? nameIdentifier : psiClass;
     if (docComment == null) {
       return isJavaDocRequired(psiClass)
-             ? new ProblemDescriptor[]{createDescriptor(elementToHighlight, JavaDocLocalInspection.REQUIRED_JAVADOC_IS_ABSENT, manager)}
+             ? new ProblemDescriptor[]{createDescriptor(elementToHighlight, REQUIRED_JAVADOC_IS_ABSENT, manager)}
              : null;
     }
 
@@ -450,7 +451,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     PsiDocComment docComment = psiField.getDocComment();
     if (docComment == null) {
       return isJavaDocRequired(psiField)
-             ? new ProblemDescriptor[]{createDescriptor(psiField.getNameIdentifier(), JavaDocLocalInspection.REQUIRED_JAVADOC_IS_ABSENT, manager)}
+             ? new ProblemDescriptor[]{createDescriptor(psiField.getNameIdentifier(), REQUIRED_JAVADOC_IS_ABSENT, manager)}
              : null;
     }
 
@@ -485,7 +486,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         }
         if (superMethods.length == 0) {
           final PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();
-          return nameIdentifier != null ? new ProblemDescriptor[] { createDescriptor(nameIdentifier, JavaDocLocalInspection.REQUIRED_JAVADOC_IS_ABSENT, manager)} : null;
+          return nameIdentifier != null ? new ProblemDescriptor[] { createDescriptor(nameIdentifier, REQUIRED_JAVADOC_IS_ABSENT, manager)} : null;
         }
         else {
           return null;
@@ -566,7 +567,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         final PsiDocTagValue valueElement = tag.getValueElement();
         boolean hasProblemsWithTag = dataElements.length < 2;
         if (!hasProblemsWithTag) {
-          final StringBuffer buf = new StringBuffer();
+          final StringBuilder buf = new StringBuilder();
           for (PsiElement element : dataElements) {
             if (element != valueElement){
               buf.append(element.getText());
@@ -671,7 +672,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         if (firstChild == null) continue;
         final PsiElement psiElement = firstChild.getFirstChild();
         if (!(psiElement instanceof PsiJavaCodeReferenceElement)) continue;
-        final PsiJavaCodeReferenceElement ref = ((PsiJavaCodeReferenceElement)psiElement);
+        final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)psiElement;
         final PsiElement element = ref.resolve();
         if (element instanceof PsiClass){
           final PsiClass exceptionClass = (PsiClass)element;
@@ -769,12 +770,12 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   }
 
   private static String extractTagDescription(PsiDocTag tag) {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     PsiElement[] children = tag.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiDocToken) {
         PsiDocToken token = (PsiDocToken)child;
-        if (token.getTokenType() == PsiDocToken.DOC_COMMENT_DATA) {
+        if (token.getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA) {
           buf.append(token.getText());
         }
       }
@@ -790,12 +791,12 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   }
 
   private static String extractThrowsTagDescription(PsiDocTag tag) {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     PsiElement[] children = tag.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiDocToken) {
         PsiDocToken token = (PsiDocToken)child;
-        if (token.getTokenType() == PsiDocToken.DOC_COMMENT_DATA) {
+        if (token.getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA) {
           buf.append(token.getText());
         }
       }
@@ -967,7 +968,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     if (psiElement instanceof PsiField) {
       psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
       while (psiElement != null) {
-        actualAccess = Math.max(actualAccess, JavaDocLocalInspection.getAccessNumber(refUtil.getAccessModifier(psiElement)));
+        actualAccess = Math.max(actualAccess, getAccessNumber(refUtil.getAccessModifier(psiElement)));
         psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
       }
 
@@ -1090,7 +1091,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       final InspectionProfile inspectionProfile =
         InspectionProjectProfileManager.getInstance(project).getInspectionProfile(myTag);
       //correct save settings
-      ((InspectionProfileImpl)inspectionProfile).isProperSetting(HighlightDisplayKey.find(SHORT_NAME));
+      ((ModifiableModel)inspectionProfile).isProperSetting(HighlightDisplayKey.find(SHORT_NAME));
       InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
       //TODO lesya
 
