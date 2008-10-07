@@ -20,20 +20,18 @@ package git4idea;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.ChangelistBuilder;
+import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.commands.GitCommand;
 import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Git repository change provider
@@ -66,11 +64,12 @@ public class GitChangeProvider implements ChangeProvider {
     Collection<VirtualFile> roots = dirtyScope.getAffectedContentRoots();
     for (VirtualFile root : roots) {
       GitCommand command = new GitCommand(project, settings, root);
-      // TODO Set<FilePath> fpaths = dirtyScope.getDirtyFiles();
-      //Set<GitVirtualFile> files = command.virtualFiles(fpaths);
-      Set<GitVirtualFile> files = command.changedFiles();
-      for (GitVirtualFile file : files) {
-        getChange(builder, file);
+      List<Change> files = command.changedFiles();
+      for (Change file : files) {
+        builder.processChange(file);
+      }
+      for(VirtualFile f : command.unversionedFiles()) {
+        builder.processUnversionedFile(f);
       }
     }
   }
@@ -88,55 +87,4 @@ public class GitChangeProvider implements ChangeProvider {
   public void doCleanup(final List<VirtualFile> files) {
   }
 
-  /**
-   * Get change from virtual file into the builder
-   *
-   * @param builder the changelist builder
-   * @param file    the file change information
-   */
-  private void getChange(ChangelistBuilder builder, GitVirtualFile file) {
-    FilePath path = VcsUtil.getFilePath(file.getPath());
-    VirtualFile vfile = VcsUtil.getVirtualFile(file.getPath());
-    ContentRevision beforeRev = new GitContentRevision(VcsUtil.getFilePath(file.getBeforePath()),
-                                                       new GitRevisionNumber(GitRevisionNumber.TIP, new Date(file.getModificationStamp())),
-                                                       project);
-    ContentRevision afterRev = CurrentContentRevision.create(path);
-
-    switch (file.getStatus()) {
-      case UNMERGED: {
-        builder.processChange(new Change(beforeRev, afterRev, FileStatus.MERGED_WITH_CONFLICTS));
-        break;
-      }
-      case ADDED: {
-        builder.processChange(new Change(null, afterRev, FileStatus.ADDED));
-        break;
-      }
-      case DELETED: {
-        builder.processChange(new Change(beforeRev, afterRev, FileStatus.DELETED));
-        break;
-      }
-      case COPY: {
-        builder.processChange(new Change(null, afterRev, FileStatus.ADDED));
-        break;
-      }
-      case RENAME: {
-        builder.processChange(new Change(beforeRev, afterRev, FileStatus.MODIFIED));
-        break;
-      }
-      case MODIFIED: {
-        builder.processChange(new Change(beforeRev, afterRev, FileStatus.MODIFIED));
-        break;
-      }
-      case UNMODIFIED: {
-        break;
-      }
-      case UNVERSIONED: {
-        builder.processUnversionedFile(vfile);
-        break;
-      }
-      default: {
-        builder.processChange(new Change(null, afterRev, FileStatus.UNKNOWN));
-      }
-    }
-  }
 }

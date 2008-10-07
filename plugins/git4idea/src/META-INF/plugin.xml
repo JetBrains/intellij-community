@@ -6,11 +6,6 @@
   <category>VCS Integration</category>
   <vendor url="http://github.com/markscott/git4idea/tree/master" email="mscott@mqsoftware.com">MQSoftware</vendor>
   <idea-version since-build="8800"/>
-  <application-components>
-    <component>
-      <implementation-class>git4idea.GitFileSystem</implementation-class>
-    </component>
-  </application-components>
 
   <depends>com.intellij.modules.vcs</depends>
 
@@ -91,11 +86,7 @@
     <applicationService
         serviceInterface="git4idea.GitSSHService"
         serviceImplementation="git4idea.GitSSHService"/>
-    <fileEditorProvider implementation="git4idea.GitRevisionGraphEditorProvider"/>
-
     <ComponentRoamingType component="Git.Settings" type="DISABLED"/>
-
-
   </extensions>
 
 </idea-plugin>

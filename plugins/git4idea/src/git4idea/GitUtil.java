@@ -48,8 +48,9 @@ public class GitUtil {
   @NotNull
   public static VirtualFile getVcsRoot(@NotNull final Project project, @NotNull final FilePath filePath) {
     VirtualFile vfile = VcsUtil.getVcsRootFor(project, filePath);
-    if (vfile == null) vfile = GitFileSystem.getInstance().findFileByPath(project, filePath.getPath());
-
+    if(vfile == null) {
+      throw new IllegalStateException("The file is not under git: "+filePath);
+    }
     return vfile;
   }
 
