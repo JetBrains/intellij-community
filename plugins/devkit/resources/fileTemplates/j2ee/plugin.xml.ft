@@ -4,5 +4,5 @@
   <description>short description of the plugin</description>
   <version>1.0</version>
   <vendor>YourCompany</vendor>
-  <idea-version since-build="3000"/>
+  <idea-version since-build="8000"/>
 </idea-plugin>
