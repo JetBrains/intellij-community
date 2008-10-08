@@ -568,7 +568,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return clone;
   }
 
-  public final void setTreeElement(ASTNode treeElement){
+  private void setTreeElement(ASTNode treeElement){
     Object newPointer;
     if (treeElement == null) {
       newPointer = null;

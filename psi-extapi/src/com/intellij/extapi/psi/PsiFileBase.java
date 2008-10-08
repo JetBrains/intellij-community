@@ -14,11 +14,7 @@ import java.util.ArrayList;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 25, 2005
- * Time: 9:40:47 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public abstract class PsiFileBase extends PsiFileImpl {
   @NotNull private final Language myLanguage;

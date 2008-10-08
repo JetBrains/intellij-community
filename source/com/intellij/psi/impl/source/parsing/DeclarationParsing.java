@@ -114,25 +114,26 @@ public class DeclarationParsing extends Parsing {
       final CompositeElement root = parseClassFromKeyword(lexer, modifierList, null);
 
       if (context == Context.FILE_CONTEXT) {
-        final CompositeElement classExpected = Factory.createErrorElement(JavaErrorMessages.message("expected.class.or.interface"));
-        TreeUtil.addChildren(root, classExpected);
         boolean declsAfterEnd = false;
 
         while (lexer.getTokenType() != null && lexer.getTokenType() != RBRACE) {
           LexerPosition position = lexer.getCurrentPosition();
           final TreeElement element = parseDeclaration(lexer, Context.CLASS_CONTEXT);
           if (element != null && (element.getElementType() == METHOD || element.getElementType() == FIELD)) {
+            if (!declsAfterEnd) {
+              final CompositeElement classExpected = Factory.createErrorElement(JavaErrorMessages.message("expected.class.or.interface"));
+              TreeUtil.addChildren(root, classExpected);
+            }
             declsAfterEnd = true;
             TreeUtil.addChildren(root, element);
-          } else {
+          }
+          else {
             lexer.restore(position);
             break;
           }
         }
 
-        if (!declsAfterEnd) {
-          TreeUtil.remove(classExpected);
-        } else {
+        if (declsAfterEnd) {
           expectRBrace(root, lexer);
         }
       }
@@ -224,13 +225,13 @@ public class DeclarationParsing extends Parsing {
         lexer.restore(startPos);
         return null;
       }
-      else{
-        TreeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("expected.identifier"));
-        if (classParameterList != null){
+      else {
+        if (classParameterList != null) {
           final CompositeElement errorElement1 = Factory.createErrorElement(JavaErrorMessages.message("unexpected.token"));
           TreeUtil.addChildren(errorElement1, classParameterList);
           TreeUtil.insertBefore(last, errorElement1);
         }
+        TreeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("expected.identifier"));
         TreeUtil.insertAfter(last, errorElement);
         return first;
       }
