@@ -11,6 +11,8 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.MessageCategory;
@@ -56,16 +58,17 @@ public class HotSwapProgressImpl extends HotSwapProgress{
 
   public void finished() {
     super.finished();
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         final List<String> errors = getMessages(MessageCategory.ERROR);
         final List<String> warnings = getMessages(MessageCategory.WARNING);
         if (errors.size() > 0) {
-          Messages.showErrorDialog(getProject(), buildMessage(errors), myTitle);
+          ToolWindowManager.getInstance(getProject()).showInfoPopup(ToolWindowId.DEBUG, Messages.getErrorIcon(), buildMessage(errors), null);
           WindowManager.getInstance().getStatusBar(getProject()).setInfo(DebuggerBundle.message("status.hot.swap.completed.with.errors"));
         }
         else if (warnings.size() > 0){
-          Messages.showWarningDialog(getProject(), buildMessage(warnings), myTitle);
+          ToolWindowManager.getInstance(getProject()).showInfoPopup(ToolWindowId.DEBUG, Messages.getWarningIcon(), buildMessage(warnings), null);
           WindowManager.getInstance().getStatusBar(getProject()).setInfo(DebuggerBundle.message("status.hot.swap.completed.with.warnings"));
         }
         else {
