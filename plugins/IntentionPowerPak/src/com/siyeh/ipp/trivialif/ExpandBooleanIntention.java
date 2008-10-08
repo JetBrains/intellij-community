@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,21 +20,22 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ExpandBooleanIntention extends Intention {
 
+    @Override
     @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new ExpandBooleanPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    @Override
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiJavaToken token = (PsiJavaToken)element;
         final PsiStatement containingStatement =
-                PsiTreeUtil.getParentOfType(token, PsiStatement.class);
+                PsiTreeUtil.getParentOfType(element, PsiStatement.class);
         if (containingStatement == null) {
             return;
         }
@@ -50,9 +51,17 @@ public class ExpandBooleanIntention extends Intention {
             final String rhsText = rhs.getText();
             final PsiExpression lhs = assignmentExpression.getLExpression();
             final String lhsText = lhs.getText();
+            final PsiJavaToken sign = assignmentExpression.getOperationSign();
+            final String signText = sign.getText();
+            final String conditionText;
+            if (signText.length() == 2) {
+                conditionText = lhsText + signText.charAt(0) + rhsText;
+            } else {
+                conditionText = rhsText;
+            }
             @NonNls final String statement =
-                    "if(" + rhsText + "){" + lhsText + " = true;}else{" +
-                            lhsText + " = false;}";
+                    "if(" + conditionText + ") " + lhsText + " = true; else " +
+                            lhsText + " = false;";
             replaceStatement(statement, containingStatement);
         } else if (ExpandBooleanPredicate.isBooleanReturn(
                 containingStatement)) {
@@ -64,7 +73,7 @@ public class ExpandBooleanIntention extends Intention {
             }
             final String valueText = returnValue.getText();
             @NonNls final String statement =
-                    "if(" + valueText + "){return true;}else{return false;}";
+                    "if(" + valueText + ") return true; else return false;";
             replaceStatement(statement, containingStatement);
         }
     }

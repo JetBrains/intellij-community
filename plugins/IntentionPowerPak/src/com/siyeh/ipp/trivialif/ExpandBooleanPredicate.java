@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ExpandBooleanPredicate implements PsiElementPredicate{
 
@@ -26,20 +25,14 @@ class ExpandBooleanPredicate implements PsiElementPredicate{
         if(!(element instanceof PsiJavaToken)){
             return false;
         }
-        final PsiJavaToken token = (PsiJavaToken) element;
         final PsiStatement containingStatement =
-                PsiTreeUtil.getParentOfType(token,
+                PsiTreeUtil.getParentOfType(element,
                                             PsiStatement.class);
         if(containingStatement == null){
             return false;
         }
-        if(isBooleanReturn(containingStatement)){
-            return true;
-        }
-        if (!isBooleanAssignment(containingStatement)) {
-            return false;
-        }
-        return !ErrorUtil.containsError(containingStatement);
+        return isBooleanReturn(containingStatement) || 
+                isBooleanAssignment(containingStatement);
     }
 
     public static boolean isBooleanReturn(PsiStatement containingStatement){
@@ -49,17 +42,11 @@ class ExpandBooleanPredicate implements PsiElementPredicate{
         final PsiReturnStatement returnStatement =
                 (PsiReturnStatement) containingStatement;
         final PsiExpression returnValue = returnStatement.getReturnValue();
-        if(returnValue == null){
-            return false;
-        }
-        if(returnValue instanceof PsiLiteralExpression){
+        if (returnValue == null || returnValue instanceof PsiLiteralExpression) {
             return false;
         }
         final PsiType returnType = returnValue.getType();
-        if(returnType == null){
-            return false;
-        }
-        return returnType.equals(PsiType.BOOLEAN);
+        return PsiType.BOOLEAN.equals(returnType);
     }
 
     public static boolean isBooleanAssignment(PsiStatement containingStatement){
@@ -75,16 +62,10 @@ class ExpandBooleanPredicate implements PsiElementPredicate{
         final PsiAssignmentExpression assignment =
                 (PsiAssignmentExpression) expression;
         final PsiExpression rhs = assignment.getRExpression();
-        if(rhs == null){
-            return false;
-        }
-        if(rhs instanceof PsiLiteralExpression){
+        if (rhs == null || rhs instanceof PsiLiteralExpression) {
             return false;
         }
         final PsiType assignmentType = rhs.getType();
-        if(assignmentType == null){
-            return false;
-        }
-        return assignmentType.equals(PsiType.BOOLEAN);
+        return PsiType.BOOLEAN.equals(assignmentType);
     }
 }
