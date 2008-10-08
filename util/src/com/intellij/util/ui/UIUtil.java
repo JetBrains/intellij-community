@@ -28,18 +28,18 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.plaf.ProgressBarUI;
 import javax.swing.border.Border;
+import javax.swing.plaf.ProgressBarUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.regex.Pattern;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.util.regex.Pattern;
 
 /**
  * @author max
@@ -908,6 +908,14 @@ public class UIUtil {
 
   public static String addPadding(final String html, int hPadding) {
     return "<table border=0 hspace=" + hPadding + "><tr><td>" + html + "</td></tr></table>";
+  }
+
+  public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
+    if (SwingUtilities.isEventDispatchThread()) {
+      runnable.run();
+    } else {
+      SwingUtilities.invokeLater(runnable);
+    }
   }
 
 }

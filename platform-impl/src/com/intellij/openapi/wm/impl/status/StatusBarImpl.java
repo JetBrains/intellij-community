@@ -6,8 +6,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -19,6 +17,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -213,12 +212,13 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     super.removeNotify();
   }
 
-  public final void setInfo(@Nullable String s) {
-    myInfo = s;
-    if (s == null){
-      s = " ";
-    }
-    myInfoAndProgressPanel.setText(s);
+  public final void setInfo(@Nullable final String s) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        myInfo = s;
+        myInfoAndProgressPanel.setText(s != null ? s : " ");
+      }
+    });
   }
 
   public void fireNotificationPopup(@NotNull JComponent content, final Color backgroundColor) {
