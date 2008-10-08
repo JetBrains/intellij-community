@@ -61,6 +61,7 @@ public class CtrlMouseHandler implements ProjectComponent {
   private Info myStoredInfo;
   private int myStoredModifiers = 0;
   private TooltipProvider myTooltipProvider = null;
+  private final FileEditorManager myFileEditorManager;
 
   private enum BrowseMode { None, Declaration, TypeDeclaration, Implementation }
 
@@ -154,7 +155,8 @@ public class CtrlMouseHandler implements ProjectComponent {
   private static final TextAttributesKey CTRL_CLICKABLE_ATTRIBUTES_KEY =
     TextAttributesKey.createTextAttributesKey("CTRL_CLICKABLE", new TextAttributes(Color.blue, null, Color.blue, EffectType.LINE_UNDERSCORE, 0));
 
-  public CtrlMouseHandler(final Project project, StartupManager startupManager, EditorColorsManager colorsManager) {
+  public CtrlMouseHandler(final Project project, StartupManager startupManager, EditorColorsManager colorsManager,
+                          FileEditorManager fileEditorManager) {
     myProject = project;
     startupManager.registerPostStartupActivity(new Runnable(){
       public void run() {
@@ -164,6 +166,7 @@ public class CtrlMouseHandler implements ProjectComponent {
       }
     });
     ourReferenceAttributes = colorsManager.getGlobalScheme().getAttributes(CTRL_CLICKABLE_ATTRIBUTES_KEY);
+    myFileEditorManager = fileEditorManager;
   }
 
   @NotNull
@@ -398,7 +401,7 @@ public class CtrlMouseHandler implements ProjectComponent {
       internalComponent.setCursor(myStoredCursor);
       internalComponent.removeKeyListener(myEditorKeyListener);
       myHighlighterView.getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
-      FileEditorManager.getInstance(myProject).removeFileEditorManagerListener(myFileEditorManagerListener);
+      myFileEditorManager.removeFileEditorManagerListener(myFileEditorManagerListener);
       HintManager.getInstance().hideAllHints();
       myHighlighter = null;
       myHighlighterView = null;
@@ -445,7 +448,7 @@ public class CtrlMouseHandler implements ProjectComponent {
         myStoredCursor = internalComponent.getCursor();
         myStoredInfo = info;
         internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        FileEditorManager.getInstance(myProject).addFileEditorManagerListener(myFileEditorManagerListener);
+        myFileEditorManager.addFileEditorManagerListener(myFileEditorManagerListener);
 
         String text = info.getInfo();
 
