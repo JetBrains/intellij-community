@@ -31,18 +31,18 @@ public class EditorTracker implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.EditorTracker");
 
   private final Project myProject;
-  private WindowManager myWindowManager;
-  private EditorFactory myEditorFactory;
-  private FileEditorManager myFileEditorManager;
-  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private ToolWindowManager myToolwindowManager;
+  private final WindowManager myWindowManager;
+  private final EditorFactory myEditorFactory;
+  private final FileEditorManager myFileEditorManager;
+  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private final ToolWindowManager myToolwindowManager;
 
-  private Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<Window, List<Editor>>();
-  private Map<Window, WindowFocusListener> myWindowToWindowFocusListenerMap = new HashMap<Window, WindowFocusListener>();
-  private Map<Editor, Window> myEditorToWindowMap = new HashMap<Editor, Window>();
+  private final Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<Window, List<Editor>>();
+  private final Map<Window, WindowFocusListener> myWindowToWindowFocusListenerMap = new HashMap<Window, WindowFocusListener>();
+  private final Map<Editor, Window> myEditorToWindowMap = new HashMap<Editor, Window>();
   private List<Editor> myActiveEditors = Collections.emptyList();
 
   private MyEditorFactoryListener myEditorFactoryListener;
-  private EventDispatcher<EditorTrackerListener> myDispatcher = EventDispatcher.create(EditorTrackerListener.class);
+  private final EventDispatcher<EditorTrackerListener> myDispatcher = EventDispatcher.create(EditorTrackerListener.class);
 
   private IdeFrameImpl myIdeFrame;
   private Window myActiveWindow = null;
@@ -88,15 +88,15 @@ public class EditorTracker implements ProjectComponent {
       myIdeFrame.addWindowFocusListener(myIdeFrameFocusListener);
     }
 
-    myEditorFactoryListener = new MyEditorFactoryListener(myProject);
+    myEditorFactoryListener = new MyEditorFactoryListener();
     myEditorFactory.addEditorFactoryListener(myEditorFactoryListener);
   }
 
   public void projectClosed() {
     if (myEditorFactoryListener != null) {
       myEditorFactoryListener.dispose(null);
+      myEditorFactory.removeEditorFactoryListener(myEditorFactoryListener);
     }
-    myEditorFactory.removeEditorFactoryListener(myEditorFactoryListener);
     if (myIdeFrame != null) {
       myIdeFrame.removeWindowFocusListener(myIdeFrameFocusListener);
     }
@@ -242,12 +242,7 @@ public class EditorTracker implements ProjectComponent {
   }
 
   private class MyEditorFactoryListener implements EditorFactoryListener {
-    private Map<Editor, Runnable> myExecuteOnEditorRelease = new HashMap<Editor, Runnable>();
-    private final Project myProject;
-
-    public MyEditorFactoryListener(final Project project) {
-      myProject = project;
-    }
+    private final Map<Editor, Runnable> myExecuteOnEditorRelease = new HashMap<Editor, Runnable>();
 
     public void editorCreated(EditorFactoryEvent event) {
       final Editor editor = event.getEditor();

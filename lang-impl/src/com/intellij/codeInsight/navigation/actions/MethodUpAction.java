@@ -24,9 +24,6 @@ public class MethodUpAction extends BaseCodeInsightAction {
 
   static boolean checkValidForFile(final PsiFile file) {
     final StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file);
-    if (structureViewBuilder instanceof TreeBasedStructureViewBuilder) {
-      return true;
-    }
-    return false;
+    return structureViewBuilder instanceof TreeBasedStructureViewBuilder;
   }
 }

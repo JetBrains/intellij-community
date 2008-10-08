@@ -57,6 +57,11 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   private static boolean ourDoJaxpTesting;
 
   @NonNls private static final String XML = "xml";
+  private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new TextAttributes() {
+    public boolean isEmpty() {
+      return false;
+    }
+  };
 
   private void addElementsForTag(XmlTag tag,
                                  String localizedMessage,
@@ -198,12 +203,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           warning,
           new TextRange(startOffset, startOffset + length),
           localizedMessage,
-          localizedMessage,
-          new TextAttributes() {
-            public boolean isEmpty() {
-              return false;
-            }
-          }
+          localizedMessage, NONEMPTY_TEXT_ATTRIBUTES
         );
       }
 

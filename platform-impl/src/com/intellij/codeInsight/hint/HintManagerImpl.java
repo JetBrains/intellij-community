@@ -28,8 +28,6 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -57,7 +55,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   private Editor myLastEditor = null;
   private final Alarm myHideAlarm = new Alarm();
 
-  public static interface ActionToIgnore {
+  public interface ActionToIgnore {
   }
 
   private static class HintInfo {
@@ -594,14 +592,6 @@ public class HintManagerImpl extends HintManager implements Disposable {
         showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | UPDATE_BY_SCROLLING | HIDE_IF_OUT_OF_EDITOR, 0, false);
         myQuestionAction = action;
         myQuestionHint = hint;
-      }
-    });
-  }
-
-  public List<LightweightHint> getAllHints() {
-    return ContainerUtil.map2List(myHintsStack, new Function<HintInfo, LightweightHint>() {
-      public LightweightHint fun(final HintInfo hintInfo) {
-        return hintInfo.hint;
       }
     });
   }
