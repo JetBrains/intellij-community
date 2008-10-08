@@ -5,6 +5,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -15,12 +16,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class FileBasedIndexProjectHandler extends AbstractProjectComponent implements IndexableFileSet {
   private final FileBasedIndex myIndex;
   private final ProjectRootManagerEx myRootManager;
+  private final FileTypeManager myFileTypeManager;
 
-  public FileBasedIndexProjectHandler(FileBasedIndex index, final Project project, final ProjectRootManagerEx rootManager) {
+  public FileBasedIndexProjectHandler(FileBasedIndex index, final Project project, final ProjectRootManagerEx rootManager, FileTypeManager ftManager) {
     super(project);
     myIndex = index;
     myRootManager = rootManager;
-
+    myFileTypeManager = ftManager;
+    
     final UnindexedFilesUpdater updater = new UnindexedFilesUpdater(project, rootManager, index);
     final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
     if (startupManager != null) {
@@ -36,7 +39,10 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
 
   public boolean isInSet(final VirtualFile file) {
     final ProjectFileIndex index = myRootManager.getFileIndex();
-    return index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file);
+    if (index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file)) {
+      return !myFileTypeManager.isFileIgnored(file.getName());
+    }
+    return false;
   }
 
   public void iterateIndexableFilesIn(final VirtualFile file, final ContentIterator iterator) {
