@@ -30,7 +30,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   @NotNull private final DomInvocationHandler myInvocationHandler;
   private final Project myProject;
   private final ThreadLocal<Boolean> myComputing = new ThreadLocal<Boolean>();
-  private boolean myInitialized;
+  private volatile boolean myInitialized;
   private ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
   private ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixeds;
   private ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> myCollections;
@@ -54,16 +54,10 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     if (myInitialized) return;
     if (myComputing.get() == Boolean.TRUE) return;
 
+    myStaticGenericInfo.buildMethodMaps();
+
     myComputing.set(Boolean.TRUE);
     try {
-      synchronized (myInvocationHandler) {
-        if (myInitialized) return;
-        myStaticGenericInfo.buildMethodMaps();
-        myAttributes = myStaticGenericInfo.getAttributes();
-        myFixeds = myStaticGenericInfo.getFixed();
-        myCollections = myStaticGenericInfo.getCollections();
-      }
-
       DomExtensionsRegistrarImpl registrar = runDomExtenders();
 
       synchronized (myInvocationHandler) {
