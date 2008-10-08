@@ -225,21 +225,23 @@ public class GuiUtils {
       splitter.setShowDividerControls(pane.isOneTouchExpandable());
       splitter.setHonorComponentsMinimumSize(true);
 
-      // let the component chance to resize itself
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          double proportion;
-          if (pane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
-            proportion = pane.getDividerLocation() / (double)(parent.getHeight() - pane.getDividerSize());
+      if (pane.getDividerLocation() > 0) {
+// let the component chance to resize itself
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            double proportion;
+            if (pane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
+              proportion = pane.getDividerLocation() / (double)(parent.getHeight() - pane.getDividerSize());
+            }
+            else {
+              proportion = pane.getDividerLocation() / (double)(parent.getWidth() - pane.getDividerSize());
+            }
+            if (proportion > 0 && proportion < 1) {
+              splitter.setProportion((float)proportion);
+            }
           }
-          else {
-            proportion = pane.getDividerLocation() / (double)(parent.getWidth() - pane.getDividerSize());
-          }
-          if (proportion > 0 && proportion < 1) {
-            splitter.setProportion((float)proportion);
-          }
-        }
-      });
+        });
+      }
 
       if (parent instanceof Splitter) {
         final Splitter psplitter = (Splitter) parent;
