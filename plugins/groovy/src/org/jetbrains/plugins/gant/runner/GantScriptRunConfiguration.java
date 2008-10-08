@@ -22,6 +22,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gant.GantBundle;
 import org.jetbrains.plugins.gant.config.GantConfigUtils;
@@ -45,8 +46,18 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
   public String scriptParams;
   public String scriptPath;
   public String workDir = ".";
-  public final String GROOVY_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
-  public final String GANT_MAIN = "gant.Gant";
+
+  @NonNls public static final String GANT_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
+  @NonNls public static final String GANT_MAIN = "gant.Gant";
+  @NonNls private static final String GANT_STARTER_CONF = "/conf/gant-starter.conf";
+
+  // JVM parameters
+  @NonNls private static final String DGROOVY_STARTER_CONF = "-Dgroovy.starter.conf=";
+  @NonNls private static final String DTOOLS_JAR = "-Dtools.jar=";
+  @NonNls private static final String DGANT_HOME = "-Dgant.home=";
+  @NonNls private static final String DSCRIPT_NAME = "-Dscript.name=";
+  @NonNls private static final String DPROGRAM_NAME = "-Dprogram.name=";
+  @NonNls private static final String DGROOVY_HOME = "-Dgroovy.home=";
 
   public GantScriptRunConfiguration(GantScriptConfigurationFactory factory, Project project, String name) {
     super(name, new RunConfigurationModule(project), factory);
@@ -56,9 +67,9 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
   public Collection<Module> getValidModules() {
     Module[] modules = ModuleManager.getInstance(getProject()).getModules();
     ArrayList<Module> res = new ArrayList<Module>();
-    for (Module module : modules)
-      if (FacetManager.getInstance(module).getFacetsByType(GantFacet.ID).size() > 0)
-        res.add(module);
+    for (Module module : modules) {
+      if (FacetManager.getInstance(module).getFacetsByType(GantFacet.ID).size() > 0) res.add(module);
+    }
     return res;
   }
 
@@ -112,21 +123,50 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     params.setWorkingDirectory(getAbsoluteWorkDir());
 
     //add starter configuration parameters
-    String groovyHome = GantConfigUtils.getInstance().getSDKInstallPath(module);
-    params.getVMParametersList().addParametersString("-Dgroovy.home=" + "\"" + groovyHome + "\"");
+    String gantHome = GantConfigUtils.getInstance().getSDKInstallPath(module);
+    final String confpath = gantHome + GANT_STARTER_CONF;
+
+    // -Dant.home
+    params.getVMParametersList().addParametersString("-Dant.home=");
+    // -Dgant.home
+    params.getVMParametersList().addParametersString(DGANT_HOME + "\"" + gantHome + "\"");
+    // -Dscript/name
+    params.getVMParametersList()
+      .addParametersString(DSCRIPT_NAME + "\"" + gantHome + File.separator + "bin" + File.separator + "gant" + "\"");
+    // -Dprogram.name
+    params.getVMParametersList().addParametersString(DPROGRAM_NAME + "gant");
+    // -Dgroovy.starter.conf
+    params.getVMParametersList().add(DGROOVY_STARTER_CONF + confpath);
+    // -Dgroovy.home
+    params.getVMParametersList().add(DGROOVY_HOME + GroovyConfigUtils.getInstance().getSDKInstallPath(module));
+    // -Dtools.jar
+    //return ((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk);
+    Sdk jdk = params.getJdk();
+    if (jdk != null && jdk.getSdkType() instanceof JavaSdkType) {
+      String toolsPath = ((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk);
+      if (toolsPath != null) {
+        params.getVMParametersList().add(DTOOLS_JAR + toolsPath);
+      }
+    }
 
     // add user parameters
     params.getVMParametersList().addParametersString(vmParams);
 
     // set starter class
-    params.setMainClass(GROOVY_STARTER);
+    params.setMainClass(GANT_STARTER);
   }
 
   private void configureGantStarter(JavaParameters params, final Module module) {
     // add GantStarter parameters
+
+    String gantHome = GantConfigUtils.getInstance().getSDKInstallPath(module);
+    final String confpath = gantHome + GANT_STARTER_CONF;
+    params.getVMParametersList().add(DGROOVY_STARTER_CONF + confpath);
+
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(GANT_MAIN);
-
+    params.getProgramParametersList().add("--conf");
+    params.getProgramParametersList().add(confpath);
     params.getProgramParametersList().add("--classpath");
 
     // Clear module libraries from JDK's occurrences
@@ -157,30 +197,29 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
       throw new ExecutionException("Module is not specified");
     }
 
-    if (!GroovyConfigUtils.getInstance().isSDKConfigured(module)) {
+    if (!GroovyConfigUtils.getInstance().isSDKConfiguredToRun(module)) {
       //throw new ExecutionException("Gant is not configured");
-      Messages.showErrorDialog(module.getProject(), ExecutionBundle.message("error.running.configuration.with.error.error.message",
-                                                                  getName(), "Gant is not configured"),
-                                          ExecutionBundle.message("run.error.message.title"));
+      Messages.showErrorDialog(module.getProject(),
+                               ExecutionBundle.message("error.running.configuration.with.error.error.message", getName(),
+                                                       "Groovy is not configured"), ExecutionBundle.message("run.error.message.title"));
 
-      int result = Messages.showOkCancelDialog(
-        GroovyBundle.message("groovy.configure.facet.question.text"),
-        GroovyBundle.message("groovy.configure.facet.question"), GroovyIcons.GROOVY_ICON_32x32);
+      int result = Messages.showOkCancelDialog(GroovyBundle.message("groovy.configure.facet.question.text"),
+                                               GroovyBundle.message("groovy.configure.facet.question"), GroovyIcons.GROOVY_ICON_32x32);
       if (result == 0) {
         ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
       }
       return null;
     }
 
-    if (!GantConfigUtils.getInstance().isSDKConfigured(module)) {
+    if (!GantConfigUtils.getInstance().isSDKConfiguredToRun(module)) {
       //throw new ExecutionException("Gant is not configured");
-      Messages.showErrorDialog(module.getProject(), ExecutionBundle.message("error.running.configuration.with.error.error.message",
-                                                                  getName(), "Gant is not configured"),
-                                          ExecutionBundle.message("run.error.message.title"));
+      Messages.showErrorDialog(module.getProject(),
+                               ExecutionBundle.message("error.running.configuration.with.error.error.message", getName(),
+                                                       "Gant is not configured"), ExecutionBundle.message("run.error.message.title"));
 
-      int result = Messages.showOkCancelDialog(
-        GantBundle.message("gant.configure.facet.question.text"),
-        GantBundle.message("gant.configure.facet.question"), GroovyIcons.GANT_ICON_16x16);
+      int result = Messages
+        .showOkCancelDialog(GantBundle.message("gant.configure.facet.question.text"), GantBundle.message("gant.configure.facet.question"),
+                            GroovyIcons.GANT_ICON_16x16);
       if (result == 0) {
         ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
       }
