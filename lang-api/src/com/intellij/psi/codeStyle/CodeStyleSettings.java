@@ -140,7 +140,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean KEEP_FIRST_COLUMN_COMMENT = true;
   public boolean INSERT_FIRST_SPACE_IN_LINE = true;
 
-  public boolean USE_SAME_INDENTS = true;
+  public boolean USE_SAME_INDENTS = false;
 
   public static class IndentOptions implements JDOMExternalizable, Cloneable {
     public int INDENT_SIZE = 4;
