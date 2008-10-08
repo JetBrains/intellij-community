@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -220,11 +221,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
     pass.setProgressLimit(myCheckingQueue.size());
     final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    String oldInfo = null;
+    String oldInfo = saveStatusBarInfo(statusBar);
     try {
-      if (statusBar instanceof StatusBarEx) {
-        oldInfo = ((StatusBarEx)statusBar).getInfo();
-      }
       for (final VirtualFile virtualFile : myCheckingQueue) {
         progress.checkCanceled();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -239,7 +237,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
     }
     finally {
-      restoreStatusBar(statusBar, oldInfo);
+      restoreStatusBarInfo(statusBar, oldInfo);
     }
   }
 
@@ -306,9 +304,21 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return true;
   }
 
-  private static void restoreStatusBar(final StatusBar statusBar, final String oldInfo) {
+  private static String saveStatusBarInfo(StatusBar statusBar) {
+    String oldInfo = null;
     if (statusBar instanceof StatusBarEx) {
-      statusBar.setInfo(oldInfo);
+      oldInfo = ((StatusBarEx)statusBar).getInfo();
+    }
+    return oldInfo;
+  }
+
+  private static void restoreStatusBarInfo(final StatusBar statusBar, final String oldInfo) {
+    if (statusBar instanceof StatusBarEx) {
+      LaterInvocator.invokeLater(new Runnable() {
+        public void run() {
+          statusBar.setInfo(oldInfo);
+        }
+      });
     }
   }
 
