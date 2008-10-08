@@ -24,13 +24,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.trilead.ssh2.KnownHosts;
+import git4idea.i18n.GitBundle;
 import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.git4idea.ssh.GitSSHHandler;
-import org.jetbrains.git4idea.ssh.SSHMain;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -38,8 +37,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Random;
 import java.util.Vector;
-
-import git4idea.i18n.GitBundle;
 
 /**
  * The provider of SSH scripts for the Git
@@ -152,7 +149,7 @@ public class GitSSHService implements ApplicationComponent {
         String resPath = getJarForResource(GitBundle.class, "/git4idea/i18n/GitBundle.properties");
         String utilPath = PathUtil.getJarPathForClass(FileUtil.class);
         // six parameters are enough for the git case (actually 4 are enough)
-        out.println("java -cp \"" +
+        out.print("java -cp \"" +
                     mainPath +
                     File.pathSeparator +
                     sshPath +
@@ -167,8 +164,12 @@ public class GitSSHService implements ApplicationComponent {
                     "\" " +
                     SSHMain.class.getName() +
                     " " +
-                    myXmlRpcServer.getPortNumber() +
-                    " %1 %2 %3 %4 %5 %6");
+                    myXmlRpcServer.getPortNumber());
+        if(SystemInfo.isWindows) {
+          out.println(" %1 %2 %3 %4 %5 %6");
+        } else {
+          out.println(" \"$@\"");
+        }
       }
       finally {
         out.close();
