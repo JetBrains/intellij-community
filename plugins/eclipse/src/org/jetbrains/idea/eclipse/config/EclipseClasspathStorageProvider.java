@@ -133,8 +133,6 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         final Document document = documentSet.read(EclipseXml.PROJECT_FILE);
         final Element projectNameElement = JDOM.getOrCreateChild(document.getRootElement(), EclipseXml.NAME_TAG);
         final String oldModuleName = projectNameElement.getText();
-        projectNameElement.setText(module.getName());
-        documentSet.write(document, EclipseXml.PROJECT_FILE);
         final String oldEmlName = oldModuleName + EclipseXml.IDEA_SETTINGS_POSTFIX;
         if (documentSet.exists(oldEmlName)) {
           final String root = documentSet.getParent(oldEmlName);
