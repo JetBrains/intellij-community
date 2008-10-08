@@ -1,25 +1,19 @@
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.changes.pending.DuringChangeListManagerUpdateTestScheme;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
 import java.util.Collection;
 
 public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
-  private MockDelayingChangeProvider myChangeProvider;
+  private DuringChangeListManagerUpdateTestScheme myScheme;
   private String myDefaulListName;
 
   @Override
@@ -27,20 +21,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     super.setUp();
     myDefaulListName = VcsBundle.message("changes.default.changlist.name");
 
-    final MockAbstractVcs vcs = new MockAbstractVcs(myProject);
-    myChangeProvider = new MockDelayingChangeProvider();
-    vcs.setChangeProvider(myChangeProvider);
-
-    final File mockVcsRoot = new File(myTempDirFixture.getTempDirPath(), "mock");
-    mockVcsRoot.mkdir();
-
-    final ProjectLevelVcsManagerImpl projectLevelVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject);
-    projectLevelVcsManager.registerVcs(vcs);
-    projectLevelVcsManager.setDirectoryMapping(mockVcsRoot.getAbsolutePath(), vcs.getName());
-    projectLevelVcsManager.updateActiveVcss();
-
-    AbstractVcs vcsFound = projectLevelVcsManager.findVcsByName(vcs.getName());
-    Assert.assertEquals(1, projectLevelVcsManager.getRootsUnderVcs(vcsFound).length);
+    myScheme = new DuringChangeListManagerUpdateTestScheme(myProject, myTempDirFixture.getTempDirPath());
   }
 
   @Test
@@ -55,7 +36,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
 
     final String newName = "renamed";
 
-    doTest(changeListManager, new Runnable() {
+    myScheme.doTest(new Runnable() {
       public void run() {
         changeListManager.editName(list.getName(), newName);
         checkFilesAreInList(new VirtualFile[] {file}, newName, changeListManager);
@@ -81,7 +62,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
 
     final String finalText = "final text";
 
-    doTest(changeListManager, new Runnable() {
+    myScheme.doTest(new Runnable() {
       public void run() {
         final String intermediate = "intermediate text";
         changeListManager.editComment(list.getName(), intermediate);
@@ -114,7 +95,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     final LocalChangeList target = changeListManager.addChangeList("target", null);
     changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
 
-    doTest(changeListManager, new Runnable() {
+    myScheme.doTest(new Runnable() {
       public void run() {
         changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
         checkFilesAreInList(new VirtualFile[] {file}, target.getName(), changeListManager);
@@ -138,7 +119,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     final LocalChangeList target = changeListManager.addChangeList("target", null);
     changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
 
-    doTest(changeListManager, new Runnable() {
+    myScheme.doTest(new Runnable() {
       public void run() {
         changeListManager.setDefaultChangeList(target);
         assert changeListManager.getDefaultChangeList().getName().equals(target.getName());
@@ -162,7 +143,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     final LocalChangeList list = changeListManager.addChangeList("test", null);
     changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
 
-    doTest(changeListManager, new Runnable() {
+    myScheme.doTest(new Runnable() {
       public void run() {
         changeListManager.removeChangeList(list);
         assert changeListManager.findChangeList(list.getName()) == null;
@@ -190,7 +171,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     final LocalChangeList target2 = changeListManager.addChangeList("target2", null);
     changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
 
-    doTest(changeListManager, new Runnable() {
+    myScheme.doTest(new Runnable() {
       public void run() {
         changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
         checkFilesAreInList(new VirtualFile[] {file}, target.getName(), changeListManager);
@@ -216,7 +197,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     final LocalChangeList target = changeListManager.addChangeList("target", null);
     changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
 
-    doTest(changeListManager, new Runnable() {
+    myScheme.doTest(new Runnable() {
       public void run() {
         changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
         checkFilesAreInList(new VirtualFile[] {file}, target.getName(), changeListManager);
@@ -243,7 +224,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
 
     final String targetName = "target";
 
-    doTest(changeListManager, new Runnable() {
+    myScheme.doTest(new Runnable() {
       public void run() {
         final LocalChangeList target = changeListManager.addChangeList(targetName, null);
         changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
@@ -291,7 +272,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     final String targetName = "target";
     final String finalName = "final list name";
 
-    doTest(changeListManager, new Runnable() {
+    myScheme.doTest(new Runnable() {
       public void run() {
         final LocalChangeList target = changeListManager.addChangeList(targetName, null);
         changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file), changeListManager.getChange(fileB)});
@@ -331,81 +312,6 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
         }
       }
       assert found == true;
-    }
-  }
-
-  private void doTest(final ChangeListManager changeListManager, final Runnable runnable) {
-    final TimeoutWaiter waiter = new TimeoutWaiter();
-
-    final DuringUpdateTest test = new DuringUpdateTest(waiter, runnable);
-    myChangeProvider.setTest(test);
-    waiter.setControlled(test);
-
-    System.out.println("Starting delayed update..");
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
-    System.out.println("Starting timeout..");
-    waiter.startTimeout();
-    System.out.println("Timeout waiter completed.");
-    assert test.get();
-  }
-
-  private class DuringUpdateTest implements Runnable, Getter<Boolean> {
-    private boolean myDone;
-    private final TimeoutWaiter myWaiter;
-    private final Runnable myRunnable;
-
-    protected DuringUpdateTest(final TimeoutWaiter waiter, final Runnable runnable) {
-      myWaiter = waiter;
-      myRunnable = runnable;
-    }
-
-    public void run() {
-      System.out.println("DuringUpdateTest: before test execution");
-      myRunnable.run();
-
-      System.out.println("DuringUpdateTest: setting done");
-      myDone = true;
-
-      myChangeProvider.setTest(null);
-      myChangeProvider.unlock();
-      synchronized (myWaiter) {
-        myWaiter.notifyAll();
-      }
-    }
-
-    public Boolean get() {
-      return myDone;
-    }
-  }
-
-  private static class TimeoutWaiter {
-    private Getter<Boolean> myControlled;
-    private final static long ourTimeout = 5000;
-    private final Object myLock;
-
-    private TimeoutWaiter() {
-      myLock = new Object();
-    }
-
-    public void setControlled(final Getter<Boolean> controlled) {
-      myControlled = controlled;
-    }
-
-    public void startTimeout() {
-      assert myControlled != null;
-      
-      final long start = System.currentTimeMillis();
-      synchronized (myLock) {
-        while (((System.currentTimeMillis() - start) < ourTimeout) && (! Boolean.TRUE.equals(myControlled.get()))) {
-          try {
-            myLock.wait(300);
-          }
-          catch (InterruptedException e) {
-            //
-          }
-        }
-      }
     }
   }
 }

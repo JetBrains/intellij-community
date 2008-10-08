@@ -9,9 +9,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeProvider;
-import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.pending.MockChangeListManagerGate;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -31,6 +30,7 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
   protected TempDirTestFixture myTempDirFixture;
   private File myWcRoot;
   protected String myRepoUrl;
+  private ChangeListManagerGate myGate;
 
   @Before
   public void setUp() throws Exception {
@@ -60,6 +60,8 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
 
     initProject(myWcRoot);
     activateVCS(SvnVcs.VCS_NAME);
+
+    myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
   }
 
   @After
@@ -107,7 +109,7 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
     ChangeProvider changeProvider = SvnVcs.getInstance(myProject).getChangeProvider();
     assert changeProvider != null;
     MockChangelistBuilder builder = new MockChangelistBuilder();
-    changeProvider.getChanges(dirtyScope, builder, new EmptyProgressIndicator());
+    changeProvider.getChanges(dirtyScope, builder, new EmptyProgressIndicator(), myGate);
     return builder.getChanges();
   }
 

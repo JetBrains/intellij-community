@@ -21,10 +21,7 @@ package git4idea.changes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeProvider;
-import com.intellij.openapi.vcs.changes.ChangelistBuilder;
-import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitCommand;
 import git4idea.config.GitVcsSettings;
@@ -60,7 +57,7 @@ public class GitChangeProvider implements ChangeProvider {
   /**
    * {@inheritDoc}
    */
-  public void getChanges(VcsDirtyScope dirtyScope, ChangelistBuilder builder, ProgressIndicator progress) throws VcsException {
+  public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress, final ChangeListManagerGate addGate) throws VcsException {
     Collection<VirtualFile> roots = dirtyScope.getAffectedContentRoots();
     for (VirtualFile root : roots) {
       GitCommand command = new GitCommand(project, settings, root);

@@ -271,7 +271,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     final SvnChangeProvider provider = new SvnChangeProvider(myVcs);
     final GatheringChangelistBuilder clb = new GatheringChangelistBuilder();
     try {
-      provider.getChanges(dirtyScope, clb, ProgressManager.getInstance().getProgressIndicator());
+      // todo to be fixed
+      provider.getChanges(dirtyScope, clb, ProgressManager.getInstance().getProgressIndicator(), null);
     } catch (VcsException e) {
       Messages.showErrorDialog(SvnBundle.message("action.Subversion.integrate.changes.error.unable.to.collect.changes.text",
                                                  e.getMessage()), SvnBundle.message("action.Subversion.integrate.changes.alien.commit.changelist.title"));

@@ -52,7 +52,8 @@ public class SvnChangeProvider implements ChangeProvider {
     myMapping = myVcs.getSvnFileUrlMapping();
   }
 
-  public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, ProgressIndicator progress) throws VcsException {
+  public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, ProgressIndicator progress,
+                         final ChangeListManagerGate addGate) throws VcsException {
     try {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
       for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
