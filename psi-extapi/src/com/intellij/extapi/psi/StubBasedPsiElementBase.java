@@ -27,7 +27,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   private volatile ASTNode myNode;
   private final IElementType myElementType;
 
-  public StubBasedPsiElementBase(final T stub, IStubElementType nodeType) {
+  public StubBasedPsiElementBase(final T stub, @NotNull IStubElementType nodeType) {
     myStub = stub;
     myElementType = nodeType;
     myNode = null;
@@ -131,6 +131,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return SharedImplUtil.getParent(getNode());
   }
 
+  @NotNull
   public IStubElementType getElementType() {
     return (IStubElementType)myElementType;
   }
