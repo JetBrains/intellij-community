@@ -52,33 +52,9 @@ public class LegacyCompletionContributor extends CompletionContributor {
 
         if (completionData == null) return;
 
-        final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
-        final PsiReference ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
-          public PsiReference compute() {
-            return insertedElement.getContainingFile().findReferenceAt(startOffset);
-          }
-        });
-        if (ref instanceof PsiMultiReference) {
-          for (final PsiReference reference : completionData.getReferences((PsiMultiReference)ref)) {
-            int offsetInElement = startOffset - reference.getElement().getTextRange().getStartOffset();
-            final CompletionResultSet resultSet = result.withPrefixMatcher(
-                reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement));
-            completionData.completeReference(reference, lookupSet, insertedElement, parameters.getOriginalFile(), startOffset);
-            for (final LookupElement item : lookupSet) {
-              resultSet.addElement(item);
-            }
-            lookupSet.clear();
-          }
-        }
-        else if (ref != null) {
-          completionData.completeReference(ref, lookupSet, insertedElement, parameters.getOriginalFile(),
-                                           startOffset);
-        }
-        for (final LookupElement item : lookupSet) {
-          result.addElement(item);
-        }
-        lookupSet.clear();
+        completeReference(parameters, result, completionData);
 
+        final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
         final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
         completionData.addKeywordVariants(keywordVariants, insertedElement, parameters.getOriginalFile());
         completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile());
@@ -89,6 +65,36 @@ public class LegacyCompletionContributor extends CompletionContributor {
     });
 
 
+  }
+
+  public static void completeReference(final CompletionParameters parameters, final CompletionResultSet result, CompletionData completionData) {
+    final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
+    final int startOffset = parameters.getOffset();
+    final PsiElement insertedElement = parameters.getPosition();
+    final PsiReference ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
+      public PsiReference compute() {
+        return insertedElement.getContainingFile().findReferenceAt(startOffset);
+      }
+    });
+    if (ref instanceof PsiMultiReference) {
+      for (final PsiReference reference : completionData.getReferences((PsiMultiReference)ref)) {
+        int offsetInElement = startOffset - reference.getElement().getTextRange().getStartOffset();
+        final CompletionResultSet resultSet = result.withPrefixMatcher(
+            reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement));
+        completionData.completeReference(reference, lookupSet, insertedElement, parameters.getOriginalFile(), startOffset);
+        for (final LookupElement item : lookupSet) {
+          resultSet.addElement(item);
+        }
+        lookupSet.clear();
+      }
+    }
+    else if (ref != null) {
+      completionData.completeReference(ref, lookupSet, insertedElement, parameters.getOriginalFile(),
+                                       startOffset);
+    }
+    for (final LookupElement item : lookupSet) {
+      result.addElement(item);
+    }
   }
 
 

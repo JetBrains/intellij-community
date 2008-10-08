@@ -153,6 +153,10 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
 
   public Object[] getVariants() {
     final Converter<T> converter = getConverter();
+    if (converter instanceof EnumConverter || converter == ResolvingConverter.BOOLEAN_CONVERTER) {
+      if (DomCompletionContributor.isSchemaEnumerated(getElement())) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+
     if (converter instanceof ResolvingConverter) {
       final ResolvingConverter<T> resolvingConverter = (ResolvingConverter<T>)converter;
       ArrayList<Object> result = new ArrayList<Object>();
