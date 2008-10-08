@@ -51,6 +51,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   private boolean myUserCaretChange;
   private MergingUpdateQueue myQueue;
   private BreadcrumbsInfoProvider myInfoProvider;
+  private JPanel myWrapperPanel;
 
   public BreadcrumbsXmlWrapper(@NotNull final Editor editor) {
     myEditor = editor;
@@ -137,6 +138,12 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
     Disposer.register(this, new UiNotifyConnector(myComponent, myQueue));
     Disposer.register(this, myQueue);
+
+    myWrapperPanel = new JPanel();
+    myWrapperPanel.setLayout(new BorderLayout());
+    myWrapperPanel.setBorder(BorderFactory.createEmptyBorder(2, 0, 1, 0));
+
+    myWrapperPanel.add(myComponent, BorderLayout.CENTER);
   }
 
   private void moveEditorCaretTo(@NotNull final PsiElement element) {
@@ -240,7 +247,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   }
 
   public JComponent getComponent() {
-    return myComponent;
+    return myWrapperPanel;
   }
 
   public void itemSelected(@NotNull final BreadcrumbsPsiItem item, final int modifiers) {
