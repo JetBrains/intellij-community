@@ -9,11 +9,13 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.Processor;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
@@ -26,14 +28,16 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Jan 20, 2008
  */
-public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Integer> {
-
+public class TodoIndex implements CustomImplementationFileBasedIndexExtension<TodoIndexEntry, Integer, FileContent> {
   @NonNls public static final ID<TodoIndexEntry, Integer> NAME = ID.create("TodoIndex");
 
   public TodoIndex(TodoConfiguration config) {
@@ -145,4 +149,65 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
     return myInputFilter;
   }
 
+  public UpdatableIndex<TodoIndexEntry, Integer, FileContent> createIndexImplementation(final FileBasedIndex owner, IndexStorage<TodoIndexEntry, Integer> storage) {
+    return new MyIndex(storage, getIndexer());
+  }
+
+  static class MyIndex extends MapReduceIndex<TodoIndexEntry, Integer, FileContent> {
+    public MyIndex(final IndexStorage<TodoIndexEntry, Integer> storage, final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
+      super(indexer, storage);
+    }
+
+    @Override
+    protected Map<TodoIndexEntry, Integer> mapOld(final FileContent fileContent) throws StorageException {
+      if (fileContent == null) {
+        return Collections.emptyMap();
+      }
+
+      final int fileId = Math.abs(FileBasedIndex.getFileId(fileContent.getFile()));
+      final Map<TodoIndexEntry, Integer> result = new HashMap<TodoIndexEntry, Integer>();
+      final Lock lock = getReadLock();
+
+      try {
+        lock.lock();
+        final IndexStorage<TodoIndexEntry, Integer> storage = getStorage();
+        final Ref<StorageException> nestedException = new Ref<StorageException>();
+
+        storage.processKeys(new Processor<TodoIndexEntry>() {
+          public boolean process(final TodoIndexEntry todoIndexEntry) {
+            try {
+              final ValueContainer<Integer> valueContainer = storage.read(todoIndexEntry);
+              final Iterator<Integer> iterator = valueContainer.getValueIterator();
+
+              while(iterator.hasNext()) {
+                final Integer value = iterator.next();
+
+                if (valueContainer.isAssociated(value, fileId)) {
+                  result.put(todoIndexEntry, value);
+                  break;
+                }
+              }
+
+              return true;
+            }
+            catch (StorageException e) {
+              nestedException.set(e);
+              return false;
+            }
+          }
+        });
+
+        final StorageException storageException = nestedException.get();
+        
+        if(storageException != null) {
+          throw storageException;
+        }
+      }
+      finally {
+        lock.unlock();
+      }
+
+      return result;
+    }
+  }
 }
