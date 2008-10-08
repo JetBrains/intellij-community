@@ -19,8 +19,8 @@ import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.ui.tabs.impl.table.TablePassInfo;
 import com.intellij.util.ui.Animator;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.TimedDeadzone;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,6 @@ import java.awt.geom.GeneralPath;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
@@ -74,7 +73,7 @@ public class JBTabsImpl extends JComponent
 
   DataProvider myDataProvider;
 
-  WeakReference<Component> myDeferredToRemove = new WeakReference<Component>(null);
+  WeakHashMap<Component, Component> myDeferredToRemove = new WeakHashMap<Component, Component>();
 
   SingleRowLayout mySingleRowLayout = new SingleRowLayout(this);
   TableLayout myTableLayout = new TableLayout(this);
@@ -97,7 +96,6 @@ public class JBTabsImpl extends JComponent
   private boolean myListenerAdded;
   final Set<TabInfo> myAttractions = new HashSet<TabInfo>();
   Animator myAnimator;
-  static final String DEFERRED_REMOVE_FLAG = "JBTabs.deferredRemove";
   List<TabInfo> myAllTabs;
   boolean myPaintBlocked;
   BufferedImage myImage;
@@ -500,7 +498,8 @@ public class JBTabsImpl extends JComponent
 
   private void updateAll(final boolean forcedRelayout, final boolean now) {
     mySelectedInfo = getSelectedInfo();
-    removeDeferred(updateContainer(forcedRelayout, now));
+    updateContainer(forcedRelayout, now);
+    removeDeferred();
     updateListeners();
     updateTabActions(false);
   }
@@ -548,7 +547,7 @@ public class JBTabsImpl extends JComponent
     mySelectedInfo = info;
     final TabInfo newInfo = getSelectedInfo();
 
-    final Component deferredRemove = updateContainer(false, true);
+    updateContainer(false, true);
 
     if (oldInfo != newInfo) {
       for (TabsListener eachListener : myTabListeners) {
@@ -568,7 +567,7 @@ public class JBTabsImpl extends JComponent
               result.setRejected();
             }
             else {
-              removeDeferred(deferredRemove).notifyWhenDone(result);
+              removeDeferred().notifyWhenDone(result);
             }
           }
         });
@@ -576,11 +575,11 @@ public class JBTabsImpl extends JComponent
       }
       else {
         requestFocus();
-        return removeDeferred(deferredRemove);
+        return removeDeferred();
       }
     }
     else {
-      return removeDeferred(deferredRemove);
+      return removeDeferred();
     }
   }
 
@@ -595,63 +594,39 @@ public class JBTabsImpl extends JComponent
     }, true);
   }
 
-  private ActionCallback removeDeferred(final Component deferredRemove) {
+  private ActionCallback removeDeferred() {
     final ActionCallback callback = new ActionCallback();
-    if (deferredRemove != null) {
-      //avoid flickering
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (isForDeferredRemove(deferredRemove)) {
-            remove(deferredRemove);
-          }
-          callback.setDone();
-        }
-      });
-    }
-    else {
-      callback.setDone();
-    }
-
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        removeDeferredNow();
+        callback.setDone();
+      }
+    });
     return callback;
   }
 
-  private boolean isForDeferredRemove(Component c) {
-    if (c instanceof JComponent) {
-      if (((JComponent)c).getClientProperty(DEFERRED_REMOVE_FLAG) == null) return false;
-
-      if (mySelectedInfo != null && mySelectedInfo.getComponent() == c) {
-        return false;
-      }
-      else {
-        return true;
-      }
-
-    }
-
-    return false;
-  }
-
-  private void setForDeferredRemove(Component c, boolean toRemove) {
+  private void queueForRemove(Component c) {
     if (c instanceof JComponent) {
       final JComponent jc = (JComponent)c;
-      jc.putClientProperty(DEFERRED_REMOVE_FLAG, toRemove ? Boolean.TRUE : null);
       layout(jc, 0, 0, 0, 0);
-      if (toRemove) {
-        removeCurrentDeferred();
-        setDeferredToRemove(c);
-      }
-      else if (getDeferredToRemove() != null && getDeferredToRemove() == c) {
-        setDeferredToRemove(null);
-      }
+      addToDeferredRemove(c);
+    } else {
+      remove(c);
     }
   }
 
-  private void removeCurrentDeferred() {
-    if (getDeferredToRemove() != null) {
-      remove(getDeferredToRemove());
-      setDeferredToRemove(null);
+  private void unqueueFromRemove(Component c) {
+    myDeferredToRemove.remove(c);
+  }
+
+  private void removeDeferredNow() {
+    for (Component each : myDeferredToRemove.keySet()) {
+      if (each != null && each.getParent() == this) {
+        remove(each);
+      }
     }
+    myDeferredToRemove.clear();
   }
 
   @Nullable
@@ -892,13 +867,11 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  @Nullable
-  private Component getDeferredToRemove() {
-    return myDeferredToRemove != null ? myDeferredToRemove.get() : null;
-  }
 
-  private void setDeferredToRemove(final Component c) {
-    myDeferredToRemove = new WeakReference<Component>(c);
+  private void addToDeferredRemove(final Component c) {
+    if (!myDeferredToRemove.containsKey(c)) {
+      myDeferredToRemove.put(c, c);
+    }
   }
 
   public boolean isToDrawBorderIfTabsHidden() {
@@ -971,7 +944,7 @@ public class JBTabsImpl extends JComponent
         mySingleRowLayout.myLastSingRowLayout = null;
       }
 
-      if (isStealthModeEffective()) {
+      if (isStealthModeEffective() && !isHideTabs()) {
         final TabLabel label = myInfo2Label.get(getSelectedInfo());
         final Rectangle bounds = label.getBounds();
         final Insets insets = getLayoutInsets();
@@ -1610,19 +1583,20 @@ public class JBTabsImpl extends JComponent
 
 
     if (toSelect != null) {
-      final JComponent deferred = processRemove(info, false);
+      processRemove(info, false);
       _setSelected(toSelect, true).doWhenProcessed(new Runnable() {
         public void run() {
-          removeDeferred(deferred);
+          removeDeferred();
         }
       }).notifyWhenDone(result);
     }
     else {
-      removeDeferred(processRemove(info, true)).notifyWhenDone(result);
+      processRemove(info, true);
+      removeDeferred().notifyWhenDone(result);
     }
 
     if (myVisibleInfos.size() == 0) {
-      removeCurrentDeferred();
+      removeDeferredNow();
     }
 
     revalidateAndRepaint(true);
@@ -1630,8 +1604,7 @@ public class JBTabsImpl extends JComponent
     return result;
   }
 
-  @Nullable
-  private JComponent processRemove(final TabInfo info, boolean forcedNow) {
+  private void processRemove(final TabInfo info, boolean forcedNow) {
     remove(myInfo2Label.get(info));
     final JComponent tb = myInfo2Toolbar.get(info);
     if (tb != null) {
@@ -1640,12 +1613,12 @@ public class JBTabsImpl extends JComponent
 
     JComponent tabComponent = info.getComponent();
 
-    if (!isForDeferredRemove(tabComponent) || forcedNow) {
+    if (!isToDeferRemoveForLater(tabComponent) || forcedNow) {
       remove(tabComponent);
       tabComponent = null;
     }
     else {
-      setForDeferredRemove(tabComponent, true);
+      queueForRemove(tabComponent);
     }
 
     myVisibleInfos.remove(info);
@@ -1655,8 +1628,6 @@ public class JBTabsImpl extends JComponent
     myAllTabs = null;
 
     updateAll(false, false);
-
-    return tabComponent;
   }
 
   public TabInfo findInfo(Component component) {
@@ -1730,12 +1701,12 @@ public class JBTabsImpl extends JComponent
   }
 
   @Nullable
-  private Component updateContainer(boolean forced, final boolean layoutNow) {
-    Component deferredRemove = null;
-
+  private void updateContainer(boolean forced, final boolean layoutNow) {
     for (TabInfo each : myVisibleInfos) {
       final JComponent eachComponent = each.getComponent();
       if (getSelectedInfo() == each && getSelectedInfo() != null) {
+        unqueueFromRemove(eachComponent);
+
         final Container parent = eachComponent.getParent();
         if (parent != null && parent != this) {
           parent.remove(eachComponent);
@@ -1747,8 +1718,8 @@ public class JBTabsImpl extends JComponent
       }
       else {
         if (eachComponent.getParent() == null) continue;
-        if (isForDeferredRemove(eachComponent)) {
-          deferredRemove = eachComponent;
+        if (isToDeferRemoveForLater(eachComponent)) {
+          queueForRemove(eachComponent);
         }
         else {
           remove(eachComponent);
@@ -1756,18 +1727,11 @@ public class JBTabsImpl extends JComponent
       }
     }
 
-    if (deferredRemove != null) {
-      setForDeferredRemove(deferredRemove, true);
-    }
-
-
     relayout(forced, layoutNow);
-
-    return deferredRemove;
   }
 
   protected void addImpl(final Component comp, final Object constraints, final int index) {
-    setForDeferredRemove(comp, false);
+    unqueueFromRemove(comp);
 
     if (comp instanceof TabLabel) {
       ((TabLabel)comp).apply(myUiDecorator.getDecoration());
@@ -1776,7 +1740,8 @@ public class JBTabsImpl extends JComponent
     super.addImpl(comp, constraints, index);
   }
 
-  private boolean isForDeferredRemove(JComponent c) {
+
+  private boolean isToDeferRemoveForLater(JComponent c) {
     return true;
   }
 
