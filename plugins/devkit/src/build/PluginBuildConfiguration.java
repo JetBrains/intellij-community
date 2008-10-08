@@ -63,7 +63,7 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
     myModule = module;
     myPluginXmlContainer = ConfigFileFactory.getInstance().createSingleFileContainer(myModule.getProject(), PluginDescriptorConstants.META_DATA);
     Disposer.register(module, myPluginXmlContainer);
-    myBuildParticipant = new PluginBuildParticipant(module);
+    myBuildParticipant = new PluginBuildParticipant(module, this);
   }
 
   @Nullable
@@ -136,20 +136,23 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
     }
   }
 
+  @Nullable
   public ConfigFile getPluginXML() {
-    final ConfigFile descriptor = myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
-    if (descriptor == null) {
-      return createDescriptor(getPluginXmlUrl());
-    }
-    return descriptor;
+    return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
   }
 
-  private ConfigFile createDescriptor(final String url) {
+  public void createPluginXmlIfNotExist() {
+    final ConfigFile descriptor = myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
+    if (descriptor == null) {
+      createDescriptor(getPluginXmlUrl());
+    }
+  }
+
+  private void createDescriptor(final String url) {
     final ConfigFileInfo descriptor = new ConfigFileInfo(PluginDescriptorConstants.META_DATA, url);
     myPluginXmlContainer.getConfiguration().addConfigFile(descriptor);
     ConfigFileFactory.getInstance().createFile(myModule.getProject(), descriptor.getUrl(), PluginDescriptorConstants.META_DATA.getDefaultVersion(),
                                                false);
-    return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
   }
 
   @Nullable

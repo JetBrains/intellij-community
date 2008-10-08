@@ -47,9 +47,11 @@ public class PluginBuildParticipant extends BuildParticipantBase {
   @NonNls private static final String CLASSES = "/classes";
   @NonNls private static final String LIB = "/lib/";
   @NonNls private static final String LIB_DIRECTORY = "lib";
+  private final PluginBuildConfiguration myPluginBuildConfiguration;
 
-  public PluginBuildParticipant(final Module module) {
+  public PluginBuildParticipant(final Module module, final PluginBuildConfiguration pluginBuildConfiguration) {
     super(module);
+    myPluginBuildConfiguration = pluginBuildConfiguration;
   }
 
   public BuildRecipe getBuildInstructions(final CompileContext context) {
@@ -109,8 +111,7 @@ public class PluginBuildParticipant extends BuildParticipantBase {
       if (realProblems) return;
     }
 
-    final PluginBuildConfiguration moduleBuild = PluginBuildConfiguration.getInstance(getModule());
-    final String explodedPath = moduleBuild.getExplodedPath();
+    final String explodedPath = myPluginBuildConfiguration.getExplodedPath();
     if (explodedPath == null) return; //where to put everything?
     HashSet<Module> modules = new HashSet<Module>();
     PluginBuildUtil.getDependencies(getModule(), modules);
@@ -203,14 +204,14 @@ public class PluginBuildParticipant extends BuildParticipantBase {
   }
 
   protected ConfigFile[] getDeploymentDescriptors() {
-    final PluginBuildConfiguration moduleBuildProperties = PluginBuildConfiguration.getInstance(getModule());
-    if (moduleBuildProperties == null) {
-      return ConfigFile.EMPTY_ARRAY;
+    ConfigFile configFile = myPluginBuildConfiguration.getPluginXML();
+    if (configFile != null) {
+      return new ConfigFile[]{configFile};
     }
-    return new ConfigFile[]{moduleBuildProperties.getPluginXML()};
+    return ConfigFile.EMPTY_ARRAY;
   }
 
   public BuildConfiguration getBuildConfiguration() {
-    return PluginBuildConfiguration.getInstance(getModule());
+    return myPluginBuildConfiguration;
   }
 }

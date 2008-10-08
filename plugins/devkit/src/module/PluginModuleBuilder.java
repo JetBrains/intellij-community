@@ -43,8 +43,8 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
       final Module module = rootModel.getModule();
       StartupManager.getInstance(module.getProject()).runWhenProjectIsInitialized(new Runnable() {
         public void run() {
-          final PluginBuildConfiguration moduleProperties = (PluginBuildConfiguration)PluginBuildConfiguration.getInstance(module);
-          moduleProperties.getPluginXML(); //call to create if not exist
+          final PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
+          buildConfiguration.createPluginXmlIfNotExist();
         }
       });
     }
