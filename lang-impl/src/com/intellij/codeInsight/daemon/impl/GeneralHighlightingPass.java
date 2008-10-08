@@ -394,8 +394,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private Collection<HighlightInfo> collectHighlights(final List<PsiElement> elements, final HighlightVisitor[] highlightVisitors,
                                                       final ProgressIndicator progress) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
     final Set<PsiElement> skipParentsSet = new THashSet<PsiElement>();
     final Set<HighlightInfo> gotHighlights = new THashSet<HighlightInfo>();
 
@@ -442,6 +440,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
             //noinspection ForLoopReplaceableByForEach
             for (int j = 0; j < holder.size(); j++) {
               HighlightInfo info = holder.get(j);
+              assert info != null;
               // have to filter out already obtained highlights
               if (!gotHighlights.add(info)) continue;
               boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
@@ -506,6 +505,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       String description = text.subSequence(range.getStartOffset(), range.getEndOffset()).toString();
       TextAttributes attributes = todoItem.getPattern().getAttributes().getTextAttributes();
       HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.TODO, range, description, description, attributes);
+      assert info != null;
       list.add(info);
     }
     return list;
