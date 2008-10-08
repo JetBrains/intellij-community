@@ -272,7 +272,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
       }
     }
     catch (IncorrectOperationException e) {
-      LOG.error(e);
+      LOG.info(e);
       return false;
     }
     return true;

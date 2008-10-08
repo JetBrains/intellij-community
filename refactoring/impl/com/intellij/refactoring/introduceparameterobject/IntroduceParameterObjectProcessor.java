@@ -303,7 +303,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       }
     }
     catch (IncorrectOperationException e) {
-      logger.error(e);
+      logger.info(e);
       return false;
     }
     return true;
