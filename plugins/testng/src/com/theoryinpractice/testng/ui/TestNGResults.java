@@ -7,7 +7,7 @@
 package com.theoryinpractice.testng.ui;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
-import com.intellij.diagnostic.logging.LogConsole;
+import com.intellij.diagnostic.logging.LogConsoleImpl;
 import com.intellij.diagnostic.logging.LogConsoleManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
@@ -189,8 +189,8 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
     public void attachStopLogConsoleTrackingListeners(ProcessHandler process) {
       myRunProcess = process;
       for (AdditionalTabComponent component: myAdditionalComponents.keySet()) {
-        if (component instanceof LogConsole){
-          ((LogConsole)component).attachStopLogConsoleTrackingListener(process);
+        if (component instanceof LogConsoleImpl){
+          ((LogConsoleImpl)component).attachStopLogConsoleTrackingListener(process);
         }
       }
     }
@@ -429,7 +429,7 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
   }
 
   public void addLogConsole(final String name, final String path, final long skippedContent){
-    final LogConsole log = new LogConsole(project, new File(path), skippedContent, name, true) {
+    final LogConsoleImpl log = new LogConsoleImpl(project, new File(path), skippedContent, name, true) {
       public boolean isActive() {
         return tabbedPane.getSelectedComponent() == this;
       }
@@ -448,10 +448,10 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
   }
 
   public void removeLogConsole(final String path) {
-    LogConsole componentToRemove = null;
+    LogConsoleImpl componentToRemove = null;
     for (AdditionalTabComponent tabComponent : myAdditionalComponents.keySet()) {
-      if (tabComponent instanceof LogConsole) {
-        final LogConsole console = (LogConsole)tabComponent;
+      if (tabComponent instanceof LogConsoleImpl) {
+        final LogConsoleImpl console = (LogConsoleImpl)tabComponent;
         if (Comparing.strEqual(console.getPath(), path)) {
           componentToRemove = console;
           break;

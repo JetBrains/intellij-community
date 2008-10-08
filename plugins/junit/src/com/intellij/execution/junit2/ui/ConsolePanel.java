@@ -17,7 +17,7 @@
 package com.intellij.execution.junit2.ui;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
-import com.intellij.diagnostic.logging.LogConsole;
+import com.intellij.diagnostic.logging.LogConsoleImpl;
 import com.intellij.diagnostic.logging.LogConsoleManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.ExecutionBundle;
@@ -135,7 +135,7 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
   }
 
   public void addLogConsole(final String name, final String path, final long skippedContent){
-    final LogConsole log = new LogConsole(myConfiguration.getProject(), new File(path), skippedContent, name, true) {
+    final LogConsoleImpl log = new LogConsoleImpl(myConfiguration.getProject(), new File(path), skippedContent, name, true) {
       public boolean isActive() {
         return myTabs.getSelectedComponent() == this;
       }
@@ -154,10 +154,10 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
   }
 
   public void removeLogConsole(final String path) {
-    LogConsole componentToRemove = null;
+    LogConsoleImpl componentToRemove = null;
     for (AdditionalTabComponent tabComponent : myAdditionalComponents.keySet()) {
-      if (tabComponent instanceof LogConsole) {
-        final LogConsole console = (LogConsole)tabComponent;
+      if (tabComponent instanceof LogConsoleImpl) {
+        final LogConsoleImpl console = (LogConsoleImpl)tabComponent;
         if (Comparing.strEqual(console.getPath(), path)) {
           componentToRemove = console;
           break;
@@ -173,8 +173,8 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
   public void attachStopLogConsoleTrackingListeners(ProcessHandler process) {
     myRunProcess = process;
     for (AdditionalTabComponent component: myAdditionalComponents.keySet()) {
-      if (component instanceof LogConsole){
-        ((LogConsole)component).attachStopLogConsoleTrackingListener(process);
+      if (component instanceof LogConsoleImpl){
+        ((LogConsoleImpl)component).attachStopLogConsoleTrackingListener(process);
       }
     }
   }
