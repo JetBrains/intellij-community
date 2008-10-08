@@ -322,4 +322,33 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     }
     return changes;
   }
+
+  ChangeListManagerGate createSelfGate() {
+    return new MyGate(this);
+  }
+
+  private static class MyGate implements ChangeListManagerGate {
+    private final ChangeListWorker myWorker;
+
+    private MyGate(final ChangeListWorker worker) {
+      myWorker = worker;
+    }
+
+    @Nullable
+    public LocalChangeList findChangeList(final String name) {
+      return myWorker.getCopyByName(name);
+    }
+
+    public LocalChangeList addChangeList(final String name, final String comment) {
+      return myWorker.addChangeList(name, comment, true);
+    }
+
+    public LocalChangeList findOrCreateList(final String name, final String comment) {
+      LocalChangeList list = myWorker.getCopyByName(name);
+      if (list == null) {
+        list = addChangeList(name, comment);
+      }
+      return list;
+    }
+  }
 }

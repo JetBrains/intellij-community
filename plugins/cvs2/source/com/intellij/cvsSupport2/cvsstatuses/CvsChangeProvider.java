@@ -62,7 +62,8 @@ public class CvsChangeProvider implements ChangeProvider {
     myEntriesManager = entriesManager;
   }
 
-  public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress) {
+  public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress,
+                         final ChangeListManagerGate addGate) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Processing changes for scope " + dirtyScope);
     }

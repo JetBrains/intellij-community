@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * Builder for the changes list in the file system. The instances of
  * this class are used to collect changes that happened in the file system.
  *
- * @see com.intellij.openapi.vcs.changes.ChangeProvider#getChanges(VcsDirtyScope, ChangelistBuilder, com.intellij.openapi.progress.ProgressIndicator)
+ * @see ChangeProvider#getChanges(VcsDirtyScope, ChangelistBuilder,com.intellij.openapi.progress.ProgressIndicator, ChangeListManagerGate)
  * @author max
  */
 public interface ChangelistBuilder {

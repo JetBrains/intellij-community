@@ -40,9 +40,11 @@ public interface ChangeProvider {
    * @param dirtyScope a changes on the virtual file system
    * @param builder a builder of VCS changes
    * @param progress a current progress object
+   * @param addGate
    * @throws VcsException if there there is a VCS specific problem
    */
-  void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress) throws VcsException;
+  void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress,
+                  final ChangeListManagerGate addGate) throws VcsException;
 
   /**
    * Returns true if the initial unsaved modification of a document should cause dirty scope invalidation

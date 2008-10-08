@@ -28,7 +28,7 @@ import java.util.Set;
 /**
  * <p>The dirty scope for a version control system. The instance of this interface
  * is passed to implementers of the {@link com.intellij.openapi.vcs.changes.ChangeProvider}
- * interface to the method {@link com.intellij.openapi.vcs.changes.ChangeProvider#getChanges(VcsDirtyScope, ChangelistBuilder, com.intellij.openapi.progress.ProgressIndicator)}.</p>
+ * interface to the method {@link ChangeProvider#getChanges(VcsDirtyScope, ChangelistBuilder,com.intellij.openapi.progress.ProgressIndicator, ChangeListManagerGate)}.</p>
  * <p/>
  * <p>The instance of this class is valid only while the project is valid.</p>
  *

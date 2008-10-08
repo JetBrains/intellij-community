@@ -226,6 +226,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }, updateUnversionedFiles, myIgnoredIdeaLevel);
 
+      final ChangeListManagerGate gate = changeListWorker.createSelfGate();
+
       for (final VcsDirtyScope scope : scopes) {
         final AbstractVcs vcs = scope.getVcs();
         if (vcs == null) continue;
@@ -237,7 +239,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         if (updateUnversionedFiles && !wasEverythingDirty) {
           composite.cleanScope(scope);
         }
-        actualUpdate(wasEverythingDirty, composite, builder, scope, vcs, changeListWorker);
+        actualUpdate(wasEverythingDirty, composite, builder, scope, vcs, changeListWorker, gate);
       }
       
       synchronized (myDataLock) {
@@ -284,7 +286,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private void actualUpdate(final boolean wasEverythingDirty, final FileHolderComposite composite, final UpdatingChangeListBuilder builder,
-                            final VcsDirtyScope scope, final AbstractVcs vcs, final ChangeListWorker changeListWorker) {
+                            final VcsDirtyScope scope, final AbstractVcs vcs, final ChangeListWorker changeListWorker,
+                            final ChangeListManagerGate gate) {
     try {
       final ChangeProvider changeProvider = vcs.getChangeProvider();
       if (changeProvider != null) {
@@ -298,7 +301,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             }
           };
           builder.setCurrent(scope, foldersCutDownWorker);
-          changeProvider.getChanges(scope, builder, myUpdateChangesProgressIndicator);
+          changeProvider.getChanges(scope, builder, myUpdateChangesProgressIndicator, gate);
         }
         catch (VcsException e) {
           LOG.info(e);
