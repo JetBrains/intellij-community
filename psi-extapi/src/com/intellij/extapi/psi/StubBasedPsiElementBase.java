@@ -49,7 +49,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
           assert file.getTreeElement() == null;
           file.loadTreeElement();
           node = myNode;
-          assert node != null: "failed to bind stub to AST for element " + this + " in " +
+          assert node != null: "failed to bind stub to AST for element " + getClass() + " in " +
                           (file.getVirtualFile() == null ? "<unknown file>" : file.getVirtualFile().getPath());
         }
       }
