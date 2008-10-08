@@ -51,7 +51,7 @@ public class AnnotateToggleAction extends ToggleAction {
     VirtualFile file = selectedFiles[0];
     if (file.isDirectory()) return false;
     Project project = context.getProject();
-    if (project == null) return false;
+    if (project == null || project.isDisposed()) return false;
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
     if (vcs == null) return false;
     final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
