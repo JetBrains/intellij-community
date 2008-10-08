@@ -348,4 +348,7 @@
 
   <extensionPoint name="documentationProvider"
                   interface="com.intellij.lang.documentation.DocumentationProvider"/>
+
+  <extensionPoint name="templateCompletionProcessor"
+                  interface="com.intellij.codeInsight.template.macro.TemplateCompletionProcessor"/>
 </extensionPoints>

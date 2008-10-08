@@ -1,4 +1,3 @@
-
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;

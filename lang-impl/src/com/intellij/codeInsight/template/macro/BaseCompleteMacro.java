@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -10,14 +9,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public abstract class BaseCompleteMacro implements Macro {
   private final String myName;
@@ -109,7 +108,7 @@ public abstract class BaseCompleteMacro implements Macro {
     return null;
   }
 
-  private class MyLookupListener extends LookupAdapter {
+  private static class MyLookupListener extends LookupAdapter {
     private final ExpressionContext myContext;
 
     public MyLookupListener(@NotNull ExpressionContext context) {
@@ -120,25 +119,11 @@ public abstract class BaseCompleteMacro implements Macro {
       LookupElement item = event.getItem();
       if (item == null) return;
 
-      final List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements(item);
-
-      boolean goNextTab;
-
-      if (elements == null) {
-        goNextTab = true;
-      }
-      else {
-        if (elements.size() != 1) {
+      boolean goNextTab = true;
+      for(TemplateCompletionProcessor processor: Extensions.getExtensions(TemplateCompletionProcessor.EP_NAME)) {
+        if (!processor.nextTabOnItemSelected(myContext, item)) {
           goNextTab = false;
-        }
-        else {
-          if (elements.get(0) instanceof PsiMethod) {
-            PsiMethod method = (PsiMethod)elements.get(0);
-            goNextTab = method.getParameterList().getParametersCount() == 0;
-          }
-          else {
-            goNextTab = !(elements.get(0) instanceof PsiFileSystemItem) || !((PsiFileSystemItem)elements.get(0)).isDirectory();
-          }
+          break;
         }
       }
 
