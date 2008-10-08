@@ -31,7 +31,11 @@ public class DomCompletionContributor extends CompletionContributor{
     final PsiElement element = PsiTreeUtil.getParentOfType(parameters.getPosition(), XmlTag.class, XmlAttributeValue.class);
     if (element == null) return true;
 
-    if (isSchemaEnumerated(element)) return true;
+    if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return isSchemaEnumerated(element);
+      }
+    }).booleanValue()) return true;
 
     final PsiReference[] references = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference[]>() {
       public PsiReference[] compute() {
