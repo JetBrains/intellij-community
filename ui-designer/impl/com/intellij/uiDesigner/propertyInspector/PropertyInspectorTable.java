@@ -852,7 +852,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       final Object oldValue=getSelectionValue(property);
       boolean retVal = true;
       if(!Comparing.equal(oldValue,newValue)){
-        if (!myEditor.ensureEditable()) {
+        final GuiEditor editor = myEditor;
+        if (!editor.ensureEditable()) {
           return false;
         }
         final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
@@ -860,7 +861,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           public void run() {
             result.set(setSelectionValue(property, newValue));
 
-            myEditor.refreshAndSave(false);
+            editor.refreshAndSave(false);
           }
         }, UIDesignerBundle.message("command.set.property.value"), null);
 
