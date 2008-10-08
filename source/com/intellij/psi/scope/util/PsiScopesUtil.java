@@ -136,13 +136,13 @@ public class PsiScopesUtil {
               substitutor = substitutor.putAll(typeResult.getSubstitutor());
             }
             else target = null;
+            final PsiType[] types = referenceElement.getTypeParameters();
+            if(target instanceof PsiClass) {
+              substitutor = substitutor.putAll((PsiClass)target, types);
+            }
           }
           else if(target instanceof PsiClass){
             processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
-          }
-          final PsiType[] types = referenceElement.getTypeParameters();
-          if(target instanceof PsiClass) {
-            substitutor = substitutor.putAll((PsiClass)target, types);
           }
         }
       }
