@@ -520,16 +520,20 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     if (tags == null) {
       final List<XmlTag> result = new ArrayList<XmlTag>();
 
-      processElements(new PsiElementProcessor() {
-          public boolean execute(PsiElement element) {
-            if (element instanceof XmlTag) result.add((XmlTag)element);
-            return true;
-          }
-        }, this);
+      fillSubTags(result);
 
       myTags = tags = result.toArray(new XmlTag[result.size()]);
     }
     return tags;
+  }
+
+  protected void fillSubTags(final List<XmlTag> result) {
+    processElements(new PsiElementProcessor() {
+      public boolean execute(PsiElement element) {
+        if (element instanceof XmlTag) result.add((XmlTag)element);
+        return true;
+      }
+    }, this);
   }
 
   @NotNull
