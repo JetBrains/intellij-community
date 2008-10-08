@@ -102,7 +102,7 @@ public class Merger {
 
   protected void doMerge() throws SVNException {
     myDiffClient.doMerge(myCurrentBranchUrl, SVNRevision.UNDEFINED, Collections.singletonList(createRange()),
-      myTarget, SVNDepth.INFINITY, true, false, mySvnConfig.MERGE_DRY_RUN, isRecordOnly());
+      myTarget, SVNDepth.INFINITY, true, true, mySvnConfig.MERGE_DRY_RUN, isRecordOnly());
   }
 
   @NonNls
