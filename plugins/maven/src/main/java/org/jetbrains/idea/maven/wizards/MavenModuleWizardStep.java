@@ -3,8 +3,8 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.NullNode;
@@ -38,6 +38,9 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private MavenModuleBuilder myBuilder;
   private MavenProjectModel myAggregator;
   private MavenProjectModel myParent;
+
+  private String myInheritedGroupId;
+  private String myInheritedVersion;
 
   private JPanel myMainPanel;
 
@@ -187,18 +190,31 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myAggregatorNameLabel.setText(formatProjectString(myAggregator));
     myParentNameLabel.setText(formatProjectString(myParent));
 
-    myInheritGroupIdCheckBox.setEnabled(myParent != null);
-    myInheritVersionCheckBox.setEnabled(myParent != null);
 
-    if (myInheritGroupIdCheckBox.isEnabled()) {
-      myGroupIdField.setText(myParent.getMavenId().groupId);
+    if (myParent == null) {
+      myGroupIdField.setEnabled(true);
+      myVersionField.setEnabled(true);
+      myInheritGroupIdCheckBox.setEnabled(false);
+      myInheritVersionCheckBox.setEnabled(false);
     }
-    myGroupIdField.setEnabled(!myInheritGroupIdCheckBox.isSelected());
+    else {
+      myGroupIdField.setEnabled(!myInheritGroupIdCheckBox.isSelected());
+      myVersionField.setEnabled(!myInheritVersionCheckBox.isSelected());
 
-    if (myInheritVersionCheckBox.isEnabled()) {
-      myVersionField.setText(myParent.getMavenId().version);
+      if (myInheritGroupIdCheckBox.isSelected()
+          || myGroupIdField.getText().equals(myInheritedGroupId)) {
+        myGroupIdField.setText(myParent.getMavenId().groupId);
+      }
+      if (myInheritVersionCheckBox.isSelected()
+          || myVersionField.getText().equals(myInheritedVersion)) {
+        myVersionField.setText(myParent.getMavenId().version);
+      }
+      myInheritedGroupId = myGroupIdField.getText();
+      myInheritedVersion = myVersionField.getText();
+
+      myInheritGroupIdCheckBox.setEnabled(true);
+      myInheritVersionCheckBox.setEnabled(true);
     }
-    myVersionField.setEnabled(!myInheritVersionCheckBox.isSelected());
 
     if (myUseArchetypeCheckBox.isSelected()) {
       myArchetypesList.setEnabled(true);
@@ -293,5 +309,10 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     public MavenProjectModel getResult() {
       return myResult;
     }
+  }
+
+  @Override
+  public String getHelpId() {
+    return "reference.dialogs.new.project.fromScratch.maven";
   }
 }
