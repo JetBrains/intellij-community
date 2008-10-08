@@ -6,14 +6,13 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.VolatileImage;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.Map;
 
@@ -25,6 +24,8 @@ public class HackyRepaintManager extends RepaintManager {
 
   private Map<GraphicsConfiguration, VolatileImage> myImagesMap;
   @NonNls private static final String FAULTY_FIELD_NAME = "volatileMap";
+
+  WeakReference<JComponent> myLastComponent;
 
   public Image getVolatileOffscreenBuffer(Component c, int proposedWidth, int proposedHeight) {
     final Image buffer = super.getVolatileOffscreenBuffer(c, proposedWidth, proposedHeight);
@@ -68,27 +69,41 @@ public class HackyRepaintManager extends RepaintManager {
   }
 
   private void checkThreadViolations(JComponent c) {
-    final ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
-    if (app == null || app.isHeadlessEnvironment() || !app.isInternal()) return;
-
     if (!SwingUtilities.isEventDispatchThread() && c.isShowing()) {
-      Exception exception = new Exception();
       boolean repaint = false;
       boolean fromSwing = false;
+      boolean imageUpdate = false;
+      final Exception exception = new Exception();
       StackTraceElement[] stackTrace = exception.getStackTrace();
       for (StackTraceElement st : stackTrace) {
         if (repaint && st.getClassName().startsWith("javax.swing.")) {
           fromSwing = true;
         }
+        if (repaint && "imageUpdate".equals(st.getMethodName())) {
+          imageUpdate = true;
+        }
         if ("repaint".equals(st.getMethodName())) {
           repaint = true;
+          fromSwing = false;
         }
+      }
+      if (imageUpdate) {
+        //assuming it is java.awt.image.ImageObserver.imageUpdate(...)
+        //image was asynchronously updated, that's ok
+        return;
       }
       if (repaint && !fromSwing) {
         //no problems here, since repaint() is thread safe
         return;
       }
-      LOG.warn("Access to realized UI components should be done only from AWT event dispatch thread, revalidate() and repaint() is ok from any thread", exception);
+      //ignore the last processed component
+      if (myLastComponent != null && c == myLastComponent.get()) {
+        return;
+      }
+      myLastComponent = new WeakReference<JComponent>(c);
+
+      LOG.warn("Access to realized UI components should be done only from AWT event dispatch thread," +
+               " revalidate() and repaint() is ok from any thread", exception);
     }
   }
 }
