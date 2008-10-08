@@ -154,6 +154,10 @@
     <!--Gant-->
     <facetType implementation="org.jetbrains.plugins.gant.config.GantFacetType"/>
     <frameworkSupport implementation="org.jetbrains.plugins.gant.config.GantSupportProvider"/>
+    <!--Gant Run/debug-->
+    <configurationType implementation="org.jetbrains.plugins.gant.runner.GantScriptRunConfigurationType"/>
+    <configurationProducer implementation="org.jetbrains.plugins.gant.runner.GantScriptRunConfigurationProducer"/>
+
 
     <!-- control flow -->
     <intentionAction>

@@ -7,6 +7,7 @@ import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.gant.GantUtils;
 
 /**
  * @author ilyas
@@ -26,7 +27,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     final PsiElement element = location.getPsiElement();
 
     final PsiFile file = element.getContainingFile();
-    if (file instanceof GroovyFile) {
+    if (file instanceof GroovyFile && !GantUtils.isGantScriptFile(file)) {
       GroovyFile groovyFile = (GroovyFile)file;
       if (groovyFile.isScript()) {
         mySourceElement = element;
