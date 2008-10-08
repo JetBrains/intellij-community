@@ -14,9 +14,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
@@ -53,12 +55,20 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final int offset = editor.getCaretModel().getOffset();
-    final PsiElement psiElement = file.findElementAt(offset);
+    PsiElement psiElement = file.findElementAt(offset);
 
     if (psiElement == null || !psiElement.isValid()) return;
     if (!CodeInsightUtilBase.prepareFileForWrite(psiElement.getContainingFile())) return;
 
     if (psiElement instanceof XmlToken) {
+      final IElementType tokenType = ((XmlToken)psiElement).getTokenType();
+      if (tokenType != XmlTokenType.XML_NAME) {
+        if (tokenType == XmlTokenType.XML_TAG_END) {
+          psiElement = psiElement.getPrevSibling();
+          if (psiElement == null) return;
+        }
+      }
+
       PsiElement target = null;
       final String text = psiElement.getText();
       if (!myTargetName.equals(text)) {
