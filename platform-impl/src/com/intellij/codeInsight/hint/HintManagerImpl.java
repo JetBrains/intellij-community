@@ -335,7 +335,8 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   public void hideAllHints() {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    for (HintInfo info : myHintsStack) {
+    List<HintInfo> hints = new ArrayList<HintInfo>(myHintsStack);
+    for (HintInfo info : hints) {
         info.hint.hide();
     }
     myHintsStack.clear();
