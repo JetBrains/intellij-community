@@ -39,7 +39,8 @@ public class SecondUnsafeCallQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return GroovyInspectionBundle.message("second.unsafe.call");
+    //return GroovyInspectionBundle.message("second.unsafe.call");
+    return "Probable bugs (Groovy)";
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

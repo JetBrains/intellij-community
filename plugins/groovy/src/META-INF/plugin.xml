@@ -33,30 +33,38 @@
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGroovyPropertyProcessor" order="first"/>
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"
-            serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>
+                        serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>
 
     <!-- Groovy language -->
     <treeStructureProvider implementation="org.jetbrains.plugins.groovy.projectView.GroovyTreeStructureProvider"/>
     <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GroovyAnnotator"/>
-    <lang.psiStructureViewFactory language="Groovy" implementationClass="org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory"/>
+    <lang.psiStructureViewFactory language="Groovy"
+                                  implementationClass="org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory"/>
     <lang.parserDefinition language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition"/>
     <lang.commenter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyCommenter"/>
     <lang.foldingBuilder language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder"/>
     <lang.formatter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
     <gotoClassContributor implementation="org.jetbrains.plugins.groovy.gotoclass.GroovyGoToClassContributor"/>
     <gotoSymbolContributor implementation="org.jetbrains.plugins.groovy.gotoclass.GroovyGoToSymbolContributor"/>
-    <lang.refactoringSupport language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider"/>
-    <lang.surroundDescriptor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor"/>
+    <lang.refactoringSupport language="Groovy"
+                             implementationClass="org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider"/>
+    <lang.surroundDescriptor language="Groovy"
+                             implementationClass="org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor"/>
     <lang.findUsagesProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesProvider"/>
     <lang.braceMatcher language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher"/>
     <lang.importOptimizer language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer"/>
-    <lang.documentationProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider"/>
-    <lang.smartEnterProcessor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor"/>
-    <codeInsight.overrideMethod language="Groovy" implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideMethodsHandler"/>
-    <codeInsight.implementMethod language="Groovy" implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyImplementMethodsHandler"/>
-    <codeInsight.parameterInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
+    <lang.documentationProvider language="Groovy"
+                                implementationClass="org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider"/>
+    <lang.smartEnterProcessor language="Groovy"
+                              implementationClass="org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor"/>
+    <codeInsight.overrideMethod language="Groovy"
+                                implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideMethodsHandler"/>
+    <codeInsight.implementMethod language="Groovy"
+                                 implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyImplementMethodsHandler"/>
+    <codeInsight.parameterInfo language="Groovy"
+                               implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
     <refactoring.inlineHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
     <completion.contributor implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyCompetionContributor"/>
@@ -69,7 +77,7 @@
 
     <quoteHandler fileType="Groovy" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
 
-    <indexPatternBuilder implementation="org.jetbrains.plugins.groovy.util.GroovyIndexPatternBuilder" />
+    <indexPatternBuilder implementation="org.jetbrains.plugins.groovy.util.GroovyIndexPatternBuilder"/>
 
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyLiteralSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyBlockStatementsSelectioner"/>
@@ -116,7 +124,8 @@
     <lang.parserDefinition language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.parsing.gsp.GspParserDefinition"/>
     <lang.fileViewProviderFactory language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.GspFileviewProviderFactory"/>
 
-    <codeInsight.parameterInfo language="GSP" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
+    <codeInsight.parameterInfo language="GSP"
+                               implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
 
     <quoteHandler fileType="GSP" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
     <braceMatcher filetype="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspBraceMatcher"/>
@@ -339,6 +348,7 @@
       </implementation-class>
     </component>
   </project-components>
+
   <module-components>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.config.GroovyFacetListener</implementation-class>
@@ -352,6 +362,10 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.grails.config.GrailsFacetListener</implementation-class>
+    </component>
+    <component>
+      <interface-class>org.jetbrains.plugins.grails.plugins.control.GrailsPluginManager</interface-class>
+      <implementation-class>org.jetbrains.plugins.grails.plugins.control.GrailsPluginManagerImpl</implementation-class>
     </component>
   </module-components>
 
@@ -421,7 +435,7 @@
     </action>
 
     <group id="Grails" class="org.jetbrains.plugins.grails.actions.GrailsGroup"
-            text="Grails">
+           text="Grails">
       <!--
       <action id="Grails.NewApp" class="org.jetbrains.plugins.grails.actions.NewGrailsAppAction"
               text="Grails Application"
@@ -443,10 +457,16 @@
               text="Grails TagLib" description="Create new Grails tagLib">
       </action>
       <action id="Grails.GSP" class="org.jetbrains.plugins.grails.actions.NewGspAction"
-              text="GSP" description="Create new Groovy Server Page">
-      </action>
+      text="GSP" description="Create new Groovy Server Page">
+    </action>
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
+
+    <action id="Grails.Plugins"
+            class="org.jetbrains.plugins.grails.plugins.GrailsPluginsAction"
+            text="Grails plugins" description="Grails plugins manager" icon="/org/jetbrains/plugins/grails/images/grails_plugin.png">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+    </action>
 
     <action id="Grails.WAR" class="org.jetbrains.plugins.grails.actions.GrailsWarAction"
             text="Make Grails Web Archive" description="Generate Web Archive">

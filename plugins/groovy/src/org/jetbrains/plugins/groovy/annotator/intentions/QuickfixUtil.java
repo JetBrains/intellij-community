@@ -139,7 +139,7 @@ public class QuickfixUtil {
 
     if (listOfPairs == null) return new String[0];
     for (MyPair listOfPair : listOfPairs) {
-        String type = PsiTypesUtil.unboxIfPossible(listOfPair.second);
+      String type = PsiTypesUtil.unboxIfPossible(listOfPair.second);
       result.add(type);
     }
 
