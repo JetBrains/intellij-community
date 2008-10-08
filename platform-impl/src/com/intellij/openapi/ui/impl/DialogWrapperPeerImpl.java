@@ -792,7 +792,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       @Override
       public void setGlassPane(final Component glass) {
-        if (myGlassPaneIsSet) {
+        //todo [kirillk] to remove as new options editor is done
+        if (myGlassPaneIsSet && "true".equalsIgnoreCase(System.getProperty("new.options.editor"))) {
           LOG.warn("Setting of glass pane for DialogWrapper is prohibited", new Exception());
           return;
         }
