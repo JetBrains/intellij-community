@@ -151,6 +151,10 @@ public class UpdatedFilesReverseSide {
     return false;
   }
 
+  public boolean containsFile(final VirtualFile file) {
+    return myFileIdx.containsKey(file.getPresentableUrl());
+  }
+
   public abstract static class DuplicateLevel {
     private final static List<String> ourErrorGroups = Arrays.asList(FileGroup.UNKNOWN_ID, FileGroup.SKIPPED_ID);
     private final static List<String> ourLocals = Arrays.asList(FileGroup.LOCALLY_ADDED_ID, FileGroup.LOCALLY_REMOVED_ID);
