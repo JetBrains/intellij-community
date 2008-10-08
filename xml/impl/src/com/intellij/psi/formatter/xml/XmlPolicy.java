@@ -4,8 +4,8 @@ import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.formatting.WrapType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 
@@ -18,7 +18,7 @@ public class XmlPolicy extends XmlFormattingPolicy{
   }
 
   public boolean indentChildrenOf(final XmlTag parentTag) {
-    return XmlChildRole.START_TAG_START_FINDER.findChild(parentTag.getNode()) != null;
+    return !(parentTag.getFirstChild() instanceof PsiErrorElement);
   }
 
   public boolean insertLineBreakBeforeTag(final XmlTag xmlTag) {

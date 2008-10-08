@@ -44,7 +44,7 @@ public abstract class XmlFormattingPolicy {
     if (builder != null) {
       final Block result = builder.createModel(root.getFirst(), getSettings()).getRootBlock();
       if (result instanceof XmlBlock) {
-        final XmlFormattingPolicy policy = ((XmlBlock)result).getPolicy();
+        final XmlFormattingPolicy policy = getPolicy((XmlBlock)result);
         policy.setRootModels(myRootToBlockMap);
         policy.doNotProcessJsp();
       }
@@ -52,7 +52,10 @@ public abstract class XmlFormattingPolicy {
     } else {
       return null;
     }
+  }
 
+  protected XmlFormattingPolicy getPolicy(final XmlBlock result) {
+    return result.getPolicy();
   }
 
   private void doNotProcessJsp() {

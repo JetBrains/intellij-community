@@ -30,7 +30,7 @@ import java.util.List;
 
 
 public abstract class AbstractXmlBlock extends AbstractBlock {
-  protected final XmlFormattingPolicy myXmlFormattingPolicy;
+  protected XmlFormattingPolicy myXmlFormattingPolicy;
 
   protected AbstractXmlBlock(final ASTNode node,
                           final Wrap wrap,
@@ -385,4 +385,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return commentTokens.contains(node.getElementType());
   }
 
+  public void setXmlFormattingPolicy(final XmlFormattingPolicy xmlFormattingPolicy) {
+    myXmlFormattingPolicy = xmlFormattingPolicy;
+  }
 }
