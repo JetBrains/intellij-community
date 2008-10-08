@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -778,7 +779,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return IdeFocusManager.getInstance(myProject);
   }
 
-  public void showInfoPopup(@NotNull final String toolWindowId, @Nullable final Icon icon, @NotNull final String text, @Nullable HyperlinkListener listener) {
+  @Override
+  public void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody) {
+    notifyByBalloon(toolWindowId, type, htmlBody, null, null);
+  }
+
+  public void notifyByBalloon(@NotNull final String toolWindowId, final MessageType type, @NotNull final String text, @Nullable final Icon icon,
+                              @Nullable HyperlinkListener listener) {
     checkId(toolWindowId);
 
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
@@ -804,7 +811,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       position.set(Balloon.Position.atLeft);
     }
 
-    final Balloon balloon = JBPopupFactory.getInstance().createInformationBalloonBuilder(text.replace("\n", "<br>"), icon, listener).createBalloon();
+    Icon actualIcon = icon != null ? icon : type.getDefaultIcon();
+
+    final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listener).createBalloon();
     Disposer.register(balloon, new Disposable() {
       public void dispose() {
         window.setPlaceholderMode(false);

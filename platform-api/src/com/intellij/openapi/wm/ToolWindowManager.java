@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,6 +100,9 @@ public abstract class ToolWindowManager {
    */
   public abstract IdeFocusManager getFocusManager();
 
-  public abstract void showInfoPopup(@NotNull final String toolWindowId, @Nullable final Icon icon, @NotNull final String text, @Nullable HyperlinkListener listener);
+  public abstract void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody);
+
+  public abstract void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody, @Nullable final Icon icon,
+                                       @Nullable HyperlinkListener listener);
 
 }

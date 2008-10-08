@@ -653,8 +653,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return new BalloonPopupBuilderImpl(content);
   }
 
-  public BalloonBuilder createInformationBalloonBuilder(@NotNull final String htmlContent,
-                                          @Nullable final Icon icon, @Nullable final HyperlinkListener listener) {
+  public BalloonBuilder createHtmlTextBalloonBuilder(@NotNull final String htmlContent, @Nullable final Icon icon, final Color fillColor,
+                                                        @Nullable final HyperlinkListener listener) {
 
 
     final JEditorPane text = new JEditorPane();
@@ -681,6 +681,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     content.setBorder(new EmptyBorder(2, 4, 2, 4));
 
-    return createBalloonBuilder(content);
+    final BalloonBuilder builder = createBalloonBuilder(content);
+
+    builder.setFillColor(fillColor);
+
+    return builder;
   }
 }

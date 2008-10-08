@@ -1,6 +1,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -570,12 +571,13 @@ public class BalloonImpl implements Disposable, Balloon {
     frame.getContentPane().add(content, BorderLayout.CENTER);
 
 
-    content.setBackground(Color.white);
+    final JTree tree = new JTree();
+    content.add(tree);
 
 
     final Ref<BalloonImpl> balloon = new Ref<BalloonImpl>();
 
-    content.addMouseListener(new MouseAdapter() {
+    tree.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(final MouseEvent e) {
         if (balloon.get() != null && balloon.get().isVisible()) {
@@ -591,7 +593,7 @@ public class BalloonImpl implements Disposable, Balloon {
           pane.setBorder(null);
           pane.setPreferredSize(size);
 
-          balloon.set(new BalloonImpl(pane, Color.black, Color.pink, true, true, true));
+          balloon.set(new BalloonImpl(pane, Color.black, MessageType.ERROR.getPopupBackground(), true, true, true));
           balloon.get().setShowPointer(true);
 
           if (e.isControlDown()) {

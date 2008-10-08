@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -64,11 +65,13 @@ public class HotSwapProgressImpl extends HotSwapProgress{
         final List<String> errors = getMessages(MessageCategory.ERROR);
         final List<String> warnings = getMessages(MessageCategory.WARNING);
         if (errors.size() > 0) {
-          ToolWindowManager.getInstance(getProject()).showInfoPopup(ToolWindowId.DEBUG, Messages.getErrorIcon(), buildMessage(errors), null);
+          ToolWindowManager.getInstance(getProject()).notifyByBalloon(ToolWindowId.DEBUG, MessageType.ERROR, buildMessage(errors), null,
+                                                                      null);
           WindowManager.getInstance().getStatusBar(getProject()).setInfo(DebuggerBundle.message("status.hot.swap.completed.with.errors"));
         }
         else if (warnings.size() > 0){
-          ToolWindowManager.getInstance(getProject()).showInfoPopup(ToolWindowId.DEBUG, Messages.getWarningIcon(), buildMessage(warnings), null);
+          ToolWindowManager.getInstance(getProject()).notifyByBalloon(ToolWindowId.DEBUG, MessageType.WARNING, buildMessage(warnings),
+                                                                      Messages.getWarningIcon(), null);
           WindowManager.getInstance().getStatusBar(getProject()).setInfo(DebuggerBundle.message("status.hot.swap.completed.with.warnings"));
         }
         else {

@@ -11,6 +11,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -40,6 +41,10 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"ConstantConditions"})
 public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
+
+  public void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody) {
+  }
+
   private static final ToolWindow HEADLESS_WINDOW = new ToolWindow(){
     public boolean isActive() {
       return false;
@@ -257,7 +262,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public void showInfoPopup(@NotNull final String toolWindowId, @Nullable final Icon icon, @NotNull final String text, @Nullable final HyperlinkListener listener) {
+  public void notifyByBalloon(@NotNull final String toolWindowId, final MessageType type, @NotNull final String text, @Nullable final Icon icon,
+                              @Nullable final HyperlinkListener listener) {
   }
 
   public void addToolWindowManagerListener(ToolWindowManagerListener l) {

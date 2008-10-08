@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
@@ -304,7 +305,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
             if (notFoundActions == null || notFoundActions.isEmpty()) {
               Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
-              ToolWindowManager.getInstance(myProject).showInfoPopup(ToolWindowId.FIND, IconLoader.getIcon("/actions/find.png"), message, null);
+              ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO, message, IconLoader.getIcon("/actions/find.png"),
+                                                                       null);
             }
             else {
               List<String> titles = new ArrayList<String>(notFoundActions.size() + 1);
