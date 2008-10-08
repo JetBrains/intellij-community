@@ -66,8 +66,8 @@ public class FeatureDescriptor{
     myDisplayName = displayName;
   }
 
-  public FeatureDescriptor(String id,
-                       String groupId,
+  public FeatureDescriptor(@NonNls String id,
+                       @NonNls String groupId,
                        @NonNls String tipFileName,
                        String displayName,
                        int daysBeforeFirstShowUp,
