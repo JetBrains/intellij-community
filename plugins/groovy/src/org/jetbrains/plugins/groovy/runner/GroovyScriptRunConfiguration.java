@@ -38,6 +38,7 @@ import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gant.runner.GantRunConfigurationEditor;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -112,7 +113,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new GroovyRunConfigurationEditor();
+    return new GantRunConfigurationEditor();
   }
 
   private void configureJavaParams(JavaParameters params, Module module) throws CantRunException {
