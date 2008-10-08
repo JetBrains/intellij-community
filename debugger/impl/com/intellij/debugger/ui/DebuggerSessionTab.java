@@ -15,7 +15,7 @@ import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
-import com.intellij.diagnostic.logging.LogConsole;
+import com.intellij.diagnostic.logging.LogConsoleImpl;
 import com.intellij.diagnostic.logging.LogConsoleManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.ExecutionException;
@@ -305,7 +305,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   public void addLogConsole(final String name, final String path, final long skippedContent) {
     final Ref<Content> content = new Ref<Content>();
 
-    final LogConsole log = new LogConsole(myProject, new File(path), skippedContent, name, false) {
+    final LogConsoleImpl log = new LogConsoleImpl(myProject, new File(path), skippedContent, name, false) {
       public boolean isActive() {
         final Content logContent = content.get();
         return logContent != null && logContent.isSelected();
@@ -323,10 +323,10 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   }
 
   public void removeLogConsole(final String path) {
-    LogConsole componentToRemove = null;
+    LogConsoleImpl componentToRemove = null;
     for (AdditionalTabComponent tabComponent : myAdditionalContent.keySet()) {
-      if (tabComponent instanceof LogConsole) {
-        final LogConsole console = (LogConsole)tabComponent;
+      if (tabComponent instanceof LogConsoleImpl) {
+        final LogConsoleImpl console = (LogConsoleImpl)tabComponent;
         if (Comparing.strEqual(console.getPath(), path)) {
           componentToRemove = console;
           break;

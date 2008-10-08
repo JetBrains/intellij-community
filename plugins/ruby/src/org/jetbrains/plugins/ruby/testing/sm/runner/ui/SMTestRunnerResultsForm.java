@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.ruby.testing.sm.runner.ui;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
-import com.intellij.diagnostic.logging.LogConsole;
+import com.intellij.diagnostic.logging.LogConsoleImpl;
 import com.intellij.diagnostic.logging.LogConsoleManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
@@ -80,7 +80,7 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
   private final TestConsoleProperties myConsoleProperties;
 
   private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
-  private Map<LogConsole, TabsListener> myLogToListenerMap = new HashMap<LogConsole, TabsListener>();
+  private Map<LogConsoleImpl, TabsListener> myLogToListenerMap = new HashMap<LogConsoleImpl, TabsListener>();
   private final List<EventsListener> myEventListeners = new ArrayList<EventsListener>();
   private final List<TestProxySelectionChangedListener> myTestsTreeSelectionListeners = new ArrayList<TestProxySelectionChangedListener>();
 
@@ -178,8 +178,8 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
     
     //attachStopLogConsoleTrackingListener
     for (AdditionalTabComponent component: myAdditionalComponents.keySet()) {
-      if (component instanceof LogConsole){
-        ((LogConsole)component).attachStopLogConsoleTrackingListener(null);
+      if (component instanceof LogConsoleImpl){
+        ((LogConsoleImpl)component).attachStopLogConsoleTrackingListener(null);
       }
     }
   }
@@ -219,7 +219,7 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
 
   public void addLogConsole(@NotNull final String name, @NotNull final String path,
                             final long skippedContent){
-    final LogConsole log = new LogConsole(myProject,
+    final LogConsoleImpl log = new LogConsoleImpl(myProject,
                                           new File(path),
                                           skippedContent, name, true) {
       public boolean isActive() {
@@ -263,10 +263,10 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
   }
 
   public void removeLogConsole(@NotNull final String path) {
-    LogConsole logConsoleToRemove = null;
+    LogConsoleImpl logConsoleToRemove = null;
     for (AdditionalTabComponent tabComponent : myAdditionalComponents.keySet()) {
-      if (tabComponent instanceof LogConsole) {
-        final LogConsole console = (LogConsole)tabComponent;
+      if (tabComponent instanceof LogConsoleImpl) {
+        final LogConsoleImpl console = (LogConsoleImpl)tabComponent;
         if (Comparing.strEqual(console.getPath(), path)) {
           logConsoleToRemove = console;
           break;

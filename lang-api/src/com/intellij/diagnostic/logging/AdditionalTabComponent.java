@@ -19,6 +19,7 @@ package com.intellij.diagnostic.logging;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.ui.ComponentWithActions;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,6 +43,7 @@ public abstract class AdditionalTabComponent extends JPanel implements Component
     return null;
   }
 
+  @NotNull
   public JComponent getComponent(){
     return this;
   }

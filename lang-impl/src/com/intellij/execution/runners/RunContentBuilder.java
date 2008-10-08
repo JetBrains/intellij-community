@@ -5,7 +5,7 @@
 package com.intellij.execution.runners;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
-import com.intellij.diagnostic.logging.LogConsole;
+import com.intellij.diagnostic.logging.LogConsoleImpl;
 import com.intellij.diagnostic.logging.LogConsoleManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.ExecutionResult;
@@ -142,12 +142,15 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   }
 
   public void addLogConsole(final String name, final String path, final long skippedContent) {
-    final LogConsole log = new LogConsole(myProject, new File(path), skippedContent, name, false){
+    final LogConsoleImpl log = new LogConsoleImpl(myProject, new File(path), skippedContent, name, false){
       public boolean isActive() {
         final Content content = myUi.findContent(path);
         return content != null && content.isSelected();
       }
     };
+    if (myEnvironment.getRunProfile() instanceof RunConfigurationBase) {
+      ((RunConfigurationBase) myEnvironment.getRunProfile()).customizeLogConsole(log);
+    }
     log.attachStopLogConsoleTrackingListener(myExecutionResult.getProcessHandler());
     addAdditionalTabComponent(log, path);
 
@@ -163,7 +166,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   public void removeLogConsole(final String path) {
     final Content content = myUi.findContent(path);
     if (content != null) {
-      final LogConsole log = (LogConsole)content.getComponent();
+      final LogConsoleImpl log = (LogConsoleImpl)content.getComponent();
       removeAdditionalTabComponent(log);
     }
   }

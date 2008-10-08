@@ -19,11 +19,10 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.util.Map;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Alexey Kudravtsev
@@ -56,7 +55,7 @@ public class ConsoleViewContentType {
     ourRegisteredTypes.put(ProcessOutputTypes.STDERR, ERROR_OUTPUT);
   }
 
-  protected ConsoleViewContentType(@NonNls final String name, final TextAttributes textAttributes) {
+  public ConsoleViewContentType(@NonNls final String name, final TextAttributes textAttributes) {
     this.myName = name;
     myTextAttributes = textAttributes;
   }
@@ -69,11 +68,11 @@ public class ConsoleViewContentType {
     return myTextAttributes;
   }
 
-  public static void registerNewConsoleViewType(final Key processOutputType, final ConsoleViewContentType attributes) {
+  public synchronized static void registerNewConsoleViewType(final Key processOutputType, final ConsoleViewContentType attributes) {
     ourRegisteredTypes.put(processOutputType, attributes);
   }
 
-  public static ConsoleViewContentType getConsoleViewType(final Key processOutputType) {
+  public synchronized static ConsoleViewContentType getConsoleViewType(final Key processOutputType) {
     if (ourRegisteredTypes.containsKey(processOutputType)) {
       return ourRegisteredTypes.get(processOutputType);
     }
