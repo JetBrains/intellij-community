@@ -20,10 +20,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.i18n.GitBundle;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

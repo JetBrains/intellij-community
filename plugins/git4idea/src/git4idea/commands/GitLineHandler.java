@@ -34,11 +34,11 @@ public class GitLineHandler extends GitHandler {
   /**
    * the partial line from stdout stream
    */
-  final StringBuilder myStdoutLine = new StringBuilder();
+  private final StringBuilder myStdoutLine = new StringBuilder();
   /**
    * the partial line from stderr stream
    */
-  final StringBuilder myStderrLine = new StringBuilder();
+  private final StringBuilder myStderrLine = new StringBuilder();
   /**
    * Line listeners
    */
@@ -51,6 +51,7 @@ public class GitLineHandler extends GitHandler {
    * @param directory a process directory
    * @param command   a command to execute
    */
+  @SuppressWarnings({"WeakerAccess"})
   public GitLineHandler(@NotNull Project project, @NotNull File directory, @NonNls @NotNull String command) {
     super(project, directory, command);
   }

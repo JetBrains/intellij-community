@@ -27,10 +27,10 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.text.SyncDateFormat;
+import git4idea.GitRevisionNumber;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
-import git4idea.GitRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;

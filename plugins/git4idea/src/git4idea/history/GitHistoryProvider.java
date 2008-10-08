@@ -25,10 +25,9 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.util.ui.ColumnInfo;
+import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.config.GitVcsSettings;
-import git4idea.GitUtil;
-import git4idea.history.GitHistoryTreeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

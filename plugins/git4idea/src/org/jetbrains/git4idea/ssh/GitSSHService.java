@@ -150,24 +150,25 @@ public class GitSSHService implements ApplicationComponent {
         String utilPath = PathUtil.getJarPathForClass(FileUtil.class);
         // six parameters are enough for the git case (actually 4 are enough)
         out.print("java -cp \"" +
-                    mainPath +
-                    File.pathSeparator +
-                    sshPath +
-                    File.pathSeparator +
-                    codecPath +
-                    File.pathSeparator +
-                    xmlRcpPath +
-                    File.pathSeparator +
-                    resPath +
-                    File.pathSeparator +
-                    utilPath +
-                    "\" " +
-                    SSHMain.class.getName() +
-                    " " +
-                    myXmlRpcServer.getPortNumber());
-        if(SystemInfo.isWindows) {
+                  mainPath +
+                  File.pathSeparator +
+                  sshPath +
+                  File.pathSeparator +
+                  codecPath +
+                  File.pathSeparator +
+                  xmlRcpPath +
+                  File.pathSeparator +
+                  resPath +
+                  File.pathSeparator +
+                  utilPath +
+                  "\" " +
+                  SSHMain.class.getName() +
+                  " " +
+                  myXmlRpcServer.getPortNumber());
+        if (SystemInfo.isWindows) {
           out.println(" %1 %2 %3 %4 %5 %6");
-        } else {
+        }
+        else {
           out.println(" \"$@\"");
         }
       }

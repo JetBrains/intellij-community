@@ -65,7 +65,7 @@ public class GitChangeProvider implements ChangeProvider {
       for (Change file : files) {
         builder.processChange(file);
       }
-      for(VirtualFile f : command.unversionedFiles()) {
+      for (VirtualFile f : command.unversionedFiles()) {
         builder.processUnversionedFile(f);
       }
     }

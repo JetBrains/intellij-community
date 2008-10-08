@@ -18,8 +18,8 @@ package git4idea.commands;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
-import git4idea.i18n.GitBundle;
 import git4idea.GitUtil;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +37,7 @@ public class GitHandlerUtil {
   }
 
   /**
-   * Execute simple process synchrnously
+   * Execute simple process synchrnously with progress
    *
    * @param handler        a handler
    * @param operationTitle an operation title shown in progress dialog
@@ -62,9 +62,8 @@ public class GitHandlerUtil {
     return handler.getStdout();
   }
 
-
   /**
-   * Execute simple process synchrnously
+   * Execute simple process synchrnously with progress
    *
    * @param handler        a handler
    * @param operationTitle an operation title shown in progress dialog

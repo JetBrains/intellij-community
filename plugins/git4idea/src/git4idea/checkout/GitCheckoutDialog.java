@@ -22,8 +22,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.validators.GitBranchNameValidator;
 import git4idea.i18n.GitBundle;
+import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;

@@ -26,13 +26,12 @@ import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitContentRevision;
+import git4idea.GitRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
-
-import git4idea.GitRevisionNumber;
-import git4idea.GitContentRevision;
 
 /**
  * Git diff provider

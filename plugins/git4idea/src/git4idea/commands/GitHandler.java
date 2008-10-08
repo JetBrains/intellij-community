@@ -24,13 +24,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.git4idea.ssh.GitSSHGUIHandler;
-import org.jetbrains.git4idea.ssh.GitSSHService;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.git4idea.ssh.GitSSHGUIHandler;
+import org.jetbrains.git4idea.ssh.GitSSHService;
 
 import java.io.File;
 import java.util.Arrays;
@@ -85,6 +87,10 @@ public abstract class GitHandler {
    */
   private Integer myExitCode;
   /**
+   * No ssh flag
+   */
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private boolean myNoSSHFlag = false;
+  /**
    * listeners
    */
   private final EventDispatcher<GitHandlerListener> myListeners = EventDispatcher.create(GitHandlerListener.class);
@@ -113,6 +119,24 @@ public abstract class GitHandler {
     return myProject;
   }
 
+  /**
+   * Set SSH flag. This flag should be set to true for commands that never interact with remote repositories.
+   *
+   * @param value if value is true, the custom ssh is not used for the command.
+   */
+  @SuppressWarnings({"WeakerAccess"})
+  public void setNoSSH(boolean value) {
+    checkNotStarted();
+    myNoSSHFlag = value;
+  }
+
+  /**
+   * @return true if SSH is not invoked by this command.
+   */
+  @SuppressWarnings({"WeakerAccess"})
+  public boolean isNoSSH() {
+    return myNoSSHFlag;
+  }
 
   /**
    * Add listner to handler
@@ -135,6 +159,7 @@ public abstract class GitHandler {
    *
    * @param parameters a parameters to add
    */
+  @SuppressWarnings({"WeakerAccess"})
   public void addParameters(@NonNls @NotNull String... parameters) {
     checkNotStarted();
     myCommandLine.addParameters(parameters);
@@ -156,12 +181,28 @@ public abstract class GitHandler {
    * @param filePaths a parameters to add
    * @throws IllegalArgumentException if some path is not under root.
    */
+  @SuppressWarnings({"WeakerAccess"})
   public void addRelativePaths(@NotNull final Collection<FilePath> filePaths) {
     checkNotStarted();
     for (FilePath path : filePaths) {
       myCommandLine.addParameter(relativePath(myWorkingDirectory, path));
     }
   }
+
+  /**
+   * Add virtual file parameters. The parameters are made relative to the working directory
+   *
+   * @param files a parameters to add
+   * @throws IllegalArgumentException if some path is not under root.
+   */
+  @SuppressWarnings({"WeakerAccess"})
+  public void addRelativeFiles(@NotNull final Collection<VirtualFile> files) {
+    checkNotStarted();
+    for (VirtualFile file : files) {
+      myCommandLine.addParameter(relativePath(myWorkingDirectory, file));
+    }
+  }
+
 
   /**
    * Get relative path
@@ -172,13 +213,37 @@ public abstract class GitHandler {
    * @throws IllegalArgumentException if path is not under root.
    */
   private static String relativePath(final File root, FilePath path) {
-    String rc = FileUtil.getRelativePath(root, path.getIOFile());
+    return relativePath(root, path.getIOFile());
+  }
+
+  /**
+   * Get relative path
+   *
+   * @param root a root path
+   * @param file a virtual file
+   * @return a relative path
+   * @throws IllegalArgumentException if path is not under root.
+   */
+  private static String relativePath(final File root, VirtualFile file) {
+    return relativePath(root, GitUtil.getIOFile(file));
+  }
+
+
+  /**
+   * Get relative path
+   *
+   * @param root a root path
+   * @param path a path to file (possibly deleted file)
+   * @return a relative path
+   * @throws IllegalArgumentException if path is not under root.
+   */
+  private static String relativePath(final File root, File path) {
+    String rc = FileUtil.getRelativePath(root, path);
     if (rc == null) {
-      throw new IllegalArgumentException("The file " + path.getIOFile() + " cannot be made relative to " + root);
+      throw new IllegalArgumentException("The file " + path + " cannot be made relative to " + root);
     }
     return rc.replace(File.separatorChar, '/');
   }
-
 
   /**
    * check that process is not started yet
@@ -240,12 +305,14 @@ public abstract class GitHandler {
       if (log.isDebugEnabled()) {
         log.debug("running git: " + myCommandLine.getCommandLineString() + " in " + myWorkingDirectory);
       }
-      GitSSHService ssh = GitSSHService.getInstance();
       final Map<String, String> env = new HashMap<String, String>(System.getenv());
-      env.put(GitSSHService.GIT_SSH_ENV, ssh.getScriptPath().getPath());
-      myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject));
-      myEnvironmentCleanedUp = false;
-      env.put(GitSSHService.SSH_HANDLER_ENV, Integer.toString(myHandlerNo));
+      if (!myNoSSHFlag) {
+        GitSSHService ssh = GitSSHService.getInstance();
+        env.put(GitSSHService.GIT_SSH_ENV, ssh.getScriptPath().getPath());
+        myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject));
+        myEnvironmentCleanedUp = false;
+        env.put(GitSSHService.SSH_HANDLER_ENV, Integer.toString(myHandlerNo));
+      }
       myCommandLine.setEnvParams(env);
       // start process
       myProcess = myCommandLine.createProcess();
@@ -333,7 +400,7 @@ public abstract class GitHandler {
    * Cleanup environment
    */
   private synchronized void cleanupEnv() {
-    if (!myEnvironmentCleanedUp) {
+    if (!myNoSSHFlag && !myEnvironmentCleanedUp) {
       GitSSHService ssh = GitSSHService.getInstance();
       myEnvironmentCleanedUp = true;
       ssh.unregisterHander(myHandlerNo);
@@ -347,5 +414,4 @@ public abstract class GitHandler {
     checkStarted();
     myHandler.waitFor();
   }
-
 }

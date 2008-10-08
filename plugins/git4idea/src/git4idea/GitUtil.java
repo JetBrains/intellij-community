@@ -46,11 +46,26 @@ public class GitUtil {
     // do nothink
   }
 
+  /**
+   * Get {@link java.io.File} from {@link VirtualFile}. Note that only files from {@link LocalFileSystem} are supported. Since git cannot work with other kinds of filesystems anyway.
+   *
+   * @param file a virtual file
+   * @return a matching {@link java.io.File}
+   */
+  public static File getIOFile(VirtualFile file) {
+    if (file.getFileSystem() instanceof LocalFileSystem) {
+      return new File(file.getPath());
+    }
+    else {
+      throw new IllegalArgumentException("Only local file system is supported: " + file.getFileSystem().getClass().getName());
+    }
+  }
+
   @NotNull
   public static VirtualFile getVcsRoot(@NotNull final Project project, @NotNull final FilePath filePath) {
     VirtualFile vfile = VcsUtil.getVcsRootFor(project, filePath);
-    if(vfile == null) {
-      throw new IllegalStateException("The file is not under git: "+filePath);
+    if (vfile == null) {
+      throw new IllegalStateException("The file is not under git: " + filePath);
     }
     return vfile;
   }
@@ -63,7 +78,8 @@ public class GitUtil {
   }
 
   @NotNull
-  private static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(@NotNull Project project, @NotNull List<VirtualFile> virtualFiles) {
+  public static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(@NotNull Project project,
+                                                                       @NotNull Collection<VirtualFile> virtualFiles) {
     Map<VirtualFile, List<VirtualFile>> result = new HashMap<VirtualFile, List<VirtualFile>>();
 
     for (VirtualFile file : virtualFiles) {
@@ -154,5 +170,30 @@ public class GitUtil {
     catch (Exception e) {
       throw new VcsException("Unable to locate temporary directory", e);
     }
+  }
+
+  /**
+   * Sort files by vcs root
+   *
+   * @param files files to delete.
+   * @return the map from root to the files under the root
+   */
+  public static Map<VirtualFile, List<FilePath>> sortFilePathsByVcsRoot(Project project, final Collection<FilePath> files) {
+    Map<VirtualFile, List<FilePath>> rc = new HashMap<VirtualFile, List<FilePath>>();
+    // TODO fix for submodules (several subroots within single vcsroot)
+    for (FilePath p : files) {
+      VirtualFile root = VcsUtil.getVcsRootFor(project, p);
+      if (root == null) {
+        // non vcs file
+        continue;
+      }
+      List<FilePath> l = rc.get(root);
+      if (l == null) {
+        l = new ArrayList<FilePath>();
+        rc.put(root, l);
+      }
+      l.add(p);
+    }
+    return rc;
   }
 }

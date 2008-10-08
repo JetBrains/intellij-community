@@ -21,10 +21,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
-import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

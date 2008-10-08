@@ -17,7 +17,6 @@ package git4idea;
  * This code was originally derived from the MKS & Mercurial IDEA VCS plugins
  */
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -26,7 +25,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -37,18 +35,17 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import git4idea.annotate.GitAnnotationProvider;
+import git4idea.changes.GitChangeProvider;
+import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.config.GitVcsConfigurable;
 import git4idea.config.GitVcsSettings;
-import git4idea.i18n.GitBundle;
-import git4idea.changes.GitChangeProvider;
-import git4idea.vfs.GitVirtualFileAdaptor;
-import git4idea.rollback.GitRollbackEnvironment;
-import git4idea.annotate.GitAnnotationProvider;
-import git4idea.history.GitHistoryProvider;
-import git4idea.update.GitUpdateEnvironment;
-import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.diff.GitDiffProvider;
+import git4idea.history.GitHistoryProvider;
+import git4idea.i18n.GitBundle;
+import git4idea.rollback.GitRollbackEnvironment;
+import git4idea.update.GitUpdateEnvironment;
+import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +56,7 @@ import java.util.List;
 /**
  * Git VCS implementation
  */
-public class GitVcs extends AbstractVcs implements Disposable {
+public class GitVcs extends AbstractVcs {
   @NonNls public static final String NAME = "Git";
   private static final String UNUNDEXED_FILES_CHANGELIST_NAME = GitBundle.getString("unindexed.files.changlelist.name");
   private final ChangeProvider changeProvider;
@@ -74,12 +71,15 @@ public class GitVcs extends AbstractVcs implements Disposable {
   private final DiffProvider diffProvider;
   private final VcsHistoryProvider historyProvider;
 
-  private Disposable activationDisposable;
   private final ProjectLevelVcsManager vcsManager;
   private final GitVcsSettings settings;
   private final EditorColorsScheme editorColorsScheme;
   private final Configurable configurable;
   private final RevisionSelector revSelector;
+  /**
+   * a vfs listener
+   */
+  private GitVFSListener myVFSListener;
 
   public static GitVcs getInstance(@NotNull Project project) {
     return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
@@ -202,30 +202,20 @@ public class GitVcs extends AbstractVcs implements Disposable {
   }
 
   @Override
-  public void shutdown() throws VcsException {
-    super.shutdown();
-    Disposer.dispose(this);
-  }
-
-  @Override
   public void activate() {
     super.activate();
-    activationDisposable = new Disposable() {
-      public void dispose() {
-        // TODO what should be done here?
-      }
-    };
-
-    VirtualFileManager.getInstance().addVirtualFileListener(new GitVirtualFileAdaptor(this, myProject), activationDisposable);
+    if (myVFSListener == null) {
+      myVFSListener = new GitVFSListener(myProject, this);
+    }
   }
 
   @Override
   public void deactivate() {
+    if (myVFSListener != null) {
+      myVFSListener.dispose();
+      myVFSListener = null;
+    }
     super.deactivate();
-
-    assert activationDisposable != null;
-    Disposer.dispose(activationDisposable);
-    activationDisposable = null;
   }
 
   @NotNull
@@ -276,9 +266,5 @@ public class GitVcs extends AbstractVcs implements Disposable {
 
   private void showMessage(@NotNull String message, final TextAttributesKey text) {
     vcsManager.addMessageToConsoleWindow(message, editorColorsScheme.getAttributes(text));
-  }
-
-  public void dispose() {
-    assert activationDisposable == null;
   }
 }
