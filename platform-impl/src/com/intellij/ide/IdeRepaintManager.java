@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6209673
  */
-public class HackyRepaintManager extends RepaintManager {
+public class IdeRepaintManager extends RepaintManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.HackyRepaintManager");
 
   private Map<GraphicsConfiguration, VolatileImage> myImagesMap;
@@ -102,8 +102,8 @@ public class HackyRepaintManager extends RepaintManager {
       }
       myLastComponent = new WeakReference<JComponent>(c);
 
-      LOG.warn("Access to realized UI components should be done only from AWT event dispatch thread," +
-               " revalidate() and repaint() is ok from any thread", exception);
+      LOG.warn("Access to realized (ever shown) UI components should be done only from the AWT event dispatch thread," +
+               " revalidate(), invalidate() & repaint() is ok from any thread", exception);
     }
   }
 }
