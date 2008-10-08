@@ -804,7 +804,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       position.set(Balloon.Position.atLeft);
     }
 
-    final Balloon balloon = JBPopupFactory.getInstance().createInformationBalloonBuilder(text, icon, listener).createBalloon();
+    final Balloon balloon = JBPopupFactory.getInstance().createInformationBalloonBuilder(text.replace("\n", "<br>"), icon, listener).createBalloon();
     Disposer.register(balloon, new Disposable() {
       public void dispose() {
         window.setPlaceholderMode(false);
