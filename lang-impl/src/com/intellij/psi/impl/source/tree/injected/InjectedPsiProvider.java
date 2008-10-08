@@ -509,14 +509,14 @@ class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places, Ps
     return injectedPsi;
   }
 
-  static boolean isPSItheSame(ASTNode injectedNode, ASTNode oldFileNode) {
-    boolean textSame = injectedNode.getText().equals(oldFileNode.getText());
+  private static boolean isPSItheSame(ASTNode injectedNode, ASTNode oldFileNode) {
+    //boolean textSame = injectedNode.getText().equals(oldFileNode.getText());
 
     boolean psiSame = comparePSI(injectedNode, oldFileNode);
-    if (psiSame != textSame) {
-      throw new RuntimeException(textSame + ";" + psiSame);
-    }
-    return textSame;
+    //if (psiSame != textSame) {
+    //  throw new RuntimeException(textSame + ";" + psiSame);
+    //}
+    return psiSame;
   }
 
   private static boolean comparePSI(ASTNode injectedNode, ASTNode oldFileNode) {
