@@ -606,7 +606,7 @@ public final class PsiUtil extends PsiUtilBase {
    * @return element with static modifier enclosing place and enclosed by aClass (if not null)
    */
   @Nullable
-  public static PsiModifierListOwner getEnclosingStaticElement(PsiElement place, PsiClass aClass) {
+  public static PsiModifierListOwner getEnclosingStaticElement(PsiElement place, @Nullable PsiClass aClass) {
     LOG.assertTrue(aClass == null || !place.isPhysical() || PsiTreeUtil.isAncestor(aClass, place, false));
     PsiElement parent = place;
     while (parent != aClass) {
