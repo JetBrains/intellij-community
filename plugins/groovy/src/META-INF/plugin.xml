@@ -153,7 +153,7 @@
 
     <!--Gant-->
     <facetType implementation="org.jetbrains.plugins.gant.config.GantFacetType"/>
-    <frameworkSupport implementation="org.jetbrains.plugins.gant.config.GantSupportProvider"/>
+    <frameworkSupport implementation="org.jetbrains.plugins.gant.config.GantFacetSupportProvider"/>
     <!--Gant Run/debug-->
     <configurationType implementation="org.jetbrains.plugins.gant.runner.GantScriptRunConfigurationType"/>
     <configurationProducer implementation="org.jetbrains.plugins.gant.runner.GantScriptRunConfigurationProducer"/>
