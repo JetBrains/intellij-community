@@ -434,6 +434,13 @@ public class DocumentationManager {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+              }
+            });
+
+            if (!element.isValid()) return;
 
             if (text == null) {
               component.setText(CodeInsightBundle.message("no.documentation.found"), true);
