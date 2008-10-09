@@ -536,7 +536,6 @@ public class JBTabsImpl extends JComponent
       }
     }
 
-
     if (myRequestFocusOnLastFocusedComponent && mySelectedInfo != null) {
       if (isMyChildIsFocusedNow()) {
         mySelectedInfo.setLastFocusOwner(getFocusOwner());
@@ -627,6 +626,19 @@ public class JBTabsImpl extends JComponent
       }
     }
     myDeferredToRemove.clear();
+  }
+
+  private void printRemoveInfo(final Component each) {
+    TabInfo removingInfo = null;
+    final List<TabInfo> all = getTabs();
+    for (TabInfo eachInfo : all) {
+      if (eachInfo.getComponent() == each) {
+        removingInfo = eachInfo;
+        break;
+      }
+    }
+
+    System.out.println(" - removing " + (removingInfo != null ? " component for " + removingInfo : each));
   }
 
   @Nullable
@@ -1571,24 +1583,30 @@ public class JBTabsImpl extends JComponent
   }
 
   public ActionCallback removeTab(final TabInfo info) {
-    return removeTab(info, true);
+    return removeTab(info, null);
   }
 
-  public ActionCallback removeTab(final TabInfo info, boolean transferFocus) {
+  public ActionCallback removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTranfer) {
     if (info == null || !getTabs().contains(info)) return new ActionCallback.Done();
 
     final ActionCallback result = new ActionCallback();
 
-    TabInfo toSelect = transferFocus ? getToSelectOnRemoveOf(info) : null;
+    TabInfo toSelect;
+    if (forcedSelectionTranfer == null) {
+      toSelect = getToSelectOnRemoveOf(info);
+    } else {
+      assert myVisibleInfos.contains(forcedSelectionTranfer) : "Cannot find tab for selection transfer, tab=" + forcedSelectionTranfer;
+      toSelect = forcedSelectionTranfer;
+    }
 
 
     if (toSelect != null) {
       processRemove(info, false);
       _setSelected(toSelect, true).doWhenProcessed(new Runnable() {
         public void run() {
-          removeDeferred();
+          removeDeferred().notifyWhenDone(result);
         }
-      }).notifyWhenDone(result);
+      });
     }
     else {
       processRemove(info, true);
@@ -1742,7 +1760,7 @@ public class JBTabsImpl extends JComponent
 
 
   private boolean isToDeferRemoveForLater(JComponent c) {
-    return true;
+    return c.getRootPane() != null;
   }
 
   private void relayout(boolean forced, final boolean layoutNow) {

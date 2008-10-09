@@ -117,13 +117,9 @@ public class EditorWindow {
             final int componentIndex = findComponentIndex(editor.getComponent());
             if (componentIndex >= 0) { // editor could close itself on decomposition
               final int indexToSelect = calcIndexToSelect(file, componentIndex);
-              myTabbedPane.removeTabAt(componentIndex).doWhenDone(new Runnable() {
+              myTabbedPane.removeTabAt(componentIndex, indexToSelect).doWhenDone(new Runnable() {
                 public void run() {
                   editorManager.disposeComposite(editor);
-
-                  if (!myIsDisposed && indexToSelect >= 0 && indexToSelect < myTabbedPane.getTabCount()) {
-                    myTabbedPane.setSelectedIndex(indexToSelect);
-                  }
                 }
               });
             }
@@ -155,7 +151,7 @@ public class EditorWindow {
     final int currentlySelectedIndex = myTabbedPane.getSelectedIndex();
     if (currentlySelectedIndex != fileIndex) {
       // if the file being closed is not currently selected, keep the currently selected file open
-      return fileIndex < currentlySelectedIndex ? currentlySelectedIndex - 1 : -1;
+      return currentlySelectedIndex;
     }
     if (UISettings.getInstance().ACTIVATE_MRU_EDITOR_ON_CLOSE) {
       // try to open last visited file
@@ -172,7 +168,7 @@ public class EditorWindow {
         final int histFileIndex = findComponentIndex(editor.getComponent());
         if (histFileIndex >= 0) {
           // if the file being closed is located before the hist file, then after closing the index of the histFile will be shifted by -1
-          return fileIndex < histFileIndex ? histFileIndex - 1 : histFileIndex;
+          return histFileIndex;
         }
       }
     }

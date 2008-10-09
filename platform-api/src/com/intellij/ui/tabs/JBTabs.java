@@ -24,7 +24,7 @@ public interface JBTabs {
 
   ActionCallback removeTab(@Nullable TabInfo info);
 
-  ActionCallback removeTab(@Nullable TabInfo info, boolean transferFocus);
+  ActionCallback removeTab(@Nullable TabInfo info, @Nullable TabInfo forcedSelectionTranfer);
 
   void removeAllTabs();
 

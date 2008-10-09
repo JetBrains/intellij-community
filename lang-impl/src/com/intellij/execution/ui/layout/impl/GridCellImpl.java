@@ -137,7 +137,7 @@ public class GridCellImpl implements GridCell, Disposable {
 
     revalidateCell(new Runnable() {
       public void run() {
-        myTabs.removeTab(info, true);
+        myTabs.removeTab(info);
       }
     });
 
