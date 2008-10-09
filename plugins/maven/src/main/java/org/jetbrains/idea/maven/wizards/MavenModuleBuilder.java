@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlElement;
+import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
 import org.jetbrains.idea.maven.dom.model.MavenParent;
 import org.jetbrains.idea.maven.dom.model.Module;
@@ -51,7 +52,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   private MavenId myArchetypeId;
 
   public void setupRootModel(ModifiableRootModel rootModel) throws ConfigurationException {
-    VirtualFile root = findContentEntry();
+    final VirtualFile root = createAndGetContentEntry();
     rootModel.addContentEntry(root);
 
     final VirtualFile pom;
@@ -83,6 +84,17 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
       public void run() {
         MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
         manager.addManagedFile(pom);
+
+        if (myArchetypeId == null) {
+          try {
+            VfsUtil.createDirectories(root.getPath() + "/src/main/java");
+            VfsUtil.createDirectories(root.getPath() + "/src/test/java");
+          }
+          catch (IOException e) {
+            MavenLog.LOG.info(e);
+          }
+        }
+
         reimportMavenProjects(project);
 
         EditorHelper.openInEditor(getPsiFile(project, pom));
@@ -93,9 +105,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   }
 
   private void updateProjectPom(final Project project, final VirtualFile pom) {
-    new WriteCommandAction.Simple(project,
-                                  "Create new Maven module",
-                                  getPsiFile(project, pom)) {
+    new WriteCommandAction.Simple(project, "Create new Maven module") {
       protected void run() throws Throwable {
         if (myParentProject != null) {
           MavenModel model = MavenUtil.getMavenModel(project, pom);
@@ -104,6 +114,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
           parent.getGroupId().setStringValue(parentId.groupId);
           parent.getArtifactId().setStringValue(parentId.artifactId);
           parent.getVersion().setStringValue(parentId.version);
+
           if (myInheritGroupId) {
             XmlElement el = model.getGroupId().getXmlElement();
             if (el != null) el.delete();
@@ -113,13 +124,12 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
             if (el != null) el.delete();
           }
 
-
           if (pom.getParent().getParent() != myParentProject.getDirectoryFile()) {
             parent.getRelativePath().setValue(getPsiFile(project, myParentProject.getFile()));
           }
-        }
 
-        CodeStyleManager.getInstance(project).reformat(getPsiFile(project, pom));
+          CodeStyleManager.getInstance(project).reformat(getPsiFile(project, pom));
+        }
       }
     }.execute();
   }
@@ -180,9 +190,19 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     return StdModuleTypes.JAVA;
   }
 
-  public VirtualFile findContentEntry() {
-    new File(myContentRootPath).mkdirs();
-    return LocalFileSystem.getInstance().refreshAndFindFileByPath(myContentRootPath.replace('\\', '/'));
+  public MavenProjectModel findPotentialParentProject(Project project) {
+    File parentDir = new File(myContentRootPath).getParentFile();
+    if (parentDir == null) return null;
+    VirtualFile parentPom = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(parentDir, "pom.xml"));
+    if (parentPom == null) return null;
+
+    return MavenProjectsManager.getInstance(project).findProject(parentPom);
+  }
+
+  private VirtualFile createAndGetContentEntry() {
+    String path = FileUtil.toSystemIndependentName(myContentRootPath);
+    new File(path).mkdirs();
+    return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
   }
 
   public String getContentEntryPath() {
@@ -207,8 +227,16 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     myAggregatorProject = project;
   }
 
+  public MavenProjectModel getAggregatorProject() {
+    return myAggregatorProject;
+  }
+
   public void setParentProject(MavenProjectModel project) {
     myParentProject = project;
+  }
+
+  public MavenProjectModel getParentProject() {
+    return myParentProject;
   }
 
   public void setInheritedOptions(boolean groupId, boolean version) {
@@ -216,11 +244,27 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     myInheritVersion = version;
   }
 
+  public boolean isInheritGroupId() {
+    return myInheritGroupId;
+  }
+
+  public boolean isInheritVersion() {
+    return myInheritVersion;
+  }
+
   public void setProjectId(MavenId id) {
     myProjectId = id;
   }
 
+  public MavenId getProjectId() {
+    return myProjectId;
+  }
+
   public void setArchetypeId(MavenId id) {
     myArchetypeId = id;
+  }
+
+  public MavenId getArchetypeId() {
+    return myArchetypeId;
   }
 }

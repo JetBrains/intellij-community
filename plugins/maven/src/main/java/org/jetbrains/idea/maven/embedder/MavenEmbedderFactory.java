@@ -179,25 +179,11 @@ public class MavenEmbedderFactory {
   }
 
   private static MavenEmbedderWrapper createEmbedder(MavenCoreSettings settings, MavenEmbedderLogger logger, ContainerCustomizer customizer) {
-    return createEmbedder(settings.getMavenHome(),
-                          settings.getEffectiveLocalRepository(),
-                          settings.getMavenSettingsFile(),
-                          logger,
-                          settings.getClass().getClassLoader(),
-                          customizer);
-  }
-
-  private static MavenEmbedderWrapper createEmbedder(String mavenHome,
-                                                     File localRepo,
-                                                     String userSettings,
-                                                     MavenEmbedderLogger logger,
-                                                     ClassLoader classLoader,
-                                                     ContainerCustomizer customizer) {
     Configuration configuration = new DefaultConfiguration();
 
     configuration.setConfigurationCustomizer(customizer);
-    configuration.setClassLoader(classLoader);
-    configuration.setLocalRepository(localRepo);
+    configuration.setClassLoader(settings.getClass().getClassLoader());
+    configuration.setLocalRepository(settings.getEffectiveLocalRepository());
 
     //MavenEmbedderConsoleLogger l = new MavenEmbedderConsoleLogger();
     //l.setThreshold(MavenEmbedderLogger.LEVEL_WARN);
@@ -209,12 +195,12 @@ public class MavenEmbedderFactory {
     }
     configuration.setMavenEmbedderLogger(logger);
 
-    File userSettingsFile = resolveUserSettingsFile(userSettings);
+    File userSettingsFile = resolveUserSettingsFile(settings.getMavenSettingsFile());
     if (userSettingsFile != null) {
       configuration.setUserSettingsFile(userSettingsFile);
     }
 
-    File globalSettingsFile = resolveGlobalSettingsFile(mavenHome);
+    File globalSettingsFile = resolveGlobalSettingsFile(settings.getMavenHome());
     if (globalSettingsFile != null) {
       configuration.setGlobalSettingsFile(globalSettingsFile);
     }
@@ -223,10 +209,12 @@ public class MavenEmbedderFactory {
 
     validate(configuration);
 
-    System.setProperty(PROP_MAVEN_HOME, mavenHome);
+    System.setProperty(PROP_MAVEN_HOME, settings.getMavenHome());
 
     try {
-      return new MavenEmbedderWrapper(new MavenEmbedder(configuration));
+      MavenEmbedder e = new MavenEmbedder(configuration);
+      e.getSettings().setUsePluginRegistry(settings.isUsePluginRegistry());
+      return new MavenEmbedderWrapper(e);
     }
     catch (MavenEmbedderException e) {
       MavenLog.LOG.info(e);

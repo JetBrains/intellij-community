@@ -34,6 +34,12 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertModules("module");
     MavenProjectsManager.getInstance(myProject).isMavenizedModule(getModule("module"));
     assertSame(project, MavenProjectsManager.getInstance(myProject).findProject(getModule("module")));
+
+    assertNotNull(myProjectRoot.findFileByRelativePath("src/main/java"));
+    assertNotNull(myProjectRoot.findFileByRelativePath("src/test/java"));
+    
+    assertSources("module", "src/main/java");
+    assertTestSources("module", "src/test/java");
   }
 
   public void testCreatingFromArtifact() throws Exception {
