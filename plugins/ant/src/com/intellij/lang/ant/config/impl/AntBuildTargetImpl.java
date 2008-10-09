@@ -51,7 +51,7 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
       return false;
     }
     final AntBuildTargetImpl that = (AntBuildTargetImpl)obj;
-    return Comparing.equal(myName, that.myName) && myFile.equals(that.myFile);
+    return Comparing.equal(myName, that.myName) && Comparing.equal(myFile, that.myFile);
   }
 
   public Project getProject() {
