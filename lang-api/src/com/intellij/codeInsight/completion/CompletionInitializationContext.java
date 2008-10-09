@@ -20,6 +20,9 @@ public class CompletionInitializationContext {
   public static final OffsetKey SELECTION_END_OFFSET = OffsetKey.create("selectionEnd");
   public static final OffsetKey IDENTIFIER_END_OFFSET = OffsetKey.create("identifierEnd");
 
+  /**
+   * A default string that is inserted to the file before completion to guarantee that there'll always be some non-empty element there
+   */
   public static @NonNls final String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz ";
   public static @NonNls final String DUMMY_IDENTIFIER_TRIMMED = "IntellijIdeaRulezzz";
   private final Editor myEditor;

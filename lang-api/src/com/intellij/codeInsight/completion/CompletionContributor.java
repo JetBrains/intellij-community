@@ -29,6 +29,22 @@ import org.jetbrains.annotations.Nullable;
  * you want to suggest from its {@link PsiReference#getVariants()} method as {@link String}s,
  * {@link com.intellij.psi.PsiElement}s, or better {@link LookupElement}s.<p>
  *
+ * Q: OK, but what to do with CompletionContributor?<br>
+ * A: There are two ways. The easier and preferred one is to provide constructor in your contributor and register completion providers there:
+ * {@link #extend(CompletionType, ElementPattern, CompletionProvider)}.<br>
+ * A more generic way is to override default {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} implementation
+ * and provide your own. It's easier to debug, but harder to write. Remember, that completion variant collection is done in a dedicated thread
+ * WITHOUT read action, so you'll have to manually invoke {@link com.intellij.openapi.application.Application#runReadAction(Runnable)} each time
+ * you access PSI. Don't spend long time inside read action, since this will prevent user from selecting lookup element or cancelling completion.<p>
+ *
+ * Q: What does the {@link CompletionParameters#getPosition()} return?<br>
+ * A: When completion is invoked, the file being edited is first copied (the original file can be accessed from {@link com.intellij.psi.PsiFile#getOriginalFile()}
+ * and {@link CompletionParameters#getOriginalFile()}. Then a special 'dummy idetifier' string is inserted to the copied file at caret offset (removing the selection).
+ * Most often this string is an identifier (see {@link com.intellij.codeInsight.completion.CompletionInitializationContext#DUMMY_IDENTIFIER}).
+ * This is usually done to guarantee that there'll always be some non-empty element there, which will be easy to describe via {@link ElementPattern}s.
+ * Also a reference can suddenly appear in that position, which will certainly help invoking its {@link PsiReference#getVariants()}.
+ * Dummy identifier string can be easily changed in {@link #beforeCompletion(CompletionInitializationContext)} method.<p>  
+ *
  * Q: How do I get automatic lookup element filtering by prefix?<br>
  * A: When you return variants from reference ({@link PsiReference#getVariants()}), the filtering will be done
  * automatically, with prefix taken as the reference text from its start ({@link PsiReference#getRangeInElement()}) to
@@ -59,6 +75,32 @@ import org.jetbrains.annotations.Nullable;
  * the deleting range end offset, do it in {@link CompletionContributor#beforeCompletion(CompletionInitializationContext)}
  * by putting new offset to {@link CompletionInitializationContext#getOffsetMap()} as {@link com.intellij.codeInsight.completion.CompletionInitializationContext#IDENTIFIER_END_OFFSET}.<p>
  *
+ * Q: I know about my environment more than IDEA does, and I can swear that those 239 variants that IDEA suggest me in some place aren't all that relevant,
+ * so I'd be happy to filter out 42 of them. How do I do this?<br>
+ * A: This is a bit harder than just adding variants. First, you should invoke
+ * {@link com.intellij.codeInsight.completion.CompletionService#getVariantsFromContributors(com.intellij.openapi.extensions.ExtensionPointName, CompletionParameters, AbstractCompletionContributor, com.intellij.util.Consumer)}
+ * with your own consumer, and your own contributor as the third argument (this will start contributors from the next one, skipping contributors before yours,
+ * that have already passed). The consumer you provide should pass all the lookup elements to the {@link com.intellij.codeInsight.completion.CompletionResultSet}
+ * given to you, except for the ones you wish to filter out. Be careful: it's too easy to break completion this way. Finally, if you've done all this, your own
+ * contributor should return false from its {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} method, either directly
+ * or via {@link com.intellij.codeInsight.completion.CompletionProvider#CompletionProvider(boolean, boolean)} first parameter. Once again, be careful, and
+ * don't ever return false from there unless you know what you're doing! Returning false will stop other contributors, that happened to be loaded after yours,
+ * from execution, and the user will never see their so useful and precious completion variants.<p>
+ *
+ * Q: How are the lookup elements sorted?<br>
+ * A: Basically in lexicographic order, ascending, by lookup string ({@link LookupElement#getLookupString()}. But some of elements
+ * may be considered more relevant, i.e. having a bigger probability of being chosen by user. Such elements (no more than 5) may be moved to
+ * the top of lookup and highlighted with green background. This is done by hooking into lookup elements comparator via creating your own
+ * {@link CompletionWeigher} and registering it as a "weigher" extension under "completion" key.<p>
+ *
+ * Q: My completion is not working! How do I debug it?<br>
+ * A: One source of common errors is that the pattern you gave to {@link #extend(CompletionType, ElementPattern, CompletionProvider)} method
+ * may be incorrect. To debug this problem you can still override {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} in
+ * your contributor, make it only call its super and put a breakpoint there.<br>
+ * If you want to know which contributor added a particular lookup element, the best place for a breakpoint will be
+ * {@link com.intellij.codeInsight.completion.CompletionService#performCompletion(CompletionParameters, com.intellij.util.Consumer)}. The consumer passed there
+ * is the 'final' consumer, it will pass your lookup elements directly to the lookup.<p>
+ *
  * @author peter
  */
 public abstract class CompletionContributor extends AbstractCompletionContributor<CompletionParameters>{
@@ -71,6 +113,23 @@ public abstract class CompletionContributor extends AbstractCompletionContributo
     myMap.putValue(type, new Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>(place, provider));
   }
 
+  /**
+   * The main contributor method that is supposed to provide completion variants to result, basing on completion parameters.
+   * The default implementation looks for {@link com.intellij.codeInsight.completion.CompletionProvider}s you could register by
+   * invoking {@link #extend(CompletionType, ElementPattern, CompletionProvider)} from you contributor constructor,
+   * matches the desired completion type and {@link ElementPattern} with actual ones, and, depending on it, invokes those
+   * completion providers.<p>
+   *
+   * If you want to implement this functionality directly by overriding this method, the following is for you.
+   * Always check that parameters match your situation, and that completion type ({@link CompletionParameters#getCompletionType()}
+   * is of your favourite kind. This method is run outside of read action, so you have to manage this manually
+   * ({@link com.intellij.openapi.application.Application#runReadAction(Runnable)}). Don't take read actions for too long.<p>
+   *
+   * @param parameters
+   * @param result
+   * @return true if completion process should continue invoking other contributors, and false otherwise. Don't ever return false unless you
+   * know precisely what you're doing!!!
+   */
   public boolean fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(parameters.getCompletionType())) {
       final ProcessingContext context = new ProcessingContext();

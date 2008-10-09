@@ -28,6 +28,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
+ * All extensions can have an "order" attribute in their XML element that will affect the place where this extension will appear in the
+ * {@link ExtensionPoint#getExtensions()}. Possible values are "first", "last", "before ID" and "after ID" where ID
+ * is another same-type extension ID. Values can be combined in a comma-separated way. E.g. if you wish to plug before some extension XXX
+ * that has "first" as its order, you must be "first, before XXX". The same with "last".<p>
+ *
+ * Extension ID can be specified in the "id" attribute of corresponding XML element. When you specify order, it's usually a good practice
+ * to specify also id, to allow other plugin-writers to plug relatively to your extension.<p>
+ *
+ * If some anchor id can't be resolved, the constraint is ignored.
+ *
  * @author Alexander Kireyev
  */
 public class LoadingOrder {

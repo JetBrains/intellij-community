@@ -42,9 +42,6 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-
 public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
   private final CompletionType myCompletionType;
@@ -153,22 +150,14 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         ProgressManager.getInstance().runProcess(new Runnable() {
           public void run() {
             try {
-              final Collection<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
 
-              CompletionService.getCompletionService().getVariantsFromContributors(CompletionContributor.EP_NAME, parameters, null, new Consumer<LookupElement>() {
+              final LookupElement[] items = CompletionService.getCompletionService().performCompletion(parameters, new Consumer<LookupElement>() {
                 public void consume(final LookupElement lookupElement) {
-                  ApplicationManager.getApplication().runReadAction(new Runnable() {
-                    public void run() {
-                      if (lookupSet.add(lookupElement)) {
-                        indicator.addItem(lookupElement);
-                      }
-                    }
-                  });
+                  indicator.addItem(lookupElement);
                 }
               });
               indicator.getLookup().setCalculating(false);
 
-              final LookupElement[] items = lookupSet.toArray(new LookupElement[lookupSet.size()]);
               data.set(items);
               freezeSemaphore.up();
               if (items.length == 0) {
