@@ -90,7 +90,6 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
         return merged;
       }
       final ValueContainerImpl<Value> newMerged = new ValueContainerImpl<Value>();
-      myMerged = newMerged;
 
       final ValueContainer<Value> fromDisk = myInitializer.compute();
 
@@ -109,6 +108,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       myRemoved.forEach(removeAction);
       myAdded.forEach(addAction);
 
+      myMerged = newMerged;
       return newMerged;
     }
   }
