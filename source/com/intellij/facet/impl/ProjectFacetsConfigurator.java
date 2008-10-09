@@ -18,13 +18,13 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,13 +46,11 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   private Set<Facet> myCreatedFacets = new HashSet<Facet>();
   private final StructureConfigurableContext myContext;
   private final Project myProject;
-  private final NotNullFunction<Module, ModuleConfigurationState> myModuleStateProvider;
   private UserDataHolderBase myProjectData = new UserDataHolderBase();
 
-  public ProjectFacetsConfigurator(final StructureConfigurableContext context, Project project, NotNullFunction<Module, ModuleConfigurationState> moduleStateProvider) {
+  public ProjectFacetsConfigurator(final StructureConfigurableContext context, Project project) {
     myContext = context;
     myProject = project;
-    myModuleStateProvider = moduleStateProvider;
   }
 
   public List<Facet> removeFacet(Facet facet) {
@@ -151,14 +149,27 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     if (editor == null) {
       final Facet underlyingFacet = facet.getUnderlyingFacet();
       final FacetEditorContext parentContext = underlyingFacet != null ? getOrCreateEditor(underlyingFacet).getContext() : null;
-      final ModuleConfigurationState state = myModuleStateProvider.fun(facet.getModule());
-      final ProjectConfigurableContext context = new MyProjectConfigurableContext(facet, parentContext, state);
+
+      final FacetEditorContext context = createContext(facet, parentContext);
       editor = new FacetEditorImpl(context, facet.getConfiguration());
       editor.getComponent();
       editor.reset();
       myEditors.put(facet, editor);
     }
     return editor;
+  }
+
+  protected FacetEditorContext createContext(final @NotNull Facet facet, final @Nullable FacetEditorContext parentContext) {
+    Module module = facet.getModule();
+    ModulesConfigurator modulesConfigurator = myContext.getModulesConfigurator();
+    ModuleEditor moduleEditor = modulesConfigurator.getModuleEditor(module);
+    if (moduleEditor == null) {
+      LOG.error("ModuleEditor[" + module.getName() + "]==null: disposed = " + module.isDisposed() + ", is in model = "
+                + Arrays.asList(modulesConfigurator.getModules()).contains(module));
+    }
+
+    final ModuleConfigurationState state = moduleEditor.createModuleConfigurationState();
+    return new MyProjectConfigurableContext(facet, parentContext, state);
   }
 
   private UserDataHolder getSharedModuleData(final Module module) {

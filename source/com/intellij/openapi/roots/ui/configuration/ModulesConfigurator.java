@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Chunk;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.GraphGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -248,12 +247,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private ProjectFacetsConfigurator createFacetsConfigurator() {
-    return new ProjectFacetsConfigurator(myContext, myProject, new NotNullFunction<Module, ModuleConfigurationState>() {
-      @NotNull
-      public ModuleConfigurationState fun(final Module module) {
-        return getModuleEditor(module).createModuleConfigurationState();
-      }
-    });
+    return new ProjectFacetsConfigurator(myContext, myProject);
   }
 
   public void setModified(final boolean modified) {
