@@ -608,7 +608,6 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   }
 
   private void selectOption(final DefaultSearchableConfigurable searchableConfigurable) {
-    searchableConfigurable.setupGlassPane(myInitializedConfigurables2Component.get(searchableConfigurable)); //restore
     searchableConfigurable.clearSearch();
     if (myOptionContainers == null || myOptionContainers.isEmpty()) return; //do not highlight current editor when nothing can be selected
     @NonNls final String filter = mySearchField.getText();

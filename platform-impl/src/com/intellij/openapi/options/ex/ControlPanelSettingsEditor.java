@@ -59,7 +59,6 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
 
   private Set<Configurable> myOptionContainers = null;
   private SearchUtil.ConfigurableSearchTextField mySearchField;
-  private GlassPanel myGlassPanel;
   private Alarm mySearchUpdater = new Alarm();
   private JBPopup[] myPopup = new JBPopup[2];
 
@@ -74,8 +73,6 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
       selectConfigurable(preselectedConfigurable);
       editConfigurable(preselectedConfigurable);
     }
-    myGlassPanel = new GlassPanel(myPanel);
-    myPanel.getRootPane().setGlassPane(myGlassPanel);
   }
 
   protected String getDimensionServiceKey() {
@@ -249,7 +246,6 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
 
     mySearchUpdater.cancelAllRequests();
     myOptionContainers = null;
-    myGlassPanel = null;
     super.dispose();
   }
 
@@ -274,8 +270,6 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
         mySearchUpdater.cancelAllRequests();
         mySearchUpdater.addRequest(new Runnable() {
           public void run() {
-            if (myGlassPanel == null) return;
-            myGlassPanel.clear();
             @NonNls final String searchPattern = mySearchField.getText();
             if (searchPattern != null && searchPattern.length() > 0) {
               myOptionContainers = optionsRegistrar.getConfigurables(myGroups, e.getType(), myOptionContainers, searchPattern,
@@ -362,9 +356,6 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
       look.paintBackground(g, this);
       look.paintIcon(g, this, myIcon);
       look.paintBorder(g, this);
-      if (myOptionContainers != null && myOptionContainers.contains(myConfigurable)) {
-        myGlassPanel.addSpotlight(this);
-      }
     }
 
     public int getPopState() {

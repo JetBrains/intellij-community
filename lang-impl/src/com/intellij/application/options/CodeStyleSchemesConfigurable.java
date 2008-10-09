@@ -11,7 +11,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
@@ -42,7 +41,6 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
   private JButton myDeleteButton;
   private SettingsStack mySettingsStack;
   private JPanel myRootPanel;
-  private GlassPanel myGlassPanel;
   private String myOption = null;
   private JButton myExportButton;
 
@@ -202,11 +200,10 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
   public boolean isModified() {
     if (myPanel == null) return false; // Disposed
     if (myPanel.getRootPane() != null) {
-      myPanel.getRootPane().setGlassPane(myGlassPanel);
       if (myOption != null){
         final CodeStyleSettingsPanel activePanel = getActivePanel();
         if (activePanel != null && activePanel.isInitialized()){
-          activePanel.showOption(this, myOption, myGlassPanel).run();
+          activePanel.showOption(this, myOption).run();
           myOption = null;
         }
       }
@@ -320,8 +317,6 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
     reset();
 
     myPanel.setPreferredSize(new Dimension(800, 650));
-
-    myGlassPanel = new GlassPanel(myPanel);
 
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     if (project == null || !CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS) return myPanel;
@@ -441,8 +436,6 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
       mySettingsStack.dispose();
       mySettingsStack = null;
     }
-
-    myGlassPanel = null;
   }
 
   public String getHelpTopic() {
@@ -537,7 +530,6 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
   }
 
   public boolean clearSearch() {
-    myGlassPanel.clear();
     return true;
   }
 

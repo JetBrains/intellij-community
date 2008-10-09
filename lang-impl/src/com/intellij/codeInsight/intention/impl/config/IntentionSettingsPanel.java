@@ -3,7 +3,6 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ResourceUtil;
@@ -25,7 +24,6 @@ public class IntentionSettingsPanel {
 
   private JPanel myTreePanel;
   private JPanel myDescriptionPanel;
-  private final GlassPanel myGlassPanel;
 
   public IntentionSettingsPanel() {
     myIntentionSettingsTree = new IntentionSettingsTree() {
@@ -66,8 +64,6 @@ public class IntentionSettingsPanel {
 
     myDescriptionPanel.setLayout(new BorderLayout());
     myDescriptionPanel.add(myIntentionDescriptionPanel.getComponent(), BorderLayout.CENTER);
-
-    myGlassPanel = new GlassPanel(myPanel);
   }
 
   private void intentionSelected(IntentionActionMetaData actionMetaData) {
@@ -79,8 +75,6 @@ public class IntentionSettingsPanel {
   }
 
   public void reset() {
-    myPanel.getRootPane().setGlassPane(myGlassPanel);
-
     List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
     myIntentionSettingsTree.reset(list);
     SwingUtilities.invokeLater(new Runnable(){
@@ -162,12 +156,10 @@ public class IntentionSettingsPanel {
       public void run() {
         myIntentionSettingsTree.reset(myIntentionSettingsTree.filterModel(option, true));
         myIntentionSettingsTree.setFilter(option);
-        SearchUtil.lightOptions(configurable, myPanel, option, myGlassPanel).run();
       }
     };
   }
 
   public void clearSearch() {
-    myGlassPanel.clear();
   }
 }

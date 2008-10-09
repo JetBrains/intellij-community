@@ -7,7 +7,6 @@ package com.intellij.ide.ui.search;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +18,6 @@ import javax.swing.*;
  */
 public class DefaultSearchableConfigurable implements Configurable {
   private SearchableConfigurable myDelegate;
-  private GlassPanel myGlassPanel;
   private JComponent myComponent;
 
   public DefaultSearchableConfigurable(final SearchableConfigurable delegate) {
@@ -32,18 +30,13 @@ public class DefaultSearchableConfigurable implements Configurable {
   }
 
   public void clearSearch() {
-    if (myGlassPanel == null) return; // Not yet initialized.
-    if (!myDelegate.clearSearch()){
-      myGlassPanel.clear();
-    }
   }
 
   public void enableSearch(String option) {
     Runnable runnable = myDelegate.enableSearch(option);
-    if (runnable == null){
-      runnable = SearchUtil.lightOptions(myDelegate, myComponent, option, myGlassPanel);
+    if (runnable != null){
+      runnable.run();
     }
-    runnable.run();
   }
 
   public String getDisplayName() {
@@ -62,7 +55,6 @@ public class DefaultSearchableConfigurable implements Configurable {
 
   public JComponent createComponent() {
     myComponent = myDelegate.createComponent();
-    myGlassPanel = new GlassPanel(myComponent);
     return myComponent;
   }
 
@@ -75,12 +67,10 @@ public class DefaultSearchableConfigurable implements Configurable {
   }
 
   public void reset() {
-    setupGlassPane(myComponent);
     myDelegate.reset();
   }
 
   public void disposeUIResources() {
-    myGlassPanel = null;
     myComponent = null;
     myDelegate.disposeUIResources();
   }
@@ -89,11 +79,4 @@ public class DefaultSearchableConfigurable implements Configurable {
     return myDelegate;
   }
 
-  public void setupGlassPane(final JComponent component) {
-    myComponent = component;
-    if (myComponent != null) {
-      myGlassPanel = new GlassPanel(myComponent);
-      myComponent.getRootPane().setGlassPane(myGlassPanel);
-    }
-  }
 }
