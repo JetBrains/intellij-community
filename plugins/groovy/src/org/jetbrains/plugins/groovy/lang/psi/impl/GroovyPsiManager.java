@@ -35,8 +35,11 @@ import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gant.psi.GantPropertiesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
@@ -55,6 +58,7 @@ public class GroovyPsiManager implements ProjectComponent {
   private Project myProject;
 
   private Map<String, List<PsiMethod>> myDefaultMethods;
+  private Map<String, List<PsiField>> myDefaultProperties;
 
   private static final String DEFAULT_METHODS_QNAME = "org.codehaus.groovy.runtime.DefaultGroovyMethods";
   private static final String DEFAULT_STATIC_METHODS_QNAME = "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods";
@@ -105,7 +109,7 @@ public class GroovyPsiManager implements ProjectComponent {
       }
     });
 
-    ((PsiManagerEx) PsiManager.getInstance(myProject)).registerRunnableToRunOnAnyChange(new Runnable() {
+    ((PsiManagerEx)PsiManager.getInstance(myProject)).registerRunnableToRunOnAnyChange(new Runnable() {
       public void run() {
         dropTypesCache();
       }
@@ -130,7 +134,8 @@ public class GroovyPsiManager implements ProjectComponent {
   private void buildGDK() {
     final HashMap<String, List<PsiMethod>> newMap = new HashMap<String, List<PsiMethod>>();
 
-    PsiClass defaultMethodsClass = JavaPsiFacade.getInstance(myProject).findClass(DEFAULT_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
+    PsiClass defaultMethodsClass =
+      JavaPsiFacade.getInstance(myProject).findClass(DEFAULT_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
     if (defaultMethodsClass != null) {
       for (PsiMethod method : defaultMethodsClass.getMethods()) {
         if (method.isConstructor()) continue;
@@ -139,7 +144,8 @@ public class GroovyPsiManager implements ProjectComponent {
 
     }
 
-    PsiClass defaultStaticMethodsClass = JavaPsiFacade.getInstance(myProject).findClass(DEFAULT_STATIC_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
+    PsiClass defaultStaticMethodsClass =
+      JavaPsiFacade.getInstance(myProject).findClass(DEFAULT_STATIC_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
     if (defaultStaticMethodsClass != null) {
       for (PsiMethod method : defaultStaticMethodsClass.getMethods()) {
         if (method.isConstructor()) continue;
@@ -150,6 +156,19 @@ public class GroovyPsiManager implements ProjectComponent {
     myDefaultMethods = newMap;
 
     addSwingBuilderMethods();
+
+  }
+
+  /**
+   * Method to add custom properties for some Groovy extensions like Gant
+   * @param project
+   */
+  private void buildGroovyScriptExtensionProperties(final Project project) {
+    final HashMap<String, List<PsiField>> newMap = new HashMap<String, List<PsiField>>();
+    // todo provide injection point
+    new GantPropertiesProvider().addExtensionProperties(newMap, project);
+
+    myDefaultProperties = newMap;
   }
 
   private void addDefaultMethod(PsiMethod method, HashMap<String, List<PsiMethod>> map, boolean isStatic) {
@@ -266,7 +285,7 @@ public class GroovyPsiManager implements ProjectComponent {
 
     classText.append('}');
 
-    final PsiJavaFile file = (PsiJavaFile) factory.createFileFromText("Dummy.java", classText.toString());
+    final PsiJavaFile file = (PsiJavaFile)factory.createFileFromText("Dummy.java", classText.toString());
     final PsiClass clazz = file.getClasses()[0];
 
     final PsiMethod[] methods = clazz.getMethods();
@@ -306,6 +325,39 @@ public class GroovyPsiManager implements ProjectComponent {
     return methods;
   }
 
+  public List<PsiField> getDefaultScriptProperties(GroovyFile file, final Project project) {
+    if (myRebuildGdkPending) {
+      synchronized (this) {
+        if (myRebuildGdkPending) {
+          buildGroovyScriptExtensionProperties(project);
+          myRebuildGdkPending = false;
+        }
+      }
+    }
+
+    final String ext = getScriptType(file);
+    if (myDefaultProperties == null || ext == null) {
+      return Collections.emptyList();
+    }
+
+    List<PsiField> properties = myDefaultProperties.get(ext);
+    if (properties == null) return Collections.emptyList();
+    return properties;
+  }
+
+  /**
+   * Get script extension by type
+   */
+  @Nullable
+  private static String getScriptType(GroovyFile file) {
+    //todo provide injection point
+    GantPropertiesProvider provider = new GantPropertiesProvider();
+    if (provider.canBeProcessed(file)) {
+      return provider.getScriptExtension();
+    }
+    return null;
+  }
+
   public static GroovyPsiManager getInstance(Project project) {
     return project.getComponent(GroovyPsiManager.class);
   }
@@ -329,7 +381,8 @@ public class GroovyPsiManager implements ProjectComponent {
     if (myArrayClass == null) {
       try {
         myArrayClass = GroovyPsiElementFactory.getInstance(myProject).createTypeDefinition(SYNTHETIC_CLASS_TEXT);
-      } catch (IncorrectOperationException e) {
+      }
+      catch (IncorrectOperationException e) {
         LOG.error(e);
       }
     }
@@ -348,7 +401,8 @@ public class GroovyPsiManager implements ProjectComponent {
     try {
       curr.add(element);
       return computable.compute();
-    } finally {
+    }
+    finally {
       curr.remove(element);
     }
   }

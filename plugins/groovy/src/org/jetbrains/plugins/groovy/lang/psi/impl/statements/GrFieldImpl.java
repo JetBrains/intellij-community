@@ -198,6 +198,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
       @Nullable
       public String getLocationString() {
         PsiClass clazz = getContainingClass();
+        if (clazz == null) return "";
         String name = clazz.getQualifiedName();
         assert name != null;
         return "(in " + name + ")";

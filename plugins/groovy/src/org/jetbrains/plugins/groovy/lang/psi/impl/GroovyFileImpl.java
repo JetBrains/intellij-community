@@ -132,6 +132,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       if (clazz != null && !ResolveUtil.processElement(processor, clazz)) return false;
     }
 
+    for (PsiField field : GroovyPsiManager.getInstance(getProject()).getDefaultScriptProperties(this, getProject())) {
+      if (!ResolveUtil.processElement(processor, field)) return false;
+    }
+
     if (currentPackageName.length() > 0) { //otherwise already processed default package
       PsiPackage defaultPackage = facade.findPackage("");
       if (defaultPackage != null) {

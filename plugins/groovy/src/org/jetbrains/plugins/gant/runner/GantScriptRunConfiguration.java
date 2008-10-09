@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
   public String vmParams;
   public boolean isDebugEnabled;
   public String scriptParams;
+  public String targets;
   public String scriptPath;
   public String workDir = ".";
 
@@ -94,6 +96,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     scriptPath = JDOMExternalizer.readString(element, "path");
     vmParams = JDOMExternalizer.readString(element, "vmparams");
     scriptParams = JDOMExternalizer.readString(element, "params");
+    targets = JDOMExternalizer.readString(element, "targets");
     workDir = JDOMExternalizer.readString(element, "workDir");
     isDebugEnabled = Boolean.parseBoolean(JDOMExternalizer.readString(element, "debug"));
     workDir = getWorkDir();
@@ -105,6 +108,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     JDOMExternalizer.write(element, "path", scriptPath);
     JDOMExternalizer.write(element, "vmparams", vmParams);
     JDOMExternalizer.write(element, "params", scriptParams);
+    JDOMExternalizer.write(element, "targets", targets);
     JDOMExternalizer.write(element, "workDir", workDir);
     JDOMExternalizer.write(element, "debug", isDebugEnabled);
   }
@@ -179,12 +183,19 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
   }
 
   private void configureScript(JavaParameters params) {
-    // add script
-    params.getProgramParametersList().add("-f");
+    // add scriptGroovy
+    params.getProgramParametersList().add("--file");
     params.getProgramParametersList().add(scriptPath);
 
-    // add script parameters
+    // add Gant script parameters
     params.getProgramParametersList().addParametersString(scriptParams);
+
+    if (targets != null) {
+      Iterable<String> targetList = StringUtil.tokenize(targets, "");
+      for (String target : targetList) {
+        params.getProgramParametersList().addParametersString(" " + target);
+      }
+    }
   }
 
   public Module getModule() {

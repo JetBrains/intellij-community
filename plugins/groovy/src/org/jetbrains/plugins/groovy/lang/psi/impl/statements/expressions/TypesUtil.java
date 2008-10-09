@@ -63,7 +63,7 @@ public class TypesUtil {
         }
       }
 
-      ResolveUtil.processNonCodeMethods(thisType, processor, place.getProject());
+      ResolveUtil.processNonCodeMethods(thisType, processor, place.getProject(), place);
       final GroovyResolveResult[] candidates = processor.getCandidates();
       if (candidates.length == 1) {
         final PsiElement element = candidates[0].getElement();

@@ -80,11 +80,11 @@ public class ResolveUtil {
     return true;
   }
 
-  public static boolean processNonCodeMethods(PsiType type, PsiScopeProcessor processor, Project project) {
-    return processNonCodeMethods(type, processor, project, new HashSet<String>());
+  public static boolean processNonCodeMethods(PsiType type, PsiScopeProcessor processor, Project project, PsiElement place) {
+    return processNonCodeMethods(type, processor, project, new HashSet<String>(), place);
   }
 
-  private static boolean processNonCodeMethods(PsiType type, PsiScopeProcessor processor, Project project, Set<String> visited) {
+  private static boolean processNonCodeMethods(PsiType type, PsiScopeProcessor processor, Project project, Set<String> visited, PsiElement place) {
     String qName = rawCanonicalText(type);
 
     if (qName != null) {
@@ -107,14 +107,14 @@ public class ResolveUtil {
         //implicit super types
         PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
         PsiClassType t = factory.createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(project));
-        if (!processNonCodeMethods(t, processor, project, visited)) return false;
+        if (!processNonCodeMethods(t, processor, project, visited, place)) return false;
         t = factory.createTypeByFQClassName("java.lang.Comparable", GlobalSearchScope.allScope(project));
-        if (!processNonCodeMethods(t, processor, project, visited)) return false;
+        if (!processNonCodeMethods(t, processor, project, visited, place)) return false;
         t = factory.createTypeByFQClassName("java.io.Serializable", GlobalSearchScope.allScope(project));
-        if (!processNonCodeMethods(t, processor, project, visited)) return false;
+        if (!processNonCodeMethods(t, processor, project, visited, place)) return false;
       } else {
         for (PsiType superType : type.getSuperTypes()) {
-          if (!processNonCodeMethods(TypeConversionUtil.erasure(superType), processor, project, visited)) return false;
+          if (!processNonCodeMethods(TypeConversionUtil.erasure(superType), processor, project, visited, place)) return false;
         }
       }
     }

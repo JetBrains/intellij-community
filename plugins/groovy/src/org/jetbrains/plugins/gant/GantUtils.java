@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.gant;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
@@ -14,9 +13,9 @@ public class GantUtils {
   public static boolean isGantScriptFile(PsiFile file) {
     if (file instanceof GroovyFile) {
       GroovyFile groovyFile = (GroovyFile)file;
-      VirtualFile virtualFile = groovyFile.getVirtualFile();
       if (!groovyFile.isScript()) return false;
-      return virtualFile != null && GantFileType.DEFAULT_EXTENSION.equals(virtualFile.getExtension());
+      String name = file.getName();
+      return  name.endsWith(GantFileType.DEFAULT_EXTENSION);
     }
     return false;
   }
