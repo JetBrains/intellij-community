@@ -16,13 +16,11 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ExceptionUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,13 +30,15 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
     @Nls
     @NotNull
     public String getDisplayName() {
-        return "Reference checked for null is not used inside if";
+        return InspectionGadgetsBundle.message(
+                "variable.not.used.inside.if.display.name");
     }
 
     @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
-        return "<code>#ref</code> is not used inside if";
+        return InspectionGadgetsBundle.message(
+                "variable.not.used.inside.if.problem.descriptor");
     }
 
     @Override
