@@ -13,6 +13,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -99,6 +100,8 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
    */
   private void fileOpenedImpl(@NotNull final VirtualFile file){
     ApplicationManager.getApplication().assertIsDispatchThread();
+    // don't add files that cannot be found via VFM (light & etc.)
+    if (VirtualFileManager.getInstance().findFileByUrl(file.getUrl()) == null) return;
 
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(myProject);
 
