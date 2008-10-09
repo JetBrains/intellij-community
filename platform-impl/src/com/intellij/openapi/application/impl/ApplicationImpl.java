@@ -547,7 +547,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public void invokeAndWait(Runnable runnable, @NotNull ModalityState modalityState) {
     if (isDispatchThread()) {
-      LOG.error("invokeAndWait should not be called from event queue thread");
+      LOG.error("invokeAndWait must not be called from event queue thread");
       runnable.run();
       return;
     }
@@ -558,14 +558,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     if (myActionsLock.isReadLockAcquired(Thread.currentThread())) {
-      @SuppressWarnings({"ThrowableInstanceNeverThrown"})
-      final Throwable stack = new Throwable();
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          LOG.error("Calling invokeAndWait from read-action leads to possible deadlock.", stack);
-        }
-      });
-      if (myIsWaitingForWriteAction) return; // The deadlock indeed. Do not perform request or we'll stall here immediately.
+      LOG.error("Calling invokeAndWait from read-action leads to possible deadlock.");
     }
 
     LaterInvocator.invokeAndWait(runnable, modalityState);

@@ -52,7 +52,7 @@ public class LaterInvocator {
     }
   }
 
-  private static ArrayList<Object> ourModalEntities = new ArrayList<Object>();
+  private static final ArrayList<Object> ourModalEntities = new ArrayList<Object>();
   private static final ArrayList<RunnableInfo> ourQueue = new ArrayList<RunnableInfo>();
   private static volatile int ourQueueSkipCount = 0; // optimization
   private static final Runnable ourFlushQueueRunnable = new FlushQueue();
@@ -64,7 +64,7 @@ public class LaterInvocator {
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster = EventDispatcher.create(ModalityStateListener.class);
 
 
-  private static ArrayList<RunnableInfo> ourForcedFlushQueue = new ArrayList<RunnableInfo>();
+  private static final ArrayList<RunnableInfo> ourForcedFlushQueue = new ArrayList<RunnableInfo>();
 
   public static void addModalityStateListener(ModalityStateListener listener){
     ourModalityStateMulticaster.addListener(listener);
