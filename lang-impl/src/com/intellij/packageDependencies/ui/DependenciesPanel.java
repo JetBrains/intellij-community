@@ -422,7 +422,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     if (dataId.equals(DataConstants.PSI_ELEMENT)) {
       final PackageDependenciesNode selectedNode = myRightTree.getSelectedNode();
       if (selectedNode != null) {
-        return selectedNode.getPsiElement();
+        final PsiElement element = selectedNode.getPsiElement();
+        return element != null && element.isValid() ? element : null;
       }
     }
     if (dataId.equals(DataConstants.HELP_ID)) {
@@ -661,7 +662,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
         return node;
       }
       if (DataConstants.PSI_ELEMENT.equals(dataId) && node != null)  {
-        return node.getPsiElement();
+        final PsiElement element = node.getPsiElement();
+        return element != null && element.isValid() ? element : null;
       }
       return null;
     }
