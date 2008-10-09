@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import junit.framework.Assert;
@@ -45,8 +46,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private final boolean myIsLasyMode;
 
   private Map<VirtualFile, Set<String>> myExcludeRootsMap;
-  private Map<VirtualFile, DirectoryInfo> myDirToInfoMap = Collections.synchronizedMap(new THashMap<VirtualFile, DirectoryInfo>());
-  private Map<String, VirtualFile[]> myPackageNameToDirsMap = Collections.synchronizedMap(new THashMap<String, VirtualFile[]>());
+  private Map<VirtualFile, DirectoryInfo> myDirToInfoMap = new ConcurrentHashMap<VirtualFile, DirectoryInfo>();
+  private Map<String, VirtualFile[]> myPackageNameToDirsMap = new ConcurrentHashMap<String, VirtualFile[]>();
 
   private final DirectoryIndexExcludePolicy[] myExcludePolicies;
   private final MessageBusConnection myConnection;

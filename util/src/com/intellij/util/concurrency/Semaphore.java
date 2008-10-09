@@ -46,6 +46,7 @@ public class Semaphore {
 
   public synchronized boolean waitFor(final long timeout) {
     try {
+      if (mySemaphore == 0) return true;
       final long startTime = System.currentTimeMillis();
       long waitTime = timeout;
       while (mySemaphore > 0) {

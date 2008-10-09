@@ -101,8 +101,7 @@ public abstract class PsiNameHelper {
               break;
             }
             else if (flag && !Character.isJavaIdentifierPart(aChar)) {
-              return getShortClassName(
-                removeWhitespace(referenceText), false);
+              return getShortClassName(removeWhitespace(referenceText), false);
             }
           }
       }

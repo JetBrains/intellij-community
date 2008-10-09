@@ -15,12 +15,12 @@ import org.jetbrains.annotations.Nullable;
 public class PsiNameHelperImpl extends PsiNameHelper{
   private final JavaPsiFacade myManager;
   private Lexer myLexer;
-  private LanguageLevel myLastLanguageLevel = LanguageLevel.JDK_1_3;
+  private LanguageLevel myLastLanguageLevel;
   private final Object LOCK = new Object();
 
   public PsiNameHelperImpl(JavaPsiFacade manager) {
     myManager = manager;
-    myLastLanguageLevel = LanguageLevel.JDK_1_3; // to be updated by updateLexer()
+    myLastLanguageLevel = LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel();
     myLexer = new JavaLexer(myLastLanguageLevel);
   }
 

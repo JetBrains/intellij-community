@@ -80,22 +80,28 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   // need 'synchronized' to ensure atomic initialization of merged data
   // because several threads that acquired read lock may simultaneously execute the method
   private ValueContainer<Value> getMergedData() {
+    ValueContainerImpl<Value> merged = myMerged;
+    if (merged != null) {
+      return merged;
+    }
     synchronized (myInitializer.getLock()) {
-      if (myMerged != null) {
-        return myMerged;
+      merged = myMerged;
+      if (merged != null) {
+        return merged;
       }
-      myMerged = new ValueContainerImpl<Value>();
+      final ValueContainerImpl<Value> newMerged = new ValueContainerImpl<Value>();
+      myMerged = newMerged;
 
       final ValueContainer<Value> fromDisk = myInitializer.compute();
 
       final ContainerAction<Value> addAction = new ContainerAction<Value>() {
         public void perform(final int id, final Value value) {
-          myMerged.addValue(id, value);
+          newMerged.addValue(id, value);
         }
       };
       final ContainerAction<Value> removeAction = new ContainerAction<Value>() {
         public void perform(final int id, final Value value) {
-          myMerged.removeValue(id, value);
+          newMerged.removeValue(id, value);
         }
       };
 
@@ -103,7 +109,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       myRemoved.forEach(removeAction);
       myAdded.forEach(addAction);
 
-      return myMerged;
+      return newMerged;
     }
   }
 

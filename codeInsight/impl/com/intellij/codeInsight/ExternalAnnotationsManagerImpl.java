@@ -52,7 +52,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsMessageDialog;
 import org.jetbrains.annotations.NonNls;
@@ -70,8 +70,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   public static final Icon ICON = IconLoader.getIcon("/modules/annotation.png");
   private static final Logger LOG = Logger.getInstance("#" + ExternalAnnotationsManagerImpl.class.getName());
 
-  private final Map<VirtualFile, List<XmlFile>> myExternalAnotations =
-    Collections.synchronizedMap(new WeakHashMap<VirtualFile, List<XmlFile>>());
+  private final Map<VirtualFile, List<XmlFile>> myExternalAnotations = new ConcurrentWeakHashMap<VirtualFile, List<XmlFile>>();
   private static final List<XmlFile> NULL = new ArrayList<XmlFile>();
   private final PsiManager myPsiManager;
 
@@ -218,7 +217,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         @Override
         public PopupStep onChosen(final VirtualFile file, final boolean finalChoice) {
           annotateExternally(file, listOwner, project, packageName, virtualFile, annotationFQName, fromFile);
-          return PopupStep.FINAL_CHOICE;
+          return FINAL_CHOICE;
         }
 
         @NotNull
