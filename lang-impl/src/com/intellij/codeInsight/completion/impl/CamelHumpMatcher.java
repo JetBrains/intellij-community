@@ -67,7 +67,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
       if (itemCaseInsensitive && StringUtil.startsWithIgnoreCase(name, myPrefix) || prefixMatches(name)) {
         return true;
       }
-      if (itemCaseInsensitive && CodeInsightSettings.FIRST_LETTER == CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE && name.length() > 0) {
+      if (itemCaseInsensitive && CodeInsightSettings.ALL != CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE && name.length() > 0) {
         final char c = name.charAt(0);
         String swappedCase = (Character.isUpperCase(c) ? Character.toLowerCase(c) : Character.toUpperCase(c)) + name.substring(1);
         if (prefixMatches(swappedCase)) {
