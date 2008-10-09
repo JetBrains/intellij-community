@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
+import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
@@ -426,7 +427,10 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         final ModuleStructureConfigurable modulesConfig = config.getModulesConfig();
         config.select(facet, true).doWhenDone(new Runnable() {
           public void run() {
-            modulesConfig.setStartModuleWizard(false);
+            if (tabNameToSelect != null) {
+              FacetEditorImpl facetEditor = modulesConfig.getFacetConfigurator().getOrCreateEditor(facet);
+              facetEditor.setSelectedTabName(tabNameToSelect);
+            }
           }
         });
       }
