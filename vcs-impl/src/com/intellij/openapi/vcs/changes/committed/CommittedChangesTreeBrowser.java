@@ -19,10 +19,10 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -539,7 +539,15 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   private class FilterChangeListener implements ChangeListener {
     public void stateChanged(ChangeEvent e) {
-      updateModel();
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        updateModel();
+      } else {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            updateModel();
+          }
+        });
+      }
     }
   }
 
