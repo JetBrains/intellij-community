@@ -42,6 +42,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 public class DialogWrapperPeerImpl extends DialogWrapperPeer {
+  public static Object HAVE_INITIAL_SELECTION = new Object();
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogWrapper");
 
   private DialogWrapper myWrapper;
@@ -807,7 +809,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     if (component instanceof JTextField) {
       JTextField field = (JTextField)component;
       String text = field.getText();
-      if (text != null) {
+      if (text != null && field.getClientProperty(HAVE_INITIAL_SELECTION) == null) {
         field.setSelectionStart(0);
         field.setSelectionEnd(text.length());
       }

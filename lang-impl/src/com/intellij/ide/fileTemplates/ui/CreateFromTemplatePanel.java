@@ -4,6 +4,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -107,6 +108,11 @@ public class CreateFromTemplatePanel{
       myFilenameField = new JTextField();
       if (myDefaultFileName != null) {
         myFilenameField.setText(myDefaultFileName);
+        final int dot = myDefaultFileName.indexOf('.');
+        if (dot > 0) {
+          myFilenameField.select(0, dot);
+          myFilenameField.putClientProperty(DialogWrapperPeerImpl.HAVE_INITIAL_SELECTION, true);
+        }
       }
       myAttrPanel.add(myFilenameField, new GridBagConstraints(0, 2, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, insets, 0, 0));
     }
