@@ -534,7 +534,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(TextLabelInSwitchStatementInspection.class);
         m_inspectionClasses.add(ThrowableResultOfMethodCallIgnoredInspection.class);
         m_inspectionClasses.add(UseOfPropertiesAsHashtableInspection.class);
-
+        m_inspectionClasses.add(VariableNotUsedInsideIfInspection.class);
     }
 
     private static boolean classExists(String className) {
