@@ -163,6 +163,8 @@ public class GitSimpleHandler extends GitHandler {
    * Prepare delete files handler.
    *
    * @param project the project
+   * @param root    a vcs root
+   * @param files   a files to commit
    * @return a simple handler that does the task
    */
   public static GitSimpleHandler delete(Project project, VirtualFile root, List<FilePath> files) {
@@ -173,14 +175,31 @@ public class GitSimpleHandler extends GitHandler {
   }
 
   /**
-   * Prepare delete files handler.
+   * Prepare add files handler.
    *
    * @param project the project
+   * @param root    a vcs root
+   * @param files   a files to commit
    * @return a simple handler that does the task
    */
-  public static GitSimpleHandler add(Project project, VirtualFile root, Collection<VirtualFile> files) {
+  public static GitSimpleHandler addFiles(Project project, VirtualFile root, Collection<VirtualFile> files) {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, "add");
     handler.addRelativeFiles(files);
+    handler.setNoSSH(true);
+    return handler;
+  }
+
+  /**
+   * Prepare add files handler.
+   *
+   * @param project the project
+   * @param root    a vcs root
+   * @param files   a files to commit
+   * @return a simple handler that does the task
+   */
+  public static GitSimpleHandler addPaths(Project project, VirtualFile root, Collection<FilePath> files) {
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, "add");
+    handler.addRelativePaths(files);
     handler.setNoSSH(true);
     return handler;
   }

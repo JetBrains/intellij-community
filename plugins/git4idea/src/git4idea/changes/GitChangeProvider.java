@@ -57,7 +57,10 @@ public class GitChangeProvider implements ChangeProvider {
   /**
    * {@inheritDoc}
    */
-  public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress, final ChangeListManagerGate addGate) throws VcsException {
+  public void getChanges(final VcsDirtyScope dirtyScope,
+                         final ChangelistBuilder builder,
+                         final ProgressIndicator progress,
+                         final ChangeListManagerGate addGate) throws VcsException {
     Collection<VirtualFile> roots = dirtyScope.getAffectedContentRoots();
     for (VirtualFile root : roots) {
       GitCommand command = new GitCommand(project, settings, root);

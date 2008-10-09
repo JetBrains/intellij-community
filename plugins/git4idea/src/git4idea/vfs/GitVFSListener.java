@@ -82,7 +82,7 @@ public class GitVFSListener extends VcsVFSListener {
     for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
       try {
         final VirtualFile root = e.getKey();
-        GitSimpleHandler.add(myProject, root, e.getValue()).run();
+        GitSimpleHandler.addFiles(myProject, root, e.getValue()).run();
         markRootDirty(root);
       }
       catch (VcsException ex) {

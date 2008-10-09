@@ -34,7 +34,6 @@ import java.util.List;
  * Basic abstract action handler for all Git actions to extend.
  */
 public abstract class BasicAction extends AnAction {
-  //	protected MksConfiguration configuration;
   protected static final String ACTION_CANCELLED_MSG = GitBundle.message("command.cancelled");
 
   @Override

@@ -110,9 +110,6 @@ public class GitVcs extends AbstractVcs {
     revSelector = new GitRevisionSelector();
     configurable = new GitVcsConfigurable(settings, myProject);
     updateEnvironment = new GitUpdateEnvironment(myProject, settings, configurable);
-
-    ((GitCheckinEnvironment)checkinEnvironment).setProject(myProject);
-    ((GitCheckinEnvironment)checkinEnvironment).setSettings(settings);
   }
 
   @Override
