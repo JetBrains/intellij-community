@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.HashMap;
@@ -23,6 +24,12 @@ public abstract class DataValidator <T> {
   private static final DataValidator<VirtualFile> VIRTUAL_FILE_VALIDATOR = new DataValidator<VirtualFile>() {
     public VirtualFile findInvalid(final String dataId, VirtualFile file, final Object dataSource) {
       return file.isValid() ? null : file;
+    }
+  };
+  private static final DataValidator<Project> PROJECT_VALIDATOR = new DataValidator<Project>() {
+    @Override
+    public Project findInvalid(final String dataId, final Project project, final Object dataSource) {
+      return !project.isDisposed() ? null : project;
     }
   };
 
@@ -49,6 +56,7 @@ public abstract class DataValidator <T> {
   static {
     ourValidators.put(DataConstants.VIRTUAL_FILE, VIRTUAL_FILE_VALIDATOR);
     ourValidators.put(DataConstants.VIRTUAL_FILE_ARRAY, new ArrayValidator<VirtualFile>(VIRTUAL_FILE_VALIDATOR));
+    ourValidators.put(DataConstants.PROJECT, PROJECT_VALIDATOR);
   }
 
   public static class ArrayValidator<T> extends DataValidator<T[]> {
