@@ -69,7 +69,10 @@ public class TestNGResultsTableModel extends ListTableModel<TestResultMessage> {
     }
 
     public String valueOf(final TestResultMessage result) {
-      return result.toDisplayString();
+      final String displayString = result.toDisplayString();
+      final String description = result.getTestDescription();
+      if (description != null && description.startsWith(displayString)) return description;
+      return displayString;
     }
 
     public Comparator<TestResultMessage> getComparator() {

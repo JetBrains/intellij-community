@@ -207,11 +207,11 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
             classNode = getClassNodeFor(result);
         }
         //test started or failed to start
-        //if (!started.containsKey(result)) {
+        if (!started.containsKey(result) || !Comparing.strEqual(started.get(result).getResultMessage().getTestDescription(), result.getTestDescription())) {
             TestProxy proxy = new TestProxy();
-            started.put(result, proxy);
             proxy.setParent(classNode);
             proxy.setResultMessage(result);
+            started.put(result, proxy);
             animator.setCurrentTestCase(proxy);
             treeBuilder.addItem(classNode, proxy);
             treeBuilder.repaintWithParents(proxy);
@@ -220,7 +220,7 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
             if (TestNGConsoleProperties.TRACK_RUNNING_TEST.value(consoleProperties)) {
                 selectTest(proxy);
             }
-        //}
+        }
         final TestProxy testCase = started.get(result);
         if (testCase != null) {
             testCase.setResultMessage(result);

@@ -54,8 +54,12 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
             } else {
                 if (proxy.getResultMessage() != null) {
                     TestResultMessage result = proxy.getResultMessage();
-                    append(node.getChildCount() == 0 ? result.toDisplayString() : result.getTestClass(),
-                           SimpleTextAttributes.REGULAR_ATTRIBUTES);
+                  final String name = node.getChildCount() == 0 ? result.toDisplayString() : result.getTestClass();
+                  append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+                  final String description = result.getTestDescription();
+                  if (description != null && description.startsWith(name) && description.length() > name.length()) {
+                    append(description.substring(name.length()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+                  }
                 } else {
                     append(proxy.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
                 }
