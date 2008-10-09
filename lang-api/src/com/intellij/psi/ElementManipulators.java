@@ -43,6 +43,8 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
 
   public static String getValueText(final PsiElement element) {
     final TextRange valueTextRange = getValueTextRange(element);
+    if (valueTextRange.isEmpty()) return "";
+
     final String text = element.getText();
     LOG.assertTrue(valueTextRange.getEndOffset() <= text.length(), "Wrong range for " + element + " text: " + text + " range " + valueTextRange);
     return valueTextRange.substring(text);
