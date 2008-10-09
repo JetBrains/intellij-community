@@ -142,9 +142,6 @@ public class CommitHelper {
       });
 
       processor.doBeforeRefresh();
-      // start VCS refresh right now (all VFiles are already up-to date, only some can have disappeared during commit);
-      // for faster view update; the same refresh would also be started after VFS update
-      processor.doVcsRefresh();
       VirtualFileManager.getInstance().refresh(true, processor.postRefresh());
 
       AbstractVcsHelper.getInstanceChecked(myProject).showErrors(processor.getVcsExceptions(), myActionName);
