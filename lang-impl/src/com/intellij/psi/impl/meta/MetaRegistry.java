@@ -28,7 +28,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class MetaRegistry extends MetaDataRegistrar {
   private static final List<MyBinding> ourBindings = new CopyOnWriteArrayList<MyBinding>();
-  private static boolean ourContributorsLoaded = false;
+  private static volatile boolean ourContributorsLoaded = false;
 
   private static final Key<CachedValue<PsiMetaData>> META_DATA_KEY = Key.create("META DATA KEY");
 
@@ -79,9 +79,13 @@ public class MetaRegistry extends MetaDataRegistrar {
 
   private static void ensureContributorsLoaded() {
     if (!ourContributorsLoaded) {
-      ourContributorsLoaded = true;
-      for(MetaDataContributor contributor: Extensions.getExtensions(MetaDataContributor.EP_NAME)) {
-        contributor.contributeMetaData(MetaDataRegistrar.getInstance());
+      synchronized (ourBindings) {
+        if (!ourContributorsLoaded) {
+          for(MetaDataContributor contributor: Extensions.getExtensions(MetaDataContributor.EP_NAME)) {
+            contributor.contributeMetaData(MetaDataRegistrar.getInstance());
+          }
+          ourContributorsLoaded = true;
+        }
       }
     }
   }
