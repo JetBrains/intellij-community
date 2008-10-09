@@ -33,6 +33,8 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.Query;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
+import java.util.Collection;
+
 /**
  * @author ven
  */
@@ -159,7 +161,8 @@ public class FindUsagesTest extends UsefulTestCase {
       query = ReferencesSearch.search(resolved, projectScope);
     }
 
-    assertEquals(expectedUsagesCount, query.findAll().size());
+    Collection<PsiReference> references = query.findAll();
+    assertEquals(expectedUsagesCount, references.size());
   }
 
 }
