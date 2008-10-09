@@ -126,17 +126,30 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final List<String> out = new ArrayList<String>();
     final PsiClassInitializer[] initializers = sourceClass.getInitializers();
     for (PsiClassInitializer initializer : initializers) {
-      if (initialierShouldBeMoved(initializer)) {
+      if (initializerDependsOnMoved(initializer)) {
         out.add("Class initializer requires moved members");
+      }
+    }
+    for (PsiMethod constructor : sourceClass.getConstructors()) {
+      if (initializerDependsOnMoved(constructor.getBody())) {
+        out.add("Constructor requires moved members");
       }
     }
     return out;
   }
 
-  private boolean initialierShouldBeMoved(PsiClassInitializer initializer) {
-    final BackpointerUsageVisitor visitor = new BackpointerUsageVisitor(fields, innerClasses, methods, sourceClass);
-    initializer.accept(visitor);
-    return !visitor.isBackpointerRequired();
+  private boolean initializerDependsOnMoved(PsiElement initializer) {
+    final boolean [] dependsOnMoved = new boolean[]{false};
+    initializer.accept(new JavaRecursiveElementVisitor(){
+      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        final PsiElement resolved = expression.resolve();
+        if (resolved != null) {
+          dependsOnMoved[0] |= isInMovedElement(resolved);
+        }
+      }
+    });
+    return dependsOnMoved[0];
   }
 
   private String calculateDelegateFieldName() {

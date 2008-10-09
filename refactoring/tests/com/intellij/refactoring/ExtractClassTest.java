@@ -182,4 +182,8 @@ public class ExtractClassTest extends MultiFileTestCase{
     doTestField("Class initializer requires moved members");
   }
 
+  public void testUsedInConstructor() throws Exception {
+    doTestField("Constructor requires moved members");
+  }
+
 }
