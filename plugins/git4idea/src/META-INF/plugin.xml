@@ -32,9 +32,6 @@
       <action id="Git.Revert" class="git4idea.actions.GitRevert" text="Revert File">
         <keyboard-shortcut first-keystroke="control alt R" keymap="$default"/>
       </action>
-      <action id="Git.Delete" class="git4idea.actions.GitDelete" text="Delete File">
-        <keyboard-shortcut first-keystroke="control alt D" keymap="$default"/>
-      </action>
       <!--<action id="Resolve" class="org.jetbrains.idea.perforce.actions.ResolveAction"/>-->
       <!--<action id="ResolveAll" class="org.jetbrains.idea.perforce.actions.ResolveAllAction"/>-->
       <!-- <action id="TimeLapseView" class="org.jetbrains.idea.perforce.actions.TimeLapseViewAction"/> -->
