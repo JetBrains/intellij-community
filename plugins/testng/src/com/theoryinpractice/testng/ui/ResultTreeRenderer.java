@@ -81,18 +81,24 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
                     return PoolOfTestIcons.SKIPPED_ICON;
                 case MessageHelper.FAILED_TEST:
                     return PoolOfTestIcons.FAILED_ICON;
+                case MessageHelper.TEST_STARTED:
+                    return PoolOfTestIcons.TERMINATED_ICON;
             }
         } else {
             boolean hasFail = false;
             boolean hasSkipped = false;
+            boolean hasTerminated = false;
             for (TestProxy result : node.getChildren()) {
                 Icon icon = getIcon(result);
                 if (icon == PoolOfTestIcons.FAILED_ICON) {
                     hasFail = true;
                 } else if (icon == PoolOfTestIcons.SKIPPED_ICON) {
                     hasSkipped = true;
+                } else if (icon == PoolOfTestIcons.TERMINATED_ICON) {
+                    hasTerminated = true;
                 }
             }
+            if (hasTerminated) return PoolOfTestIcons.TERMINATED_ICON;
             if (hasFail) return PoolOfTestIcons.FAILED_ICON;
             if (hasSkipped) return PoolOfTestIcons.SKIPPED_ICON;
         }

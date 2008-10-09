@@ -347,6 +347,9 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
         end = System.currentTimeMillis();
         animator.stopMovie();
         updateLabel(statusLabel);
+        if (total > count) {
+          progress.setColor(ColorProgressBar.YELLOW);
+        }
         rootNode.setInProgress(false);
         if (TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(consoleProperties)) {
             selectTest(rootNode.getFirstDefect());
