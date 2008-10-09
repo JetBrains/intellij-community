@@ -64,6 +64,7 @@ public class TypedHandler implements TypedActionHandler {
         }
       }
 
+      lookup.setAdditionalPrefix(lookup.getAdditionalPrefix()); //a magic that will clear initial prefix, so that common prefix won't be undone
       lookup.hide();
       myOriginalHandler.execute(editor, charTyped, dataContext);
     }

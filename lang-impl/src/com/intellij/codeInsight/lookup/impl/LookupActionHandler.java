@@ -1,9 +1,9 @@
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.codeInsight.lookup.LookupManager;
 
 /**
  * @author yole
@@ -13,6 +13,11 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   public LookupActionHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;
+  }
+
+  @Override
+  public boolean executeInCommand() {
+    return false;
   }
 
   public void execute(Editor editor, DataContext dataContext){

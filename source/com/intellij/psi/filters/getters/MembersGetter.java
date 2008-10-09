@@ -12,6 +12,7 @@ import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,25 +30,54 @@ public class MembersGetter {
     }
 
     if (expectedType instanceof PsiPrimitiveType && PsiType.DOUBLE.isAssignableFrom(expectedType)) {
-      if (position.getParent() instanceof PsiReferenceExpression &&
-          position.getParent().getParent() instanceof PsiExpressionList &&
-          position.getParent().getParent().getParent() instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression call = (PsiMethodCallExpression) position.getParent().getParent().getParent();
-        final JavaResolveResult[] resolveResults = call.getMethodExpression().multiResolve(true);
-        for (final JavaResolveResult result : resolveResults) {
-          final PsiElement element = result.getElement();
-          if (element instanceof PsiMethod) {
-            final PsiClass aClass = ((PsiMethod)element).getContainingClass();
+      final PsiElement parent = position.getParent();
+      if (parent instanceof PsiReferenceExpression) {
+        final PsiElement refParent = parent.getParent();
+        if (refParent instanceof PsiExpressionList) {
+          final PsiClass aClass = getCalledClass(refParent.getParent());
+          if (aClass != null) {
+            processMembers(position, results, aClass, false);
+          }
+        }
+        else if (refParent instanceof PsiBinaryExpression) {
+          final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)refParent;
+          if (parent == binaryExpression.getROperand() &&
+              JavaTokenType.EQEQ == binaryExpression.getOperationSign().getTokenType()) {
+            final PsiClass aClass = getCalledClass(binaryExpression.getLOperand());
             if (aClass != null) {
               processMembers(position, results, aClass, false);
-              return;
             }
           }
         }
-
-
       }
     }
+  }
+
+  @Nullable
+  private static PsiClass getCalledClass(@Nullable PsiElement call) {
+    if (call instanceof PsiMethodCallExpression) {
+      for (final JavaResolveResult result : ((PsiMethodCallExpression)call).getMethodExpression().multiResolve(true)) {
+        final PsiElement element = result.getElement();
+        if (element instanceof PsiMethod) {
+          final PsiClass aClass = ((PsiMethod)element).getContainingClass();
+          if (aClass != null) {
+            return aClass;
+          }
+        }
+      }
+    }
+    if (call instanceof PsiNewExpression) {
+      final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)call).getClassReference();
+      if (reference != null) {
+        for (final JavaResolveResult result : reference.multiResolve(true)) {
+          final PsiElement element = result.getElement();
+          if (element instanceof PsiClass) {
+            return (PsiClass)element;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   private static void processMembers(final PsiElement context, final CompletionResultSet results, final PsiClass where,

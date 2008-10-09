@@ -12,6 +12,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
@@ -69,12 +70,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         LookupElement item = event.getItem();
         if (item == null) return;
 
+        setMergeCommand();
+
         contextOriginal.setStartOffset(myEditor.getCaretModel().getOffset() - item.getLookupString().length());
         CodeCompletionHandlerBase.selectLookupItem(item, CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS ||
                                                          (item instanceof LookupItem &&
                                                           ((LookupItem)item).getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null),
                                                    event.getCompletionChar(), contextOriginal, myLookup.getItems());
       }
+
 
       public void lookupCanceled(final LookupEvent event) {
         cancel();
@@ -113,6 +117,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
     });
+  }
+
+  private void setMergeCommand() {
+    CommandProcessor.getInstance().setCurrentCommandGroupId("Completion" + hashCode());
   }
 
   public void showLookup() {
@@ -279,6 +287,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public boolean fillInCommonPrefix(final boolean explicit) {
     return new WriteCommandAction<Boolean>(myEditor.getProject()) {
       protected void run(Result<Boolean> result) throws Throwable {
+        if (!explicit) {
+          setMergeCommand();
+        }
         result.setResult(myLookup.fillInCommonPrefix(explicit));
       }
     }.execute().getResultObject().booleanValue();

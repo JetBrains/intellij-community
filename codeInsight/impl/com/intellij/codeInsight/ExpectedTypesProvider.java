@@ -422,7 +422,11 @@ public class ExpectedTypesProvider {
         }
       }
       else {
-        if (myForCompletion) return;
+        if (myForCompletion) {
+          myExpr = (PsiExpression)myExpr.getParent();
+          assignment.getParent().accept(this);
+          return;
+        }
 
         PsiExpression rExpr = assignment.getRExpression();
         if (rExpr != null) {

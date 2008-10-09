@@ -42,4 +42,8 @@ public abstract class EditorActionHandler {
    * @param dataContext the data context for the action.
    */
   public abstract void execute(Editor editor, DataContext dataContext);
+
+  public boolean executeInCommand() {
+    return true;
+  }
 }

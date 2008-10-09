@@ -4,6 +4,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.patterns.PlatformPatterns;
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
@@ -262,7 +263,8 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 
     {
       final CompletionVariant variant = new CompletionVariant(psiElement().afterLeaf(
-          psiElement(PsiIdentifier.class).afterLeaf(",", "<")).withSuperParent(2, PsiTypeParameterList.class));
+          psiElement(PsiIdentifier.class).afterLeaf(
+            psiElement().withText(string().oneOf(",", "<")).withParent(PsiTypeParameterList.class))));
       variant.includeScopeClass(PsiClass.class, true);
       variant.addCompletion(PsiKeyword.EXTENDS, TailType.SPACE);
       registerVariant(variant);

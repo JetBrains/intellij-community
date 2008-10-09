@@ -70,17 +70,22 @@ public abstract class EditorAction extends AnAction {
   public final void actionPerformed(final Editor editor, final DataContext dataContext) {
     if (editor == null) return;
 
-    CommandProcessor commandProcessor = CommandProcessor.getInstance();
+    final EditorActionHandler handler = getHandler();
     Runnable command = new Runnable() {
       public void run() {
-        getHandler().execute(editor, getProjectAwareDataContext(editor, dataContext));
+        handler.execute(editor, getProjectAwareDataContext(editor, dataContext));
       }
     };
+
+    if (!handler.executeInCommand()) {
+      command.run();
+      return;
+    }
 
     String commandName = getTemplatePresentation().getText();
     if (commandName == null) commandName = "";
     // use new Ref() here to avoid merging two consequential commands, and, in the same time, pass along the Document
-    commandProcessor.executeCommand(editor.getProject(), command, commandName, new Ref(editor.getDocument()), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+    CommandProcessor.getInstance().executeCommand(editor.getProject(), command, commandName, new Ref(editor.getDocument()), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
   }
 
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {

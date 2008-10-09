@@ -368,7 +368,9 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     final Document document = myEditor.getDocument();
     PsiDocumentManager.getInstance(myFile.getProject()).commitDocument(document);
     PsiElement elementAt = myFile.findElementAt(myContext.getStartOffset());
-    final PsiElement parentElement = elementAt != null ? elementAt.getParent():null;
+    if (elementAt == null) return false;
+    
+    final PsiElement parentElement = elementAt.getParent();
 
     PsiElement parent = PsiTreeUtil.getParentOfType(elementAt, PsiModifierListOwner.class, PsiCodeBlock.class, PsiComment.class);
     if (parent == null && parentElement instanceof PsiErrorElement) {
@@ -376,8 +378,10 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       if (nextElement instanceof PsiWhiteSpace) nextElement = nextElement.getNextSibling();
       if (nextElement instanceof PsiClass) parent = nextElement;
     }
+    if (!(parent instanceof PsiModifierListOwner)) return false;
+    if (parent instanceof PsiPackage) return true;
 
-    return parent instanceof PsiModifierListOwner;
+    return elementAt.getTextRange().getStartOffset() <= parent.getTextOffset();
   }
 
   protected void removeEndOfIdentifier(boolean needParenth){
