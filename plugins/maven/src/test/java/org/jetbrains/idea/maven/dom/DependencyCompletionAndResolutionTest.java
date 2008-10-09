@@ -630,6 +630,24 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     checkHighlighting(myProjectPom);
   }
 
+  public void testPropertiesInScopes() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <my.scope>compile</my.scope>" +
+                     "</properties>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <scope>${my.scope}</scope>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    checkHighlighting(myProjectPom);
+  }
+
   public void testDoesNotHighlightCorrectValues() throws Throwable {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

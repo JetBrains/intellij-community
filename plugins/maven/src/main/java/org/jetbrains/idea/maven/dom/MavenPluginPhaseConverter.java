@@ -1,7 +1,6 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,8 +8,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class MavenPluginPhaseConverter extends ResolvingConverter<String> {
-  public String fromString(@Nullable @NonNls String s, ConvertContext context) {
+public class MavenPluginPhaseConverter extends MavenPropertyResolvingConverter<String> {
+  @Override
+  public String fromResolvedString(@Nullable @NonNls String s, ConvertContext context) {
     return getVariants(context).contains(s) ? s : null;
   }
 

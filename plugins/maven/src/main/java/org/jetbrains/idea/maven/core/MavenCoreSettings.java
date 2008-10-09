@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.core;
 
+import com.intellij.openapi.util.Comparing;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,8 @@ public class MavenCoreSettings implements Cloneable {
   @NotNull private String checksumPolicy = MavenExecutionRequest.CHECKSUM_POLICY_FAIL;
   @NotNull private String failureBehavior = MavenExecutionRequest.REACTOR_FAIL_FAST;
   private boolean pluginUpdatePolicy = false;
+
+  private File myEffectiveLocalRepositoryCache;
 
 
   public boolean getPluginUpdatePolicy() {
@@ -78,11 +81,17 @@ public class MavenCoreSettings implements Cloneable {
   }
 
   public File getEffectiveLocalRepository() {
-    return MavenEmbedderFactory.resolveLocalRepository(mavenHome, mavenSettingsFile, localRepository);
+    if (myEffectiveLocalRepositoryCache == null) {
+      myEffectiveLocalRepositoryCache = MavenEmbedderFactory.resolveLocalRepository(mavenHome, mavenSettingsFile, localRepository);
+    }
+    return myEffectiveLocalRepositoryCache;
   }
 
   public void setLocalRepository(final @Nullable String localRepository) {
     if (localRepository != null) {
+      if (!Comparing.equal(this.localRepository, localRepository)) {
+        myEffectiveLocalRepositoryCache = null;
+      }
       this.localRepository = localRepository;
     }
   }
@@ -93,6 +102,9 @@ public class MavenCoreSettings implements Cloneable {
   }
 
   public void setMavenHome(@NotNull final String mavenHome) {
+    if (!Comparing.equal(this.mavenHome, mavenHome)) {
+      myEffectiveLocalRepositoryCache = null;
+    }
     this.mavenHome = mavenHome;
   }
 
@@ -103,6 +115,9 @@ public class MavenCoreSettings implements Cloneable {
 
   public void setMavenSettingsFile(@Nullable String mavenSettingsFile) {
     if (mavenSettingsFile != null) {
+      if (!Comparing.equal(this.mavenSettingsFile, mavenSettingsFile)) {
+        myEffectiveLocalRepositoryCache = null;
+      }
       this.mavenSettingsFile = mavenSettingsFile;
     }
   }

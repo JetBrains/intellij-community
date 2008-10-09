@@ -4,6 +4,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ModuleRootManager;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -40,6 +41,11 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     
     assertSources("module", "src/main/java");
     assertTestSources("module", "src/test/java");
+  }
+  
+  public void testInheritJdkFromProject() throws Exception {
+    createNewModule(new MavenId("org.foo", "module", "1.0"));
+    assertTrue(ModuleRootManager.getInstance(getModule("module")).isSdkInherited());
   }
 
   public void testCreatingFromArtifact() throws Exception {

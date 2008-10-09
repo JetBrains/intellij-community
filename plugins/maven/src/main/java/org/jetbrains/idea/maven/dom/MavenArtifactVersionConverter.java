@@ -8,7 +8,7 @@ import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 
 import java.util.Set;
 
-public class MavenVersionConverter extends MavenArtifactConverter {
+public class MavenArtifactVersionConverter extends MavenArtifactConverter {
   @Override
   protected boolean isValid(Project project, MavenProjectIndicesManager manager, MavenId id, ConvertContext context) {
     if (StringUtil.isEmpty(id.version)) return false;

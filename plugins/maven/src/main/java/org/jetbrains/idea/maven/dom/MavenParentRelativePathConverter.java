@@ -10,7 +10,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,11 +22,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile> {
+public class MavenParentRelativePathConverter extends MavenPropertyResolvingConverter<PsiFile> {
   @Override
-  public PsiFile fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public PsiFile fromResolvedString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
-    s = PropertyResolver.resolve(s, context.getInvocationElement().<MavenModel>getRoot());
     VirtualFile f = context.getFile().getVirtualFile().getParent().findFileByRelativePath(s);
     if (f == null) return null;
     return PsiManager.getInstance(context.getXmlElement().getProject()).findFile(f);

@@ -30,15 +30,19 @@ public class RootModelAdapter {
   }
 
   public void init(MavenProjectModel p, boolean isNewlyCreatedModule) {
-    if (isNewlyCreatedModule) setupInitialValues();
+    setupInitialValues(isNewlyCreatedModule);
     initContentRoots(p);
     initOrderEntries();
   }
 
-  private void setupInitialValues() {
-    myRootModel.inheritSdk();
-    myRootModel.getModule().setSavePathsRelative(true);
-    getCompilerExtension().setExcludeOutput(true);
+  private void setupInitialValues(boolean newlyCreatedModule) {
+    if (newlyCreatedModule || myRootModel.getSdk() == null) {
+      myRootModel.inheritSdk();
+    }
+    if (newlyCreatedModule) {
+      myRootModel.getModule().setSavePathsRelative(true);
+      getCompilerExtension().setExcludeOutput(true);
+    }
   }
 
   private void initContentRoots(MavenProjectModel p) {
