@@ -151,6 +151,9 @@ public class LocalChangeListImpl extends LocalChangeList {
       final ContentRevision after = oldBoy.getAfterRevision();
       if (scope == null || before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())
         || isIgnoredChange(oldBoy, fileIndex)) {
+        if (myLocalListener != null) {
+          myLocalListener.changeRemoved(myName, oldBoy);
+        }
         myIsInUpdate = true;
         removeChange(oldBoy);
         myOutdatedChanges.add(oldBoy);
