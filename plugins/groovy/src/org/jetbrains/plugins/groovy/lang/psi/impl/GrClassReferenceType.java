@@ -112,7 +112,7 @@ public class GrClassReferenceType extends PsiClassType {
   }
 
   public String getPresentableText() {
-    return myReferenceElement.getText();
+    return myReferenceElement.getReferenceName();
   }
 
   @Nullable

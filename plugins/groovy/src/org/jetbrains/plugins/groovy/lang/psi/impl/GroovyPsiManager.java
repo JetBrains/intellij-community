@@ -326,15 +326,9 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   public List<PsiField> getDefaultScriptProperties(GroovyFile file, final Project project) {
-    if (myRebuildGdkPending) {
-      synchronized (this) {
-        if (myRebuildGdkPending) {
-          buildGroovyScriptExtensionProperties(project);
-          myRebuildGdkPending = false;
-        }
-      }
+    if (myDefaultProperties == null) {
+      buildGroovyScriptExtensionProperties(myProject);
     }
-
     final String ext = getScriptType(file);
     if (myDefaultProperties == null || ext == null) {
       return Collections.emptyList();

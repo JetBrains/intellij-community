@@ -35,6 +35,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
@@ -44,9 +45,11 @@ import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.gant.GantFileType;
+import org.jetbrains.plugins.gant.GantUtils;
 import org.jetbrains.plugins.groovy.GroovyLoader;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -54,7 +57,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.gant.GantUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -195,7 +197,9 @@ public class GroovyPositionManager implements PositionManager {
     String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
 
     // For Gant scripts
-    qName = processGantScriptFileName(qName);
+    String originalName = qName;
+    qName = processGantScriptFileName(originalName);
+
     final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
     final PsiClass[] classes = GroovyPsiManager.getInstance(project).getNamesCache().getClassesByFQName(qName, searchScope);
     PsiClass clazz = classes.length == 1 ? classes[0] : null;
@@ -210,8 +214,6 @@ public class GroovyPositionManager implements PositionManager {
     for (final String extention : GroovyLoader.GROOVY_EXTENSIONS) {
       fileNames.add(fileNameWithoutExtension + "." + extention);
     }
-    //todo implement 4 gant
-    //fileNames.add(fileNameWithoutExtension + "." + "gant");
     final Ref<PsiFile> result = new Ref<PsiFile>();
     query.forEach(new Processor<VirtualFile>() {
       public boolean process(VirtualFile vDir) {
@@ -225,12 +227,21 @@ public class GroovyPositionManager implements PositionManager {
             }
           }
         }
-
         return true;
       }
     });
 
-    return result.get();
+    PsiFile res = result.get();
+    if (res != null) {
+      return res;
+    }
+    // For gant scripts
+    if (GantUtils.isGantScriptCompiledName(originalName)) {
+      PsiFile[] files =
+        FilenameIndex.getFilesByName(project, qName + "." + GantFileType.DEFAULT_EXTENSION, GlobalSearchScope.allScope(project));
+      if (files.length == 1) return files[0];
+    }
+    return null;
   }
 
   private static String processGantScriptFileName(String qName) {

@@ -19,4 +19,8 @@ public class GantUtils {
     }
     return false;
   }
+
+  public static boolean isGantScriptCompiledName(String s) {
+    return s != null && s.endsWith("_gant");
+  }
 }
