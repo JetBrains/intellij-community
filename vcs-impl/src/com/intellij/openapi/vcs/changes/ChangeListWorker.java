@@ -158,14 +158,12 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     if (list.isDefault()) {
       throw new RuntimeException(new IncorrectOperationException("Cannot remove default changelist"));
     }
-    final String listName = list.getName();
 
     for (Change change : list.getChanges()) {
-      myIdx.changeRemoved(listName, change);
       ((LocalChangeListImpl) myDefault).addChange(change);
     }
 
-    myMap.remove(listName);
+    myMap.remove(list.getName());
     return true;
   }
 
@@ -272,7 +270,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   // should be tested
-  public String getListName(final VirtualFile file) {
+  public String getListName(@NotNull final VirtualFile file) {
     final String listName = myIdx.getListName(file);
     if (listName == null || ((listName != null) && myMap.containsKey(listName))) {
       return listName;
