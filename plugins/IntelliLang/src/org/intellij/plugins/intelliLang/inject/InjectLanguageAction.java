@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -174,6 +175,7 @@ public class InjectLanguageAction implements IntentionAction {
         final PsiAnnotation existingAnnotation = list.findAnnotation(annotationName);
         if (existingAnnotation != null) existingAnnotation.replace(annotation);
         else list.addAfter(annotation, null);
+        JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(list);
       }
     }.execute();
     return true;
