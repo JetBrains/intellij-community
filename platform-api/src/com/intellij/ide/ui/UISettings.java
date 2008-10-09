@@ -237,7 +237,11 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
 
   }
 
+  private static boolean DONT_TOUCH_ALIASING = "true".equalsIgnoreCase(System.getProperty("idea.use.default.antialiasing.in.editor"));
+
   public static void setupAntialiasing(final Graphics g) {
+    if (DONT_TOUCH_ALIASING) return;
+
     Graphics2D g2d=(Graphics2D)g;
     UISettings uiSettings=getInstance();
 
