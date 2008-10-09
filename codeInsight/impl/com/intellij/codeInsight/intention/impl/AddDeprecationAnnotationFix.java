@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AddDeprecationAnnotationFix extends AddAnnotationFix {
   public AddDeprecationAnnotationFix() {
@@ -18,11 +19,12 @@ public class AddDeprecationAnnotationFix extends AddAnnotationFix {
   }
 
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (!super.isAvailable(project, editor, file)) {
+  @Override
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+    if (!super.isAvailable(project, editor, element)) {
       return false;
     }
-    PsiModifierListOwner owner = getContainer(editor, file);
+    PsiModifierListOwner owner = getContainer(element);
     if (owner == null) {
       return false;
     }

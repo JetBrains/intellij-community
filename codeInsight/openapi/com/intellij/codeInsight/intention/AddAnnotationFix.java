@@ -25,10 +25,10 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -42,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
+public class AddAnnotationFix extends PsiElementBaseIntentionAction implements LocalQuickFix {
   private final String myAnnotation;
   private final PsiModifierListOwner myModifierListOwner;
   private final String[] myAnnotationsToRemove;
@@ -93,8 +93,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
   }
 
   @Nullable
-  protected static PsiModifierListOwner getContainer(final Editor editor, final PsiFile file) {
-    final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+  protected static PsiModifierListOwner getContainer(final PsiElement element) {
     PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
     if (listOwner == null) {
       final PsiIdentifier psiIdentifier = PsiTreeUtil.getParentOfType(element, PsiIdentifier.class, false);
@@ -105,8 +104,9 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
     return listOwner;
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(file)) return false;
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+    if (element == null) return false;
+    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
     final PsiModifierListOwner owner;
     if (myModifierListOwner != null) {
       if (!myModifierListOwner.isValid()) return false;
@@ -119,13 +119,26 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
       
       owner = myModifierListOwner;
     }
-    else if (!file.getManager().isInProject(file) || CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS) {
-      owner = getContainer(editor, file);
+    else if (!element.getManager().isInProject(element) || CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS) {
+      owner = getContainer(element);
     }
     else {
       owner = null;
     }
     return owner != null  && !AnnotationUtil.isAnnotated(owner, myAnnotation, false);
+  }
+
+  @Override
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+    final PsiElement element;
+    if (myModifierListOwner != null) {
+      element = myModifierListOwner;
+    } else {
+      final CaretModel caretModel = editor.getCaretModel();
+      final int position = caretModel.getOffset();
+      element = file.findElementAt(position);
+    }
+    return isAvailable(project, editor, element);
   }
 
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

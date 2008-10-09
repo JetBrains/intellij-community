@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.idea.ActionsBundle;
@@ -79,12 +80,15 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
                 if (info.quickFixActionRanges != null) {
                   final boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
                   for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> actionRanges : info.quickFixActionRanges) {
-                    if (actionRanges.second.contains(offset) && actionRanges.first.getAction().isAvailable(project, editor, file)) {
-                      if (isError) {
-                        errorFixesToShow.add(actionRanges.first);
-                      }
-                      else {
-                        inspectionFixesToShow.add(actionRanges.first);
+                    if (actionRanges.second.contains(offset)) {
+                      final IntentionAction action = actionRanges.first.getAction();
+                      if (action instanceof PsiElementBaseIntentionAction ? ((PsiElementBaseIntentionAction)action).isAvailable(project, editor, element) : action.isAvailable(project, editor, file)) {
+                        if (isError) {
+                          errorFixesToShow.add(actionRanges.first);
+                        }
+                        else {
+                          inspectionFixesToShow.add(actionRanges.first);
+                        }
                       }
                     }
                   }
