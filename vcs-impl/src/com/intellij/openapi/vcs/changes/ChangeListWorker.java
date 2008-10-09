@@ -158,12 +158,14 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     if (list.isDefault()) {
       throw new RuntimeException(new IncorrectOperationException("Cannot remove default changelist"));
     }
+    final String listName = list.getName();
 
     for (Change change : list.getChanges()) {
+      myIdx.changeRemoved(listName, change);
       ((LocalChangeListImpl) myDefault).addChange(change);
     }
 
-    myMap.remove(list.getName());
+    myMap.remove(listName);
     return true;
   }
 
