@@ -8,6 +8,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ListUtil;
@@ -190,15 +191,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
           final HostMessages.InputHostDialog dlg = new HostMessages.InputHostDialog(myPanel,
                                                                                     IdeBundle.message("update.plugin.host.url.message"),
                                                                                     IdeBundle.message("update.add.new.plugin.host.title"),
-                                                                                    Messages.getQuestionIcon(), "", new InputValidator() {
-            public boolean checkInput(final String inputString) {
-              return inputString.length() > 0;
-            }
-
-            public boolean canClose(final String inputString) {
-              return checkInput(inputString);
-            }
-          });
+                                                                                    Messages.getQuestionIcon(), "",
+                                                                                    new NonEmptyInputValidator());
           dlg.show();
           final String input = dlg.getInputString();
           if (input != null) {
@@ -305,4 +299,5 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       }
     }
   }
+
 }
