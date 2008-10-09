@@ -32,7 +32,7 @@ public class MergeInfoHolder {
   private final static SimpleTextAttributes ourRefreshAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.GRAY);
   
   // used ONLY when refresh is triggered
-  private final Map<Pair<String, String>, Map<Long, SvnMergeInfoCache.MergeCheckResult>> myCachedMap;
+  private final Map<Pair<String, String>, MergeinfoCached> myCachedMap;
 
   private Getter<WCPaths> myRootGetter;
   private Getter<WCInfoWithBranches.Branch> myBranchGetter;
@@ -49,12 +49,12 @@ public class MergeInfoHolder {
     myEnabledHolder = enabledHolder;
     myManager = manager;
     myMergeInfoCache = SvnMergeInfoCache.getInstance(project);
-    myCachedMap = new HashMap<Pair<String, String>, Map<Long, SvnMergeInfoCache.MergeCheckResult>>();
+    myCachedMap = new HashMap<Pair<String, String>, MergeinfoCached>();
 
     myDecorator = new MyDecorator();
   }
 
-  private Map<Long, SvnMergeInfoCache.MergeCheckResult> getCurrentCache() {
+  private MergeinfoCached getCurrentCache() {
     return myCachedMap.get(createKey(myRootGetter.get(), myBranchGetter.get()));
   }
 
@@ -73,7 +73,6 @@ public class MergeInfoHolder {
     return new Pair<String, String>(root.getPath(), branch.getUrl());
   }
 
-  @Nullable
   public void refresh(final boolean ignoreEnabled) {
     final CommittedChangeListsListener refresher = createRefresher(ignoreEnabled);
     if (refresher != null) {
@@ -86,10 +85,9 @@ public class MergeInfoHolder {
   public CommittedChangeListsListener createRefresher(final boolean ignoreEnabled) {
     if (refreshEnabled(ignoreEnabled)) {
       // on awt thread
-      final Map<Long, SvnMergeInfoCache.MergeCheckResult> map =
-          myMergeInfoCache.getCachedState(myRootGetter.get(), myBranchGetter.get());
-      myCachedMap.put(createKey(myRootGetter.get(), myBranchGetter.get()),
-                      (map == null) ? new HashMap<Long, SvnMergeInfoCache.MergeCheckResult>() : map);
+      final MergeinfoCached state = myMergeInfoCache.getCachedState(myRootGetter.get(), myBranchGetter.get());
+      myCachedMap.put(createKey(myRootGetter.get(), myBranchGetter.get()), (state == null) ? new MergeinfoCached() :
+          new MergeinfoCached(new HashMap<Long, SvnMergeInfoCache.MergeCheckResult>(state.getMap()), state.getCopyRevision()));
       myMergeInfoCache.clear(myRootGetter.get(), myBranchGetter.get());
 
       return new MyRefresher();
@@ -121,15 +119,15 @@ public class MergeInfoHolder {
         } */
 
         // prepare state. must be in non awt thread
-        final SvnMergeInfoCache.MergeCheckResult state = myMergeInfoCache.getState(myRefreshedRoot, (SvnChangeList)list, myRefreshedBranch,
+        final SvnMergeInfoCache.MergeCheckResult checkState = myMergeInfoCache.getState(myRefreshedRoot, (SvnChangeList)list, myRefreshedBranch,
                                                                                    myBranchPath);
         // todo make batches - by 10
         final long number = list.getNumber();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            final Map<Long, SvnMergeInfoCache.MergeCheckResult> map = myCachedMap.get(createKey(myRefreshedRoot, myRefreshedBranch));
-            if (map != null) {
-              map.put(number, state);
+            final MergeinfoCached cachedState = myCachedMap.get(createKey(myRefreshedRoot, myRefreshedBranch));
+            if (cachedState != null) {
+              cachedState.getMap().put(number, checkState);
             }
             myManager.repaintTree();
           }
@@ -149,6 +147,7 @@ public class MergeInfoHolder {
   }
 
   public static enum ListMergeStatus {
+    COMMON(IconLoader.getIcon("/icons/Common.png")),
     MERGED(IconLoader.getIcon("/icons/Integrated.png")),
     NOT_MERGED(IconLoader.getIcon("/icons/Notintegrated.png")),
     //ALIEN(IconLoader.getIcon("/icons/OnDefault.png")),
@@ -175,6 +174,8 @@ public class MergeInfoHolder {
       if (result != null) {
         if (SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result)) {
           return ListMergeStatus.MERGED;
+        } else if (SvnMergeInfoCache.MergeCheckResult.COMMON.equals(result)) {
+          return ListMergeStatus.COMMON;
         } else {
           return ListMergeStatus.NOT_MERGED;
         }
@@ -194,18 +195,23 @@ public class MergeInfoHolder {
         return ListMergeStatus.ALIEN;
       }
 
-      final Map<Long, SvnMergeInfoCache.MergeCheckResult> map = getCurrentCache();
-      if (map != null) {
-        final SvnMergeInfoCache.MergeCheckResult result = map.get(list.getNumber());
+      final MergeinfoCached cachedState = getCurrentCache();
+      if (cachedState != null) {
+        if (cachedState.getCopyRevision() != -1 && cachedState.getCopyRevision() >= list.getNumber()) {
+          return ListMergeStatus.COMMON;
+        }
+        final SvnMergeInfoCache.MergeCheckResult result = cachedState.getMap().get(list.getNumber());
         return convert(result, true);
       } else {
-        final Map<Long, SvnMergeInfoCache.MergeCheckResult> state =
-            myMergeInfoCache.getCachedState(myRootGetter.get(), myBranchGetter.get());
+        final MergeinfoCached state = myMergeInfoCache.getCachedState(myRootGetter.get(), myBranchGetter.get());
         if (state == null) {
           refresh(ignoreEnabled);
           return ListMergeStatus.REFRESHING;
         } else {
-          return convert(state.get(list.getNumber()), false);
+          if (state.getCopyRevision() != -1 && state.getCopyRevision() >= list.getNumber()) {
+            return ListMergeStatus.COMMON;
+          }
+          return convert(state.getMap().get(list.getNumber()), false);
         }
       }
     }

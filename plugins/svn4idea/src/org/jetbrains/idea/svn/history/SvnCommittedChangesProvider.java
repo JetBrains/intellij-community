@@ -270,7 +270,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
   @Nullable
   public VcsCommittedViewAuxiliary createActions(final DecoratorManager manager, @Nullable final RepositoryLocation location) {
-    final RootsAndBranches rootsAndBranches = new RootsAndBranches(myProject, manager, location);
+    final RootsAndBranches rootsAndBranches = new RootsAndBranches(myProject, manager, location, myConnection);
     refreshMergeInfo(rootsAndBranches);
 
     final DefaultActionGroup popup = new DefaultActionGroup(myVcs.getDisplayName(), true);

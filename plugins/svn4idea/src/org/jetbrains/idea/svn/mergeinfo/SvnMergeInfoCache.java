@@ -1,14 +1,19 @@
 package org.jetbrains.idea.svn.mergeinfo;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.dialogs.WCPaths;
+import org.jetbrains.idea.svn.history.FirstInBranch;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
@@ -26,6 +31,9 @@ public class SvnMergeInfoCache {
   private final Project myProject;
   private MyState myState;
   private SVNWCClient myClient;
+
+  public static Topic<SvnMergeInfoCacheListener> SVN_MERGE_INFO_CACHE = new Topic<SvnMergeInfoCacheListener>("SVN_MERGE_INFO_CACHE",
+                                                                                                 SvnMergeInfoCacheListener.class);
 
   private SvnMergeInfoCache(final Project project) {
     myProject = project;
@@ -65,7 +73,7 @@ public class SvnMergeInfoCache {
   }
 
   @Nullable
-  public Map<Long, MergeCheckResult> getCachedState(final WCPaths info, final WCInfoWithBranches.Branch selectedBranch) {
+  public MergeinfoCached getCachedState(final WCPaths info, final WCInfoWithBranches.Branch selectedBranch) {
     final String currentUrl = info.getRootUrl();
     final String branchUrl = selectedBranch.getUrl();
 
@@ -99,7 +107,7 @@ public class SvnMergeInfoCache {
       branchInfo = rootMapping.getBranchInfo(branchUrl);
     }
     if (branchInfo == null) {
-      branchInfo = new BranchInfo(info.getRepoUrl(), branchUrl, currentUrl, myClient);
+      branchInfo = new BranchInfo(SvnVcs.getInstance(myProject), info.getRepoUrl(), branchUrl, currentUrl, myClient);
       rootMapping.addBranchInfo(branchUrl, branchInfo);
     }
 
@@ -123,6 +131,7 @@ public class SvnMergeInfoCache {
   }
 
   public static enum MergeCheckResult {
+    COMMON,
     MERGED,
     NOT_MERGED,
     NOT_EXISTS,
@@ -137,6 +146,40 @@ public class SvnMergeInfoCache {
     }
   }
 
+  private static class CopyRevison {
+    private final String myPath;
+    private volatile long myRevision;
+
+    private CopyRevison(final SvnVcs vcs, final String path, final String repositoryRoot, final String branchUrl, final String trunkUrl) {
+      myPath = path;
+      myRevision = -1;
+
+      ApplicationManager.getApplication().executeOnPooledThread(new FirstInBranch(vcs, repositoryRoot, branchUrl, trunkUrl,
+                                                                                  new Consumer<Long>() {
+                                                                                    public void consume(final Long aLong) {
+                                                                                      myRevision = aLong;
+                                                                                      if (myRevision != -1) {
+                                                                                        ApplicationManager.getApplication().invokeLater(new Runnable() {
+                                                                                          public void run() {
+                                                                                            if (vcs.getProject().isDisposed()) return;
+                                                                                            vcs.getProject().getMessageBus().syncPublisher(SVN_MERGE_INFO_CACHE).copyRevisionUpdated();
+                                                                                          }
+                                                                                        });
+                                                                                      }
+                                                                                    }
+                                                                                  }));
+    }
+
+    public String getPath() {
+      return myPath;
+    }
+
+    public long getRevision() {
+      return myRevision;
+    }
+  }
+
+  //FirstInBranch
   private static class BranchInfo {
     // repo path in branch -> merged revisions
     private final Map<String, Set<Long>> myPathMergedMap;
@@ -153,8 +196,12 @@ public class SvnMergeInfoCache {
     private final String myTrunkUrl;
     private final String myRelativeTrunk;
     private final SVNWCClient myClient;
+    private final SvnVcs myVcs;
 
-    private BranchInfo(final String repositoryRoot, final String branchUrl, final String trunkUrl, final SVNWCClient client) {
+    private CopyRevison myCopyRevison;
+
+    private BranchInfo(final SvnVcs vcs, final String repositoryRoot, final String branchUrl, final String trunkUrl, final SVNWCClient client) {
+      myVcs = vcs;
       myRepositoryRoot = repositoryRoot;
       myBranchUrl = branchUrl;
       myTrunkUrl = trunkUrl;
@@ -164,6 +211,14 @@ public class SvnMergeInfoCache {
       myPathMergedMap = new HashMap<String, Set<Long>>();
       myNonExistingPaths = new HashSet<String>();
       myAlreadyCalculatedMap = new HashMap<Long, MergeCheckResult>();
+    }
+
+    private long calculateCopyRevision(final String branchPath) {
+      if (myCopyRevison != null && Comparing.equal(myCopyRevison.getPath(), branchPath)) {
+        return myCopyRevison.getRevision();
+      }
+      myCopyRevison = new CopyRevison(myVcs, branchPath, myRepositoryRoot, myBranchUrl, myTrunkUrl);
+      return -1;
     }
 
     public void clear() {
@@ -182,14 +237,25 @@ public class SvnMergeInfoCache {
       myNonExistingPaths.clear();
     }
 
-    public Map<Long, MergeCheckResult> getCached() {
+    public MergeinfoCached getCached() {
       synchronized (myCalculatedLock) {
-        return new HashMap<Long, MergeCheckResult>(myAlreadyCalculatedMap);
+        final long revision;
+        if (myCopyRevison != null && myCopyRevison.getRevision() != -1) {
+          revision = myCopyRevison.getRevision();
+        } else {
+          revision = -1;
+        }
+        return new MergeinfoCached(Collections.unmodifiableMap(myAlreadyCalculatedMap), revision);
       }
     }
 
     public MergeCheckResult checkList(final SvnChangeList list, final String branchPath) {
       synchronized (myCalculatedLock) {
+        final long revision = calculateCopyRevision(branchPath);
+        if (revision != -1 && revision >= list.getNumber()) {
+          return MergeCheckResult.COMMON;
+        }
+
         final MergeCheckResult calculated = myAlreadyCalculatedMap.get(list.getNumber());
         if (calculated != null) {
           return calculated;
@@ -413,5 +479,9 @@ public class SvnMergeInfoCache {
     public void addBranchInfo(final String branchUrl, final BranchInfo branchInfo) {
       myBranchInfo.put(branchUrl, branchInfo);
     }
+  }
+
+  public interface SvnMergeInfoCacheListener {
+    void copyRevisionUpdated();
   }
 }

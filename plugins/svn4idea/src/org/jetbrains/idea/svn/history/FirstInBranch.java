@@ -1,0 +1,84 @@
+package org.jetbrains.idea.svn.history;
+
+import com.intellij.util.Consumer;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNLogClient;
+
+import java.util.Map;
+
+public class FirstInBranch implements Runnable {
+  private final SvnVcs myVcs;
+  private final String myRepositoryRoot;
+  private final String myFullBranchUrl;
+  private final String myFullTrunkUrl;
+  private final String myBranchUrl;
+  private final String myTrunkUrl;
+  private final Consumer<Long> myConsumer;
+  private long myCopyRevision;
+  private final boolean myPrimary;
+
+  public FirstInBranch(final SvnVcs vcs, final String repositoryRoot, final String branchUrl, final String trunkUrl, final Consumer<Long> consumer) {
+    this(vcs,  repositoryRoot, branchUrl, trunkUrl, consumer, true);
+  }
+
+  public FirstInBranch(final SvnVcs vcs, final String repositoryRoot, final String branchUrl, final String trunkUrl, final Consumer<Long> consumer, final boolean primary) {
+    myPrimary = primary;
+    myVcs = vcs;
+    myRepositoryRoot = repositoryRoot;
+    myConsumer = consumer;
+
+    myCopyRevision = -1;
+
+    myFullBranchUrl = branchUrl;
+    myFullTrunkUrl = trunkUrl;
+    myBranchUrl = relativePath(repositoryRoot, branchUrl);
+    myTrunkUrl = relativePath(repositoryRoot, trunkUrl);
+  }
+
+  private String relativePath(final String parent, final String child) {
+    String path = SVNPathUtil.getRelativePath(parent, child);
+    return path.startsWith("/") ? path : "/" + path;
+  }
+
+  public void run() {
+    final SVNLogClient logClient = myVcs.createLogClient();
+
+    try {
+      logClient.doLog(SVNURL.parseURIEncoded(myFullBranchUrl), null, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(0), true, true, 0,
+                      new ISVNLogEntryHandler() {
+                        public void handleLogEntry(final SVNLogEntry logEntry) throws SVNException {
+                          final Map map = logEntry.getChangedPaths();
+                          for (Object o : map.values()) {
+                            final SVNLogEntryPath path = (SVNLogEntryPath) o;
+                            final String localPath = path.getPath();
+                            final String copyPath = path.getCopyPath();
+
+                            if ('A' == path.getType() &&
+                                (myBranchUrl.equals(localPath) || SVNPathUtil.isAncestor(localPath, myBranchUrl)) &&
+                                (myTrunkUrl.equals(copyPath)) || SVNPathUtil.isAncestor(copyPath, myTrunkUrl)) {
+                              myCopyRevision = path.getCopyRevision();
+                              throw new MockException();
+                            }
+                          }
+                        }
+                      });
+    }
+    catch (MockException e) {
+      myConsumer.consume(myCopyRevision);
+      return;
+    }
+    catch (SVNException e) {
+      myConsumer.consume(myCopyRevision);
+    }
+    if (myPrimary) {
+      new FirstInBranch(myVcs, myRepositoryRoot, myFullTrunkUrl, myFullBranchUrl, myConsumer, false).run();
+    } else {
+      myConsumer.consume(myCopyRevision);
+    }
+  }
+
+  private static class MockException extends RuntimeException {}
+}

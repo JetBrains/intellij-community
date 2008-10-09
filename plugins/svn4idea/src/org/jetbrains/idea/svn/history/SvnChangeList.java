@@ -613,4 +613,12 @@ public class SvnChangeList implements CommittedChangeList {
     }
     return new File(rootInfo.getFile().getPath()).getAbsolutePath();
   }
+
+  public boolean allPathsUnder(final String path) {
+    final String commonRelative = myCommonPathSearcher.getCommon();
+    if (commonRelative != null) {
+      return SVNPathUtil.isAncestor(path, SVNPathUtil.append(myRepositoryRoot, commonRelative));
+    }
+    return false;
+  }
 }

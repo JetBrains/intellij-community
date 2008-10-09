@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -38,6 +39,7 @@ import org.jetbrains.idea.svn.integrate.MergerFactory;
 import org.jetbrains.idea.svn.integrate.SelectedChangeListsChecker;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.jetbrains.idea.svn.mergeinfo.MergeInfoHolder;
+import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -72,6 +74,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   private final UndoIntegrateChangeListsAction myUndoIntegrateChangeListsAction;
   private JComponent myToolbarComponent;
 
+  private final MessageBusConnection myMessageBusConnection;
+
   private MergeInfoHolder getHolder(final String key) {
     final MergeInfoHolder holder = myHolders.get(key);
     if (holder != null) {
@@ -88,7 +92,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     return myMergePanels.get(key.endsWith(File.separator) ? key.substring(0, key.length() - 1) : key + File.separator);
   }
   
-  public RootsAndBranches(final Project project, final DecoratorManager manager, final RepositoryLocation location) {
+  public RootsAndBranches(final Project project, final DecoratorManager manager, final RepositoryLocation location,
+                          final MessageBusConnection connection) {
     myProject = project;
     myManager = manager;
     myLocation = location;
@@ -115,6 +120,14 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     setDirectionToPanels();
 
     myStrategy = new MergePanelFiltering(getPanel());
+
+    // parent will disconnect
+    myMessageBusConnection = connection;
+    myMessageBusConnection.subscribe(SvnMergeInfoCache.SVN_MERGE_INFO_CACHE, new SvnMergeInfoCache.SvnMergeInfoCacheListener() {
+      public void copyRevisionUpdated() {
+        myManager.repaintTree();
+      }
+    });
   }
 
   public IntegrateChangeListsAction getIntegrateAction() {
@@ -869,10 +882,17 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
     final SvnChangeList svnList = (SvnChangeList) list;
     final String wcPath = svnList.getWcPath();
+    MergeInfoHolder holder = null;
     if (wcPath == null) {
-      return null;
+      for (Map.Entry<String, SvnMergeInfoRootPanelManual> entry : myMergePanels.entrySet()) {
+        final SvnMergeInfoRootPanelManual panelManual = entry.getValue();
+        if (svnList.allPathsUnder(panelManual.getBranch().getUrl())) {
+          holder = getHolder(entry.getKey());
+        }
+      }
+    } else {
+      holder = getHolder(wcPath);
     }
-    final MergeInfoHolder holder = getHolder(wcPath);
     if (holder != null) {
       return holder.getDecorator().check(list, ignoreEnabled);
     }
@@ -934,7 +954,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
           if (! myFilterAlien.isSelected(null)) {
             result.add(list);
           }
-        } else if (MergeInfoHolder.ListMergeStatus.MERGED.equals(status)) {
+        } else if (MergeInfoHolder.ListMergeStatus.MERGED.equals(status) || MergeInfoHolder.ListMergeStatus.COMMON.equals(status)) {
           if (! myFilterMerged.isSelected(null)) {
             result.add(list);
           }
