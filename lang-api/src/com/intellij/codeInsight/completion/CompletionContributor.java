@@ -11,13 +11,54 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Completion FAQ:<p>
+ *
+ * Q: How do I implement code completion?<br>
+ * A: Define a completion.contributor extension of type {@link CompletionContributor}.
+ * Or, if the place you want to complete in contains a {@link PsiReference}, just return the variants
+ * you want to suggest from its {@link PsiReference#getVariants()} method as {@link String}s,
+ * {@link com.intellij.psi.PsiElement}s, or better {@link LookupElement}s.<p>
+ *
+ * Q: How do I get automatic lookup element filtering by prefix?<br>
+ * A: When you return variants from reference ({@link PsiReference#getVariants()}), the filtering will be done
+ * automatically, with prefix taken as the reference text from its start ({@link PsiReference#getRangeInElement()}) to
+ * the caret position.
+ * In {@link CompletionContributor} you will be given a {@link com.intellij.codeInsight.completion.CompletionResultSet}
+ * which will match {@link LookupElement}s againts its prefix matcher {@link CompletionResultSet#getPrefixMatcher()}.
+ * If the default prefix calculated by IntelliJ IDEA doesn't satisfy you, you can obtain another result set via
+ * {@link com.intellij.codeInsight.completion.CompletionResultSet#withPrefixMatcher(PrefixMatcher)} and feed your lookup elements to the latter.
+ * It's one of the item's lookup strings ({@link LookupElement#getAllLookupStrings()} that is matched against prefix matcher.<p>
+ *
+ * Q: How do I plug into those funny texts below the items in shown lookup?<br>
+ * A: Use {@link CompletionContributor#advertise(CompletionParameters)} or
+ * {@link CompletionService#setAdvertisementText(String)}. Don't forget to check whether you are in correct place
+ * (see {@link CompletionParameters}).<p>
+ *
+ * Q: How do I change the text that gets shown when there are no suitable variants at all? <br>
+ * A: Use {@link CompletionContributor#handleEmptyLookup(CompletionParameters, Editor)}.
+ * Don't forget to check whether you are in correct place (see {@link CompletionParameters}).<p>
+ *
+ * Q: How do I affect lookup element's appearance (icon, text attributes, etc.)?<br>
+ * A: See {@link LookupElement#renderElement(LookupElementPresentation)} and {@link LookupElement#getRenderer()}.<p>
+ *
+ * Q: I'm not satisfied that completion just inserts the item's lookup string on item selection. How make IDEA write something else?<br>
+ * A: See {@link LookupElement#handleInsert(InsertionContext)} and {@link LookupElement#getInsertHandler()}.<p>
+ *
+ * Q: What if I select item with a Tab key?<br>
+ * A: Semantics is, that the identifier that you're stanging inside gets removed completely, and then the lookup string is inserted. You can change
+ * the deleting range end offset, do it in {@link CompletionContributor#beforeCompletion(CompletionInitializationContext)}
+ * by putting new offset to {@link CompletionInitializationContext#getOffsetMap()} as {@link com.intellij.codeInsight.completion.CompletionInitializationContext#IDENTIFIER_END_OFFSET}.<p>
+ *
  * @author peter
  */
 public abstract class CompletionContributor extends AbstractCompletionContributor<CompletionParameters>{
