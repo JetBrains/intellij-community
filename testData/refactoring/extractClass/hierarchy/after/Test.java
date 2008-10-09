@@ -1,5 +1,5 @@
 class Test<R>  extends A <R>{
 
-    public void foo(R t){}
+    void foo(R t){}
 
 }

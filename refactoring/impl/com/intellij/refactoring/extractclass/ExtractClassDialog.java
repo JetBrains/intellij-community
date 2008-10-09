@@ -138,54 +138,32 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   }
 
   public List<PsiField> getFieldsToExtract() {
-    return getFieldsToExtract(true);
+    return getMembersToExtract(true, PsiField.class);
   }
 
-  public List<PsiField> getFieldsToExtract(final boolean checked) {
-    final List<PsiField> out = new ArrayList<PsiField>();
+  public <T> List<T> getMembersToExtract(final boolean checked, Class<T> memberClass) {
+    final List<T> out = new ArrayList<T>();
     for (MemberInfo info : memberInfo) {
       if (checked && !info.isChecked()) continue;
       if (!checked && info.isChecked()) continue;
       final PsiMember member = info.getMember();
-      if (member instanceof PsiField) {
-        out.add((PsiField)member);
+      if (memberClass.isAssignableFrom(member.getClass())) {
+        out.add((T)member);
       }
     }
     return out;
   }
 
   public List<PsiMethod> getMethodsToExtract() {
-    return getMethodsToExtract(true);
-  }
-
-  public List<PsiMethod> getMethodsToExtract(final boolean checked) {
-    final List<PsiMethod> out = new ArrayList<PsiMethod>();
-    for (MemberInfo info : memberInfo) {
-      if (checked && !info.isChecked()) continue;
-      if (!checked && info.isChecked()) continue;
-      final PsiMember member = info.getMember();
-      if (member instanceof PsiMethod) {
-        out.add((PsiMethod)member);
-      }
-    }
-    return out;
+    return getMembersToExtract(true, PsiMethod.class);
   }
 
   public List<PsiClass> getClassesToExtract() {
-    return getClassesToExtract(true);
+    return getMembersToExtract(true, PsiClass.class);
   }
 
-  public List<PsiClass> getClassesToExtract(final boolean checked) {
-    final List<PsiClass> out = new ArrayList<PsiClass>();
-    for (MemberInfo info : memberInfo) {
-      if (checked && !info.isChecked()) continue;
-      if (!checked && info.isChecked()) continue;
-      final PsiMember member = info.getMember();
-      if (member instanceof PsiClass) {
-        out.add((PsiClass)member);
-      }
-    }
-    return out;
+  public List<PsiClassInitializer> getClassInitializersToExtract() {
+    return getMembersToExtract(true, PsiClassInitializer.class);
   }
 
   protected String getDimensionServiceKey() {
@@ -282,7 +260,8 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
         }
         else {
           visitor =
-            new BackpointerUsageVisitor(getFieldsToExtract(false), getClassesToExtract(false), getMethodsToExtract(false), sourceClass, false);
+            new BackpointerUsageVisitor(getMembersToExtract(false, PsiField.class), getMembersToExtract(false, PsiClass.class),
+                                        getMembersToExtract(false, PsiMethod.class), sourceClass, false);
         }
 
         member.getMember().accept(visitor);

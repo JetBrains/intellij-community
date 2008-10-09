@@ -1,20 +1,14 @@
 class Test {
   int myField;
-    private final Extracted extracted = new Extracted(this);
-
-    Test(){
+  Test(){
     myField = 7;
   }
 
   void foo() {
-      extracted.foo();
+    if (myField == 7){}
   }
 
   void bar() {
-      extracted.foo();
+    foo();
   }
-
-    public int getMyField() {
-        return myField;
-    }
 }

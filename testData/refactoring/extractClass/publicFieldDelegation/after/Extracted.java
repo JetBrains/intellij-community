@@ -5,8 +5,4 @@ public class Extracted<T> {
     }
 
 
-    public T getMyT() {
-        return myT;
-    }
-
 }

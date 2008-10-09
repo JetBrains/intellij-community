@@ -1,3 +1,3 @@
 class Test<T> {
-    public void foo(T t){}
+    void foo(T t){}
 }

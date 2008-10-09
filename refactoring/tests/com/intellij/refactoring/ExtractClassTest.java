@@ -11,6 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.extractclass.ExtractClassProcessor;
+import junit.framework.Assert;
 
 import java.util.ArrayList;
 
@@ -20,6 +21,14 @@ public class ExtractClassTest extends MultiFileTestCase{
   }
 
   private void doTestMethod() throws Exception {
+    doTestMethod(null);
+  }
+
+  private void doTestMethod(String conflicts) throws Exception {
+    doTestMethod("foo", conflicts);
+  }
+
+  private void doTestMethod(final String methodName, final String conflicts) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test");
@@ -27,11 +36,9 @@ public class ExtractClassTest extends MultiFileTestCase{
         assertNotNull("Class Test not found", aClass);
 
         final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>();
-        methods.add(aClass.findMethodsByName("foo", false)[0]);
-        ExtractClassProcessor processor = new ExtractClassProcessor(aClass, new ArrayList<PsiField>(), methods, new ArrayList<PsiClass>(), "", "Extracted");
-        processor.run();
-        LocalFileSystem.getInstance().refresh(false);
-        FileDocumentManager.getInstance().saveAllDocuments();
+        methods.add(aClass.findMethodsByName(methodName, false)[0]);
+        
+        doTest(aClass, methods, new ArrayList<PsiField>(), conflicts);
       }
     });
   }
@@ -41,7 +48,7 @@ public class ExtractClassTest extends MultiFileTestCase{
   }
 
   public void testFieldReference() throws Exception {
-    doTestMethod();
+    doTestMethod("foo", "Field 'myField' needs getter");
   }
 
   public void testVarargs() throws Exception {
@@ -73,13 +80,48 @@ public class ExtractClassTest extends MultiFileTestCase{
         final ArrayList<PsiField> fields = new ArrayList<PsiField>();
         fields.add(aClass.findFieldByName("myT", false));
 
-        ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", "Extracted");
-        processor.run();
-        LocalFileSystem.getInstance().refresh(false);
-        FileDocumentManager.getInstance().saveAllDocuments();
+        doTest(aClass, methods, fields, null);
       }
     });
   }
+
+  private void doTestField(final String conflicts) throws Exception {
+    doTest(new PerformAction() {
+      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
+        PsiClass aClass = myJavaFacade.findClass("Test");
+
+        assertNotNull("Class Test not found", aClass);
+
+        final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>();
+
+        final ArrayList<PsiField> fields = new ArrayList<PsiField>();
+        fields.add(aClass.findFieldByName("myT", false));
+
+        doTest(aClass, methods, fields, conflicts);
+      }
+    });
+  }
+
+  private void doTest(final PsiClass aClass, final ArrayList<PsiMethod> methods, final ArrayList<PsiField> fields, final String conflicts) {
+    try {
+      ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", "Extracted");
+      processor.run();
+      LocalFileSystem.getInstance().refresh(false);
+      FileDocumentManager.getInstance().saveAllDocuments();
+    }
+    catch (Exception e) {
+      if (conflicts != null) {
+        Assert.assertEquals(e.getMessage(), conflicts);
+        return;
+      } else {
+        fail(e.getMessage());
+      }
+    }
+    if (conflicts != null) {
+      fail("Conflicts were not detected: " + conflicts);
+    }
+  }
+
 
   public void testGetters() throws Exception {
     doTestFieldAndMethod("getMyT");
@@ -127,4 +169,17 @@ public class ExtractClassTest extends MultiFileTestCase{
   public void testInner() throws Exception {
     doTestInnerClass();
   }
+
+  public void testMultipleGetters() throws Exception {
+    doTestField(null);
+  }
+
+  public void testMultipleGetters1() throws Exception {
+    doTestMethod("getMyT", null);
+  }
+
+  public void testUsedInInitializer() throws Exception {
+    doTestField("Class initializer requires moved members");
+  }
+
 }
