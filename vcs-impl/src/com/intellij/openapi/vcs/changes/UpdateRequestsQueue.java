@@ -181,12 +181,11 @@ public class UpdateRequestsQueue {
 
   private class MyRunnable implements Runnable {
     public void run() {
-      myTask = null;
-
       boolean updateUnversioned;
       final List<Runnable> copy = new ArrayList<Runnable>(myWaitingUpdateCompletionQueue.size());
 
       synchronized (myLock) {
+        myTask = null;
         if ((! myStopped) && ((! myStarted) || myPlVcsManager.isBackgroundVcsOperationRunning())) {
           LOG.debug("MyRunnable: not started, not stopped, reschedule, project: " + myProject.getName() + ", runnable: " + hashCode());
           // try again after time
