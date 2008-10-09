@@ -990,6 +990,7 @@ public class FileManagerImpl implements FileManager {
         new ExternalChangeAction() {
           public void run() {
             depthCounter--;
+            assert depthCounter >= 0 : depthCounter;
             if (depthCounter > 0) return;
 
             removeInvalidFilesAndDirs(true);
