@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,13 +41,8 @@ public class CamelHumpMatcher extends PrefixMatcher {
   public boolean prefixMatches(@NotNull final LookupElement element) {
     final boolean itemCaseInsensitive = element instanceof LookupItem && 
                                         Boolean.TRUE.equals(((LookupItem)element).getAttribute(LookupItem.CASE_INSENSITIVE));
-    boolean result = false;
-    for (final String name : element.getAllLookupStrings()) {
-      if (itemCaseInsensitive && StringUtil.startsWithIgnoreCase(name, myPrefix) || prefixMatches(name)) {
-        result = true;
-        break;
-      }
-    }
+    boolean result = prefixMatchersInternal(element, itemCaseInsensitive);
+
     //todo dirty hack
     if (result && itemCaseInsensitive) {
       final String currentString = ContainerUtil.find(element.getAllLookupStrings(), new Condition<String>() {
@@ -64,6 +60,22 @@ public class CamelHumpMatcher extends PrefixMatcher {
       }
     }
     return result;
+  }
+
+  private boolean prefixMatchersInternal(final LookupElement element, final boolean itemCaseInsensitive) {
+    for (final String name : element.getAllLookupStrings()) {
+      if (itemCaseInsensitive && StringUtil.startsWithIgnoreCase(name, myPrefix) || prefixMatches(name)) {
+        return true;
+      }
+      if (itemCaseInsensitive && CodeInsightSettings.FIRST_LETTER == CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE && name.length() > 0) {
+        final char c = name.charAt(0);
+        String swappedCase = (Character.isUpperCase(c) ? Character.toLowerCase(c) : Character.toUpperCase(c)) + name.substring(1);
+        if (prefixMatches(swappedCase)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @NotNull
