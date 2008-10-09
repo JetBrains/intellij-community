@@ -237,6 +237,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     myContentWrapper.setContent(c, getContext().getErrors().get(current));
   }
 
+  @Nullable
+  public String getHelpTopic() {
+    final Configurable current = getContext().getCurrentConfigurable();
+    return current != null ? current.getHelpTopic() : null;
+  }
+
 
   class ResetAction extends AbstractAction {
     Configurable myConfigurable;

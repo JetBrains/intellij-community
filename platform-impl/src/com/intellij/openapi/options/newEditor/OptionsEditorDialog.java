@@ -7,6 +7,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.help.HelpManager;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -20,12 +21,15 @@ public class OptionsEditorDialog extends DialogWrapper {
   private OptionsEditor myEditor;
 
   private ApplyAction myApplyAction;
+  public static final String DIMENSION_KEY = "OptionsEditor";
 
   public OptionsEditorDialog(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     super(project, true);
     myProject = project;
     myGroups = groups;
     myPreselected = preselectedConfigurable;
+
+    setTitle("Settings");
 
     init();
   }
@@ -35,37 +39,63 @@ public class OptionsEditorDialog extends DialogWrapper {
     myEditor.getContext().addColleague(new OptionsEditorColleague.Adapter() {
       @Override
       public void onModifiedAdded(final Configurable configurable) {
-        myApplyAction.setEnabled(myEditor.canApply());
+        updateStatus();
       }
 
       @Override
       public void onModifiedRemoved(final Configurable configurable) {
-        myApplyAction.setEnabled(myEditor.canApply());
+        updateStatus();
       }
 
       @Override
       public void onErrorsChanged() {
-        final Map<Configurable,ConfigurationException> errors = myEditor.getContext().getErrors();
-        if (errors.size() == 0) {
-          setErrorText(null);
-        } else {
-          setErrorText("Applying changes was incomplete due to errors");
-        }
+        updateStatus();
       }
     });
     Disposer.register(myDisposable, myEditor);
     return myEditor;
   }
 
+  public boolean updateStatus() {
+    myApplyAction.setEnabled(myEditor.canApply());
+
+    final Map<Configurable,ConfigurationException> errors = myEditor.getContext().getErrors();
+    if (errors.size() == 0) {
+      setErrorText(null);
+    } else {
+      setErrorText("Applying changes was incomplete due to errors");
+    }
+
+    return errors.size() == 0;
+  }
+
   @Override
   protected String getDimensionServiceKey() {
-    return "OptionsEditor";
+    return DIMENSION_KEY;
+  }
+
+  @Override
+  protected void doOKAction() {
+    if (myEditor.canApply()) {
+      myEditor.apply();
+      if (!updateStatus()) return;
+    }
+
+    super.doOKAction();
   }
 
   @Override
   protected Action[] createActions() {
     myApplyAction = new ApplyAction();
-    return new Action[] {getOKAction(), getCancelAction(), myApplyAction};
+    return new Action[] {getOKAction(), getCancelAction(), myApplyAction, getHelpAction()};
+  }
+
+  @Override
+  protected void doHelpAction() {
+    final String topic = myEditor.getHelpTopic();
+    if (topic != null) {
+      HelpManager.getInstance().invokeHelp(topic);
+    }
   }
 
   @Override

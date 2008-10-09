@@ -17,6 +17,7 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 
@@ -35,7 +36,7 @@ public abstract class ShowSettingsUtil {
 
   public abstract boolean editConfigurable(Component parent, Configurable configurable, Runnable advancedInitialization);
 
-  public abstract boolean editConfigurable(Project project, String dimensionServiceKey, Configurable configurable);
+  public abstract boolean editConfigurable(Project project, @NonNls String dimensionServiceKey, Configurable configurable);
 
   public abstract boolean editConfigurable(Component parent, String dimensionServiceKey, Configurable configurable);
 

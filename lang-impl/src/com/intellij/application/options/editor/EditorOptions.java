@@ -16,6 +16,7 @@ public class EditorOptions implements SearchableConfigurable.Parent {
 
   private EditorOptionsPanel myPanel;
   private Wrapper myComponentWrapper = new Wrapper();
+  private Configurable[] myKids;
 
 
   public boolean isModified() {
@@ -31,6 +32,8 @@ public class EditorOptions implements SearchableConfigurable.Parent {
   }
 
   public Configurable[] getConfigurables() {
+    if (myKids != null) return myKids;
+
     if (myPanel == null) {
       createComponent();
     }
@@ -38,15 +41,15 @@ public class EditorOptions implements SearchableConfigurable.Parent {
     myComponentWrapper.removeAll();
 
     final TabbedPaneWrapper tabs = myPanel.getTabs();
-    Configurable[] result = new Configurable[tabs.getTabCount()];
+    myKids = new Configurable[tabs.getTabCount()];
 
     for (int i= 0; i < tabs.getTabCount(); i++) {
-      result[i] = new Kid(tabs.getTitleAt(i), tabs.getComponentAt(i));
+      myKids[i] = new Kid(tabs.getTitleAt(i), tabs.getComponentAt(i));
     }
 
     tabs.removeAll();
 
-    return result;
+    return myKids;
   }
 
   public String getDisplayName() {

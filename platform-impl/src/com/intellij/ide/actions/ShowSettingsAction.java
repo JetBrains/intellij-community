@@ -18,7 +18,7 @@ public class ShowSettingsAction extends AnAction {
     }
 
     ConfigurableGroup[] group = new ConfigurableGroup[]{
-      new ProjectConfigurablesGroup(project),
+      new ProjectConfigurablesGroup(project, false),
       new IdeConfigurablesGroup()
     };
 
