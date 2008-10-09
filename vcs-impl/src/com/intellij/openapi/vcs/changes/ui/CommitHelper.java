@@ -6,9 +6,9 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -141,15 +142,10 @@ public class CommitHelper {
       });
 
       processor.doBeforeRefresh();
-      if (appManager.isDispatchThread()) {
-        VirtualFileManager.getInstance().refresh(false, processor.postRefresh());
-      } else {
-        appManager.invokeLater(new Runnable() {
-          public void run() {
-            VirtualFileManager.getInstance().refresh(false, processor.postRefresh());
-          }
-        });
-      }
+      // start VCS refresh right now (all VFiles are already up-to date, only some can have disappeared during commit);
+      // for faster view update; the same refresh would also be started after VFS update
+      processor.doVcsRefresh();
+      VirtualFileManager.getInstance().refresh(true, processor.postRefresh());
 
       AbstractVcsHelper.getInstanceChecked(myProject).showErrors(processor.getVcsExceptions(), myActionName);
     }
@@ -202,6 +198,9 @@ public class CommitHelper {
     public Runnable postRefresh() {
       return null;
     }
+
+    public void doVcsRefresh() {
+    }
   }
 
   private abstract static class GeneralCommitProcessor implements ChangesUtil.PerVcsProcessor<Change>, ActionsAroundRefresh {
@@ -234,6 +233,7 @@ public class CommitHelper {
 
   private interface ActionsAroundRefresh {
     void doBeforeRefresh();
+    void doVcsRefresh();
     Runnable postRefresh();
   }
 
@@ -306,13 +306,31 @@ public class CommitHelper {
         public void run() {
           myAction.finish();
           if (!myProject.isDisposed()) {
-            for (FilePath path : myPathsToRefresh) {
-              myDirtyScopeManager.fileDirty(path);
-            }
+            vcsRefresh();
             LocalHistory.putSystemLabel(myProject, myActionName + ": " + myCommitMessage);
+            // after vcs refresh is completed, outdated notifiers should be removed if some exists...
+            ChangeListManager.getInstance(myProject).invokeAfterUpdate(new Runnable() {
+              public void run() {
+                CommittedChangesCache.getInstance(myProject).refreshIncomingChanges();
+              }
+            }, false, true, null, false);
           }
         }
       };
+    }
+
+    private void vcsRefresh() {
+      for (FilePath path : myPathsToRefresh) {
+        myDirtyScopeManager.fileDirty(path);
+      }
+    }
+
+    public void doVcsRefresh() {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          vcsRefresh();
+        }
+      });
     }
   }
 
