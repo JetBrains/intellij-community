@@ -261,8 +261,10 @@ public class DebuggerTreeNodeExpression {
     final TextWithImports textWithImports = PsiDocumentManager.getInstance(context.getProject()).commitAndRunReadAction(new Computable<TextWithImports>() {
       public TextWithImports compute() {
         try {
-          PsiExpression expressionText = getEvaluationExpression(node, context);
-          return new TextWithImportsImpl(expressionText);
+          final PsiExpression expressionText = getEvaluationExpression(node, context);
+          if (expressionText != null) {
+            return new TextWithImportsImpl(expressionText);
+          }
         }
         catch (EvaluateException e) {
           ex[0] = e;
