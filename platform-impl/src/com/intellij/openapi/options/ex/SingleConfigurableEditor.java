@@ -37,6 +37,17 @@ public class SingleConfigurableEditor extends DialogWrapper {
     myConfigurable.reset();
   }
 
+  public SingleConfigurableEditor(Component parent, Configurable configurable, String dimensionServiceKey) {
+    super(parent, true);
+    myDimensionKey = dimensionServiceKey;
+    setTitle(createTitleString(configurable));
+
+    myParentComponent = parent;
+    myConfigurable = configurable;
+    init();
+    myConfigurable.reset();
+  }
+
   public Configurable getConfigurable() {
     return myConfigurable;
   }
@@ -57,17 +68,6 @@ public class SingleConfigurableEditor extends DialogWrapper {
     String displayName = configurable.getDisplayName();
     LOG.assertTrue(displayName != null, configurable.getClass().getName());
     return displayName.replaceAll("\n", " ");
-  }
-
-  public SingleConfigurableEditor(Component parent, Configurable configurable, String dimensionServiceKey) {
-    super(parent, true);
-    myDimensionKey = dimensionServiceKey;
-    setTitle(createTitleString(configurable));
-
-    myParentComponent = parent;
-    myConfigurable = configurable;
-    init();
-    myConfigurable.reset();
   }
 
   protected String getDimensionServiceKey() {

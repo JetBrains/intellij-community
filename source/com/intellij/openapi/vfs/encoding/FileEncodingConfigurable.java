@@ -55,7 +55,7 @@ public class FileEncodingConfigurable implements FileOptionsProvider, NonDefault
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;
+    return "topicId771616";
   }
 
   public JComponent createComponent() {
