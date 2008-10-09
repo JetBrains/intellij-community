@@ -87,19 +87,6 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
   private ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
   private ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheNotStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
-  private static final CachedValue NULL = new CachedValue(){
-    public Object getValue() {
-      return null;
-    }
-
-    public CachedValueProvider getValueProvider() {
-      return null;
-    }
-
-    public boolean hasUpToDateValue() {
-      return false;
-    }
-  };
 
   public void clearCaches() {
     myDefaultDescriptorsCacheStrict.clear();
@@ -115,40 +102,24 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     else {
       defaultDescriptorsCache = myDefaultDescriptorsCacheNotStrict;
     }
-    if (defaultDescriptorsCache.containsKey(namespace)) {
-      final CachedValue<XmlNSDescriptor> cachedValue = defaultDescriptorsCache.get(namespace);
-      if (cachedValue != NULL) {
-        return cachedValue.getValue();
-      }
-      else {
-        return null;
-      }
-    }
 
-    final XmlNSDescriptor defaultNSDescriptor;
-    try {
-      final CachedValueImpl<XmlNSDescriptor> value =
-        new CachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>() {
-          public Result<XmlNSDescriptor> compute() {
-            final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
+    CachedValue<XmlNSDescriptor> cachedValue = defaultDescriptorsCache.get(namespace);
+    if (cachedValue == null) {
+      defaultDescriptorsCache.put(namespace, cachedValue = new CachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>() {
+        public Result<XmlNSDescriptor> compute() {
+          final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
 
-            if (isGeneratedFromDtd(defaultNSDescriptorInner)) {
-              return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, XmlDocumentImpl.this, ExternalResourceManager.getInstance());
-            }
-
-            return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, defaultNSDescriptorInner != null
-                                                                         ? defaultNSDescriptorInner.getDependences()
-                                                                         : ExternalResourceManager.getInstance());
+          if (isGeneratedFromDtd(defaultNSDescriptorInner)) {
+            return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, XmlDocumentImpl.this, ExternalResourceManager.getInstance());
           }
-        }, false);
-      defaultNSDescriptor = value.getValue();
-      defaultDescriptorsCache.put(namespace, value == null ? NULL : value);
+
+          return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, defaultNSDescriptorInner != null
+                                                                       ? defaultNSDescriptorInner.getDependences()
+                                                                       : ExternalResourceManager.getInstance());
+        }
+      }, false));
     }
-    catch (ProcessCanceledException ex) {
-      defaultDescriptorsCache.remove(namespace);
-      throw ex;
-    }
-    return defaultNSDescriptor;
+    return cachedValue.getValue();
   }
 
   private boolean isGeneratedFromDtd(XmlNSDescriptor defaultNSDescriptorInner) {
