@@ -33,7 +33,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     declareCompletionSpaces();
 
     final CompletionVariant variant = new CompletionVariant(PsiMethod.class,
-                                                            new PatternFilter(not(PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement().withText("@")))));
+                                                            new PatternFilter(not(psiElement().afterLeaf("@", "."))));
     variant.includeScopeClass(PsiVariable.class);
     variant.includeScopeClass(PsiClass.class);
     variant.includeScopeClass(PsiFile.class);
@@ -101,14 +101,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
 // other in file scope
     {
-      final ElementFilter position = new AndFilter(
-        new OrFilter(
-          END_OF_BLOCK,
-          new LeftNeighbour(new SuperParentFilter(new ClassFilter(PsiModifierList.class))), new StartElementFilter()
-        ),
-        new PatternFilter(not(PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement().withText("@")))));
-
-      final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, position);
+      final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, CLASS_START);
       variant.includeScopeClass(PsiClass.class);
 
       variant.addCompletion(PsiKeyword.CLASS);
@@ -711,6 +704,16 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     ),
     START_OF_CODE_FRAGMENT
   );
+
+  protected static final AndFilter CLASS_START = new AndFilter(
+    new OrFilter(
+      END_OF_BLOCK,
+      new PatternFilter(psiElement().afterLeaf(
+        or(
+          psiElement().withoutText(".").inside(psiElement(PsiModifierList.class)),
+          psiElement().isNull())))
+    ),
+    new PatternFilter(not(psiElement().afterLeaf("@"))));
 
   private static final String[] PRIMITIVE_TYPES = new String[]{
     PsiKeyword.SHORT, PsiKeyword.BOOLEAN,

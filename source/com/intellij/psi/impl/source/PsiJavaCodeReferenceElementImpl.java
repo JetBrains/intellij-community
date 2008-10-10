@@ -71,6 +71,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
              i == DOC_TAG_VALUE_TOKEN ||
              i == REFERENCE_PARAMETER_LIST ||
              i == ANNOTATION) {
+      if (isQualified()) {
+        return CLASS_OR_PACKAGE_NAME_KIND;
+      }
+
       return CLASS_NAME_KIND;
     }
     else if (i == NEW_EXPRESSION) {
@@ -722,7 +726,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         superParent = superParent.getParent();
       }
     }
-    if (!smartCompletion && getTreeParent().getElementType() != CODE_FRAGMENT) {
+    if (!smartCompletion && getTreeParent().getElementType() != CODE_FRAGMENT && !(getParent() instanceof PsiAnnotation)) {
       /*filter.addFilter(new ClassFilter(PsiClass.class));
       filter.addFilter(new ClassFilter(PsiPackage.class));*/
       filter.addFilter(new AndFilter(new ClassFilter(PsiMethod.class), new NotFilter(new ConstructorFilter())));
@@ -730,17 +734,12 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
     switch (getKind()) {
     case CLASS_OR_PACKAGE_NAME_KIND:
-           filter.addFilter(new ClassFilter(PsiClass.class));
-           filter.addFilter(new ClassFilter(PsiPackage.class));
+      addClassFilter(filter);
+      filter.addFilter(new ClassFilter(PsiPackage.class));
            break;
     case CLASS_NAME_KIND:
-           if (getParent() instanceof PsiAnnotation) {
-             filter.addFilter(new AnnotationTypeFilter());
-           }
-           else {
-             filter.addFilter(new ClassFilter(PsiClass.class));
-           }
-           break;
+      addClassFilter(filter);
+      break;
     case PACKAGE_NAME_KIND:
            filter.addFilter(new ClassFilter(PsiPackage.class));
            break;
@@ -775,6 +774,15 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
     final FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor);
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
+  }
+
+  private void addClassFilter(final OrFilter filter) {
+    if (getParent() instanceof PsiAnnotation) {
+      filter.addFilter(new AnnotationTypeFilter());
+    }
+    else {
+      filter.addFilter(new ClassFilter(PsiClass.class));
+    }
   }
 
   public PsiElement getReferenceNameElement() {
