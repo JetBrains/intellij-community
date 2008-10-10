@@ -291,7 +291,7 @@ public final class Match {
       }
     }
     catch (AnalysisCanceledException e) {
-      LOG.error(e);
+      //skip match
     }
   }
 
