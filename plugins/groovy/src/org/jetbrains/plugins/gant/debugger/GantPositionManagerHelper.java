@@ -2,7 +2,7 @@ package org.jetbrains.plugins.gant.debugger;
 
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.gant.GantFileType;
-import org.jetbrains.plugins.gant.GantUtils;
+import org.jetbrains.plugins.gant.util.GantUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.psi.PsiFile;

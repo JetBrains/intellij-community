@@ -1,7 +1,8 @@
-package org.jetbrains.plugins.gant;
+package org.jetbrains.plugins.gant.util;
 
 import com.intellij.psi.PsiFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.gant.GantFileType;
 
 /**
  * @author ilyas

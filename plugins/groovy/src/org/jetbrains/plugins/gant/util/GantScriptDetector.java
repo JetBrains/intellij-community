@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gant.util;
 import org.jetbrains.plugins.groovy.extensions.script.GroovyScriptDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.gant.GantIcons;
-import org.jetbrains.plugins.gant.GantUtils;
+import org.jetbrains.plugins.gant.util.GantUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
