@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gant.GantBundle;
 import org.jetbrains.plugins.gant.GantFileType;
-import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.gant.GantIcons;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -20,7 +20,7 @@ public class NewGantScriptAction extends NewGroovyActionBase {
 
   public NewGantScriptAction() {
     super(GantBundle.message("newscript.menu.action.text"), GantBundle.message("newscript.menu.action.description"),
-          GroovyIcons.GANT_ICON_16x16);
+          GantIcons.GANT_ICON_16x16);
   }
 
   protected String getActionName(PsiDirectory directory, String newName) {

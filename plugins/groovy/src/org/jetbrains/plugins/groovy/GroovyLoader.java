@@ -44,7 +44,7 @@ import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPass
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
-import org.jetbrains.plugins.groovy.lang.completion.InsertHandlerRegistry;
+import org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
 import org.jetbrains.plugins.groovy.lang.groovydoc.completion.GroovyDocCompletionData;
 import org.jetbrains.plugins.groovy.lang.groovydoc.completion.handlers.GroovyDocMethodHandler;

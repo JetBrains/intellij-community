@@ -496,17 +496,24 @@
       <implementation-class>org.jetbrains.plugins.grails.fileType.GspLoader</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionProvider</implementation-class>
+      <implementation-class>org.jetbrains.plugins.gant.GantLoader</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.lang.completion.VariableNameSuggesterRegistry
-      </implementation-class>
+      <implementation-class>org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionProvider</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.grails.GrailsLoader</implementation-class>
     </component>
+    <!-- Groovy-based framework specific extension points -->
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.lang.completion.InsertHandlerRegistry</implementation-class>
+      <implementation-class>org.jetbrains.plugins.groovy.extensions.completion.VariableNameSuggesterRegistry
+      </implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelperRegistry</implementation-class>
     </component>
   </application-components>
 

@@ -44,8 +44,4 @@ public interface GroovyIcons {
 
   Icon DYNAMIC_PROPERTY_TOOL_WINDOW_ICON = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png");
 
-  //Gant icon
-  Icon GANT_ICON_16x16 = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/gant_16x16.png");
-  Icon GANT_SDK_ICON = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/gant_sdk.png");
-  Icon GANT_NO_SDK_ICON = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/no_gant_sdk.png");
 }

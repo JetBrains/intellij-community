@@ -26,6 +26,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gant.GantBundle;
+import org.jetbrains.plugins.gant.GantIcons;
 import org.jetbrains.plugins.gant.config.GantConfigUtils;
 import org.jetbrains.plugins.gant.config.GantFacet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -230,7 +231,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
 
       int result = Messages
         .showOkCancelDialog(GantBundle.message("gant.configure.facet.question.text"), GantBundle.message("gant.configure.facet.question"),
-                            GroovyIcons.GANT_ICON_16x16);
+                            GantIcons.GANT_ICON_16x16);
       if (result == 0) {
         ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
       }

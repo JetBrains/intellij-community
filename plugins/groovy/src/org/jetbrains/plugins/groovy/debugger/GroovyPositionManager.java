@@ -29,13 +29,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
@@ -45,12 +43,11 @@ import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gant.GantFileType;
-import org.jetbrains.plugins.gant.GantUtils;
 import org.jetbrains.plugins.groovy.GroovyLoader;
+import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
+import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelperRegistry;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -67,10 +64,11 @@ public class GroovyPositionManager implements PositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.PositionManagerImpl");
 
   private final DebugProcess myDebugProcess;
-  @NonNls private static final String GANT_SUFFIX = "_gant";
+  private final ScriptPositionManagerHelperRegistry myRegistry;
 
   public GroovyPositionManager(DebugProcess debugProcess) {
     myDebugProcess = debugProcess;
+    myRegistry = ScriptPositionManagerHelperRegistry.getInstance();
   }
 
   public DebugProcess getDebugProcess() {
@@ -154,7 +152,7 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   @Nullable
-  private static String getScriptQualifiedName(SourcePosition position) {
+  private String getScriptQualifiedName(SourcePosition position) {
     PsiFile file = position.getFile();
     if (file instanceof GroovyFile) {
       return getScriptFQName((GroovyFile)file);
@@ -196,9 +194,13 @@ public class GroovyPositionManager implements PositionManager {
     int dollar = originalQName.indexOf('$');
     String qName = dollar >= 0 ? originalQName.substring(0, dollar) : originalQName;
 
-    // For Gant scripts
-    String originalName = qName;
-    qName = processGantScriptFileName(originalName);
+    String runtimeName = qName;
+    for (ScriptPositionManagerHelper helper : myRegistry.getScriptHelpers()) {
+      if (helper.isAppropriateRuntimeName(runtimeName)) {
+        qName = helper.getOriginalScriptName(runtimeName);
+        break;
+      }
+    }
 
     final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
     final PsiClass[] classes = GroovyPsiManager.getInstance(project).getNamesCache().getClassesByFQName(qName, searchScope);
@@ -235,20 +237,13 @@ public class GroovyPositionManager implements PositionManager {
     if (res != null) {
       return res;
     }
-    // For gant scripts
-    if (GantUtils.isGantScriptCompiledName(originalName)) {
-      PsiFile[] files =
-        FilenameIndex.getFilesByName(project, qName + "." + GantFileType.DEFAULT_EXTENSION, GlobalSearchScope.allScope(project));
-      if (files.length == 1) return files[0];
+    for (ScriptPositionManagerHelper helper : myRegistry.getScriptHelpers()) {
+      if (helper.isAppropriateRuntimeName(runtimeName)) {
+        PsiFile file = helper.getExtraScriptIfNotFound(runtimeName, project);
+        if (file != null) return file;
+      }
     }
     return null;
-  }
-
-  private static String processGantScriptFileName(String qName) {
-    if (qName.endsWith(GANT_SUFFIX)) {
-      qName = StringUtil.trimEnd(qName, GANT_SUFFIX);
-    }
-    return qName;
   }
 
   @NotNull
@@ -291,13 +286,19 @@ public class GroovyPositionManager implements PositionManager {
     return result;
   }
 
-  private static String getScriptFQName(GroovyFile groovyFile) {
+  private String getScriptFQName(GroovyFile groovyFile) {
     String qName;
     VirtualFile vFile = groovyFile.getVirtualFile();
     assert vFile != null;
     String packageName = groovyFile.getPackageName();
     String plainName = vFile.getNameWithoutExtension();
-    String fileName = GantUtils.isGantScriptFile(groovyFile) ? plainName + GANT_SUFFIX : plainName;
+    String fileName = plainName;
+    for (ScriptPositionManagerHelper helper : myRegistry.getScriptHelpers()) {
+      if (helper.isAppropriateScriptFile(groovyFile)) {
+        fileName = helper.getRuntimeScriptName(plainName);
+        break;
+      }
+    }
     qName = packageName.length() > 0 ? packageName + "." + fileName : fileName;
     return qName;
   }

@@ -54,6 +54,8 @@ import org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.ContextSpecificInsertHandler;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.extensions.completion.VariableNameSuggesterRegistry;
+import org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry;
 
 import java.util.Arrays;
 import java.util.Set;

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.completion;
+package org.jetbrains.plugins.groovy.extensions.completion;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
