@@ -26,10 +26,7 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
@@ -64,8 +61,7 @@ class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places, Ps
   }
 
   @Nullable
-  static Places doCompute(final PsiElement element, InjectedLanguageManagerImpl injectedManager, Project project,
-                                  PsiFile hostPsiFile) {
+  static Places doCompute(final PsiElement element, InjectedLanguageManagerImpl injectedManager, Project project, PsiFile hostPsiFile) {
     MyInjProcessor processor = new MyInjProcessor(injectedManager, project, hostPsiFile);
     injectedManager.processInPlaceInjectorsFor(element, processor);
     return processor.hostRegistrar == null ? null : processor.hostRegistrar.result;
@@ -85,7 +81,7 @@ class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places, Ps
 
     public boolean process(PsiElement element, MultiHostInjector injector) {
       if (hostRegistrar == null) {
-        hostRegistrar = new MyMultiHostRegistrar(myProject, myInjectedManager, myHostPsiFile);
+        hostRegistrar = new MyMultiHostRegistrar(myProject, myInjectedManager, myHostPsiFile, element);
       }
       injector.getLanguagesToInject(hostRegistrar, element);
       return hostRegistrar.result == null;
@@ -106,11 +102,13 @@ class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places, Ps
     private DocumentEx myHostDocument;
     private VirtualFile myHostVirtualFile;
     private final InjectedLanguageManagerImpl myInjectedManager;
+    private final PsiElement myContextElement;
     private final PsiFile myHostPsiFile;
 
-    public MyMultiHostRegistrar(Project project, InjectedLanguageManagerImpl injectedManager, PsiFile hostPsiFile) {
+    public MyMultiHostRegistrar(@NotNull Project project, @NotNull InjectedLanguageManagerImpl injectedManager, @NotNull PsiFile hostPsiFile, @NotNull PsiElement contextElement) {
       myProject = project;
       myInjectedManager = injectedManager;
+      myContextElement = contextElement;
       myHostPsiFile = PsiUtilBase.getTemplateLanguageFile(hostPsiFile);
       myPsiManager = myHostPsiFile.getManager();
       cleared = true;
@@ -157,6 +155,7 @@ class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places, Ps
                                        @NotNull PsiLanguageInjectionHost host,
                                        @NotNull TextRange rangeInsideHost) {
       ProperTextRange.assertProperRange(rangeInsideHost);
+
       PsiFile containingFile = PsiUtilBase.getTemplateLanguageFile(host);
       assert containingFile == myHostPsiFile : "Trying to inject into foreign file: "+containingFile+" while processing injections for "+myHostPsiFile;
       TextRange hostTextRange = host.getTextRange();
@@ -279,6 +278,13 @@ class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places, Ps
           result = new PlacesImpl();
         }
         result.add(place);
+
+        boolean isAncestor = false;
+        for (PsiLanguageInjectionHost.Shred shred : shreds) {
+          PsiLanguageInjectionHost host = shred.host;
+          isAncestor |= PsiTreeUtil.isAncestor(myContextElement, host, false);
+        }
+        assert isAncestor : myContextElement + " must be the parent of at least one of injection hosts: " + shreds;
       }
       finally {
         clear();
