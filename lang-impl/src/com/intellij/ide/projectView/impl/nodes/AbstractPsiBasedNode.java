@@ -1,0 +1,177 @@
+package com.intellij.ide.projectView.impl.nodes;
+
+import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.navigation.NavigationItem;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
+
+/**
+ * Class for node descriptors based on PsiElements. Subclasses should define
+ * method that extract PsiElement from Value.
+ * @param <Value> Value of node descriptor
+ */
+public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value> {
+  private static final Logger LOG = Logger.getInstance(AbstractPsiBasedNode.class.getName());
+
+  protected AbstractPsiBasedNode(final Project project,
+                                final Value value,
+                                final ViewSettings viewSettings) {
+    super(project, value, viewSettings);
+  }
+
+  @Nullable
+  protected abstract PsiElement extractPsiFromValue();
+  protected abstract Collection<AbstractTreeNode> getChildrenImpl();
+  protected abstract void updateImpl(final PresentationData data);
+
+  @NotNull
+  public final Collection<AbstractTreeNode> getChildren() {
+    final PsiElement psiElement = extractPsiFromValue();
+    if (psiElement == null) {
+      return new ArrayList<AbstractTreeNode>();
+    }
+    final boolean valid = psiElement.isValid();
+    if (!LOG.assertTrue(valid)) {
+      return Collections.emptyList();
+    }
+
+    final Collection<AbstractTreeNode> children = getChildrenImpl();
+    return children != null ? children : Collections.<AbstractTreeNode>emptyList();
+  }
+
+  protected boolean isMarkReadOnly() {
+    final AbstractTreeNode parent = getParent();
+    if (parent == null) {
+      return false;
+    }
+    if (parent instanceof AbstractPsiBasedNode) {
+      final PsiElement psiElement = ((AbstractPsiBasedNode)parent).extractPsiFromValue();
+      return psiElement instanceof PsiDirectory;
+    }
+
+    final Object parentValue = parent.getValue();
+    return parentValue instanceof PsiDirectory || parentValue instanceof Module;
+  }
+
+
+  public FileStatus getFileStatus() {
+    VirtualFile file = getVirtualFileForValue();
+    if (file == null) {
+      return FileStatus.NOT_CHANGED;
+    }
+    else {
+      return FileStatusManager.getInstance(getProject()).getStatus(file);
+    }
+  }
+
+  @Nullable
+  private VirtualFile getVirtualFileForValue() {
+    PsiElement psiElement = extractPsiFromValue();
+    if (psiElement == null) {
+      return null;
+    }
+    return PsiUtilBase.getVirtualFile(psiElement);
+  }
+
+  // Should be called in atomic action
+
+  public void update(final PresentationData data) {
+    if (!validate()) {
+      return;
+    }
+
+    final PsiElement value = extractPsiFromValue();
+    LOG.assertTrue(value.isValid());
+
+    int flags = Iconable.ICON_FLAG_VISIBILITY;
+    if (isMarkReadOnly()) {
+      flags |= Iconable.ICON_FLAG_READ_STATUS;
+    }
+
+    Icon icon = value.getIcon(flags);
+    data.setClosedIcon(icon);
+    data.setOpenIcon(icon);
+    data.setLocationString(myLocationString);
+    data.setPresentableText(myName);
+    data.setTooltip(calcTooltip());
+    if (isDeprecated()) {
+      data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
+    }
+    updateImpl(data);
+  }
+
+  protected boolean isDeprecated() {
+    return false;
+  }
+
+  public boolean contains(@NotNull final VirtualFile file) {
+    final PsiElement psiElement = extractPsiFromValue();
+    if (psiElement == null || !psiElement.isValid()) {
+      return false;
+    }
+
+    final PsiFile containingFile = psiElement.getContainingFile();
+    if (containingFile == null) {
+      return false;
+    }
+    final VirtualFile valueFile = containingFile.getVirtualFile();
+    return valueFile != null && file.equals(valueFile);
+  }
+
+  @Nullable
+  public NavigationItem getNavigationItem() {
+    final PsiElement psiElement = extractPsiFromValue();
+    return (psiElement instanceof NavigationItem) ? (NavigationItem) psiElement : null;
+  }
+
+  public void navigate(boolean requestFocus) {
+    if (canNavigate()) {
+      getNavigationItem().navigate(requestFocus);
+    }
+  }
+
+  public boolean canNavigate() {
+    final NavigationItem item = getNavigationItem();
+    return item != null && item.canNavigate();
+  }
+
+  public boolean canNavigateToSource() {
+    final NavigationItem item = getNavigationItem();
+    return item != null && item.canNavigateToSource();
+  }
+
+  @Nullable
+  protected String calcTooltip() {
+    return null;
+  }
+
+  @Override
+  public boolean validate() {
+    final PsiElement psiElement = extractPsiFromValue();
+    if (psiElement == null || !psiElement.isValid()) {
+      setValue(null);
+    }
+
+    return getValue() != null;
+  }
+}
