@@ -128,26 +128,28 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return create(file, file.getUrl(), parent,listener);
   }
 
+  @NotNull
   private VirtualFilePointer create(VirtualFile file, String url, @NotNull final Disposable parentDisposable, VirtualFilePointerListener listener) {
     if (file != null && file.getFileSystem() instanceof DummyFileSystem) {
       return new VirtualFilePointerImpl(file, file.getUrl(), myVirtualFileManager, listener, parentDisposable);
     }
 
-    TreeMap<String, VirtualFilePointerImpl> pathToPointer = getPathToPointerMap(listener);
-
     url = FileUtil.toSystemIndependentName(url);
     String protocol = VirtualFileManager.extractProtocol(url);
     VirtualFileSystem fileSystem = myVirtualFileManager.getFileSystem(protocol);
-    assert fileSystem != null: "Illegal url: '"+url+"'";
+    if (fileSystem == null) {
+      // this pointer will never be alive
+      return NullVirtualFilePointer.INSTANCE;
+    }
 
     url = stripTrailingPathSeparator(url, protocol);
 
     String path = urlToPath(url);
 
+    Map<String, VirtualFilePointerImpl> pathToPointer = getPathToPointerMap(listener);
     VirtualFilePointerImpl pointer = pathToPointer.get(path);
-    final boolean notexists = pointer == null;
 
-    if (notexists) {
+    if (pointer == null) {
       pointer = new VirtualFilePointerImpl(file, url, myVirtualFileManager, listener, parentDisposable);
       pathToPointer.put(path, pointer);
     }

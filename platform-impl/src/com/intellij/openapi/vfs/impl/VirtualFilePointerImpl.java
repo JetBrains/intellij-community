@@ -2,17 +2,14 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.PathUtil;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintStream;
@@ -25,7 +22,6 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   private boolean myWasRecentlyValid = false;
   private final VirtualFileManager myVirtualFileManager;
   private final VirtualFilePointerListener myListener;
-  @NonNls private static final String ATTRIBUTE_URL = "url";
   private boolean disposed = false;
   private int useCount;
 
@@ -150,17 +146,6 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     }
 
     myWasRecentlyValid = isFileRetrieved();
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    myUrl = element.getAttributeValue(ATTRIBUTE_URL);
-    myFile = null;
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    update();
-
-    element.setAttribute(ATTRIBUTE_URL, getUrl());
   }
 
   boolean willValidityChange() {
