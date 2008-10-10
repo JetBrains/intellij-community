@@ -15,6 +15,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.introduceparameterobject.usageInfo.MergeMethodArguments;
@@ -73,12 +74,14 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     final PsiParameterList parameterList = method.getParameterList();
     final PsiParameter[] methodParams = parameterList.getParameters();
     paramsToMerge = new int[parameters.size()];
-    int paramsToMergeCount = 0;
-    for (int i = 0; i < methodParams.length; i++) {
-      final PsiParameter methodParam = methodParams[i];
-      if (parameters.contains(methodParam)) {
-        paramsToMerge[paramsToMergeCount] = i;
-        paramsToMergeCount++;
+    for (int p = 0; p < parameters.size(); p++) {
+      PsiParameter parameter = parameters.get(p);
+      for (int i = 0; i < methodParams.length; i++) {
+        final PsiParameter methodParam = methodParams[i];
+        if (parameter.equals(methodParam)) {
+          paramsToMerge[p] = i;
+          break;
+        }
       }
     }
     final Set<PsiTypeParameter> typeParamSet = new HashSet<PsiTypeParameter>();
@@ -145,8 +148,6 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
   }
 
   private void findUsagesForMethod(PsiMethod overridingMethod, List<FixableUsageInfo> usages) {
-    final PsiManager psiManager = overridingMethod.getManager();
-    final Project project = psiManager.getProject();
     final String fixedParamName = calculateNewParamNameForMethod(overridingMethod);
 
     usages.add(new MergeMethodArguments(overridingMethod, className, packageName, fixedParamName, paramsToMerge, typeParams, keepMethodAsDelegate, myCreateInnerClass));
@@ -160,21 +161,15 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       final PsiMethod containingMethod = (PsiMethod)parameter.getDeclarationScope();
       final int index = containingMethod.getParameterList().getParameterIndex(parameter);
       final PsiParameter replacedParameter = method.getParameterList().getParameters()[index];
-      final String capitalizedName = StringUtil.capitalize(calculateStrippedName(replacedParameter.getName(), project));
       @NonNls final String getter;
       if (getterNames == null) {
-        if (PsiType.BOOLEAN.equals(parameter.getType())) {
-          getter = "is" + capitalizedName;
-        }
-        else {
-          getter = "get" + capitalizedName;
-        }
+        getter = PropertyUtil.suggestGetterName(replacedParameter.getName(), replacedParameter.getType());
       }
       else {
         final int getterIndex = parameters.indexOf(parameter);
         getter = getterNames.get(getterIndex);
       }
-      @NonNls final String setter = "set" + capitalizedName;
+      @NonNls final String setter = PropertyUtil.suggestSetterName(replacedParameter.getName());
       if (RefactoringUtil.isPlusPlusOrMinusMinus(paramUsage.getParent())) {
         usages.add(new ReplaceParameterIncrementDecrement(paramUsage, fixedParamName, setter, getter));
         paramsNeedingSetters.add(replacedParameter);
@@ -189,26 +184,14 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     }
   }
 
-  private static String calculateStrippedName(String name, final Project project) {
-    final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
-    final CodeStyleSettings settings = settingsManager.getCurrentSettings();
-    if (name.startsWith(settings.PARAMETER_NAME_PREFIX)) {
-      name = name.substring(settings.PARAMETER_NAME_PREFIX.length());
-    }
-    if (name.endsWith(settings.PARAMETER_NAME_SUFFIX)) {
-      name = name.substring(0, name.length() - settings.PARAMETER_NAME_SUFFIX.length());
-    }
-    return name;
-  }
-
   private String calculateNewParamNameForMethod(PsiMethod testMethod) {
     final Project project = testMethod.getProject();
-    final String baseParamName = calculateStrippedName(StringUtil.decapitalize(className), project);
-
     final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
     final CodeStyleSettings settings = settingsManager.getCurrentSettings();
-    if (!isParamNameUsed(settings.PARAMETER_NAME_PREFIX + baseParamName + settings.PARAMETER_NAME_SUFFIX, testMethod)) {
-      return baseParamName;
+    final String baseParamName = settings.PARAMETER_NAME_PREFIX.length() == 0 ? StringUtil.decapitalize(className) : className;
+    final String newParamName = settings.PARAMETER_NAME_PREFIX + baseParamName + settings.PARAMETER_NAME_SUFFIX;
+    if (!isParamNameUsed(newParamName, testMethod)) {
+      return newParamName;
     }
     int count = 1;
     while (true) {
@@ -255,9 +238,6 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
   }
 
   private boolean buildClass() {
-
-    final PsiManager manager = method.getManager();
-    final Project project = method.getProject();
     if (existingClass != null) {
       return true;
     }
@@ -280,7 +260,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     }
 
     try {
-      final PsiJavaFile newFile = (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText(className + ".java", classString);
+      final PsiJavaFile newFile = (PsiJavaFile)PsiFileFactory.getInstance(method.getProject()).createFileFromText(className + ".java", classString);
       if (myCreateInnerClass) {
         final PsiClass containingClass = method.getContainingClass();
         final PsiElement innerClass = containingClass.add(newFile.getClasses()[0]);
@@ -293,7 +273,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
 
         if (directory != null) {
 
-          final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+          final CodeStyleManager codeStyleManager = method.getManager().getCodeStyleManager();
           final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(newFile.getProject()).shortenClassReferences(newFile);
           final PsiElement reformattedFile = codeStyleManager.reformat(shortenedFile);
           directory.add(reformattedFile);
