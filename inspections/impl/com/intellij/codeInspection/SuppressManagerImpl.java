@@ -229,7 +229,9 @@ public class SuppressManagerImpl extends SuppressManager {
     if (module == null) return false;
     final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
     if (jdk == null) return false;
-    final boolean is_1_5 = JavaSdk.getInstance().compareTo(jdk.getVersionString(), "1.5") >= 0;
+    final String jdkVersion = jdk.getVersionString();
+    if (jdkVersion == null) return false;
+    final boolean is_1_5 = JavaSdk.getInstance().compareTo(jdkVersion, "1.5") >= 0;
     return DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && is_1_5 && PsiUtil.isLanguageLevel5OrHigher(file);
   }
 
