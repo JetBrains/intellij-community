@@ -36,10 +36,11 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gant.psi.GantPropertiesProvider;
+import org.jetbrains.plugins.groovy.extensions.resolve.ScriptMembersProvider;
+import org.jetbrains.plugins.groovy.extensions.resolve.ScriptMembersProviderRegistry;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
@@ -160,14 +161,17 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   /**
-   * Method to add custom properties for some Groovy extensions like Gant
+   * Method to add custom properties for some Groovy extensions
    * @param project
+   * @param file
    */
-  private void buildGroovyScriptExtensionProperties(final Project project) {
+  private void buildGroovyScriptExtensionProperties(final Project project, final GroovyFile file) {
     final HashMap<String, List<PsiField>> newMap = new HashMap<String, List<PsiField>>();
-    // todo provide injection point
-    new GantPropertiesProvider().addExtensionProperties(newMap, project);
-
+    for (ScriptMembersProvider provider : ScriptMembersProviderRegistry.getInstance().getProviders()) {
+      if (provider.canBeProcessed(file)) {
+        provider.addExtensionProperties(newMap, project);
+      }
+    }
     myDefaultProperties = newMap;
   }
 
@@ -327,7 +331,7 @@ public class GroovyPsiManager implements ProjectComponent {
 
   public List<PsiField> getDefaultScriptProperties(GroovyFile file, final Project project) {
     if (myDefaultProperties == null) {
-      buildGroovyScriptExtensionProperties(myProject);
+      buildGroovyScriptExtensionProperties(myProject, file);
     }
     final String ext = getScriptType(file);
     if (myDefaultProperties == null || ext == null) {
@@ -344,10 +348,10 @@ public class GroovyPsiManager implements ProjectComponent {
    */
   @Nullable
   private static String getScriptType(GroovyFile file) {
-    //todo provide injection point
-    GantPropertiesProvider provider = new GantPropertiesProvider();
-    if (provider.canBeProcessed(file)) {
-      return provider.getScriptExtension();
+    for (ScriptMembersProvider provider : ScriptMembersProviderRegistry.getInstance().getProviders()) {
+      if (provider.canBeProcessed(file)) {
+        return provider.getScriptExtension();
+      }
     }
     return null;
   }
