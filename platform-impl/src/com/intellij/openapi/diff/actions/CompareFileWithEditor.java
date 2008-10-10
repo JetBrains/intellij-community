@@ -43,6 +43,9 @@ public class CompareFileWithEditor extends BaseDiffAction {
     if (array == null || array.length != 1 || document == null) {
       return null;
     }
+    if (array[0].isDirectory()) {
+      return null;
+    }
     if (isSameFile(document, array [0])) {
       return null;
     }
