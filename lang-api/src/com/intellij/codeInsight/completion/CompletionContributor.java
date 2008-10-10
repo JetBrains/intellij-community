@@ -13,6 +13,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -78,7 +79,7 @@ import org.jetbrains.annotations.Nullable;
  * Q: I know about my environment more than IDEA does, and I can swear that those 239 variants that IDEA suggest me in some place aren't all that relevant,
  * so I'd be happy to filter out 42 of them. How do I do this?<br>
  * A: This is a bit harder than just adding variants. First, you should invoke
- * {@link com.intellij.codeInsight.completion.CompletionService#getVariantsFromContributors(com.intellij.openapi.extensions.ExtensionPointName, CompletionParameters, AbstractCompletionContributor, com.intellij.util.Consumer)}
+ * {@link CompletionService#getVariantsFromContributors(com.intellij.openapi.extensions.ExtensionPointName, CompletionParameters, AbstractCompletionContributor, Consumer)}
  * with your own consumer, and your own contributor as the third argument (this will start contributors from the next one, skipping contributors before yours,
  * that have already passed). The consumer you provide should pass all the lookup elements to the {@link com.intellij.codeInsight.completion.CompletionResultSet}
  * given to you, except for the ones you wish to filter out. Be careful: it's too easy to break completion this way. Finally, if you've done all this, your own
@@ -98,8 +99,12 @@ import org.jetbrains.annotations.Nullable;
  * may be incorrect. To debug this problem you can still override {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} in
  * your contributor, make it only call its super and put a breakpoint there.<br>
  * If you want to know which contributor added a particular lookup element, the best place for a breakpoint will be
- * {@link com.intellij.codeInsight.completion.CompletionService#performCompletion(CompletionParameters, com.intellij.util.Consumer)}. The consumer passed there
- * is the 'final' consumer, it will pass your lookup elements directly to the lookup.<p>
+ * {@link CompletionService#performCompletion(CompletionParameters, Consumer)}. The consumer passed there
+ * is the 'final' consumer, it will pass your lookup elements directly to the lookup.<br>
+ * If your contributor isn't even invoked, probably there was another contributor that said 'stop' to the system, and yours happened to be ordered after
+ * that contributor. To test this hypothesis, put a breakpoint to
+ * {@link CompletionService#getVariantsFromContributors(AbstractCompletionContributor[], CompletionParameters, AbstractCompletionContributor, Consumer)},
+ * to the 'return false' line.<p> 
  *
  * @author peter
  */
