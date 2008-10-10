@@ -334,7 +334,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       boolean handleFinalChoices = true;
       final Object selectedValue = myList.getSelectedValue();
       final ListPopupStep<Object> listStep = getListStep();
-      if (listStep.hasSubstep(selectedValue) && listStep.isSelectable(selectedValue)) {
+      if (selectedValue != null && listStep.hasSubstep(selectedValue) && listStep.isSelectable(selectedValue)) {
         final int index = myList.getSelectedIndex();
         final Rectangle bounds = myList.getCellBounds(index, index);
         final Point point = e.getPoint();
