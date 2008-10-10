@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.tmatesoft.svn.core.*;
@@ -41,7 +40,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
   }
 
   public FileAnnotation annotate(final VirtualFile file) throws VcsException {
-    return annotate(file, new SvnFileRevision(myVcs, SVNRevision.HEAD, SVNRevision.HEAD, null, null, null, null, null));
+    return annotate(file, new SvnFileRevision(myVcs, SVNRevision.WORKING, SVNRevision.WORKING, null, null, null, null, null));
   }
 
   public FileAnnotation annotate(final VirtualFile file, final VcsFileRevision revision) throws VcsException {
@@ -67,7 +66,10 @@ public class SvnAnnotationProvider implements AnnotationProvider {
           final String url = info.getURL() == null ? null : info.getURL().toString();
 
           SVNLogClient client = myVcs.createLogClient();
-          SVNRevision endRevision = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision();
+          SVNRevision endRevision = ((SvnFileRevision) revision).getRevision();
+          if (SVNRevision.WORKING.equals(endRevision)) {
+            endRevision = info.getRevision();
+          }
           if (progress != null) {
             progress.setText(SvnBundle.message("progress.text.computing.annotation", file.getName()));
           }
@@ -102,7 +104,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
             }
           });
 
-          client.doLog(new File[]{ioFile}, SVNRevision.HEAD, SVNRevision.create(1), false, false, 0,
+          client.doLog(new File[]{ioFile}, endRevision, SVNRevision.create(1), false, false, 0,
                        new ISVNLogEntryHandler() {
                          public void handleLogEntry(SVNLogEntry logEntry) {
                            if (progress != null) {

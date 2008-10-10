@@ -189,4 +189,8 @@ public class SvnFileRevision implements VcsFileRevision {
       }
     }
   }
+
+  public SVNRevision getRevision() {
+    return myRevision;
+  }
 }

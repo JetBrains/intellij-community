@@ -144,8 +144,11 @@ public class SvnFileAnnotation implements FileAnnotation {
 
   public void appendLineInfo(final Date date, final long revision, final String author, final String line) {
     myLineInfos.add(new LineInfo(date, revision, author));
+    if (myContentBuffer.length() > 0) {
+      // newline only if needed
+      myContentBuffer.append("\n");
+    }
     myContentBuffer.append(line);
-    myContentBuffer.append("\n");
   }
 
   public VcsRevisionNumber getLineRevisionNumber(final int lineNumber) {
