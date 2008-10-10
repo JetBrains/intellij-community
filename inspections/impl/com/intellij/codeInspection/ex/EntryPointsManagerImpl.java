@@ -274,7 +274,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
             notype = true;
           }
 
-          final String className = fqName.substring(notype ? 0 : spaceIdx + 1, lastDotIdx >= 0 ?  lastDotIdx : notype ? 0 : spaceIdx + 1);
+          final String className = fqName.substring(notype ? 0 : spaceIdx + 1, lastDotIdx);
           final String methodSignature =
               notype ? fqName.substring(lastDotIdx + 1) : fqName.substring(0, spaceIdx) + ' ' + fqName.substring(lastDotIdx + 1);
 
