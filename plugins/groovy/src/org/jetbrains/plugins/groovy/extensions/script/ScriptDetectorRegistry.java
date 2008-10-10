@@ -24,7 +24,7 @@ public class ScriptDetectorRegistry implements ApplicationComponent {
     return ApplicationManager.getApplication().getComponent(ScriptDetectorRegistry.class);
   }
 
-  public void registerPositionManagerHelper(GroovyScriptDetector detector) {
+  public void registerDetector(GroovyScriptDetector detector) {
     myDetectors.add(detector);
   }
 

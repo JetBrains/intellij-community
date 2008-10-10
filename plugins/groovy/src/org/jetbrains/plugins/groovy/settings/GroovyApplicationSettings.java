@@ -46,7 +46,6 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
 
   // Groovy & Grails configuration settings
   public String DEFAULT_GROOVY_LIB_NAME = null;
-  public String DEFAULT_GANT_LIB_NAME = null;
   public String DEFAULT_GRAILS_LIB_NAME = null;
 
   @Transient

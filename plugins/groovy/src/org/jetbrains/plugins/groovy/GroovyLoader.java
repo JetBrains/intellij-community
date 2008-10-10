@@ -43,8 +43,8 @@ import org.jetbrains.plugins.groovy.codeInspection.local.GroovyAddImportsPassFac
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
-import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
 import org.jetbrains.plugins.groovy.lang.groovydoc.completion.GroovyDocCompletionData;
 import org.jetbrains.plugins.groovy.lang.groovydoc.completion.handlers.GroovyDocMethodHandler;
@@ -54,7 +54,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-import org.jetbrains.plugins.gant.GantFileType;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -86,7 +85,6 @@ public class GroovyLoader implements ApplicationComponent {
     GROOVY_EXTENSIONS.add(GVY_EXTENSION);
     GROOVY_EXTENSIONS.add(GY_EXTENSION);
     GROOVY_EXTENSIONS.add(GROOVY_SCRIPT_EXTENSION);
-    GROOVY_EXTENSIONS.add(GantFileType.DEFAULT_EXTENSION);
   }
 
   public GroovyLoader(GrailsLoader loader) {

@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -27,6 +26,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.extensions.script.GroovyScriptDetector;
+import org.jetbrains.plugins.groovy.extensions.script.ScriptDetectorRegistry;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -39,7 +40,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.gant.GantFileType;
 
 import javax.swing.*;
 
@@ -78,15 +78,20 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private GrParameter getSyntheticArgsParameter() {
     if (mySyntheticArgsParameter == null) {
       try {
-        mySyntheticArgsParameter = GroovyPsiElementFactory.getInstance(getProject()).createParameter(SYNTHETIC_PARAMETER_NAME, "java.lang.String[]", this);
-      } catch (IncorrectOperationException e) {
+        mySyntheticArgsParameter =
+          GroovyPsiElementFactory.getInstance(getProject()).createParameter(SYNTHETIC_PARAMETER_NAME, "java.lang.String[]", this);
+      }
+      catch (IncorrectOperationException e) {
         LOG.error(e);
       }
     }
     return mySyntheticArgsParameter;
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
     for (final GrTopLevelDefintion definition : getTopLevelDefinitions()) {
       if (!ResolveUtil.processElement(processor, definition)) return false;
     }
@@ -97,8 +102,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter())) return false;
 
       PsiClass scriptClass = getScriptClass();
-      if (scriptClass != null && !scriptClass.processDeclarations(processor, state, lastParent, place))
-        return false;
+      if (scriptClass != null && !scriptClass.processDeclarations(processor, state, lastParent, place)) return false;
     }
 
     if (!processChildrenScopes(this, processor, state, lastParent, place)) return false;
@@ -114,12 +118,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     String currentPackageName = getPackageName();
     PsiPackage currentPackage = facade.findPackage(currentPackageName);
 
-    if (currentPackage != null && !currentPackage.processDeclarations(processor, state, lastParent, place))
-      return false;
+    if (currentPackage != null && !currentPackage.processDeclarations(processor, state, lastParent, place)) return false;
 
     for (GrImportStatement importStatement : imports) {
-      if (importStatement.isOnDemand() && !importStatement.processDeclarations(processor, state, lastParent, place))
-        return false;
+      if (importStatement.isOnDemand() && !importStatement.processDeclarations(processor, state, lastParent, place)) return false;
     }
 
     for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {
@@ -132,7 +134,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       if (clazz != null && !ResolveUtil.processElement(processor, clazz)) return false;
     }
 
-     for (PsiField field : GroovyPsiManager.getInstance(getProject()).getDefaultScriptProperties(this, getProject())) {
+    for (PsiField field : GroovyPsiManager.getInstance(getProject()).getDefaultScriptProperties(this, getProject())) {
       if (!ResolveUtil.processElement(processor, field)) return false;
     }
 
@@ -148,13 +150,18 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return true;
   }
 
-  private static boolean processChildrenScopes(PsiElement element, PsiScopeProcessor processor,
-                                               ResolveState state, PsiElement lastParent, PsiElement place) {
+  private static boolean processChildrenScopes(PsiElement element,
+                                               PsiScopeProcessor processor,
+                                               ResolveState state,
+                                               PsiElement lastParent,
+                                               PsiElement place) {
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
     while (run != null) {
       if (!(run instanceof GrTopLevelDefintion) &&
-              !(run instanceof GrImportStatement) &&
-              !run.processDeclarations(processor, state, lastParent, place)) return false;
+          !(run instanceof GrImportStatement) &&
+          !run.processDeclarations(processor, state, lastParent, place)) {
+        return false;
+      }
       run = run.getPrevSibling();
     }
 
@@ -167,8 +174,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Nullable
   public Icon getIcon(int flags) {
-    VirtualFile file = getVirtualFile();
-    if (file != null && file.getFileType() instanceof GantFileType) return GantFileType.GANT_LOGO;
+    for (GroovyScriptDetector detector : ScriptDetectorRegistry.getInstance().getScriptDetectors()) {
+      if (detector.isSpecificScriptFile(this)) return detector.getScriptIcon();
+    }
     return GroovyFileType.GROOVY_LOGO;
   }
 
@@ -179,8 +187,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
       GrImportStatement importStatement = factory.createImportStatementFromText(aClass.getQualifiedName(), false, false, null);
       PsiElement anchor = getAnchorToInsertImportAfter();
-      return (GrImportStatement) addAfter(importStatement, anchor);
-    } catch (IncorrectOperationException e) {
+      return (GrImportStatement)addAfter(importStatement, anchor);
+    }
+    catch (IncorrectOperationException e) {
       LOG.error(e);
       return null;
     }
@@ -204,16 +213,15 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     boolean isAliasedImport = false;
     if (anchor instanceof GrImportStatement) {
-      isAliasedImport = !((GrImportStatement) anchor).isAliasedImport() && statement.isAliasedImport() ||
-              ((GrImportStatement) anchor).isAliasedImport() && !statement.isAliasedImport();
+      isAliasedImport = !((GrImportStatement)anchor).isAliasedImport() && statement.isAliasedImport() ||
+                        ((GrImportStatement)anchor).isAliasedImport() && !statement.isAliasedImport();
     }
 
-    if (anchor != null &&
-            (!(anchor instanceof GrImportStatement) || isAliasedImport)) {
+    if (anchor != null && (!(anchor instanceof GrImportStatement) || isAliasedImport)) {
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode());
     }
 
-    GrImportStatement importStatement = (GrImportStatement) result;
+    GrImportStatement importStatement = (GrImportStatement)result;
     PsiElement next = importStatement.getNextSibling();
     if (next != null) {
       ASTNode node = next.getNode();
@@ -227,9 +235,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   public boolean isScript() {
     GrTopStatement[] top = findChildrenByClass(GrTopStatement.class);
-    for (GrTopStatement st : top)
-      if (!(st instanceof GrTypeDefinition || st instanceof GrImportStatement || st instanceof GrPackageDefinition))
-        return true;
+    for (GrTopStatement st : top) {
+      if (!(st instanceof GrTypeDefinition || st instanceof GrImportStatement || st instanceof GrPackageDefinition)) return true;
+    }
 
     return false;
   }
@@ -270,8 +278,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   }
 
-  public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, PsiElement anchorBefore) throws IncorrectOperationException {
-    T result = (T) addBefore(decl, anchorBefore);
+  public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, PsiElement anchorBefore)
+    throws IncorrectOperationException {
+    T result = (T)addBefore(decl, anchorBefore);
     CodeStyleManager styleManager = getManager().getCodeStyleManager();
     PsiElement parent = result.getContainingFile();
     TextRange range = result.getTextRange();
@@ -284,7 +293,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   public void removeMemberDeclaration(GrMembersDeclaration decl) {
     try {
       deleteChildRange(decl, decl);
-    } catch (IncorrectOperationException e) {
+    }
+    catch (IncorrectOperationException e) {
       throw new RuntimeException(e);
     }
   }
@@ -302,7 +312,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected GroovyFileImpl clone() {
-    GroovyFileImpl clone = (GroovyFileImpl) super.clone();
+    GroovyFileImpl clone = (GroovyFileImpl)super.clone();
     clone.myContext = myContext;
     return clone;
   }

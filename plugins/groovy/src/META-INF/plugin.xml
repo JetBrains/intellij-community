@@ -160,6 +160,9 @@
     <!--Gant Run/debug-->
     <configurationType implementation="org.jetbrains.plugins.gant.runner.GantScriptRunConfigurationType"/>
     <configurationProducer implementation="org.jetbrains.plugins.gant.runner.GantScriptRunConfigurationProducer"/>
+    <fileTypeFactory implementation="org.jetbrains.plugins.gant.GantFileTypeLoader"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gant.settings.GantApplicationSettings"
+                        serviceImplementation="org.jetbrains.plugins.gant.settings.GantApplicationSettings"/>
 
 
     <!-- control flow -->
@@ -514,6 +517,9 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelperRegistry</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.extensions.script.ScriptDetectorRegistry</implementation-class>
     </component>
   </application-components>
 
