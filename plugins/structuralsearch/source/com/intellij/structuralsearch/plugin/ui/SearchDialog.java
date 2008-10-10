@@ -620,7 +620,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
             SubstitutionShortInfoHandler handler = searchCriteriaEdit.getUserData(UIUtil.LISTENER_KEY);
             ArrayList<Variable> variables = new ArrayList<Variable>(handler.getVariables());
 
-            CompletionTextField.setCurrentProject(searchContext.getProject());
+            EditVarConstraintsDialog.setProject(searchContext.getProject());
             new EditVarConstraintsDialog(
               searchContext.getProject(),
               model,
@@ -629,7 +629,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
               getFileTypeByString((String)fileTypes.getSelectedItem())
             ).show();
             initiateValidation();
-            CompletionTextField.setCurrentProject(null);
+            EditVarConstraintsDialog.setProject(null);
           }
         }
       )

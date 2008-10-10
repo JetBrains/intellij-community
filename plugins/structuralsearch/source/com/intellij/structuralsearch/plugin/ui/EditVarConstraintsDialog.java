@@ -1,13 +1,18 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.impl.Variable;
+import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -22,6 +27,7 @@ import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptPredicate;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.EditorTextField;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -46,7 +52,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JTextField maxoccurs;
   private JCheckBox applyWithinTypeHierarchy;
   private JCheckBox notRegexp;
-  private CompletionTextField regexp;
+  private EditorTextField regexp;
   private JTextField minoccurs;
   private JPanel mainForm;
   private JCheckBox notWrite;
@@ -56,7 +62,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JList parameterList;
   private JCheckBox partOfSearchResults;
   private JCheckBox notExprType;
-  private CompletionTextField regexprForExprType;
+  private EditorTextField regexprForExprType;
   private SearchModel model;
   private JCheckBox exprTypeWithinHierarchy;
 
@@ -65,15 +71,18 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JCheckBox wholeWordsOnly;
   private JCheckBox formalArgTypeWithinHierarchy;
   private JCheckBox invertFormalArgType;
-  private CompletionTextField formalArgType;
+  private EditorTextField formalArgType;
   private TextFieldWithBrowseButton customScriptCode;
   private JCheckBox maxoccursUnlimited;
+
   private ComboboxWithBrowseButton withinCombo;
   private JPanel containedInConstraints;
   private JCheckBox invertWithinIn;
   private JPanel variableConstraints;
   private JPanel expressionConstraints;
   private JPanel occurencePanel;
+
+  private static Project myProject;
 
   EditVarConstraintsDialog(final Project project,SearchModel _model,List<Variable> _variables, boolean replaceContext, FileType fileType) {
     super(project,false);
@@ -85,6 +94,11 @@ class EditVarConstraintsDialog extends DialogWrapper {
     //    }
     //  }
     //);
+
+    variables = _variables;
+    model = _model;
+
+    setTitle(SSRBundle.message("editvarcontraints.edit.variables"));
     
     regexprForExprType.getDocument().addDocumentListener(
       new DocumentAdapter() {
@@ -101,11 +115,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
         }
       }
     );
-      
-    variables = _variables;
-    model = _model;
-
-    setTitle(SSRBundle.message("editvarcontraints.edit.variables"));
 
     partOfSearchResults.setEnabled(!replaceContext);
     containedInConstraints.setVisible(false);
@@ -198,10 +207,10 @@ class EditVarConstraintsDialog extends DialogWrapper {
             rollingBackSelection=false;
             return;
           }
-          Variable var = variables.get(parameterList.getSelectedIndex());
+          final Variable var = variables.get(parameterList.getSelectedIndex());
           if (validateParameters()) {
             if (current!=null) copyValuesFromUI(current);
-            copyValuesToUI(var);
+            ApplicationManager.getApplication().runWriteAction(new Runnable() { public void run() { copyValuesToUI(var); }});
             current = var;
           } else {
             rollingBackSelection = true;
@@ -239,9 +248,8 @@ class EditVarConstraintsDialog extends DialogWrapper {
     if (variables.size() > 0) parameterList.setSelectedIndex(0);
   }
 
-
-  private static void doProcessing(JCheckBox checkBox, CompletionTextField textField) {
-    checkBox.setEnabled( textField.getText().length() > 0);
+  private static void doProcessing(JCheckBox checkBox, EditorTextField editor) {
+    checkBox.setEnabled( editor.getDocument().getText().length() > 0);
     if (!checkBox.isEnabled()) checkBox.setSelected(false);
   }
 
@@ -276,7 +284,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     varInfo.setReadAccess(read.isSelected());
     varInfo.setInvertWriteAccess(notWrite.isSelected());
     varInfo.setWriteAccess(write.isSelected());
-    varInfo.setRegExp(regexp.getText());
+    varInfo.setRegExp(regexp.getDocument().getText());
     varInfo.setInvertRegExp(notRegexp.isSelected());
 
     int minCount = Integer.parseInt( minoccurs.getText() );
@@ -293,12 +301,12 @@ class EditVarConstraintsDialog extends DialogWrapper {
     varInfo.setPartOfSearchResults(partOfSearchResults.isEnabled() && partOfSearchResults.isSelected());
 
     varInfo.setInvertExprType(notExprType.isSelected());
-    varInfo.setNameOfExprType(regexprForExprType.getText());
+    varInfo.setNameOfExprType(regexprForExprType.getDocument().getText());
     varInfo.setExprTypeWithinHierarchy(exprTypeWithinHierarchy.isSelected());
     varInfo.setWholeWordsOnly(wholeWordsOnly.isSelected());
     varInfo.setInvertFormalType(invertFormalArgType.isSelected());
     varInfo.setFormalArgTypeWithinHierarchy(formalArgTypeWithinHierarchy.isSelected());
-    varInfo.setNameOfFormalArgType(formalArgType.getText());
+    varInfo.setNameOfFormalArgType(formalArgType.getDocument().getText());
     varInfo.setScriptCodeConstraint("\"" + customScriptCode.getTextField().getText() + "\"");
 
     final String withinConstraint = (String)withinCombo.getComboBox().getEditor().getItem();
@@ -306,7 +314,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     varInfo.setInvertWithinConstraint(invertWithinIn.isSelected());
   }
 
-  void copyValuesToUI(Variable var) {
+  private void copyValuesToUI(Variable var) {
     MatchVariableConstraint varInfo = (var!=null)?model.getConfig().getMatchOptions().getVariableConstraint(var.getName()):null;
 
     if (varInfo == null) {
@@ -315,7 +323,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       read.setSelected(false);
       notWrite.setSelected(false);
       write.setSelected(false);
-      regexp.setText("");
+      regexp.getDocument().setText("");
 
       minoccurs.setText("1");
       maxoccurs.setText("1");
@@ -323,14 +331,14 @@ class EditVarConstraintsDialog extends DialogWrapper {
       applyWithinTypeHierarchy.setSelected(false);
       partOfSearchResults.setSelected(false);
 
-      regexprForExprType.setText("");
+      regexprForExprType.getDocument().setText("");
       notExprType.setSelected(false);
       exprTypeWithinHierarchy.setSelected(false);
       wholeWordsOnly.setSelected(false);
 
       invertFormalArgType.setSelected(false);
       formalArgTypeWithinHierarchy.setSelected(false);
-      formalArgType.setText("");
+      formalArgType.getDocument().setText("");
       customScriptCode.setText("");
 
       withinCombo.getComboBox().getEditor().setItem("");
@@ -342,7 +350,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       write.setSelected(varInfo.isWriteAccess());
       
       applyWithinTypeHierarchy.setSelected(varInfo.isWithinHierarchy());
-      regexp.setText(varInfo.getRegExp());
+      regexp.getDocument().setText(varInfo.getRegExp());
       //doProcessing(applyWithinTypeHierarchy,regexp);
       
       notRegexp.setSelected(varInfo.isInvertRegExp());
@@ -359,7 +367,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       partOfSearchResults.setSelected( partOfSearchResults.isEnabled() && varInfo.isPartOfSearchResults() );
 
       exprTypeWithinHierarchy.setSelected( varInfo.isExprTypeWithinHierarchy() );
-      regexprForExprType.setText( varInfo.getNameOfExprType() );
+      regexprForExprType.getDocument().setText( varInfo.getNameOfExprType() );
       doProcessing(exprTypeWithinHierarchy, regexprForExprType);
       
       notExprType.setSelected( varInfo.isInvertExprType() );
@@ -367,7 +375,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
       invertFormalArgType.setSelected( varInfo.isInvertFormalType() );
       formalArgTypeWithinHierarchy.setSelected( varInfo.isFormalArgTypeWithinHierarchy() );
-      formalArgType.setText( varInfo.getNameOfFormalArgType() );
+      formalArgType.getDocument().setText( varInfo.getNameOfFormalArgType() );
       doProcessing(formalArgTypeWithinHierarchy,formalArgType);
       customScriptCode.setText( StringUtil.stripQuotesAroundValue(varInfo.getScriptCodeConstraint()) );
 
@@ -389,10 +397,11 @@ class EditVarConstraintsDialog extends DialogWrapper {
     return "#com.intellij.structuralsearch.plugin.ui.EditVarConstraintsDialog";
   }
 
-  private static boolean validateRegExp(CompletionTextField field) {
+  private static boolean validateRegExp(EditorTextField field) {
     try {
-      if (field.getText().length() > 0) {
-        Pattern.compile(field.getText());
+      final String s = field.getDocument().getText();
+      if (s.length() > 0) {
+        Pattern.compile(s);
       }
     } catch(PatternSyntaxException ex) {
       Messages.showErrorDialog(SSRBundle.message("invalid.regular.expression"), SSRBundle.message("invalid.regular.expression"));
@@ -437,6 +446,35 @@ class EditVarConstraintsDialog extends DialogWrapper {
     HelpManager.getInstance().invokeHelp("reference.dialogs.search.replace.structural.editvariable");
   }
 
+  private void createUIComponents() {
+    regexp = createComponent();
+    regexprForExprType = createComponent();
+    formalArgType = createComponent();
+  }
+
+  private static EditorTextField createComponent() {
+    final String fileName = "1.regexp";
+    FileType fileType = getFileType(fileName);
+    Document doc = createDocument(fileName, fileType, "");
+    return new EditorTextField(doc, myProject, fileType);
+  }
+
+  private static Document createDocument(final String fileName, final FileType fileType, String text) {
+    final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(fileName, fileType, text, -1, true);
+
+    return PsiDocumentManager.getInstance(myProject).getDocument(file);
+  }
+
+  private static FileType getFileType(final String fileName) {
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+    if (fileType == FileTypes.UNKNOWN) fileType = StdFileTypes.PLAIN_TEXT;
+    return fileType;
+  }
+
+  public static void setProject(final Project project) {
+    myProject = project;
+  }
+
   private class MyChangeListener implements ChangeListener {
     JTextField textField;
 
@@ -456,6 +494,17 @@ class EditVarConstraintsDialog extends DialogWrapper {
     }
   }
 
+  private static Editor createEditor(final Project project, final String text, final String fileName) {
+    final FileType fileType = getFileType(fileName);
+    final Document doc = createDocument(fileName, fileType, text);
+    final Editor editor = EditorFactory.getInstance().createEditor(doc, project);
+
+    ((EditorEx)editor).setEmbeddedIntoDialogWrapper(true);
+    ((EditorEx)editor).setHighlighter(HighlighterFactory.createHighlighter(fileType, DefaultColorSchemesManager.getInstance().getAllSchemes()[0], project));
+
+    return editor;
+  }
+
   private static class EditScriptDialog extends DialogWrapper {
     private Editor editor;
 
@@ -463,11 +512,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       super(project, true);
       setTitle("Edit Groovy Script Constraint");
 
-      final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName("1.groovy");
-      PsiFile file = PsiFileFactory.getInstance(project).createFileFromText("1.groovy", fileType, text, -1, true);
-
-      Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
-      editor = EditorFactory.getInstance().createEditor(doc, project);
+      editor = createEditor(project, text, "1.groovy");
 
       init();
       setSize(300, 300);
