@@ -433,6 +433,8 @@ public class TemplateState implements Disposable {
       final InsertionContext context = new InsertionContext(offsetMap, (char)0, false, elements, psiFile, myEditor);
       context.setTailOffset(myEditor.getCaretModel().getOffset());
       offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, context.getTailOffset() - item.getLookupString().length());
+      offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, context.getTailOffset());
+      offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, context.getTailOffset());
 
       Integer bracketCount = item instanceof LookupItem ? (Integer)((LookupItem)item).getAttribute(LookupItem.BRACKETS_COUNT_ATTR) : null;
       if (bracketCount != null) {
