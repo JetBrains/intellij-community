@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.completion.handlers.ContextSpecificInsertHandler;
 
 import java.util.ArrayList;
 

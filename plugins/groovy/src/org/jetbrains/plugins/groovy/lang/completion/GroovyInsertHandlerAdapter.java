@@ -15,7 +15,8 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import org.jetbrains.plugins.groovy.lang.completion.handlers.ContextSpecificInsertHandler;
+import org.jetbrains.plugins.groovy.extensions.completion.ContextSpecificInsertHandler;
+import org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry;
 import com.intellij.codeInsight.completion.DefaultInsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -25,15 +26,13 @@ import com.intellij.codeInsight.lookup.LookupElement;
  */
 public class GroovyInsertHandlerAdapter extends DefaultInsertHandler{
 
-  private final ContextSpecificInsertHandler[] myHandlers;
   private final GroovyInsertHandler myGroovyInsertHandler = new GroovyInsertHandler();
 
-  public GroovyInsertHandlerAdapter(ContextSpecificInsertHandler ... handlers) {
-    myHandlers = handlers;
+  public GroovyInsertHandlerAdapter() {
   }
 
   public void handleInsert(InsertionContext context, LookupElement item) {
-    for (ContextSpecificInsertHandler handler : myHandlers) {
+    for (ContextSpecificInsertHandler handler : InsertHandlerRegistry.getInstance().getSpecificInsertHandlers()) {
       if (handler.isAcceptable(context, context.getStartOffset(), item)) {
         handler.handleInsert(context, context.getStartOffset(), item);
         return;

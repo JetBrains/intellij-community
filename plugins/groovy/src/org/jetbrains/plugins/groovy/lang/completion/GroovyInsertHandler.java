@@ -84,10 +84,10 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
           PsiFile psiFile = docManager.getPsiFile(document);
           if (isExpressionStatement(psiFile, context.getStartOffset()) && PsiType.VOID.equals(method.getReturnType())) {
             document.insertString(offset, " ");
-          } else {
+          } else if (!document.getText().substring(offset).trim().startsWith("(")) {
             document.insertString(offset, "()");
+            caretModel.moveToOffset(offset + 1);
           }
-          caretModel.moveToOffset(offset + 1);
         }
       }
       return;

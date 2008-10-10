@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
-import org.jetbrains.plugins.groovy.lang.completion.handlers.ContextSpecificInsertHandler;
+import org.jetbrains.plugins.groovy.extensions.completion.ContextSpecificInsertHandler;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParameter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;

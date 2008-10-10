@@ -52,7 +52,7 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFil
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.ParameterTypeFilter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
-import org.jetbrains.plugins.groovy.lang.completion.handlers.ContextSpecificInsertHandler;
+import org.jetbrains.plugins.groovy.extensions.completion.ContextSpecificInsertHandler;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.extensions.completion.VariableNameSuggesterRegistry;
 import org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry;
@@ -212,7 +212,7 @@ public class GroovyCompletionData extends CompletionData {
       }
     };
     ContextSpecificInsertHandler[] handlers = InsertHandlerRegistry.getInstance().getSpecificInsertHandlers();
-    ourReferenceVariant.setInsertHandler(new GroovyInsertHandlerAdapter(handlers));
+    ourReferenceVariant.setInsertHandler(new GroovyInsertHandlerAdapter());
   }
 
   private static void checkForEmptyPackage(final PsiReference reference) {
@@ -267,8 +267,7 @@ public class GroovyCompletionData extends CompletionData {
     CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
     variant.setItemProperty(LookupItem.HIGHLIGHTED_ATTR, "");
     variant.includeScopeClass(LeafPsiElement.class);
-    ContextSpecificInsertHandler[] handlers = InsertHandlerRegistry.getInstance().getSpecificInsertHandlers();
-    variant.setInsertHandler(new GroovyInsertHandlerAdapter(handlers));
+    variant.setInsertHandler(new GroovyInsertHandlerAdapter());
     addCompletions(variant, keywords);
     registerVariant(variant);
   }

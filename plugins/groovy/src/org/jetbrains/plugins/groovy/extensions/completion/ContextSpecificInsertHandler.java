@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.completion.handlers;
+package org.jetbrains.plugins.groovy.extensions.completion;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
