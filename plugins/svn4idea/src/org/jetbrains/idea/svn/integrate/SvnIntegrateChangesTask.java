@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeImpl;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -252,7 +253,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
         CommitChangeListDialog.commitPaths(myProject, files, null, null, myMerger.getComment());
         prepareAndShowResults();
       }
-    }, true, false, SvnBundle.message("action.Subversion.integrate.changes.messages.title"), true);
+    }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, SvnBundle.message("action.Subversion.integrate.changes.messages.title"));
   }
 
   private void showAlienCommit() {

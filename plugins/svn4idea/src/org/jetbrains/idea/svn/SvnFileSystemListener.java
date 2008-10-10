@@ -503,29 +503,44 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     }
 
     if (myFilesToRefresh.size() > 0) {
-      final List<VirtualFile> toRefresh = new ArrayList<VirtualFile>(myFilesToRefresh);
-      // if refresh asynchronously, local changes would also be notified that they are dirty asynchronously,
-      // and commit could be executed while not all changes are visible
-      final RefreshSession session = RefreshQueue.getInstance().createSession(false, true, new Runnable() {
-        public void run() {
-          if (project.isDisposed()) return;
-          for(VirtualFile f: toRefresh) {
-            if (!f.isValid()) {
-              LOG.info("Refresh root is not valid: " + f.getPath());
-              continue;
-            }
-            if (f.isDirectory()) {
-              VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(f);
-            }
-            else {
-              VcsDirtyScopeManager.getInstance(project).fileDirty(f);
-            }
-          }
-        }
-      });
-      session.addAllFiles(myFilesToRefresh);
-      session.launch();
-      myFilesToRefresh.clear();
+      refreshFiles(project);
+    }
+  }
+
+  private void refreshFiles(final Project project) {
+    final List<VirtualFile> toRefreshFiles = new ArrayList<VirtualFile>();
+    final List<VirtualFile> toRefreshDirs = new ArrayList<VirtualFile>();
+    for (VirtualFile file : myFilesToRefresh) {
+      if (file.isDirectory()) {
+        toRefreshDirs.add(file);
+      } else {
+        toRefreshFiles.add(file);
+      }
+    }
+    // if refresh asynchronously, local changes would also be notified that they are dirty asynchronously,
+    // and commit could be executed while not all changes are visible
+    final RefreshSession session = RefreshQueue.getInstance().createSession(false, true, new Runnable() {
+      public void run() {
+        if (project.isDisposed()) return;
+        filterOutInvalid(toRefreshFiles);
+        filterOutInvalid(toRefreshDirs);
+
+        final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+        vcsDirtyScopeManager.filesDirty(toRefreshFiles, toRefreshDirs);
+      }
+    });
+    session.addAllFiles(myFilesToRefresh);
+    session.launch();
+    myFilesToRefresh.clear();
+  }
+
+  private void filterOutInvalid(final Collection<VirtualFile> files) {
+    for (Iterator<VirtualFile> iterator = files.iterator(); iterator.hasNext();) {
+      final VirtualFile file = iterator.next();
+      if (! file.isValid()) {
+        LOG.info("Refresh root is not valid: " + file.getPath());
+        iterator.remove();
+      }
     }
   }
 
