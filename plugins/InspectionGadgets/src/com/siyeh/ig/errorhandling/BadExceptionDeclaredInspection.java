@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -95,9 +96,7 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
         @Override public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             if(ignoreTestCases){
-                final PsiClass containingClass = method.getContainingClass();
-                if(ClassUtils.isSubclass(containingClass,
-                        "junit.framework.Test")){
+                if(TestUtils.isJUnitTestMethod(method)){
                     return;
                 }
             }
@@ -131,7 +130,6 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
             super();
             addButton.setAction(new AddAction(table));
             removeButton.setAction(new RemoveAction(table));
-            ignoreTestCasesCheckBox.setSelected(ignoreTestCases);
             ignoreTestCasesCheckBox.setAction(new ToggleAction(
                     InspectionGadgetsBundle.message(
                             "bad.exception.declared.ignore.exceptions.declared.in.junit.test.cases.option"),
