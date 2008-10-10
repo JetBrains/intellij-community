@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.navigator.MavenProjectNavigator;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
 
-public abstract class PomTreeViewAction extends ToggleAction {
+public abstract class MavenTreeViewAction extends ToggleAction {
   public void update(final AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(getNavigator(e) != null);
@@ -21,20 +21,16 @@ public abstract class PomTreeViewAction extends ToggleAction {
   }
 
   public boolean isSelected(AnActionEvent e) {
-    final MavenProjectNavigator navigator = getNavigator(e);
+    MavenProjectNavigator navigator = getNavigator(e);
     return navigator != null && isSelected(navigator.getTreeViewSettings());
   }
 
   public void setSelected(AnActionEvent e, boolean state) {
-    final MavenProjectNavigator navigator = getNavigator(e);
+    MavenProjectNavigator navigator = getNavigator(e);
     if (navigator != null) {
       setSelected(navigator.getTreeViewSettings(), state);
-      navigator.updateFromRoot(true, isHard());
+      navigator.updateFromRoot(true, true);
     }
-  }
-
-  boolean isHard() {
-    return false;
   }
 
   protected abstract boolean isSelected(PomTreeViewSettings settings);

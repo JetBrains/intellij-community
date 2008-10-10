@@ -2,12 +2,7 @@ package org.jetbrains.idea.maven.navigator.action;
 
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
 
-public class ShowIgnoredAction extends PomTreeViewAction {
-
-  protected boolean isHard() {
-    return true;
-  }
-
+public class ShowIgnoredProjectsAction extends MavenTreeViewAction {
   public boolean isSelected(PomTreeViewSettings settings) {
     return settings.showIgnored;
   }

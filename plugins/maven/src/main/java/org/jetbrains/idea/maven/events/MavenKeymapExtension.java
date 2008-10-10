@@ -11,14 +11,15 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
-import org.jetbrains.idea.maven.utils.MavenId;
-import org.jetbrains.idea.maven.utils.MavenPluginInfo;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
+import org.jetbrains.idea.maven.utils.MavenId;
+import org.jetbrains.idea.maven.utils.MavenPluginInfo;
 
 import javax.swing.*;
 import java.io.File;
@@ -38,7 +39,7 @@ public class MavenKeymapExtension implements KeymapExtension {
     if (project == null) return result;
 
     ActionManager actionManager = ActionManager.getInstance();
-    String[] ids = actionManager.getActionIds(getProjectPrefix(project));
+    String[] ids = actionManager.getActionIds(getActionPrefix(project, null));
     Arrays.sort(ids);
 
     Map<String, KeymapGroup> pomPathToActionId = new HashMap<String, KeymapGroup>();
@@ -69,46 +70,67 @@ public class MavenKeymapExtension implements KeymapExtension {
     return result;
   }
 
-  public static String getProjectPrefix(Project project) {
-    return MavenEventsManager.getInstance(project).getActionId(null, null);
-  }
+  public static void updateActions(@NotNull Project project, boolean delete) {
+    String actionIdPrefix = getActionPrefix(project, null);
+    if (delete) {
+      doUpdateActions(actionIdPrefix, Collections.<MavenGoalAction>emptyList());
+      return;
+    }
 
-  public static void createActions(@NotNull Project project) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     MavenEventsManager eventsHandler = MavenEventsManager.getInstance(project);
 
     List<MavenGoalAction> actionList = new ArrayList<MavenGoalAction>();
-
     for (MavenProjectModel eachProject : projectsManager.getProjects()) {
       if (projectsManager.isIgnored(eachProject)) continue;
-
-      String projectName = eachProject.getMavenProject().getName();
-      String pomPath = eachProject.getPath();
-      String actionIdPrefix = eventsHandler.getActionId(pomPath, null);
-
-      for (String eachGoal : collectGoals(eachProject, projectsManager.getLocalRepository())) {
-        actionList.add(new MavenGoalAction(projectName, actionIdPrefix, pomPath, eachGoal));
-      }
+      actionList.addAll(collectActions(eachProject, projectsManager, eventsHandler));
     }
 
-    refreshActions(actionList, getProjectPrefix(project));
+    doUpdateActions(actionIdPrefix, actionList);
   }
 
-  public static void clearActions(@NotNull Project project) {
-    refreshActions(new ArrayList<MavenGoalAction>(), getProjectPrefix(project));
+  public static void updateActions(@NotNull Project project, MavenProjectModel mavenProject, boolean delete) {
+    String actionIdPrefix = getActionPrefix(project, mavenProject);
+    if (delete) {
+      doUpdateActions(actionIdPrefix, Collections.<MavenGoalAction>emptyList());
+      return;
+    }
+
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+    MavenEventsManager eventsHandler = MavenEventsManager.getInstance(project);
+
+    doUpdateActions(actionIdPrefix,  collectActions(mavenProject, projectsManager, eventsHandler));
   }
 
-  private static void refreshActions(Collection<MavenGoalAction> actionList, String actionIdPrefix) {
+  private static List<MavenGoalAction> collectActions(MavenProjectModel eachProject,
+                                                      MavenProjectsManager projectsManager,
+                                                      MavenEventsManager eventsHandler) {
+    List<MavenGoalAction> result = new ArrayList<MavenGoalAction>();
+    String projectName = eachProject.getMavenProject().getName();
+    String pomPath = eachProject.getPath();
+    String actionIdPrefix = eventsHandler.getActionId(pomPath, null);
+
+    for (String eachGoal : collectGoals(eachProject, projectsManager.getLocalRepository())) {
+      result.add(new MavenGoalAction(projectName, actionIdPrefix, pomPath, eachGoal));
+    }
+
+    return result;
+  }
+
+  @TestOnly
+  static String getActionPrefix(Project project, MavenProjectModel mavenProject) {
+    String pomPath = mavenProject == null ? null : mavenProject.getPath();
+    return MavenEventsManager.getInstance(project).getActionId(pomPath, null);
+  }
+
+  private static void doUpdateActions(String actionIdPrefix, Collection<MavenGoalAction> actionList) {
     ActionManager actionManager = ActionManager.getInstance();
 
-    synchronized (actionManager) {
-      for (String oldId : actionManager.getActionIds(actionIdPrefix)) {
-        actionManager.unregisterAction(oldId);
-      }
-
-      for (MavenGoalAction action : actionList) {
-        actionManager.registerAction(action.myId, action);
-      }
+    for (String oldId : actionManager.getActionIds(actionIdPrefix)) {
+      actionManager.unregisterAction(oldId);
+    }
+    for (MavenGoalAction action : actionList) {
+      actionManager.registerAction(action.myId, action);
     }
   }
 

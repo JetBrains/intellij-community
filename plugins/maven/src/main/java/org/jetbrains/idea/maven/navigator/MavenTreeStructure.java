@@ -197,12 +197,6 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       return shouldDisplay(this);
     }
 
-    public void display(DisplayList list) {
-      if (isVisible()) {
-        list.insert(this);
-      }
-    }
-
     public ErrorLevel getOverallErrorLevel() {
       ErrorLevel childrenErrorLevel = getChildrenErrorLevel();
       return childrenErrorLevel.compareTo(myNodeErrorLevel) > 0
@@ -302,69 +296,28 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     }
   }
 
-  public interface DisplayList {
-    void add(Iterable<? extends CustomNode> nodes);
-
-    void add(CustomNode node);
-
-    void insert(CustomNode node);
-
-    void sort();
-  }
-
   public abstract class ListNode extends CustomNode {
-    final List<SimpleNode> displayList = new ArrayList<SimpleNode>();
-
-    final DisplayList myDisplayList = new DisplayList() {
-      public void insert(CustomNode node) {
-        displayList.add(node);
-      }
-
-      public void sort() {
-        Collections.sort(displayList, nodeComparator);
-      }
-
-
-      public void add(Iterable<? extends CustomNode> nodes) {
-        for (CustomNode node : nodes) {
-          add(node);
-        }
-      }
-
-      public void add(CustomNode node) {
-        node.display(this);
-      }
-    };
-
     public ListNode(CustomNode parent) {
       super(parent);
     }
 
     @Override
     public boolean isVisible() {
-      CustomNode[] children = getChildren();
-      
-      for (CustomNode each : children) {
+      for (CustomNode each : getStructuralChildren()) {
         if (each.isVisible()) return true;
       }
       return super.isVisible();
     }
 
     public CustomNode[] getChildren() {
-      displayList.clear();
-      displayChildren(myDisplayList);
-      return displayList.toArray(new CustomNode[displayList.size()]);
-    }
-
-    public void display(DisplayList list) {
-      if (isVisible()) {
-        super.display(list);
-      } else {
-        displayChildren(list);
+      List<CustomNode> result = new ArrayList<CustomNode>();
+      for (CustomNode each : getStructuralChildren()) {
+        if (each.isVisible()) result.add(each);
       }
+      return result.toArray(new CustomNode[result.size()]);
     }
 
-    protected abstract void displayChildren(DisplayList displayList);
+    protected abstract List<? extends CustomNode> getStructuralChildren();
   }
 
   public abstract class PomGroupNode extends ListNode {
@@ -378,8 +331,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       return !pomNodes.isEmpty() && super.isVisible();
     }
 
-    protected void displayChildren(DisplayList displayList) {
-      displayList.add(pomNodes);
+    protected List<? extends CustomNode> getStructuralChildren() {
+      return pomNodes;
     }
 
     protected boolean addUnderExisting(final PomNode newNode) {
@@ -393,8 +346,10 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     }
 
     public boolean addUnder(PomNode newNode) {
-      if (addUnderExisting(newNode)) {
-        return true;
+      if (getTreeViewSettings().groupStructurally) {
+        if (addUnderExisting(newNode)) {
+          return true;
+        }
       }
 
       for (PomNode child : removeChildren(newNode, new ArrayList<PomNode>())) {
@@ -493,10 +448,11 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       setName(NavigatorBundle.message("node.root"));
     }
 
-    protected void displayChildren(DisplayList displayList) {
-      displayList.add(profilesNode);
-      displayList.add(pomNodes);
-      displayList.sort();
+    protected List<? extends CustomNode> getStructuralChildren() {
+      List<CustomNode> result = new ArrayList<CustomNode>();
+      result.add(profilesNode);
+      result.addAll(pomNodes);
+      return result;
     }
 
     @NotNull
@@ -568,11 +524,13 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       return myProjectModel.getFile();
     }
 
-    protected void displayChildren(DisplayList displayList) {
-      displayList.add(lifecycleNode);
-      displayList.add(pluginsNode);
-      displayList.add(modulePomsNode);
-      displayList.add(nonModulePomsNode);
+    protected List<? extends CustomNode> getStructuralChildren() {
+      List<CustomNode> result = new ArrayList<CustomNode>();
+      result.add(lifecycleNode);
+      result.add(pluginsNode);
+      result.add(modulePomsNode);
+      result.add(nonModulePomsNode);
+      return result;
     }
 
     @Nullable
@@ -691,7 +649,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     }
 
     private ErrorLevel getModulesErrorLevel() {
-      ErrorLevel result =  ErrorLevel.NONE;
+      ErrorLevel result = ErrorLevel.NONE;
       for (PomNode each : modulePomsNode.pomNodes) {
         ErrorLevel moduleLevel = each.getOverallErrorLevel();
         if (moduleLevel.compareTo(result) > 0) result = moduleLevel;
@@ -943,8 +901,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       pomNode = parent;
     }
 
-    protected void displayChildren(DisplayList displayList) {
-      displayList.add(goalNodes);
+    protected List<? extends CustomNode> getStructuralChildren() {
+      return goalNodes;
     }
   }
 
@@ -1032,7 +990,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
     public boolean isVisible() {
       return (!getTreeViewSettings().filterStandardPhases
-             || myStandardPhases.contains(getName())) && super.isVisible();
+              || myStandardPhases.contains(getName())) && super.isVisible();
     }
   }
 
@@ -1054,8 +1012,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       return !profileNodes.isEmpty() && super.isVisible();
     }
 
-    protected void displayChildren(DisplayList displayList) {
-      displayList.add(profileNodes);
+    protected List<? extends CustomNode> getStructuralChildren() {
+      return profileNodes;
     }
 
     public void clear() {
@@ -1134,8 +1092,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       return !pluginNodes.isEmpty() && super.isVisible();
     }
 
-    protected void displayChildren(DisplayList displayList) {
-      displayList.add(pluginNodes);
+    protected List<? extends CustomNode> getStructuralChildren() {
+      return pluginNodes;
     }
 
     public void clear() {

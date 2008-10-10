@@ -145,7 +145,7 @@
               description="Group Maven projects according to the layout"
               icon="/nodes/folder.png"/>
       <action id="Maven.ShowIgnored"
-              class="org.jetbrains.idea.maven.navigator.action.ShowIgnoredAction"
+              class="org.jetbrains.idea.maven.navigator.action.ShowIgnoredProjectsAction"
               text="Show ignored"
               description="Show ignored projects"
               icon="/actions/showHiddens.png"/>

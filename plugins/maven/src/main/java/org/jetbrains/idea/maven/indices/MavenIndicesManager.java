@@ -146,10 +146,10 @@ public class MavenIndicesManager implements ApplicationComponent {
   }
 
   public void addArtifact(File artifactFile, String name) {
-    File reporepository = getRepositoryFile(artifactFile, name);
+    File repository = getRepositoryFile(artifactFile, name);
 
     for (MavenIndex each : getIndices()) {
-      if (each.isForLocal(reporepository)) {
+      if (each.isForLocal(repository)) {
         each.addArtifact(artifactFile);
         return;
       }

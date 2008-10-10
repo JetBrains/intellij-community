@@ -413,7 +413,7 @@ public class MavenEventsManager extends DummyProjectComponent implements Persist
     }
 
     public void stopListen() {
-      MavenKeymapExtension.clearActions(myProject);
+      MavenKeymapExtension.updateActions(myProject, true);
       listenTo(null);
       KeymapManagerEx.getInstanceEx().removeKeymapManagerListener(this);
     }
@@ -421,33 +421,37 @@ public class MavenEventsManager extends DummyProjectComponent implements Persist
 
   private class MyProjectStateListener implements MavenProjectsManager.Listener {
     public void activate() {
-      scheduleKeymapUpdate();
+      scheduleKeymapUpdate(null, false);
     }
 
     public void projectAdded(MavenProjectModel project) {
-      scheduleKeymapUpdate();
+      scheduleKeymapUpdate(project, false);
     }
 
     public void projectUpdated(MavenProjectModel project) {
-      scheduleKeymapUpdate();
+      scheduleKeymapUpdate(project, false);
     }
 
     public void projectRemoved(MavenProjectModel project) {
-      scheduleKeymapUpdate();
+      scheduleKeymapUpdate(project, true);
     }
 
     public void setIgnored(MavenProjectModel project, boolean on) {
-      scheduleKeymapUpdate();
+      scheduleKeymapUpdate(project, on);
     }
 
     public void profilesChanged(List<String> profiles) {
     }
 
-    private void scheduleKeymapUpdate() {
+    private void scheduleKeymapUpdate(final MavenProjectModel mavenProject , final boolean delete) {
       Runnable updateTask = new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
-          MavenKeymapExtension.createActions(myProject);
+          if (mavenProject == null) {
+            MavenKeymapExtension.updateActions(myProject, delete);
+          } else {
+            MavenKeymapExtension.updateActions(myProject, mavenProject, delete);
+          }
         }
       };
 
@@ -455,7 +459,6 @@ public class MavenEventsManager extends DummyProjectComponent implements Persist
         updateTask.run();
       }
       else {
-        myKeymapUpdaterAlarm.cancelAllRequests();
         myKeymapUpdaterAlarm.addRequest(updateTask, 10);
       }
     }

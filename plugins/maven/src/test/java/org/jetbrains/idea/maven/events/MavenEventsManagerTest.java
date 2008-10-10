@@ -135,7 +135,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
   }
 
   private List<String> getProjectActions() {
-    String prefix = MavenKeymapExtension.getProjectPrefix(myProject);
+    String prefix = MavenKeymapExtension.getActionPrefix(myProject, null);
     return Arrays.asList(ActionManager.getInstance().getActionIds(prefix));
   }
 }
