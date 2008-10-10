@@ -68,6 +68,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     parameterInfo = new ParameterTablePanel.VariableData[parameters.length];
     for (int i = 0; i < parameterInfo.length; i++) {
       parameterInfo[i] = new ParameterTablePanel.VariableData(parameters[i]);
+      parameterInfo[i].name = parameters[i].getName();
       parameterInfo[i].passAsParameter = true;
     }
 
@@ -114,20 +115,20 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     final String packageName;
     final List<String> getterNames;
     final boolean createInnerClass = myCreateInnerClassRadioButton.isSelected();
-    if (!useExistingClass) {
-      packageName = getPackageName();
-      className = getClassName();
-      getterNames = null;
-    } else if (createInnerClass) {
+    if (createInnerClass) {
       className = getInnerClassName();
       packageName = "";
       getterNames = null;
-    }
-    else {
+    } else if (useExistingClass) {
       final String existingClassName = getExistingClassName();
       getterNames = new ArrayList<String>();
       className = StringUtil.getShortName(existingClassName);
       packageName = StringUtil.getPackageName(existingClassName);
+    }
+    else {
+      packageName = getPackageName();
+      className = getClassName();
+      getterNames = null;
     }
     invokeRefactoring(new IntroduceParameterObjectProcessor(className, packageName, sourceMethod, params, getterNames, keepMethod, useExistingClass,
                                                             createInnerClass));
