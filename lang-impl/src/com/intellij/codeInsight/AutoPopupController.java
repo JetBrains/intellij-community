@@ -70,6 +70,9 @@ public class AutoPopupController implements Disposable {
       if (file == null) return;
       final Runnable request = new Runnable(){
         public void run(){
+          if (myProject.isDisposed()) return;
+          if (editor.isDisposed()) return;
+
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           if (condition != null && !condition.value(editor)) return;
           new DotAutoLookupHandler().invoke(myProject, editor, file);
