@@ -65,6 +65,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     ExecutionResult executionResult;
+    final boolean shouldAddDefaultActions;
     if (state instanceof JavaCommandLine) {
       patch(((JavaCommandLine)state).getJavaParameters(), state.getRunnerSettings(), true);
       final ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
@@ -72,9 +73,11 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       if (proxy != null && executionResult != null) {
         proxy.attach(executionResult.getProcessHandler());
       }
+      shouldAddDefaultActions = state instanceof JavaCommandLineState &&  ((JavaCommandLineState)state).shouldAddJavaProgramRunnerActions();
     }
     else {
       executionResult = state.execute(executor, this);
+      shouldAddDefaultActions = true;
     }
 
     if (executionResult == null) {
@@ -86,7 +89,9 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     final RunContentBuilder contentBuilder = new RunContentBuilder(project, this, executor);
     contentBuilder.setExecutionResult(executionResult);
     contentBuilder.setEnvironment(env);
-    customizeContent(contentBuilder);
+    if (shouldAddDefaultActions) {
+      addDefaultActions(contentBuilder);
+    }
 
     RunContentDescriptor runContent = contentBuilder.showRunContent(contentToReuse);
 
@@ -99,7 +104,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     return runContent;
   }
 
-  protected static void customizeContent(final RunContentBuilder contentBuilder) {
+  protected static void addDefaultActions(final RunContentBuilder contentBuilder) {
     final ExecutionResult executionResult = contentBuilder.getExecutionResult();
     final ExecutionConsole executionConsole = executionResult.getExecutionConsole();
     final JComponent consoleComponent = executionConsole != null ? executionConsole.getComponent() : null;

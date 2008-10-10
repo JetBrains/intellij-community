@@ -45,4 +45,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return CommandLineBuilder.createFromJavaParameters(getJavaParameters(), true);
   }
 
+  public boolean shouldAddJavaProgramRunnerActions() {
+    return true;
+  }
 }
