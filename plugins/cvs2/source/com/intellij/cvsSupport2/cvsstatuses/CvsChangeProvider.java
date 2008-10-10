@@ -56,10 +56,12 @@ public class CvsChangeProvider implements ChangeProvider {
 
   private final CvsVcs2 myVcs;
   private final CvsEntriesManager myEntriesManager;
+  private final ProjectFileIndex myFileIndex;
 
   public CvsChangeProvider(final CvsVcs2 vcs, CvsEntriesManager entriesManager) {
     myVcs = vcs;
     myEntriesManager = entriesManager;
+    myFileIndex = ProjectRootManager.getInstance(vcs.getProject()).getFileIndex();
   }
 
   public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress,
@@ -151,7 +153,7 @@ public class CvsChangeProvider implements ChangeProvider {
       if (children != null) {
         for (VirtualFile file : children) {
           if (file.isDirectory()) {
-            final boolean isIgnored = ProjectRootManager.getInstance(myVcs.getProject()).getFileIndex().isIgnored(file);
+            final boolean isIgnored = myFileIndex.isIgnored(file);
             if (!isIgnored) {
               processEntriesIn(file, scope, builder, true);
             }
@@ -196,9 +198,8 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private void checkSwitchedDir(final VirtualFile dir, final ChangelistBuilder builder, final VcsDirtyScope scope) {
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myVcs.getProject()).getFileIndex();
     VirtualFile parentDir = dir.getParent();
-    if (parentDir == null || !fileIndex.isInContent(parentDir)) {
+    if (parentDir == null || !myFileIndex.isInContent(parentDir)) {
       return;
     }
     final CvsInfo info = CvsEntriesManager.getInstance().getCvsInfoFor(dir);
@@ -245,9 +246,8 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private void checkSwitchedFile(final FilePath filePath, final ChangelistBuilder builder, final VirtualFile dir, final Entry entry) {
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myVcs.getProject()).getFileIndex();
     // if content root itself is switched, ignore
-    if (!fileIndex.isInContent(dir)) {
+    if (!myFileIndex.isInContent(dir)) {
       return;
     }
     final String dirTag = CvsEntriesManager.getInstance().getCvsInfoFor(dir).getStickyTag();
