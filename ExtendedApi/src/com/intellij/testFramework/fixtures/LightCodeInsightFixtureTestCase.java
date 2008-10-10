@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.*;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -80,4 +81,9 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
   protected PsiFile createLightFile(final FileType fileType, final String text) {
     return PsiFileFactory.getInstance(getProject()).createFileFromText("a." + fileType.getDefaultExtension(), fileType, text);
   }
+
+  public PsiFile createLightFile(final String fileName, final Language language, final String text) {
+    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, language, text, false, true);
+  }
+
 }
