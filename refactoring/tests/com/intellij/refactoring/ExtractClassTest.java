@@ -175,7 +175,7 @@ public class ExtractClassTest extends MultiFileTestCase{
   }
 
   public void testMultipleGetters1() throws Exception {
-    doTestMethod("getMyT", null);
+    doTestMethod("getMyT", "Field 'myT' needs getter");
   }
 
   public void testUsedInInitializer() throws Exception {

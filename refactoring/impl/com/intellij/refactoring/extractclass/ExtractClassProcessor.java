@@ -440,7 +440,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   private boolean hasGetterOrSetter(final PsiMethod[] getters) {
     for (PsiMethod getter : getters) {
-      if (isInMovedElement(getter)) return true;
+      if (!isInMovedElement(getter)) return true;
     }
     return false;
   }
