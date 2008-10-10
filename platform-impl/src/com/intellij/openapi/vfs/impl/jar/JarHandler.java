@@ -90,18 +90,18 @@ public class JarHandler implements FileSystemInterface {
         final ZipFile zip = getZip();
 
         map = new THashMap<String, EntryInfo>();
-        if (zip == null) return map;
+        if (zip != null) {
+          map.put("", new EntryInfo("", null, true));
+          final Enumeration<? extends ZipEntry> entries = zip.entries();
+          while (entries.hasMoreElements()) {
+            ZipEntry entry = entries.nextElement();
+            final String name = entry.getName();
+            final boolean isDirectory = name.endsWith("/");
+            getOrCreate(isDirectory ? name.substring(0, name.length() - 1) : name, isDirectory, map);
+          }
 
-        map.put("", new EntryInfo("", null, true));
-        final Enumeration<? extends ZipEntry> entries = zip.entries();
-        while (entries.hasMoreElements()) {
-          ZipEntry entry = entries.nextElement();
-          final String name = entry.getName();
-          final boolean isDirectory = name.endsWith("/");
-          getOrCreate(isDirectory ? name.substring(0, name.length() - 1) : name, isDirectory, map);
+          myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(map);
         }
-
-        myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(map);
       }
       return map;
     }
