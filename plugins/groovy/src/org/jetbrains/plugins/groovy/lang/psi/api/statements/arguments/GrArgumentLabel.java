@@ -25,6 +25,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * @author ilyas
  */
 public interface GrArgumentLabel extends GroovyPsiElement {
+
+  GrArgumentLabel[] EMPTY_ARRAY = new GrArgumentLabel[0];
+
   @NotNull
   PsiElement getNameElement();
 

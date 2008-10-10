@@ -154,7 +154,6 @@
     <!--Gant-->
     <facetType implementation="org.jetbrains.plugins.gant.config.GantFacetType"/>
     <frameworkSupport implementation="org.jetbrains.plugins.gant.config.GantFacetSupportProvider"/>
-
     <!--Gant filetype-->
     <quoteHandler fileType="Gant" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
     <!--Gant Run/debug-->
@@ -163,6 +162,8 @@
     <fileTypeFactory implementation="org.jetbrains.plugins.gant.GantFileTypeLoader"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gant.settings.GantApplicationSettings"
                         serviceImplementation="org.jetbrains.plugins.gant.settings.GantApplicationSettings"/>
+
+    <psi.referenceContributor implementation="org.jetbrains.plugins.gant.reference.GantReferenceContirbutor"/>
 
 
     <!-- control flow -->
@@ -520,6 +521,9 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.extensions.script.ScriptDetectorRegistry</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.extensions.resolve.ScriptMembersProviderRegistry</implementation-class>
     </component>
   </application-components>
 
