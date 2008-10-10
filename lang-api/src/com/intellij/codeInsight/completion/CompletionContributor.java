@@ -139,13 +139,17 @@ public abstract class CompletionContributor extends AbstractCompletionContributo
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(parameters.getCompletionType())) {
       final ProcessingContext context = new ProcessingContext();
       if (isPatternSuitable(pair.first, parameters, context)) {
-        if (!pair.second.addCompletionVariants(parameters, context, result)) return false;
+        if (!pair.second.addCompletionVariants(parameters, context, result)) {
+          return false;
+        }
       }
     }
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(null)) {
       final ProcessingContext context = new ProcessingContext();
       if (isPatternSuitable(pair.first, parameters, context)) {
-        if (!pair.second.addCompletionVariants(parameters, context, result)) return false;
+        if (!pair.second.addCompletionVariants(parameters, context, result)) {
+          return false;
+        }
       }
     }
     return true;
