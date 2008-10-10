@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -20,9 +19,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -49,12 +47,6 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     getComponent().addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         new MyEnvironmentVariablesDialog().show();
-      }
-    });
-    getComponent().getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        myEnvs.clear();
-        splitVars(myEnvs, getComponent().getText());
       }
     });
   }

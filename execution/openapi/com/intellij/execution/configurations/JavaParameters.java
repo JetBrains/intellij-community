@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.Map;
 
 public class JavaParameters {
@@ -190,8 +191,9 @@ public class JavaParameters {
 
   public void setupEnvs(Map<String, String> envs, boolean passDefault) {
     if (!envs.isEmpty()) {
-      EnvironmentVariablesComponent.inlineParentOccurrences(envs);
-      setEnv(envs);
+      final HashMap<String, String> map = new HashMap<String, String>(envs);
+      EnvironmentVariablesComponent.inlineParentOccurrences(map);
+      setEnv(map);
       setPassParentEnvs(passDefault);
     }
   }
