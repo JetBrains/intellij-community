@@ -9,6 +9,7 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -110,9 +111,18 @@ public class JavaCompletionUtil {
       propertyName = PropertyUtil.getPropertyName(method);
     }
 
-    SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, var.getType());
+    final PsiType type = var.getType();
+    SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, type);
     final String[] suggestedNames = suggestedNameInfo.names;
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNames, matcher), suggestedNameInfo);
+    if (set.isEmpty()) {
+      if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && matcher.prefixMatches("object")) {
+        set.add(LookupElementFactoryImpl.getInstance().createLookupElement("object"));
+      }
+      if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) && matcher.prefixMatches("string")) {
+        set.add(LookupElementFactoryImpl.getInstance().createLookupElement("string"));
+      }
+    }
 
     if (set.isEmpty()) {
       suggestedNameInfo = new SuggestedNameInfo(getOverlappedNameVersions(matcher.getPrefix(), suggestedNames, "")) {
@@ -126,7 +136,7 @@ public class JavaCompletionUtil {
     if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, getUnresolvedReferences(parent, false), matcher), suggestedNameInfo);
     final String[] nameSuggestions =
-      JavaStatisticsManager.getNameSuggestions(var.getType(), JavaStatisticsManager.getContext(var), matcher.getPrefix());
+      JavaStatisticsManager.getNameSuggestions(type, JavaStatisticsManager.getContext(var), matcher.getPrefix());
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, nameSuggestions, matcher), suggestedNameInfo);
   }
 
