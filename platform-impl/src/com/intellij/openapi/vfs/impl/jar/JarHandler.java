@@ -113,6 +113,8 @@ public class JarHandler implements FileSystemInterface {
       int idx = entryName.lastIndexOf('/');
       final String parentEntryName = idx > 0 ? entryName.substring(0, idx) : "";
       String shortName = idx > 0 ? entryName.substring(idx + 1) : entryName;
+      if (".".equals(shortName)) return getOrCreate(parentEntryName, true, map);
+
       info = new EntryInfo(shortName, getOrCreate(parentEntryName, true, map), isDirectory);
       map.put(entryName, info);
     }
