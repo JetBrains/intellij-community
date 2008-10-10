@@ -81,6 +81,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final Comparator<LookupElement> myComparator;
   private volatile boolean myCalculating;
   private final JLabel myAdComponent;
+  private volatile String myAdText;
+  private volatile int myLookupWidth = 50;
 
   public LookupImpl(Project project,
                     Editor editor,
@@ -124,7 +126,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myList = new JList(new DefaultListModel());
     myCellRenderer = new LookupCellRenderer(this);
     myList.setCellRenderer(myCellRenderer);
-    myList.setFixedCellWidth(50);
 
     for (final LookupElement item : items) {
       addItem(item);
@@ -197,7 +198,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myItems.add(item);
     addItemWeight(item);
     int maxWidth = myCellRenderer.updateMaximumWidth(item);
-    myList.setFixedCellWidth(Math.max(maxWidth, myList.getFixedCellWidth()));
+    myLookupWidth = Math.max(maxWidth, myLookupWidth);
   }
 
   private void addItemWeight(final LookupElement item) {
@@ -236,12 +237,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myItems.toArray(new LookupElement[myItems.size()]);
   }
 
-  public synchronized void setAdvertisementText(@Nullable String text) {
-    myAdComponent.setText(text);
+  public void setAdvertisementText(@Nullable String text) {
+    myAdText = text;
   }
 
-  public synchronized String getAdvertisementText() {
-    return myAdComponent.getText();
+  public String getAdvertisementText() {
+    return myAdText;
   }
 
 
@@ -315,18 +316,23 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       item.setPrefixMatcher(new CamelHumpMatcher(""));
       if (!myCalculating) {
         final int maxWidth = myCellRenderer.updateMaximumWidth(item);
-        myList.setFixedCellWidth(Math.max(maxWidth, myList.getFixedCellWidth()));
+        myList.setFixedCellWidth(Math.max(maxWidth, myLookupWidth));
       }
 
       model.addElement(item);
       allItems.add(item);
+    } else {
+      myList.setFixedCellWidth(myLookupWidth);
     }
     myList.setFixedCellHeight(myCellRenderer.getListCellRendererComponent(myList, myList.getModel().getElementAt(0), 0, false, false).getPreferredSize().height);
 
     myList.setVisibleRowCount(Math.min(myList.getModel().getSize(), CodeInsightSettings.getInstance().LOOKUP_HEIGHT));
 
-    if (StringUtil.isNotEmpty(myAdComponent.getText())) {
+    myAdComponent.setText(myAdText);
+    if (StringUtil.isNotEmpty(myAdText)) {
       myAdComponent.setPreferredSize(new Dimension(myAdComponent.getPreferredSize().width, myProcessIcon.getPreferredSize().height));
+    } else {
+      myAdComponent.setPreferredSize(new Dimension(0, 0));
     }
 
     if (!isEmpty) {
