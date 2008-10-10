@@ -130,7 +130,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
       className = getClassName();
       getterNames = null;
     }
-    invokeRefactoring(new IntroduceParameterObjectProcessor(className, packageName, sourceMethod, params, getterNames, keepMethod, useExistingClass,
+    invokeRefactoring(new IntroduceParameterObjectProcessor(className, packageName, sourceMethod, parameterInfo, getterNames, keepMethod, useExistingClass,
                                                             createInnerClass));
   }
 

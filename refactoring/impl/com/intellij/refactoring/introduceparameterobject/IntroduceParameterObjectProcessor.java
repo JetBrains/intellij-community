@@ -26,6 +26,7 @@ import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
+import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -34,10 +35,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringProcessor {
   private static final Logger logger = Logger.getInstance("com.siyeh.rpp.introduceparameterobject.IntroduceParameterObjectProcessor");
@@ -49,7 +47,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
   private final boolean keepMethodAsDelegate;
   private final boolean myUseExistingClass;
   private final boolean myCreateInnerClass;
-  private final List<PsiParameter> parameters;
+  private final List<ParameterTablePanel.VariableData> parameters;
   private final int[] paramsToMerge;
   private final List<PsiTypeParameter> typeParams;
   private final Set<PsiParameter> paramsNeedingSetters = new HashSet<PsiParameter>();
@@ -59,7 +57,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
   public IntroduceParameterObjectProcessor(String className,
                                            String packageName,
                                            PsiMethod method,
-                                           List<PsiParameter> parameters,
+                                           ParameterTablePanel.VariableData[] parameters,
                                            List<String> getterNames,
                                            boolean keepMethodAsDelegate, final boolean useExistingClass, final boolean createInnerClass) {
     super(method.getProject());
@@ -70,15 +68,15 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     this.keepMethodAsDelegate = keepMethodAsDelegate;
     myUseExistingClass = useExistingClass;
     myCreateInnerClass = createInnerClass;
-    this.parameters = new ArrayList<PsiParameter>(parameters);
+    this.parameters = new ArrayList<ParameterTablePanel.VariableData>(Arrays.asList(parameters));
     final PsiParameterList parameterList = method.getParameterList();
     final PsiParameter[] methodParams = parameterList.getParameters();
-    paramsToMerge = new int[parameters.size()];
-    for (int p = 0; p < parameters.size(); p++) {
-      PsiParameter parameter = parameters.get(p);
+    paramsToMerge = new int[parameters.length];
+    for (int p = 0; p < parameters.length; p++) {
+      ParameterTablePanel.VariableData parameter = parameters[p];
       for (int i = 0; i < methodParams.length; i++) {
         final PsiParameter methodParam = methodParams[i];
-        if (parameter.equals(methodParam)) {
+        if (parameter.variable.equals(methodParam)) {
           paramsToMerge[p] = i;
           break;
         }
@@ -86,8 +84,8 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     }
     final Set<PsiTypeParameter> typeParamSet = new HashSet<PsiTypeParameter>();
     final JavaRecursiveElementVisitor visitor = new TypeParametersVisitor(typeParamSet);
-    for (PsiParameter parameter : parameters) {
-      parameter.accept(visitor);
+    for (ParameterTablePanel.VariableData parameter : parameters) {
+      parameter.variable.accept(visitor);
     }
     typeParams = new ArrayList<PsiTypeParameter>(typeParamSet);
 
@@ -161,13 +159,18 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       final PsiMethod containingMethod = (PsiMethod)parameter.getDeclarationScope();
       final int index = containingMethod.getParameterList().getParameterIndex(parameter);
       final PsiParameter replacedParameter = method.getParameterList().getParameters()[index];
-      @NonNls final String getter;
-      if (getterNames == null) {
-        getter = PropertyUtil.suggestGetterName(replacedParameter.getName(), replacedParameter.getType());
+      @NonNls String getter = null;
+      if (getterNames != null) {
+        for (int i = 0; i < parameters.size(); i++) {
+          ParameterTablePanel.VariableData data = parameters.get(i);
+          if (data.variable.equals(parameter)) {
+            getter = getterNames.get(i);
+            break;
+          }
+        }
       }
-      else {
-        final int getterIndex = parameters.indexOf(parameter);
-        getter = getterNames.get(getterIndex);
+      if (getter == null) {
+        getter = PropertyUtil.suggestGetterName(replacedParameter.getName(), replacedParameter.getType());
       }
       @NonNls final String setter = PropertyUtil.suggestSetterName(replacedParameter.getName());
       if (RefactoringUtil.isPlusPlusOrMinusMinus(paramUsage.getParent())) {
@@ -246,9 +249,9 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     beanClassBuilder.setTypeArguments(typeParams);
     beanClassBuilder.setClassName(className);
     beanClassBuilder.setPackageName(packageName);
-    for (PsiParameter parameter : parameters) {
-      final boolean setterRequired = paramsNeedingSetters.contains(parameter);
-      beanClassBuilder.addField(parameter, setterRequired);
+    for (ParameterTablePanel.VariableData parameter : parameters) {
+      final boolean setterRequired = paramsNeedingSetters.contains(parameter.variable);
+      beanClassBuilder.addField((PsiParameter)parameter.variable,  parameter.name, parameter.type, setterRequired);
     }
     final String classString;
     try {
@@ -365,9 +368,9 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     }
   }
 
-  private static boolean existingClassIsCompatible(PsiClass aClass, List<PsiParameter> params, @NonNls List<String> getterNames) {
+  private static boolean existingClassIsCompatible(PsiClass aClass, List<ParameterTablePanel.VariableData> params, @NonNls List<String> getterNames) {
     if (params.size() == 1) {
-      final PsiType paramType = params.get(0).getType();
+      final PsiType paramType = params.get(0).type;
       if (TypeConversionUtil.isPrimitiveWrapper(aClass.getQualifiedName())) {
         getterNames.add(paramType.getCanonicalText() + "Value");
         return true;
@@ -401,7 +404,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     return true;
   }
 
-  private static boolean constructorIsCompatible(PsiMethod constructor, List<PsiParameter> params) {
+  private static boolean constructorIsCompatible(PsiMethod constructor, List<ParameterTablePanel.VariableData> params) {
     if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
       return false;
     }
@@ -411,7 +414,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       return false;
     }
     for (int i = 0; i < constructorParams.length; i++) {
-      if (!TypeConversionUtil.isAssignable(constructorParams[i].getType(), params.get(i).getType())) {
+      if (!TypeConversionUtil.isAssignable(constructorParams[i].getType(), params.get(i).type)) {
         return false;
       }
     }

@@ -9,11 +9,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.introduceparameterobject.IntroduceParameterObjectProcessor;
+import com.intellij.refactoring.util.ParameterTablePanel;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class IntroduceParameterObjectTest extends MultiFileTestCase{
   protected String getTestRoot() {
@@ -32,8 +33,8 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
         assertNotNull("Class Test not found", aClass);
 
         final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
-        IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor("Param", "", method,
-                                                                                            Arrays.asList(method.getParameterList().getParameters()),
+        final ParameterTablePanel.VariableData[] datas = generateParams(method);
+        IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor("Param", "", method, datas,
                                                                                             null, delegate, false,
                                                                                             createInner);
         processor.run();
@@ -41,6 +42,19 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
         FileDocumentManager.getInstance().saveAllDocuments();
       }
     });
+  }
+
+  private ParameterTablePanel.VariableData[] generateParams(final PsiMethod method) {
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+
+    final ParameterTablePanel.VariableData[] datas = new ParameterTablePanel.VariableData[parameters.length];
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+      datas[i] = new ParameterTablePanel.VariableData(parameter);
+      datas[i].name = parameter.getName();
+      datas[i].passAsParameter = true;
+    }
+    return datas;
   }
 
   public void testInnerClass() throws Exception {
@@ -91,7 +105,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
 
         final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
         IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor(existingClassName, existingClassPackage, method,
-                                                                                            Arrays.asList(method.getParameterList().getParameters()),
+                                                                                            generateParams(method),
                                                                                             new ArrayList<String>(), false, true,
                                                                                             false);
         processor.run();
