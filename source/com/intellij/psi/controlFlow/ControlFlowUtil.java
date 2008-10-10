@@ -9,6 +9,7 @@ import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.IntArrayList;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -164,7 +165,7 @@ public class ControlFlowUtil {
       public Boolean getResult() {
         return neededBelow[offset];
       }
-    };
+    };                   
     depthFirstSearch(flow, visitor, offset, flow.getSize());
     return visitor.getResult().booleanValue();
   }
@@ -342,20 +343,19 @@ public class ControlFlowUtil {
     return codeFragment;
   }
 
-  private static boolean checkReferenceExpressionScope (final PsiReferenceExpression ref, final PsiElement targetClassMember) {
+  private static boolean checkReferenceExpressionScope(final PsiReferenceExpression ref, @NotNull PsiElement targetClassMember) {
     final JavaResolveResult resolveResult = ref.advancedResolve(false);
     final PsiElement def = resolveResult.getElement();
     if (def != null) {
-      PsiElement parent = def.getParent ();
-      PsiElement commonParent = PsiTreeUtil.findCommonParent(parent, targetClassMember);
+      PsiElement parent = def.getParent();
+      PsiElement commonParent = parent == null ? null : PsiTreeUtil.findCommonParent(parent, targetClassMember);
       if (commonParent == null) {
         parent = resolveResult.getCurrentFileResolveScope();
       }
       if (parent instanceof PsiClass) {
-        final PsiClass clss = (PsiClass) parent;
-        if (PsiTreeUtil.isAncestor(targetClassMember, clss, false))
-          return false;
-        }
+        final PsiClass clss = (PsiClass)parent;
+        if (PsiTreeUtil.isAncestor(targetClassMember, clss, false)) return false;
+      }
     }
 
     return true;
