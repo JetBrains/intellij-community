@@ -25,15 +25,29 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 
+import java.util.ArrayList;
 import java.util.Properties;
 
 public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactory {
   @NonNls
-  public static final String[] TEMPLATES = {
-      "GroovyClass.groovy",
-      "GroovyScript.groovy",
-      "GroovyControllerTests.groovy",
-  };
+  public static final String[] TEMPLATES = {"GroovyClass.groovy", "GroovyScript.groovy", "GroovyControllerTests.groovy",};
+
+  public void registerCustromTemplates(String... templates) {
+    for (String template : templates) {
+      myCustomTemplates.add(template);
+    }
+  }
+
+  private static GroovyTemplatesFactory myInstance = null;
+
+  public static GroovyTemplatesFactory getInstance() {
+    if (myInstance == null) {
+      myInstance = new GroovyTemplatesFactory();
+    }
+    return myInstance;
+  }
+
+  private ArrayList<String> myCustomTemplates = new ArrayList<String>();
 
   public static final String GSP_TEMPLATE = "GroovyServerPage.gsp";
   @NonNls
@@ -41,18 +55,27 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
   static final String LOW_CASE_NAME_TEMPLATE_PROPERTY = "lowCaseName";
 
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
-    final FileTemplateGroupDescriptor group = new FileTemplateGroupDescriptor(GroovyBundle.message("file.template.group.title.groovy"),
-        GroovyIcons.GROOVY_ICON_16x16);
+    final FileTemplateGroupDescriptor group =
+      new FileTemplateGroupDescriptor(GroovyBundle.message("file.template.group.title.groovy"), GroovyIcons.GROOVY_ICON_16x16);
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     for (String template : TEMPLATES) {
       group.addTemplate(new FileTemplateDescriptor(template, fileTypeManager.getFileTypeByFileName(template).getIcon()));
     }
     //add GSP Template
     group.addTemplate(new FileTemplateDescriptor(GSP_TEMPLATE, fileTypeManager.getFileTypeByFileName(GSP_TEMPLATE).getIcon()));
+
+    // register custom templates
+    for (String template : getInstance().getCustomTemplates()) {
+      group.addTemplate(new FileTemplateDescriptor(template, fileTypeManager.getFileTypeByFileName(template).getIcon()));
+    }
     return group;
   }
 
-  public static PsiFile createFromTemplate(final PsiDirectory directory, final String name, String fileName, String templateName,
+
+  public static PsiFile createFromTemplate(final PsiDirectory directory,
+                                           final String name,
+                                           String fileName,
+                                           String templateName,
                                            @NonNls String... parameters) throws IncorrectOperationException {
     final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
 
@@ -68,12 +91,17 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
       text = template.getText(properties);
     }
     catch (Exception e) {
-      throw new RuntimeException("Unable to load template for " + FileTemplateManager.getInstance().internalTemplateToSubject(templateName), e);
+      throw new RuntimeException("Unable to load template for " + FileTemplateManager.getInstance().internalTemplateToSubject(templateName),
+                                 e);
     }
 
     final PsiFileFactory factory = PsiFileFactory.getInstance(directory.getProject());
     final PsiFile file = factory.createFileFromText(fileName, text);
 
-    return (PsiFile) directory.add(file);
+    return (PsiFile)directory.add(file);
+  }
+
+  public String[] getCustomTemplates() {
+    return myCustomTemplates.toArray(new String[myCustomTemplates.size()]);
   }
 }
