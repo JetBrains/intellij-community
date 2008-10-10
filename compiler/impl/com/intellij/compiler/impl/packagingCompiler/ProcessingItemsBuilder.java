@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 import java.util.jar.JarFile;
@@ -81,7 +82,12 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
   }
 
   private static String getCanonicalConcat(final String... paths) {
-    return getCanonicalPath(DeploymentUtil.concatPaths(paths));
+    final String fullOutputPath = DeploymentUtil.concatPaths(paths);
+    String path = PathUtil.getCanonicalPath(fullOutputPath);
+    if (path == null) {
+      LOG.error("invalid path: " + Arrays.toString(paths));
+    }
+    return path;
   }
 
   public boolean visitFileCopyInstruction(final FileCopyInstruction instruction) throws Exception {
@@ -115,15 +121,6 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
     }
 
     return true;
-  }
-
-  @NotNull
-  private static String getCanonicalPath(final String fullOutputPath) {
-    String path = PathUtil.getCanonicalPath(fullOutputPath);
-    if (path == null) {
-      LOG.error("invalid path: " + fullOutputPath);
-    }
-    return path;
   }
 
   private void checkRecursiveCopying(final @NotNull VirtualFile sourceFile, @NotNull final String outputPath) {
