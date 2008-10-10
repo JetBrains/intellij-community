@@ -1,5 +1,6 @@
 package com.intellij.ide.browsers;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -8,7 +9,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -284,11 +285,11 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
 
         @Nullable
         private WebBrowserUrlProvider getProvider(@NotNull PsiFile file) {
-          final WebBrowserUrlProvider[] providers = Extensions.getExtensions(WebBrowserUrlProvider.EXTENSION_POINT_NAME);
-          for (WebBrowserUrlProvider provider : providers) {
-            if (provider.isAvailableFor(file)) {
-              return provider;
-            }
+          final Language language = file.getViewProvider().getBaseLanguage();
+          final List<WebBrowserUrlProvider> providers = WebBrowserUrlProviders.INSTANCE.forKey(language);
+          if (providers.size() > 0) {
+            LOG.assertTrue(providers.size() == 1, "Only one WebBrowserUrlProvider per language (" + language.getDisplayName() + ") is allowed!");
+            return providers.get(0);
           }
 
           return null;
