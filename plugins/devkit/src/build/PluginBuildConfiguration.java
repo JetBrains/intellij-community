@@ -16,7 +16,6 @@
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.make.BuildConfiguration;
@@ -195,16 +194,12 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
 
   private void setPluginXmlUrl(final String url) {
     myPluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        new WriteAction() {
-          protected void run(final Result result) throws Throwable {
-            createDescriptor(url);
-            myPluginXmlPointer = VirtualFilePointerManager.getInstance().create(url, myModule, null);
-          }
-        }.execute();
+    new WriteAction() {
+      protected void run(final Result result) throws Throwable {
+        createDescriptor(url);
+        myPluginXmlPointer = VirtualFilePointerManager.getInstance().create(url, myModule, null);
       }
-    }, ModalityState.NON_MODAL);
+    }.execute();
   }
 
   public void setManifestPath(final String manifestPath) {
