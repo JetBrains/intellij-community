@@ -97,15 +97,15 @@ public class DocumentationManager {
     myActionManagerEx.addAnActionListener(actionListener, project);
   }
 
-  public JBPopup showJavaDocInfo(@NotNull final PsiElement element) {
+  public JBPopup showJavaDocInfo(@NotNull final PsiElement element, final PsiElement original) {
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor() {
       public void updatePopup(Object lookupItemObject) {
         if (lookupItemObject instanceof PsiElement) {
-          doShowJavaDocInfo((PsiElement)lookupItemObject, true, false, this);
+          doShowJavaDocInfo((PsiElement)lookupItemObject, true, false, this, original);
         }
       }
     };
-    return doShowJavaDocInfo(element, true, false, updateProcessor);
+    return doShowJavaDocInfo(element, true, false, updateProcessor, original);
   }
 
   @Nullable
@@ -149,7 +149,7 @@ public class DocumentationManager {
     final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor() {
       public void updatePopup(Object lookupIteObject) {
         if (lookupIteObject instanceof PsiElement) {
-          doShowJavaDocInfo((PsiElement)lookupIteObject, false, false, this);
+          doShowJavaDocInfo((PsiElement)lookupIteObject, false, false, this, originalElement);
           return;
         }
 
@@ -175,15 +175,15 @@ public class DocumentationManager {
           }
         }
         else {
-          doShowJavaDocInfo(element, false, false, this);
+          doShowJavaDocInfo(element, false, false, this, originalElement);
         }
       }
     };
 
-    return doShowJavaDocInfo(element, false, requestFocus, updateProcessor);
+    return doShowJavaDocInfo(element, false, requestFocus, updateProcessor, originalElement);
   }
 
-  private JBPopup doShowJavaDocInfo(PsiElement element, boolean heavyWeight, boolean requestFocus, PopupUpdateProcessor updateProcessor) {
+  private JBPopup doShowJavaDocInfo(PsiElement element, boolean heavyWeight, boolean requestFocus, PopupUpdateProcessor updateProcessor, PsiElement originalElement) {
     Project project = getProject(element);
     final DocumentationComponent component = new DocumentationComponent(this);
 
@@ -228,7 +228,7 @@ public class DocumentationManager {
 
     component.setHint(hint);
 
-    fetchDocInfo(getDefaultCollector(element), component);
+    fetchDocInfo(getDefaultCollector(element, originalElement), component);
 
     myDocInfoHintRef = new WeakReference<JBPopup>(hint);
     myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
@@ -316,14 +316,16 @@ public class DocumentationManager {
     return myPreviouslyFocused != null && myPreviouslyFocused.getParent() instanceof ChooseByNameBase.JPanelProvider;
   }
 
-  private DocumentationCollector getDefaultCollector(final PsiElement _element) {
+  private DocumentationCollector getDefaultCollector(@NotNull final PsiElement _element, @Nullable final PsiElement originalElement) {
+    final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(_element.getProject());
     return new DocumentationCollector() {
-      private final SmartPsiElementPointer element = SmartPointerManager.getInstance(_element.getProject()).createSmartPsiElementPointer(_element);
+      private final SmartPsiElementPointer element = smartPointerManager.createSmartPsiElementPointer(_element);
+      private final SmartPsiElementPointer original = originalElement == null ? null : smartPointerManager.createSmartPsiElementPointer(originalElement);
 
       @Nullable
       public String getDocumentation() throws Exception {
         PsiElement element1 = element.getElement();
-        final DocumentationProvider provider = getProviderFromElement(element1);
+        final DocumentationProvider provider = getProviderFromElement(element1, original == null ? null : original.getElement());
         if (provider != null && myParameterInfoController != null) {
           final Object[] objects = myParameterInfoController.getSelectedElements();
 
@@ -380,7 +382,7 @@ public class DocumentationManager {
   }
 
   public void fetchDocInfo(final PsiElement element, final DocumentationComponent component) {
-    doFetchDocInfo(component, getDefaultCollector(element), true);
+    doFetchDocInfo(component, getDefaultCollector(element, null), true);
   }
 
   public void queueFetchDocInfo(final DocumentationCollector provider, final DocumentationComponent component) {
@@ -388,7 +390,7 @@ public class DocumentationManager {
   }
 
   public void queueFetchDocInfo(final PsiElement element, final DocumentationComponent component) {
-    queueFetchDocInfo(getDefaultCollector(element), component);
+    queueFetchDocInfo(getDefaultCollector(element, null), component);
   }
 
   private void doFetchDocInfo(final DocumentationComponent component, final DocumentationCollector provider, final boolean cancelRequests) {
@@ -477,22 +479,33 @@ public class DocumentationManager {
 
   @Nullable
   public static DocumentationProvider getProviderFromElement(final PsiElement element) {
-    PsiElement originalElement = getOriginalElement(element);
-    PsiFile containingFile = originalElement != null ? originalElement.getContainingFile() : element != null ? element.getContainingFile() : null;
+    return getProviderFromElement(element, null);
+  }
+
+  private static DocumentationProvider getProviderFromElement(final PsiElement element, PsiElement originalElement) {
+    if (originalElement == null) {
+      originalElement = getOriginalElement(element);
+    }
+
+    PsiFile containingFile =
+      originalElement != null ? originalElement.getContainingFile() : element != null ? element.getContainingFile() : null;
     Set<DocumentationProvider> result = new LinkedHashSet<DocumentationProvider>();
 
-    final Language containingFileLanguage = containingFile != null ? containingFile.getLanguage():null;
-    DocumentationProvider originalProvider = containingFile != null ? LanguageDocumentation.INSTANCE
-      .forLanguage(containingFileLanguage) : null;
+    final Language containingFileLanguage = containingFile != null ? containingFile.getLanguage() : null;
+    DocumentationProvider originalProvider =
+      containingFile != null ? LanguageDocumentation.INSTANCE.forLanguage(containingFileLanguage) : null;
 
-    final Language elementLanguage = element != null ?element.getLanguage():null;
-    DocumentationProvider elementProvider = element == null || elementLanguage.is(containingFileLanguage) ? null : LanguageDocumentation.INSTANCE.forLanguage(elementLanguage);
+    final Language elementLanguage = element != null ? element.getLanguage() : null;
+    DocumentationProvider elementProvider =
+      element == null || elementLanguage.is(containingFileLanguage) ? null : LanguageDocumentation.INSTANCE.forLanguage(elementLanguage);
 
     ContainerUtil.addIfNotNull(elementProvider, result);
     ContainerUtil.addIfNotNull(originalProvider, result);
     if (containingFile != null) {
       final Language baseLanguage = containingFile.getViewProvider().getBaseLanguage();
-      if (!baseLanguage.is(containingFileLanguage)) ContainerUtil.addIfNotNull(LanguageDocumentation.INSTANCE.forLanguage(baseLanguage), result);
+      if (!baseLanguage.is(containingFileLanguage)) {
+        ContainerUtil.addIfNotNull(LanguageDocumentation.INSTANCE.forLanguage(baseLanguage), result);
+      }
     }
     // return extensible documentation provider even if the list is empty
     return new CompositeDocumentationProvider(result);
@@ -514,7 +527,7 @@ public class DocumentationManager {
       if (provider!=null) {
         final PsiElement targetElement = provider.getDocumentationElementForLink(manager, refText, psiElement);
         if (targetElement != null) {
-          fetchDocInfo(getDefaultCollector(targetElement), component);
+          fetchDocInfo(getDefaultCollector(targetElement, null), component);
         }
       }
     }

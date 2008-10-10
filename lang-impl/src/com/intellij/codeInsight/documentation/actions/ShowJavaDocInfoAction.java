@@ -114,7 +114,7 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
         CommandProcessor.getInstance().executeCommand(project,
                                                       new Runnable() {
                                                         public void run() {
-                                                          DocumentationManager.getInstance(project).showJavaDocInfo(element);
+                                                          DocumentationManager.getInstance(project).showJavaDocInfo(element, null);
                                                         }
                                                       },
                                                       getCommandName(),
