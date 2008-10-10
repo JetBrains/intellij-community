@@ -104,7 +104,6 @@
         <separator/>
         <group id="FileSettingsGroup">
           <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction" icon="/general/ideOptions.png"/>
-          <action id="ShowProjectStructureSettings" class="com.intellij.ide.actions.ShowStructureSettingsAction" icon="/general/projectStructure.png"/>
         </group>
         <separator/>
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="/actions/menu-saveall.png"/>
@@ -281,7 +280,6 @@
       <reference ref="Forward"/>
       <separator/>
       <reference ref="ShowSettings"/>
-      <reference ref="ShowProjectStructureSettings"/>
       <separator/>
       <reference ref="HelpTopics"/>
       <separator/>
