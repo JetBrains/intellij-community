@@ -106,7 +106,7 @@ public class ShowDiffAction extends AnAction {
     };
 
     if (needsConvertion) {
-      ChangeListManager.getInstance(project).invokeAfterUpdate(performer, true, false, ourText, false);
+      ChangeListManager.getInstance(project).invokeAfterUpdate(performer, InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE, ourText);
     }  else {
       performer.run();
     }

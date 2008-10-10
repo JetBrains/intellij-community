@@ -22,7 +22,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -82,4 +84,14 @@ public abstract class VcsDirtyScopeManager {
   public abstract void dirDirtyRecursively(FilePath path);
 
   public abstract List<VcsDirtyScope> retrieveScopes();
+
+  /**
+   * Requests an asynchronous file status update for all files specified and under the specified directories
+   */
+  public abstract void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty);
+
+  /**
+   * Requests an asynchronous file status update for all files specified and under the specified directories
+   */
+  public abstract void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty);
 }

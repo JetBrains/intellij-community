@@ -17,10 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author max
@@ -147,6 +144,58 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private boolean isFileInBaseDir(final FilePath filePath) {
     final VirtualFile parent = filePath.getVirtualFileParent(); 
     return !filePath.isDirectory() && parent != null && parent.equals(myProject.getBaseDir());
+  }
+
+  public void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
+    boolean somethingDirty = false;
+    if (filesDirty != null) {
+      for (FilePath file : filesDirty) {
+        final AbstractVcs vcs = getVcsForDirty(file);
+        if (vcs != null) {
+          somethingDirty = true;
+          getScope(vcs).addDirtyFile(file);
+        }
+      }
+    }
+    if (dirsRecursivelyDirty != null) {
+      for (FilePath dir : dirsRecursivelyDirty) {
+        AbstractVcs vcs = getVcsForDirty(dir);
+        if (vcs != null) {
+          somethingDirty = true;
+          getScope(vcs).addDirtyDirRecursively(dir);
+        }
+      }
+    }
+
+    if (somethingDirty) {
+      myChangeListManager.scheduleUpdate();
+    }
+  }
+
+  public void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
+    boolean somethingDirty = false;
+    if (filesDirty != null) {
+      for (VirtualFile file : filesDirty) {
+        final AbstractVcs vcs = getVcsForDirty(file);
+        if (vcs != null) {
+          somethingDirty = true;
+          getScope(vcs).addDirtyFile(new FilePathImpl(file));
+        }
+      }
+    }
+    if (dirsRecursivelyDirty != null) {
+      for (VirtualFile dir : dirsRecursivelyDirty) {
+        AbstractVcs vcs = getVcsForDirty(dir);
+        if (vcs != null) {
+          somethingDirty = true;
+          getScope(vcs).addDirtyDirRecursively(new FilePathImpl(dir));
+        }
+      }
+    }
+
+    if (somethingDirty) {
+      myChangeListManager.scheduleUpdate();
+    }
   }
 
   public void fileDirty(VirtualFile file) {

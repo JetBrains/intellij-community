@@ -739,7 +739,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           component.refresh();
         }
       }
-    }, false, true, "commit dialog", false);   // title not shown for silently
+    }, InvokeAfterUpdateMode.SILENT, "commit dialog");   // title not shown for silently
   }
 
   public void saveState() {

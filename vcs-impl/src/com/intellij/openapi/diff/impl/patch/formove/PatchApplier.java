@@ -89,9 +89,7 @@ public class PatchApplier {
 
     refreshIndirectlyAffected(indirectlyAffected);
     final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-    for (VirtualFile file : directlyAffected) {
-      vcsDirtyScopeManager.fileDirty(file);
-    }
+    vcsDirtyScopeManager.filesDirty(directlyAffected, null);
     if ((myTargetChangeList != null) && (! directlyAffected.isEmpty())) {
       ApplyPatchAction.moveChangesOfVsToList(myProject, directlyAffected, myTargetChangeList);
     } else {

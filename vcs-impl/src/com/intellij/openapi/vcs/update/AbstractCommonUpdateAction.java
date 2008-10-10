@@ -427,15 +427,17 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
       if (myActionInfo.canChangeFileStatus()) {
         final VcsDirtyScopeManager myManager = VcsDirtyScopeManager.getInstance(myProject);
+        final List<VirtualFile> files = new ArrayList<VirtualFile>();
         UpdateFilesHelper.iterateFileGroupFiles(myUpdatedFiles, new UpdateFilesHelper.Callback() {
           public void onFile(final String filePath, final String groupId) {
             @NonNls final String path = VfsUtil.pathToUrl(filePath.replace(File.separatorChar, '/'));
             final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(path);
             if (file != null) {
-              myManager.fileDirty(file);
+              files.add(file);
             }
           }
         });
+        myManager.filesDirty(files, null);
       }
 
       final boolean updateSuccess = (! someSessionWasCancelled) && (myVcsExceptions.isEmpty());

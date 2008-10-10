@@ -158,9 +158,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
    *
    * runnable is invoked on AWT thread
    */
-  public void invokeAfterUpdate(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title,
-                                final boolean synchronous) {
-    myUpdater.invokeAfterUpdate(afterUpdate, cancellable, silently, title, synchronous);
+  public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title) {
+    myUpdater.invokeAfterUpdate(afterUpdate, mode.isCancellable(), mode.isSilently(), title, mode.isSynchronous(), null);
+  }
+
+  public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
+                                final Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller) {
+    myUpdater.invokeAfterUpdate(afterUpdate, mode.isCancellable(), mode.isSilently(), title, mode.isSynchronous(), dirtyScopeManagerFiller);
   }
 
   static class DisposedException extends RuntimeException {}
@@ -621,9 +625,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     for (VirtualFile file : files) {
-      VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
       FileStatusManager.getInstance(myProject).fileStatusChanged(file);
     }
+    VcsDirtyScopeManager.getInstance(myProject).filesDirty(files, null);
 
     if (!list.isDefault()) {
       // find the changes for the added files and move them to the necessary changelist
@@ -649,7 +653,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
           ChangesViewManager.getInstance(myProject).scheduleRefresh();
         }
-      }, false, false, VcsBundle.message("change.lists.manager.add.unversioned"), false);
+      },  InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, VcsBundle.message("change.lists.manager.add.unversioned"));
     } else {
       ChangesViewManager.getInstance(myProject).scheduleRefresh();
     }

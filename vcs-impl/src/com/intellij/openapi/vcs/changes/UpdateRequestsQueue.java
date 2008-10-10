@@ -105,11 +105,23 @@ public class UpdateRequestsQueue {
     }
   }
 
-  public void invokeAfterUpdate(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title, final boolean synchronously) {
+  public void invokeAfterUpdate(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title,
+                                final boolean synchronously, final Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller) {
     LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
     final CallbackData data = createCallbackWrapperRunnable(afterUpdate, cancellable, silently, title, synchronously);
+
+    VcsDirtyScopeManagerProxy managerProxy = null;
+    if (dirtyScopeManagerFiller != null) {
+      managerProxy  = new VcsDirtyScopeManagerProxy();
+      dirtyScopeManagerFiller.consume(managerProxy);
+    }
+
     synchronized (myLock) {
       if (! myStopped) {
+        if (managerProxy != null) {
+          managerProxy.callRealManager(VcsDirtyScopeManager.getInstance(myProject));
+        }
+        
         myWaitingUpdateCompletionQueue.add(data.myCallback);
         schedule(true);
       }

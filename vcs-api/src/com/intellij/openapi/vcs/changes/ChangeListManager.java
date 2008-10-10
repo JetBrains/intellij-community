@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,8 +50,9 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract void scheduleUpdate();
   public abstract void scheduleUpdate(boolean updateUnversionedFiles);
-  public abstract void invokeAfterUpdate(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title,
-                                         final boolean synchronous);
+  public abstract void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title);
+  public abstract void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
+                                final Consumer<VcsDirtyScopeManager> dirtyScopeManager);
   public abstract boolean ensureUpToDate(boolean canBeCanceled);
 
   public abstract List<LocalChangeList> getChangeListsCopy();

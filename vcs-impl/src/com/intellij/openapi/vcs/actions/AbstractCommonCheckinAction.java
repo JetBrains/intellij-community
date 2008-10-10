@@ -81,7 +81,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
           CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection, getExecutor(project), null);
         }
       }
-    }, false, false, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"), true);
+    }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"));
   }
 
   @Nullable

@@ -3,15 +3,16 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
 
 import java.util.Arrays;
 
@@ -36,7 +37,7 @@ public class RollbackDialogAction extends AnAction {
           browser.rebuildList();
         }
       }
-    }, false, false, VcsBundle.message("changes.action.rollback.text"), false);
+    }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, VcsBundle.message("changes.action.rollback.text"));
   }
 
   public void update(AnActionEvent e) {

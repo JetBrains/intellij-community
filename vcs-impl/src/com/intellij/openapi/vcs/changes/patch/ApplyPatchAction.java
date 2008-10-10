@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
@@ -197,7 +198,7 @@ public class ApplyPatchAction extends AnAction {
 
           changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[changes.size()]));
         }
-      }, false, false, VcsBundle.message("change.lists.manager.move.changes.to.list"), false);
+      }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, VcsBundle.message("change.lists.manager.move.changes.to.list"));
     }
   }
 
@@ -215,7 +216,7 @@ public class ApplyPatchAction extends AnAction {
           }
           changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[changes.size()]));
         }
-      }, false, false, VcsBundle.message("change.lists.manager.move.changes.to.list"), false);
+      }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, VcsBundle.message("change.lists.manager.move.changes.to.list"));
     }
   }
 

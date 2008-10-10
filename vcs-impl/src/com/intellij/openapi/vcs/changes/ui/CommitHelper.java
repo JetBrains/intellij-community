@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ui.ConfirmationDialog;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -303,14 +304,20 @@ public class CommitHelper {
         public void run() {
           myAction.finish();
           if (!myProject.isDisposed()) {
-            vcsRefresh();
-            LocalHistory.putSystemLabel(myProject, myActionName + ": " + myCommitMessage);
             // after vcs refresh is completed, outdated notifiers should be removed if some exists...
             ChangeListManager.getInstance(myProject).invokeAfterUpdate(new Runnable() {
               public void run() {
                 CommittedChangesCache.getInstance(myProject).refreshIncomingChanges();
               }
-            }, false, true, null, false);
+            }, InvokeAfterUpdateMode.SILENT, null, new Consumer<VcsDirtyScopeManager>() {
+              public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
+                for (FilePath path : myPathsToRefresh) {
+                  vcsDirtyScopeManager.fileDirty(path);
+                }
+              }
+            });
+
+            LocalHistory.putSystemLabel(myProject, myActionName + ": " + myCommitMessage);
           }
         }
       };
