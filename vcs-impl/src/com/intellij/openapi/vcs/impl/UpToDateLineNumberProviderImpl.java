@@ -25,11 +25,36 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
   public int getLineNumber(int currentNumber) {
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(myProject).getLineStatusTracker(myDocument);
     if (tracker == null) {
-      tracker = LineStatusTrackerManager.getInstance(myProject).setUpToDateContent(myDocument, myUpToDateContent);
+      tracker = LineStatusTrackerManager.getInstance(myProject).setUpToDateContent(myDocument,
+                                                                                   fixLatestLineSeparator(myDocument, myUpToDateContent));
     }
     return calcLineNumber(tracker, currentNumber);
   }
 
+  private boolean endsWithSeparator(final CharSequence string) {
+    if ((string == null) || (string.length() == 0)) {
+      return false;
+    }
+    final char latest = string.charAt(string.length() - 1);
+    return ('\n' == latest) || ('\r' == latest);
+  }
+
+  // annotated content is not aware about latest line ends with end-line separator or not. ignore latest separator difference then
+  private String fixLatestLineSeparator(final Document document, final String content) {
+    final CharSequence documentSequence = document.getCharsSequence();
+    if (endsWithSeparator(documentSequence) && (! endsWithSeparator(content))) {
+      int numCharsToCopy = 1;
+      final int docLen = documentSequence.length();
+      if (docLen > 1) {
+        final char beforeLatest = documentSequence.charAt(docLen - 2);
+        if (('\r' == beforeLatest) || ('\n' == beforeLatest)) {
+          numCharsToCopy = 2;
+        }
+      }
+      return content + documentSequence.subSequence(docLen - numCharsToCopy, docLen);
+    }
+    return content;
+  }
 
   private static int calcLineNumber(LineStatusTracker tracker, int currentNumber){
     if (tracker == null) return -1;
