@@ -28,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gant.GantBundle;
 import org.jetbrains.plugins.gant.GantIcons;
 import org.jetbrains.plugins.gant.config.GantConfigUtils;
-import org.jetbrains.plugins.gant.config.GantFacet;
+import org.jetbrains.plugins.gant.config.grails.GantGrailsFacet;
+import org.jetbrains.plugins.gant.config.groovy.GantGroovyFacet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -71,7 +72,8 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     Module[] modules = ModuleManager.getInstance(getProject()).getModules();
     ArrayList<Module> res = new ArrayList<Module>();
     for (Module module : modules) {
-      if (FacetManager.getInstance(module).getFacetsByType(GantFacet.ID).size() > 0) res.add(module);
+      if (FacetManager.getInstance(module).getFacetsByType(GantGrailsFacet.ID).size() > 0 ||
+        FacetManager.getInstance(module).getFacetsByType(GantGroovyFacet.ID).size() > 0) res.add(module);
     }
     return res;
   }
