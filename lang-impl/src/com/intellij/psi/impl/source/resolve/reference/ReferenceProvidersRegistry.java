@@ -112,7 +112,7 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
   }
 
   /**
-   * @deprecated {@see com.intellij.psi.PsiReferenceContributor
+   * @deprecated {@link com.intellij.psi.PsiReferenceContributor}
    */
   public void registerReferenceProvider(@Nullable ElementFilter elementFilter,
                                         @NotNull Class scope,
