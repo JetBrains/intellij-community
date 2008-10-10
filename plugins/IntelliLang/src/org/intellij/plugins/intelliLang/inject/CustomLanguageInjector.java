@@ -422,48 +422,49 @@ public final class CustomLanguageInjector implements ProjectComponent {
       return elements;
     }
 
-    public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {
+    public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull PsiElement host) {
       final TreeSet<TextRange> ranges = new TreeSet<TextRange>(RANGE_COMPARATOR);
       final PsiFile containingFile = host.getContainingFile();
       myInjector.getInjectedLanguage(host, new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
         public boolean process(final Language language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list) {
           // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
           // Maybe IDEA core is caching a bit too aggressively here?
-          if (language != null/* && (pair.second.getLength() > 0*/) {
-            // do not handle overlapping injections
-            for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-              if (ranges.contains(trinity.third.shiftRight(trinity.first.getTextRange().getStartOffset()))) return true;
-            }
-            boolean injectionStarted = false;
-            for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-              final PsiLanguageInjectionHost host = trinity.first;
-              if (host.getContainingFile() != containingFile) continue;
+          if (language == null/* && (pair.second.getLength() > 0*/) {
+            return true;
+          }
+          for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
+            if (ranges.contains(trinity.third.shiftRight(trinity.first.getTextRange().getStartOffset()))) return true;
+          }
+          boolean injectionStarted = false;
+          for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
+            final PsiLanguageInjectionHost host = trinity.first;
+            if (host.getContainingFile() != containingFile) continue;
 
-              final TextRange textRange = trinity.third;
-              final InjectedLanguage injectedLanguage = trinity.second;
-              ranges.add(textRange.shiftRight(host.getTextRange().getStartOffset()));
+            final TextRange textRange = trinity.third;
+            final InjectedLanguage injectedLanguage = trinity.second;
+            ranges.add(textRange.shiftRight(host.getTextRange().getStartOffset()));
 
-              if (!injectionStarted) {
-                registrar.startInjecting(language);
-                injectionStarted = true;
-              }
-              if (injectedLanguage.isDynamic()) {
-                // Only adjust prefix/suffix if it has been computed dynamically. Otherwise some other
-                // useful cases may break. This system is far from perfect still...
-                final StringBuilder prefix = new StringBuilder(injectedLanguage.getPrefix());
-                final StringBuilder suffix = new StringBuilder(injectedLanguage.getSuffix());
-                adjustPrefixAndSuffix(getUnescapedText(host, textRange.substring(host.getText())), prefix, suffix);
+            if (!injectionStarted) {
+              registrar.startInjecting(language);
+              injectionStarted = true;
+            }
+            if (injectedLanguage.isDynamic()) {
+              // Only adjust prefix/suffix if it has been computed dynamically. Otherwise some other
+              // useful cases may break. This system is far from perfect still...
+              final StringBuilder prefix = new StringBuilder(injectedLanguage.getPrefix());
+              final StringBuilder suffix = new StringBuilder(injectedLanguage.getSuffix());
+              adjustPrefixAndSuffix(getUnescapedText(host, textRange.substring(host.getText())), prefix, suffix);
 
-                addPlaceSafe(registrar, prefix.toString(), suffix.toString(), host, textRange, language);
-              }
-              else {
-                addPlaceSafe(registrar, injectedLanguage.getPrefix(), injectedLanguage.getSuffix(), host, textRange, language);
-              }
+              addPlaceSafe(registrar, prefix.toString(), suffix.toString(), host, textRange, language);
             }
-            //try {
-            if (injectionStarted) {
-              registrar.doneInjecting();
+            else {
+              addPlaceSafe(registrar, injectedLanguage.getPrefix(), injectedLanguage.getSuffix(), host, textRange, language);
             }
+          }
+          //try {
+          if (injectionStarted) {
+            registrar.doneInjecting();
+          }
             //}
             //catch (AssertionError e) {
             //  logError(language, host, null, e);
@@ -471,7 +472,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
             //catch (Exception e) {
             //  logError(language, host, null, e);
             //}
-          }
+
           return true;
         }
       });
