@@ -208,8 +208,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
     PsiNamedElement element = (PsiNamedElement) resolveResult.getElement();
-    assert element != null;
-    if (!element.isValid()) {
+    if (element == null || !element.isValid()) {
       context.setUIComponentEnabled(false);
       return;
     }
