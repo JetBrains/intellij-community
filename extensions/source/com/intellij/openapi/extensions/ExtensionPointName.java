@@ -40,4 +40,8 @@ public class ExtensionPointName<T> {
   public String toString() {
     return myName;
   }
+
+  public T[] getExtensions() {
+    return Extensions.getExtensions(this);
+  }
 }
