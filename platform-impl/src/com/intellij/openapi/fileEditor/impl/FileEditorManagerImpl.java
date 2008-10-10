@@ -1199,7 +1199,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
             }
             updateFileStatus(file);
           }
-        }, ModalityState.NON_MODAL);
+        }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
     }
 
