@@ -57,12 +57,14 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
 
     public AnchorElementInfo(PsiElement anchor) {
       LOG.assertTrue(anchor.isPhysical());
+      LOG.assertTrue(anchor.isValid());
       myFile = anchor.getContainingFile();
       TextRange range = anchor.getTextRange();
 
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myFile.getProject());
       Document document = documentManager.getDocument(myFile);
       LOG.assertTrue(!documentManager.isUncommited(document));
+      LOG.assertTrue(myFile.getTextLength() == document.getTextLength());
       myMarker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
 
       mySyncStartOffset = range.getStartOffset();
