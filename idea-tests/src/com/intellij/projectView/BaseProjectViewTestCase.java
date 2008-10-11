@@ -228,7 +228,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     return null;
   }
 
-  protected static void checkNavigateFromSourceBehaviour(PsiElement element, VirtualFile virtualFile, AbstractProjectViewPSIPane pane) {
+  public static void checkNavigateFromSourceBehaviour(PsiElement element, VirtualFile virtualFile, AbstractProjectViewPSIPane pane) {
     Disposer.dispose(pane);
     pane.createComponent();
     assertNull(getNodeForElement(element,pane));
@@ -236,7 +236,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     assertTrue(isExpanded(element, pane));
   }
 
-  protected static boolean isExpanded(PsiElement element, AbstractProjectViewPSIPane pane) {
+  public static boolean isExpanded(PsiElement element, AbstractProjectViewPSIPane pane) {
     DefaultMutableTreeNode nodeForElement = getNodeForElement(element, pane);
     return nodeForElement != null && isExpanded((DefaultMutableTreeNode)nodeForElement.getParent(), pane);
   }
@@ -245,7 +245,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     assertEquals(expected, IdeaTestUtil.print(model));
   }
 
-  protected static void checkContainsMethod(final Object rootElement, final AbstractTreeStructure structure) {
+  public static void checkContainsMethod(final Object rootElement, final AbstractTreeStructure structure) {
     MultiValuesMap<VirtualFile, AbstractTreeNode> map = new MultiValuesMap<VirtualFile, AbstractTreeNode>();
     collect((AbstractTreeNode)rootElement, map, structure);
 
