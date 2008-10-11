@@ -3,8 +3,8 @@ package org.jetbrains.plugins.gant.reference;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -26,7 +26,6 @@ public class AntTasksProvider implements ProjectComponent {
 
   private ArrayList<PsiClass> myAntTaks = new ArrayList<PsiClass>();
   private final Project myProject;
-  private ModuleRootListener myModuleRootListener;
   private MessageBusConnection myRootConnection;
 
   public static AntTasksProvider getInstance(Project project) {
@@ -35,20 +34,21 @@ public class AntTasksProvider implements ProjectComponent {
 
   public AntTasksProvider(Project project) {
     myProject = project;
+  }
 
-    myModuleRootListener = new ModuleRootListener() {
+  public void projectOpened() {
+    myRootConnection = myProject.getMessageBus().connect();
+    myRootConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+
       public void beforeRootsChange(ModuleRootEvent event) {
-
       }
 
       public void rootsChanged(final ModuleRootEvent event) {
         myAntTaks.clear();
         myAntTaks = findAntTasks(myProject);
       }
-    };
-  }
+    });
 
-  public void projectOpened() {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         myAntTaks.clear();
@@ -58,6 +58,7 @@ public class AntTasksProvider implements ProjectComponent {
   }
 
   public void projectClosed() {
+    myRootConnection.disconnect();
     myAntTaks.clear();
   }
 
@@ -67,15 +68,9 @@ public class AntTasksProvider implements ProjectComponent {
   }
 
   public void initComponent() {
-    myRootConnection = myProject.getMessageBus().connect();
-    myRootConnection.subscribe(ProjectTopics.PROJECT_ROOTS, myModuleRootListener);
-
   }
 
   public void disposeComponent() {
-    if (myRootConnection != null) {
-      myRootConnection.disconnect();
-    }
   }
 
   public ArrayList<PsiClass> getAntTasks() {
