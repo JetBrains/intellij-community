@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.gant.util;
 
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.plugins.gant.GantFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.gant.GantFileType;
 
 import java.util.ArrayList;
 
@@ -14,6 +14,7 @@ import java.util.ArrayList;
  * @author ilyas
  */
 public class GantUtils {
+
   private GantUtils() {
   }
 

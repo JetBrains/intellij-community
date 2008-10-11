@@ -3,10 +3,9 @@ package org.jetbrains.plugins.gant.reference;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.ResolveResult;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -14,10 +13,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gant.GantIcons;
 import org.jetbrains.plugins.gant.util.GantUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,11 +40,21 @@ public class GantTargetReference implements PsiPolyVariantReference {
     if (!GantUtils.isGantScriptFile(file)) return ResolveResult.EMPTY_ARRAY;
 
     ArrayList<ResolveResult> res = new ArrayList<ResolveResult>();
-    for (GrArgumentLabel label : GantUtils.getScriptTargets((GroovyFile)file)) {
+    final GroovyFile groovyFile = (GroovyFile)file;
+    for (GrArgumentLabel label : GantUtils.getScriptTargets(groovyFile)) {
       if (label.getName().equals(myRefExpr.getName())) {
         res.add(new GroovyResolveResultImpl(label, true));
       }
     }
+
+    // Add ant tasks
+    final Project project = groovyFile.getProject();
+    for (PsiClass task : AntTasksProvider.getInstance(project).getAntTasks()) {
+      if (StringUtil.decapitalize(task.getName()).equals(myRefExpr.getName())) {
+        res.add(new GroovyResolveResultImpl(task, true));
+      }
+    }
+
     return res.toArray(new ResolveResult[res.size()]);
   }
 
@@ -86,9 +95,16 @@ public class GantTargetReference implements PsiPolyVariantReference {
     final LookupElementFactory factory = LookupElementFactory.getInstance();
     PsiFile file = myRefExpr.getContainingFile();
     if (GantUtils.isGantScriptFile(file)) {
-      for (GrArgumentLabel label : GantUtils.getScriptTargets(((GroovyFile)file))) {
+      final GroovyFile groovyFile = (GroovyFile)file;
+
+      for (GrArgumentLabel label : GantUtils.getScriptTargets(groovyFile)) {
         String name = label.getName();
-        pageProperties.add(factory.createLookupElement(name).setIcon(GantIcons.GANT_TARGET));
+        pageProperties.add(factory.createLookupElement(name).setIcon(GantIcons.GANT_TASK));
+      }
+
+      for (PsiClass task : AntTasksProvider.getInstance(file.getProject()).getAntTasks()) {
+        final String name = StringUtil.decapitalize(task.getName());
+        pageProperties.add(factory.createLookupElement(name).setIcon(GantIcons.ANT_TASK));
       }
     }
     return pageProperties.toArray(new LookupElement[pageProperties.size()]);

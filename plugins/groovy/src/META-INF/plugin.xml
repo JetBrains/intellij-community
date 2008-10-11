@@ -361,6 +361,9 @@
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyAddImportsPassFactory
       </implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.gant.reference.AntTasksProvider</implementation-class>
+    </component>
   </project-components>
 
   <module-components>
