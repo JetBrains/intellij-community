@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,35 +27,37 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class TrivialIfInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "RedundantIfStatement";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("trivial.if.display.name");
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new TrivialIfVisitor();
-    }
-
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message("trivial.if.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new TrivialIfFix();
     }
@@ -67,6 +69,7 @@ public class TrivialIfInspection extends BaseInspection {
                     "constant.conditional.expression.simplify.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement ifKeywordElement = descriptor.getPsiElement();
@@ -129,7 +132,7 @@ public class TrivialIfInspection extends BaseInspection {
             final PsiStatement thenBranch = statement.getThenBranch();
             final PsiExpressionStatement assignmentStatement =
                     (PsiExpressionStatement)
-                            ConditionalUtils.stripBraces(thenBranch);
+                            ControlFlowUtils.stripBraces(thenBranch);
             final PsiAssignmentExpression assignmentExpression =
                     (PsiAssignmentExpression)assignmentStatement.getExpression();
             final PsiJavaToken operator =
@@ -157,7 +160,7 @@ public class TrivialIfInspection extends BaseInspection {
             final PsiStatement thenBranch = statement.getThenBranch();
             final PsiExpressionStatement assignmentStatement =
                     (PsiExpressionStatement)
-                            ConditionalUtils.stripBraces(thenBranch);
+                            ControlFlowUtils.stripBraces(thenBranch);
             final PsiAssignmentExpression assignmentExpression =
                     (PsiAssignmentExpression)assignmentStatement.getExpression();
             final PsiJavaToken operator =
@@ -185,7 +188,7 @@ public class TrivialIfInspection extends BaseInspection {
             final PsiStatement thenBranch = statement.getThenBranch();
             final PsiExpressionStatement assignmentStatement =
                     (PsiExpressionStatement)
-                            ConditionalUtils.stripBraces(thenBranch);
+                            ControlFlowUtils.stripBraces(thenBranch);
             final PsiAssignmentExpression assignmentExpression =
                     (PsiAssignmentExpression)
                             assignmentStatement.getExpression();
@@ -245,7 +248,7 @@ public class TrivialIfInspection extends BaseInspection {
             final PsiStatement thenBranch = statement.getThenBranch();
             final PsiExpressionStatement assignmentStatement =
                     (PsiExpressionStatement)
-                            ConditionalUtils.stripBraces(thenBranch);
+                            ControlFlowUtils.stripBraces(thenBranch);
             final PsiAssignmentExpression assignmentExpression =
                     (PsiAssignmentExpression)
                             assignmentStatement.getExpression();
@@ -257,6 +260,11 @@ public class TrivialIfInspection extends BaseInspection {
             replaceStatement(statement,
                     lhsText + operand + conditionText + ';');
         }
+    }
+
+    @Override
+    public BaseInspectionVisitor buildVisitor() {
+        return new TrivialIfVisitor();
     }
 
     private static class TrivialIfVisitor extends BaseInspectionVisitor {
@@ -310,7 +318,7 @@ public class TrivialIfInspection extends BaseInspection {
             return false;
         }
         PsiStatement thenBranch = ifStatement.getThenBranch();
-        thenBranch = ConditionalUtils.stripBraces(thenBranch);
+        thenBranch = ControlFlowUtils.stripBraces(thenBranch);
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsForward(ifStatement,
                                 PsiWhiteSpace.class);
@@ -329,7 +337,7 @@ public class TrivialIfInspection extends BaseInspection {
             return false;
         }
         PsiStatement thenBranch = ifStatement.getThenBranch();
-        thenBranch = ConditionalUtils.stripBraces(thenBranch);
+        thenBranch = ControlFlowUtils.stripBraces(thenBranch);
 
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsForward(ifStatement,
@@ -344,9 +352,9 @@ public class TrivialIfInspection extends BaseInspection {
 
     public static boolean isSimplifiableReturn(PsiIfStatement ifStatement) {
         PsiStatement thenBranch = ifStatement.getThenBranch();
-        thenBranch = ConditionalUtils.stripBraces(thenBranch);
+        thenBranch = ControlFlowUtils.stripBraces(thenBranch);
         PsiStatement elseBranch = ifStatement.getElseBranch();
-        elseBranch = ConditionalUtils.stripBraces(elseBranch);
+        elseBranch = ControlFlowUtils.stripBraces(elseBranch);
         return ConditionalUtils.isReturn(thenBranch, PsiKeyword.TRUE)
                 && ConditionalUtils.isReturn(elseBranch, PsiKeyword.FALSE);
     }
@@ -354,18 +362,18 @@ public class TrivialIfInspection extends BaseInspection {
     public static boolean isSimplifiableReturnNegated(
             PsiIfStatement ifStatement) {
         PsiStatement thenBranch = ifStatement.getThenBranch();
-        thenBranch = ConditionalUtils.stripBraces(thenBranch);
+        thenBranch = ControlFlowUtils.stripBraces(thenBranch);
         PsiStatement elseBranch = ifStatement.getElseBranch();
-        elseBranch = ConditionalUtils.stripBraces(elseBranch);
+        elseBranch = ControlFlowUtils.stripBraces(elseBranch);
         return ConditionalUtils.isReturn(thenBranch, PsiKeyword.FALSE)
                 && ConditionalUtils.isReturn(elseBranch, PsiKeyword.TRUE);
     }
 
     public static boolean isSimplifiableAssignment(PsiIfStatement ifStatement) {
         PsiStatement thenBranch = ifStatement.getThenBranch();
-        thenBranch = ConditionalUtils.stripBraces(thenBranch);
+        thenBranch = ControlFlowUtils.stripBraces(thenBranch);
         PsiStatement elseBranch = ifStatement.getElseBranch();
-        elseBranch = ConditionalUtils.stripBraces(elseBranch);
+        elseBranch = ControlFlowUtils.stripBraces(elseBranch);
         if (ConditionalUtils.isAssignment(thenBranch, PsiKeyword.TRUE) &&
                 ConditionalUtils.isAssignment(elseBranch, PsiKeyword.FALSE)) {
             final PsiExpressionStatement thenExpressionStatement =
@@ -396,9 +404,9 @@ public class TrivialIfInspection extends BaseInspection {
     public static boolean isSimplifiableAssignmentNegated(
             PsiIfStatement ifStatement) {
         PsiStatement thenBranch = ifStatement.getThenBranch();
-        thenBranch = ConditionalUtils.stripBraces(thenBranch);
+        thenBranch = ControlFlowUtils.stripBraces(thenBranch);
         PsiStatement elseBranch = ifStatement.getElseBranch();
-        elseBranch = ConditionalUtils.stripBraces(elseBranch);
+        elseBranch = ControlFlowUtils.stripBraces(elseBranch);
         if (ConditionalUtils.isAssignment(thenBranch, PsiKeyword.FALSE) &&
                 ConditionalUtils.isAssignment(elseBranch, PsiKeyword.TRUE)) {
             final PsiExpressionStatement thenExpressionStatement =
@@ -432,7 +440,7 @@ public class TrivialIfInspection extends BaseInspection {
             return false;
         }
         PsiStatement thenBranch = ifStatement.getThenBranch();
-        thenBranch = ConditionalUtils.stripBraces(thenBranch);
+        thenBranch = ControlFlowUtils.stripBraces(thenBranch);
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsBackward(ifStatement,
                                 PsiWhiteSpace.class);
@@ -440,8 +448,7 @@ public class TrivialIfInspection extends BaseInspection {
             return false;
         }
         PsiStatement elseBranch = (PsiStatement)nextStatement;
-
-        elseBranch = ConditionalUtils.stripBraces(elseBranch);
+        elseBranch = ControlFlowUtils.stripBraces(elseBranch);
         if (ConditionalUtils.isAssignment(thenBranch, PsiKeyword.TRUE) &&
                 ConditionalUtils.isAssignment(elseBranch, PsiKeyword.FALSE)) {
             final PsiExpressionStatement thenExpressionStatement =
@@ -475,7 +482,7 @@ public class TrivialIfInspection extends BaseInspection {
             return false;
         }
         PsiStatement thenBranch = ifStatement.getThenBranch();
-        thenBranch = ConditionalUtils.stripBraces(thenBranch);
+        thenBranch = ControlFlowUtils.stripBraces(thenBranch);
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsBackward(ifStatement,
                         PsiWhiteSpace.class);
@@ -483,7 +490,7 @@ public class TrivialIfInspection extends BaseInspection {
             return false;
         }
         PsiStatement elseBranch = (PsiStatement)nextStatement;
-        elseBranch = ConditionalUtils.stripBraces(elseBranch);
+        elseBranch = ControlFlowUtils.stripBraces(elseBranch);
         if (ConditionalUtils.isAssignment(thenBranch, PsiKeyword.FALSE) &&
                 ConditionalUtils.isAssignment(elseBranch, PsiKeyword.TRUE)) {
             final PsiExpressionStatement thenExpressionStatement =

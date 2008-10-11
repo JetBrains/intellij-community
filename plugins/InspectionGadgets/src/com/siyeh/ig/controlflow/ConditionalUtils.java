@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,21 +21,6 @@ public class ConditionalUtils{
     
     private ConditionalUtils(){
         super();
-    }
-
-    public static PsiStatement stripBraces(PsiStatement statement){
-        if(statement instanceof PsiBlockStatement){
-            final PsiBlockStatement block = (PsiBlockStatement) statement;
-            final PsiCodeBlock codeBlock = block.getCodeBlock();
-            final PsiStatement[] statements = codeBlock.getStatements();
-            if(statements.length == 1){
-                return statements[0];
-            } else{
-                return block;
-            }
-        } else{
-            return statement;
-        }
     }
 
     public static boolean isReturn(PsiStatement statement, String value){

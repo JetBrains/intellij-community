@@ -388,9 +388,9 @@ public class ControlFlowUtils{
     }
 
     @Nullable
-    public static PsiStatement stripBraces(@Nullable PsiStatement branch){
-        if(branch instanceof PsiBlockStatement){
-            final PsiBlockStatement block = (PsiBlockStatement) branch;
+    public static PsiStatement stripBraces(@Nullable PsiStatement statement){
+        if(statement instanceof PsiBlockStatement){
+            final PsiBlockStatement block = (PsiBlockStatement) statement;
             final PsiCodeBlock codeBlock = block.getCodeBlock();
             final PsiStatement[] statements = codeBlock.getStatements();
             if(statements.length == 1){
@@ -399,7 +399,7 @@ public class ControlFlowUtils{
                 return block;
             }
         } else{
-            return branch;
+            return statement;
         }
     }
 
