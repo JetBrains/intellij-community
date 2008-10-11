@@ -149,11 +149,11 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
             if (element == null) break;
             element = element.getPrevSibling();
 
-            while (element.getLastChild() != null) {
+            while (element != null && element.getLastChild() != null) {
               element = element.getLastChild();
             }
           }
-          while (element.getTextLength() == 0);
+          while (element != null && element.getTextLength() == 0);
 
           if (!skip.getCondition().accepts(element, context)) {
             return pattern.getCondition().accepts(element, context);
@@ -176,11 +176,11 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
             if (element == null) break;
             element = element.getNextSibling();
 
-            while (element.getFirstChild() != null) {
+            while (element != null && element.getFirstChild() != null) {
               element = element.getFirstChild();
             }
           }
-          while (element.getTextLength() == 0);
+          while (element != null && element.getTextLength() == 0);
           if (!skip.getCondition().accepts(element, context)) {
             return pattern.getCondition().accepts(element, context);
           }
