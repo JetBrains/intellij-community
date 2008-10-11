@@ -183,12 +183,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public boolean willAutoInsert(final AutoCompletionPolicy policy, final PrefixMatcher matcher) {
+    if (!myHandler.mayAutocompleteOnInvocation()) return false;
+
     if (policy == AutoCompletionPolicy.NEVER_AUTOCOMPLETE) return false;
     if (policy == AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE) return true;
 
-    if (myHandler.mayAutocompleteOnInvocation()) {
-      if (!isAutocompleteOnInvocation()) return false;
-    }
+    if (!isAutocompleteOnInvocation()) return false;
 
     if (myContextOriginal.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != myContextOriginal.getSelectionEndOffset()) return false;
     if (policy == AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE) return true;
