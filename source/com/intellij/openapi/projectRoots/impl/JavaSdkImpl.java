@@ -306,7 +306,7 @@ public class JavaSdkImpl extends JavaSdk {
     };
 
     File[] jarDirs;
-    if(SystemInfo.isMac && /*!ApplicationManager.getApplication().isUnitTestMode()) &&*/ !file.getName().equals("mockJDK")){
+    if(SystemInfo.isMac && /*!ApplicationManager.getApplication().isUnitTestMode()) &&*/ !file.getName().startsWith("mockJDK")){
       File libFile = new File(file, "lib");
       @NonNls File classesFile = new File(file, "../Classes");
       @NonNls File libExtFile = new File(libFile, "ext");
