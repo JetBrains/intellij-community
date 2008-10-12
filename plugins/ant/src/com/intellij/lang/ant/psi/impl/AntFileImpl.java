@@ -265,7 +265,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public void incModificationCount() {
     synchronized (PsiLock.LOCK) {
       ++myModificationCount;
-      for (final AntFile file : AntSupport.getImpotingFiles(this)) {
+      for (final AntFile file : AntSupport.getImportingFiles(this)) {
         file.clearCaches();
       }
     }
@@ -378,6 +378,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
             myEpilogueElement = new AntOuterProjectElement(this, projectEnd, fileText.subSequence(projectEnd, fileText.length()).toString());
           }
           final AntProjectImpl project = new AntProjectImpl(this, tag, createProjectDefinition());
+          System.out.println("AntProjectCreate: " + getVirtualFile().getPresentableUrl());
           myProject = project;
           if (getOriginalFile() == null || myProperties == null) {
             buildPropertiesMap();

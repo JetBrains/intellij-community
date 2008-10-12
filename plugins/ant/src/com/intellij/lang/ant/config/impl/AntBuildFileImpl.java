@@ -284,6 +284,10 @@ public class AntBuildFileImpl implements AntBuildFileBase {
 
   public void updateConfig() {
     basicUpdateConfig();
+    final AntFile antFile = getAntFile();
+    if (antFile != null) {
+      antFile.clearCachesWithTypeDefinitions();
+    }
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
   }
 
@@ -331,7 +335,6 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     registerPropertiesInPsi(antFile);
     bindAnt();
     myClassloaderHolder.updateClasspath();
-    antFile.clearCachesWithTypeDefinitions();
   }
 
   private void registerPropertiesInPsi(final AntFile antFile) {

@@ -86,7 +86,7 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
   // Managing ant files dependencies via the <import> task.
   //
 
-  public static synchronized List<AntFile> getImpotingFiles(final AntFile imported) {
+  public static synchronized List<AntFile> getImportingFiles(final AntFile imported) {
     final WeakHashMap<AntFile, Boolean> files = ourFileDependencies.get(imported);
     if (files != null) {
       final int size = files.size();
