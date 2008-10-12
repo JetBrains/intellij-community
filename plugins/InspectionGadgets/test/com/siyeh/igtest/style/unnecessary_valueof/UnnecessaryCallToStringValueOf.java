@@ -19,4 +19,10 @@ public class UnnecessaryCallToStringValueOf {
         return "wars" + String.valueOf(cs);
     }
 
+    void fizzz() {
+        boolean c = true;
+        int d = 'x';
+        System.out.println(String.valueOf(d) + c);
+    }
+
 }

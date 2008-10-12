@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
 
+    @Override
     @Nls
     @NotNull
     public String getDisplayName() {
@@ -37,6 +38,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
                 "unnecessary.call.to.string.valueof.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         final PsiExpression expression = (PsiExpression) infos[0];
@@ -45,6 +47,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
                 expression);
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiExpression expression = (PsiExpression) infos[0];
@@ -67,6 +70,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
                     replacementText);
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiMethodCallExpression methodCallExpression =
@@ -82,6 +86,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnnecessaryCallToStringValueOfVisitor();
     }
@@ -89,6 +94,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
     private static class UnnecessaryCallToStringValueOfVisitor
             extends BaseInspectionVisitor {
 
+        @Override
         public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
@@ -106,6 +112,16 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
                     (PsiBinaryExpression) parent;
             final PsiType type = binaryExpression.getType();
             if (!TypeUtils.typeEquals("java.lang.String", type)) {
+                return;
+            }
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            if (lhs == expression) {
+                final PsiExpression rhs = binaryExpression.getROperand();
+                if (rhs == null || !TypeUtils.typeEquals("java.lang.String",
+                        rhs.getType())) {
+                    return;
+                }
+            } else if (!TypeUtils.typeEquals("java.lang.String", lhs.getType())) {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
