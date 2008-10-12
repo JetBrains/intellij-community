@@ -16,10 +16,17 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.psi.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.ControlFlowUtils;import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class IfMayBeConditionalInspection extends BaseInspection {
 
@@ -27,13 +34,118 @@ public class IfMayBeConditionalInspection extends BaseInspection {
     @Nls
     @NotNull
     public String getDisplayName() {
-        return "If statement could be replaced with simple conditional";
+        return InspectionGadgetsBundle.message(
+                "if.may.be.conditional.display.name");
     }
 
     @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
-        return "<code>#ref</code> could be replaced with simple conditional";
+        return InspectionGadgetsBundle.message(
+                "if.may.be.conditional.problem.descriptor");
+    }
+
+    @Override
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        return new IfMayBeConditionalFix();
+    }
+
+    private static class IfMayBeConditionalFix extends InspectionGadgetsFix {
+        
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "if.may.be.conditional.quickfix");
+        }
+
+        @Override
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiIfStatement ifStatement =
+                    (PsiIfStatement) element.getParent();
+            final PsiStatement thenBranch = ifStatement.getThenBranch();
+            final PsiStatement thenStatement =
+                    ControlFlowUtils.stripBraces(thenBranch);
+            final PsiStatement elseBranch = ifStatement.getElseBranch();
+            final PsiStatement elseStatement =
+                    ControlFlowUtils.stripBraces(elseBranch);
+            final PsiExpression condition = ifStatement.getCondition();
+            final StringBuilder replacementText = new StringBuilder();
+            if (thenStatement instanceof PsiReturnStatement) {
+                final PsiReturnStatement elseReturn =
+                        (PsiReturnStatement) elseStatement;
+                final PsiReturnStatement thenReturn =
+                        (PsiReturnStatement) thenStatement;
+                replacementText.append("return ");
+                appendExpressionText(condition, replacementText);
+                replacementText.append('?');
+                final PsiExpression thenReturnValue =
+                        thenReturn.getReturnValue();
+                appendExpressionText(thenReturnValue, replacementText);
+                replacementText.append(':');
+                if (elseReturn != null) {
+                    final PsiExpression elseReturnValue =
+                            elseReturn.getReturnValue();
+                    appendExpressionText(elseReturnValue, replacementText);
+                }
+                replacementText.append(';');
+            } else if (thenStatement instanceof PsiExpressionStatement) {
+                final PsiExpressionStatement thenExpressionStatement =
+                        (PsiExpressionStatement) thenStatement;
+                final PsiExpression thenExpression =
+                        thenExpressionStatement.getExpression();
+                if (!(thenExpression instanceof PsiAssignmentExpression)) {
+                    return;
+                }
+                final PsiAssignmentExpression thenAssignmentExpression =
+                        (PsiAssignmentExpression) thenExpression;
+                final PsiExpression lhs =
+                        thenAssignmentExpression.getLExpression();
+                appendExpressionText(lhs, replacementText);
+                replacementText.append('=');
+                appendExpressionText(condition, replacementText);
+                replacementText.append('?');
+                final PsiExpression thenRhs =
+                        thenAssignmentExpression.getRExpression();
+                appendExpressionText(thenRhs, replacementText);
+                replacementText.append(':');
+                final PsiExpressionStatement elseExpressionStatement =
+                        (PsiExpressionStatement) elseStatement;
+                if (elseExpressionStatement != null) {
+                    final PsiExpression elseExpression =
+                            elseExpressionStatement.getExpression();
+                    if (elseExpression instanceof PsiAssignmentExpression) {
+                        final PsiAssignmentExpression elseAssignmentExpression =
+                                (PsiAssignmentExpression) elseExpression;
+                        final PsiExpression elseRhs =
+                                elseAssignmentExpression.getRExpression();
+                        appendExpressionText(elseRhs, replacementText);
+                    }
+                }
+                replacementText.append(';');
+            }
+            replaceStatement(ifStatement, replacementText.toString());
+        }
+
+        private static void appendExpressionText(
+                @Nullable PsiExpression expression,
+                StringBuilder out) {
+            final PsiExpression strippedExpression =
+                    ParenthesesUtils.stripParentheses(expression);
+            if (strippedExpression == null) {
+                return;
+            }
+            final String expressionText = strippedExpression.getText();
+            if (ParenthesesUtils.getPrecedence(expression) >
+                    ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
+                out.append('(');
+                out.append(expressionText);
+                out.append(')');
+            } else {
+                out.append(expressionText);
+            }
+        }
     }
 
     @Override
@@ -49,11 +161,13 @@ public class IfMayBeConditionalInspection extends BaseInspection {
             super.visitIfStatement(statement);
             final PsiStatement thenBranch = statement.getThenBranch();
             final PsiStatement elseBranch = statement.getElseBranch();
-            final PsiStatement thenStatement = getStatement(thenBranch);
+            final PsiStatement thenStatement =
+                    ControlFlowUtils.stripBraces(thenBranch);
             if (thenStatement == null) {
                 return;
             }
-            final PsiStatement elseStatement = getStatement(elseBranch);
+            final PsiStatement elseStatement =
+                    ControlFlowUtils.stripBraces(elseBranch);
             if (elseStatement == null) {
                 return;
             }
@@ -71,8 +185,8 @@ public class IfMayBeConditionalInspection extends BaseInspection {
                 if (thenVariable == null) {
                     return;
                 }
-                final PsiVariable elseVariable = getAssignmentTarget(
-                        elseStatement);
+                final PsiVariable elseVariable =
+                        getAssignmentTarget(elseStatement);
                 if (elseVariable == null) {
                     return;
                 }
@@ -86,7 +200,6 @@ public class IfMayBeConditionalInspection extends BaseInspection {
         private static PsiVariable getAssignmentTarget(PsiStatement statement) {
             final PsiExpressionStatement thenExpressionStatement =
                     (PsiExpressionStatement) statement;
-
             final PsiExpression expression =
                     thenExpressionStatement.getExpression();
             if (!(expression instanceof PsiAssignmentExpression)) {
@@ -107,19 +220,5 @@ public class IfMayBeConditionalInspection extends BaseInspection {
             return (PsiVariable) target;
         }
 
-        private static PsiStatement getStatement(PsiStatement thenBranch) {
-            if (thenBranch instanceof PsiBlockStatement) {
-                final PsiBlockStatement blockStatement =
-                        (PsiBlockStatement) thenBranch;
-                final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-                final PsiStatement[] statements = codeBlock.getStatements();
-                if (statements.length != 1) {
-                    return null;
-                }
-                return statements[0];
-            } else {
-                return thenBranch;
-            }
-        }
     }
 }
