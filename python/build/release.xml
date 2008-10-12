@@ -166,7 +166,7 @@
     <layout todir="${out.dir}/dist" xmlns="antlib:jetbrains.antlayout">
       <dir name="bin">
         <fileset dir="${idea.dir}/jdk15/bin">
-          <include name="FileWatcher*.dll"/>
+          <include name="fsnotifier.exe"/>
           <include name="focuskiller*.dll"/>
           <include name="yjpagent.dll"/>
           <include name="append.bat"/>
