@@ -595,6 +595,9 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
 
                      "<dependencies>" +
                      "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version>4.0</version>" +
                      "    <type>xxx</type>" +
                      "  </dependency>" +
                      "</dependencies>");
@@ -623,6 +626,9 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
 
                      "<dependencies>" +
                      "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version>4.0</version>" +
                      "    <scope><error>xxx</error></scope>" +
                      "  </dependency>" +
                      "</dependencies>");
@@ -641,6 +647,9 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
 
                      "<dependencies>" +
                      "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version>4.0</version>" +
                      "    <scope>${my.scope}</scope>" +
                      "  </dependency>" +
                      "</dependencies>");

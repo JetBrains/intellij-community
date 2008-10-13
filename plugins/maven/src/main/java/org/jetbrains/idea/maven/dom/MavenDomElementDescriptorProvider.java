@@ -32,10 +32,9 @@ public class MavenDomElementDescriptorProvider implements XmlElementDescriptorPr
   private void initDescriptor(XmlTag tag) {
     ourDescriptor = new XmlNSDescriptorImpl();
 
-    String schemaUrl = "http://maven.apache.org/maven-v4_0_0.xsd";
+    String schemaUrl = MavenSchemaRegistrar.MAVEN_SCHEMA_URL;
     String location = ExternalResourceManager.getInstance().getResourceLocation(schemaUrl);
     if (schemaUrl.equals(location)) return;
-
 
     VirtualFile schema = null;
     try {

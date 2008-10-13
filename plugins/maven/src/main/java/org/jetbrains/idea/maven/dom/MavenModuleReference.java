@@ -21,10 +21,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
@@ -37,38 +39,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MavenModuleReference implements PsiReference, LocalQuickFixProvider {
-  private PsiElement myElement;
-  private VirtualFile myVirtualFile;
-  private PsiFile myPsiFile;
-  private String myResolvedText;
-  private String myOriginalText;
-  private TextRange myRange;
+public class MavenModuleReference extends MavenPsiReference implements LocalQuickFixProvider {
+  final private VirtualFile myVirtualFile;
+  final private PsiFile myPsiFile;
 
   public MavenModuleReference(PsiElement element,
-                              VirtualFile virtualFile,
-                              PsiFile psiFile,
                               String originalText,
                               String resolvedText,
-                              TextRange range) {
-    myElement = element;
+                              TextRange range,
+                              VirtualFile virtualFile,
+                              PsiFile psiFile) {
+    super(element, originalText, resolvedText, range);
     myPsiFile = psiFile;
     myVirtualFile = virtualFile;
-    myOriginalText = originalText;
-    myResolvedText = resolvedText;
-    myRange = range;
-  }
-
-  public PsiElement getElement() {
-    return myElement;
-  }
-
-  public String getCanonicalText() {
-    return myOriginalText;
-  }
-
-  public TextRange getRangeInElement() {
-    return myRange;
   }
 
   public PsiElement resolve() {
@@ -79,10 +62,6 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
     if (file == null) return null;
 
     return getPsiFile(file);
-  }
-
-  public boolean isReferenceTo(PsiElement element) {
-    return element.getManager().areElementsEquivalent(element, resolve());
   }
 
   public Object[] getVariants() {
@@ -124,18 +103,6 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
     return new LocalQuickFix[]{new CreatePomFix()};
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    return null;
-  }
-
-  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    return null;
-  }
-
-  public boolean isSoft() {
-    return true;
-  }
-
   private class CreatePomFix implements LocalQuickFix {
     @NotNull
     public String getName() {
@@ -173,9 +140,9 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
       id.artifactId = modulePomFile.getParent().getName();
 
       XmlFile psiFile = (XmlFile)PsiFileFactory.getInstance(project).createFileFromText(
-          MavenConstants.POM_XML,
-          StdLanguages.XML,
-          MavenUtil.makeFileContent(id));
+        MavenConstants.POM_XML,
+        StdLanguages.XML,
+        MavenUtil.makeFileContent(id));
 
       TemplateBuilder b = new TemplateBuilder(psiFile);
 

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
  * Author: Vladislav.Kaznacheev
  */
 public class MavenSchemaRegistrar implements ApplicationComponent {
+  public static final String MAVEN_SCHEMA_URL = "http://maven.apache.org/maven-v4_0_0.xsd";
 
   @NonNls
   @NotNull
@@ -17,7 +18,7 @@ public class MavenSchemaRegistrar implements ApplicationComponent {
   }
 
   public void initComponent() {
-    ExternalResourceManager.getInstance().addStdResource("http://maven.apache.org/maven-v4_0_0.xsd","maven-v4_0_0.xsd",getClass());
+    ExternalResourceManager.getInstance().addStdResource(MAVEN_SCHEMA_URL,"maven-v4_0_0.xsd",getClass());
     ExternalResourceManager.getInstance().addStdResource("http://maven.apache.org/xsd/maven-4.0.0.xsd","maven-v4_0_0.xsd",getClass());
   }
 
