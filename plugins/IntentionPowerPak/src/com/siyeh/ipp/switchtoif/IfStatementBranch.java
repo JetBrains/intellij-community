@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,22 @@ class IfStatementBranch{
 
     private Set<String> m_topLevelVariables = new HashSet<String>(3);
     private Set<String> m_innerVariables = new HashSet<String>(3);
+    private final LinkedList<String> comments = new LinkedList<String>();
+    private final LinkedList<String> statementComments = new LinkedList<String>();
     private final List<String> m_conditions = new ArrayList<String>(3);
     private PsiStatement m_statement = null;
     private boolean m_else = false;
+
+    public IfStatementBranch() {
+    }
+
+    public void addComment(String comment){
+        comments.addFirst(comment);
+    }
+
+    public void addStatementComment(String comment) {
+        statementComments.addFirst(comment);
+    }
 
     public void addCondition(String conditionString){
         m_conditions.add(conditionString);
@@ -84,5 +97,13 @@ class IfStatementBranch{
             }
         }
         return false;
+    }
+
+    public List<String> getComments() {
+        return comments;
+    }
+
+    public List<String> getStatementComments() {
+        return statementComments;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,9 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.psiutils.DeclarationUtils;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -33,15 +34,16 @@ import java.util.Set;
 
 public class ReplaceIfWithSwitchIntention extends Intention {
 
+    @Override
     @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new IfToSwitchPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    @Override
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiJavaToken switchToken =
-                (PsiJavaToken)element;
+        final PsiJavaToken switchToken = (PsiJavaToken) element;
         PsiIfStatement ifStatement = (PsiIfStatement)switchToken.getParent();
         assert ifStatement != null;
         boolean breaksNeedRelabeled = false;
@@ -84,8 +86,12 @@ public class ReplaceIfWithSwitchIntention extends Intention {
                     innerVariables,
                     true);
             final IfStatementBranch ifBranch = new IfStatementBranch();
+            if (!branches.isEmpty()) {
+                extractIfComments(ifStatement, ifBranch);
+            }
             ifBranch.setInnerVariables(innerVariables);
             ifBranch.setTopLevelVariables(topLevelVariables);
+            extractStatementComments(thenBranch, ifBranch);
             ifBranch.setStatement(thenBranch);
             for (final PsiExpression label : labels) {
                 if (label instanceof PsiReferenceExpression) {
@@ -119,6 +125,9 @@ public class ReplaceIfWithSwitchIntention extends Intention {
                         elseBranch, elseTopLevelVariables, elseInnerVariables,
                         true);
                 final IfStatementBranch elseIfBranch = new IfStatementBranch();
+                final PsiKeyword elseKeyword = ifStatement.getElseElement();
+                extractIfComments(elseKeyword, elseIfBranch);
+                extractStatementComments(elseBranch, elseIfBranch);
                 elseIfBranch.setInnerVariables(elseInnerVariables);
                 elseIfBranch.setTopLevelVariables(elseTopLevelVariables);
                 elseIfBranch.setElse();
@@ -146,13 +155,22 @@ public class ReplaceIfWithSwitchIntention extends Intention {
 
             final PsiStatement branchStatement = branch.getStatement();
             if (branch.isElse()) {
-                dumpDefaultBranch(switchStatementBuffer, branchStatement,
+                final List<String> comments = branch.getComments();
+                final List<String> statementComments =
+                        branch.getStatementComments();
+                dumpDefaultBranch(switchStatementBuffer, comments,
+                        branchStatement, statementComments,
                         hasConflicts,
                         breaksNeedRelabeled, labelString);
             } else {
                 final List<String> conditions = branch.getConditions();
-                dumpBranch(switchStatementBuffer, conditions, branchStatement,
-                        hasConflicts, breaksNeedRelabeled, labelString);
+                final List<String> comments = branch.getComments();
+                final List<String> statementComments =
+                        branch.getStatementComments();
+                dumpBranch(switchStatementBuffer,
+                        comments, conditions, statementComments,
+                        branchStatement, hasConflicts, breaksNeedRelabeled,
+                        labelString);
             }
         }
         switchStatementBuffer.append('}');
@@ -169,6 +187,72 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         } else {
             replaceStatement(switchStatementString,
                     statementToReplace);
+        }
+    }
+
+    @Nullable
+    public static <T extends PsiElement> T getPrevSiblingOfType(
+            @Nullable PsiElement element,
+            @NotNull Class<T> aClass,
+            @NotNull Class<? extends PsiElement>... stopAt) {
+        if (element == null) {
+            return null;
+        }
+        PsiElement sibling = element.getPrevSibling();
+        while (sibling != null && !aClass.isInstance(sibling)) {
+            for (Class<? extends PsiElement> stopClass : stopAt) {
+                if (stopClass.isInstance(sibling)) {
+                    return null;
+                }
+            }
+            sibling = sibling.getPrevSibling();
+        }
+        return (T)sibling;
+    }
+
+    private static void extractIfComments(PsiElement element,
+                                          IfStatementBranch out) {
+        PsiComment comment = getPrevSiblingOfType(element,
+                PsiComment.class, PsiStatement.class);
+        while (comment != null) {
+            final PsiElement sibling = comment.getPrevSibling();
+            final String commentText;
+            if (sibling instanceof PsiWhiteSpace) {
+                final String whiteSpaceText = sibling.getText();
+                if (whiteSpaceText.startsWith("\n")) {
+                    commentText = whiteSpaceText.substring(1) + comment.getText();
+                } else {
+                    commentText = comment.getText();
+                }
+            } else {
+                commentText = comment.getText();
+            }
+            out.addComment(commentText);
+            comment = getPrevSiblingOfType(comment, PsiComment.class,
+                    PsiStatement.class);
+        }
+    }
+
+    private static void extractStatementComments(PsiElement element,
+                                                  IfStatementBranch out) {
+        PsiComment comment = getPrevSiblingOfType(element,
+                PsiComment.class, PsiStatement.class, PsiKeyword.class);
+        while (comment != null) {
+            final PsiElement sibling = comment.getPrevSibling();
+            final String commentText;
+            if (sibling instanceof PsiWhiteSpace) {
+                final String whiteSpaceText = sibling.getText();
+                if (whiteSpaceText.startsWith("\n")) {
+                    commentText = whiteSpaceText.substring(1) + comment.getText();
+                } else {
+                    commentText = comment.getText();
+                }
+            } else {
+                commentText = comment.getText();
+            }
+            out.addStatementComment(commentText);
+            comment = getPrevSiblingOfType(comment, PsiComment.class,
+                    PsiStatement.class, PsiKeyword.class);
         }
     }
 
@@ -227,19 +311,38 @@ public class ReplaceIfWithSwitchIntention extends Intention {
     }
 
     private static void dumpBranch(StringBuilder switchStatementString,
-                                   List<String> labels, PsiStatement body,
+                                   List<String> comments,
+                                   List<String> labels,
+                                   List<String> statementComments,
+                                   PsiStatement body,
                                    boolean wrap, boolean renameBreaks,
                                    String breakLabelName) {
+        dumpComments(switchStatementString, comments);
         dumpLabels(switchStatementString, labels);
+        dumpComments(switchStatementString, statementComments);
         dumpBody(switchStatementString, body, wrap, renameBreaks,
                 breakLabelName);
     }
 
+    private static void dumpComments(StringBuilder switchStatementString,
+                                     List<String> comments) {
+        if (!comments.isEmpty()) {
+            switchStatementString.append('\n');
+            for (String comment : comments) {
+                switchStatementString.append(comment);
+                switchStatementString.append('\n');
+            }
+        }
+    }
+
     private static void dumpDefaultBranch(
             @NonNls StringBuilder switchStatementString,
-            PsiStatement body, boolean wrap,
+            List<String> comments, PsiStatement body,
+            List<String> statementComments, boolean wrap,
             boolean renameBreaks, String breakLabelName) {
+        dumpComments(switchStatementString, comments);
         switchStatementString.append("default: ");
+        dumpComments(switchStatementString, statementComments);
         dumpBody(switchStatementString, body, wrap, renameBreaks,
                 breakLabelName);
     }
