@@ -103,16 +103,17 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
       finishSave(saveSession);
     }
 
-    myApplication.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateStarted();
+    if (!componentNames.isEmpty()) {
+      myApplication.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateStarted();
 
-    try {
-      doReload(changedFiles, componentNames);
-      reinitComponents(componentNames);
+      try {
+        doReload(changedFiles, componentNames);
+        reinitComponents(componentNames);
+      }
+      finally {
+        myApplication.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished();
+      }
     }
-    finally {
-      myApplication.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished();
-    }
-
 
 
     return true;

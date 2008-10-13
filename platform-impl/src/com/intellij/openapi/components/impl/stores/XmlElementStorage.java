@@ -609,6 +609,14 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       Set<String> componentsToRetain = new HashSet<String>(oldLoadedData.myComponentStates.keySet());
       componentsToRetain.addAll(changedComponents);
       storageData.myComponentStates.keySet().retainAll(componentsToRetain);
+
+      for (String componentToRetain : componentsToRetain) {
+        if (!storageData.myComponentStates.containsKey(componentToRetain)) {
+          Element emptyElement = new Element(myRootElementName);
+          emptyElement.setAttribute(NAME, componentToRetain);
+          storageData.myComponentStates.put(componentToRetain, emptyElement);
+        }
+      }
     }
     
     myLoadedData = storageData;
