@@ -14,7 +14,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
@@ -184,40 +183,30 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
 
     @NotNull
     public Collection<VirtualFile> fun(final VirtualFile virtualFile) {
-      try {
-        SVNInfo info = myVcs.getInfoWithCaching(virtualFile);
-        if (info == null) {
-          // === svn exception
-          return Collections.emptyList();
-        }
-
-        final File ioFile = new File(virtualFile.getPath());
-        SVNURL repositoryUrl = info.getRepositoryRootURL();
-        if (repositoryUrl == null) {
-          // in very few cases go there
-          info = myClient.doInfo(ioFile, SVNRevision.HEAD);
-          repositoryUrl = info.getRepositoryRootURL();
-          if (repositoryUrl == null) {
-            LOG.info("Error: cannot find repository URL for versioned folder: " + ioFile.getAbsolutePath());
-            return Collections.emptyList();
-          }
-        }
-
-        final String currentPath = FileUtil.toSystemDependentName(virtualFile.getPath()) + File.separator;
-
-        final SvnFileUrlMappingRefresher.RootUrlInfo rootInfo = new SvnFileUrlMappingRefresher.RootUrlInfo(repositoryUrl, info.getURL(),
-                                                                                           SvnFormatSelector.getWorkingCopyFormat(ioFile));
-
-        if ((! myRootsDiffer) && (! myCurrentRoot.equals(virtualFile))) {
-          myRootsDiffer = true;
-        }
-        myFile2UrlMapCopy.put(currentPath, rootInfo);
-        myUrl2FileMapCopy.put(rootInfo.getAbsoluteUrl(), new Pair<String, VirtualFile>(currentPath, virtualFile));
-        myFileRootsMapCopy.put(rootInfo.getAbsoluteUrl(), myCurrentRoot);
+      SVNInfo info = myVcs.getInfoWithCaching(virtualFile);
+      if (info == null) {
+        // === svn exception
+        return Collections.emptyList();
       }
-      catch (SVNException e) {
-        LOG.info(e);
+
+      final File ioFile = new File(virtualFile.getPath());
+      SVNURL repositoryUrl = info.getRepositoryRootURL();
+      if (repositoryUrl == null) {
+        LOG.info("Error: cannot find repository URL for versioned folder: " + ioFile.getAbsolutePath());
+        return Collections.emptyList();
       }
+
+      final String currentPath = FileUtil.toSystemDependentName(virtualFile.getPath()) + File.separator;
+
+      final SvnFileUrlMappingRefresher.RootUrlInfo rootInfo = new SvnFileUrlMappingRefresher.RootUrlInfo(repositoryUrl, info.getURL(),
+                                                                                                         SvnFormatSelector.getWorkingCopyFormat(ioFile));
+
+      if ((! myRootsDiffer) && (! myCurrentRoot.equals(virtualFile))) {
+        myRootsDiffer = true;
+      }
+      myFile2UrlMapCopy.put(currentPath, rootInfo);
+      myUrl2FileMapCopy.put(rootInfo.getAbsoluteUrl(), new Pair<String, VirtualFile>(currentPath, virtualFile));
+      myFileRootsMapCopy.put(rootInfo.getAbsoluteUrl(), myCurrentRoot);
 
       return Collections.emptyList();
     }

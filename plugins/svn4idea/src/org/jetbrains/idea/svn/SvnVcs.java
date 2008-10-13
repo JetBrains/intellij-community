@@ -648,6 +648,9 @@ public class SvnVcs extends AbstractVcs {
       try {
         SVNWCClient wcClient = new SVNWCClient(getSvnAuthenticationManager(), getSvnOptions());
         info = wcClient.doInfo(new File(file.getPath()), SVNRevision.WORKING);
+        if (info == null || info.getRepositoryRootURL() == null) {
+          info = wcClient.doInfo(new File(file.getPath()), SVNRevision.HEAD);
+        }
       }
       catch (SVNException e) {
         info = null;
