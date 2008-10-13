@@ -4,8 +4,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.LanguageLevelUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.OrderRootType;
@@ -436,15 +434,18 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       if (originalFile instanceof PsiJavaFile && originalFile != this) return ((PsiJavaFile)originalFile).getLanguageLevel();
       return LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel();
     }
+
+    final VirtualFile folder = virtualFile.getParent();
+    if (folder != null) {
+      final LanguageLevel level = folder.getUserData(LanguageLevel.KEY);
+      if (level != null) return level;
+    }
+
     final Project project = getProject();
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    final Module module = index.getModuleForFile(virtualFile);
-    if (module != null) {
-      return LanguageLevelUtil.getEffectiveLanguageLevel(module);
-    }
     final VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
     if (sourceRoot != null) {
-      String relativePath = VfsUtil.getRelativePath(virtualFile.getParent(), sourceRoot, '/');
+      String relativePath = VfsUtil.getRelativePath(folder, sourceRoot, '/');
       LOG.assertTrue(relativePath != null);
       final VirtualFile[] files = index.getOrderEntriesForFile(virtualFile).get(0).getFiles(OrderRootType.CLASSES);
       for (VirtualFile rootFile : files) {

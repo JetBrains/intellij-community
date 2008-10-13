@@ -9,11 +9,11 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -85,10 +85,14 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       reloadProjectOnLanguageLevelChange(languageLevel, false);
     }
     myLanguageLevel = languageLevel;
+
+    if (!willReload() && DirectoryIndex.getInstance(myProject).isInitialized()) {
+      LanguageLevelUpdater.getInstance(myProject).updateLanguageLevels();
+    }
   }
 
   public void reloadProjectOnLanguageLevelChange(final LanguageLevel languageLevel, final boolean forceReload) {
-    if (myProject.isOpen() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (willReload()) {
       myReloadProjectRequest = new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
@@ -113,6 +117,10 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       // if the project is not open, reset the original level to the same value as mylanguageLevel has
       myOriginalLanguageLevel = languageLevel;
     }
+  }
+
+  private boolean willReload() {
+    return myProject.isOpen() && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   public static class MyProjectExtension extends ProjectExtension {

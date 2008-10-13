@@ -15,6 +15,7 @@
  */
 package com.intellij.pom.java;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiBundle;
 
 /**
@@ -27,6 +28,7 @@ public enum LanguageLevel {
   JDK_1_6 (PsiBundle.message("jdk.1.6.language.level.description"), true, true); // changed rules for @Override
 
   public static final LanguageLevel HIGHEST = JDK_1_6;
+  public static final Key<LanguageLevel> KEY = Key.create("LANGUGAGE_LEVEL");
   private final boolean myHasAssertKeyword;
   private final boolean myHasEnumKeywordAndAutoboxing;
   private final String myPresentableText;

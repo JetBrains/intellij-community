@@ -54,6 +54,22 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
     return bytes;
   }
 
+  /*
+  @NotNull
+  public FileType getFileType() {
+    if (myCachedFileType == null) {
+      myCachedFileType = FileTypeManager.getInstance().getFileTypeByFile(this);
+    }
+    return myCachedFileType;
+  }
+
+  private volatile FileType myCachedFileType = null;
+
+  public void clearCachedFileType() {
+    myCachedFileType = null;
+  }
+  */
+
   @NotNull
   public abstract NewVirtualFileSystem getFileSystem();
 

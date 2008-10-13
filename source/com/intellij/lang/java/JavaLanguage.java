@@ -5,9 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.module.LanguageLevelUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -25,19 +23,7 @@ public class JavaLanguage extends Language {
     SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SyntaxHighlighterFactory() {
       @NotNull
       public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
-        LanguageLevel languageLevel;
-        if (project != null && virtualFile != null) {
-          final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
-          if (module != null) {
-            languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
-          } else {
-            languageLevel = LanguageLevel.HIGHEST;
-          }
-        } else {
-          languageLevel = LanguageLevel.HIGHEST;
-        }
-
-        return new JavaFileHighlighter(languageLevel);
+        return new JavaFileHighlighter(virtualFile != null ? LanguageLevelUtil.getLanguageLevelForFile(virtualFile) : LanguageLevel.HIGHEST);
       }
     });
   }

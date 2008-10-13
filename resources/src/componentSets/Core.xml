@@ -89,6 +89,10 @@
       <skipForDummyProject/>
     </component>
 
+    <component>
+      <implementation-class>com.intellij.openapi.roots.impl.LanguageLevelUpdater</implementation-class>
+    </component>
+
     <!--
     <component>
       <implementation-class>com.intellij.lang.jsp.jspxLike.impl.JspxLikeXmlTextSynchronizer</implementation-class>

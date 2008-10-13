@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -85,6 +86,12 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Map<ID<?, ?>, FileBasedIndexExtension<?, ?>> myExtentions = new HashMap<ID<?,?>, FileBasedIndexExtension<?,?>>();
 
   private static final int ALREADY_PROCESSED = 0x02;
+
+  public void requestReindex(final VirtualFile file) {
+    if (shouldUpdateIndex(file, StubUpdatingIndex.INDEX_ID)) {
+      myFileContentAttic.offer(file);
+    }
+  }
 
   public interface InputFilter {
     boolean acceptInput(VirtualFile file);
@@ -1339,6 +1346,7 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     }
     else {
+/*      nvf.clearCachedFileType(); */
       nvf.setFlag(ALREADY_PROCESSED, false);
     }
   }
