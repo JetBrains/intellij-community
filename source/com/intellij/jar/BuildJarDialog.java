@@ -154,6 +154,7 @@ public class BuildJarDialog extends DialogWrapper {
         return value.getName();
       }
     };
+    myElementsChooser.setColorUnmarkedElements(false);
     myModulesPanel.setLayout(new BorderLayout());
     myModulesPanel.add(myElementsChooser, BorderLayout.CENTER);
 
