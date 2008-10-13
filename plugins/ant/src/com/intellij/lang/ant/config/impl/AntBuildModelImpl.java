@@ -84,7 +84,8 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   public AntProject getAntProject() {
-    return ((AntFile)getBuildFile().getAntFile()).getAntProject();
+    final AntFile antFile = (AntFile)getBuildFile().getAntFile();
+    return antFile != null? antFile.getAntProject() : null;
   }
 
   public boolean hasTargetWithActionId(final String id) {
