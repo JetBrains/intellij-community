@@ -270,6 +270,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
   private void processLiteralExpressionInjections(final PsiExpression place, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
     final PsiElement topBlock = PsiUtil.getTopLevelEnclosingCodeBlock(place, null);
     final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock? topBlock : place.getContainingFile()}, "", true);
+    final THashSet<PsiModifierListOwner> visitedVars = new THashSet<PsiModifierListOwner>();
     final LinkedList<PsiExpression> places = new LinkedList<PsiExpression>();
     places.add(place);
     while (!places.isEmpty()) {
@@ -290,7 +291,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
         psiMethod = (PsiMethod)owner;
         trin = Trinity.create(psiMethod.getName(), psiMethod.getParameterList().getParametersCount(), -1);
       }
-      else if (owner instanceof PsiVariable) {
+      else if (owner instanceof PsiVariable && visitedVars.add(owner)) {
         final PsiVariable variable = (PsiVariable)owner;
         for (PsiReference psiReference : ReferencesSearch.search(variable, searchScope).findAll()) {
           final PsiElement element = psiReference.getElement();
