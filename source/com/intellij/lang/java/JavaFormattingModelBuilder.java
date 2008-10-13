@@ -7,6 +7,7 @@ import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
@@ -23,9 +24,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaFormattingModelBuilder implements FormattingModelBuilder {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.JavaFormattingModelBuilder");
+
   @NotNull
     public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     final FileElement fileElement = TreeUtil.getFileElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(element));
+    LOG.assertTrue(fileElement != null, "File element should not be null for " + element);
     return new PsiBasedFormatterModelWithShiftIndentInside (element.getContainingFile(), AbstractJavaBlock.createJavaBlock(fileElement,
                                                                                                                            settings),
                                                             FormattingDocumentModelImpl.createOn(element.getContainingFile()));
