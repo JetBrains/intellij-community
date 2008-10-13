@@ -17,13 +17,12 @@ package org.jetbrains.plugins.groovy.config;
 import com.intellij.facet.impl.ui.FacetTypeFrameworkSupportProvider;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -133,7 +132,8 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
         ValidationResult result = GroovyConfigUtils.getInstance().isSDKHome(path);
         if (path != null && ValidationResult.OK == result) {
           final Project project = module.getProject();
-          selectedName = GroovyConfigUtils.getInstance().generateNewSDKLibName(GroovyConfigUtils.getInstance().getSDKVersion(path), project);
+          selectedName =
+            GroovyConfigUtils.getInstance().generateNewSDKLibName(GroovyConfigUtils.getInstance().getSDKVersion(path), project);
           final String selected = selectedName;
           //Delayed modal dialog to add Groovy library
           final CreateLibraryDialog dialog = new CreateLibraryDialog(project, GroovyBundle.message("facet.create.lib.title"),
@@ -156,6 +156,12 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
               });
               super.doOKAction();
             }
+
+            @Override
+            public void doCancelAction() {
+              GroovyFacetSupportProvider.this.addSupport(module, rootModel, "unknown", null);
+              super.doCancelAction();
+            }
           };
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -164,9 +170,7 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
             }
           });
         } else {
-          Messages
-            .showErrorDialog(GroovyBundle.message("invalid.groovy.sdk.path.message"), GroovyBundle.message("invalid.groovy.sdk.path.text"));
-          selectedLibrary = null;
+          GroovyFacetSupportProvider.this.addSupport(module, rootModel, "unknown", null);
         }
       }
     }

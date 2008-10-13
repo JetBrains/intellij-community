@@ -60,12 +60,13 @@ import java.util.jar.JarFile;
 public abstract class GroovyConfigUtils extends AbstractConfigUtils {
 
   @NonNls public static final String GROOVY_LIB_PATTERN = "groovy-.*";
-  @NonNls public static final String GROOVY_JAR_PATTERN = "groovy-all-.*\\.jar";
+  @NonNls public static final String GROOVY_ALL_JAR_PATTERN = "groovy-all-.*\\.jar";
 
   @NonNls private static final String DGM_CLASS_PATH = "org/codehaus/groovy/runtime/DefaultGroovyMethods.class";
   @NonNls private static final String CLOSURE_CLASS_PATH = "groovy/lang/Closure.class";
 
   private static GroovyConfigUtils myGroovyConfigUtils;
+  @NonNls private static final String GROOVY_JAR_PATTERN = "groovy-\\d.*\\.jar";
 
   private GroovyConfigUtils() {
   }
@@ -85,7 +86,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
 
   @NotNull
   public String getSDKVersion(@NotNull final String path) {
-    String groovyJarVersion = getSDKJarVersion(path + "/lib", "groovy-\\d.*\\.jar", MANIFEST_PATH);
+    String groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_JAR_PATTERN, MANIFEST_PATH);
     return groovyJarVersion != null ? groovyJarVersion : UNDEFINED_VERSION;
   }
 
@@ -119,7 +120,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   public static boolean isGroovyAllJar(@NonNls final String name) {
-    return name.matches(GROOVY_JAR_PATTERN) || name.equals("groovy-all.jar");
+    return name.matches(GROOVY_ALL_JAR_PATTERN) || name.matches(GROOVY_JAR_PATTERN);
   }
 
   public LibrarySDK[] getSDKs(final Module module) {
@@ -173,11 +174,11 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
       }
 
       File[] jars;
-      File embeddableDir = new File(path + "/embeddable");
-      if (embeddableDir.exists()) {
-        jars = embeddableDir.listFiles();
+      File libDir = new File(path + "/lib");
+      if (libDir.exists()) {
+        jars = libDir.listFiles();
       } else {
-        jars = new File(path + "/lib").listFiles();
+        jars = new File(path + "/embeddable").listFiles();
       }
       if (jars != null) {
         for (File file : jars) {

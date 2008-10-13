@@ -24,7 +24,7 @@ public class AntTasksProvider implements ProjectComponent {
 
   @NonNls private static final String ANT_TASK_CLASS = "org.apache.tools.ant.Task";
 
-  private ArrayList<PsiClass> myAntTaks = new ArrayList<PsiClass>();
+  private ArrayList<PsiClass> myAntTaks = null;
   private final Project myProject;
   private MessageBusConnection myRootConnection;
 
@@ -44,14 +44,14 @@ public class AntTasksProvider implements ProjectComponent {
       }
 
       public void rootsChanged(final ModuleRootEvent event) {
-        myAntTaks.clear();
+        myAntTaks = new ArrayList<PsiClass>();
         myAntTaks = findAntTasks(myProject);
       }
     });
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
-        myAntTaks.clear();
+        myAntTaks = new ArrayList<PsiClass>();
         myAntTaks = findAntTasks(myProject);
       }
     });
@@ -74,7 +74,14 @@ public class AntTasksProvider implements ProjectComponent {
   }
 
   public ArrayList<PsiClass> getAntTasks() {
+    if (myAntTaks == null) {
+      myAntTaks = findAntTasks(myProject);
+    }
     return myAntTaks;
+  }
+
+  public void init() {
+    findAntTasks(myProject);
   }
 
   private static ArrayList<PsiClass> findAntTasks(Project project) {

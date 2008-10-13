@@ -384,6 +384,9 @@
       <interface-class>org.jetbrains.plugins.grails.plugins.control.GrailsPluginManager</interface-class>
       <implementation-class>org.jetbrains.plugins.grails.plugins.control.GrailsPluginManagerImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.gant.config.GantFacetListener</implementation-class>
+    </component>
   </module-components>
 
   <actions>

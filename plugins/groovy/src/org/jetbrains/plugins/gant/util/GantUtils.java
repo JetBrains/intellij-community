@@ -2,11 +2,13 @@ package org.jetbrains.plugins.gant.util;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.lang.ASTNode;
 import org.jetbrains.plugins.gant.GantFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 import java.util.ArrayList;
 
@@ -36,13 +38,20 @@ public class GantUtils {
         GrNamedArgument[] arguments = call.getNamedArguments();
         if (arguments.length == 1) {
           GrArgumentLabel label = arguments[0].getLabel();
-          if (label != null) {
+          if (label != null && isPlainIdentifier(label)) {
             labels.add(label);
           }
         }
       }
     }
     return labels.toArray(new GrArgumentLabel[labels.size()]);
+  }
+
+  public static boolean isPlainIdentifier(final GrArgumentLabel label) {
+    final PsiElement elem = label.getNameElement();
+    final ASTNode node = elem.getNode();
+    if (node == null) return false;
+    return node.getElementType() == GroovyTokenTypes.mIDENT;
   }
 
 }
