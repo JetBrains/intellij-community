@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,22 +26,26 @@ import org.jetbrains.annotations.NotNull;
 public class PrimitiveArrayArgumentToVariableArgMethodInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "primitive.array.argument.to.var.arg.method.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "primitive.array.argument.to.var.arg.method.problem.descriptor");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new PrimitiveArrayArgumentToVariableArgVisitor();
     }
@@ -80,7 +84,7 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection
                 return;
             }
             final PsiType parameterType = lastParameter.getType();
-            if (isPrimitiveArrayType(parameterType)) {
+            if (isDeepPrimitiveArrayType(parameterType)) {
                 return;
             }
             registerError(lastArgument);
@@ -95,6 +99,14 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection
             return false;
         }
         final PsiType componentType = ((PsiArrayType)type).getComponentType();
+        return TypeConversionUtil.isPrimitiveAndNotNull(componentType);
+    }
+
+    private static boolean isDeepPrimitiveArrayType(PsiType type) {
+        if (!(type instanceof PsiArrayType)) {
+            return false;
+        }
+        final PsiType componentType = type.getDeepComponentType();
         return TypeConversionUtil.isPrimitiveAndNotNull(componentType);
     }
 }
