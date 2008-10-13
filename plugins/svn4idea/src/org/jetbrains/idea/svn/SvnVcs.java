@@ -34,6 +34,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -228,7 +229,16 @@ public class SvnVcs extends AbstractVcs {
       }
     }
     finally {
-      plVcsManager.stopBackgroundVcsOperation();
+      final Application appManager = ApplicationManager.getApplication();
+      if (appManager.isDispatchThread()) {
+        appManager.executeOnPooledThread(new Runnable() {
+          public void run() {
+            plVcsManager.stopBackgroundVcsOperation();
+          }
+        });
+      } else {
+        plVcsManager.stopBackgroundVcsOperation();
+      }
     }
   }
 
