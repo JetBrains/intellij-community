@@ -1,17 +1,17 @@
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -179,7 +179,8 @@ public class BreakpointsConfigurationDialogFactory {
         myPreparePreferredComponent = null;
         return myPreferredComponent;
       }
-      return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myTabbedPane.getComponent());
+      final TabbedPaneWrapper tabbedPane = myTabbedPane;
+      return tabbedPane != null? IdeFocusTraversalPolicy.getPreferredFocusedComponent(tabbedPane.getComponent()) : null;
     }
 
     public void setPreferredFocusedComponent(final JComponent component, @Nullable Runnable preparePreferredComponent) {
