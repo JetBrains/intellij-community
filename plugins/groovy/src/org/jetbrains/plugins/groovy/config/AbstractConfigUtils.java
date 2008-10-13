@@ -85,7 +85,7 @@ public abstract class AbstractConfigUtils {
     }
   }
 
-  @NotNull
+  @Nullable
   public abstract String getSDKVersion(@NotNull String path);
 
   public String getSDKLibPrefix() {
