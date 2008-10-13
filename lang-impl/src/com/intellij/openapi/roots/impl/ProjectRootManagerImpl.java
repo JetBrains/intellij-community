@@ -127,8 +127,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
     }
 
-    public void rootsChanged() {
-      if (myBatchLevel == 0 || true || myIsRootsChangedOnDemandStartedButNotDemanded) {
+    public void rootsChanged(boolean force) {
+      if (myBatchLevel == 0 || force || myRootsChangeCounter > 1) {
         if (fireChange()){
           myChanged = false;
         }
@@ -433,7 +433,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
           LOG.assertTrue(false, "myRootsChangedCounter = " + myRootsChangeCounter);
         }
         myIsRootsChangedOnDemandStartedButNotDemanded = false;
-        rootsChanged(false);
+        rootsChangedInternal(false);
       }
     }
   }
@@ -464,7 +464,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   public void rootsChanged(boolean filetypes) {
-    getBatchSession(filetypes).rootsChanged();
+    getBatchSession(filetypes).rootsChanged(false);
+  }
+
+    public void rootsChangedInternal(boolean filetypes) {
+    getBatchSession(filetypes).rootsChanged(true);
   }
 
   private boolean fireRootsChanged(final boolean filetypes) {
