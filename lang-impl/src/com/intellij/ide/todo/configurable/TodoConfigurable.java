@@ -401,7 +401,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     }
     TodoFilter sourceFilter = myFilters.get(selectedIndex);
     TodoFilter filter = sourceFilter.clone();
-    FilterDialog dialog = new FilterDialog(TodoConfigurable.this.myPanel, filter, selectedIndex, myFilters, myPatterns);
+    FilterDialog dialog = new FilterDialog(myPanel, filter, selectedIndex, myFilters, myPatterns);
     dialog.setTitle(IdeBundle.message("title.edit.todo.filter"));
     dialog.show();
     int exitCode = dialog.getExitCode();

@@ -22,14 +22,13 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 class FilterDialog extends DialogWrapper {
-  private TodoFilter myFilter;
-  private int myFilterIndex;
-  private List<TodoPattern> myPatterns;
-  private List<TodoFilter> myFilters;
-  private MyModel myModel;
+  private final TodoFilter myFilter;
+  private final int myFilterIndex;
+  private final List<TodoPattern> myPatterns;
+  private final List<TodoFilter> myFilters;
 
-  private JTextField myNameField;
-  private Table myTable;
+  private final JTextField myNameField;
+  private final Table myTable;
 
   /**
    * @param parent      parent component.
@@ -50,8 +49,8 @@ class FilterDialog extends DialogWrapper {
     myPatterns = patterns;
     myFilters = filters;
     myNameField = new JTextField(filter.getName());
-    myModel = new MyModel();
-    myTable = new Table(myModel);
+    MyModel model = new MyModel();
+    myTable = new Table(model);
     init();
   }
 
@@ -122,7 +121,7 @@ class FilterDialog extends DialogWrapper {
 
     // Column "Available"
 
-    int width = (new JCheckBox()).getPreferredSize().width;
+    int width = new JCheckBox().getPreferredSize().width;
     TableColumn availableColumn = myTable.getColumnModel().getColumn(0);
     availableColumn.setPreferredWidth(width);
     availableColumn.setMaxWidth(width);
@@ -160,37 +159,29 @@ class FilterDialog extends DialogWrapper {
       TodoPattern pattern = myPatterns.get(row);
       switch (column) {
         case 0:
-          { // "Available" column
-            return myFilter.contains(pattern) ? Boolean.TRUE : Boolean.FALSE;
-          }
+          // "Available" column
+          return myFilter.contains(pattern) ? Boolean.TRUE : Boolean.FALSE;
         case 1:
-          { // "Pattern" column
-            return pattern.getPatternString();
-          }
+          // "Pattern" column
+          return pattern.getPatternString();
         default:
-          {
-            throw new IllegalArgumentException();
-          }
+          throw new IllegalArgumentException();
       }
     }
 
     public void setValueAt(Object value, int row, int column) {
       switch (column) {
         case 0:
-          {
-            TodoPattern pattern = myPatterns.get(row);
-            if (((Boolean)value).booleanValue()) {
-              myFilter.addTodoPattern(pattern);
-            }
-            else {
-              myFilter.removeTodoPattern(pattern);
-            }
-            break;
+          TodoPattern pattern = myPatterns.get(row);
+          if (((Boolean)value).booleanValue()) {
+            myFilter.addTodoPattern(pattern);
           }
+          else {
+            myFilter.removeTodoPattern(pattern);
+          }
+          break;
         default:
-          {
-            throw new IllegalArgumentException();
-          }
+          throw new IllegalArgumentException();
       }
     }
 
