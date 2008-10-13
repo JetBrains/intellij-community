@@ -16,11 +16,16 @@
 package com.intellij.psi.javadoc;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
  */
 public interface JavadocManager {
+  @NotNull
   JavadocTagInfo[] getTagInfos(PsiElement context);
+
+  @Nullable
   JavadocTagInfo getTagInfo(String name);
 }

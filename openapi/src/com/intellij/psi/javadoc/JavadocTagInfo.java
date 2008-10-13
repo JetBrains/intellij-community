@@ -18,6 +18,7 @@ package com.intellij.psi.javadoc;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author mike
@@ -32,7 +33,9 @@ public interface JavadocTagInfo {
   /**
    * Checks the tag value for correctnes. Returns null if correct. Error message otherwise.
    */
+  @Nullable
   String checkTagValue(PsiDocTagValue value);
 
+  @Nullable
   PsiReference getReference(PsiDocTagValue value);
 }
