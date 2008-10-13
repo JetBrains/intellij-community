@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.psi.util.ClassKind;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
@@ -97,12 +98,14 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new RemoveUnusedVariableFix(variable);
   }
 
+  @Nullable
   public IntentionAction createCreateClassOrPackageFix(@NotNull final PsiElement context, @NotNull final String qualifiedName, final boolean createClass, final String superClass) {
-    return new CreateClassOrPackageFix(context, qualifiedName, createClass ? ClassKind.CLASS : null, superClass);
+    return CreateClassOrPackageFix.createFix(qualifiedName, context, createClass ? ClassKind.CLASS : null, superClass);
   }
 
+  @Nullable
   public IntentionAction createCreateClassOrInterfaceFix(@NotNull final PsiElement context, @NotNull final String qualifiedName, final boolean createClass, final String superClass) {
-    return new CreateClassOrPackageFix(context, qualifiedName, createClass ? ClassKind.CLASS : ClassKind.INTERFACE, superClass);
+    return CreateClassOrPackageFix.createFix(qualifiedName, context, createClass ? ClassKind.CLASS : ClassKind.INTERFACE, superClass);
   }
 
   public IntentionAction createCreateFieldOrPropertyFix(final PsiClass aClass, final String name, final PsiType type, final PropertyMemberType targetMember, final PsiAnnotation... annotations) {

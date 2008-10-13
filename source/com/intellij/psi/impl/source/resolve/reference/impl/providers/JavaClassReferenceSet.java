@@ -25,7 +25,7 @@ public class JavaClassReferenceSet {
   private static final char SEPARATOR3 = '<';
   private static final char SEPARATOR4 = ',';
 
-  private PsiReference[] myReferences;
+  private JavaClassReference[] myReferences;
   private List<JavaClassReferenceSet> myNestedGenericParameterReferences;
   private JavaClassReferenceSet myContext;
   private PsiElement myElement;
@@ -184,15 +184,15 @@ public class JavaClassReferenceSet {
     reparse(text, element, false, myContext);
   }
 
-  public PsiReference getReference(int index) {
+  public JavaClassReference getReference(int index) {
     return myReferences[index];
   }
 
-  public PsiReference[] getAllReferences() {
-    PsiReference[] result = myReferences;
+  public JavaClassReference[] getAllReferences() {
+    JavaClassReference[] result = myReferences;
     if (myNestedGenericParameterReferences != null) {
       for(JavaClassReferenceSet set:myNestedGenericParameterReferences) {
-        result = ArrayUtil.mergeArrays(result, set.getAllReferences(),PsiReference.class);
+        result = ArrayUtil.mergeArrays(result, set.getAllReferences(),JavaClassReference.class);
       }
     }
     return result;

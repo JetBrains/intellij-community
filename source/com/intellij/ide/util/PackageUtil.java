@@ -8,7 +8,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModulePackageIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
@@ -19,13 +21,13 @@ import com.intellij.util.ActionRunner;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 
 public class PackageUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.util.PackageUtil");
@@ -141,7 +143,7 @@ public class PackageUtil {
     return psiDirectory[0];
   }
 
-  public static PsiDirectory findOrCreateDirectoryForPackage(Module module,
+  public static PsiDirectory findOrCreateDirectoryForPackage(@NotNull Module module,
                                                              String packageName,
                                                              PsiDirectory baseDir,
                                                              boolean askUserToCreate) throws IncorrectOperationException {

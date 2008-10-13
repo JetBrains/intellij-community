@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyMemberType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
@@ -51,7 +52,9 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createRemoveUnusedParameterFix(@NotNull PsiParameter parameter);
   public abstract IntentionAction createRemoveUnusedVariableFix(@NotNull PsiVariable variable);
 
+  @Nullable
   public abstract IntentionAction createCreateClassOrPackageFix(@NotNull PsiElement context, @NotNull String qualifiedName, final boolean createClass, final String superClass);
+  @Nullable
   public abstract IntentionAction createCreateClassOrInterfaceFix(@NotNull PsiElement context, @NotNull String qualifiedName, final boolean createClass, final String superClass);
   public abstract IntentionAction createCreateFieldOrPropertyFix(final PsiClass aClass, final String name, final PsiType type, final PropertyMemberType targetMember, final PsiAnnotation... annotations);
 }

@@ -418,28 +418,38 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
     final String[] extendClasses = getExtendClassNames();
     final String extendClass = extendClasses != null && extendClasses.length > 0 ? extendClasses[0] : null;
-    final PsiReference contextReference = getContextReference();
 
-    PsiElement context = contextReference != null ? contextReference.resolve() : null;
+    final JavaClassReference[] references = getJavaClassReferenceSet().getAllReferences();
+    PsiPackage contextPackage = null;
+    for (int i = myIndex; i >= 0; i--) {
+      final PsiElement context = references[i].getContext();
+      if (context != null) {
+        if (context instanceof PsiPackage) {
+          contextPackage = (PsiPackage)context;
+        }
+        break;
+      }
+    }
 
-    if (context != null || contextReference == null) {
-      boolean createJavaClass = !canReferencePackage();
-      final List<PsiDirectory> writableDirectoryList = getWritableDirectoryList(context);
-      if (!writableDirectoryList.isEmpty() && checkCreateClassOrPackage(writableDirectoryList, createJavaClass)) {
-        final Pair<String,ClassKind> pair = JavaClassReferenceProvider.CLASS_TEMPLATE.getValue(getOptions());
-        final ClassKind kind = createJavaClass ? pair != null ? pair.second : ClassKind.CLASS : null;
-        final CreateClassOrPackageFix action = new CreateClassOrPackageFix(writableDirectoryList, this, kind, extendClass,
-                                                                           pair == null ? null : pair.first);
-        QuickFixAction.registerQuickFixAction(info, action);
-        if (list == null) {
-          return Arrays.asList(action);
-        }
-        else {
-          final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(list.size() + 1);
-          fixes.addAll(list);
-          fixes.add(action);
-          return fixes;
-        }
+    boolean createJavaClass = !canReferencePackage();
+    final Pair<String,ClassKind> pair = JavaClassReferenceProvider.CLASS_TEMPLATE.getValue(getOptions());
+    final ClassKind kind = createJavaClass ? pair != null ? pair.second : ClassKind.CLASS : null;
+    final String templateName = pair == null ? null : pair.first;
+    final TextRange range = new TextRange(references[0].getRangeInElement().getStartOffset(),
+                                          getRangeInElement().getEndOffset());
+    final String qualifiedName = range.substring(getElement().getText());
+    final CreateClassOrPackageFix action = CreateClassOrPackageFix.createFix(qualifiedName, getScope(), getElement(), contextPackage, 
+                                                                             kind, extendClass, templateName);
+    if (action != null) {
+      QuickFixAction.registerQuickFixAction(info, action);
+      if (list == null) {
+        return Arrays.asList(action);
+      }
+      else {
+        final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(list.size() + 1);
+        fixes.addAll(list);
+        fixes.add(action);
+        return fixes;
       }
     }
     return list;
@@ -499,33 +509,6 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   public LocalQuickFix[] getQuickFixes() {
     final List<? extends LocalQuickFix> list = registerFixes(null);
     return list == null ? LocalQuickFix.EMPTY_ARRAY : list.toArray(new LocalQuickFix[list.size()]);
-  }
-
-  private boolean checkCreateClassOrPackage(final List<PsiDirectory> writableDirectoryList, final boolean createJavaClass) {
-    final PsiDirectory directory = writableDirectoryList.get(0);
-    final String canonicalText = getCanonicalText();
-
-    if (createJavaClass) {
-      try {
-        JavaDirectoryService.getInstance().checkCreateClass(directory, canonicalText);
-      }
-      catch (IncorrectOperationException ex) {
-        return false;
-      }
-    }
-    else {
-      try {
-        directory.checkCreateSubdirectory(canonicalText);
-      }
-      catch (IncorrectOperationException ex) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private List<PsiDirectory> getWritableDirectoryList(final PsiElement context) {
-    return CreateClassOrPackageFix.getWritableDirectoryListDefault(context, getElement().getManager());
   }
 
   @Nullable
