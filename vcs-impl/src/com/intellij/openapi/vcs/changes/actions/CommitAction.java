@@ -34,8 +34,7 @@ public class CommitAction extends AnAction {
       }
       Change[] changes = e.getData(VcsDataKeys.CHANGES);
 
-      final ChangeList changeList = ChangesUtil.getChangeListIfOnlyOne(project, changes);
-      if (changes != null && changeList != null) {
+      if (changes != null && ChangesUtil.allChangesInOneList(project, changes)) {
         for(Change c: changes) {
           final AbstractVcs vcs = ChangesUtil.getVcsForChange(c, project);
           if (vcs != null && vcs.getCheckinEnvironment() != null) {

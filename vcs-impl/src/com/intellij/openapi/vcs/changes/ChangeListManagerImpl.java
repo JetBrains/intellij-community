@@ -483,6 +483,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  @Override
+  public String getChangeListNameIfOnlyOne(final Change[] changes) {
+    synchronized (myDataLock) {
+      return myWorker.listNameIfOnlyOne(changes);
+    }
+  }
+
   /**
    * @deprecated
    * better use normal comparison, with equals

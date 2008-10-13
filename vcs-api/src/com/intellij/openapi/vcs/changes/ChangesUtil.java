@@ -133,22 +133,16 @@ public class ChangesUtil {
   }
 
   @Nullable
-  public static ChangeList getChangeListIfOnlyOne(@NotNull final Project project, @Nullable Change[] changes) {
-    if (changes == null || changes.length == 0) {
-      return null;
-    }
+  public static boolean allChangesInOneList(@NotNull final Project project, @Nullable Change[] changes) {
+    return ChangeListManager.getInstance(project).getChangeListNameIfOnlyOne(changes) != null;
+  }
 
-    ChangeList selectedList = null;
-    for (Change change : changes) {
-      final ChangeList list = ChangeListManager.getInstance(project).getChangeList(change);
-      if (selectedList == null) {
-        selectedList = list;
-      }
-      else if (! selectedList.equals(list)) {
-        return null;
-      }
-    }
-    return selectedList;
+  @Nullable
+  public static ChangeList getChangeListIfOnlyOne(@NotNull final Project project, @Nullable Change[] changes) {
+    final ChangeListManager clManager = ChangeListManager.getInstance(project);
+
+    final String name = clManager.getChangeListNameIfOnlyOne(changes);
+    return (name == null) ? null : clManager.findChangeList(name);
   }
 
   public static FilePath getCommittedPath(final Project project, FilePath filePath) {

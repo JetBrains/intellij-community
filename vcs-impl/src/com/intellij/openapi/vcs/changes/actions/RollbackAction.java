@@ -102,7 +102,7 @@ public class RollbackAction extends AnAction {
   private static Change[] getChanges(final Project project, final AnActionEvent e) {
     final Change[] changes = e.getData(VcsDataKeys.CHANGES);
     if (changes != null && changes.length > 0) {
-      if (ChangesUtil.getChangeListIfOnlyOne(project, changes) == null) {
+      if (! ChangesUtil.allChangesInOneList(project, changes)) {
         return null;
       }
       return changes;

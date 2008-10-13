@@ -305,6 +305,30 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return null;
   }
 
+  @Nullable
+  public String listNameIfOnlyOne(final @Nullable Change[] changes) {
+    if (changes == null || changes.length == 0) {
+      return null;
+    }
+
+    final Change first = changes[0];
+
+    for (LocalChangeList list : myMap.values()) {
+      final Collection<Change> listChanges = list.getChanges();
+      if (listChanges.contains(first)) {
+        // must contain all other
+        for (int i = 1; i < changes.length; i++) {
+          final Change change = changes[i];
+          if (! listChanges.contains(change)) {
+            return null;
+          }
+        }
+        return list.getName();
+      }
+    }
+    return null;
+  }
+
   @NotNull
   public Collection<Change> getChangesIn(final FilePath dirPath) {
     List<Change> changes = new ArrayList<Change>();
