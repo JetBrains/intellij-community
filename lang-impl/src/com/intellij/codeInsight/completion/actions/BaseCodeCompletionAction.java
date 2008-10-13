@@ -31,5 +31,8 @@ public abstract class BaseCodeCompletionAction extends BaseCodeInsightAction imp
     getHandler().invoke(project, editor, psiFile);
   }
 
-
+  @Override
+  protected boolean isValidForLookup() {
+    return true;
+  }
 }
