@@ -81,7 +81,7 @@ public class JavaSdkImpl extends JavaSdk {
   @NonNls
   public String getToolsPath(Sdk sdk) {
     final String versionString = sdk.getVersionString();
-    final boolean isJdk1_x = versionString.contains("1.0") || versionString.contains("1.1");
+    final boolean isJdk1_x = versionString != null && (versionString.contains("1.0") || versionString.contains("1.1"));
     return getConvertedHomePath(sdk) + "lib" + File.separator + (isJdk1_x? "classes.zip" : "tools.jar");
   }
 
