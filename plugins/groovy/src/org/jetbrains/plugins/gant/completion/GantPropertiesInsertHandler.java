@@ -68,7 +68,9 @@ public class GantPropertiesInsertHandler implements ContextSpecificInsertHandler
     Document document = editor.getDocument();
     CaretModel caretModel = editor.getCaretModel();
     int offset = startOffset + name.length();
-    if (offset == document.getTextLength() || document.getCharsSequence().charAt(offset) != '(') {
+    final String text = document.getText();
+    if (offset == document.getTextLength() ||
+        !text.substring(offset).trim().startsWith("(")) {
       document.insertString(offset, "()");
     }
     caretModel.moveToOffset(offset + 1);

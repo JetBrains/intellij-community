@@ -96,12 +96,10 @@ public class GantTargetReference implements PsiPolyVariantReference {
     PsiFile file = myRefExpr.getContainingFile();
     if (GantUtils.isGantScriptFile(file)) {
       final GroovyFile groovyFile = (GroovyFile)file;
-
       for (GrArgumentLabel label : GantUtils.getScriptTargets(groovyFile)) {
         String name = label.getName();
         pageProperties.add(factory.createLookupElement(name).setIcon(GantIcons.GANT_TASK));
       }
-
       for (PsiClass task : AntTasksProvider.getInstance(file.getProject()).getAntTasks()) {
         final String name = StringUtil.decapitalize(task.getName());
         pageProperties.add(factory.createLookupElement(name).setIcon(GantIcons.ANT_TASK));

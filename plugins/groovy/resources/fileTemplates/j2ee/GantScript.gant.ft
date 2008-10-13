@@ -2,6 +2,6 @@
 
 includeTool << gant.tools.Ivy
 
-target ('default': 'The default target') {
+target('default': 'The default target') {
   
 }
