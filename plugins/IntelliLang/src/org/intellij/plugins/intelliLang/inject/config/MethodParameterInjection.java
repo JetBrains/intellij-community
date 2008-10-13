@@ -19,14 +19,11 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import gnu.trove.THashMap;
-import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -214,64 +211,6 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
     sb.append(")");
     return sb.toString();
   }
-
-  @Nullable
-  public static PsiExpression findParameterExpression(@NotNull final PsiExpression element) {
-    PsiElement e = element;
-    PsiElement parent = e.getParent();
-    while (!(parent instanceof PsiExpressionList ||
-             parent instanceof PsiNameValuePair ||
-             parent instanceof PsiReturnStatement ||
-             parent instanceof PsiArrayInitializerMemberValue)) {
-      e = parent;
-      if (!(e instanceof PsiExpression)) return null;
-      parent = parent.getParent();
-    }
-    return (PsiExpression)e;
-  }
-
-  @Nullable
-  public static Pair<Trinity<String, Integer, Integer>, PsiMethod> getParameterInfo(@NotNull final PsiExpression place) {
-    final PsiExpression element = findParameterExpression(place);
-    if (element == null) return null;
-    final PsiMethod method;
-    final int parameterIndex;
-    final int curParameterCount;
-    final PsiElement tmp = element.getParent();
-    final PsiElement elementParent = tmp instanceof PsiArrayInitializerMemberValue ? tmp.getParent() : tmp;
-    if (elementParent instanceof PsiReturnStatement) {
-      parameterIndex = -1;
-      curParameterCount = 0;
-      method = PsiTreeUtil.getParentOfType(elementParent, PsiMethod.class, true, true);
-    }
-    else if (elementParent instanceof PsiNameValuePair) {
-      parameterIndex = -1;
-      curParameterCount = 0;
-      final PsiReference psiReference = elementParent.getReference();
-      final PsiElement resolved = psiReference == null ? null : psiReference.resolve();
-      method = resolved instanceof PsiMethod ? (PsiMethod)resolved : null;
-    }
-    else {
-      final PsiParameter parameter = PsiUtilEx.getParameterForArgument(element);
-      if (parameter == null) {
-        return null;
-      }
-      final PsiElement _parent = parameter.getParent();
-      final PsiParameterList list;
-      if (_parent instanceof PsiParameterList) {
-        list = (PsiParameterList)_parent;
-      }
-      else {
-        return null;
-      }
-      parameterIndex = list.getParameterIndex(parameter);
-      curParameterCount = list.getParametersCount();
-      method = PsiTreeUtil.getParentOfType(list, PsiMethod.class, true, true);
-    }
-    if (method == null) return null;
-    return Pair.create(Trinity.create(method.getName(), curParameterCount, parameterIndex), method);
-  }
-
 
   @NotNull
   private static String buildSignature(@NotNull PsiMethod method) {

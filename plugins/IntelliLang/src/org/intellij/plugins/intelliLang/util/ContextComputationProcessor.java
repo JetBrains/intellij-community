@@ -43,9 +43,9 @@ public class ContextComputationProcessor {
   }
 
   @Nullable
-  private static PsiElement getContext(PsiElement place) {
+  private static PsiElement getContext(@Nullable PsiElement place) {
     final PsiConditionalExpression conditionalExpression = PsiTreeUtil.getParentOfType(place, PsiConditionalExpression.class);
-    if (conditionalExpression != null && PsiTreeUtil.isAncestor(conditionalExpression.getCondition(), place, false)) return null;
+    if (conditionalExpression != null && place != null && PsiTreeUtil.isAncestor(conditionalExpression.getCondition(), place, false)) return null;
 
     PsiElement element = place;
     PsiElement prev = place;
@@ -68,9 +68,10 @@ public class ContextComputationProcessor {
     return element;
   }
 
-  public static List<Object> collectOperands(final PsiExpression place, final String prefix, final String suffix, final Ref<Boolean> unparsable) {
+  public static List<Object> collectOperands(@Nullable final PsiExpression place, final String prefix, final String suffix, final Ref<Boolean> unparsable) {
     final PsiElement parent = getContext(place);
     if (parent == null) return Collections.emptyList();
+    assert place != null;
 
     final ArrayList<Object> result = new ArrayList<Object>();
     addStringFragment(prefix, result);
