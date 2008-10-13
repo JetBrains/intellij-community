@@ -76,28 +76,32 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     BlockReloadingUtil.block();
     myProjectLevelVcsManager.startBackgroundVcsOperation();
 
-    myRecentlyUpdatedFiles = UpdatedFiles.create();
-    myHandler.setUpdatedFiles(myRecentlyUpdatedFiles);
+    try {
+      myRecentlyUpdatedFiles = UpdatedFiles.create();
+      myHandler.setUpdatedFiles(myRecentlyUpdatedFiles);
 
-    indicatorOnStart();
+      indicatorOnStart();
 
-    // try to do multiple under single progress
-    while (true) {
-      if (indicator.isCanceled()) {
-        createMessage(false, true, SvnBundle.message("action.Subversion.integrate.changes.message.canceled.text"));
-        return;
+      // try to do multiple under single progress
+      while (true) {
+        if (indicator.isCanceled()) {
+          createMessage(false, true, SvnBundle.message("action.Subversion.integrate.changes.message.canceled.text"));
+          return;
+        }
+
+        doMerge();
+
+        RefreshVFsSynchronously.updateAllChanged(myRecentlyUpdatedFiles);
+        indicator.setText(VcsBundle.message("progress.text.updating.done"));
+
+        if (myResolveWorker.needsInteraction(myRecentlyUpdatedFiles) || (! myMerger.hasNext()) ||
+            (! myExceptions.isEmpty()) || UpdatedFilesReverseSide.containErrors(myRecentlyUpdatedFiles)) {
+          break;
+        }
+        accomulate();
       }
-
-      doMerge();
-
-      RefreshVFsSynchronously.updateAllChanged(myRecentlyUpdatedFiles);
-      indicator.setText(VcsBundle.message("progress.text.updating.done"));
-
-      if (myResolveWorker.needsInteraction(myRecentlyUpdatedFiles) || (! myMerger.hasNext()) ||
-          (! myExceptions.isEmpty()) || UpdatedFilesReverseSide.containErrors(myRecentlyUpdatedFiles)) {
-        break;
-      }
-      accomulate();
+    } finally {
+      myProjectLevelVcsManager.stopBackgroundVcsOperation();
     }
   }
 
@@ -136,7 +140,6 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
           afterExecution();
         } finally {
           BlockReloadingUtil.unblock();
-          myProjectLevelVcsManager.stopBackgroundVcsOperation();
         }
       }
     }

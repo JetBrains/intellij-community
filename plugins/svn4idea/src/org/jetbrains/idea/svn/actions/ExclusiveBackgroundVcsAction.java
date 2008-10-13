@@ -2,6 +2,8 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 
 public class ExclusiveBackgroundVcsAction {
   private ExclusiveBackgroundVcsAction() {
@@ -13,7 +15,16 @@ public class ExclusiveBackgroundVcsAction {
     try {
       action.run();
     } finally {
-      plVcsManager.stopBackgroundVcsOperation();
+      final Application application = ApplicationManager.getApplication();
+      if (application.isDispatchThread()) {
+        application.executeOnPooledThread(new Runnable() {
+          public void run() {
+            plVcsManager.stopBackgroundVcsOperation();
+          }
+        });
+      } else {
+        plVcsManager.stopBackgroundVcsOperation();
+      }
     }
   }
 }

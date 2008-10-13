@@ -83,11 +83,6 @@ public class SvnFormatWorker extends Task.Backgroundable {
     if (myProject.isDisposed()) {
       return;
     }
-    // to map to native
-    if (WorkingCopyFormat.ONE_DOT_FIVE.equals(myNewFormat)) {
-      SvnVcs.getInstance(myProject).processChangeLists(myBeforeChangeLists);
-    }
-    ProjectLevelVcsManager.getInstance(myProject).stopBackgroundVcsOperation();
 
     if (! myExceptions.isEmpty()) {
       final List<String> messages = new ArrayList<String>();
@@ -123,6 +118,13 @@ public class SvnFormatWorker extends Task.Backgroundable {
       }
     }
     finally {
+      ProjectLevelVcsManager.getInstance(myProject).stopBackgroundVcsOperation();
+
+      // to map to native
+      if (WorkingCopyFormat.ONE_DOT_FIVE.equals(myNewFormat)) {
+        SvnVcs.getInstance(myProject).processChangeLists(myBeforeChangeLists);
+      }
+
       ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnMapDialog.WC_CONVERTED).run();
     }
   }
