@@ -22,6 +22,8 @@ import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Array;
+
 public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegatePsiElement {
   private volatile T myStub;
   private volatile ASTNode myNode;
@@ -63,12 +65,11 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   public PsiFile getContainingFile() {
-    if (myStub != null) {
-      StubElement stub = myStub;
+    StubElement stub = myStub;
+    if (stub != null) {
       while (!(stub instanceof PsiFileStub)) {
         stub = stub.getParentStub();
       }
-
       return (PsiFile)((PsiFileStub)stub).getPsi();
     }
 
@@ -80,12 +81,13 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   public boolean isValid() {
-    if (myStub != null) {
-      if (myStub instanceof PsiFileStub) {
-        return myStub.getPsi().isValid();
+    T stub = myStub;
+    if (stub != null) {
+      if (stub instanceof PsiFileStub) {
+        return stub.getPsi().isValid();
       }
 
-      return myStub.getParentStub().getPsi().isValid();
+      return stub.getParentStub().getPsi().isValid();
     }
 
     return super.isValid();
@@ -105,9 +107,10 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   public PsiElement getContext() {
-    if (myStub != null) {
-      if (!(myStub instanceof PsiFileStub)) {
-        return myStub.getParentStub().getPsi();
+    T stub = myStub;
+    if (stub != null) {
+      if (!(stub instanceof PsiFileStub)) {
+        return stub.getParentStub().getPsi();
       }
     }
     return super.getContext();
@@ -147,8 +150,9 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
   @Nullable
   public <Stub extends StubElement, Psi extends PsiElement> Psi getStubOrPsiChild(final IStubElementType<Stub, Psi> elementType) {
-    if (myStub != null) {
-      final StubElement<Psi> element = myStub.findChildStubByType(elementType);
+    T stub = myStub;
+    if (stub != null) {
+      final StubElement<Psi> element = stub.findChildStubByType(elementType);
       if (element != null) {
         return element.getPsi();
       }
@@ -171,13 +175,14 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
 
   public <Stub extends StubElement, Psi extends PsiElement> Psi[] getStubOrPsiChildren(final IStubElementType<Stub, Psi> elementType, Psi[] array) {
-    if (myStub != null) {
+    T stub = myStub;
+    if (stub != null) {
       //noinspection unchecked
-      return (Psi[])myStub.getChildrenByType(elementType, array);
+      return (Psi[])stub.getChildrenByType(elementType, array);
     }
     else {
       final ASTNode[] nodes = SharedImplUtil.getChildrenOfType(getNode(), elementType);
-      Psi[] psiElements = (Psi[])java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), nodes.length);
+      Psi[] psiElements = (Psi[])Array.newInstance(array.getClass().getComponentType(), nodes.length);
       for (int i = 0; i < nodes.length; i++) {
         psiElements[i] = (Psi)nodes[i].getPsi();
       }
@@ -186,9 +191,10 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   public <Stub extends StubElement, Psi extends PsiElement> Psi[] getStubOrPsiChildren(final IStubElementType<Stub, Psi> elementType, ArrayFactory<Psi> f) {
-    if (myStub != null) {
+    T stub = myStub;
+    if (stub != null) {
       //noinspection unchecked
-      return (Psi[])myStub.getChildrenByType(elementType, f);
+      return (Psi[])stub.getChildrenByType(elementType, f);
     }
     else {
       final ASTNode[] nodes = SharedImplUtil.getChildrenOfType(getNode(), elementType);
@@ -201,13 +207,14 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   public <Psi extends PsiElement> Psi[] getStubOrPsiChildren(TokenSet filter, Psi[] array) {
-    if (myStub != null) {
+    T stub = myStub;
+    if (stub != null) {
       //noinspection unchecked
-      return (Psi[])myStub.getChildrenByType(filter, array);
+      return (Psi[])stub.getChildrenByType(filter, array);
     }
     else {
       final ASTNode[] nodes = getNode().getChildren(filter);
-      Psi[] psiElements = (Psi[])java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), nodes.length);
+      Psi[] psiElements = (Psi[])Array.newInstance(array.getClass().getComponentType(), nodes.length);
       for (int i = 0; i < nodes.length; i++) {
         psiElements[i] = (Psi)nodes[i].getPsi();
       }
@@ -216,9 +223,10 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   public <Psi extends PsiElement> Psi[] getStubOrPsiChildren(TokenSet filter, ArrayFactory<Psi> f) {
-    if (myStub != null) {
+    T stub = myStub;
+    if (stub != null) {
       //noinspection unchecked
-      return (Psi[])myStub.getChildrenByType(filter, f);
+      return (Psi[])stub.getChildrenByType(filter, f);
     }
     else {
       final ASTNode[] nodes = getNode().getChildren(filter);
@@ -232,9 +240,10 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
   @Nullable
   protected <E extends PsiElement> E getStubOrPsiParentOfType(final Class<E> parentClass) {
-    if (myStub != null) {
+    T stub = myStub;
+    if (stub != null) {
       //noinspection unchecked
-      return (E)myStub.getParentStubOfType(parentClass);
+      return (E)stub.getParentStubOfType(parentClass);
     }
     return PsiTreeUtil.getParentOfType(this, parentClass);
   }
