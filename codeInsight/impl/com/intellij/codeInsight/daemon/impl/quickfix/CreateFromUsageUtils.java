@@ -690,12 +690,12 @@ public class CreateFromUsageUtils {
       if (facade.getResolveHelper().isAccessible(aClass, expression, null)) {
         PsiClassType type;
         final PsiElement pparent = expression.getParent().getParent();
-        if (pparent instanceof PsiMethodCallExpression) {
-
+        if (pparent instanceof PsiMethodCallExpression && member instanceof PsiMethod) {
           PsiSubstitutor substitutor = ExpectedTypeUtil.inferSubstitutor((PsiMethod)member, (PsiMethodCallExpression)pparent, false);
           if (substitutor == null) {
             type = factory.createType(aClass);
-          } else {
+          }
+          else {
             type = factory.createType(aClass, substitutor);
           }
         }
