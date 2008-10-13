@@ -47,15 +47,13 @@ public class MethodParameterInjection extends BaseInjection<MethodParameterInjec
   public boolean isApplicable(@NotNull final PsiMethod method) {
     final PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return false;
-    if (myClassName.equals(psiClass.getQualifiedName())) return true;
-    if (myApplyInHierarchy) {
+    boolean classApplicable = myClassName.equals(psiClass.getQualifiedName());
+    if (!classApplicable && myApplyInHierarchy) {
       final GlobalSearchScope scope = GlobalSearchScope.allScope(method.getProject());
       final PsiClass baseClass = JavaPsiFacade.getInstance(method.getProject()).findClass(myClassName, scope);
-      if (baseClass != null && psiClass.isInheritor(baseClass, true)) {
-        return true;
-      }
+      classApplicable = baseClass != null && psiClass.isInheritor(baseClass, true);
     }
-    return false;
+    return classApplicable;
   }
 
   @NotNull

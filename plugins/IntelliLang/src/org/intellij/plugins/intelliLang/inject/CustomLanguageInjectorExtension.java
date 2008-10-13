@@ -9,8 +9,8 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.PairProcessor;
 import org.intellij.plugins.intelliLang.Configuration;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * @author Gregory.Shrago
@@ -20,5 +20,5 @@ public interface CustomLanguageInjectorExtension {
 
   void getInjectedLanguage(final Configuration configuration, final PsiElement place, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor);
 
-  void elementsToInjectIn(final ArrayList<Class<? extends PsiElement>> result);
+  void elementsToInjectIn(final Collection<Class<? extends PsiElement>> result);
 }

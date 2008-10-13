@@ -141,7 +141,7 @@ public class InjectLanguageAction implements IntentionAction {
       if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != target) continue;
       break;
     }
-    if (parent instanceof PsiReturnStatement) {
+    if (parent instanceof PsiReturnStatement || parent instanceof PsiMethod) {
       return doInjectInJavaMethod(project, findPsiMethod(parent), -1, languageId);
     }
     else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
@@ -185,13 +185,17 @@ public class InjectLanguageAction implements IntentionAction {
                                               final String languageId) {
     if (psiMethod == null) return false;
     if (parameterIndex < -1) return false;
-     final PsiModifierList modifiers = psiMethod.getModifierList();
-    if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) || modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-      return doAddLanguageAnnotation(project, parameterIndex >0? psiMethod.getParameterList().getParameters()[parameterIndex - 1] : psiMethod,
-                                     languageId);
+    final PsiModifierList methodModifiers = psiMethod.getModifierList();
+    if (methodModifiers.hasModifierProperty(PsiModifier.PRIVATE) || methodModifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+      return doAddLanguageAnnotation(project, parameterIndex >0? psiMethod.getParameterList().getParameters()[parameterIndex - 1] : psiMethod, languageId);
     }
     final PsiClass containingClass = psiMethod.getContainingClass();
     assert containingClass != null;
+    final PsiModifierList classModifiers = containingClass.getModifierList();
+    if (classModifiers != null && (classModifiers.hasModifierProperty(PsiModifier.PRIVATE) || classModifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL))) {
+      return doAddLanguageAnnotation(project, parameterIndex >0? psiMethod.getParameterList().getParameters()[parameterIndex - 1] : psiMethod, languageId);
+    }
+
     final String className = containingClass.getQualifiedName();
     assert className != null;
     final MethodParameterInjection injection = new MethodParameterInjection();
@@ -218,7 +222,7 @@ public class InjectLanguageAction implements IntentionAction {
       first = ((PsiMethodCallExpression)parent.getParent()).resolveMethod();
     }
     else {
-      first = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, true);
+      first = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, false);
     }
     if (first == null || first.getContainingClass() == null) return null;
     final LinkedList<PsiMethod> methods = new LinkedList<PsiMethod>();
