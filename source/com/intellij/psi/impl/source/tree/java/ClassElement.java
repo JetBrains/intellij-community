@@ -90,7 +90,7 @@ public class ClassElement extends CompositeElement implements Constants {
     ASTNode next;
     for (ASTNode child = first; child != afterLast; child = next) {
       next = child.getTreeNext();
-      if (child.getElementType() == ElementType.METHOD && ((PsiMethod)SourceTreeToPsiMap.treeElementToPsi(child)).isConstructor()) {
+      if (child.getElementType() == JavaElementType.METHOD && ((PsiMethod)SourceTreeToPsiMap.treeElementToPsi(child)).isConstructor()) {
         ASTNode oldIdentifier = ((CompositeElement)child).findChildByRole(ChildRole.NAME);
         ASTNode newIdentifier = findChildByRole(ChildRole.NAME).copyElement();
         newIdentifier.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(this));
@@ -101,8 +101,8 @@ public class ClassElement extends CompositeElement implements Constants {
     if (psiClass.isEnum()) {
       for (ASTNode child = first; child != afterLast; child = next) {
         next = child.getTreeNext();
-        if ((child.getElementType() == ElementType.METHOD && ((PsiMethod)SourceTreeToPsiMap.treeElementToPsi(child)).isConstructor()) ||
-            child.getElementType() == ElementType.ENUM_CONSTANT) {
+        if ((child.getElementType() == JavaElementType.METHOD && ((PsiMethod)SourceTreeToPsiMap.treeElementToPsi(child)).isConstructor()) ||
+            child.getElementType() == JavaElementType.ENUM_CONSTANT) {
           CompositeElement modifierList = (CompositeElement)((CompositeElement)child).findChildByRole(ChildRole.MODIFIER_LIST);
           while (true) {
             ASTNode modifier = TreeUtil.findChild(modifierList, MODIFIERS_TO_REMOVE_IN_ENUM_BIT_SET);
@@ -115,7 +115,7 @@ public class ClassElement extends CompositeElement implements Constants {
     else if (psiClass.isInterface()) {
       for (ASTNode child = first; child != afterLast; child = next) {
         next = child.getTreeNext();
-        if (child.getElementType() == ElementType.METHOD || child.getElementType() == ElementType.FIELD) {
+        if (child.getElementType() == JavaElementType.METHOD || child.getElementType() == JavaElementType.FIELD) {
           CompositeElement modifierList = (CompositeElement)((CompositeElement)child).findChildByRole(ChildRole.MODIFIER_LIST);
           while (true) {
             ASTNode modifier = TreeUtil.findChild(modifierList, MODIFIERS_TO_REMOVE_IN_INTERFACE_BIT_SET);
@@ -252,7 +252,13 @@ public class ClassElement extends CompositeElement implements Constants {
         for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
           if (CLASS_KEYWORD_BIT_SET.contains(child.getElementType())) return child;
         }
-        LOG.assertTrue(false);
+        String message = "Node not found. Immediate children are:---\n";
+        for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+          message += child.getClass() + "(" + child.getElementType() + ") " + child + "\n";
+        }
+        message += "---";
+
+        LOG.error(message);
         return null;
 
       case ChildRole.NAME:
@@ -290,10 +296,8 @@ public class ClassElement extends CompositeElement implements Constants {
       final IElementType childType = child.getElementType();
       if (StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(childType) ||
           childType == ERROR_ELEMENT || childType == ENUM_CONSTANT) {
-        continue;
       }
       else if (childType == COMMA) {
-        continue;
       }
       else if (childType == SEMICOLON) {
         return child;
