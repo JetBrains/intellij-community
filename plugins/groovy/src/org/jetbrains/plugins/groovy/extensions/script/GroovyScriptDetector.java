@@ -15,4 +15,7 @@ public interface GroovyScriptDetector {
   @NotNull
   Icon getScriptIcon();
 
+  @NotNull
+  String getScriptExtension();
+
 }

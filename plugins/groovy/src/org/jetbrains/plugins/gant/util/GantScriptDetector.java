@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.gant.util;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gant.GantIcons;
+import org.jetbrains.plugins.gant.GantFileType;
 import org.jetbrains.plugins.groovy.extensions.script.GroovyScriptDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.gant.GantIcons;
-import org.jetbrains.plugins.gant.util.GantUtils;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -20,5 +20,10 @@ public class GantScriptDetector implements GroovyScriptDetector {
   @NotNull
   public Icon getScriptIcon() {
     return GantIcons.GANT_ICON_16x16;
+  }
+
+  @NotNull
+  public String getScriptExtension() {
+    return GantFileType.DEFAULT_EXTENSION;
   }
 }
