@@ -465,10 +465,9 @@ public class CtrlMouseHandler implements ProjectComponent {
             hintManager.hideAllHints();
           }
         });
-        Point p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, HintManagerImpl.ABOVE);
+        Point p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, HintManager.ABOVE);
         hintManager.showEditorHint(hint, myEditor, p,
-                                   HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE |
-                                   HintManagerImpl.HIDE_BY_SCROLLING,
+                                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING,
                                    0, false);
       }
     }
