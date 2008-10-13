@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gant.completion.GantPropertiesInsertHandler;
 import org.jetbrains.plugins.gant.debugger.GantPositionManagerHelper;
-import org.jetbrains.plugins.gant.psi.GantScriptMembersPropertiesProvider;
+import org.jetbrains.plugins.gant.psi.GantScriptMembersProvider;
 import org.jetbrains.plugins.gant.util.GantScriptDetector;
 import org.jetbrains.plugins.groovy.GroovyLoader;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
@@ -40,7 +40,7 @@ public class GantLoader implements ApplicationComponent {
     ScriptDetectorRegistry.getInstance().registerDetector(new GantScriptDetector());
 
     // Register Gant members provider
-    ScriptMembersProviderRegistry.getInstance().registerProvider(new GantScriptMembersPropertiesProvider());
+    ScriptMembersProviderRegistry.getInstance().registerProvider(new GantScriptMembersProvider());
     GroovyTemplatesFactory.getInstance().registerCustromTemplates("GantScript.gant");
 
     InsertHandlerRegistry handlerRegistry = InsertHandlerRegistry.getInstance();

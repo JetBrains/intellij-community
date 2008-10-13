@@ -24,9 +24,10 @@ public class AntTasksProvider implements ProjectComponent {
 
   @NonNls private static final String ANT_TASK_CLASS = "org.apache.tools.ant.Task";
 
-  private ArrayList<PsiClass> myAntTaks = null;
+  private ArrayList<PsiClass> myAntTaks = new ArrayList<PsiClass>();
   private final Project myProject;
   private MessageBusConnection myRootConnection;
+  private boolean needToRefresh = true;
 
   public static AntTasksProvider getInstance(Project project) {
     return project.getComponent(AntTasksProvider.class);
@@ -44,17 +45,22 @@ public class AntTasksProvider implements ProjectComponent {
       }
 
       public void rootsChanged(final ModuleRootEvent event) {
-        myAntTaks = new ArrayList<PsiClass>();
-        myAntTaks = findAntTasks(myProject);
+        myAntTaks.clear();
+        setRefresh(true);
       }
     });
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
-        myAntTaks = new ArrayList<PsiClass>();
+        myAntTaks.clear();
         myAntTaks = findAntTasks(myProject);
+        needToRefresh = false;
       }
     });
+  }
+
+  public void setRefresh(boolean flag){
+    needToRefresh = flag;
   }
 
   public void projectClosed() {
@@ -73,15 +79,12 @@ public class AntTasksProvider implements ProjectComponent {
   public void disposeComponent() {
   }
 
-  public ArrayList<PsiClass> getAntTasks() {
-    if (myAntTaks == null) {
+  synchronized public ArrayList<PsiClass> getAntTasks() {
+    if (needToRefresh) {
       myAntTaks = findAntTasks(myProject);
+      needToRefresh = false;
     }
     return myAntTaks;
-  }
-
-  public void init() {
-    findAntTasks(myProject);
   }
 
   private static ArrayList<PsiClass> findAntTasks(Project project) {
@@ -92,7 +95,7 @@ public class AntTasksProvider implements ProjectComponent {
       final Iterable<PsiClass> inheritors = SearchUtils.findClassInheritors(taskClass, true);
       final ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
       for (PsiClass inheritor : inheritors) {
-        if (!inheritor.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        if (!inheritor.hasModifierProperty(PsiModifier.ABSTRACT) && !inheritor.hasModifierProperty(PsiModifier.PRIVATE)) {
           classes.add(inheritor);
         }
       }

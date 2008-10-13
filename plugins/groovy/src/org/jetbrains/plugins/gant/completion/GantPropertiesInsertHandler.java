@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.gant.util.GantUtils;
 import org.jetbrains.plugins.gant.reference.AntTasksProvider;
@@ -35,6 +36,7 @@ public class GantPropertiesInsertHandler implements ContextSpecificInsertHandler
 
     Object obj = item.getObject();
     if (!GantUtils.isGantScriptFile(file)) return false;
+    if (obj instanceof PsiMethod) return true;
     if (obj instanceof String) {
       String str = (String)obj;
       GrArgumentLabel[] targets = GantUtils.getScriptTargets(((GroovyFile)file));

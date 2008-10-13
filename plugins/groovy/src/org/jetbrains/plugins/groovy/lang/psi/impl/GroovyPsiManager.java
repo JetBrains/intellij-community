@@ -59,7 +59,8 @@ public class GroovyPsiManager implements ProjectComponent {
   private Project myProject;
 
   private Map<String, List<PsiMethod>> myDefaultMethods;
-  private Map<String, List<PsiField>> myDefaultProperties;
+  private Map<String, List<PsiMethod>> myScriptMethods;
+  private Map<String, List<PsiField>> myScriptProperties;
 
   private static final String DEFAULT_METHODS_QNAME = "org.codehaus.groovy.runtime.DefaultGroovyMethods";
   private static final String DEFAULT_STATIC_METHODS_QNAME = "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods";
@@ -162,17 +163,27 @@ public class GroovyPsiManager implements ProjectComponent {
 
   /**
    * Method to add custom properties for some Groovy extensions
-   * @param project
+   *
    * @param file
    */
-  private void buildGroovyScriptExtensionProperties(final Project project, final GroovyFile file) {
+  private void buildGroovyScriptExtensionProperties(final GroovyFile file) {
     final HashMap<String, List<PsiField>> newMap = new HashMap<String, List<PsiField>>();
     for (ScriptMembersProvider provider : ScriptMembersProviderRegistry.getInstance().getProviders()) {
       if (provider.canBeProcessed(file)) {
-        provider.addExtensionProperties(newMap, project);
+        provider.addExtensionProperties(newMap, file.getProject());
       }
     }
-    myDefaultProperties = newMap;
+    myScriptProperties = newMap;
+  }
+
+  private void buildGroovyScriptExtensionMethods(final GroovyFile file) {
+    final HashMap<String, List<PsiMethod>> newMap = new HashMap<String, List<PsiMethod>>();
+    for (ScriptMembersProvider provider : ScriptMembersProviderRegistry.getInstance().getProviders()) {
+      if (provider.canBeProcessed(file)) {
+        provider.addExtensionMethods(newMap, file.getProject());
+      }
+    }
+    myScriptMethods = newMap;
   }
 
   private void addDefaultMethod(PsiMethod method, HashMap<String, List<PsiMethod>> map, boolean isStatic) {
@@ -191,90 +202,36 @@ public class GroovyPsiManager implements ProjectComponent {
     hisMethods.add(convertMethod(method, isStatic));
   }
 
-  private static final String[] SWING_WIDGETS_METHODS = {
-          "action", "groovy.swing.impl.DefaultAction",
-          "actions", "java.util.List",
-          "map", "java.util.Map",
-          "buttonGroup", "javax.swing.ButtonGroup",
-          "bind", "org.codehaus.groovy.binding.BindingUpdatable",
-          "model", "org.codehaus.groovy.binding.ModelBinding",
-          "widget", "java.awt.Component",
-          "container", "java.awt.Container",
-          "bean", "java.lang.Object",
-          "dialog", "javax.swing.JDialog",
-          "fileChooser", "javax.swing.JFileChooser",
-          "frame", "javax.swing.JFrame",
-          "optionPane", "javax.swing.JOptionPane",
-          "window", "javax.swing.JWindow",
-          "button", "javax.swing.JButton",
-          "checkBox", "javax.swing.JCheckBox",
-          "checkBoxMenuItem", "javax.swing.JCheckBoxMenuItem",
-          "menuItem", "javax.swing.JMenuItem",
-          "radioButton", "javax.swing.JRadioButton",
-          "radioButtonMenuItem", "javax.swing.JRadioButtonMenuItem",
-          "toggleButton", "javax.swing.JToggleButton",
+  private static final String[] SWING_WIDGETS_METHODS =
+    {"action", "groovy.swing.impl.DefaultAction", "actions", "java.util.List", "map", "java.util.Map", "buttonGroup",
+      "javax.swing.ButtonGroup", "bind", "org.codehaus.groovy.binding.BindingUpdatable", "model",
+      "org.codehaus.groovy.binding.ModelBinding", "widget", "java.awt.Component", "container", "java.awt.Container", "bean",
+      "java.lang.Object", "dialog", "javax.swing.JDialog", "fileChooser", "javax.swing.JFileChooser", "frame", "javax.swing.JFrame",
+      "optionPane", "javax.swing.JOptionPane", "window", "javax.swing.JWindow", "button", "javax.swing.JButton", "checkBox",
+      "javax.swing.JCheckBox", "checkBoxMenuItem", "javax.swing.JCheckBoxMenuItem", "menuItem", "javax.swing.JMenuItem", "radioButton",
+      "javax.swing.JRadioButton", "radioButtonMenuItem", "javax.swing.JRadioButtonMenuItem", "toggleButton", "javax.swing.JToggleButton",
 
-          "editorPane", "javax.swing.JEditorPane",
-          "label", "javax.swing.JLabel",
-          "passwordField", "javax.swing.JPasswordField",
-          "textArea", "javax.swing.JTextArea",
-          "textField", "javax.swing.JTextField",
-          "textPane", "javax.swing.JTextPane",
+      "editorPane", "javax.swing.JEditorPane", "label", "javax.swing.JLabel", "passwordField", "javax.swing.JPasswordField", "textArea",
+      "javax.swing.JTextArea", "textField", "javax.swing.JTextField", "textPane", "javax.swing.JTextPane",
 
-          "colorChooser", "javax.swing.JColorChooser",
-          "comboBox", "javax.swing.JComboBox",
-          "desktopPane", "javax.swing.JDesktopPane",
-          "formattedTextField", "javax.swing.JFormattedTextField",
-          "internalFrame", "javax.swing.JInternalFrame",
-          "layeredPane", "javax.swing.JLayeredPane",
-          "list", "javax.swing.JList",
-          "menu", "javax.swing.JMenu",
-          "menuBar", "javax.swing.JMenuBar",
-          "panel", "javax.swing.JPanel",
-          "popupMenum", "javax.swing.JPopupMenu",
-          "progressBar", "javax.swing.JProgressBar",
-          "scrollBar", "javax.swing.JScrollBar",
-          "scrollPane", "javax.swing.JScrollPane",
-          "separator", "javax.swing.JSeparator",
-          "slider", "javax.swing.JSlider",
-          "spinner", "javax.swing.JSpinner",
-          "splitPane", "javax.swing.JSplitPane",
-          "tabbedPane", "javax.swing.JTabbedPane",
-          "table", "javax.swing.JTable",
-          "tableColumn", "javax.swing.table.TableColumn",
-          "toolbar", "javax.swing.JToolbar",
-          "tree", "javax.swing.JTree",
-          "viewport", "javax.swing.JViewport",
-          "boundedRangeModel", "javax.swing.DefaultBoundedRangeModel",
-          "spinnerDateModel", "javax.swing.SpinnerDateModel",
-          "spinnerListModel", "javax.swing.SpinnerListModel",
-          "spinnerNumberModel", "javax.swing.SpinnerNumberModel",
-          "tableModel", "javax.swing.table.TableModel",
-          "propertyColumn", "javax.swing.table.TableColumn",
-          "closureColumn", "javax.swing.table.TableColumn",
-          "borderLayout", "java.awt.BorderLayout",
-          "cardLayout", "java.awt.CardLayout",
-          "flowLayout", "java.awt.FlowLayout",
-          "gridBagLayout", "java.awt.GridBagLayout",
-          "gridLayout", "java.awt.GridLayout",
-          "overlayLayout", "java.swing.OverlayLayout",
-          "springLayout", "java.swing.SpringLayout",
-          "gridBagConstraints", "java.awt.GridBagConstraints",
-          "gbc", "java.awt.GridBagConstraints",
-          "boxLayout", "javax.swing.BoxLayout",
-          "box", "javax.swing.Box",
-          "hbox", "javax.swing.Box",
-          "hglue", "java.awt.Component",
-          "hstrut", "java.awt.Component",
-          "vbox", "javax.swing.Box",
-          "vglue", "java.awt.Component",
-          "vstrut", "java.awt.Component",
-          "glue", "java.awt.Component",
-          "rigidArea", "java.awt.Component",
-          "tableLayout", "groovy.swing.impl.TableLayoutRow",
-          "tr", "groovy.swing.impl.TableLayoutRow",
-          "td", "groovy.swing.impl.TableLayoutCell",
-  };
+      "colorChooser", "javax.swing.JColorChooser", "comboBox", "javax.swing.JComboBox", "desktopPane", "javax.swing.JDesktopPane",
+      "formattedTextField", "javax.swing.JFormattedTextField", "internalFrame", "javax.swing.JInternalFrame", "layeredPane",
+      "javax.swing.JLayeredPane", "list", "javax.swing.JList", "menu", "javax.swing.JMenu", "menuBar", "javax.swing.JMenuBar", "panel",
+      "javax.swing.JPanel", "popupMenum", "javax.swing.JPopupMenu", "progressBar", "javax.swing.JProgressBar", "scrollBar",
+      "javax.swing.JScrollBar", "scrollPane", "javax.swing.JScrollPane", "separator", "javax.swing.JSeparator", "slider",
+      "javax.swing.JSlider", "spinner", "javax.swing.JSpinner", "splitPane", "javax.swing.JSplitPane", "tabbedPane",
+      "javax.swing.JTabbedPane", "table", "javax.swing.JTable", "tableColumn", "javax.swing.table.TableColumn", "toolbar",
+      "javax.swing.JToolbar", "tree", "javax.swing.JTree", "viewport", "javax.swing.JViewport", "boundedRangeModel",
+      "javax.swing.DefaultBoundedRangeModel", "spinnerDateModel", "javax.swing.SpinnerDateModel", "spinnerListModel",
+      "javax.swing.SpinnerListModel", "spinnerNumberModel", "javax.swing.SpinnerNumberModel", "tableModel", "javax.swing.table.TableModel",
+      "propertyColumn", "javax.swing.table.TableColumn", "closureColumn", "javax.swing.table.TableColumn", "borderLayout",
+      "java.awt.BorderLayout", "cardLayout", "java.awt.CardLayout", "flowLayout", "java.awt.FlowLayout", "gridBagLayout",
+      "java.awt.GridBagLayout", "gridLayout", "java.awt.GridLayout", "overlayLayout", "java.swing.OverlayLayout", "springLayout",
+      "java.swing.SpringLayout", "gridBagConstraints", "java.awt.GridBagConstraints", "gbc", "java.awt.GridBagConstraints", "boxLayout",
+      "javax.swing.BoxLayout", "box", "javax.swing.Box", "hbox", "javax.swing.Box", "hglue", "java.awt.Component", "hstrut",
+      "java.awt.Component", "vbox", "javax.swing.Box", "vglue", "java.awt.Component", "vstrut", "java.awt.Component", "glue",
+      "java.awt.Component", "rigidArea", "java.awt.Component", "tableLayout", "groovy.swing.impl.TableLayoutRow", "tr",
+      "groovy.swing.impl.TableLayoutRow", "td", "groovy.swing.impl.TableLayoutCell",};
 
   private void addSwingBuilderMethods() {
     PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
@@ -329,18 +286,32 @@ public class GroovyPsiManager implements ProjectComponent {
     return methods;
   }
 
-  public List<PsiField> getDefaultScriptProperties(GroovyFile file, final Project project) {
-    if (myDefaultProperties == null) {
-      buildGroovyScriptExtensionProperties(myProject, file);
+  public List<PsiField> getDefaultScriptProperties(GroovyFile file) {
+    if (myScriptProperties == null) {
+      buildGroovyScriptExtensionProperties(file);
     }
     final String ext = getScriptType(file);
-    if (myDefaultProperties == null || ext == null) {
+    if (myScriptProperties == null || ext == null) {
       return Collections.emptyList();
     }
 
-    List<PsiField> properties = myDefaultProperties.get(ext);
+    List<PsiField> properties = myScriptProperties.get(ext);
     if (properties == null) return Collections.emptyList();
     return properties;
+  }
+
+  public List<PsiMethod> getDefaultScriptMethods(GroovyFile file) {
+    if (myScriptMethods == null) {
+      buildGroovyScriptExtensionMethods(file);
+    }
+    final String ext = getScriptType(file);
+    if (myScriptMethods == null || ext == null) {
+      return Collections.emptyList();
+    }
+
+    List<PsiMethod> methods = myScriptMethods.get(ext);
+    if (methods == null) return Collections.emptyList();
+    return methods;
   }
 
   /**
