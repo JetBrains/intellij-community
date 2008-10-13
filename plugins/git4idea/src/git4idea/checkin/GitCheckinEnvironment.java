@@ -272,7 +272,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   public static GitSimpleHandler commit(Project project, VirtualFile root, Collection<FilePath> files, File message) {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, "commit");
-    handler.addParameters("-F", message.getAbsolutePath());
+    handler.addParameters("--only", "-F", message.getAbsolutePath());
     handler.endOptions();
     handler.addRelativePaths(files);
     handler.setNoSSH(true);
@@ -307,23 +307,21 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   private Map<VirtualFile, List<Change>> sortChangesByVcsRoot(@NotNull List<Change> changes) {
     Map<VirtualFile, List<Change>> result = new HashMap<VirtualFile, List<Change>>();
-
     for (Change change : changes) {
       final ContentRevision afterRevision = change.getAfterRevision();
       final ContentRevision beforeRevision = change.getBeforeRevision();
-      if (beforeRevision != null) {
-        final FilePath filePath = afterRevision != null ? afterRevision.getFile() : beforeRevision.getFile();
-        final VirtualFile vcsRoot = GitUtil.getVcsRoot(myProject, filePath);
-
-        List<Change> changeList = result.get(vcsRoot);
-        if (changeList == null) {
-          changeList = new ArrayList<Change>();
-          result.put(vcsRoot, changeList);
-        }
-        changeList.add(change);
+      // nothing-to-nothing change cannot happen.
+      assert beforeRevision != null || afterRevision != null;
+      // note that any path will work, because changes could happen within single vcs root
+      final FilePath filePath = afterRevision != null ? afterRevision.getFile() : beforeRevision.getFile();
+      final VirtualFile vcsRoot = GitUtil.getVcsRoot(myProject, filePath);
+      List<Change> changeList = result.get(vcsRoot);
+      if (changeList == null) {
+        changeList = new ArrayList<Change>();
+        result.put(vcsRoot, changeList);
       }
+      changeList.add(change);
     }
-
     return result;
   }
 
@@ -337,5 +335,4 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     // Otherwise it is not possible to detect moves.
     myDirtyScopeManager.dirDirtyRecursively(root);
   }
-
 }
