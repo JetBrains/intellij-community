@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.meta.PsiWritableMetaData;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
@@ -151,12 +152,12 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   protected final XmlAttributeDescriptor[] collectAttributeDescriptors(final XmlTag context) {
     final XmlAttributeDescriptor[] attrDescrs;
     final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
-    if (getName().equals("td")) {
-      int a = 1;
-    }
+
     for (XmlAttlistDecl attlistDecl : findAttlistDecls(getName())) {
       for (XmlAttributeDecl attributeDecl : attlistDecl.getAttributeDecls()) {
-        result.add((XmlAttributeDescriptor)attributeDecl.getMetaData());
+        final PsiMetaData psiMetaData = attributeDecl.getMetaData();
+        assert psiMetaData instanceof XmlAttributeDescriptor;
+        result.add((XmlAttributeDescriptor)psiMetaData);
       }
     }
 
