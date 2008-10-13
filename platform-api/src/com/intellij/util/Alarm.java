@@ -248,7 +248,7 @@ public class Alarm implements Disposable {
 
   public Alarm setActivationComponent(@NotNull final JComponent component) {
     myActivationComponent = component;
-    final UiNotifyConnector connector = new UiNotifyConnector(component, new Activatable() {
+    new UiNotifyConnector(component, new Activatable() {
       public void showNotify() {
         flushPending();
       }
@@ -257,8 +257,6 @@ public class Alarm implements Disposable {
       }
     });
 
-    
-    Disposer.register(this, connector);
 
     return this;
   }
