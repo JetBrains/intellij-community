@@ -1,8 +1,9 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -209,8 +210,15 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   @Override
   public boolean includeSelfInGotoImplementation(final PsiElement element) {
+    final TargetElementEvaluator elementEvaluator = targetElementEvaluator.forLanguage(element.getLanguage());
+    if (elementEvaluator != null) {
+      return elementEvaluator.includeSelfInGotoImplementation(element);
+    }
+
     final boolean isAbstract =
       element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.ABSTRACT);
     return !isAbstract;
   }
+
+  private LanguageExtension<TargetElementEvaluator> targetElementEvaluator = new LanguageExtension<TargetElementEvaluator>("com.intellij.targetElementEvaluator");
 }

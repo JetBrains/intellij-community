@@ -351,4 +351,6 @@
 
   <extensionPoint name="templateCompletionProcessor"
                   interface="com.intellij.codeInsight.template.macro.TemplateCompletionProcessor"/>
+
+  <extensionPoint name="targetElementEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 </extensionPoints>
