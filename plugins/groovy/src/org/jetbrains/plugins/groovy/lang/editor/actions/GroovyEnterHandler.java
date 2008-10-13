@@ -139,9 +139,6 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
           iterator = highlighter.createIterator(caret);
           if (GroovyTokenTypes.mRCURLY == iterator.getTokenType()) {
             myOriginalHandler.execute(editor, context);
-            myOriginalHandler.execute(editor, context);
-            editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
-            GroovyEditorActionUtil.insertSpacesByGroovyIndent(editor, project);
             return true;
           }
         }

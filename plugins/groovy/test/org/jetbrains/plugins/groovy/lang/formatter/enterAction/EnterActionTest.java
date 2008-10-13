@@ -91,6 +91,8 @@ public class EnterActionTest extends ActionTestCase {
       myEditor = null;
     }
 
+    System.out.println(result);
+
     return result;
   }
 

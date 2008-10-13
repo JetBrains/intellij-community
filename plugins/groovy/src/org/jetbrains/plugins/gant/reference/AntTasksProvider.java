@@ -35,10 +35,10 @@ public class AntTasksProvider implements ProjectComponent {
 
   public AntTasksProvider(Project project) {
     myProject = project;
+    myRootConnection = myProject.getMessageBus().connect();
   }
 
   public void projectOpened() {
-    myRootConnection = myProject.getMessageBus().connect();
     myRootConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
 
       public void beforeRootsChange(ModuleRootEvent event) {
@@ -64,8 +64,6 @@ public class AntTasksProvider implements ProjectComponent {
   }
 
   public void projectClosed() {
-    myRootConnection.disconnect();
-    myAntTaks.clear();
   }
 
   @NotNull
