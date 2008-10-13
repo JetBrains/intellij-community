@@ -152,7 +152,7 @@ public class GroovyCompletionData extends CompletionData {
     registerVariant(variant);
   }
 
-  private CompletionVariant setUpFilter(ElementFilter filter) {
+  private static CompletionVariant setUpFilter(ElementFilter filter) {
     LeftNeighbour afterDotFilter = new LeftNeighbour(new TextFilter("."));
     CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
     variant.includeScopeClass(LeafPsiElement.class);
