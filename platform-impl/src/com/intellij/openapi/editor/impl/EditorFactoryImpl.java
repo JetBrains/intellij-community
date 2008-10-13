@@ -1,7 +1,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
@@ -131,7 +130,6 @@ public class EditorFactoryImpl extends EditorFactory {
   }
 
   private Editor createEditor(@NotNull Document document, boolean isViewer, Project project) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     Document hostDocument = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
     EditorImpl editor = new EditorImpl(hostDocument, isViewer, project);
     myEditors.add(editor);

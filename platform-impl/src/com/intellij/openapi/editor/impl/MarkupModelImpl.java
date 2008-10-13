@@ -8,7 +8,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -45,7 +44,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @NotNull
   public RangeHighlighter addLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     if (lineNumber >= getDocument().getLineCount() || lineNumber < 0) {
       throw new IndexOutOfBoundsException("lineNumber:" + lineNumber + ". Shold be in [0, " + (getDocument().getLineCount() - 1) + "]");
     }
@@ -56,7 +54,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   public RangeHighlighter addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     if (lineNumber >= getDocument().getLineCount() || lineNumber < 0) return null;
 
     int offset = getFirstNonspaceCharOffset(getDocument(), lineNumber);
@@ -81,7 +78,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @NotNull
   public RangeHighlighter[] getAllHighlighters() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myCachedHighlighters == null) {
       myCachedHighlighters = myHighlighters.toArray(new RangeHighlighter[myHighlighters.size()]);
     }
@@ -94,7 +90,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                                TextAttributes textAttributes,
                                                HighlighterTargetArea targetArea,
                                                boolean isPersistent) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
 
     RangeHighlighterImpl segmentHighlighter = new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea,
                                                                        textAttributes, isPersistent);
@@ -116,7 +111,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   public void removeHighlighter(RangeHighlighter segmentHighlighter) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     boolean removed = myHighlighters.remove(segmentHighlighter);
     myCachedHighlighters = null;
     LOG.assertTrue(removed);
@@ -125,7 +119,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   public void removeAllHighlighters() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     for (RangeHighlighter highlighter : myHighlighters) {
       fireSegmentHighlighterChanged(highlighter);
       myHighlighterList.removeSegmentHighlighter(highlighter);
@@ -172,7 +165,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   public HighlighterList getHighlighterList() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     return myHighlighterList;
   }
 

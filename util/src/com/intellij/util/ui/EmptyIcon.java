@@ -16,6 +16,8 @@
 
 package com.intellij.util.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -30,6 +32,10 @@ public class EmptyIcon implements Icon {
   public EmptyIcon(int width, int height) {
     myWidth = width;
     myHeight = height;
+  }
+
+  public EmptyIcon(@NotNull Icon template) {
+    this(template.getIconWidth(), template.getIconHeight());
   }
 
   public int getIconWidth() {

@@ -86,10 +86,11 @@ public abstract class CodeStyleAbstractPanel {
   protected CodeStyleAbstractPanel(CodeStyleSettings settings) {
     mySettings = settings;
     myEditor = createEditor();
+    myUpdateAlarm.setActivationComponent(myEditor.getComponent());
     myUserActivityWatcher.addUserActivityListener(new UserActivityListener() {
       public void stateChanged() {
         somethingChanged();
-        myUpdateAlarm.addRequest(new Runnable() {
+        myUpdateAlarm.addComponentRequest(new Runnable() {
           public void run() {
             myUpdateAlarm.cancelAllRequests();
             updatePreview();
@@ -158,7 +159,7 @@ public abstract class CodeStyleAbstractPanel {
   protected abstract int getRightMargin();
 
   protected final void updatePreview() {
-    if (!myShouldUpdatePreview) {
+    if (!myShouldUpdatePreview || !myEditor.getComponent().isShowing()) {
       return;
     }
 

@@ -30,15 +30,25 @@ public class AsyncProcessIcon extends AnimatedIcon {
   public static final int CYCLE_LENGTH = 800;
 
   public AsyncProcessIcon(@NonNls String name) {
+    this(name, "/process/step_", "/process/step_passive.png");
+  }
+
+  protected AsyncProcessIcon(@NonNls String name, String prefix, String passivePath) {
     super(name);
 
     Icon[] icons = new Icon[COUNT];
     for (int i = 0; i <= COUNT - 1; i++) {
-      icons[i] = IconLoader.getIcon("/process/step_" + (i + 1) + ".png");
+      icons[i] = IconLoader.getIcon(prefix + (i + 1) + ".png");
     }
-    Icon passive = IconLoader.getIcon("/process/step_passive.png");
+    Icon passive = passivePath != null ? IconLoader.getIcon(passivePath) : new EmptyIcon(icons[0]);
 
     init(icons, passive, CYCLE_LENGTH, 0, -1);
+  }
+
+  public static class Big extends AsyncProcessIcon {
+    public Big(@NonNls final String name) {
+      super(name, "/process/big/step_", "/process/big/step_passive.png");
+    }
   }
 
   public static void main(String[] args) {
@@ -50,7 +60,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
     JPanel content = new JPanel(new FlowLayout());
 
 
-    AsyncProcessIcon progress = new AsyncProcessIcon("Process");
+    AsyncProcessIcon progress = new Big("Process");
     content.add(progress);
 
     JButton button = new JButton("press me");

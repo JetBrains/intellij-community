@@ -107,12 +107,15 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   private void onSelectionChanged(final Component component) {
+    if (component != null && !component.isShowing()) return;
+
     if (!isAutoScrollMode()) {
       return;
     }
     if (needToCheckFocus() && !component.hasFocus()) {
       return;
     }
+
     myAutoScrollAlarm.cancelAllRequests();
     myAutoScrollAlarm.addRequest(
       new Runnable() {

@@ -21,6 +21,7 @@ public class OptionsEditorContext {
   Configurable myCurrentConfigurable;
   Set<Configurable> myModified = new CopyOnWriteArraySet<Configurable>();
   Map<Configurable, ConfigurationException> myErrors = new HashMap<Configurable, ConfigurationException>();
+  private boolean myHoldingFilter;
 
   public OptionsEditorContext(ElementFilter.Active filter) {
     myFilter = filter;
@@ -98,6 +99,17 @@ public class OptionsEditorContext {
     }
   }
 
+  public boolean isModified(final Configurable configurable) {
+    return myModified.contains(configurable);
+  }
+
+  public void setHoldingFilter(final boolean holding) {
+    myHoldingFilter = holding;
+  }
+
+  public boolean isHoldingFilter() {
+    return myHoldingFilter;
+  }
 
   interface ColleagueAction {
     void process(OptionsEditorColleague colleague);

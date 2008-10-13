@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.xml.sax.SAXException;
 
@@ -50,19 +51,19 @@ public class RepositoryHelper {
       String buildNumber = RepositoryHelper.ExtractBuildNumber();
       @NonNls String url = RepositoryHelper.REPOSITORY_LIST_URL + "?build=" + buildNumber;
 
-      label.setText(IdeBundle.message("progress.connecting.to.plugin.manager", RepositoryHelper.REPOSITORY_HOST));
+      setLabelText(label, IdeBundle.message("progress.connecting.to.plugin.manager", RepositoryHelper.REPOSITORY_HOST));
       HttpConfigurable.getInstance().prepareURL(RepositoryHelper.REPOSITORY_HOST);
 //      if( !pi.isCanceled() )
       {
         RepositoryContentHandler handler = new RepositoryContentHandler();
         HttpURLConnection connection = (HttpURLConnection)new URL (url).openConnection();
 
-        label.setText(IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", RepositoryHelper.REPOSITORY_HOST));
+        setLabelText(label, IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", RepositoryHelper.REPOSITORY_HOST));
 
         InputStream is = RepositoryHelper.getConnectionInputStream( connection );
         if (is != null)
         {
-          label.setText(IdeBundle.message("progress.downloading.list.of.plugins"));
+          setLabelText(label, IdeBundle.message("progress.downloading.list.of.plugins"));
           File temp = RepositoryHelper.CreateLocalPluginsDescriptions();
           RepositoryHelper.ReadPluginsStream( temp, is, handler );
 
@@ -78,6 +79,14 @@ public class RepositoryHelper {
       }
     }
     return plugins;
+  }
+
+  private static void setLabelText(final JLabel label, final String message) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        label.setText(message);
+      }
+    });
   }
 
 

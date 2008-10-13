@@ -15,6 +15,7 @@ import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,7 +135,12 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     });
 
     optionGroup.add(myIndentOptionsTabs.getComponent());
-    updatePreviewEditor();
+
+    UiNotifyConnector.doWhenFirstShown(myPanel, new Runnable() {
+      public void run() {
+        updatePreviewEditor();
+      }
+    });
 
     return optionGroup.createPanel();
   }

@@ -8,9 +8,13 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.codeInsight.hint.*;
+import com.intellij.codeInsight.hint.LineTooltipRenderer;
+import com.intellij.codeInsight.hint.TooltipController;
+import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.hint.TooltipRenderer;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -414,13 +418,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   public void setErrorStripeRenderer(ErrorStripeRenderer renderer) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     myErrorStripeRenderer = renderer;
     //try to not cancel tooltips here, since it is being called after every writeAction, even to the console
     //HintManager.getInstance().getTooltipController().cancelTooltips();
     if (myErrorPanel != null) {
       myErrorPanel.repaint();
     }
+  }
+
+  private void assertIsDispatchThread() {
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditor.getComponent());
   }
 
   public ErrorStripeRenderer getErrorStripeRenderer() {

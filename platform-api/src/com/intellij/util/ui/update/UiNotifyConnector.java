@@ -19,7 +19,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
@@ -106,6 +108,17 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
         Disposer.dispose(this);
       }
     }
+  }
+
+  public static void doWhenFirstShown(@NotNull JComponent c, @NotNull final Runnable runnable) {
+    new Once(c, new Activatable() {
+      public void showNotify() {
+        runnable.run();        
+      }
+
+      public void hideNotify() {
+      }
+    });
   }
 
 }

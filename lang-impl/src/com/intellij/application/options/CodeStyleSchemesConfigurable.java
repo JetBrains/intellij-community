@@ -203,7 +203,10 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
       if (myOption != null){
         final CodeStyleSettingsPanel activePanel = getActivePanel();
         if (activePanel != null && activePanel.isInitialized()){
-          activePanel.showOption(this, myOption).run();
+          final Runnable runnable = activePanel.showOption(this, myOption);
+          if (runnable != null) {
+            runnable.run();
+          }
           myOption = null;
         }
       }

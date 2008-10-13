@@ -1,8 +1,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.IJSwingUtilities;
@@ -51,8 +51,6 @@ public class TabbedPaneWrapper {
 
 
   public TabbedPaneWrapper(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation) {
-    assertIsDispatchThread();
-
     myTabbedPane = createTabbedPane(tabPlacement);
     myTabbedPane.putClientProperty(TabbedPaneWrapper.class, myTabbedPane);
     myTabbedPane.myInstallKeyboardNavigation = installKeyboardNavigation;
@@ -60,12 +58,14 @@ public class TabbedPaneWrapper {
     myTabbedPaneHolder.add(myTabbedPane, BorderLayout.CENTER);
     myTabbedPaneHolder.setFocusCycleRoot(true);
     myTabbedPaneHolder.setFocusTraversalPolicy(new _MyFocusTraversalPolicy());
+
+    assertIsDispatchThread();
   }
 
-  private static void assertIsDispatchThread() {
-    final Application application = ApplicationManager.getApplication();
+  private void assertIsDispatchThread() {
+    final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     if (application != null){
-      application.assertIsDispatchThread();
+      application.assertIsDispatchThread(myTabbedPane);
     }
   }
 

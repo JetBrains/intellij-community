@@ -413,8 +413,8 @@ public class ActionsTree {
         myTree.expandPath(new TreePath(node.getPath()));
       }
 
-      Alarm alarm = new Alarm();
-      alarm.addRequest(new Runnable() {
+      Alarm alarm = new Alarm().setActivationComponent(myComponent);
+      alarm.addComponentRequest(new Runnable() {
         public void run() {
           final ArrayList<DefaultMutableTreeNode> nodesToSelect = getNodesByPaths(mySelectionPaths);
           for (DefaultMutableTreeNode node : nodesToSelect) {

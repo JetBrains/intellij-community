@@ -21,8 +21,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -31,7 +35,10 @@ public class Alarm implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.Alarm");
 
   private boolean myDisposed;
+
   private final List<Request> myRequests = new ArrayList<Request>();
+  private final List<Request> myPendingRequests = new ArrayList<Request>();
+
   private final ExecutorService myExecutorService;
 
   @NonNls private static final String ALARM_THREADS_POOL_NAME = "Alarm pool";
@@ -49,6 +56,8 @@ public class Alarm implements Disposable {
 
   private final Object LOCK = new Object();
   private final ThreadToUse myThreadToUse;
+
+  private JComponent myActivationComponent;
 
   public void dispose() {
     myDisposed = true;
@@ -91,44 +100,78 @@ public class Alarm implements Disposable {
     _addRequest(request, delayMillis, myThreadToUse == ThreadToUse.SWING_THREAD ? ModalityState.current() : null);
   }
 
-  public void addRequest(final Runnable request, int delayMillis, ModalityState modalityState) {
+  public void addComponentRequest(Runnable request, int delay) {
+    assert myActivationComponent != null;
+    _addRequest(request, delay, ModalityState.stateForComponent(myActivationComponent));
+  }
+
+  public void addRequest(final Runnable request, int delayMillis, final ModalityState modalityState) {
     LOG.assertTrue(myThreadToUse == ThreadToUse.SWING_THREAD);
     _addRequest(request, delayMillis, modalityState);
   }
 
   private void _addRequest(final Runnable request, int delayMillis, ModalityState modalityState) {
     synchronized (LOCK) {
-      final Request requestToSchedule = new Request(request, modalityState);
-      final ScheduledFuture<?> future = JobScheduler.getScheduler().schedule(requestToSchedule, delayMillis, TimeUnit.MILLISECONDS);
-      requestToSchedule.setFuture(future);
-      myRequests.add(requestToSchedule);
+      final Request requestToSchedule = new Request(request, modalityState, delayMillis);
+
+      if (myActivationComponent == null || myActivationComponent.isShowing()) {
+        _add(requestToSchedule);
+      } else {
+        if (!myPendingRequests.contains(requestToSchedule)) {
+          myPendingRequests.add(requestToSchedule);
+        }
+      }
     }
+  }
+
+  private void _add(final Request requestToSchedule) {
+    final ScheduledFuture<?> future = JobScheduler.getScheduler().schedule(requestToSchedule, requestToSchedule.myDelay, TimeUnit.MILLISECONDS);
+    requestToSchedule.setFuture(future);
+    myRequests.add(requestToSchedule);
+  }
+
+  private void flushPending() {
+    for (Request each : myPendingRequests) {
+      _add(each);
+    }
+
+    myPendingRequests.clear();
   }
 
   public boolean cancelRequest(Runnable request) {
     synchronized (LOCK) {
-      for (int i = myRequests.size()-1; i>=0; i--) {
-        Request r = myRequests.get(i);
-        if (r.getTask() == request) {
-          r.cancel();
-          myRequests.remove(i);
-        }
-      }
-
+      cancelRequest(request, myRequests);
+      cancelRequest(request, myPendingRequests);
       return true;
+    }
+  }
+
+  private void cancelRequest(final Runnable request, final List<Request> list) {
+    for (int i = list.size()-1; i>=0; i--) {
+      Request r = list.get(i);
+      if (r.getTask() == request) {
+        r.cancel();
+        list.remove(i);
+      }
     }
   }
 
   public int cancelAllRequests() {
     synchronized (LOCK) {
-      int count = 0;
-      for (Request request : myRequests) {
-        count++;
-        request.cancel();
-      }
-      myRequests.clear();
+      int count = cancelAllRequests(myRequests);
+      cancelAllRequests(myPendingRequests);
       return count;
     }
+  }
+
+  private int cancelAllRequests(final List<Request> list) {
+    int count = 0;
+    for (Request request : list) {
+      count++;
+      request.cancel();
+    }
+    list.clear();
+    return count;
   }
 
   public int getActiveRequestCount() {
@@ -141,10 +184,12 @@ public class Alarm implements Disposable {
     private Runnable myTask;
     private final ModalityState myModalityState;
     private Future<?> myFuture;
+    private int myDelay;
 
-    public Request(final Runnable task, final ModalityState modalityState) {
+    public Request(final Runnable task, final ModalityState modalityState, int delayMillis) {
       myTask = task;
       myModalityState = modalityState;
+      myDelay = delayMillis;
     }
 
     public void run() {
@@ -194,8 +239,27 @@ public class Alarm implements Disposable {
     }
 
     private void cancel() {
-      myFuture.cancel(false);
+      if (myFuture != null) {
+        myFuture.cancel(false);
+      }
       myTask = null;
     }
+  }
+
+  public Alarm setActivationComponent(@NotNull final JComponent component) {
+    myActivationComponent = component;
+    final UiNotifyConnector connector = new UiNotifyConnector(component, new Activatable() {
+      public void showNotify() {
+        flushPending();
+      }
+
+      public void hideNotify() {
+      }
+    });
+
+    
+    Disposer.register(this, connector);
+
+    return this;
   }
 }

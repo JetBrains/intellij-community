@@ -224,4 +224,7 @@ public class MockApplication extends MockComponentManager implements Application
     throws Throwable {
     return null;
   }
+
+  public void assertIsDispatchThread(@Nullable final JComponent component) {
+  }
 }

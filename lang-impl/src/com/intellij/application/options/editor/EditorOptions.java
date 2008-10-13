@@ -89,7 +89,7 @@ public class EditorOptions implements SearchableConfigurable.Parent {
     return null;
   }
 
-  private class Kid implements Configurable {
+  private class Kid implements SearchableConfigurable {
 
     String myName;
     JComponent myComponent;
@@ -130,6 +130,18 @@ public class EditorOptions implements SearchableConfigurable.Parent {
 
     public void disposeUIResources() {
       EditorOptions.this.disposeUIResources();
+    }
+
+    public String getId() {
+      return EditorOptions.this.getId();
+    }
+
+    public boolean clearSearch() {
+      return EditorOptions.this.clearSearch();
+    }
+
+    public Runnable enableSearch(final String option) {
+      return EditorOptions.this.enableSearch(option);
     }
   }
 

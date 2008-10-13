@@ -3,6 +3,7 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ErrorLabel;
@@ -108,7 +109,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     final JScrollPane scrolls = new JScrollPane(myTree);
     add(scrolls, BorderLayout.CENTER);
 
-    mySelection = new MergingUpdateQueue("OptionsTree", 250, false, this, this, this).setRestartTimerOnAdd(true);
+    mySelection = new MergingUpdateQueue("OptionsTree", 150, false, this, this, this).setRestartTimerOnAdd(true);
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(final TreeSelectionEvent e) {
         final TreePath path = e.getNewLeadSelectionPath();
@@ -163,12 +164,13 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
   }
 
   void queueSelection(final Configurable configurable) {
-    mySelection.queue(new Update(this) {
+    final Update update = new Update(this) {
       public void run() {
         if (configurable == null) {
           myTree.getSelectionModel().clearSelection();
           myContext.fireSelected(null, OptionsTree.this);
-        } else {
+        }
+        else {
           final EditorNode editorNode = myConfigurable2Node.get(configurable);
           myBuilder.select(myBuilder.getVisibleNodeFor(editorNode), new Runnable() {
             public void run() {
@@ -177,7 +179,8 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
           });
         }
       }
-    });
+    };
+    mySelection.queue(update);
   }
 
   void revalidateTree() {
@@ -207,6 +210,27 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     }
 
     return path;
+  }
+
+  @Nullable
+  public Configurable getParentFor(final Configurable configurable) {
+    final List<Configurable> path = getPathToRoot(configurable);
+    if (path.size() > 1) {
+      return path.get(1);
+    } else {
+      return null;
+    }
+  }
+
+  @Nullable
+  public SearchableConfigurable.Parent getResponsibleParentFor(Configurable configurable) {
+    final Configurable parent = getParentFor(configurable);
+    if (parent instanceof SearchableConfigurable.Parent) {
+      final SearchableConfigurable.Parent searchableParent = (SearchableConfigurable.Parent)parent;
+      return searchableParent.isResponsibleForChildren() ? searchableParent : null;
+    } else {
+      return null;
+    }
   }
 
 
@@ -261,6 +285,9 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       } else {
         result = configureComponent(value.toString(), null, null, null, selected, false, null, -1);
       }
+
+      final Font font = myTextLabel.getFont();
+      myTextLabel.setFont(font.deriveFont(myContext.isHoldingFilter() ? Font.BOLD : Font.PLAIN));
 
       myTextLabel.setForeground(fg);
 

@@ -851,6 +851,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
               "SystemEventQueueThread: " + describe(getEventQueueThread()));
   }
 
+  public void assertIsDispatchThread(@Nullable final JComponent component) {
+    if (component == null || component.getRootPane() == null) return;
+    assertIsDispatchThread();
+  }
+
   public void assertWriteAccessAllowed() {
     LOG.assertTrue(isWriteAccessAllowed(),
                    "Write access is allowed inside write-action only (see com.intellij.openapi.application.Application.runWriteAction())");

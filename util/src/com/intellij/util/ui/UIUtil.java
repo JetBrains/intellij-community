@@ -682,7 +682,7 @@ public class UIUtil {
     return parent == null ? c.getBackground() : parent.getBackground();
   }
 
-  private static
+  public static
   @Nullable
   Component findNearestOpaque(JComponent c) {
     Component eachParent = c;

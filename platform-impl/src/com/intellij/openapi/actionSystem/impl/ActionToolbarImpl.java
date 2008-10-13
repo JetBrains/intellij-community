@@ -22,6 +22,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -97,7 +98,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
     setLayout(new BorderLayout());
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
-    updateActionsImmediately();
+
+    UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
+      public void run() {
+        updateActionsImmediately();
+      }
+    });
+
     //
     keymapManager.addKeymapManagerListener(new WeakKeymapManagerListener(keymapManager, myKeymapManagerListener));
     actionManager.addTimerListener(500, new WeakTimerListener(actionManager, myTimerListener));

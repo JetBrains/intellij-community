@@ -10,6 +10,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -63,7 +64,7 @@ public class ScrollingModelImpl implements ScrollingModel {
   }
 
   public Rectangle getVisibleArea() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     if (myEditor.getScrollPane() == null) {
       return new Rectangle(0, 0, 0, 0);
     }
@@ -71,7 +72,7 @@ public class ScrollingModelImpl implements ScrollingModel {
   }
 
   public Rectangle getVisibleAreaOnScrollingFinished() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     if (myCurrentAnimatedRunnable != null) {
       return myCurrentAnimatedRunnable.getTargetVisibleArea();
     }
@@ -81,14 +82,14 @@ public class ScrollingModelImpl implements ScrollingModel {
   }
 
   public void scrollToCaret(ScrollType scrollType) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
     myEditor.validateSize();
     scrollTo(caretPosition, scrollType);
   }
 
   public void scrollTo(LogicalPosition pos, ScrollType scrollType) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     if (myEditor.getScrollPane() == null) return;
 
     AnimatedScrollingRunnable canceledThread = cancelAnimatedScrolling(false);
@@ -98,8 +99,12 @@ public class ScrollingModelImpl implements ScrollingModel {
     scrollToOffsets(p.x, p.y);
   }
 
+  private void assertIsDispatchThread() {
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditor.getComponent());
+  }
+
   public void runActionOnScrollingFinished(Runnable action) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
 
     synchronized (myAnimatedLock) {
       if (myCurrentAnimatedRunnable != null) {
@@ -186,7 +191,7 @@ public class ScrollingModelImpl implements ScrollingModel {
   }
 
   public int getVerticalScrollOffset() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     if (myEditor.getScrollPane() == null) return 0;
 
     JScrollBar scrollbar = myEditor.getScrollPane().getVerticalScrollBar();
@@ -194,7 +199,7 @@ public class ScrollingModelImpl implements ScrollingModel {
   }
 
   public int getHorizontalScrollOffset() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     if (myEditor.getScrollPane() == null) return 0;
 
     JScrollBar scrollbar = myEditor.getScrollPane().getHorizontalScrollBar();
@@ -206,7 +211,7 @@ public class ScrollingModelImpl implements ScrollingModel {
   }
 
   private void _scrollVertically(int scrollOffset) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     if (myEditor.getScrollPane() == null) return;
 
     myEditor.validateSize();
@@ -226,7 +231,7 @@ public class ScrollingModelImpl implements ScrollingModel {
   }
 
   private void _scrollHorizontally(int scrollOffset) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     if (myEditor.getScrollPane() == null) return;
 
     myEditor.validateSize();
@@ -423,7 +428,7 @@ public class ScrollingModelImpl implements ScrollingModel {
     }
 
     public void cancel(boolean scrollToTarget) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      assertIsDispatchThread();
       synchronized (myAnimatedLock) {
         myCanceled = true;
         finish(false, scrollToTarget);

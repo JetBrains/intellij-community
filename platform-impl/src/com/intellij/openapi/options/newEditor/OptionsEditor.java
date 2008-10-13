@@ -4,6 +4,7 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -12,11 +13,9 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.AbstractPainter;
-import com.intellij.openapi.ui.DetailsComponent;
-import com.intellij.openapi.ui.NullableComponent;
-import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.EdtRunnable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
@@ -60,12 +59,14 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   MySearchField mySearch;
   Splitter mySplitter;
   JComponent myToolbar;
-                             
+
   DetailsComponent myDetails = new DetailsComponent().setEmptyContentText("Select configuration element in the tree to edit its settings");
   ContentWrapper myContentWrapper = new ContentWrapper();
 
 
   Map<Configurable, JComponent> myConfigurable2Componenet = new HashMap<Configurable, JComponent>();
+  Map<Configurable, ActionCallback> myConfigurable2LoadCallback = new HashMap<Configurable, ActionCallback>();
+
   private MyColleague myColleague;
 
   MergingUpdateQueue myModificationChecker;
@@ -74,6 +75,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   private SpotlightPainter mySpotlightPainter = new SpotlightPainter();
   private MergingUpdateQueue mySpotlightUpdate;
+  private LoadingDecorator myLoadingDecorator;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProject = project;
@@ -131,7 +133,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     mySplitter.setFirstComponent(left);
     mySplitter.setHonorComponentsMinimumSize(false);
 
-    mySplitter.setSecondComponent(myDetails.getComponent());
+    myLoadingDecorator = new LoadingDecorator(myDetails.getComponent(), project);
+    mySplitter.setSecondComponent(myLoadingDecorator.getComponent());
 
     float proportion = .3f;
     try {
@@ -166,36 +169,89 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     IdeGlassPaneUtil.installPainter(myContentWrapper, mySpotlightPainter, this);
   }
 
-  private void processSelected(final Configurable configurable, Configurable oldConfigurable) {
-    checkModified(oldConfigurable);
-
+  private void processSelected(final Configurable configurable, final Configurable oldConfigurable) {
     if (configurable == null) {
       myDetails.setContent(null);
+
+      updateSpotlight(true);
+      checkModified(oldConfigurable);
     } else {
-      JComponent c = myConfigurable2Componenet.get(configurable);
-      boolean reset = false;
-      if (c == null) {
-        c = configurable.createComponent();
-        reset = true;
-        myConfigurable2Componenet.put(configurable, c);
+      getUiFor(configurable).doWhenDone(new EdtRunnable() {
+        public void runEdt() {
+          final Configurable current = getContext().getCurrentConfigurable();
+          if (current != configurable) return;
+
+
+          updateErrorBanner();
+
+          myDetails.setContent(myContentWrapper);
+          myDetails.setBannerMinHeight(myToolbar.getHeight());
+          myDetails.setText(getBannerText(configurable));
+
+
+          myDetails.setBannerActions(new Action[] {new ResetAction(configurable)});
+          myDetails.updateBannerActions();
+
+          myLoadingDecorator.stopLoading();
+
+          updateSpotlight(true);
+
+          checkModified(oldConfigurable);
+          checkModified(configurable);
+        }
+      });
+    }
+  }
+
+  private ActionCallback getUiFor(final Configurable configurable) {
+    final ActionCallback result = new ActionCallback();
+
+    if (!myConfigurable2Componenet.containsKey(configurable)) {
+
+      final ActionCallback readyCallback = myConfigurable2LoadCallback.get(configurable);
+      if (readyCallback != null) {
+        return readyCallback;
       }
 
-      updateErrorBanner();
+      myConfigurable2LoadCallback.put(configurable, result);
+      myLoadingDecorator.startLoading(false);
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          final JComponent c = configurable.createComponent();
 
-      myDetails.setContent(myContentWrapper);
-      myDetails.setBannerMinHeight(myToolbar.getHeight());
-      myDetails.setText(getBannerText(configurable));
+          final SearchableConfigurable.Parent responsibleParent = myTree.getResponsibleParentFor(configurable);
+          boolean reset = true;
+          if (responsibleParent != null && myConfigurable2Componenet.containsKey(responsibleParent)) {
+            reset = !responsibleParent.isResponsibleForChildren();
+          }
 
-      if (reset) {
-        reset(configurable);
-      }
+          if (reset) {
+            reset(configurable, false);
 
-      myDetails.setBannerActions(new Action[] {new ResetAction(configurable)});
-      myDetails.updateBannerActions();
+            if (responsibleParent != null && !myConfigurable2Componenet.containsKey(responsibleParent)) {
+              final JComponent parentComp = responsibleParent.createComponent();
+              myConfigurable2Componenet.put(responsibleParent, parentComp);
+            }
+          }
+
+
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            public void run() {
+              myConfigurable2Componenet.put(configurable, c);
+              result.setDone();
+              myConfigurable2LoadCallback.remove(configurable);
+            }
+          });
+        }
+      });
+
+    } else {
+      result.setDone();
     }
 
-    updateSpotlight(true);
+    return result;
   }
+
 
   private void updateSpotlight(boolean now) {
     if (now) {
@@ -224,10 +280,18 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   private void checkModified(final Configurable configurable) {
-    if (configurable != null && configurable.isModified()) {
-      getContext().fireModifiedAdded(configurable, null);
-    } else if (configurable != null && !configurable.isModified() && !getContext().getErrors().containsKey(configurable)) {
-      getContext().fireModifiedRemoved(configurable, null);
+    final Configurable parent = myTree.getResponsibleParentFor(configurable);
+    Configurable actual = parent != null ? parent : configurable;
+
+    fireModification(configurable);
+    fireModification(actual);
+  }
+
+  private void fireModification(final Configurable actual) {
+    if (actual != null && actual.isModified()) {
+      getContext().fireModifiedAdded(actual, null);
+    } else if (actual != null && !actual.isModified() && !getContext().getErrors().containsKey(actual)) {
+      getContext().fireModifiedRemoved(actual, null);
     }
   }
 
@@ -254,12 +318,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
 
     public void actionPerformed(final ActionEvent e) {
-      reset(myConfigurable);
+      reset(myConfigurable, true);
     }
 
     @Override
     public boolean isEnabled() {
-      return myConfigurable.isModified() || getContext().getErrors().containsKey(myConfigurable);
+      return myContext.isModified(myConfigurable) || getContext().getErrors().containsKey(myConfigurable); 
     }
   }
 
@@ -298,9 +362,11 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
   }
 
-  public void reset(Configurable configurable) {
+  public void reset(Configurable configurable, boolean notify) {
     configurable.reset();
-    getContext().fireReset(configurable);
+    if (notify) {
+      getContext().fireReset(configurable);
+    }
   }
 
   public void apply() {
@@ -370,8 +436,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     public void update(DocumentEvent e) {
       final String text = mySearch.getText();
       if (text == null || text.length() == 0) {
+        myContext.setHoldingFilter(false);
         myOptionContainers = null;
       } else {
+        myContext.setHoldingFilter(true);
         myOptionContainers = myIndex.getConfigurables(myGroups, e.getType(), myOptionContainers, text, myProject);
       }
 

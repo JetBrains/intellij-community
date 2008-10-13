@@ -11,9 +11,13 @@ import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.update.UiNotifyConnector;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -84,7 +88,11 @@ class TemplateListPanel extends JPanel {
       myExpandByCombo.setSelectedItem(SPACE);
     }
 
-    updateTemplateText();
+    UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
+      public void run() {
+        updateTemplateText();
+      }
+    });
 
     isModified = false;
     myUpdateNeeded = true;

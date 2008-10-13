@@ -8,7 +8,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -310,7 +309,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
   }
 
   private void validateCallContext() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(!myIsInUpdate, "Caret model is in its update process. All requests are illegal at this point.");
   }
 

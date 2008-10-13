@@ -8,7 +8,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -67,17 +67,21 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public boolean isOffsetCollapsed(int offset) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     return getCollapsedRegionAtOffset(offset) != null;
   }
 
+  private void assertIsDispatchThread() {
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditor.getComponent());
+  }
+
   public void setFoldingEnabled(boolean isEnabled) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     myIsFoldingEnabled = isEnabled;
   }
 
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     FoldRegion range = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholderText);
     if (isFoldingEnabled()) {
       if (!myIsBatchFoldingProcessing) {
@@ -97,7 +101,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   private void runBatchFoldingOperation(final Runnable operation, final boolean dontCollapseCaret) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     boolean oldDontCollapseCaret = myDoNotCollapseCaret;
     myDoNotCollapseCaret |= dontCollapseCaret;
     boolean oldBatchFlag = myIsBatchFoldingProcessing;
@@ -130,7 +134,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   @NotNull
   public FoldRegion[] getAllFoldRegions() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     return myFoldTree.fetchAllRegions();
   }
 
@@ -143,7 +147,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public FoldRegion getFoldingPlaceholderAt(Point p) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     LogicalPosition pos = myEditor.xyToLogicalPosition(p);
     int line = pos.line;
 
@@ -154,12 +158,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public FoldRegion[] getAllFoldRegionsIncludingInvalid() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     return myFoldTree.fetchAllRegionsIncludingInvalid();
   }
 
   public void removeFoldRegion(final FoldRegion region) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
 
     if (!myIsBatchFoldingProcessing) {
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
@@ -171,7 +175,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public void expandFoldRegion(FoldRegion region) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     if (region.isExpanded()) return;
 
     if (!myIsBatchFoldingProcessing) {
@@ -193,7 +197,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public void collapseFoldRegion(FoldRegion region) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     if (!region.isExpanded()) return;
 
     if (!myIsBatchFoldingProcessing) {

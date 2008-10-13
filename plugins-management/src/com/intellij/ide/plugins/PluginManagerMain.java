@@ -1,6 +1,5 @@
 package com.intellij.ide.plugins;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.search.SearchUtil;
@@ -10,7 +9,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressManager;
@@ -21,6 +19,9 @@ import com.intellij.ui.*;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.net.HTTPProxySettingsDialog;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,7 +167,6 @@ public class PluginManagerMain {
     myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManaer", getActionGroup(), true);
     myToolbarPanel.add(myActionToolbar.getComponent(), BorderLayout.WEST);
     myToolbarPanel.add(myFilter, BorderLayout.EAST);
-    myActionToolbar.updateActionsImmediately();
   }
 
   public void filter(String filter) {
@@ -174,14 +174,12 @@ public class PluginManagerMain {
   }
 
   public void reset() {
-    TableUtil.ensureSelectionExists(getPluginTable());
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          loadAvailablePlugins();
-        }
-      });
-    }
+    UiNotifyConnector.doWhenFirstShown(getPluginTable(), new Runnable() {
+      public void run() {
+        TableUtil.ensureSelectionExists(getPluginTable());
+        loadAvailablePlugins();
+      }
+    });
   }
 
   PluginTable getPluginTable() {
@@ -321,20 +319,24 @@ public class PluginManagerMain {
       }
 
       public void finished() {
-        if (list != null) {
-          modifyPluginsList(list);
-          setDownloadStatus(false);
-        }
-        else if (error != null) {
-          LOG.info(error);
-          setDownloadStatus(false);
-          if (0==Messages.showDialog(
-            IdeBundle.message("error.list.of.plugins.was.not.loaded", error.getMessage()),
-            IdeBundle.message("title.plugins"),
-            new String[]{CommonBundle.message("button.retry"), CommonBundle.getCancelButtonText()}, 0, Messages.getErrorIcon())) {
-            loadPluginsFromHostInBackground();
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            if (list != null) {
+              modifyPluginsList(list);
+              setDownloadStatus(false);
+            }
+            else if (error != null) {
+              LOG.info(error);
+              setDownloadStatus(false);
+              if (0==Messages.showDialog(
+                IdeBundle.message("error.list.of.plugins.was.not.loaded", error.getMessage()),
+                IdeBundle.message("title.plugins"),
+                new String[]{CommonBundle.message("button.retry"), CommonBundle.getCancelButtonText()}, 0, Messages.getErrorIcon())) {
+                loadPluginsFromHostInBackground();
+              }
+            }
           }
-        }
+        });
       }
     }.start();
   }
