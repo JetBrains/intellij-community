@@ -192,7 +192,7 @@ public abstract class MavenTestCase extends TestCase {
   }
 
   protected void updateProjectPom(String xml) throws IOException {
-    setFileContent(myProjectPom, xml);
+    setPomContent(myProjectPom, xml);
   }
 
   protected VirtualFile createModulePom(String relativePath, String xml) throws IOException {
@@ -200,16 +200,16 @@ public abstract class MavenTestCase extends TestCase {
   }
 
   protected void updateModulePom(String relativePath, String xml) throws IOException {
-    setFileContent(myProjectRoot.findFileByRelativePath(relativePath + "/pom.xml"), xml);
+    setPomContent(myProjectRoot.findFileByRelativePath(relativePath + "/pom.xml"), xml);
   }
 
   private VirtualFile createPomFile(VirtualFile dir, String xml) throws IOException {
     VirtualFile f = dir.createChildData(null, "pom.xml");
     myAllPoms.add(f);
-    return setFileContent(f, xml);
+    return setPomContent(f, xml);
   }
 
-  private VirtualFile setFileContent(VirtualFile f, String xml) throws IOException {
+  private VirtualFile setPomContent(VirtualFile f, String xml) throws IOException {
     f.setBinaryContent(createProjectXml(xml).getBytes());
     return f;
   }

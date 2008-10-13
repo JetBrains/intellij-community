@@ -211,12 +211,11 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
       private boolean isConsoleOpened = false;
 
       @Override
-      protected void doPrint(String text, OutputType type) {
+      protected void beforePrint() {
         if (!isConsoleOpened) {
           attachToToolWindow(consoleView);
           isConsoleOpened = true;
         }
-        super.doPrint(text, type);
       }
     };
   }

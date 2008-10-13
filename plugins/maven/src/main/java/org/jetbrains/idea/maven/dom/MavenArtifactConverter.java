@@ -134,24 +134,12 @@ public abstract class MavenArtifactConverter extends ResolvingConverter<String> 
       return MavenArtifactUtil.getArtifactFile(manager.getLocalRepository(), id.groupId, id.artifactId, id.version, "pom");
     }
 
-    return new File(manager.getLocalRepository(), assembleArtifactFile(context, id));
-  }
+    String relPath = ("" + id.groupId).replace(".", "/");
+    relPath += "/" + id.artifactId;
+    relPath += "/" + id.version;
+    relPath += "/" + id.artifactId + "-" + id.version + ".pom";
 
-  private String assembleArtifactFile(ConvertContext context, MavenId id) {
-    String type = "pom";
-
-    Dependency dep = MavenArtifactConverterHelper.getMavenDependency(context);
-    if (dep != null) {
-      type = dep.getType().getStringValue();
-      if (type == null) type = "jar";
-    }
-
-    String result = ("" + id.groupId).replace(".", "/");
-    result += "/" + id.artifactId;
-    result += "/" + id.version;
-    result += "/" + id.artifactId + "-" + id.version + "." + type;
-
-    return result;
+    return new File(manager.getLocalRepository(), relPath);
   }
 
   @Override

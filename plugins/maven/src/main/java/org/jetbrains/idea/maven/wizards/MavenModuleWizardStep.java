@@ -6,14 +6,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.treeStructure.NullNode;
-import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.UIUtil;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
-import org.jetbrains.idea.maven.navigator.MavenTreeStructure;
-import org.jetbrains.idea.maven.navigator.SelectFromMavenTreeDialog;
+import org.jetbrains.idea.maven.navigator.SelectMavenProjectDialog;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.utils.MavenId;
 
@@ -100,7 +97,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private MavenProjectModel selectProject(MavenProjectModel current) {
     assert myProjectOrNull != null : "must not be called when creating a new project";
 
-    MySelectMavenProjectDialog d = new MySelectMavenProjectDialog(current);
+    SelectMavenProjectDialog d = new SelectMavenProjectDialog(myProjectOrNull, current);
     d.show();
     if (!d.isOK()) return current;
     return d.getResult();
@@ -293,50 +290,6 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
       append(archetype.getGroupId() + ":", SimpleTextAttributes.GRAY_ATTRIBUTES);
       append(archetype.getArtifactId(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       append(":" + archetype.getVersion(), SimpleTextAttributes.GRAY_ATTRIBUTES);
-    }
-  }
-
-  private class MySelectMavenProjectDialog extends SelectFromMavenTreeDialog {
-    private MavenProjectModel myResult;
-
-    public MySelectMavenProjectDialog(final MavenProjectModel current) {
-      super(myProjectOrNull, "Select Maven Project", MavenTreeStructure.PomNode.class, new NodeSelector() {
-        public SimpleNode findNode(MavenTreeStructure.PomNode pomNode) {
-          return pomNode.getProjectModel() == current ? pomNode : null;
-        }
-      });
-
-      init();
-    }
-
-    @Override
-    protected Action[] createActions() {
-      Action selectNoneAction = new AbstractAction("&None") {
-        public void actionPerformed(ActionEvent e) {
-          doOKAction();
-          myResult = null;
-        }
-      };
-      return new Action[]{selectNoneAction, getOKAction(), getCancelAction()};
-    }
-
-    @Override
-    protected void doOKAction() {
-      SimpleNode node = getSelectedNode();
-      if (node instanceof NullNode) node = null;
-
-      if (node != null) {
-        if (!(node instanceof MavenTreeStructure.PomNode)) {
-          ((MavenTreeStructure.CustomNode)node).getParent(MavenTreeStructure.PomNode.class);
-        }
-      }
-      myResult = node != null ? ((MavenTreeStructure.PomNode)node).getProjectModel() : null;
-
-      super.doOKAction();
-    }
-
-    public MavenProjectModel getResult() {
-      return myResult;
     }
   }
 

@@ -13,7 +13,7 @@ public class GenerateDependencyAction extends GenerateDomElementAction {
     super(new MavenGenerateProvider<Dependency>("Generate Dependency", Dependency.class) {
       @Override
       protected Dependency doGenerate(MavenModel mavenModel, Editor editor) {
-        final MavenId id = MavenArtifactSearchDialog.searchForArtifact(editor.getProject());
+        MavenId id = MavenArtifactSearchDialog.searchForArtifact(editor.getProject());
         if (id == null) return null;
 
         MavenProjectsManager manager = MavenProjectsManager.getInstance(editor.getProject());

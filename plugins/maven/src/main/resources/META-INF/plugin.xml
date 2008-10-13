@@ -36,6 +36,7 @@
 
     <iconProvider implementation="org.jetbrains.idea.maven.core.MavenIconProvider"/>
 
+    <xml.elementDescriptorProvider implementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorProvider"/>
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenModelDomDescription"/>
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenPluginModelDomDescription"/>
     <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenPluginModelDocumentationProvider" order="first"/>
@@ -51,7 +52,7 @@
 
   <application-components>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.core.MavenApplicationComponent</implementation-class>
+      <implementation-class>org.jetbrains.idea.maven.dom.MavenSchemaRegistrar</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.indices.MavenIndicesManager</implementation-class>
@@ -256,8 +257,8 @@
     </group>
 
     <group id="Maven.GenerateGroup" text="Generate">
-      <action id="GenerateParent" text="Parent" class="org.jetbrains.idea.maven.dom.generate.GenerateParentAction"/>
       <action id="GenerateDependency" text="Dependency" class="org.jetbrains.idea.maven.dom.generate.GenerateDependencyAction"/>
+      <action id="GenerateParent" text="Parent" class="org.jetbrains.idea.maven.dom.generate.GenerateParentAction"/>
       <add-to-group group-id="GenerateGroup" anchor="last"/>
     </group>
 

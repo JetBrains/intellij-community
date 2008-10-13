@@ -167,6 +167,7 @@
     <orderEntry type="module" module-name="JavaScriptLanguage" />
     <orderEntry type="module" module-name="FlexSupport" />
     <orderEntry type="module" module-name="jetgroovy" />
+    <orderEntry type="module" module-name="xml" />
   </component>
   <component name="copyright">
     <Base>

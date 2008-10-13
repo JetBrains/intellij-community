@@ -5,6 +5,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.maven.core.MavenCore;
 
 import java.io.File;
+import java.io.IOException;
 
 public class MavenIndicesTestFixture {
   private File myDir;
@@ -30,7 +31,7 @@ public class MavenIndicesTestFixture {
     myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
 
     for (String each : myExtraRepoDirs) {
-      myRepositoryHelper.copy(each, myLocalRepoDir);
+      addToRepository(each);
     }
 
     MavenCore.getInstance(myProject).getState().setLocalRepository(myRepositoryHelper.getTestDataPath(myLocalRepoDir));
@@ -38,6 +39,10 @@ public class MavenIndicesTestFixture {
     getIndicesManager().setTestIndexDir(new File(myDir, "MavenIndices"));
     myIndicesManager = MavenProjectIndicesManager.getInstance(myProject);
     myIndicesManager.doInit();
+  }
+
+  public void addToRepository(String relPath) throws IOException {
+    myRepositoryHelper.copy(relPath, myLocalRepoDir);
   }
 
   public void tearDown() throws Exception {

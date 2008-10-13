@@ -1,43 +1,30 @@
 package org.jetbrains.idea.maven.dom.generate;
 
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.xml.actions.generate.DomTemplateRunner;
-import com.intellij.util.xml.impl.DomTemplateRunnerImpl;
 import com.intellij.util.xml.ui.actions.generate.GenerateDomElementAction;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
 import org.jetbrains.idea.maven.dom.model.MavenParent;
+import org.jetbrains.idea.maven.navigator.SelectMavenProjectDialog;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
 
 public class GenerateParentAction extends GenerateDomElementAction {
   public GenerateParentAction() {
     super(new MavenGenerateProvider<MavenParent>("Generate Parent", MavenParent.class) {
-      protected MavenParent doGenerate(MavenModel mavenModel, Editor editor) {
-        MavenParent mavenParent = mavenModel.getMavenParent();
-        mavenParent.ensureTagExists();
-        return mavenParent;
-      }
+      protected MavenParent doGenerate(final MavenModel mavenModel, Editor editor) {
+        SelectMavenProjectDialog d = new SelectMavenProjectDialog(editor.getProject(), null);
+        d.show();
+        if (!d.isOK()) return null;
+        final MavenProjectModel parentProject = d.getResult();
+        if (parentProject == null) return null;
 
-      @Override
-      protected void runTemplate(Editor editor, PsiFile file, MavenParent mavenParent) {
-        TemplateManager manager = TemplateManager.getInstance(file.getProject());
-        Template template = manager.createTemplate("", "");
-
-        template.addTextSegment("<parent>");
-        template.addTextSegment("<groupId>");
-        template.addVariable("groupId", new ConstantNode("groupId"), new ConstantNode("groupId"), true);
-        template.addTextSegment("</groupId>");
-        template.addTextSegment("<artifactId>");
-        template.addVariable("artifactId", new ConstantNode("artifactId"), new ConstantNode("artifactId"), true);
-        template.addTextSegment("</artifactId>");
-        template.addTextSegment("<version>");
-        template.addVariable("version", new ConstantNode("version"), new ConstantNode("artifactversion"), true);
-        template.addTextSegment("</version>");
-        template.addTextSegment("</parent>");
-
-        ((DomTemplateRunnerImpl)DomTemplateRunner.getInstance(file.getProject())).runTemplate(mavenParent, editor, template);
+        return new WriteCommandAction<MavenParent>(editor.getProject(), getDescription()) {
+          protected void run(Result result) throws Throwable {
+            result.setResult(MavenDomUtil.updateMavenParent(mavenModel, parentProject));
+          }
+        }.execute().getResultObject();
       }
 
       @Override
@@ -45,5 +32,10 @@ public class GenerateParentAction extends GenerateDomElementAction {
         return mavenModel.getMavenParent().getXmlElement() == null;
       }
     });
+  }
+
+  @Override
+  protected boolean startInWriteAction() {
+    return false;
   }
 }

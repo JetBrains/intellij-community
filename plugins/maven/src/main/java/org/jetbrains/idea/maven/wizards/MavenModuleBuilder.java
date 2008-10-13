@@ -21,8 +21,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.idea.maven.core.MavenLog;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
-import org.jetbrains.idea.maven.dom.model.MavenParent;
 import org.jetbrains.idea.maven.dom.model.Module;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -109,11 +109,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
       protected void run() throws Throwable {
         if (myParentProject != null) {
           MavenModel model = MavenUtil.getMavenModel(project, pom);
-          MavenParent parent = model.getMavenParent();
-          MavenId parentId = myParentProject.getMavenId();
-          parent.getGroupId().setStringValue(parentId.groupId);
-          parent.getArtifactId().setStringValue(parentId.artifactId);
-          parent.getVersion().setStringValue(parentId.version);
+          MavenDomUtil.updateMavenParent(model, myParentProject);
 
           if (myInheritGroupId) {
             XmlElement el = model.getGroupId().getXmlElement();
@@ -122,10 +118,6 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
           if (myInheritVersion) {
             XmlElement el = model.getVersion().getXmlElement();
             if (el != null) el.delete();
-          }
-
-          if (pom.getParent().getParent() != myParentProject.getDirectoryFile()) {
-            parent.getRelativePath().setValue(getPsiFile(project, myParentProject.getFile()));
           }
 
           CodeStyleManager.getInstance(project).reformat(getPsiFile(project, pom));

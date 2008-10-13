@@ -64,4 +64,33 @@ public class MavenProjectIndicesManagerTest extends MavenImportingTestCase {
 
     assertTrue(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
   }
+
+  public void testCheckingLocalRepositoryForAbsentIndices() throws Exception {
+    myIndicesFixture.tearDown();
+    myIndicesFixture = new MavenIndicesTestFixture(myDir, myProject, "local2");
+    myIndicesFixture.setUp();
+
+    myIndicesFixture.addToRepository("local1");
+    
+    assertUnorderedElementsAreEqual(
+        myIndicesFixture.getProjectIndicesManager().getGroupIds(), "jmock");
+
+    assertTrue(myIndicesFixture.getProjectIndicesManager().hasGroupId("junit"));
+    assertFalse(myIndicesFixture.getProjectIndicesManager().hasGroupId("xxx"));
+
+    assertTrue(myIndicesFixture.getProjectIndicesManager().hasArtifactId("junit", "junit"));
+    assertFalse(myIndicesFixture.getProjectIndicesManager().hasArtifactId("junit", "xxx"));
+    assertFalse(myIndicesFixture.getProjectIndicesManager().hasArtifactId("xxx", "junit"));
+
+    assertTrue(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
+    assertFalse(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "xxx"));
+    assertFalse(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "xxx", "4.0"));
+    assertFalse(myIndicesFixture.getProjectIndicesManager().hasVersion("xxx", "junit", "4.0"));
+    //assertUnorderedElementsAreEqual(
+    //    myIndicesFixture.getProjectIndicesManager().getGroupIds(), "junit", "jmock");
+    //assertUnorderedElementsAreEqual(
+    //    myIndicesFixture.getProjectIndicesManager().getArtifactIds("junit"), "junit");
+    //assertUnorderedElementsAreEqual(
+    //    myIndicesFixture.getProjectIndicesManager().getVersions("junit", "junit"), "4.0");
+  }
 }

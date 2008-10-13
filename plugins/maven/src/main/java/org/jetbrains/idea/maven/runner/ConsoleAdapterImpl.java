@@ -1,8 +1,11 @@
 package org.jetbrains.idea.maven.runner;
 
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.util.Key;
 
 public class ConsoleAdapterImpl extends ConsoleAdapter {
   private final ConsoleView myConsoleView;
@@ -24,11 +27,19 @@ public class ConsoleAdapterImpl extends ConsoleAdapter {
     myConsoleView.setOutputPaused(outputPaused);
   }
 
-  public void attachToProcess( ProcessHandler processHandler) {
+  public void attachToProcess(ProcessHandler processHandler) {
     myConsoleView.attachToProcess(processHandler);
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void onTextAvailable(ProcessEvent event, Key outputType) {
+        beforePrint();
+      }
+    });
   }
 
   protected void doPrint(String text, OutputType type) {
+    beforePrint();
+
     ConsoleViewContentType contentType;
     switch (type) {
       case SYSTEM:
@@ -42,5 +53,8 @@ public class ConsoleAdapterImpl extends ConsoleAdapter {
         contentType = ConsoleViewContentType.NORMAL_OUTPUT;
     }
    myConsoleView.print(text, contentType);
+  }
+
+  protected void beforePrint() {
   }
 }

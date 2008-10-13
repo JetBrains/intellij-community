@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.core;
+package org.jetbrains.idea.maven.dom;
 
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Author: Vladislav.Kaznacheev
  */
-public class MavenApplicationComponent implements ApplicationComponent {
+public class MavenSchemaRegistrar implements ApplicationComponent {
 
   @NonNls
   @NotNull

@@ -3,15 +3,17 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.apache.lucene.search.Query;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.utils.DummyProjectComponent;
-import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.DummyProjectComponent;
+import org.jetbrains.idea.maven.utils.MavenId;
 import org.sonatype.nexus.index.ArtifactInfo;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -77,8 +79,12 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
 
   private void updateIndicesList() {
     MavenIndicesManager m = MavenIndicesManager.getInstance();
-    myProjectIndices.set(m.ensureIndicesExist(MavenProjectsManager.getInstance(myProject).getLocalRepository(),
+    myProjectIndices.set(m.ensureIndicesExist(getLocalRepository(),
                                               collectRemoteRepositories()));
+  }
+
+  private File getLocalRepository() {
+    return MavenProjectsManager.getInstance(myProject).getLocalRepository();
   }
 
   private Set<String> collectRemoteRepositories() {
@@ -144,7 +150,23 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
     for (MavenIndex each : myProjectIndices.get()) {
       if (each.hasGroupId(groupId)) return true;
     }
-    return false;
+    return checkLocalRepository(groupId, null, null);
+  }
+
+  private boolean checkLocalRepository(String groupId, String artifactId, String version) {
+    if (StringUtil.isEmpty(groupId)) return false;
+
+    String relPath = groupId.replace('.', '/');
+
+    if (artifactId != null) {
+      relPath += "/" + artifactId;
+      if (version != null) {
+        relPath += "/" + version + "/" + artifactId + "-" + version + ".pom";
+      }
+    }
+    File file = new File(getLocalRepository(), relPath);
+
+    return file.exists();
   }
 
   public boolean hasArtifactId(String groupId, String artifactId) {
@@ -152,7 +174,7 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
     for (MavenIndex each : myProjectIndices.get()) {
       if (each.hasArtifactId(groupId, artifactId)) return true;
     }
-    return false;
+    return checkLocalRepository(groupId, artifactId, null);
   }
 
   public boolean hasVersion(String groupId, String artifactId, String version) {
@@ -160,7 +182,7 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
     for (MavenIndex each : myProjectIndices.get()) {
       if (each.hasVersion(groupId, artifactId, version)) return true;
     }
-    return false;
+    return checkLocalRepository(groupId, artifactId, version);
   }
 
   public Set<ArtifactInfo> search(Query query, int maxResult) {

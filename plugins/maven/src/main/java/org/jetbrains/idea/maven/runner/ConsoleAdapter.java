@@ -88,7 +88,8 @@ public abstract class ConsoleAdapter {
       }
       else {
         doPrint(MavenLogUtil.LINE_SEPARATOR +
-                "To view full stack traces, please go to the Maven Settings->General and check the 'Print Exception Stack Traces' box.",
+                "To view full stack traces, please go to the Maven Settings->General and check the 'Print Exception Stack Traces' box." +
+                MavenLogUtil.LINE_SEPARATOR,
                 type);
       }
     }
