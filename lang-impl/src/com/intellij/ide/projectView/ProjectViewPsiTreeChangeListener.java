@@ -89,7 +89,7 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
     }
   }
 
-  public final void propertyChanged(PsiTreeChangeEvent event) {
+  public void propertyChanged(PsiTreeChangeEvent event) {
     String propertyName = event.getPropertyName();
     PsiElement element = event.getElement();
     DefaultMutableTreeNode rootNode = getRootNode();

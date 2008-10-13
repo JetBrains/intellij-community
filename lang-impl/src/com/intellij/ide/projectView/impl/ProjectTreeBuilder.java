@@ -46,19 +46,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
     final MessageBusConnection connection = project.getMessageBus().connect(this);
 
-    myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener(myProject){
-      protected DefaultMutableTreeNode getRootNode(){
-        return ProjectTreeBuilder.this.getRootNode();
-      }
-
-      protected AbstractTreeUpdater getUpdater() {
-        return ProjectTreeBuilder.this.getUpdater();
-      }
-
-      protected boolean isFlattenPackages(){
-        return ((AbstractProjectTreeStructure)getTreeStructure()).isFlattenPackages();
-      }
-    };
+    myPsiTreeChangeListener = createPsiTreeChangeListener(myProject);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {
       }
@@ -92,6 +80,34 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
       propertiesFilesManager.removePropertiesFileListener(myPropertiesFileListener);
     }*/
     WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
+  }
+
+  /**
+   * Creates psi tree changes listener. This method will be invoked in constructor of ProjectTreeBuilder
+   * thus builder object will be not completely initialized
+   * @param project Project
+   * @return Listener
+   */
+  protected ProjectViewPsiTreeChangeListener createPsiTreeChangeListener(final Project project) {
+    return new ProjectTreeBuilderPsiListener(project);
+  }
+
+  protected class ProjectTreeBuilderPsiListener extends ProjectViewPsiTreeChangeListener {
+    public ProjectTreeBuilderPsiListener(final Project project) {
+      super(project);
+    }
+
+    protected DefaultMutableTreeNode getRootNode(){
+      return ProjectTreeBuilder.this.getRootNode();
+    }
+
+    protected AbstractTreeUpdater getUpdater() {
+      return ProjectTreeBuilder.this.getUpdater();
+    }
+
+    protected boolean isFlattenPackages(){
+      return ((AbstractProjectTreeStructure)getTreeStructure()).isFlattenPackages();
+    }
   }
 
   private final class MyFileStatusListener implements FileStatusListener {
