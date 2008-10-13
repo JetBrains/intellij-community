@@ -333,32 +333,41 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     public void run(@NotNull final ProgressIndicator indicator) {
       ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
       myProjectLevelVcsManager.startBackgroundVcsOperation();
-      ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-      int toBeProcessed = myVcsToVirtualFiles.size();
-      int processed = 0;
-      for (AbstractVcs vcs : myVcsToVirtualFiles.keySet()) {
-        final UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
-        updateEnvironment.fillGroups(myUpdatedFiles);
-        Collection<FilePath> files = myVcsToVirtualFiles.get(vcs);
 
-        final SequentialUpdatesContext context = myContextInfo.get(vcs.getName());
-        final Ref<SequentialUpdatesContext> refContext = new Ref<SequentialUpdatesContext>(context);
-        UpdateSession updateSession =
+      try {
+        ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        int toBeProcessed = myVcsToVirtualFiles.size();
+        int processed = 0;
+        for (AbstractVcs vcs : myVcsToVirtualFiles.keySet()) {
+          final UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
+          updateEnvironment.fillGroups(myUpdatedFiles);
+          Collection<FilePath> files = myVcsToVirtualFiles.get(vcs);
+
+          final SequentialUpdatesContext context = myContextInfo.get(vcs.getName());
+          final Ref<SequentialUpdatesContext> refContext = new Ref<SequentialUpdatesContext>(context);
+          UpdateSession updateSession =
             updateEnvironment.updateDirectories(files.toArray(new FilePath[files.size()]), myUpdatedFiles, progressIndicator, refContext);
-        myContextInfo.put(vcs.getName(), refContext.get());
-        processed++;
-        if (progressIndicator != null) {
-          progressIndicator.setFraction((double)processed / (double)toBeProcessed);
+          myContextInfo.put(vcs.getName(), refContext.get());
+          processed++;
+          if (progressIndicator != null) {
+            progressIndicator.setFraction((double)processed / (double)toBeProcessed);
+          }
+          myVcsExceptions.addAll(updateSession.getExceptions());
+          myUpdateSessions.add(updateSession);
         }
-        myVcsExceptions.addAll(updateSession.getExceptions());
-        myUpdateSessions.add(updateSession);
-      }
 
-      if (progressIndicator != null) {
-        progressIndicator.setText(VcsBundle.message("progress.text.synchronizing.files"));
-        progressIndicator.setText2("");
-      }
+        if (progressIndicator != null) {
+          progressIndicator.setText(VcsBundle.message("progress.text.synchronizing.files"));
+          progressIndicator.setText2("");
+        }
 
+        doVfsRefresh();
+      } finally {
+        myProjectLevelVcsManager.stopBackgroundVcsOperation();
+      }
+    }
+
+    private void doVfsRefresh() {
       final LocalHistoryAction action = LocalHistory.startAction(myProject, VcsBundle.message("local.history.update.from.vcs"));
       try {
         final Semaphore semaphore = new Semaphore();
@@ -406,7 +415,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     public void onSuccess() {
       if (myProject.isDisposed()) {
-        myProjectLevelVcsManager.stopBackgroundVcsOperation();
         ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
         return;
       }
@@ -422,8 +430,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           updateSession.onRefreshFilesCompleted();
         }
       }
-
-      myProjectLevelVcsManager.stopBackgroundVcsOperation();
 
       if (myActionInfo.canChangeFileStatus()) {
         final VcsDirtyScopeManager myManager = VcsDirtyScopeManager.getInstance(myProject);

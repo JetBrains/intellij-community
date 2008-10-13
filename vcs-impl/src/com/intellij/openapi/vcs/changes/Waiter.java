@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -8,8 +9,10 @@ import com.intellij.openapi.vcs.VcsBundle;
 import javax.swing.*;
 
 public class Waiter implements Runnable {
+  private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.Waiter");
   private final Project myProject;
   private final Runnable myRunnable;
+  private boolean myStarted;
   private boolean myDone;
   private final Object myLock = new Object();
 
@@ -17,6 +20,7 @@ public class Waiter implements Runnable {
     myRunnable = runnable;
     myProject = project;
     myDone = false;
+    myStarted = false;
   }
 
   public void run() {
@@ -24,6 +28,11 @@ public class Waiter implements Runnable {
     indicator.setIndeterminate(true);
     indicator.setText2(VcsBundle.message("commit.wait.util.synched.text"));
     synchronized (myLock) {
+      if (myStarted) {
+        LOG.error("Waiter running under progress being started again.");
+        return;
+      }
+      myStarted = true;
       while ((! myDone) && (! ProgressManager.getInstance().getProgressIndicator().isCanceled())) {
         try {
           myLock.wait();

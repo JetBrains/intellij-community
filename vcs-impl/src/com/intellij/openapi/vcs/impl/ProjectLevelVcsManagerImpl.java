@@ -717,6 +717,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void stopBackgroundVcsOperation() {
+    // in fact, the condition is "should not be called under ApplicationManager.invokeLater() and similiar"
+    assert ! ApplicationManager.getApplication().isDispatchThread();
     LOG.assertTrue(myBackgroundOperationCounter > 0, "myBackgroundOperationCounter > 0");
     myBackgroundOperationCounter--;
   }

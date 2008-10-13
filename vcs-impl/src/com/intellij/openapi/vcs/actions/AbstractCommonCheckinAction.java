@@ -59,6 +59,10 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
     if (project == null) return;
 
+    if (ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()) {
+      return;
+    }
+
     final FilePath[] roots = filterDescindingFiles(getRoots(context), project);
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -81,7 +85,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
           CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection, getExecutor(project), null);
         }
       }
-    }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"));
+    }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"));
   }
 
   @Nullable
@@ -153,7 +157,8 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       presentation.setVisible(false);
       return;
     }
-    if (ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length == 0) {
+    final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
+    if (plVcsManager.getAllActiveVcss().length == 0) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
       return;
@@ -184,7 +189,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     String actionName = getActionName(vcsContext) + "...";
     presentation.setText(actionName);
 
-    presentation.setEnabled(!ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning());
+    presentation.setEnabled(! plVcsManager.isBackgroundVcsOperationRunning());
     presentation.setVisible(true);
   }
 

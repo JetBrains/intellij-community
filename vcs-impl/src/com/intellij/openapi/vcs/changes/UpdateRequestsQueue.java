@@ -170,7 +170,7 @@ public class UpdateRequestsQueue {
           }, new Runnable() {
             public void run() {
               ProgressManager.getInstance().runProcessWithProgressSynchronously(waiter,
-                VcsBundle.message("change.list.manager.wait.lists.synchronization", title), false, myProject);
+                VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable, myProject);
             }
           }
         );
@@ -196,27 +196,30 @@ public class UpdateRequestsQueue {
       boolean updateUnversioned;
       final List<Runnable> copy = new ArrayList<Runnable>(myWaitingUpdateCompletionQueue.size());
 
-      synchronized (myLock) {
-        myTask = null;
-        if ((! myStopped) && ((! myStarted) || myPlVcsManager.isBackgroundVcsOperationRunning())) {
-          LOG.debug("MyRunnable: not started, not stopped, reschedule, project: " + myProject.getName() + ", runnable: " + hashCode());
-          // try again after time
-          schedule(myUpdateUnversionedRequested);
-          return;
-        }
-        if (myStopped) {
-          LOG.debug("MyRunnable: STOPPED, project: " + myProject.getName() + ", runnable: " + hashCode());
-          return;
-        }
-
-        copy.addAll(myWaitingUpdateCompletionQueue);
-        // take it under lock
-        updateUnversioned = myUpdateUnversionedRequested;
-        // for concurrent schedules to tigger flag correctly
-        myUpdateUnversionedRequested = false;
-      }
-
       try {
+        synchronized (myLock) {
+          if ((! myStopped) && ((! myStarted) || myPlVcsManager.isBackgroundVcsOperationRunning())) {
+            LOG.debug("MyRunnable: not started, not stopped, reschedule, project: " + myProject.getName() + ", runnable: " + hashCode());
+            myTask = null;
+            // try again after time
+            schedule(myUpdateUnversionedRequested);
+            return;
+          }
+
+          copy.addAll(myWaitingUpdateCompletionQueue);
+          myTask = null;
+          
+          if (myStopped) {
+            LOG.debug("MyRunnable: STOPPED, project: " + myProject.getName() + ", runnable: " + hashCode());
+            return;
+          }
+
+          // take it under lock
+          updateUnversioned = myUpdateUnversionedRequested;
+          // for concurrent schedules to tigger flag correctly
+          myUpdateUnversionedRequested = false;
+        }
+
         LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
         myAction.consume(updateUnversioned);
         LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", runnable: " + hashCode());
@@ -225,6 +228,10 @@ public class UpdateRequestsQueue {
           LOG.debug("MyRunnable: delete executed, project: " + myProject.getName() + ", runnable: " + hashCode());
           if (! copy.isEmpty()) {
             myWaitingUpdateCompletionQueue.removeAll(copy);
+          }
+
+          if ((! myWaitingUpdateCompletionQueue.isEmpty()) && (myTask == null)) {
+            LOG.error("No update task to handle request(s)");
           }
         }
         // do not run under lock

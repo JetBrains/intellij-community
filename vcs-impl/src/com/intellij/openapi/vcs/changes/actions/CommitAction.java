@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 
@@ -25,9 +26,14 @@ import java.util.Arrays;
 public class CommitAction extends AnAction {
   public void update(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    Change[] changes = e.getData(VcsDataKeys.CHANGES);
     boolean enabled = false;
     if (project != null) {
+      if (ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()) {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+      Change[] changes = e.getData(VcsDataKeys.CHANGES);
+
       final ChangeList changeList = ChangesUtil.getChangeListIfOnlyOne(project, changes);
       if (changes != null && changeList != null) {
         for(Change c: changes) {
@@ -43,6 +49,11 @@ public class CommitAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) return;
+    if (ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()) {
+      return;
+    }
+    
     final Change[] changes = e.getData(VcsDataKeys.CHANGES);
     final ChangeList list = ChangesUtil.getChangeListIfOnlyOne(project, changes);
     if ((list == null) || (! (list instanceof LocalChangeList))) return;
@@ -52,6 +63,6 @@ public class CommitAction extends AnAction {
         CommitChangeListDialog.commitChanges(project, Arrays.asList(changes), (LocalChangeList) list,
                                              ChangeListManager.getInstance(project).getRegisteredExecutors(), true, null);
       }
-    }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"));
+    }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"));
   }
 }
