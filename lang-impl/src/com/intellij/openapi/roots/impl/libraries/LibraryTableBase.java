@@ -14,6 +14,7 @@ import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -189,6 +190,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       return Collections.unmodifiableList(myLibraries).iterator();
     }
 
+    @Nullable
     public Library getLibraryByName(@NotNull String name) {
       for (Library myLibrary : myLibraries) {
         LibraryImpl library = (LibraryImpl)myLibrary;

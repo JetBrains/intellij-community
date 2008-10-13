@@ -64,6 +64,7 @@ public interface LibraryTable {
 
     @NotNull Iterator<Library> getLibraryIterator();
 
+    @Nullable
     Library getLibraryByName(@NotNull String name);
 
     @NotNull Library[] getLibraries();
