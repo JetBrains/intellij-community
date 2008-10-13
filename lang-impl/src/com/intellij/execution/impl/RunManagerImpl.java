@@ -343,7 +343,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     final List children = parentNode.getChildren();
     for (final Object aChildren : children) {
       final Element element = (Element)aChildren;
-      if (!loadConfiguration(element, false) && Comparing.strEqual(element.getName(), CONFIGURATION)) {
+      if (loadConfiguration(element, false) == null && Comparing.strEqual(element.getName(), CONFIGURATION)) {
         if (myUnloadedElements == null) myUnloadedElements = new ArrayList<Element>(2);
         myUnloadedElements.add(element);
       }
@@ -357,14 +357,17 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public void clear() {
     myConfigurations.clear();
     myUnloadedElements = null;
+    myMethod2CompileBeforeRun.clear();
+    mySharedConfigurations.clear();
   }
 
-  public boolean loadConfiguration(final Element element, boolean isShared) throws InvalidDataException {
+  @Nullable
+  public RunnerAndConfigurationSettingsImpl loadConfiguration(final Element element, boolean isShared) throws InvalidDataException {
     RunnerAndConfigurationSettingsImpl configuration = new RunnerAndConfigurationSettingsImpl(this);
     configuration.readExternal(element);
     ConfigurationFactory factory = configuration.getFactory();
     if (factory == null) {
-      return false;
+      return null;
     }
 
     final Element methodsElement = element.getChild(METHOD);
@@ -383,7 +386,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       final Map<String, Boolean> map = updateStepsBeforeRun(methodsElement);
       addConfiguration(configuration, isShared, map);
     }
-    return true;
+    return configuration;
   }
 
   @Nullable
@@ -520,5 +523,15 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   public static RunManagerImpl getInstanceImpl(final Project project) {
     return (RunManagerImpl)RunManager.getInstance(project);
+  }
+
+  public void removeNotExistingSharedConfigurations(final Set<String> existing) {
+    for (Iterator<Map.Entry<String, RunnerAndConfigurationSettingsImpl>> it = myConfigurations.entrySet().iterator(); it.hasNext();) {
+      Map.Entry<String, RunnerAndConfigurationSettingsImpl> c = it.next();
+      final RunnerAndConfigurationSettingsImpl o = c.getValue();
+      if (!o.isTemplate() && isConfigurationShared(o) && !existing.contains(getUniqueName(o.getConfiguration()))) {
+        it.remove();
+      }
+    }
   }
 }

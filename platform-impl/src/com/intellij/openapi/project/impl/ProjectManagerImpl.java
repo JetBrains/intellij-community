@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.util.Alarm;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.fs.IFile;
@@ -73,6 +74,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private final Map<VirtualFile, byte[]> mySavedCopies = new HashMap<VirtualFile, byte[]>();
   private final TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
   private final HashMap<Project, List<Pair<VirtualFile, StateStorage>>> myChangedProjectFiles = new HashMap<Project, List<Pair<VirtualFile, StateStorage>>>();
+  private final Alarm myChangedFilesAlarm = new Alarm();
   private final List<Pair<VirtualFile, StateStorage>> myChangedApplicationFiles = new ArrayList<Pair<VirtualFile, StateStorage>>();
   private volatile int myReloadBlockCount = 0;
 
@@ -149,6 +151,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public void disposeComponent() {
+    Disposer.dispose(myChangedFilesAlarm);
     if (myDefaultProject != null) {
       Disposer.dispose(myDefaultProject);
       myDefaultProject = null;
@@ -427,8 +430,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
 
       public void afterRefreshFinish(boolean asynchonous) {
-        if (!tryToReloadApplication()) return;
-        askToReloadProjectIfConfigFilesChangedExternally();
+        scheduleReloadApplicationAndProject();
       }
     });
   }
@@ -563,6 +565,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   public void unblockReloadingProjectOnExternalChanges() {
     myReloadBlockCount--;
+    scheduleReloadApplicationAndProject();
+  }
+
+  private void scheduleReloadApplicationAndProject() {
     if (!tryToReloadApplication()) return;
     askToReloadProjectIfConfigFilesChangedExternally();
   }
@@ -607,6 +613,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     else {
       myChangedApplicationFiles.add(new Pair<VirtualFile, StateStorage>(cause, storage));
     }
+
+    myChangedFilesAlarm.cancelAllRequests();
+    myChangedFilesAlarm.addRequest(new Runnable() {
+      public void run() {
+        if (myReloadBlockCount == 0) {
+          scheduleReloadApplicationAndProject();
+        }
+      }
+    }, 444);
   }
 
   private void copyToTemp(VirtualFile file) {

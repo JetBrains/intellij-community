@@ -7,6 +7,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
@@ -80,14 +82,22 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
 
   public void readExternal(Element element) throws InvalidDataException {
     myUnloadedElements = null;
+    final Set<String> existing = new HashSet<String>();
 
     final List children = element.getChildren();
     for (final Object child : children) {
-      if (!myManager.loadConfiguration((Element)child, true) && Comparing.strEqual(element.getName(), RunManagerImpl.CONFIGURATION)) {
+      final RunnerAndConfigurationSettingsImpl configuration = myManager.loadConfiguration((Element)child, true);
+      if (configuration == null && Comparing.strEqual(element.getName(), RunManagerImpl.CONFIGURATION)) {
         if (myUnloadedElements == null) myUnloadedElements = new ArrayList<Element>(2);
         myUnloadedElements.add(element);
       }
+
+      if (configuration != null) {
+        existing.add(RunManagerImpl.getUniqueName(configuration.getConfiguration()));
+      }
     }
+
+    myManager.removeNotExistingSharedConfigurations(existing);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {

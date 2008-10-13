@@ -21,7 +21,7 @@ import com.intellij.util.PairConsumer;
 import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.THashSet;
+import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -81,7 +81,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         public void fileCreated(final VirtualFileEvent event) {
           listener.storageFileChanged(event, DirectoryBasedStorage.this);
         }
-      }, true, this);
+      }, false, this);
     }
   }
 
@@ -229,7 +229,11 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
       myStorageData.process(new StorageDataProcessor() {
         public void process(final String componentName, final IFile file, final Element element) {
-          // TODO: do not save file if it was dropped externally
+          if (myStorageData.hasChanged(file)) {
+            // will not create file if it was removed or modified externally
+            return;
+          }
+
           StorageUtil.save(file, element);
           currentNames.remove(file.getName());
         }
@@ -239,7 +243,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         public void run() {
           for (String name : currentNames) {
             IFile child = myDir.getChild(name);
-            if (!myStorageData.getBackup().contains(child)) {
+            if (!myStorageData.existedEarlier(child)) {
               continue;
             }
 
@@ -292,6 +296,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         public void process(final String componentName, final IFile file, final Element element) {
           if (currentChildNames.contains(file.getName())) {
             currentChildNames.remove(file.getName());
+
+            if (myStorageData.hasChanged(file)) return;
             final byte[] text = StorageUtil.printElement(element);
             try {
               if (!Arrays.equals(file.loadBytes(), text)) {
@@ -315,17 +321,17 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     }
 
     public List<IFile> getAllStorageFiles() {
-      return myStorageData.getAllStorageFiles();
+      return new ArrayList<IFile>(myStorageData.getAllStorageFiles().keySet());
     }
   }
 
-  private static interface StorageDataProcessor {
+  private interface StorageDataProcessor {
     void process(String componentName, IFile file, Element element);
   }
 
   private static class MyStorageData {
     private Map<String, Map<IFile, Element>> myStates = new HashMap<String, Map<IFile, Element>>();
-    private List<IFile> myBackup;
+    private Map<IFile, Long> myBackup;
 
     public Set<String> getComponentNames() {
       return myStates.keySet();
@@ -341,11 +347,11 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       stateMap.put(file, element);
     }
 
-    public List<IFile> getAllStorageFiles() {
-      final List<IFile> allStorageFiles = new ArrayList<IFile>();
+    public Map<IFile, Long> getAllStorageFiles() {
+      final Map<IFile, Long> allStorageFiles = new THashMap<IFile, Long>();
       process(new StorageDataProcessor() {
         public void process(final String componentName, final IFile file, final Element element) {
-          allStorageFiles.add(file);
+          allStorageFiles.put(file, file.getTimeStamp());
         }
       });
 
@@ -394,8 +400,16 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       myBackup = getAllStorageFiles();
     }
 
-    public Set<IFile> getBackup() {
-      return new THashSet<IFile>(myBackup);
+    public boolean existedEarlier(IFile file) {
+      return myBackup.containsKey(file);
+    }
+
+    public boolean hasChanged(IFile file) {
+      final Long ts = myBackup.get(file);
+      if (ts == null) return false;
+      if (!file.exists()) return true;
+      if (ts.longValue() < file.getTimeStamp()) return true;
+      return false;
     }
   }
 
