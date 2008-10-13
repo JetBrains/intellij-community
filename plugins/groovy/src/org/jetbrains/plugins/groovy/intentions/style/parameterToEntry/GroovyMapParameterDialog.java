@@ -1,57 +1,79 @@
 package org.jetbrains.plugins.groovy.intentions.style.parameterToEntry;
 
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorComboBoxEditor;
-import com.intellij.ui.StringComboboxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.StringComboboxEditor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
+import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.EventListenerList;
 import java.awt.event.*;
 import java.util.EventListener;
 
 public class GroovyMapParameterDialog extends DialogWrapper {
   private JPanel contentPane;
-  private boolean createNewFirst = true;
   private ComboBox myNameComboBox;
   private JLabel myNameLabel;
   private JCheckBox myCbTypeSpec;
+  private JCheckBox myCreateNew;
   private Project myProject;
   private EventListenerList myListenerList = new EventListenerList();
 
-  public GroovyMapParameterDialog(Project project, final String[] possibleNames) {
+  public GroovyMapParameterDialog(Project project, final String[] possibleNames, final boolean createNew) {
     super(true);
     myProject = project;
-    setUpDialog(possibleNames);
+    setUpDialog(possibleNames, createNew);
     init();
   }
 
-  private void setUpDialog(final String[] possibleNames) {
+  private void setUpDialog(final String[] possibleNames, boolean createNew) {
+    setTitle(GroovyIntentionsBundle.message("convert.param.to.map.entry"));
+
+    if (GroovyApplicationSettings.getInstance().CONVERT_PARAM_CREATE_NEW_PARAM != null) {
+      myCreateNew.setSelected(createNew = GroovyApplicationSettings.getInstance().CONVERT_PARAM_CREATE_NEW_PARAM.booleanValue());
+    } else {
+      myCreateNew.setSelected(createNew);
+    }
+
     myNameLabel.setLabelFor(myNameComboBox);
     myCbTypeSpec.setMnemonic(KeyEvent.VK_T);
     myCbTypeSpec.setFocusable(false);
     setUpNameComboBox(possibleNames);
     setModal(true);
-
     if (GroovyApplicationSettings.getInstance().CONVERT_PARAM_SPECIFY_MAP_TYPE != null) {
       myCbTypeSpec.setSelected(GroovyApplicationSettings.getInstance().CONVERT_PARAM_SPECIFY_MAP_TYPE.booleanValue());
     } else {
       myCbTypeSpec.setSelected(true);
     }
 
+    myCbTypeSpec.setEnabled(createNew);
+    myNameComboBox.setEnabled(createNew);
+    myNameLabel.setEnabled(createNew);
+
+    myCreateNew.addChangeListener(new ChangeListener() {
+      public void stateChanged(final ChangeEvent e) {
+        final boolean flag = myCreateNew.isSelected();
+        myCbTypeSpec.setEnabled(flag);
+        myNameComboBox.setEnabled(flag);
+        myNameLabel.setEnabled(flag);
+      }
+    });
   }
 
   public boolean createNewFirst() {
-    return createNewFirst;
+    return myCreateNew.isSelected();
   }
 
   @Override
@@ -68,6 +90,7 @@ public class GroovyMapParameterDialog extends DialogWrapper {
     if (myCbTypeSpec.isEnabled()) {
       GroovyApplicationSettings.getInstance().CONVERT_PARAM_SPECIFY_MAP_TYPE = myCbTypeSpec.isSelected();
     }
+    GroovyApplicationSettings.getInstance().CONVERT_PARAM_CREATE_NEW_PARAM = myCreateNew.isSelected();
     super.doOKAction();
   }
 

@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -64,8 +63,6 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   @NonNls private static final String MAP_TYPE_TEXT = "Map";
   @NonNls private static final String[] MY_POSSIBLE_NAMES = new String[]{"attrs", "args", "params", "map"};
 
-  private static final Key<Boolean> hasFirstMapParameter = Key.create("maethod.has.first.map.parameter");
-
   protected void processIntention(@NotNull final PsiElement element) throws IncorrectOperationException {
     final Project project = element.getProject();
     // Method or closure to be refactored
@@ -102,22 +99,25 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       }
       case IS_NOT_MAP: {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          Boolean data = owner.getUserData(hasFirstMapParameter);
-          if (data == null || !data.booleanValue()) {
-            String[] possibleNames = generateValidNames(MY_POSSIBLE_NAMES, firstParam);
-            final GroovyMapParameterDialog dialog = new GroovyMapParameterDialog(project, possibleNames);
-            dialog.show();
-            if (dialog.isOK()) {
-              String name = dialog.getEnteredName();
+          String[] possibleNames = generateValidNames(MY_POSSIBLE_NAMES, firstParam);
+          final GroovyMapParameterDialog dialog = new GroovyMapParameterDialog(project, possibleNames, true) {
+            @Override
+            protected void doOKAction() {
+              String name = getEnteredName();
               ArrayList<String> conflicts = new ArrayList<String>();
               GroovyValidationUtil.validateNewParameterName(firstParam, conflicts, name);
               if (reportConflicts(conflicts, project)) {
-                performRefactoring(element, owner, occurrences, true, name, dialog.specifyTypeExplicitly());
+                performRefactoring(element, owner, occurrences, createNewFirst(), name, specifyTypeExplicitly());
               }
+              super.doOKAction();
             }
-          } else {
-            performRefactoring(element, owner, occurrences, false, null, false);
-          }
+          };
+
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              dialog.show();
+            }
+          });
         } else {
           //todo add statictics manager
           performRefactoring(element, owner, occurrences, true,
@@ -214,7 +214,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
-        owner.putUserData(hasFirstMapParameter, true);
+        //owner.putUserData(hasFirstMapParameter, true);
       }
     };
 
@@ -399,7 +399,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     CodeStyleManager.getInstance(owner.getProject()).reformat(owner);
   }
 
-  private boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {
+  private static boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {
     if (conflicts.size() == 0) return true;
     ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
     conflictsDialog.show();
