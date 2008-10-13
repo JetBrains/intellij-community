@@ -21,6 +21,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings({"SSBasedInspection"})
 public class LaterInvocator {
@@ -237,7 +238,9 @@ public class LaterInvocator {
   }
 
   private static void requestFlush() {
-    SwingUtilities.invokeLater(ourFlushQueueRunnable);
+    if (FLUSHER_SCHEDULED.compareAndSet(false, true)) {
+      SwingUtilities.invokeLater(ourFlushQueueRunnable);
+    }
   }
 
   @Nullable
@@ -277,12 +280,15 @@ public class LaterInvocator {
     }
   }
 
+  private static final AtomicBoolean FLUSHER_SCHEDULED = new AtomicBoolean(false);
   private static final Object RUN_LOCK = new Object();
 
   static class FlushQueue implements Runnable {
     private RunnableInfo myLastInfo;
 
     public void run() {
+      FLUSHER_SCHEDULED.set(false);
+
       final RunnableInfo lastInfo = pollNext();
       myLastInfo = lastInfo;
 
