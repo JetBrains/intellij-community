@@ -25,13 +25,16 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,6 +46,7 @@ import git4idea.config.GitVcsSettings;
 import git4idea.diff.GitDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.i18n.GitBundle;
+import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.update.GitUpdateEnvironment;
 import git4idea.vfs.GitVFSListener;
@@ -57,25 +61,62 @@ import java.util.List;
  * Git VCS implementation
  */
 public class GitVcs extends AbstractVcs {
+  /**
+   * Vcs name
+   */
   @NonNls public static final String NAME = "Git";
-  private static final String UNUNDEXED_FILES_CHANGELIST_NAME = GitBundle.getString("unindexed.files.changlelist.name");
-  private final ChangeProvider changeProvider;
-  private final VcsShowConfirmationOption addConfirmation;
-  private final VcsShowConfirmationOption delConfirmation;
-
-  private final CheckinEnvironment checkinEnvironment;
-  private final RollbackEnvironment rollbackEnvironment;
-  private final GitUpdateEnvironment updateEnvironment;
-
-  private final GitAnnotationProvider annotationProvider;
-  private final DiffProvider diffProvider;
-  private final VcsHistoryProvider historyProvider;
-
-  private final ProjectLevelVcsManager vcsManager;
-  private final GitVcsSettings settings;
-  private final EditorColorsScheme editorColorsScheme;
-  private final Configurable configurable;
-  private final RevisionSelector revSelector;
+  /**
+   * change provider
+   */
+  private final ChangeProvider myChangeProvider;
+  /**
+   * commit support
+   */
+  private final CheckinEnvironment myCheckinEnvironment;
+  /**
+   * rollback support
+   */
+  private final RollbackEnvironment myRollbackEnvironment;
+  /**
+   * update support
+   */
+  private final GitUpdateEnvironment myUpdateEnvironment;
+  /**
+   * annotate file support
+   */
+  private final GitAnnotationProvider myAnnotationProvider;
+  /**
+   * diff provider
+   */
+  private final DiffProvider myDiffProvider;
+  /**
+   * history provider
+   */
+  private final VcsHistoryProvider myHistoryProvider;
+  /**
+   * cached instace of vcs manager for the project
+   */
+  private final ProjectLevelVcsManager myVcsManager;
+  /**
+   * project vcs settings
+   */
+  private final GitVcsSettings mySettings;
+  /**
+   * cached instace of color scheme
+   */
+  private final EditorColorsScheme myEditorColorsScheme;
+  /**
+   * configuration support
+   */
+  private final Configurable myConfigurable;
+  /**
+   * selector for revisions
+   */
+  private final RevisionSelector myRevSelector;
+  /**
+   * merge provider
+   */
+  private final GitMergeProvider myMergeProvider;
   /**
    * a vfs listener
    */
@@ -96,86 +137,130 @@ public class GitVcs extends AbstractVcs {
                 @NotNull final GitVcsSettings gitSettings) {
     super(project);
 
-    vcsManager = gitVcsManager;
-    settings = gitSettings;
-    addConfirmation = gitVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
-    delConfirmation = gitVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
-    changeProvider = gitChangeProvider;
-    checkinEnvironment = gitCheckinEnvironment;
-    annotationProvider = gitAnnotationProvider;
-    diffProvider = gitDiffProvider;
-    editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    historyProvider = gitHistoryProvider;
-    rollbackEnvironment = gitRollbackEnvironment;
-    revSelector = new GitRevisionSelector();
-    configurable = new GitVcsConfigurable(settings, myProject);
-    updateEnvironment = new GitUpdateEnvironment(myProject, settings, configurable);
+    myVcsManager = gitVcsManager;
+    mySettings = gitSettings;
+    myChangeProvider = gitChangeProvider;
+    myCheckinEnvironment = gitCheckinEnvironment;
+    myAnnotationProvider = gitAnnotationProvider;
+    myDiffProvider = gitDiffProvider;
+    myEditorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    myHistoryProvider = gitHistoryProvider;
+    myRollbackEnvironment = gitRollbackEnvironment;
+    myRevSelector = new GitRevisionSelector();
+    myConfigurable = new GitVcsConfigurable(mySettings, myProject);
+    myUpdateEnvironment = new GitUpdateEnvironment(myProject, mySettings, myConfigurable);
+    myMergeProvider = new GitMergeProvider(myProject);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String getName() {
     return NAME;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @NotNull
   public CheckinEnvironment getCheckinEnvironment() {
-    return checkinEnvironment;
+    return myCheckinEnvironment;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @NotNull
+  @Override
+  public MergeProvider getMergeProvider() {
+    return myMergeProvider;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @NotNull
   public RollbackEnvironment getRollbackEnvironment() {
-    return rollbackEnvironment;
+    return myRollbackEnvironment;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @NotNull
   public VcsHistoryProvider getVcsHistoryProvider() {
-    return historyProvider;
+    return myHistoryProvider;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @NotNull
   public String getDisplayName() {
     return NAME;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @Nullable
   public UpdateEnvironment getUpdateEnvironment() {
-    return updateEnvironment;
+    return myUpdateEnvironment;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @Nullable
   public UpdateEnvironment getStatusEnvironment() {
     return getUpdateEnvironment();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @NotNull
   public GitAnnotationProvider getAnnotationProvider() {
-    return annotationProvider;
+    return myAnnotationProvider;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @NotNull
   public DiffProvider getDiffProvider() {
-    return diffProvider;
+    return myDiffProvider;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @Nullable
   public RevisionSelector getRevisionSelector() {
-    return revSelector;
+    return myRevSelector;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public UpdateEnvironment getIntegrateEnvironment() {
     return getUpdateEnvironment();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @SuppressWarnings({"deprecation"})
   @Override
   @Nullable
@@ -192,12 +277,18 @@ public class GitVcs extends AbstractVcs {
     return new GitRevisionNumber(revision);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isVersionedDirectory(VirtualFile dir) {
     final VirtualFile versionFile = dir.findChild(".git");
     return versionFile != null && versionFile.isDirectory();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void activate() {
     super.activate();
@@ -206,6 +297,9 @@ public class GitVcs extends AbstractVcs {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void deactivate() {
     if (myVFSListener != null) {
@@ -215,27 +309,29 @@ public class GitVcs extends AbstractVcs {
     super.deactivate();
   }
 
-  @NotNull
-  public VcsShowConfirmationOption getAddConfirmation() {
-    return addConfirmation;
-  }
-
-  @NotNull
-  public VcsShowConfirmationOption getDeleteConfirmation() {
-    return delConfirmation;
-  }
-
+  /**
+   * {@inheritDoc}
+   */
   @NotNull
   @Override
   public synchronized Configurable getConfigurable() {
-    return configurable;
+    return myConfigurable;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Nullable
   public ChangeProvider getChangeProvider() {
-    return changeProvider;
+    return myChangeProvider;
   }
 
+  /**
+   * Show errors as popup and as messages in vcs view.
+   *
+   * @param list   a list of errors
+   * @param action an action
+   */
   public void showErrors(@NotNull List<VcsException> list, @NotNull String action) {
     if (list.size() > 0) {
       StringBuffer buffer = new StringBuffer();
@@ -251,17 +347,31 @@ public class GitVcs extends AbstractVcs {
     }
   }
 
+  /**
+   * Show a plain message in vcs view
+   *
+   * @param message a message to show
+   */
   public void showMessages(@NotNull String message) {
     if (message.length() == 0) return;
     showMessage(message, HighlighterColors.TEXT);
   }
 
+  /**
+   * @return vcs settings for the current project
+   */
   @NotNull
   public GitVcsSettings getSettings() {
-    return settings;
+    return mySettings;
   }
 
-  private void showMessage(@NotNull String message, final TextAttributesKey text) {
-    vcsManager.addMessageToConsoleWindow(message, editorColorsScheme.getAttributes(text));
+  /**
+   * Show message in the VCS view
+   *
+   * @param message a message to show
+   * @param style   a style to use
+   */
+  private void showMessage(@NotNull String message, final TextAttributesKey style) {
+    myVcsManager.addMessageToConsoleWindow(message, myEditorColorsScheme.getAttributes(style));
   }
 }

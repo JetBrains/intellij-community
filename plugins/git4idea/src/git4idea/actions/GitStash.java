@@ -36,7 +36,7 @@ import java.util.Map;
 public class GitStash extends BasicAction {
 
   protected void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
-      throws VcsException {
+    throws VcsException {
     saveAll();
 
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(GitVcs.getInstance(project), affectedFiles)) return;

@@ -40,7 +40,7 @@ import java.util.Map;
 public class GitTag extends BasicAction {
   @Override
   public void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
-      throws VcsException {
+    throws VcsException {
     saveAll();
 
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, affectedFiles)) {
@@ -49,7 +49,7 @@ public class GitTag extends BasicAction {
     }
 
     final String tagName =
-        Messages.showInputDialog(project, GitBundle.getString("tag.message"), GitBundle.getString("tag.title"), Messages.getQuestionIcon());
+      Messages.showInputDialog(project, GitBundle.getString("tag.message"), GitBundle.getString("tag.title"), Messages.getQuestionIcon());
     if (tagName == null || tagName.length() == 0) return;
 
     final Map<VirtualFile, List<VirtualFile>> roots = GitUtil.sortFilesByVcsRoot(project, affectedFiles);

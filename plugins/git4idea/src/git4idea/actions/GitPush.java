@@ -39,7 +39,7 @@ import java.util.List;
 public class GitPush extends BasicAction {
   @Override
   protected void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
-      throws VcsException {
+    throws VcsException {
     saveAll();
 
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);

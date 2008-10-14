@@ -34,10 +34,10 @@ import java.io.File;
  * Git VCS settings
  */
 @State(
-    name = "Git.Settings",
-    storages = {@Storage(
-        id = "ws",
-        file = "$WORKSPACE_FILE$")})
+  name = "Git.Settings",
+  storages = {@Storage(
+    id = "ws",
+    file = "$WORKSPACE_FILE$")})
 public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> {
   /**
    * the default cygwin executable

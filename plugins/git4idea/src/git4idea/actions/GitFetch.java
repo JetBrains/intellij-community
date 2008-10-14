@@ -40,7 +40,7 @@ public class GitFetch extends BasicAction {
   @SuppressWarnings({"ThrowableResultOfMethodCallIgnored"})
   @Override
   protected void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
-      throws VcsException {
+    throws VcsException {
     saveAll();
 
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -58,7 +59,6 @@ public class GitSimpleHandler extends GitHandler {
   public GitSimpleHandler(@NotNull Project project, @NotNull File directory, @NotNull @NonNls String command) {
     super(project, directory, command);
   }
-
 
   /**
    * A constructor
@@ -142,7 +142,6 @@ public class GitSimpleHandler extends GitHandler {
     return result[0];
   }
 
-
   /**
    * Prepare check repository handler. To do this ls-remote command is executed and attempts to match
    * master tag. This will likely return only single entry or none, if there is no master
@@ -164,7 +163,7 @@ public class GitSimpleHandler extends GitHandler {
    *
    * @param project the project
    * @param root    a vcs root
-   * @param files   a files to commit
+   * @param files   files to delete
    * @return a simple handler that does the task
    */
   public static GitSimpleHandler delete(Project project, VirtualFile root, List<FilePath> files) {
@@ -179,7 +178,7 @@ public class GitSimpleHandler extends GitHandler {
    *
    * @param project the project
    * @param root    a vcs root
-   * @param files   a files to commit
+   * @param files   files to add
    * @return a simple handler that does the task
    */
   public static GitSimpleHandler addFiles(Project project, VirtualFile root, Collection<VirtualFile> files) {
@@ -194,7 +193,19 @@ public class GitSimpleHandler extends GitHandler {
    *
    * @param project the project
    * @param root    a vcs root
-   * @param files   a files to commit
+   * @param files   files to add
+   * @return a simple handler that does the task
+   */
+  public static GitSimpleHandler addFiles(Project project, VirtualFile root, VirtualFile... files) {
+    return addFiles(project, root, Arrays.asList(files));
+  }
+
+  /**
+   * Prepare add files handler.
+   *
+   * @param project the project
+   * @param root    a vcs root
+   * @param files   files to add
    * @return a simple handler that does the task
    */
   public static GitSimpleHandler addPaths(Project project, VirtualFile root, Collection<FilePath> files) {
@@ -203,6 +214,5 @@ public class GitSimpleHandler extends GitHandler {
     handler.setNoSSH(true);
     return handler;
   }
-
 
 }

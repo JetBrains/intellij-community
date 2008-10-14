@@ -132,7 +132,7 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
         public void run() {
           showError(lastError);
           GitSSHKeyboardInteractiveDialog dialog =
-              new GitSSHKeyboardInteractiveDialog(name, numPrompts, instruction, prompt, echo, username);
+            new GitSSHKeyboardInteractiveDialog(name, numPrompts, instruction, prompt, echo, username);
           dialog.show();
           if (dialog.isOK()) {
             rc[0] = dialog.getResults();
@@ -156,7 +156,7 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
         public void run() {
           showError(lastError);
           PasswordPromptDialog dialog =
-              new PasswordPromptDialog(GitBundle.message("ssh.password.message", username), GitBundle.getString("ssh.password.title"), "");
+            new PasswordPromptDialog(GitBundle.message("ssh.password.message", username), GitBundle.getString("ssh.password.title"), "");
           dialog.show();
           if (dialog.isOK()) {
             rc[0] = dialog.getPassword();

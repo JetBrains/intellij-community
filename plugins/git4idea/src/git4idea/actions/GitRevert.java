@@ -40,7 +40,7 @@ import java.util.Map;
 public class GitRevert extends BasicAction {
   @Override
   public void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
-      throws VcsException {
+    throws VcsException {
     saveAll();
 
     final Map<VirtualFile, List<VirtualFile>> roots = GitUtil.sortFilesByVcsRoot(project, affectedFiles);

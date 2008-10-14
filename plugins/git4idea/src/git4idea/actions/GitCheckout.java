@@ -41,7 +41,7 @@ import java.util.List;
 public class GitCheckout extends BasicAction {
   @Override
   protected void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
-      throws VcsException {
+    throws VcsException {
     saveAll();
 
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
@@ -60,8 +60,8 @@ public class GitCheckout extends BasicAction {
       }
 
       String branchName = Messages
-          .showEditableChooseDialog(GitBundle.getString("select.branch.to.checkout"), GitBundle.getString("checkout.branch"),
-                                    Messages.getQuestionIcon(), branchesList, selectedBranch, new GitBranchNameValidator());
+        .showEditableChooseDialog(GitBundle.getString("select.branch.to.checkout"), GitBundle.getString("checkout.branch"),
+                                  Messages.getQuestionIcon(), branchesList, selectedBranch, new GitBranchNameValidator());
 
       if (branchName == null) return;
       selectedBranch = null;

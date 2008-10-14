@@ -94,6 +94,10 @@ public abstract class GitHandler {
    * listeners
    */
   private final EventDispatcher<GitHandlerListener> myListeners = EventDispatcher.create(GitHandlerListener.class);
+  /**
+   * if true, the command execution is not logged in version control view
+   */
+  private boolean mySilent;
 
   /**
    * A constructor
@@ -299,7 +303,7 @@ public abstract class GitHandler {
     checkNotStarted();
     try {
       // setup environment
-      if (!myProject.isDefault()) {
+      if (!myProject.isDefault() && !mySilent) {
         GitVcs.getInstance(myProject).showMessages(printCommandLine());
       }
       if (log.isDebugEnabled()) {
@@ -413,5 +417,9 @@ public abstract class GitHandler {
   public void waitFor() {
     checkStarted();
     myHandler.waitFor();
+  }
+
+  public void setSilent(final boolean silent) {
+    mySilent = silent;
   }
 }

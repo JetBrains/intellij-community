@@ -59,7 +59,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
                                          UpdatedFiles updatedFiles,
                                          ProgressIndicator progressIndicator,
                                          @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef)
-      throws ProcessCanceledException {
+    throws ProcessCanceledException {
     return new GitUpdateSession(null);
   }
 

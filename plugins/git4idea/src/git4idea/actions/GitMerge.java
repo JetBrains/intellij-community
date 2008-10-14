@@ -42,7 +42,7 @@ import java.util.List;
 public class GitMerge extends BasicAction {
   @Override
   protected void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
-      throws VcsException {
+    throws VcsException {
     saveAll();
 
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
@@ -63,8 +63,8 @@ public class GitMerge extends BasicAction {
       if (selectedBranch == null) return;
 
       int branchNum = Messages
-          .showChooseDialog(GitBundle.message("merge.branch.message", currBranch), GitBundle.getString("merge.branch.title"), branchesList,
-                            selectedBranch.getName(), Messages.getQuestionIcon());
+        .showChooseDialog(GitBundle.message("merge.branch.message", currBranch), GitBundle.getString("merge.branch.title"), branchesList,
+                          selectedBranch.getName(), Messages.getQuestionIcon());
       if (branchNum < 0) return;
 
       selectedBranch = branches.get(branchNum);

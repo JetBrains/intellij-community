@@ -496,7 +496,7 @@ public class SSHMain {
         vEcho.add(e);
       }
       final Vector<String> result =
-          myXmlRpcClient.replyToChallenge(myHandlerNo, getUserHostString(), name, instruction, numPrompts, vPrompts, vEcho, myLastError);
+        myXmlRpcClient.replyToChallenge(myHandlerNo, getUserHostString(), name, instruction, numPrompts, vPrompts, vEcho, myLastError);
       if (result == null) {
         myCancelled = true;
         String[] rc = new String[numPrompts];

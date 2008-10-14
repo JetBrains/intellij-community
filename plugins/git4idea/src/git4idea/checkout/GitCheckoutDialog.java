@@ -202,8 +202,8 @@ public class GitCheckoutDialog extends DialogWrapper {
       public void actionPerformed(final ActionEvent e) {
         myTestURL = myRepositoryURL.getText();
         String stdout = GitHandlerUtil
-            .doSynchronously(GitSimpleHandler.checkRepository(myProject, myTestURL), GitBundle.message("clone.testing", myTestURL),
-                             "connection test");
+          .doSynchronously(GitSimpleHandler.checkRepository(myProject, myTestURL), GitBundle.message("clone.testing", myTestURL),
+                           "connection test");
         if (stdout != null) {
           Messages.showInfoMessage(myTestButton, GitBundle.message("clone.test.success.message", myTestURL),
                                    GitBundle.getString("clone.test.success"));

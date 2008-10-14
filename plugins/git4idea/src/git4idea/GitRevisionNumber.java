@@ -54,7 +54,7 @@ public class GitRevisionNumber implements VcsRevisionNumber {
    *
    * @param version the version number.
    */
-  public GitRevisionNumber(@NotNull String version) {
+  public GitRevisionNumber(@NonNls @NotNull String version) {
     // TODO review usages
     myRevisionStr = version;
     myTimestamp = new Date();

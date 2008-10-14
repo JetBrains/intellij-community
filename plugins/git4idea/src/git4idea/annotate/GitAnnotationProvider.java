@@ -106,7 +106,7 @@ public class GitAnnotationProvider implements AnnotationProvider {
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance()
-          .runProcessWithProgressSynchronously(command, GitBundle.getString("annotate.action.name"), false, myProject);
+        .runProcessWithProgressSynchronously(command, GitBundle.getString("annotate.action.name"), false, myProject);
     }
     else {
       command.run();

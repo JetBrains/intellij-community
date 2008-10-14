@@ -12,6 +12,7 @@ package git4idea.actions;
  * Copyright 2007 Decentrix Inc
  * Copyright 2007 Aspiro AS
  * Copyright 2008 MQSoftware
+ * Copyright 2008 JetBrains s.r.o.
  * Authors: mike.aizatsky,gevession, Erlend Simonsen & Mark Scott
  *
  * This code was originally derived from the MKS & Mercurial IDEA VCS plugins
@@ -19,60 +20,56 @@ package git4idea.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitCommand;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Git merge tool for resolving conflicts
- * <p/>
- * You'll need to add a stanza something like the following in your .git/config file for the affected repository. The
- * mergetool must point to a Git supported merge tool.  Note that on MS-Windwos when using the Cygwin version of git,
- * you need to specifiy a valid Cygwin path to the actual merge tool since it will be called from within a Cygwin
- * environment.
- * <p/>
- * [mergetool "kdiff3"]
- * path = /cygdrive/c/Program Files/KDiff3/kdiff3.exe
- * [merge]
- * tool = kdiff3
+ * Git merge tool for resolving conflicts. Use IDEA built-in 3-way merge tool.
  */
 public class GitMergeTool extends BasicAction {
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
-      throws VcsException {
+    throws VcsException {
     saveAll();
-
-    if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(GitVcs.getInstance(project), affectedFiles)) return;
-
-    final Map<VirtualFile, List<VirtualFile>> roots = GitUtil.sortFilesByVcsRoot(project, affectedFiles);
-
-    for (VirtualFile root : roots.keySet()) {
-      GitCommand command = new GitCommand(project, vcs.getSettings(), root);
-      List<VirtualFile> files = roots.get(root);
-      if (files == null || files.size() == 0) continue;
-      String[] fileNames = new String[files.size()];
-      int i = 0;
-      for (VirtualFile file : files) {
-        fileNames[i++] = GitUtil.getRelativeFilePath(file, root);
+    // ensure that all selected files actually has unresolved conflicts
+    ChangeListManager changes = ChangeListManager.getInstance(project);
+    for (VirtualFile file : affectedFiles) {
+      Change change = changes.getChange(file);
+      if (change != null && change.getFileStatus() != FileStatus.MERGED_WITH_CONFLICTS) {
+        File f = new File(file.getPath());
+        throw new VcsException(GitBundle.message("merge.is.not.needed", f.getAbsolutePath()));
       }
-      command.mergetool(fileNames);
     }
+    // perform merge
+    AbstractVcsHelper.getInstance(project).showMergeDialog(Arrays.asList(affectedFiles), vcs.getMergeProvider());
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @NotNull
   protected String getActionName(@NotNull AbstractVcs abstractvcs) {
     return GitBundle.getString("merge.tool.action.name");
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   protected boolean isEnabled(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile... vFiles) {
     return true;

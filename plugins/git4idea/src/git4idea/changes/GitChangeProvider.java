@@ -23,8 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitCommand;
-import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -37,21 +35,15 @@ public class GitChangeProvider implements ChangeProvider {
   /**
    * the project
    */
-  private final Project project;
-  /**
-   * the VCS settings
-   */
-  private final GitVcsSettings settings;
+  private final Project myProject;
 
   /**
    * A constructor
    *
-   * @param project  a project
-   * @param settings a VCS settings
+   * @param project a project
    */
-  public GitChangeProvider(@NotNull Project project, @NotNull GitVcsSettings settings) {
-    this.project = project;
-    this.settings = settings;
+  public GitChangeProvider(@NotNull Project project) {
+    myProject = project;
   }
 
   /**
@@ -63,12 +55,11 @@ public class GitChangeProvider implements ChangeProvider {
                          final ChangeListManagerGate addGate) throws VcsException {
     Collection<VirtualFile> roots = dirtyScope.getAffectedContentRoots();
     for (VirtualFile root : roots) {
-      GitCommand command = new GitCommand(project, settings, root);
-      List<Change> files = command.changedFiles();
-      for (Change file : files) {
+      ChangeCollector c = new ChangeCollector(myProject, root);
+      for (Change file : c.changes()) {
         builder.processChange(file);
       }
-      for (VirtualFile f : command.unversionedFiles()) {
+      for (VirtualFile f : c.unversioned()) {
         builder.processUnversionedFile(f);
       }
     }

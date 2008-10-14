@@ -50,7 +50,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
     }
     final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
     GitLineHandler handler = GitLineHandler
-        .clone(project, sourceRepositoryURL, new File(dialog.getParentDirectory()), dialog.getDirectoryName(), dialog.getOriginName());
+      .clone(project, sourceRepositoryURL, new File(dialog.getParentDirectory()), dialog.getDirectoryName(), dialog.getOriginName());
     int code = GitHandlerUtil.doSynchronously(handler, GitBundle.message("cloning.repository", sourceRepositoryURL), "git clone");
     if (code == 0) {
       if (listener != null) {

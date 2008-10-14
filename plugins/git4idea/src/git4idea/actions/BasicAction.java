@@ -174,7 +174,7 @@ public abstract class BasicAction extends AnAction {
     }
     GitVcs mksvcs = GitVcs.getInstance(project);
     boolean enabled =
-        ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(mksvcs, vFiles) && isEnabled(project, mksvcs, vFiles);
+      ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(mksvcs, vFiles) && isEnabled(project, mksvcs, vFiles);
     // only enable action if all the targets are under the vcs and the action suports all of them
 
     presentation.setEnabled(enabled);

@@ -196,4 +196,54 @@ public class GitUtil {
     }
     return rc;
   }
+
+  /**
+   * Unescape path returned by the Git
+   *
+   * @param path a path to unescape
+   * @return unescaped path
+   * @throws com.intellij.openapi.vcs.VcsException
+   *          if the path in invalid
+   */
+  public static String unescapePath(String path) throws VcsException {
+    StringBuilder rc = new StringBuilder(path.length());
+    for (int i = 0; i < path.length(); i++) {
+      char c = path.charAt(i);
+      if (c == '\\') {
+        //noinspection AssignmentToForLoopParameter
+        i++;
+        if (i <= path.length()) {
+          throw new VcsException("Unterminated escape sequence in the path: " + path);
+        }
+        switch (path.charAt(i)) {
+          case '\\':
+            rc.append('\\');
+            break;
+          case 't':
+            rc.append('\t');
+            break;
+          case 'n':
+            rc.append('\n');
+            break;
+          // TODO support unicode
+          default:
+            throw new VcsException("Unknown escape sequence '\\" + path.charAt(i) + "' in the path: " + path);
+        }
+      }
+      else {
+        rc.append(c);
+      }
+    }
+    return rc.toString();
+  }
+
+  /**
+   * Parse unix timestamp as it is returned by the git
+   *
+   * @param value a value to parse
+   * @return timestamp as {@link java.util.Date} object
+   */
+  public static Date parseTimestamp(String value) {
+    return new Date(Long.parseLong(value.trim()) * 1000);
+  }
 }

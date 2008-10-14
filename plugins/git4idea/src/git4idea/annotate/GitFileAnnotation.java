@@ -189,8 +189,8 @@ public class GitFileAnnotation implements FileAnnotation {
     VcsFileRevision fileRevision = myRevisionMap.get(info.getRevision());
     if (fileRevision != null) {
       return GitBundle
-          .message("annotation.tool.tip", info.getRevision().asString(), fileRevision.getAuthor(), fileRevision.getRevisionDate(),
-                   fileRevision.getCommitMessage());
+        .message("annotation.tool.tip", info.getRevision().asString(), fileRevision.getAuthor(), fileRevision.getRevisionDate(),
+                 fileRevision.getCommitMessage());
     }
     else {
       return "";

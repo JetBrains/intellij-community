@@ -21,7 +21,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.commands.GitCommand;
 import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NotNull;
@@ -71,5 +74,32 @@ public class GitContentRevision implements ContentRevision {
   public int hashCode() {
     if (file != null && revision != null) return file.hashCode() + revision.hashCode();
     return 0;
+  }
+
+  /**
+   * Create revision
+   *
+   * @param vcsRoot        a vcs root for the repository
+   * @param path           an path inside with possibly escape sequences
+   * @param revisionNumber a revision number, if null the current revision will be created
+   * @param project        the context project
+   * @param isDeleted      if true, the file is deleted
+   * @return a created revision
+   * @throws com.intellij.openapi.vcs.VcsException
+   *          if there is a problem with creating revision
+   */
+  public static ContentRevision createRevision(VirtualFile vcsRoot,
+                                               String path,
+                                               VcsRevisionNumber revisionNumber,
+                                               Project project,
+                                               boolean isDeleted) throws VcsException {
+    final String name = vcsRoot.getPath() + "/" + GitUtil.unescapePath(path);
+    final FilePath file = isDeleted ? VcsUtil.getFilePathForDeletedFile(name, false) : VcsUtil.getFilePath(name, false);
+    if (revisionNumber != null) {
+      return new GitContentRevision(file, (GitRevisionNumber)revisionNumber, project);
+    }
+    else {
+      return CurrentContentRevision.create(file);
+    }
   }
 }

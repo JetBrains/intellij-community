@@ -34,7 +34,7 @@ import java.util.List;
 public class GitCurrentBranch extends BasicAction {
   @Override
   protected void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] files)
-      throws VcsException {
+    throws VcsException {
 
     GitCommand cmd = new GitCommand(project, vcs.getSettings(), GitUtil.getVcsRoot(project, files[0]));
     Messages.showInfoMessage(project, GitBundle.message("current.branch.message", cmd.currentBranch()),

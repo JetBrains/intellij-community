@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public class GitUnstash extends BasicAction {
   protected void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
-      throws VcsException {
+    throws VcsException {
     saveAll();
 
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(GitVcs.getInstance(project), affectedFiles)) return;
@@ -49,8 +49,8 @@ public class GitUnstash extends BasicAction {
       if (stashList == null || stashList.length == 0) continue;
       stashesFound = true;
       int stashIndex = Messages
-          .showChooseDialog(GitBundle.getString("unstash.message"), GitBundle.getString("unstash.title"), stashList, stashList[0],
-                            Messages.getQuestionIcon());
+        .showChooseDialog(GitBundle.getString("unstash.message"), GitBundle.getString("unstash.title"), stashList, stashList[0],
+                          Messages.getQuestionIcon());
       if (stashIndex < 0) continue;
       GitCommandRunnable cmdr = new GitCommandRunnable(project, vcs.getSettings(), root);
       cmdr.setCommand(GitCommand.STASH_CMD);

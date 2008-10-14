@@ -43,7 +43,7 @@ public class GitPull extends BasicAction {
   @SuppressWarnings({"ThrowableResultOfMethodCallIgnored"})
   @Override
   protected void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
-      throws VcsException {
+    throws VcsException {
     saveAll();
 
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
@@ -91,8 +91,8 @@ public class GitPull extends BasicAction {
       if (selectedBranch == null) selectedBranch = branches.get(0);
 
       int branchNum = Messages
-          .showChooseDialog(GitBundle.message("merge.branch.message", command.currentBranch()), GitBundle.getString("merge.branch.title"),
-                            branchesList, selectedBranch.getName(), Messages.getQuestionIcon());
+        .showChooseDialog(GitBundle.message("merge.branch.message", command.currentBranch()), GitBundle.getString("merge.branch.title"),
+                          branchesList, selectedBranch.getName(), Messages.getQuestionIcon());
       if (branchNum < 0) {
         return;
       }
