@@ -75,6 +75,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
   private final Map<String, String> myLocalizedTemplateNames = new HashMap<String, String>();
   private final Object LOCK = new Object();
+  private static final Object TOP_DIRS_LOCK = new Object();
 
   public static FileTemplateManagerImpl getInstance() {
     return (FileTemplateManagerImpl)ServiceManager.getService(FileTemplateManager.class);
@@ -92,16 +93,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       }
 
       public void after(final List<? extends VFileEvent> events) {
-        synchronized (LOCK) {
-          if (ourTopDirs != null) {
-            for (VirtualFile dir : ourTopDirs) {
-              if (!dir.exists()) {
-                ourTopDirs = null;
-                break;
-              }
-            }
-          }
-        }
+        refreshTopDirs();
       }
     });
   }
@@ -725,9 +717,22 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     return templatesList.toArray(new VirtualFile[templatesList.size()]);
   }
 
+  private static void refreshTopDirs() {
+    synchronized (TOP_DIRS_LOCK) {
+      if (ourTopDirs != null) {
+        for (VirtualFile dir : ourTopDirs) {
+          if (!dir.exists()) {
+            ourTopDirs = null;
+            break;
+          }
+        }
+      }
+    }
+  }
+
   @NotNull
-  private VirtualFile[] getTopTemplatesDir() {
-    synchronized (LOCK) {
+  private static VirtualFile[] getTopTemplatesDir() {
+    synchronized (TOP_DIRS_LOCK) {
       if (ourTopDirs != null) {
         return ourTopDirs;
       }
@@ -745,7 +750,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     }
   }
 
-  private void appendDefaultTemplatesFromClassloader(ClassLoader classLoader, Set<VirtualFile> dirList) {
+  private static void appendDefaultTemplatesFromClassloader(ClassLoader classLoader, Set<VirtualFile> dirList) {
     try {
       Enumeration systemResources = classLoader.getResources(DEFAULT_TEMPLATES_TOP_DIR);
       if (systemResources != null && systemResources.hasMoreElements()) {
@@ -754,7 +759,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
           URL nextURL = (URL)systemResources.nextElement();
           if (!urls.contains(nextURL)) {
             urls.add(nextURL);
-            VirtualFile dir = VfsUtil.findFileByURL(nextURL, myVirtualFileManager);
+            VirtualFile dir = VfsUtil.findFileByURL(nextURL);
             if (dir == null) {
               LOG.error("Cannot find file by URL: " + nextURL);
             }
