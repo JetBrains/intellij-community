@@ -43,7 +43,7 @@ public class AntTasksProvider {
     }, false);
   }
   
-  synchronized public Set<String> getAntTasks() {
+  public Set<String> getAntTasks() {
     return myCachedValue.getValue();
   }
 
