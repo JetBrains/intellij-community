@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -19,6 +21,9 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
@@ -26,6 +31,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PatternUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -207,8 +213,7 @@ final class FindDialog extends DialogWrapper {
     if (editorComponent instanceof EditorTextField) {
       final EditorTextField etf = (EditorTextField) editorComponent;
 
-      etf.setFocusTraversalPolicyProvider(true);
-      etf.setFocusTraversalPolicy(new EditorFocusTraversalPolicy());
+      etf.pleaseHandleShiftTab();
 
       DocumentAdapter listener = new DocumentAdapter() {
         public void documentChanged(final DocumentEvent e) {
@@ -498,6 +503,11 @@ final class FindDialog extends DialogWrapper {
       }
     };
     myCbRegularExpressions.addActionListener(actionListener);
+    myCbRegularExpressions.addItemListener(new ItemListener() {
+      public void itemStateChanged(final ItemEvent e) {
+        setupRegExpSetting();
+      }
+    });
 
     if (myModel.isReplaceState()) {
       myCbCaseSensitive.addActionListener(actionListener);
@@ -510,6 +520,24 @@ final class FindDialog extends DialogWrapper {
 //      findOptionsPanel.add(myCbPromptOnReplace);
 //    }
     return findOptionsPanel;
+  }
+
+  private void setupRegExpSetting() {
+    updateFileTypeForEditorComponent(myInputComboBox);
+    if (myReplaceComboBox != null) updateFileTypeForEditorComponent(myReplaceComboBox);
+  }
+
+  private void updateFileTypeForEditorComponent(final ComboBox inputComboBox) {
+    final Component editorComponent = inputComboBox.getEditor().getEditorComponent();
+
+    if (editorComponent instanceof EditorTextField) {
+      final @NonNls String s = myCbRegularExpressions.isSelectedWhenSelectable() ? "*.regexp" : "*.txt";
+      final FileType fileType =
+        FileTypeManager.getInstance().getFileTypeByFileName(s);
+      final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(s, fileType, ((EditorTextField)editorComponent).getText(), -1, true);
+
+      ((EditorTextField)editorComponent).setNewDocumentAndFileType(fileType, PsiDocumentManager.getInstance(myProject).getDocument(file));
+    }
   }
 
   private void updateControls() {
@@ -936,38 +964,6 @@ final class FindDialog extends DialogWrapper {
     }
     updateControls();
     validateFindButton();
-  }
-
-  private static class EditorFocusTraversalPolicy extends FocusTraversalPolicy {
-    @Override
-    public Component getComponentAfter(final Container aContainer, final Component aComponent) {
-      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
-      return cycleRootAncestor.getFocusTraversalPolicy().getComponentAfter(cycleRootAncestor, aContainer);
-    }
-
-    @Override
-    public Component getComponentBefore(final Container aContainer, final Component aComponent) {
-      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
-      return cycleRootAncestor.getFocusTraversalPolicy().getComponentBefore(cycleRootAncestor, aContainer);
-    }
-
-    @Override
-    public Component getFirstComponent(final Container aContainer) {
-      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
-      return cycleRootAncestor.getFocusTraversalPolicy().getFirstComponent(cycleRootAncestor);
-    }
-
-    @Override
-    public Component getLastComponent(final Container aContainer) {
-      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
-      return cycleRootAncestor.getFocusTraversalPolicy().getLastComponent(cycleRootAncestor);
-    }
-
-    @Override
-    public Component getDefaultComponent(final Container aContainer) {
-      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
-      return cycleRootAncestor.getFocusTraversalPolicy().getDefaultComponent(cycleRootAncestor);
-    }
   }
 }
 

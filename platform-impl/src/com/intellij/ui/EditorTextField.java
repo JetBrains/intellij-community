@@ -39,7 +39,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
 
   private Document myDocument;
   private final Project myProject;
-  private final FileType myFileType;
+  private FileType myFileType;
   private EditorEx myEditor = null;
   private Component myNextFocusable = null;
   private boolean myWholeTextSelected = false;
@@ -85,6 +85,11 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
       public void focusLost(FocusEvent e) {
       }
     });
+  }
+
+  public void pleaseHandleShiftTab() {
+    setFocusTraversalPolicyProvider(true);
+    setFocusTraversalPolicy(new DelegatingToRootTraversalPolicy());
   }
 
   public void setSupplementary(boolean supplementary) {
@@ -479,4 +484,42 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
 
     return null;
   }
+
+  public void setNewDocumentAndFileType(final FileType fileType, Document document) {
+    myFileType = fileType;
+    setDocument(document);
+  }
+
+  private static class DelegatingToRootTraversalPolicy extends FocusTraversalPolicy {
+    @Override
+    public Component getComponentAfter(final Container aContainer, final Component aComponent) {
+      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
+      return cycleRootAncestor.getFocusTraversalPolicy().getComponentAfter(cycleRootAncestor, aContainer);
+    }
+
+    @Override
+    public Component getComponentBefore(final Container aContainer, final Component aComponent) {
+      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
+      return cycleRootAncestor.getFocusTraversalPolicy().getComponentBefore(cycleRootAncestor, aContainer);
+    }
+
+    @Override
+    public Component getFirstComponent(final Container aContainer) {
+      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
+      return cycleRootAncestor.getFocusTraversalPolicy().getFirstComponent(cycleRootAncestor);
+    }
+
+    @Override
+    public Component getLastComponent(final Container aContainer) {
+      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
+      return cycleRootAncestor.getFocusTraversalPolicy().getLastComponent(cycleRootAncestor);
+    }
+
+    @Override
+    public Component getDefaultComponent(final Container aContainer) {
+      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
+      return cycleRootAncestor.getFocusTraversalPolicy().getDefaultComponent(cycleRootAncestor);
+    }
+  }
+
 }
