@@ -1,6 +1,5 @@
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -12,16 +11,7 @@ class FictiveBackgroundable extends Task.Backgroundable {
   private final Waiter myWaiter;
 
   FictiveBackgroundable(@Nullable final Project project, @NotNull final Runnable runnable, final boolean cancellable, final String title) {
-    super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable, new PerformInBackgroundOption() {
-      public boolean shouldStartInBackground() {
-        return true;
-      }
-      public void processSentToBackground() {
-      }
-
-      public void processRestoredToForeground() {
-      }
-    });
+    super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable, BackgroundFromStartOption.getInstance());
     myWaiter = new Waiter(project, runnable);
   }
 
