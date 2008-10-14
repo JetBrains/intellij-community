@@ -331,6 +331,7 @@ public class GroovyPsiManager implements ProjectComponent {
     return project.getComponent(GroovyPsiManager.class);
   }
 
+  @Nullable
   public <T extends GroovyPsiElement> PsiType getType(T element, Function<T, PsiType> calculator) {
     PsiType type = myCalculatedTypes.get(element);
     if (type == null) {
