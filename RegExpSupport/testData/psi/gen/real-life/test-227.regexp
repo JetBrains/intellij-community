@@ -1,0 +1,1 @@
+.*?(<(error|warning|info)(?: descr="((?:[^"\\]|\\")*)")?(?: type="([0-9A-Z_]+)")?(?: foreground="([0-9xa-f]+)")?(?: background="([0-9xa-f]+)")?(?: effectcolor="([0-9xa-f]+)")?(?: effecttype="([A-Z]+)")?(?: fonttype="([0-9]+)")?(/)?>)(.*)

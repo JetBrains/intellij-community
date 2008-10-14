@@ -1,0 +1,1 @@
+([ab]+=<warning descr="Backreference is nested into the capturing group it refers to">\1</warning>)
