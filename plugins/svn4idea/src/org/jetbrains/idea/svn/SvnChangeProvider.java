@@ -12,7 +12,9 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.CommonProcessors;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -281,14 +283,19 @@ public class SvnChangeProvider implements ChangeProvider {
               return;
             }
             processStatusFirstPass(path, status, context, parentStatus);
-            if (status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED && path.isDirectory()) {
-              // process children of this file with another client.
-              SVNStatusClient client = myVcs.createStatusClient();
-              if (recursively && path.isDirectory()) {
-                VirtualFile[] children = vFile.getChildren();
-                for (VirtualFile aChildren : children) {
-                  FilePath filePath = VcsUtil.getFilePath(aChildren.getPath(), aChildren.isDirectory());
-                  processFile(filePath, context, parentStatus, recursively, client);
+            if ((vFile != null) && (status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED) && path.isDirectory()) {
+              if (myClManager.isIgnoredFile(vFile)) {
+                // for directory, this means recursively ignored by Idea
+                reportIgnoredRecursively(vFile, context);
+              } else {
+                // process children of this file with another client.
+                SVNStatusClient client = myVcs.createStatusClient();
+                if (recursively && path.isDirectory()) {
+                  VirtualFile[] children = vFile.getChildren();
+                  for (VirtualFile aChildren : children) {
+                    FilePath filePath = VcsUtil.getFilePath(aChildren.getPath(), aChildren.isDirectory());
+                    processFile(filePath, context, parentStatus, recursively, client);
+                  }
                 }
               }
             }
@@ -320,6 +327,15 @@ public class SvnChangeProvider implements ChangeProvider {
       else {
         throw e;
       }
+    }
+  }
+
+  private void reportIgnoredRecursively(final VirtualFile vFile, final SvnChangeProviderContext context) {
+    final CommonProcessors.CollectUniquesProcessor<VirtualFile> processor = new CommonProcessors.CollectUniquesProcessor<VirtualFile>();
+    VfsUtil.processFilesRecursively(vFile, processor);
+    final Collection<VirtualFile> ignoredFiles = processor.getResults();
+    for (VirtualFile ignoredFile : ignoredFiles) {
+      context.getBuilder().processIgnoredFile(ignoredFile);
     }
   }
 
