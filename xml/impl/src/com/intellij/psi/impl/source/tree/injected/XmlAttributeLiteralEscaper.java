@@ -4,7 +4,7 @@ import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.injected.editor.ProperTextRange;
+import com.intellij.openapi.util.ProperTextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**

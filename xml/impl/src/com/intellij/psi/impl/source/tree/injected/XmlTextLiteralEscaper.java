@@ -1,9 +1,9 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.impl.source.xml.XmlTextImpl;
 import com.intellij.psi.LiteralTextEscaper;
-import com.intellij.injected.editor.ProperTextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.ProperTextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**

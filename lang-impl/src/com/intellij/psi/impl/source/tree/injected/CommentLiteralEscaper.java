@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.injected.editor.ProperTextRange;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;

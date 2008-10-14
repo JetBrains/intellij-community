@@ -3,7 +3,7 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.injected.editor.ProperTextRange;
+import com.intellij.openapi.util.ProperTextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**

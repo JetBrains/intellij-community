@@ -47,17 +47,13 @@ class InjectedFileViewProvider extends SingleRootFileViewProvider {
     DocumentWindowImpl documentWindow = (DocumentWindowImpl)documentManager.getDocument(psiFile);
     assert documentWindow.getHostRanges().length == shreds.size();
     String[] changes = documentWindow.calculateMinEditSequence(psiFile.getText());
-    //RangeMarker[] hostRanges = documentWindow.getHostRanges();
     assert changes.length == shreds.size();
     for (int i = 0; i < changes.length; i++) {
       String change = changes[i];
       if (change != null) {
         PsiLanguageInjectionHost.Shred shred = shreds.get(i);
         PsiLanguageInjectionHost host = shred.host;
-        //RangeMarker hostRange = hostRanges[i];
-        //TextRange hostTextRange = host.getTextRange();
         TextRange rangeInsideHost = shred.getRangeInsideHost();
-        //TextRange rangeInsideHost = hostTextRange.intersection(toTextRange(hostRange)).shiftRight(-hostTextRange.getStartOffset());
         String newHostText = StringUtil.replaceSubstring(host.getText(), rangeInsideHost, change);
         host.fixText(newHostText);
       }

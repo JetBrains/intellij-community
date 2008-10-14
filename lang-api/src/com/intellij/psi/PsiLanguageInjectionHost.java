@@ -18,6 +18,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +80,7 @@ public interface PsiLanguageInjectionHost extends PsiElement {
     }
 
     public TextRange getRangeInsideHost() {
-      return new TextRange(relevantRangeInHost.getStartOffset(), relevantRangeInHost.getEndOffset()).shiftRight(-host.getTextRange().getStartOffset());
+      return new ProperTextRange(relevantRangeInHost.getStartOffset(), relevantRangeInHost.getEndOffset()).shiftRight(-host.getTextRange().getStartOffset());
     }
 
     public String toString() {

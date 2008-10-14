@@ -1,8 +1,7 @@
-package com.intellij.injected.editor;
-
-import com.intellij.openapi.util.TextRange;
+package com.intellij.openapi.util;
 
 /**
+ * Text range which asserts its non-negative length
  * @author cdr
  */
 public class ProperTextRange extends TextRange {
