@@ -11,8 +11,9 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
@@ -34,6 +35,7 @@ import java.util.EventObject;
  * @author peter
  */
 public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcess{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionProgressIndicator");
   private final Editor myEditor;
   private final CompletionParameters myParameters;
   private final CodeCompletionHandlerBase myHandler;
@@ -285,14 +287,20 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public boolean fillInCommonPrefix(final boolean explicit) {
-    return new WriteCommandAction<Boolean>(myEditor.getProject()) {
+    final Boolean aBoolean = new WriteCommandAction<Boolean>(myEditor.getProject()) {
       protected void run(Result<Boolean> result) throws Throwable {
         if (!explicit) {
           setMergeCommand();
         }
-        result.setResult(myLookup.fillInCommonPrefix(explicit));
+        try {
+          result.setResult(myLookup.fillInCommonPrefix(explicit));
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
-    }.execute().getResultObject().booleanValue();
+    }.execute().getResultObject();
+    return aBoolean.booleanValue();
   }
 
   public boolean isInitialized() {
