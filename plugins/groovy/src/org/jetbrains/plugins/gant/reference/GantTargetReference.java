@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 
 import java.util.ArrayList;
@@ -38,6 +39,10 @@ public class GantTargetReference implements PsiPolyVariantReference {
   @NotNull
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     if (myRefExpr.getQualifierExpression() != null) return ResolveResult.EMPTY_ARRAY;
+
+    final PsiElement parent = myRefExpr.getParent();
+    if (!(parent instanceof GrCall)) return ResolveResult.EMPTY_ARRAY;
+
     PsiFile file = myRefExpr.getContainingFile();
     if (!GantUtils.isGantScriptFile(file)) return ResolveResult.EMPTY_ARRAY;
 
@@ -51,7 +56,6 @@ public class GantTargetReference implements PsiPolyVariantReference {
 
     // Add ant tasks
     final Project project = groovyFile.getProject();
-
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myRefExpr.getProject());
     final PsiClass taskClass = facade.findClass(AntTasksProvider.ANT_TASK_CLASS, GlobalSearchScope.allScope(project));
 
@@ -125,7 +129,7 @@ public class GantTargetReference implements PsiPolyVariantReference {
 
   public Object[] getVariants() {
     GrExpression qualifier = myRefExpr.getQualifierExpression();
-    if (qualifier == null) {
+    if (qualifier == null && !(myRefExpr.getParent() instanceof GrReferenceExpression)) {
       return getScriptTargets();
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

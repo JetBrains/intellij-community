@@ -1,92 +1,50 @@
 package org.jetbrains.plugins.gant.reference;
 
-import com.intellij.ProjectTopics;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.psi.SearchUtils;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 /**
  * @author ilyas
  */
-public class AntTasksProvider implements ProjectComponent {
+public class AntTasksProvider {
 
   @NonNls public static final String ANT_TASK_CLASS = "org.apache.tools.ant.Task";
 
-  private Set<String> myAntTaks = new HashSet<String>();
   private final Project myProject;
-  private MessageBusConnection myRootConnection;
-  private boolean needToRefresh = true;
+  private final CachedValue<Set<String>> myCachedValue;
 
   public static AntTasksProvider getInstance(Project project) {
-    return project.getComponent(AntTasksProvider.class);
+    return ServiceManager.getService(project, AntTasksProvider.class);
   }
 
   public AntTasksProvider(Project project) {
     myProject = project;
-  }
-
-  public void projectOpened() {
-    myRootConnection = myProject.getMessageBus().connect();
-    myRootConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-
-      public void beforeRootsChange(ModuleRootEvent event) {
+    final CachedValuesManager manager = PsiManager.getInstance(myProject).getCachedValuesManager();
+    myCachedValue = manager.createCachedValue(new CachedValueProvider<Set<String>>() {
+      public Result<Set<String>> compute() {
+        final Set<String> set = findAntTasks(myProject);
+        return Result.create(set, ProjectRootManager.getInstance(myProject), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
-
-      public void rootsChanged(final ModuleRootEvent event) {
-        myAntTaks.clear();
-        setRefresh(true);
-      }
-    });
-
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        myAntTaks.clear();
-        myAntTaks = findAntTasks(myProject);
-        needToRefresh = false;
-      }
-    });
+    }, false);
   }
-
-  public void setRefresh(boolean flag){
-    needToRefresh = flag;
-  }
-
-  public void projectClosed() {
-    if (myRootConnection != null) {
-      myRootConnection.disconnect();
-    }
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "AntTasksProvider";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
+  
   synchronized public Set<String> getAntTasks() {
-    if (needToRefresh) {
-      myAntTaks = findAntTasks(myProject);
-      needToRefresh = false;
-    }
-    return myAntTaks;
+    return myCachedValue.getValue();
   }
 
   private static HashSet<String> findAntTasks(Project project) {
