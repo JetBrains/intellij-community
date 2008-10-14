@@ -137,8 +137,9 @@
       <action id="GuiDesigner.ReloadCustomComponents" class="com.intellij.uiDesigner.actions.ReloadCustomComponentsAction"
               icon="/actions/refresh.png"/>
       <action id="GuiDesigner.ChooseLocale" class="com.intellij.uiDesigner.actions.ChooseLocaleAction"/>
+      <separator/>
 
-      <add-to-group anchor="after" group-id="MainToolBar" relative-to-action="ShowSettings"/>
+      <add-to-group anchor="before" group-id="MainToolBar" relative-to-action="HelpTopics"/>
     </group>
 
     <group id="GuiDesigner.EditorPopupMenu">
