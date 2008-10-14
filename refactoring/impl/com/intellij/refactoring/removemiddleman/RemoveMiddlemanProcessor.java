@@ -50,7 +50,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
 
   public void findUsages(@NotNull List<FixableUsageInfo> usages) {
     for (final MemberInfo memberInfo : myDelegateMethodInfos) {
-      if (!memberInfo.isChecked()) return;
+      if (!memberInfo.isChecked()) continue;
       final PsiMethod method = (PsiMethod)memberInfo.getMember();
       final Project project = method.getProject();
       final String getterName = PropertyUtil.suggestGetterName(project, field);
