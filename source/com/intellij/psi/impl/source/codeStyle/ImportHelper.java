@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.jsp.JspSpiUtil;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -522,9 +523,15 @@ public class ImportHelper{
     Set<String> names = new THashSet<String>();
     collectNamesToImport(names, file, namesToImportStaticly);
 
-    if (PsiUtil.isInJspFile(file)) {
-      final PsiFile[] includingFiles = JspSpiUtil.getReferencingFiles(PsiUtil.getJspFile(file));
-      for (PsiFile includingFile : includingFiles) {
+    final JspFile jspFile = PsiUtil.getJspFile(file);
+    if (jspFile != null) {
+      for (PsiFile includingFile : JspSpiUtil.getReferencingFiles(jspFile)) {
+        final PsiFile javaRoot = includingFile.getViewProvider().getPsi(StdLanguages.JAVA);
+        if (javaRoot instanceof PsiJavaFile && file != javaRoot) {
+          collectNamesToImport(names, (PsiJavaFile)javaRoot, namesToImportStaticly);
+        }
+      }
+      for (PsiFile includingFile : JspSpiUtil.getIncludedFiles(jspFile)) {
         final PsiFile javaRoot = includingFile.getViewProvider().getPsi(StdLanguages.JAVA);
         if (javaRoot instanceof PsiJavaFile && file != javaRoot) {
           collectNamesToImport(names, (PsiJavaFile)javaRoot, namesToImportStaticly);

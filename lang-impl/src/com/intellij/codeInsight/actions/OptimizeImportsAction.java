@@ -16,7 +16,10 @@ public class OptimizeImportsAction extends AnAction {
   private static final @NonNls String HELP_ID = "editing.manageImports";
 
   public void actionPerformed(AnActionEvent event) {
-    DataContext dataContext = event.getDataContext();
+    actionPerformedImpl(event.getDataContext());
+  }
+
+  public static void actionPerformedImpl(final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = BaseCodeInsightAction.getInjectedEditor(project, PlatformDataKeys.EDITOR.getData(dataContext));
