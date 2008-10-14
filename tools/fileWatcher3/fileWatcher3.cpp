@@ -316,7 +316,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		watchRootInfos [i].bUsed = false;
 	}
 
-	char buffer[256];
+	char buffer[8192];
 	while(true)
 	{
 		if (!gets_s(buffer, sizeof(buffer)-1))
