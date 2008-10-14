@@ -130,7 +130,14 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
       className = getClassName();
       getterNames = null;
     }
-    invokeRefactoring(new IntroduceParameterObjectProcessor(className, packageName, sourceMethod, parameterInfo, getterNames, keepMethod, useExistingClass,
+    List<ParameterTablePanel.VariableData> parameters = new ArrayList<ParameterTablePanel.VariableData>();
+    for (ParameterTablePanel.VariableData data : parameterInfo) {
+      if (data.passAsParameter) {
+        parameters.add(data);
+      }
+    }
+    invokeRefactoring(new IntroduceParameterObjectProcessor(className, packageName, sourceMethod,
+                                                            parameters.toArray(new ParameterTablePanel.VariableData[parameters.size()]), getterNames, keepMethod, useExistingClass,
                                                             createInnerClass));
   }
 
