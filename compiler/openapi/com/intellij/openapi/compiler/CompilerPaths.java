@@ -23,6 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Locale;
 
 /**
  * A set of utility methods for working with paths
@@ -84,11 +86,32 @@ public class CompilerPaths {
    */
   public static File getCompilerSystemDirectory(Project project) {
     //noinspection HardCodedStringLiteral
-    final File compilerProjectSystemDir = new File(getCompilerSystemDirectory(), project.getName() + "." + project.getLocationHash());
+    String projectName = getPresentableName(project);
+    final File compilerProjectSystemDir = new File(getCompilerSystemDirectory(), projectName + "." + project.getLocationHash());
     if (!project.isDefault()) {
       compilerProjectSystemDir.mkdirs();
     }
     return compilerProjectSystemDir;
+  }
+
+  private static String getPresentableName(final Project project) {
+    if (project.isDefault()) {
+      return project.getName();
+    }
+    String projectName = FileUtil.toSystemIndependentName(project.getLocation());
+    int start = projectName.lastIndexOf('/');
+    if (start >= 0) {
+      start += 1;
+      int end = projectName.lastIndexOf('.');
+      if (end < 0) {
+        end = projectName.length();
+      }
+      if (start <= end) {
+        projectName = projectName.substring(start, end);
+      }
+    }
+    projectName = projectName.toLowerCase(Locale.US);
+    return projectName;
   }
 
   public static File getCompilerSystemDirectory() {
