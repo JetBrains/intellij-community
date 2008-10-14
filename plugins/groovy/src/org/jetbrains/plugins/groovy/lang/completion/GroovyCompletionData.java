@@ -33,6 +33,7 @@ import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.extensions.completion.VariableNameSuggesterRegistry;
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ExtendsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ImplementsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.BranchFilter;
@@ -52,10 +53,7 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFil
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.ParameterTypeFilter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
-import org.jetbrains.plugins.groovy.extensions.completion.ContextSpecificInsertHandler;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.extensions.completion.VariableNameSuggesterRegistry;
-import org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -211,7 +209,6 @@ public class GroovyCompletionData extends CompletionData {
         completeReference(reference, position, set, TailType.NONE, file, TrueFilter.INSTANCE, this);
       }
     };
-    ContextSpecificInsertHandler[] handlers = InsertHandlerRegistry.getInstance().getSpecificInsertHandlers();
     ourReferenceVariant.setInsertHandler(new GroovyInsertHandlerAdapter());
   }
 

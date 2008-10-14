@@ -28,9 +28,6 @@ public class GroovyInsertHandlerAdapter extends DefaultInsertHandler{
 
   private final GroovyInsertHandler myGroovyInsertHandler = new GroovyInsertHandler();
 
-  public GroovyInsertHandlerAdapter() {
-  }
-
   public void handleInsert(InsertionContext context, LookupElement item) {
     for (ContextSpecificInsertHandler handler : InsertHandlerRegistry.getInstance().getSpecificInsertHandlers()) {
       if (handler.isAcceptable(context, context.getStartOffset(), item)) {
