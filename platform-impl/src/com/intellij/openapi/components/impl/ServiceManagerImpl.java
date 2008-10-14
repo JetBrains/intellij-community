@@ -71,7 +71,7 @@ public class ServiceManagerImpl implements BaseComponent {
     private final ServiceDescriptor myDescriptor;
     private PluginDescriptor myPluginDescriptor;
     private final ComponentManagerEx myComponentManager;
-    private boolean myInitialized = false;
+    private volatile Object myInitializedComponentInstance = null;
 
     public MyComponentAdapter(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor, ComponentManagerEx componentManager) {
       myDescriptor = descriptor;
@@ -100,16 +100,21 @@ public class ServiceManagerImpl implements BaseComponent {
     }
 
     public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
-      final Object serviceInstance = getDelegate().getComponentInstance(container);
+      if (myInitializedComponentInstance != null) return myInitializedComponentInstance;
 
-      if (!myInitialized) {
-        if (serviceInstance instanceof Disposable) {
-          Disposer.register(myComponentManager, (Disposable)serviceInstance);
-        }
-        myComponentManager.getComponentStore().initComponent(serviceInstance);
-        myInitialized = true;
+      synchronized (this) {
+        if (myInitializedComponentInstance != null) return myInitializedComponentInstance; // DCL is fine, field is volatile
+        myInitializedComponentInstance = initializeInstance(container);
+        return myInitializedComponentInstance;
       }
+    }
 
+    private Object initializeInstance(final PicoContainer container) {
+      final Object serviceInstance = getDelegate().getComponentInstance(container);
+      if (serviceInstance instanceof Disposable) {
+        Disposer.register(myComponentManager, (Disposable)serviceInstance);
+      }
+      myComponentManager.getComponentStore().initComponent(serviceInstance);
       return serviceInstance;
     }
 
