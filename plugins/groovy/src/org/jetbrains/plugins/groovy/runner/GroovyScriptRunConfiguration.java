@@ -36,7 +36,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
@@ -57,6 +60,17 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   public final String GROOVY_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
   public final String GROOVY_MAIN = "groovy.ui.GroovyMain";
 
+  @NonNls private static final String GROOVY_STARTER_CONF = "/conf/groovy-starter.conf";
+
+  // JVM parameters
+  @NonNls private static final String DGROOVY_STARTER_CONF = "-Dgroovy.starter.conf";
+  @NonNls private static final String DTOOLS_JAR = "-Dtools.jar=";
+  @NonNls private static final String DGROOVY_HOME = "-Dgroovy.home=";
+  @NonNls private static final String JAR_EXTENSION = ".jar";
+  @NonNls private static final String EMBEDDABLE = "embeddable";
+  @NonNls private static final String LIB = "lib";
+
+
   public GroovyScriptRunConfiguration(GroovyScriptConfigurationFactory factory, Project project, String name) {
     super(name, new RunConfigurationModule(project), factory);
     this.factory = factory;
@@ -65,9 +79,9 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   public Collection<Module> getValidModules() {
     Module[] modules = ModuleManager.getInstance(getProject()).getModules();
     ArrayList<Module> res = new ArrayList<Module>();
-    for (Module module : modules)
-      if (FacetManager.getInstance(module).getFacetsByType(GroovyFacet.ID).size() > 0)
-        res.add(module);
+    for (Module module : modules) {
+      if (FacetManager.getInstance(module).getFacetsByType(GroovyFacet.ID).size() > 0) res.add(module);
+    }
     return res;
   }
 
@@ -117,12 +131,27 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
   private void configureJavaParams(JavaParameters params, Module module) throws CantRunException {
 
-    params.configureByModule(module, JavaParameters.JDK_AND_CLASSES);
+    // Setting up classpath
+    configureSystemClassPath(params, module);
+
     params.setWorkingDirectory(getAbsoluteWorkDir());
 
     //add starter configuration parameters
     String groovyHome = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
-    params.getVMParametersList().addParametersString("-Dgroovy.home=" + "\"" + groovyHome + "\"");
+    params.getVMParametersList().addParametersString(DGROOVY_HOME + "\"" + groovyHome + "\"");
+
+    // -Dgroovy.starter.conf
+    final String confpath = groovyHome + GROOVY_STARTER_CONF;
+    params.getVMParametersList().add(DGROOVY_STARTER_CONF + confpath);
+
+    // -Dtools.jar
+    Sdk jdk = params.getJdk();
+    if (jdk != null && jdk.getSdkType() instanceof JavaSdkType) {
+      String toolsPath = ((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk);
+      if (toolsPath != null) {
+        params.getVMParametersList().add(DTOOLS_JAR + toolsPath);
+      }
+    }
 
     // add user parameters
     params.getVMParametersList().addParametersString(vmParams);
@@ -131,7 +160,27 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     params.setMainClass(GROOVY_STARTER);
   }
 
-  private void configureGroovyStarter(JavaParameters params, final Module module) {
+  private static void configureSystemClassPath(final JavaParameters params, final Module module) throws CantRunException {
+    params.configureByModule(module, JavaParameters.JDK_ONLY);
+    final String path = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
+    final VirtualFile sdk = VirtualFileManager.getInstance().findFileByUrl("file:///" + path);
+    if (sdk != null) {
+      VirtualFile libDir = null;
+      libDir = sdk.findFileByRelativePath(EMBEDDABLE);
+      if (libDir == null) {
+        libDir = sdk.findFileByRelativePath(LIB);
+      }
+      if (libDir != null) {
+        for (VirtualFile file : libDir.getChildren()) {
+          if (file.getName().endsWith(JAR_EXTENSION)) {
+            params.getClassPath().add(file);
+          }
+        }
+      }
+    }
+  }
+
+  private void configureGroovyStarter(JavaParameters params, final Module module) throws CantRunException {
     // add GroovyStarter parameters
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(GROOVY_MAIN);
@@ -139,7 +188,9 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     params.getProgramParametersList().add("--classpath");
 
     // Clear module libraries from JDK's occurrences
-    StringBuffer buffer = RunnerUtil.getClearClassPathString(params, module);
+    final JavaParameters tmp = new JavaParameters();
+    tmp.configureByModule(module, JavaParameters.JDK_AND_CLASSES);
+    StringBuffer buffer = RunnerUtil.getClearClassPathString(tmp, module);
 
     params.getProgramParametersList().add("\"" + workDir + File.pathSeparator + buffer.toString() + "\"");
     if (isDebugEnabled) {
@@ -167,13 +218,12 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
     if (!GroovyConfigUtils.getInstance().isSDKConfigured(module)) {
       //throw new ExecutionException("Groovy is not configured");
-      Messages.showErrorDialog(module.getProject(), ExecutionBundle.message("error.running.configuration.with.error.error.message",
-                                                                  getName(), "Groovy is not configured"),
-                                          ExecutionBundle.message("run.error.message.title"));
+      Messages.showErrorDialog(module.getProject(),
+                               ExecutionBundle.message("error.running.configuration.with.error.error.message", getName(),
+                                                       "Groovy is not configured"), ExecutionBundle.message("run.error.message.title"));
 
-      int result = Messages.showOkCancelDialog(
-        GroovyBundle.message("groovy.configure.facet.question.text"),
-        GroovyBundle.message("groovy.configure.facet.question"), GroovyIcons.GROOVY_ICON_32x32);
+      int result = Messages.showOkCancelDialog(GroovyBundle.message("groovy.configure.facet.question.text"),
+                                               GroovyBundle.message("groovy.configure.facet.question"), GroovyIcons.GROOVY_ICON_32x32);
       if (result == 0) {
         ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
       }

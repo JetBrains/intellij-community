@@ -22,6 +22,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +65,10 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
   @NonNls private static final String DPROGRAM_NAME = "-Dprogram.name=";
   @NonNls private static final String DGROOVY_HOME = "-Dgroovy.home=";
 
+  @NonNls private static final String JAR_EXTENSION = ".jar";
+  @NonNls private static final String EMBEDDABLE = "embeddable";
+  @NonNls private static final String LIB = "lib";
+
   public GantScriptRunConfiguration(GantScriptConfigurationFactory factory, Project project, String name) {
     super(name, new RunConfigurationModule(project), factory);
     this.factory = factory;
@@ -73,7 +79,9 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     ArrayList<Module> res = new ArrayList<Module>();
     for (Module module : modules) {
       if (FacetManager.getInstance(module).getFacetsByType(GantGrailsFacet.ID).size() > 0 ||
-        FacetManager.getInstance(module).getFacetsByType(GantGroovyFacet.ID).size() > 0) res.add(module);
+          FacetManager.getInstance(module).getFacetsByType(GantGroovyFacet.ID).size() > 0) {
+        res.add(module);
+      }
     }
     return res;
   }
@@ -126,7 +134,9 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
 
   private void configureJavaParams(JavaParameters params, Module module) throws CantRunException {
 
-    params.configureByModule(module, JavaParameters.JDK_AND_CLASSES);
+    // Setting up classpath
+    configureSystemClassPath(params, module);
+    
     params.setWorkingDirectory(getAbsoluteWorkDir());
 
     //add starter configuration parameters
@@ -147,7 +157,6 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     // -Dgroovy.home
     params.getVMParametersList().add(DGROOVY_HOME + GroovyConfigUtils.getInstance().getSDKInstallPath(module));
     // -Dtools.jar
-    //return ((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk);
     Sdk jdk = params.getJdk();
     if (jdk != null && jdk.getSdkType() instanceof JavaSdkType) {
       String toolsPath = ((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk);
@@ -161,6 +170,26 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
 
     // set starter class
     params.setMainClass(GANT_STARTER);
+  }
+
+  private static void configureSystemClassPath(final JavaParameters params, final Module module) throws CantRunException {
+    params.configureByModule(module, JavaParameters.JDK_ONLY);
+    final String path = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
+    final VirtualFile sdk = VirtualFileManager.getInstance().findFileByUrl("file:///" + path);
+    if (sdk != null) {
+      VirtualFile libDir = null;
+      libDir = sdk.findFileByRelativePath(EMBEDDABLE);
+      if (libDir == null) {
+        libDir = sdk.findFileByRelativePath(LIB);
+      }
+      if (libDir != null) {
+        for (VirtualFile file : libDir.getChildren()) {
+          if (file.getName().endsWith(JAR_EXTENSION)) {
+            params.getClassPath().add(file);
+          }
+        }
+      }
+    }
   }
 
   private void configureGantStarter(JavaParameters params, final Module module) {
