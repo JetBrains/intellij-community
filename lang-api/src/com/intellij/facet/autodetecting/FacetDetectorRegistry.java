@@ -98,4 +98,16 @@ public interface FacetDetectorRegistry<C extends FacetConfiguration> {
   void registerUniversalDetector(@NotNull FileType fileType, @NotNull VirtualFileFilter virtualFileFilter, @NotNull FacetDetector<VirtualFile, C> detector);
 
   void registerUniversalDetector(@NotNull FileType fileType, @NotNull VirtualFilePattern virtualFilePattern, @NotNull FacetDetector<VirtualFile, C> facetDetector);
+
+  /**
+   * Register detector to be used for both on-the-fly auto-detection and auto-detection in the module wizrd
+   * @param fileType type of facet descriptor files
+   * @param virtualFilePattern filter for facet descriptors
+   * @param facetDetector detector
+   * @param underlyingFacetSelector {@link UnderlyingFacetSelector} instance which will be used to select a parent facet for a detected facet
+   */
+  <U extends FacetConfiguration> void registerUniversalSubFacetDetector(@NotNull FileType fileType,
+                                                                        @NotNull VirtualFilePattern virtualFilePattern,
+                                                                        @NotNull FacetDetector<VirtualFile, C> facetDetector,
+                                                                        UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector);
 }

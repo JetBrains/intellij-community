@@ -338,10 +338,14 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
       myType = type;
     }
 
-    public void register(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter, @NotNull final FacetDetector<VirtualFile, C> facetDetector) {
+    public <U extends FacetConfiguration> void register(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter,
+                                                        @NotNull final FacetDetector<VirtualFile, C> facetDetector,
+                                                        final UnderlyingFacetSelector<VirtualFile, U> selector) {
       myHasDetectors = true;
       myId2Detector.put(facetDetector.getId(), facetDetector);
-      myDetectors.put(fileType, new FacetByVirtualFileDetectorWrapper<C, F, FacetConfiguration>(myDetectedFacetSet, myType, FacetAutodetectingManagerImpl.this, virtualFileFilter, facetDetector));
+      myDetectors.put(fileType, new FacetByVirtualFileDetectorWrapper<C, F, U>(myDetectedFacetSet, myType,
+                                                                               FacetAutodetectingManagerImpl.this, virtualFileFilter,
+                                                                               facetDetector, selector));
     }
 
     public <U extends FacetConfiguration> void register(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter,
@@ -349,7 +353,8 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
                                                         final UnderlyingFacetSelector<VirtualFile, U> selector) {
       myHasDetectors = true;
       myId2Detector.put(facetDetector.getId(), facetDetector);
-      myDetectors.put(fileType, new FacetByPsiFileDetectorWrapper<C, F, U>(myDetectedFacetSet, myType, FacetAutodetectingManagerImpl.this, virtualFileFilter, facetDetector, psiFileFilter, selector));
+      myDetectors.put(fileType, new FacetByPsiFileDetectorWrapper<C, F, U>(myDetectedFacetSet, myType, FacetAutodetectingManagerImpl.this,
+                                                                           virtualFileFilter, facetDetector, psiFileFilter, selector));
     }
 
     public boolean hasDetectors() {

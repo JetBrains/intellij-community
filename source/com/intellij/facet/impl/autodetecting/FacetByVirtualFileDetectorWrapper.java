@@ -8,6 +8,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.autodetecting.FacetDetector;
+import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
 import com.intellij.facet.impl.autodetecting.model.FacetInfo2;
 import com.intellij.facet.impl.autodetecting.model.ProjectFacetInfoSet;
 import com.intellij.openapi.module.Module;
@@ -23,8 +24,9 @@ import org.jetbrains.annotations.Nullable;
 public class FacetByVirtualFileDetectorWrapper<C extends FacetConfiguration, F extends Facet<C>, U extends FacetConfiguration> extends FacetDetectorWrapper<VirtualFile, C, F, U> {
   public FacetByVirtualFileDetectorWrapper(ProjectFacetInfoSet projectFacetSet, FacetType<F, C> facetType,
                                            final AutodetectionFilter autodetectionFilter, final VirtualFileFilter virtualFileFilter,
-                                           final FacetDetector<VirtualFile, C> facetDetector) {
-    super(projectFacetSet, facetType, autodetectionFilter, virtualFileFilter, facetDetector, null);
+                                           final FacetDetector<VirtualFile, C> facetDetector,
+                                           final UnderlyingFacetSelector<VirtualFile, U> selector) {
+    super(projectFacetSet, facetType, autodetectionFilter, virtualFileFilter, facetDetector, selector);
   }
 
   @Nullable
