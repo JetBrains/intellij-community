@@ -422,7 +422,7 @@ public class SvnUtil {
     try {
       final SVNURL url = SVNURL.parseURIEncoded(urlPath);
       configuration = SvnBranchConfigurationManager.getInstance(vcs.getProject()).get(vcsRoot);
-      return configuration.getWorkingBranch(vcs.getProject(), url);
+      return (configuration == null) ? null : configuration.getWorkingBranch(vcs.getProject(), url);
     }
     catch (SVNException e) {
       return null;
