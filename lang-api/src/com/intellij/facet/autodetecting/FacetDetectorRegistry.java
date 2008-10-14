@@ -21,20 +21,81 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.VirtualFilePattern;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Use this class to support auto-detection for your type of facets if presence of facet may be detected by presence of a specific file
+ * called <i>facet descriptor</i> in the module content. IDEA runs facet detectors when a module is created from existing sources and
+ * when files are created or changed in the opened project
+ *
+ * @see com.intellij.facet.FacetType#registerDetectors(FacetDetectorRegistry)
  * @author nik
  */
 public interface FacetDetectorRegistry<C extends FacetConfiguration> {
-
+  /**
+   * Customize text of popup which will be shown when facet is detected
+   * @param presentation
+   */
   void customizeDetectedFacetPresentation(@NotNull DetectedFacetPresentation presentation);
 
-  void registerUniversalDetector(@NotNull FileType fileType, @NotNull VirtualFileFilter virtualFileFilter, @NotNull FacetDetector<VirtualFile, C> detector);
+  /**
+   * Register detector which will be used to detect facet on the fly
+   * @param fileType type of facet descriptor files
+   * @param virtualFileFilter preliminary filter for facet descriptor file
+   * @param psiFileFilter filter for facet descriptors
+   * @param detector detector
+   */
+  void registerOnTheFlyDetector(@NotNull FileType fileType, @NotNull VirtualFileFilter virtualFileFilter, @NotNull Condition<PsiFile> psiFileFilter,
+                                @NotNull FacetDetector<PsiFile, C> detector);
 
+  void registerOnTheFlyDetector(@NotNull FileType fileType, @NotNull VirtualFilePattern virtualFilePattern,
+                                @NotNull ElementPattern<? extends PsiFile> psiFilePattern, @NotNull FacetDetector<PsiFile, C> facetDetector);
+
+  /**
+   * Register detector which will be used to detect subfacets on the fly
+   * @param fileType type of facet descriptor files
+   * @param virtualFilePattern preliminary filter for facet descriptor file
+   * @param psiFilePattern filter for facet descriptors
+   * @param facetDetector detector
+   * @param selector {@link UnderlyingFacetSelector} instance which will be used to select a parent facet for a detected facet
+   */
+  <U extends FacetConfiguration>
+  void registerOnTheFlySubFacetDetector(@NotNull FileType fileType, @NotNull VirtualFilePattern virtualFilePattern,
+                                        @NotNull ElementPattern<? extends PsiFile> psiFilePattern, @NotNull FacetDetector<PsiFile, C> facetDetector,
+                                        UnderlyingFacetSelector<VirtualFile, U> selector);
+
+  /**
+   * Register detector which will be used in the module wizard when a module is created from sources
+   * @param fileType type of facet descriptor files
+   * @param virtualFileFilter filter for facet descriptors
+   * @param detector detector
+   */
   void registerDetectorForWizard(@NotNull FileType fileType, @NotNull VirtualFileFilter virtualFileFilter, @NotNull FacetDetector<VirtualFile, C> detector);
 
-  void registerOnTheFlyDetector(@NotNull FileType fileType, @NotNull VirtualFileFilter virtualFileFilter, @NotNull Condition<PsiFile> psiFileFilter,
-                @NotNull FacetDetector<PsiFile, C> detector);
+  void registerDetectorForWizard(@NotNull FileType fileType, @NotNull VirtualFilePattern virtualFilePattern, @NotNull FacetDetector<VirtualFile, C> facetDetector);
+
+  /**
+   * Register detector which will be used in the module wizard when a module is created from sources
+   * @param fileType type of facet descriptor files
+   * @param virtualFilePattern filter for facet descriptors
+   * @param facetDetector detector
+   * @param underlyingFacetSelector {@link UnderlyingFacetSelector} instance which will be used to select a parent facet for a detected facet
+   */
+  <U extends FacetConfiguration>
+  void registerSubFacetDetectorForWizard(@NotNull FileType fileType, @NotNull VirtualFilePattern virtualFilePattern,
+                                         @NotNull FacetDetector<VirtualFile, C> facetDetector,
+                                         @NotNull UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector);
+
+  /**
+   * Register detector to be used for both on-the-fly auto-detection and auto-detection in the module wizrd
+   * @param fileType type of facet descriptor files
+   * @param virtualFileFilter fileter for facet descriptor files
+   * @param detector
+   */
+  void registerUniversalDetector(@NotNull FileType fileType, @NotNull VirtualFileFilter virtualFileFilter, @NotNull FacetDetector<VirtualFile, C> detector);
+
+  void registerUniversalDetector(@NotNull FileType fileType, @NotNull VirtualFilePattern virtualFilePattern, @NotNull FacetDetector<VirtualFile, C> facetDetector);
 }

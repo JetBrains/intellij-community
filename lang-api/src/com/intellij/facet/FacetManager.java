@@ -31,6 +31,10 @@ public abstract class FacetManager implements FacetModel {
     return module.getComponent(FacetManager.class);
   }
 
+  /**
+   * Creates the interface for modifiyng set of facets in the module. Call {@link ModifiableFacetModel#commit()} when modification is finished 
+   * @return the modifiable facet model
+   */
   @NotNull
   public abstract ModifiableFacetModel createModifiableModel();
 

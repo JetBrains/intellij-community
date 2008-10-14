@@ -6,9 +6,9 @@ package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.*;
 import com.intellij.facet.autodetecting.FacetDetector;
+import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
 import com.intellij.facet.impl.autodetecting.FacetDetectorForWizardRegistry;
 import com.intellij.facet.impl.autodetecting.FacetDetectorRegistryEx;
-import com.intellij.facet.impl.autodetecting.UnderlyingFacetSelector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;

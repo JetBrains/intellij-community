@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.facet.impl.autodetecting;
+package com.intellij.facet.autodetecting;
 
 import com.intellij.facet.FacetConfiguration;
 import org.jetbrains.annotations.Nullable;

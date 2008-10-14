@@ -23,9 +23,11 @@ import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author nik
+ * Represents a specific instance of facet
  *
  * @see FacetType
+ *
+ * @author nik
  */
 public class Facet<C extends FacetConfiguration> extends UserDataHolderBase implements UserDataHolder, Disposable {
   public static final Facet[] EMPTY_ARRAY = new Facet[0];
@@ -77,9 +79,15 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
     myImplicit = implicit;
   }
 
+  /**
+   * Called when the module containing this facet is initialized
+   */
   public void initFacet() {
   }
 
+  /**
+   * Called when the module containing this facet is disposed
+   */
   public void disposeFacet() {
   }
 
@@ -103,7 +111,7 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
   }
 
   /**
-   * use {@link com.intellij.facet.ModifiableFacetModel#rename} to rename facet
+   * Use {@link com.intellij.facet.ModifiableFacetModel#rename} to rename facets
    */
   final void setName(final String name) {
     myName = name;

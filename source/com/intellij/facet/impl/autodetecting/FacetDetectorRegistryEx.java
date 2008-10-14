@@ -11,6 +11,7 @@ import com.intellij.facet.FacetModel;
 import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.autodetecting.FacetDetectorRegistry;
 import com.intellij.facet.autodetecting.DetectedFacetPresentation;
+import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Condition;
@@ -58,7 +59,7 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
       registerDetectorForWizard(StdFileTypes.XML, wizardPattern, detector);
     }
 
-    registerOnTheFlyDetector(StdFileTypes.XML, fileNamePattern, XmlPatterns.xmlFile().withRootTag(XmlPatterns.xmlTag().withName(rootTag)),
+    registerOnTheFlySubFacetDetector(StdFileTypes.XML, fileNamePattern, XmlPatterns.xmlFile().withRootTag(XmlPatterns.xmlTag().withName(rootTag)),
                              convertDetector(detector), underlyingFacetSelector);
   }
 
@@ -81,14 +82,14 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
   }
 
   public void registerOnTheFlyDetector(@NotNull final FileType fileType, @NotNull final VirtualFilePattern virtualFilePattern,
-                       @NotNull final ElementPattern psiFilePattern,
+                       @NotNull final ElementPattern<? extends PsiFile> psiFilePattern,
                        @NotNull final FacetDetector<PsiFile, C> facetDetector) {
-    registerOnTheFlyDetector(fileType, virtualFilePattern, psiFilePattern, facetDetector, null);
+    registerOnTheFlySubFacetDetector(fileType, virtualFilePattern, psiFilePattern, facetDetector, null);
   }
 
-  public <U extends FacetConfiguration> void registerOnTheFlyDetector(@NotNull final FileType fileType,
+  public <U extends FacetConfiguration> void registerOnTheFlySubFacetDetector(@NotNull final FileType fileType,
                                        @NotNull final VirtualFilePattern virtualFilePattern,
-                                       @NotNull final ElementPattern psiFilePattern,
+                                       @NotNull final ElementPattern<? extends PsiFile> psiFilePattern,
                                        @NotNull final FacetDetector<PsiFile, C> facetDetector,
                                        final UnderlyingFacetSelector<VirtualFile, U> selector) {
     registerOnTheFlyDetector(fileType, new MyPatternFilter(virtualFilePattern), new Condition<PsiFile>() {
@@ -159,8 +160,8 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
   }
 
   @NotNull
-  public static DetectedFacetPresentation getDetectedFacetPresentation(@NotNull FacetType<?,?> facetType) {
-    FacetDetectorRegistryEx registry = new FacetDetectorRegistryEx(null, null);
+  public static <C extends FacetConfiguration> DetectedFacetPresentation getDetectedFacetPresentation(@NotNull FacetType<?,C> facetType) {
+    FacetDetectorRegistryEx<C> registry = new FacetDetectorRegistryEx<C>(null, null);
     facetType.registerDetectors(registry);
     DetectedFacetPresentation presentation = registry.myPresentation;
     return presentation != null ? presentation : DefaultDetectedFacetPresentation.INSTANCE;

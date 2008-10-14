@@ -20,18 +20,24 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetModel;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
 /**
+ * Base class for facet detectors
+ *
+ * @see FacetDetectorRegistry
  * @author nik
  */
 public abstract class FacetDetector<T, C extends FacetConfiguration> {
   private final String myId;
 
+  /**
+   * @param id unique id
+   */
   protected FacetDetector(final @NotNull @NonNls String id) {
     myId = id;
   }
@@ -47,12 +53,33 @@ public abstract class FacetDetector<T, C extends FacetConfiguration> {
     return myId;
   }
 
+  /**
+   * Inspect <code>source</code> and decide does it really descriptor of a new facet or it relates to one of the existent facets
+   * @param source {@link com.intellij.openapi.vfs.VirtualFile} or {@link com.intellij.psi.PsiFile} instance
+   * @param existentFacetConfigurations configuration of existent facet in the module
+   * @return
+   * <ul>
+   *  <li><code>null</code> if <code>source</code> is not facet descriptor
+   *  <li>one of <code>existentFacetConfigurations</code> if <code>source</code> relates to an existent facet
+   *  <li>new facet configuration instance if <code>source</code> is descriptor of a new facet
+   * </ul>
+   */
   @Nullable
   public abstract C detectFacet(T source, Collection<C> existentFacetConfigurations);
 
+  /**
+   * Called when the detected facet is accepted by user but before the facet is added to the module
+   * @param facet facet
+   * @param facetModel facetModule
+   * @param modifiableRootModel modifiableRootModel
+   */
   public void beforeFacetAdded(@NotNull Facet facet, final FacetModel facetModel, @NotNull ModifiableRootModel modifiableRootModel) {
   }
 
+  /**
+   * Called when the detected facet is accepted by user and added to the module
+   * @param facet facet
+   */
   public void afterFacetAdded(@NotNull Facet facet) {
   }
 

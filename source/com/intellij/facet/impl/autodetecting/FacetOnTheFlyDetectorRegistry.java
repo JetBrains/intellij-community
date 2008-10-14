@@ -6,6 +6,7 @@ package com.intellij.facet.impl.autodetecting;
 
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.autodetecting.FacetDetector;
+import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFile;

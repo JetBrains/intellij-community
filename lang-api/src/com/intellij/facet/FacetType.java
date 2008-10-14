@@ -20,10 +20,10 @@ import com.intellij.facet.autodetecting.FacetDetectorRegistry;
 import com.intellij.facet.ui.DefaultFacetSettingsEditor;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,9 +31,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * @author nik
+ * Override this class to provide custom type of facets. The implementation should be registered in the plugin.xml:
+ * <p>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
+ * &nbsp;&nbsp;&lt;facetType implementation="qualified-class-name"/&gt;<br>
+ * &lt;/extensions&gt;
  *
- * @see com.intellij.facet.FacetTypeRegistry#registerFacetType(FacetType)
+ * @author nik
  */
 public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   public static final ExtensionPointName<FacetType> EP_NAME = ExtensionPointName.create("com.intellij.facetType"); 
@@ -43,7 +47,16 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   private final @NotNull String myPresentableName;
   private final @Nullable FacetTypeId myUnderlyingFacetType;
 
-  public FacetType(final @NotNull FacetTypeId<F> id, final @NotNull @NonNls String stringId, final @NotNull String presentableName, final @Nullable FacetTypeId underlyingFacetType) {
+  /**
+   * @param id unique instance of {@link FacetTypeId}
+   * @param stringId unique string id of the facet type
+   * @param presentableName name of this facet type which will be shown in UI
+   * @param underlyingFacetType if this parameter is not <code>null</code> then you will be able to add facets of this type only as
+   * subfacets to a facet of the specified type. If this parameter is <code>null</code> it will be possible to add facet of this type
+   * directly to a module
+   */
+  public FacetType(final @NotNull FacetTypeId<F> id, final @NotNull @NonNls String stringId, final @NotNull String presentableName,
+                   final @Nullable FacetTypeId underlyingFacetType) {
     myId = id;
     myStringId = stringId;
     myPresentableName = presentableName;
@@ -51,6 +64,11 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   }
 
 
+  /**
+   * @param id unique instance of {@link FacetTypeId}
+   * @param stringId unique string id of the facet type
+   * @param presentableName name of this facet type which will be shown in UI
+   */
   public FacetType(final @NotNull FacetTypeId<F> id, final @NotNull @NonNls String stringId, final @NotNull String presentableName) {
     this(id, stringId, presentableName, null);
   }
@@ -70,6 +88,10 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
     return myPresentableName;
   }
 
+  /**
+   * Default name wich will be used then user creates a facet of this type
+   * @return
+   */
   @NotNull @NonNls
   public String getDefaultFacetName() {
     return myPresentableName;
@@ -80,13 +102,21 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
     return myUnderlyingFacetType;
   }
 
+  /**
+   * Override this method to support auto-detection for facets of this type
+   * @param registry a {@link com.intellij.facet.autodetecting.FacetDetectorRegistry} instance to register facet detectors
+   */
   public void registerDetectors(FacetDetectorRegistry<C> registry) {
   }
 
+  /**
+   * Create default configuration of facet. See {@link FacetConfiguration} for details
+   * @return
+   */
   public abstract C createDefaultConfiguration();
 
   /**
-   * Create a facet instance
+   * Create a new facet instance
    * @param module parent module for facet. Must be passed to {@link Facet} constructor
    * @param name name of facet. Must be passed to {@link Facet} constructor
    * @param configuration facet configuration. Must be passed to {@link Facet} constructor
@@ -95,10 +125,17 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
    */
   public abstract F createFacet(@NotNull Module module, final String name, @NotNull C configuration, @Nullable Facet underlyingFacet);
 
+  /**
+   * @return <code>true</code> if only one facet of this type is allowed in single module
+   */
   public boolean isOnlyOneFacetAllowed() {
     return true;
   }
 
+  /**
+   * @param moduleType type of module
+   * @return <code>true</code> if facet of this type are allowed in module of type <code>moduleType</code>
+   */
   public abstract boolean isSuitableModuleType(ModuleType moduleType);
 
   @Nullable

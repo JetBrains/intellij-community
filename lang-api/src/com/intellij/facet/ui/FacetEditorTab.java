@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 /**
+ * Base class for tabs of facet editors
+ *
  * @author nik
  */
 public abstract class FacetEditorTab implements Configurable {
@@ -51,6 +53,10 @@ public abstract class FacetEditorTab implements Configurable {
     return null;
   }
 
+  /**
+   * Called after user press "OK" or "Apply" in the Project Settings dialog.
+   * @param facet facet
+   */
   public void onFacetInitialized(@NotNull Facet facet) {
   }
 }

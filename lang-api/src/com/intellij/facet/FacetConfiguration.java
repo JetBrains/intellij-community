@@ -25,15 +25,22 @@ import com.intellij.facet.ui.FacetValidatorsManager;
 import org.jdom.Element;
 
 /**
- * @author nik
- */
-
-/**
+ * Implementations of this interface contain settings of a specific facet. Do not store
+ *
+ * <p>
  * Implement {@link com.intellij.openapi.components.PersistentStateComponent} instead of {@link com.intellij.openapi.util.JDOMExternalizable}
  * in your implementation of {@link com.intellij.facet.FacetConfiguration}
+ *
+ * @author nik
  */
 public interface FacetConfiguration extends JDOMExternalizable {
 
+  /**
+   * Creates editor which will be used to edit this facet configuration
+   * @param editorContext context
+   * @param validatorsManager validatorsManager
+   * @return
+   */
   FacetEditorTab[] createEditorTabs(final FacetEditorContext editorContext, final FacetValidatorsManager validatorsManager);
 
   /**
