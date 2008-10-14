@@ -229,13 +229,13 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
       myStorageData.process(new StorageDataProcessor() {
         public void process(final String componentName, final IFile file, final Element element) {
-          if (myStorageData.hasChanged(file)) {
+          currentNames.remove(file.getName());
+          if (myStorageData.hasChangedSinceLastAccess(file)) {
             // will not create file if it was removed or modified externally
             return;
           }
 
           StorageUtil.save(file, element);
-          currentNames.remove(file.getName());
         }
       });
 
@@ -258,6 +258,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
           }
         }
       });
+
+      myStorageData.updateBackupTimeStamps();
 
       myStorageData.clear();
     }
@@ -297,7 +299,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
           if (currentChildNames.contains(file.getName())) {
             currentChildNames.remove(file.getName());
 
-            if (myStorageData.hasChanged(file)) return;
+            if (myStorageData.hasChangedSinceLastAccess(file)) return;
             final byte[] text = StorageUtil.printElement(element);
             try {
               if (!Arrays.equals(file.loadBytes(), text)) {
@@ -404,12 +406,21 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       return myBackup.containsKey(file);
     }
 
-    public boolean hasChanged(IFile file) {
+    public boolean hasChangedSinceLastAccess(IFile file) {
       final Long ts = myBackup.get(file);
       if (ts == null) return false;
       if (!file.exists()) return true;
       if (ts.longValue() < file.getTimeStamp()) return true;
       return false;
+    }
+
+    public void updateBackupTimeStamps() {
+      for (final Map.Entry<IFile, Long> entry : myBackup.entrySet()) {
+        final IFile file = entry.getKey();
+        if (file.exists()) {
+          entry.setValue(file.getTimeStamp());
+        }
+      }
     }
   }
 
