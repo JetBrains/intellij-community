@@ -36,8 +36,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +130,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   private void configureJavaParams(JavaParameters params, Module module) throws CantRunException {
 
     // Setting up classpath
-    configureSystemClassPath(params, module);
+    RunnerUtil.configureScriptSystemClassPath(params, module);
 
     params.setWorkingDirectory(getAbsoluteWorkDir());
 
@@ -158,26 +156,6 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
     // set starter class
     params.setMainClass(GROOVY_STARTER);
-  }
-
-  private static void configureSystemClassPath(final JavaParameters params, final Module module) throws CantRunException {
-    params.configureByModule(module, JavaParameters.JDK_ONLY);
-    final String path = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
-    final VirtualFile sdk = VirtualFileManager.getInstance().findFileByUrl("file:///" + path);
-    if (sdk != null) {
-      VirtualFile libDir = null;
-      libDir = sdk.findFileByRelativePath(EMBEDDABLE);
-      if (libDir == null) {
-        libDir = sdk.findFileByRelativePath(LIB);
-      }
-      if (libDir != null) {
-        for (VirtualFile file : libDir.getChildren()) {
-          if (file.getName().endsWith(JAR_EXTENSION)) {
-            params.getClassPath().add(file);
-          }
-        }
-      }
-    }
   }
 
   private void configureGroovyStarter(JavaParameters params, final Module module) throws CantRunException {
