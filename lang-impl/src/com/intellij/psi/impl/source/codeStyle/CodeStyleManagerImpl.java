@@ -151,6 +151,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
                                        final int startOffset,
                                        final int endOffset,
                                        boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException {
+    LOG.assertTrue(element.isValid());
     CheckUtil.checkWritable(element);
     if( !SourceTreeToPsiMap.hasTreeElement( element ) )
     {

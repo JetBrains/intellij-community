@@ -5,6 +5,7 @@ import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
@@ -15,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiBasedFormattingModel implements FormattingModel {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.PsiBasedFormattingModel");
 
   private final ASTNode myASTNode;
   private final FormattingDocumentModelImpl myDocumentModel;
@@ -58,6 +61,15 @@ public class PsiBasedFormattingModel implements FormattingModel {
       if (leafElement.getPsi() instanceof PsiFile) {
         return null;
       } else {
+        if (!leafElement.getPsi().isValid()) {
+          String message = "Invalid element found in '\n" +
+                           myASTNode.getText() +
+                           "\n' at " +
+                           offset +
+                           "(" +
+                           myASTNode.getText().substring(offset, Math.min(offset + 10, myASTNode.getTextLength()));
+          LOG.error(message);
+        }
         return replaceWithPsiInLeaf(textRange, whiteSpace, leafElement);
       }
     } else if (textRange.getEndOffset() == myASTNode.getTextLength()){
