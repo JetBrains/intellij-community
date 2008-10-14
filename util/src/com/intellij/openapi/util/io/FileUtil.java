@@ -178,7 +178,11 @@ public class FileUtil {
     byte[] bytes;
     final InputStream stream = new FileInputStream(file);
     try{
-      bytes = loadBytes(stream, (int)file.length());
+      final long len = file.length();
+      if (len < 0) {
+        throw new IOException("File length reported negative, probably doesn't exist");
+      }
+      bytes = loadBytes(stream, (int)len);
     }
     finally{
       stream.close();
