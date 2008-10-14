@@ -184,9 +184,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   public void addConfiguration(RunnerAndConfigurationSettingsImpl settings, boolean shared, Map<String, Boolean> method) {
     final String configName = getUniqueName(settings.getConfiguration());
-    if (!myConfigurations.containsKey(configName)) { //do not add shared configuration twice
-      myConfigurations.put(configName, settings);
-    }
+    myConfigurations.put(configName, settings);
+    
     int id = settings.getConfiguration().getUniqueID();
     mySharedConfigurations.put(id, shared);
     myMethod2CompileBeforeRun.put(id, method);
@@ -284,7 +283,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void writeExternal(@NotNull final Element parentNode) throws WriteExternalException {
-
     if (myTempConfiguration != null) {
       addConfigurationElement(parentNode, myTempConfiguration, TEMP_CONFIGURATION);
     }
