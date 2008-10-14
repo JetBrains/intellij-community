@@ -36,6 +36,7 @@ import java.awt.event.MouseEvent;
  * @see EditorFactory#createViewer(Document)
  */
 public interface Editor extends UserDataHolder {
+  Editor[] EMPTY_ARRAY = new Editor[0];
   /**
    * Returns the document edited or viewed in the editor.
    *

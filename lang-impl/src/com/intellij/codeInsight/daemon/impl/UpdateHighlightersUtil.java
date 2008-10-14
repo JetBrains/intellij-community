@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class UpdateHighlightersUtil {
-  
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil");
 
   private static final Key<List<HighlightInfo>> FILE_LEVEL_HIGHLIGHTS = Key.create("FILE_LEVEL_HIGHLIGHTS");
@@ -328,7 +327,6 @@ public class UpdateHighlightersUtil {
     for (HighlightInfo info : highlights) {
       RangeHighlighter highlighter = info.highlighter;
       boolean toRemove = false;
-
       if (info.needUpdateOnTyping()) {
         int highlighterStart = highlighter.getStartOffset();
         int highlighterEnd = highlighter.getEndOffset();

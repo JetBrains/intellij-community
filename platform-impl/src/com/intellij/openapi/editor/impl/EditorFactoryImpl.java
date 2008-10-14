@@ -19,6 +19,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.SmartList;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,15 +27,13 @@ import javax.swing.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.List;
 
 public class EditorFactoryImpl extends EditorFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFactoryImpl");
-
   private final EditorEventMulticasterImpl myEditorEventMulticaster = new EditorEventMulticasterImpl();
-
-  private EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
-
-  private ArrayList<Editor> myEditors = new ArrayList<Editor>();
+  private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
+  private final ArrayList<Editor> myEditors = new ArrayList<Editor>();
   private static final Key<String> EDITOR_CREATOR = new Key<String>("Editor creator");
   private final ModalityStateListener myModalityStateListener = new ModalityStateListener() {
     public void beforeModalityStateChanged() {
@@ -101,8 +100,7 @@ public class EditorFactoryImpl extends EditorFactory {
   }
 
   public void refreshAllEditors() {
-    Editor[] editors = getAllEditors();
-    for (Editor editor : editors) {
+    for (Editor editor : myEditors) {
       ((EditorEx)editor).reinitSettings();
     }
   }
@@ -165,14 +163,15 @@ public class EditorFactoryImpl extends EditorFactory {
 
   @NotNull
   public Editor[] getEditors(@NotNull Document document, Project project) {
-    ArrayList<Editor> list = new ArrayList<Editor>();
+    List<Editor> list = null;
     for (Editor editor : myEditors) {
       Project project1 = editor.getProject();
       if (editor.getDocument().equals(document) && (project == null || project1 == null || project1.equals(project))) {
+        if (list == null) list = new SmartList<Editor>();
         list.add(editor);
       }
     }
-    return list.toArray(new Editor[list.size()]);
+    return list == null ? Editor.EMPTY_ARRAY : list.toArray(new Editor[list.size()]);
   }
 
   @NotNull
