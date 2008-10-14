@@ -262,7 +262,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           changeListWorker.notifyDoneProcessingChanges(myListeners);
         }
         if (updateUnversionedFiles) {
-          boolean statusChanged = myComposite.equals(composite);
+          boolean statusChanged = !myComposite.equals(composite);
           myComposite = composite;
           if (statusChanged) {
             myListeners.getMulticaster().unchangedFileStatusChanged();
