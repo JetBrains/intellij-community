@@ -40,6 +40,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private final Project myProject;
   private final ChangesViewManager myChangesViewManager;
+  private final FileStatusManager myFileStatusManager;
   private final UpdateRequestsQueue myUpdater;
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
@@ -81,6 +82,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public ChangeListManagerImpl(final Project project) {
     myProject = project;
     myChangesViewManager = ChangesViewManager.getInstance(myProject);
+    myFileStatusManager = FileStatusManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
     myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject);
     myUpdater = new UpdateRequestsQueue(myProject, ourUpdateAlarm, new ActualUpdater());
@@ -634,7 +636,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     for (VirtualFile file : files) {
-      FileStatusManager.getInstance(myProject).fileStatusChanged(file);
+      myFileStatusManager.fileStatusChanged(file);
     }
     VcsDirtyScopeManager.getInstance(myProject).filesDirty(files, null);
 
@@ -768,7 +770,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }
       if (somethingChanged) {
-        FileStatusManager.getInstance(getProject()).fileStatusesChanged();
+        myFileStatusManager.fileStatusesChanged();
         myChangesViewManager.scheduleRefresh();
       }
     }
