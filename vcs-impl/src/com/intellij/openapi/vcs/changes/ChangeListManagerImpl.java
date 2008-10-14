@@ -38,7 +38,8 @@ import java.util.concurrent.ScheduledExecutorService;
 public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
 
-  private Project myProject;
+  private final Project myProject;
+  private final ChangesViewManager myChangesViewManager;
   private final UpdateRequestsQueue myUpdater;
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
@@ -79,6 +80,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public ChangeListManagerImpl(final Project project) {
     myProject = project;
+    myChangesViewManager = ChangesViewManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
     myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject);
     myUpdater = new UpdateRequestsQueue(myProject, ourUpdateAlarm, new ActualUpdater());
@@ -220,7 +222,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         if (wasEverythingDirty) {
           changeListWorker.notifyStartProcessingChanges(null);
         }
-        ChangesViewManager.getInstance(myProject).scheduleRefresh();
+        myChangesViewManager.scheduleRefresh();
       }
 
       // do actual requests about file statuses
@@ -236,7 +238,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         final AbstractVcs vcs = scope.getVcs();
         if (vcs == null) continue;
 
-        ChangesViewManager.getInstance(myProject).updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()), false);
+        myChangesViewManager.updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()), false);
         if (! wasEverythingDirty) {
           changeListWorker.notifyStartProcessingChanges(scope);
         }
@@ -267,7 +269,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
         updateIgnoredFiles(false);
       }
-      ChangesViewManager.getInstance(myProject).scheduleRefresh();
+      myChangesViewManager.scheduleRefresh();
     }
     catch (DisposedException e) {
       // OK, we're finishing all the stuff now.
@@ -284,7 +286,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     finally {
       synchronized (myDataLock) {
         myListeners.getMulticaster().changeListUpdateDone();
-        ChangesViewManager.getInstance(myProject).scheduleRefresh();
+        myChangesViewManager.scheduleRefresh();
       }
     }
   }
@@ -408,7 +410,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public LocalChangeList addChangeList(@NotNull String name, final String comment) {
     synchronized (myDataLock) {
       final LocalChangeList changeList = myModifier.addChangeList(name, comment);
-      ChangesViewManager.getInstance(myProject).scheduleRefresh();
+      myChangesViewManager.scheduleRefresh();
       return changeList;
     }
   }
@@ -416,7 +418,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void removeChangeList(LocalChangeList list) {
     synchronized (myDataLock) {
       myModifier.removeChangeList(list.getName());
-      ChangesViewManager.getInstance(myProject).scheduleRefresh();
+      myChangesViewManager.scheduleRefresh();
     }
   }
 
@@ -465,7 +467,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void setDefaultChangeList(@NotNull LocalChangeList list) {
     synchronized (myDataLock) {
       myModifier.setDefault(list.getName());
-      ChangesViewManager.getInstance(myProject).scheduleRefresh();
+      myChangesViewManager.scheduleRefresh();
     }
   }
 
@@ -604,7 +606,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        ChangesViewManager.getInstance(myProject).refreshView();
+        myChangesViewManager.refreshView();
       }
     });
   }
@@ -658,11 +660,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             }
           }
 
-          ChangesViewManager.getInstance(myProject).scheduleRefresh();
+          myChangesViewManager.scheduleRefresh();
         }
       },  InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, VcsBundle.message("change.lists.manager.add.unversioned"));
     } else {
-      ChangesViewManager.getInstance(myProject).scheduleRefresh();
+      myChangesViewManager.scheduleRefresh();
     }
   }
 
@@ -767,7 +769,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
       if (somethingChanged) {
         FileStatusManager.getInstance(getProject()).fileStatusesChanged();
-        ChangesViewManager.getInstance(myProject).scheduleRefresh();
+        myChangesViewManager.scheduleRefresh();
       }
     }
   }
@@ -804,19 +806,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   public boolean setReadOnly(final String name, final boolean value) {
-    // there could be external read action taken under which another method of ChangeListManager guarged by myDataLock
-    // is being called; so to avoid deadlock use the same sequence of locks - read action first (internal in getInstanceChecked)
-    final ChangesViewManager changesView;
-    try {
-      changesView = ChangesViewManager.getInstanceChecked(myProject);
-    }
-    catch (ProcessCanceledException e) {
-      return false;
-    }
-
     synchronized (myDataLock) {
       final boolean result = myModifier.setReadOnly(name, value);
-      changesView.scheduleRefresh();
+      myChangesViewManager.scheduleRefresh();
       return result;
     }
   }
@@ -824,7 +816,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public boolean editName(@NotNull final String fromName, @NotNull final String toName) {
     synchronized (myDataLock) {
       final boolean result = myModifier.editName(fromName, toName);
-      ChangesViewManager.getInstance(myProject).scheduleRefresh();
+      myChangesViewManager.scheduleRefresh();
       return result;
     }
   }
@@ -832,7 +824,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public String editComment(@NotNull final String fromName, final String newComment) {
     synchronized (myDataLock) {
       final String oldComment = myModifier.editComment(fromName, newComment);
-      ChangesViewManager.getInstance(myProject).scheduleRefresh();
+      myChangesViewManager.scheduleRefresh();
       return oldComment;
     }
   }
