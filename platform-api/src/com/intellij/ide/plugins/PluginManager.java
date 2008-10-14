@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -103,7 +104,9 @@ public class PluginManager {
       //noinspection HardCodedStringLiteral
       ThreadGroup threadGroup = new ThreadGroup("Idea Thread Group") {
         public void uncaughtException(Thread t, Throwable e) {
-          getLogger().error(e);
+          if (!(e instanceof ProcessCanceledException)) {
+            getLogger().error(e);
+          }
         }
       };
 
