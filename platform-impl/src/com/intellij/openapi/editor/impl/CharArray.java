@@ -12,18 +12,20 @@ import java.lang.ref.SoftReference;
  * @author cdr
  */
 abstract class CharArray implements CharSequenceBackedByArray {
-  protected int myCount = 0;
+  private int myCount = 0;
   private CharSequence myOriginalSequence;
   private char[] myArray = null;
   private SoftReference<String> myStringRef = null; // buffers String value - for not to generate it every time
+  private int myBufferSize;
 
-  public CharArray(CharSequence chars) {
-    myOriginalSequence = chars;
-    myCount = chars.length();
+  // max chars to hold, bufferSize == 0 means unbounded
+  public CharArray(int bufferSize) {
+    myBufferSize = bufferSize;
+    myOriginalSequence = "";
   }
 
-  public CharArray() {
-    this("");
+  public void setBufferSize(int bufferSize) {
+    myBufferSize = bufferSize;
   }
 
   protected abstract DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString);
@@ -34,6 +36,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     myArray = null;
     myCount = chars.length();
     myStringRef = null;
+    trimToSize();
   }
 
   public void replace(int startOffset, int endOffset, CharSequence toDelete, CharSequence newString, long newModificationStamp) {
@@ -66,6 +69,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     doInsert(s, startIndex);
 
     afterChangedUpdate(event, LocalTimeCounter.currentTime());
+    trimToSize();
   }
 
   private void doInsert(final CharSequence s, final int startIndex) {
@@ -160,10 +164,17 @@ abstract class CharArray implements CharSequenceBackedByArray {
       newArraySize = 16;
     }
     while (newArraySize <= index) {
-      newArraySize = (newArraySize * 120) / 100 + 1;
+      newArraySize = newArraySize * 12 / 10 + 1;
     }
     char[] newArray = new char[newArraySize];
     System.arraycopy(array, 0, newArray, 0, array.length);
     return newArray;
+  }
+
+  private void trimToSize() {
+    if (myBufferSize != 0 && myCount > myBufferSize) {
+      // make a copy
+      remove(0, myCount - myBufferSize, getCharArray().subSequence(0, myCount - myBufferSize).toString());
+    }
   }
 }

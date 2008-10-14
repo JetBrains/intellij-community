@@ -24,7 +24,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   private static final AtomicLong counter = new AtomicLong();
   private final long myId;
 
-  public RangeMarkerImpl(@NotNull Document document, int start, int end) {
+  protected RangeMarkerImpl(@NotNull Document document, int start, int end) {
     if (start < 0) {
       throw new IllegalArgumentException("Wrong start: " + start+"; end="+end);
     }

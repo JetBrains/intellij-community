@@ -4,6 +4,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.WeakHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -13,8 +14,8 @@ import java.util.Set;
 public class DocumentMarkupModelManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentMarkupModelManager");
 
-  private WeakHashMap<DocumentImpl,String> myDocumentSet = new WeakHashMap<DocumentImpl, String>();
-  private Project myProject;
+  private final WeakHashMap<DocumentImpl,String> myDocumentSet = new WeakHashMap<DocumentImpl, String>();
+  private final Project myProject;
   private boolean myIsDisposed = false;
 
   public static DocumentMarkupModelManager getInstance(Project project) {
@@ -37,6 +38,7 @@ public class DocumentMarkupModelManager implements ProjectComponent {
     myDocumentSet.put(doc, "");
   }
 
+  @NotNull
   public String getComponentName() {
     return "DocumentMarkupModelManager";
   }

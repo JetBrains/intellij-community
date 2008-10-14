@@ -5,7 +5,7 @@
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.impl.RangeMarkerImpl;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -21,12 +21,12 @@ import org.jetbrains.annotations.NonNls;
  */
 public abstract class ReferenceInForm implements PsiReference {
   protected final PsiPlainTextFile myFile;
-  protected RangeMarkerImpl myRangeMarker;
+  private final RangeMarker myRangeMarker;
 
   protected ReferenceInForm(final PsiPlainTextFile file, TextRange range) {
     myFile = file;
     final Document document = FileDocumentManager.getInstance().getDocument(myFile.getVirtualFile());
-    myRangeMarker = new RangeMarkerImpl(document, range.getStartOffset(), range.getEndOffset());
+    myRangeMarker = document.createRangeMarker(range);
   }
 
   public PsiElement getElement() {

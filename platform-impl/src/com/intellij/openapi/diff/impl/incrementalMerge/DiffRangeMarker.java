@@ -45,12 +45,10 @@ class DiffRangeMarker extends RangeMarkerImpl {
     private int myClientCount = 0;
 
     public void documentChanged(DocumentEvent e) {
-      if (myDeferedNotifications.size() == 0) return;
-      RangeInvalidListener[] notifications = myDeferedNotifications.toArray(
-        new RangeInvalidListener[myDeferedNotifications.size()]);
+      if (myDeferedNotifications.isEmpty()) return;
+      RangeInvalidListener[] notifications = myDeferedNotifications.toArray(new RangeInvalidListener[myDeferedNotifications.size()]);
       myDeferedNotifications.clear();
-      for (int i = 0; i < notifications.length; i++) {
-        RangeInvalidListener notification = notifications[i];
+      for (RangeInvalidListener notification : notifications) {
         notification.onRangeInvalidated();
       }
     }

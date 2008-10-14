@@ -25,10 +25,10 @@ public final class IterationState {
   private final TextAttributes myMergedAttributes = new TextAttributes();
 
   private final HighlighterIterator myHighlighterIterator;
-  private final ArrayList<RangeHighlighterImpl> myViewHighlighters;
+  private final List<RangeHighlighterImpl> myViewHighlighters;
   private int myCurrentViewHighlighterIdx;
 
-  private final ArrayList<RangeHighlighterImpl> myDocumentHighlighters;
+  private final List<RangeHighlighterImpl> myDocumentHighlighters;
   private int myCurrentDocHighlighterIdx;
 
   private int myStartOffset;
@@ -139,7 +139,7 @@ public final class IterationState {
     reinit();
   }
 
-  private int initHighlighterIterator(int start, ArrayList<RangeHighlighterImpl> sortedHighlighters, int longestHighlighterLength) {
+  private int initHighlighterIterator(int start, List<RangeHighlighterImpl> sortedHighlighters, int longestHighlighterLength) {
     int low = 0;
     int high = sortedHighlighters.size();
     int search = myDocument.getLineStartOffset(myDocument.getLineNumber(start)) -

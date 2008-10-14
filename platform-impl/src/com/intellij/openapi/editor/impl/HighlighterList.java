@@ -9,8 +9,8 @@ import gnu.trove.THashSet;
 import java.util.*;
 
 public class HighlighterList {
-  private final ArrayList<RangeHighlighterImpl> mySegmentHighlighters = new ArrayList<RangeHighlighterImpl>();
-  private final Set<RangeHighlighterImpl> myHighlightersSet = new THashSet<RangeHighlighterImpl>();
+  private final List<RangeHighlighterImpl> mySegmentHighlighters = new ArrayList<RangeHighlighterImpl>();
+  private final Set<RangeHighlighter> myHighlightersSet = new THashSet<RangeHighlighter>();
   private boolean myIsDirtied = false;
   private final DocumentAdapter myDocumentListener;
   private final Document myDoc;
@@ -37,11 +37,11 @@ public class HighlighterList {
   private void sortMarkers() {
     myLongestHighlighterLength = 0;
     mySegmentHighlighters.clear();
-    Iterator<RangeHighlighterImpl> iterator = myHighlightersSet.iterator();
+    Iterator<RangeHighlighter> iterator = myHighlightersSet.iterator();
     while (iterator.hasNext()) {
-      RangeHighlighterImpl rangeHighlighter = iterator.next();
+      RangeHighlighter rangeHighlighter = iterator.next();
       if (rangeHighlighter.isValid()) {
-        mySegmentHighlighters.add(rangeHighlighter);
+        mySegmentHighlighters.add((RangeHighlighterImpl)rangeHighlighter);
         myLongestHighlighterLength = Math.max(myLongestHighlighterLength, rangeHighlighter.getEndOffset() - rangeHighlighter.getStartOffset());
       }
       else {
@@ -65,19 +65,19 @@ public class HighlighterList {
     myIsDirtied = false;
   }
 
-  public Iterator<RangeHighlighterImpl> getHighlighterIterator() {
+  Iterator<RangeHighlighterImpl> getHighlighterIterator() {
     if (myIsDirtied) sortMarkers();
     return mySegmentHighlighters.iterator();
   }
 
-  ArrayList<RangeHighlighterImpl> getSortedHighlighters() {
+  List<RangeHighlighterImpl> getSortedHighlighters() {
     if (myIsDirtied) sortMarkers();
     return mySegmentHighlighters;
   }
 
   public void addSegmentHighlighter(RangeHighlighter segmentHighlighter) {
     myIsDirtied = true;
-    myHighlightersSet.add((RangeHighlighterImpl)segmentHighlighter);
+    myHighlightersSet.add(segmentHighlighter);
   }
 
   public void removeSegmentHighlighter(RangeHighlighter segmentHighlighter) {

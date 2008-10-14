@@ -10,9 +10,9 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -41,12 +41,12 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
-import java.awt.event.ComponentEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.awt.geom.AffineTransform;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
@@ -1043,7 +1043,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     GutterIconRenderer renderer = getGutterRenderer(e);
     AnAction clickAction = null;
     if (renderer != null) {
-      clickAction = (MouseEvent.BUTTON2_MASK & e.getModifiers()) > 0
+      clickAction = (InputEvent.BUTTON2_MASK & e.getModifiers()) > 0
                     ? renderer.getMiddleButtonClickAction()
                     : renderer.getClickAction();
     }
@@ -1130,9 +1130,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
       DefaultActionGroup actionGroup = new DefaultActionGroup(EditorBundle.message("editor.annotations.action.group.name"), true);
       actionGroup.add(new CloseAnnotationsAction());
-      final java.util.List<AnAction> addActions = new ArrayList<AnAction>();
+      final List<AnAction> addActions = new ArrayList<AnAction>();
       for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
-        final java.util.List<AnAction> list = gutterProvider.getPopupActions(myEditor);
+        final List<AnAction> list = gutterProvider.getPopupActions(myEditor);
         if (list != null) {
           for (AnAction action : list) {
             if (! addActions.contains(action)) {
@@ -1309,11 +1309,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     public void dragDropEnd(DragSourceDropEvent dsde) {
-      if(!dsde.getDropSuccess()) return;
+      if (!dsde.getDropSuccess()) return;
 
-       if(dsde.getDropAction() == DnDConstants.ACTION_MOVE) {
-         myGutterDraggableObject.removeSelf();
-       }
+      if (dsde.getDropAction() == DnDConstants.ACTION_MOVE) {
+        myGutterDraggableObject.removeSelf();
+      }
     }
 
     public void dragExit(DragSourceEvent dse) {}
