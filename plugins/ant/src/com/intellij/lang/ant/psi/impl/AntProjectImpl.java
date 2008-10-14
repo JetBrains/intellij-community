@@ -79,10 +79,12 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   }
 
   public void clearImports() {
-    myImports = null;
-    myCachedImportsArray = null;
-    myImportsDependentProperties = null;
-    myImportedTargets = null;
+    synchronized (PsiLock.LOCK) {
+      myImports = null;
+      myCachedImportsArray = null;
+      myImportsDependentProperties = null;
+      myImportedTargets = null;
+    }
   }
 
   @Nullable
