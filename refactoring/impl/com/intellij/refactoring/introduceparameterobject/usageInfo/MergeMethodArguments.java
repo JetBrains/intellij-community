@@ -8,6 +8,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.util.FixableUsageInfo;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,15 +111,17 @@ public class MergeMethodArguments extends FixableUsageInfo {
       final PsiSubstitutor substitutor = resolvant.getSubstitutor();
       newExpression.append('<');
       final Map<PsiTypeParameter, PsiType> substitutionMap = substitutor.getSubstitutionMap();
-      for (PsiTypeParameter typeParameter : typeParams) {
-        final PsiType boundType = substitutionMap.get(typeParameter);
-        if (boundType != null) {
-          newExpression.append(boundType.getCanonicalText());
+      newExpression.append(StringUtil.join(typeParams, new Function<PsiTypeParameter, String>() {
+        public String fun(final PsiTypeParameter typeParameter) {
+          final PsiType boundType = substitutionMap.get(typeParameter);
+          if (boundType != null) {
+            return boundType.getCanonicalText();
+          }
+          else {
+            return typeParameter.getName();
+          }
         }
-        else {
-          newExpression.append(typeParameter.getName());
-        }
-      }
+      }, ", "));
       newExpression.append('>');
     }
     newExpression.append('(');
