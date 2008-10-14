@@ -21,6 +21,7 @@ package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -30,10 +31,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MessageBusImpl implements MessageBus {
@@ -43,9 +44,9 @@ public class MessageBusImpl implements MessageBus {
       return new ConcurrentLinkedQueue<DeliveryJob>();
     }
   };
-  private final Map<Topic, Object> mySyncPublishers = new ConcurrentHashMap<Topic, Object>();
-  private final Map<Topic, Object> myAsyncPublishers = new ConcurrentHashMap<Topic, Object>();
-  private final Map<Topic, List<MessageBusConnectionImpl>> mySubscribers = new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
+  private final ConcurrentMap<Topic, Object> mySyncPublishers = new ConcurrentHashMap<Topic, Object>();
+  private final ConcurrentMap<Topic, Object> myAsyncPublishers = new ConcurrentHashMap<Topic, Object>();
+  private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscribers = new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
   private final List<MessageBusImpl> myChildBusses = new CopyOnWriteArrayList<MessageBusImpl>();
 
   private static final Object NA = new Object();
@@ -107,7 +108,7 @@ public class MessageBusImpl implements MessageBus {
         }
       };
       publisher = (L)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
-      mySyncPublishers.put(topic, publisher);
+      publisher = (L)ConcurrencyUtil.cacheOrGet(mySyncPublishers, topic, publisher);
     }
     return publisher;
   }
@@ -124,7 +125,7 @@ public class MessageBusImpl implements MessageBus {
         }
       };
       publisher = (L)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
-      myAsyncPublishers.put(topic, publisher);
+      publisher = (L)ConcurrencyUtil.cacheOrGet(myAsyncPublishers, topic, publisher);
     }
     return publisher;
   }
@@ -191,7 +192,7 @@ public class MessageBusImpl implements MessageBus {
     List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers == null) {
       topicSubscribers = new CopyOnWriteArrayList<MessageBusConnectionImpl>();
-      mySubscribers.put(topic, topicSubscribers);
+      topicSubscribers = ConcurrencyUtil.cacheOrGet(mySubscribers, topic, topicSubscribers);
     }
 
     topicSubscribers.add(connection);
