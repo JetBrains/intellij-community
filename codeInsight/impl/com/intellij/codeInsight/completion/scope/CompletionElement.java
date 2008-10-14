@@ -43,9 +43,10 @@ public class CompletionElement{
       return ((PsiMethod)myElement).getSignature(mySubstitutor);
     }
     else if (myElement instanceof PsiField) {
-      final String s = ((PsiField)myElement).getName();
-      if (myQualifierClass != null) return "#" + s;
-      return ((PsiField)myElement).getContainingClass().getQualifiedName() + "#" + s;
+      final PsiField field = (PsiField)myElement;
+      final String s = field.getName();
+      if (myQualifierClass != null || !field.hasModifierProperty(PsiModifier.STATIC)) return "#" + s;
+      return field.getContainingClass().getQualifiedName() + "#" + s;
     }
     else if(myElement instanceof PsiElement){
       name = PsiUtil.getName((PsiElement)myElement);
