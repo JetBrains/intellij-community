@@ -17,10 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -186,5 +183,15 @@ public class JDomConvertingUtil {
       }
     }
     return null;
+  }
+
+  public static void removeDuplicatedOptions(final Element element) {
+    List<Element> children = new ArrayList<Element>(element.getChildren(OPTION_ELEMENT));
+    Set<String> names = new HashSet<String>();
+    for (Element child : children) {
+      if (!names.add(child.getAttributeValue(NAME_ATTRIBUTE))) {
+        element.removeContent(child);
+      }
+    }
   }
 }
