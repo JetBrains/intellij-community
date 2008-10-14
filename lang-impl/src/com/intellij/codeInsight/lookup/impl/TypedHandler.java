@@ -72,9 +72,15 @@ public class TypedHandler implements TypedActionHandler {
 
   private static CharFilter.Result getLookupAction(final char charTyped, final LookupElement currentItem, final LookupImpl lookup) {
     if (currentItem != null && charTyped != ' ') {
+      String postfix = lookup.getAdditionalPrefix() + charTyped;
       final PrefixMatcher matcher = currentItem.getPrefixMatcher();
-      if (matcher.cloneWithPrefix(matcher.getPrefix() + lookup.getAdditionalPrefix() + charTyped).prefixMatches(currentItem)) {
+      if (matcher.cloneWithPrefix(matcher.getPrefix() + postfix).prefixMatches(currentItem)) {
         return CharFilter.Result.ADD_TO_PREFIX;
+      }
+      for (final LookupElement element : lookup.getItems()) {
+        if (element.isPrefixMatched() && element.getPrefixMatcher().cloneWithPrefix(element.getPrefixMatcher().getPrefix() + postfix).prefixMatches(element)) {
+          return CharFilter.Result.ADD_TO_PREFIX;
+        }
       }
     }
     final CharFilter[] filters = Extensions.getExtensions(CharFilter.EP_NAME);
