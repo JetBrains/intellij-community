@@ -943,7 +943,7 @@
       <keyboard-shortcut first-keystroke="meta COMMA"/>
     </action>
     <action id="ShowProjectStructureSettings">
-      <keyboard-shortcut first-keystroke="meta PERIOD"/>
+      <keyboard-shortcut first-keystroke="meta SEMICOLON"/>
     </action>
     <action id="CodeCompletion">
       <keyboard-shortcut first-keystroke="control SPACE"/>
