@@ -24,7 +24,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.committed.*;
+import com.intellij.openapi.vcs.changes.committed.ChangeListFilteringStrategy;
+import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
+import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
+import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
@@ -36,7 +39,6 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ConfigureBranchesAction;
-import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -57,7 +59,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   private final Project myProject;
   private final SvnVcs myVcs;
   private final MessageBusConnection myConnection;
-  private List<RootsAndBranches> myMergeInfoRefreshActions;
+  private MergeInfoUpdatesListener myMergeInfoUpdatesListener;
 
   public final static int VERSION_WITH_COPY_PATHS_ADDED = 2;
   public final static int VERSION_WITH_REPLACED_PATHS = 3;
@@ -188,50 +190,10 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   private void refreshMergeInfo(final RootsAndBranches action) {
-    if (myMergeInfoRefreshActions == null) {
-      myMergeInfoRefreshActions = new ArrayList<RootsAndBranches>();
-      myMergeInfoRefreshActions.add(action);
-
-      myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, new VcsConfigurationChangeListener.Notification() {
-        public void execute(final Project project, final VirtualFile vcsRoot) {
-          callReloadMergeInfo();
-        }
-      });
-      final Runnable reloadRunnable = new Runnable() {
-        public void run() {
-          callReloadMergeInfo();
-        }
-      };
-      myConnection.subscribe(SvnMapDialog.WC_CONVERTED, reloadRunnable);
-
-      ProjectLevelVcsManager.getInstance(myProject).addVcsListener(new VcsListener() {
-        public void directoryMappingChanged() {
-          callReloadMergeInfo();
-        }
-      });
-
-      myConnection.subscribe(CommittedChangesTreeBrowser.ITEMS_RELOADED, reloadRunnable); 
-    } else {
-      myMergeInfoRefreshActions.add(action);
+    if (myMergeInfoUpdatesListener == null) {
+      myMergeInfoUpdatesListener = new MergeInfoUpdatesListener(myProject, myConnection);
     }
-  }
-
-  private void callReloadMergeInfo() {
-    for (final RootsAndBranches action : myMergeInfoRefreshActions) {
-      if (action.strategyInitialized()) {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          action.reloadPanels();
-          action.refresh();
-        } else {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              action.reloadPanels();
-              action.refresh();
-            }
-          });
-        }
-      }
-    }
+    myMergeInfoUpdatesListener.addPanel(action);
   }
 
   private static class ShowHideMergePanel extends ToggleAction {
@@ -270,7 +232,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
   @Nullable
   public VcsCommittedViewAuxiliary createActions(final DecoratorManager manager, @Nullable final RepositoryLocation location) {
-    final RootsAndBranches rootsAndBranches = new RootsAndBranches(myProject, manager, location, myConnection);
+    final RootsAndBranches rootsAndBranches = new RootsAndBranches(myProject, manager, location);
     refreshMergeInfo(rootsAndBranches);
 
     final DefaultActionGroup popup = new DefaultActionGroup(myVcs.getDisplayName(), true);
@@ -282,8 +244,9 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
     return new VcsCommittedViewAuxiliary(Collections.<AnAction>singletonList(popup), new Runnable() {
       public void run() {
-        if (myMergeInfoRefreshActions != null) {
-          myMergeInfoRefreshActions.remove(rootsAndBranches);
+        if (myMergeInfoUpdatesListener != null) {
+          myMergeInfoUpdatesListener.removePanel(rootsAndBranches);
+          rootsAndBranches.dispose();
         }
       }
     }, Collections.<AnAction>singletonList(action));

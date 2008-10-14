@@ -3,46 +3,40 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.committed.ChangeListFilteringStrategy;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListDecorator;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListsListener;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.AbstractIntegrateChangesAction;
 import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.actions.RecordOnlyMergerFactory;
 import org.jetbrains.idea.svn.actions.ShowSvnMapAction;
-import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.dialogs.WCPaths;
 import org.jetbrains.idea.svn.integrate.Merger;
 import org.jetbrains.idea.svn.integrate.MergerFactory;
 import org.jetbrains.idea.svn.integrate.SelectedChangeListsChecker;
-import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.jetbrains.idea.svn.mergeinfo.MergeInfoHolder;
-import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
@@ -51,8 +45,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RootsAndBranches implements CommittedChangeListDecorator {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.RootsAndBranches");
@@ -74,7 +70,9 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   private final UndoIntegrateChangeListsAction myUndoIntegrateChangeListsAction;
   private JComponent myToolbarComponent;
 
-  private final MessageBusConnection myMessageBusConnection;
+  private boolean myDisposed;
+
+  private final WcInfoLoader myDataLoader;
 
   private MergeInfoHolder getHolder(final String key) {
     final MergeInfoHolder holder = myHolders.get(key);
@@ -92,11 +90,13 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     return myMergePanels.get(key.endsWith(File.separator) ? key.substring(0, key.length() - 1) : key + File.separator);
   }
   
-  public RootsAndBranches(final Project project, final DecoratorManager manager, final RepositoryLocation location,
-                          final MessageBusConnection connection) {
+  public RootsAndBranches(final Project project, final DecoratorManager manager, final RepositoryLocation location) {
     myProject = project;
     myManager = manager;
     myLocation = location;
+
+    myDataLoader = new WcInfoLoader(myProject, myLocation);
+
     myMergePanels = new HashMap<String, SvnMergeInfoRootPanelManual>();
     myHolders = new HashMap<String, MergeInfoHolder>();
 
@@ -120,14 +120,6 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     setDirectionToPanels();
 
     myStrategy = new MergePanelFiltering(getPanel());
-
-    // parent will disconnect
-    myMessageBusConnection = connection;
-    myMessageBusConnection.subscribe(SvnMergeInfoCache.SVN_MERGE_INFO_CACHE, new SvnMergeInfoCache.SvnMergeInfoCacheListener() {
-      public void copyRevisionUpdated() {
-        myManager.repaintTree();
-      }
-    });
   }
 
   public IntegrateChangeListsAction getIntegrateAction() {
@@ -195,20 +187,21 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   
   private void createPanels(final RepositoryLocation location, final Runnable afterRefresh) {
     final Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Subversion: loading working copies data..", false,
-                                                                        new PerformInBackgroundOption() {
-                                                                          public boolean shouldStartInBackground() {
-                                                                            return true;
-                                                                          }
-                                                                          public void processSentToBackground() {
-                                                                          }
-                                                                          public void processRestoredToForeground() {
-                                                                          }
-                                                                        }) {
+                                                                        BackgroundFromStartOption.getInstance()) {
       public void run(final ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
-        final JPanel mainPanel = prepareData(location);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        final Map<String, SvnMergeInfoRootPanelManual> panels = new HashMap<String, SvnMergeInfoRootPanelManual>();
+        final Map<String, MergeInfoHolder> holders = new HashMap<String, MergeInfoHolder>();
+        final JPanel mainPanel = prepareData(panels, holders);
+        SwingUtilities.invokeLater(new Runnable() {
           public void run() {
+            if (myDisposed) return;
+            
+            myMergePanels.clear();
+            myHolders.clear();
+            myMergePanels.putAll(panels);
+            myHolders.putAll(holders);
+            
             if (myPanelWrapper != null) {
               myPanelWrapper.removeAll();
               if (myMergePanels.isEmpty()) {
@@ -243,12 +236,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     myToolbarComponent = actionToolbar.getComponent();
   }
 
-  private JPanel prepareData(final RepositoryLocation location) {
-    synchronized (myMergePanels) {
-      myMergePanels.clear();
-      myHolders.clear();
-
-      final List<WCInfoWithBranches> roots = loadRoots(location);
+  private JPanel prepareData(final Map<String, SvnMergeInfoRootPanelManual> panels, final Map<String, MergeInfoHolder> holders) {
+      final List<WCInfoWithBranches> roots = myDataLoader.loadRoots();
 
       final JPanel mainPanel = new JPanel(new GridBagLayout());
       boolean onlyOneRoot = roots.size() == 1;
@@ -264,7 +253,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
         final SvnMergeInfoRootPanelManual panel = new SvnMergeInfoRootPanelManual(myProject,
                                                                                   new NullableFunction<WCInfoWithBranches, WCInfoWithBranches>() {
                                                                                     public WCInfoWithBranches fun(final WCInfoWithBranches wcInfoWithBranches) {
-                                                                                      return reloadInfo(wcInfoWithBranches);
+                                                                                      return myDataLoader.reloadInfo(wcInfoWithBranches);
                                                                                     }
                                                                                   }, new Runnable() {
             public void run() {
@@ -274,20 +263,19 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
               }
             }
           }, onlyOneRoot, root);
-        myMergePanels.put(root.getPath(), panel);
-        myHolders.put(root.getPath(), createHolder(panel));
+        panels.put(root.getPath(), panel);
+        holders.put(root.getPath(), createHolder(panel));
 
         final JPanel contentPanel = panel.getContentPanel();
         mainPanel.add(contentPanel, gb);
         ++ gb.gridy;
       }
-      if (myMergePanels.size() == 1) {
-        for (SvnMergeInfoRootPanelManual panel : myMergePanels.values()) {
+      if (panels.size() == 1) {
+        for (SvnMergeInfoRootPanelManual panel : panels.values()) {
           panel.setOnlyOneRoot(true);
         }
       }
       return mainPanel;
-    }
   }
 
   private DefaultActionGroup createActions() {
@@ -383,112 +371,6 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     gb.fill = GridBagConstraints.BOTH;
     wrapper.add(scrollPane, gb);
     return wrapper;
-  }
-
-  /**
-   *
-   * @param location filled in case when showing hostory for folder/file
-   * @return
-   */
-  public List<WCInfoWithBranches> loadRoots(final RepositoryLocation location) {
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    if (vcs == null) {
-      return Collections.emptyList();
-    }
-    final SvnFileUrlMapping urlMapping = vcs.getSvnFileUrlMapping();
-    final List<WCInfo> wcInfoList = vcs.getAllWcInfos();
-
-    final List<WCInfoWithBranches> result = new ArrayList<WCInfoWithBranches>();
-    for (WCInfo info : wcInfoList) {
-      final WCInfoWithBranches wcInfoWithBranches = createInfo(info, location, vcs, urlMapping);
-      result.add(wcInfoWithBranches);
-    }
-    return result;
-  }
-
-  @Nullable
-  public WCInfoWithBranches reloadInfo(final WCInfoWithBranches info) {
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    if (vcs == null) {
-      return null;
-    }
-    final SvnFileUrlMapping urlMapping = vcs.getSvnFileUrlMapping();
-    final File file = new File(info.getPath());
-    final Pair<String, SvnFileUrlMapping.RootUrlInfo> infoPair = urlMapping.getWcRootForFilePath(file);
-    if (infoPair == null) {
-      return null;
-    }
-    final SvnFileUrlMapping.RootUrlInfo rootInfo = infoPair.getSecond();
-    final WCInfo wcInfo = new WCInfo(infoPair.getFirst(), rootInfo.getAbsoluteUrlAsUrl(), SvnFormatSelector.getWorkingCopyFormat(file),
-                                     rootInfo.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file));
-    return createInfo(wcInfo, myLocation, vcs, urlMapping);
-  }
-
-  @Nullable
-  private WCInfoWithBranches createInfo(final WCInfo info, final RepositoryLocation location, final SvnVcs vcs,
-                                        final SvnFileUrlMapping urlMapping) {
-    if (! WorkingCopyFormat.ONE_DOT_FIVE.equals(info.getFormat())) {
-      return null;
-    }
-
-    final String url = info.getUrl().toString();
-    if ((location != null) && (! location.toPresentableString().startsWith(url)) &&
-        (! url.startsWith(location.toPresentableString()))) {
-      return null;
-    }
-    if (!SvnUtil.checkRepositoryVersion15(vcs, url)) {
-      return null;
-    }
-
-    // check of WC version
-    final RootMixedInfo rootForUrl = urlMapping.getWcRootForUrl(url);
-    if (rootForUrl == null) {
-      return null;
-    }
-    final VirtualFile root = rootForUrl.getParentVcsRoot();
-    final VirtualFile wcRoot = rootForUrl.getFile();
-    if (wcRoot == null) {
-      return null;
-    }
-    final SvnBranchConfiguration configuration;
-    try {
-      configuration = SvnBranchConfigurationManager.getInstance(myProject).get(wcRoot);
-    }
-    catch (VcsException e) {
-      LOG.info(e);
-      return null;
-    }
-    if (configuration == null) {
-      return null;
-    }
-
-    final List<WCInfoWithBranches.Branch> items = createBranchesList(url, configuration);
-    return new WCInfoWithBranches(info.getPath(), info.getUrl(), info.getFormat(),
-                                                                         info.getRepositoryRoot(), info.isIsWcRoot(), items, root);
-  }
-
-  private List<WCInfoWithBranches.Branch> createBranchesList(final String url, final SvnBranchConfiguration configuration) {
-    final List<WCInfoWithBranches.Branch> items = new ArrayList<WCInfoWithBranches.Branch>();
-
-    final String trunkUrl = configuration.getTrunkUrl();
-    if (! SVNPathUtil.isAncestor(trunkUrl, url)) {
-      items.add(new WCInfoWithBranches.Branch(trunkUrl));
-    }
-    final Map<String,List<SvnBranchItem>> branchMap = configuration.getLoadedBranchMap(myProject);
-    for (Map.Entry<String, List<SvnBranchItem>> entry : branchMap.entrySet()) {
-      for (SvnBranchItem branchItem : entry.getValue()) {
-        if (! SVNPathUtil.isAncestor(branchItem.getUrl(), url)) {
-          items.add(new WCInfoWithBranches.Branch(branchItem.getUrl()));
-        }
-      }
-    }
-
-    Collections.sort(items, new Comparator<WCInfoWithBranches.Branch>() {
-      public int compare(final WCInfoWithBranches.Branch o1, final WCInfoWithBranches.Branch o2) {
-        return Comparing.compare(o1.getUrl(), o2.getUrl());
-      }
-    });
-    return items;
   }
 
   public void refresh() {
@@ -974,5 +856,13 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       }
       myManager.repaintTree();
     }
+  }
+
+  public void fireRepaint() {
+    myManager.repaintTree();
+  }
+
+  public void dispose() {
+    myDisposed = true;
   }
 }
