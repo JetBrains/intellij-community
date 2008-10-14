@@ -460,7 +460,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
   
-  public static interface AllValuesProcessor<V> {
+  public interface AllValuesProcessor<V> {
     void process(final int inputId, V value);
   }
   
