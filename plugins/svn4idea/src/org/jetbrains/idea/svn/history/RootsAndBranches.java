@@ -1,7 +1,6 @@
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -768,7 +767,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     if (wcPath == null) {
       for (Map.Entry<String, SvnMergeInfoRootPanelManual> entry : myMergePanels.entrySet()) {
         final SvnMergeInfoRootPanelManual panelManual = entry.getValue();
-        if (svnList.allPathsUnder(panelManual.getBranch().getUrl())) {
+        if ((panelManual.getBranch() != null) && (panelManual.getBranch().getUrl() != null) &&
+            svnList.allPathsUnder(panelManual.getBranch().getUrl())) {
           holder = getHolder(entry.getKey());
         }
       }
