@@ -48,10 +48,6 @@ public class LocalHistoryConfigurable extends BaseConfigurable implements Search
     return getHelpTopic();
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   @Nullable
   public Runnable enableSearch(String option) {
     return null;

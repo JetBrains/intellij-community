@@ -19,16 +19,56 @@ package com.intellij.openapi.options;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * User: anna
  * Date: 08-Feb-2006
  */
 public interface SearchableConfigurable extends Configurable {
   @NonNls String getId();
-  boolean clearSearch();
+
   @Nullable Runnable enableSearch(String option);
 
   interface Parent extends SearchableConfigurable, Composite {
     boolean isResponsibleForChildren();
+
+    abstract class Abstract implements Parent {
+      private Configurable[] myKids;
+
+      public boolean isResponsibleForChildren() {
+        return false;
+      }
+
+      public JComponent createComponent() {
+        return null;
+      }
+
+      public boolean isModified() {
+        return false;
+      }
+
+      public void apply() throws ConfigurationException {
+      }
+
+      public void reset() {
+      }
+
+      public void disposeUIResources() {
+      }
+
+      public Runnable enableSearch(final String option) {
+        return null;
+      }
+
+
+      public final Configurable[] getConfigurables() {
+        if (myKids != null) return myKids;
+        myKids = buildConfigurables();
+        return myKids;
+      }
+
+      protected abstract Configurable[] buildConfigurables();
+    }
   }
 }

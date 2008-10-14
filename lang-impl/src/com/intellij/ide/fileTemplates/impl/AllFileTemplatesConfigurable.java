@@ -696,10 +696,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     return "fileTemplates";
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   @Nullable
   public Runnable enableSearch(String option) {
     return null;

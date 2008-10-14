@@ -26,13 +26,15 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   public void showSettingsDialog(Project project, ConfigurableGroup[] group) {
     group = filterEmptyGroups(group);
 
-    if ("true".equalsIgnoreCase(System.getProperty("new.options.editor"))) {
+    if ("false".equalsIgnoreCase(System.getProperty("new.options.editor"))) {
+      if (Boolean.toString(true).equals(PropertiesComponent.getInstance().getValue(PREFER_CLASSIC_OPTIONS_EDITOR))) {
+        showExplorerOptions(project, group);
+      }
+      else {
+        showControlPanelOptions(project, group, null);
+      }
+    } else {
       new OptionsEditorDialog(project, group, null).show();
-    }  else if (Boolean.toString(true).equals(PropertiesComponent.getInstance().getValue(PREFER_CLASSIC_OPTIONS_EDITOR))) {
-      showExplorerOptions(project, group);
-    }
-    else {
-      showControlPanelOptions(project, group, null);
     }
   }
 

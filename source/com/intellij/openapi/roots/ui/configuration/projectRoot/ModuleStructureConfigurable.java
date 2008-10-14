@@ -502,10 +502,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return "project.structure";
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   @Nullable
   public Runnable enableSearch(String option) {
     return null;

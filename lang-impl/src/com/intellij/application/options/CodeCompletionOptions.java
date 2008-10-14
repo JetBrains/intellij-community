@@ -49,10 +49,6 @@ public class CodeCompletionOptions extends BaseConfigurable implements Searchabl
     return getHelpTopic();
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   @Nullable
   public Runnable enableSearch(String option) {
     return null;

@@ -77,10 +77,6 @@ public class ProjectConfigurableWrapper implements SearchableConfigurable {
     return myDelegate instanceof SearchableConfigurable ? ((SearchableConfigurable)myDelegate).getId() : "";
   }
 
-  public boolean clearSearch() {
-    return myDelegate instanceof SearchableConfigurable && ((SearchableConfigurable)myDelegate).clearSearch();
-  }
-
   @Nullable
   public Runnable enableSearch(String option) {
     return myDelegate instanceof SearchableConfigurable ? ((SearchableConfigurable)myDelegate).enableSearch(option) : null;  

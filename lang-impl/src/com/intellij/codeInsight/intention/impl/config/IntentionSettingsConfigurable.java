@@ -63,9 +63,4 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
     return HELP_ID;
   }
 
-  public boolean clearSearch() {
-    myPanel.clearSearch();
-    return true;
-  }
-
 }

@@ -535,10 +535,6 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     return getHelpTopic();
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   @Nullable
   public Runnable enableSearch(String option) {
     return null;

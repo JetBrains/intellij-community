@@ -225,10 +225,6 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return "project.facets";
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   public Runnable enableSearch(final String option) {
     return null;
   }

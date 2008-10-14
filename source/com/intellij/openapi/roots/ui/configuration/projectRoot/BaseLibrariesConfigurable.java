@@ -47,10 +47,6 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     return false;
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   @Nullable
   public Runnable enableSearch(final String option) {
     return null;

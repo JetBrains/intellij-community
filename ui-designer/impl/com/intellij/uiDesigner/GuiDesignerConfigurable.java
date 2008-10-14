@@ -201,10 +201,6 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable {
     return getHelpTopic();
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   @Nullable
   public Runnable enableSearch(String option) {
     return null;

@@ -345,7 +345,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       if (myContent == c && myException == e) return;
 
       removeAll();
-      add(c, BorderLayout.CENTER);
+
+      if (c != null) {
+        add(c, BorderLayout.CENTER);
+      }
 
       if (e != null) {
         myErrorLabel.setText(UIUtil.toHtml(e.getMessage()));

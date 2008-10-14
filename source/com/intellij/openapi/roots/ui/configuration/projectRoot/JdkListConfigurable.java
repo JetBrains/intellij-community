@@ -97,10 +97,6 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return "jdk.list";
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   @Nullable
   public Runnable enableSearch(final String option) {
     return null;

@@ -262,10 +262,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     return getHelpTopic();
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   @Nullable
   public Runnable enableSearch(String option) {
     return null;

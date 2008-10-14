@@ -1,55 +1,28 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.TabbedPaneWrapper;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class EditorOptions implements SearchableConfigurable.Parent {
+public class EditorOptions extends SearchableConfigurable.Parent.Abstract {
 
-  private EditorOptionsPanel myPanel;
-  private Wrapper myComponentWrapper = new Wrapper();
-  private Configurable[] myKids;
+  protected Configurable[] buildConfigurables() {
+    final EditorOptionsProvider[] extensions = Extensions.getExtensions(EditorOptionsProvider.EP_NAME);
+    Configurable[] result = new Configurable[extensions.length + 1];
 
+    final EditorOptionsPanel behavior = new EditorOptionsPanel();
+    result[0] = behavior.getConfigurable();
 
-  public boolean isModified() {
-    return myPanel.isModified();
-  }
-
-  public JComponent createComponent() {
-    if (myPanel != null) return myComponentWrapper;
-
-    myPanel = new EditorOptionsPanel();
-    myComponentWrapper.setContent(myPanel.getTabbedPanel());
-    return myComponentWrapper;
-  }
-
-  public Configurable[] getConfigurables() {
-    if (myKids != null) return myKids;
-
-    if (myPanel == null) {
-      createComponent();
+    for (int i = 0; i < extensions.length; i++) {
+      EditorOptionsProvider each = extensions[i];
+      result[i + 1] = each;
     }
 
-    myComponentWrapper.removeAll();
-
-    final TabbedPaneWrapper tabs = myPanel.getTabs();
-    myKids = new Configurable[tabs.getTabCount()];
-
-    for (int i= 0; i < tabs.getTabCount(); i++) {
-      myKids[i] = new Kid(tabs.getTitleAt(i), tabs.getComponentAt(i));
-    }
-
-    tabs.removeAll();
-
-    return myKids;
+    return result;
   }
 
   public String getDisplayName() {
@@ -60,18 +33,6 @@ public class EditorOptions implements SearchableConfigurable.Parent {
     return IconLoader.getIcon("/general/configurableEditor.png");
   }
 
-  public void reset() {
-    myPanel.reset();
-  }
-
-  public void apply() throws ConfigurationException {
-    myPanel.apply();
-  }
-
-  public void disposeUIResources() {
-    myPanel = null;
-  }
-
   public String getHelpTopic() {
     return "preferences.editor";
   }
@@ -80,72 +41,4 @@ public class EditorOptions implements SearchableConfigurable.Parent {
     return getHelpTopic();
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
-  private class Kid implements SearchableConfigurable {
-
-    String myName;
-    JComponent myComponent;
-
-    private Kid(final String name, final JComponent component) {
-      myName = name;
-      myComponent = component;
-    }
-
-    @Nls
-    public String getDisplayName() {
-      return myName;
-    }
-
-    public Icon getIcon() {
-      return null;
-    }
-
-    public String getHelpTopic() {
-      return null;
-    }
-
-    public JComponent createComponent() {
-      return myComponent;
-    }
-
-    public boolean isModified() {
-      return EditorOptions.this.isModified();
-    }
-
-    public void apply() throws ConfigurationException {
-      EditorOptions.this.apply();
-    }
-
-    public void reset() {
-      EditorOptions.this.reset();
-    }
-
-    public void disposeUIResources() {
-      EditorOptions.this.disposeUIResources();
-    }
-
-    public String getId() {
-      return EditorOptions.this.getId();
-    }
-
-    public boolean clearSearch() {
-      return EditorOptions.this.clearSearch();
-    }
-
-    public Runnable enableSearch(final String option) {
-      return EditorOptions.this.enableSearch(option);
-    }
-  }
-
-  public boolean isResponsibleForChildren() {
-    return true;
-  }
 }

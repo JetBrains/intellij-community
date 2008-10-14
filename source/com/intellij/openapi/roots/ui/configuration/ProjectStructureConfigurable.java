@@ -114,10 +114,6 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return "project.structure";
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   @Nullable
   public Runnable enableSearch(final String option) {
     return null;

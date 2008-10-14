@@ -532,10 +532,6 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
     return "preferences.sourceCode";
   }
 
-  public boolean clearSearch() {
-    return true;
-  }
-
   @Nullable
   public Runnable enableSearch(String option) {
     myOption = option;

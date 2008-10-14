@@ -638,11 +638,6 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     return getHelpTopic();
   }
 
-  public boolean clearSearch() {
-    myPanel.clearSearch();
-    return true;
-  }
-
   @Nullable
   public Runnable enableSearch(String option) {
     return myPanel.showOption(this, option, true);

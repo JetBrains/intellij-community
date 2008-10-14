@@ -80,10 +80,6 @@ public class DebuggerConfigurable extends TabbedConfigurable implements Searchab
     return getHelpTopic();
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   @Nullable
   public Runnable enableSearch(String option) {
     return null;

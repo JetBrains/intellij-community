@@ -60,10 +60,6 @@ public class VcsManagerConfigurable implements SearchableConfigurable {
     return getHelpTopic();
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   @Nullable
   public Runnable enableSearch(String option) {
     return null;

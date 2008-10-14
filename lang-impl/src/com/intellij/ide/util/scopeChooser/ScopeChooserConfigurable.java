@@ -293,10 +293,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     return getHelpTopic();
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   @Nullable
   public Runnable enableSearch(final String option) {
     return null;

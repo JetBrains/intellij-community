@@ -64,7 +64,4 @@ public class KeymapConfigurable extends BaseConfigurable implements SearchableCo
     return getHelpTopic();
   }
 
-  public boolean clearSearch() {
-    return true;
-  }
 }

@@ -130,10 +130,6 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
     return getHelpTopic();
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   @Nullable
   public Runnable enableSearch(final String option) {
     return new Runnable(){

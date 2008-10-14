@@ -10,12 +10,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.TabbedPaneWrapper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,16 +49,8 @@ public class EditorOptionsPanel {
   private JCheckBox myCbRenameLocalVariablesInplace;
   private JCheckBox myCbHighlightIdentifierUnderCaret;
   private ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
+  private MyConfigurable myConfigurable;
 
-  private TabbedPaneWrapper myTabbedPaneWrapper;
-
-  public JComponent getTabbedPanel() {
-    return myTabbedPaneWrapper.getComponent();
-  }
-
-  public TabbedPaneWrapper getTabs() {
-    return myTabbedPaneWrapper;
-  }
 
   public EditorOptionsPanel(){
     if (SystemInfo.isMac) {
@@ -73,15 +65,12 @@ public class EditorOptionsPanel {
 
     myHighlightSettingsPanel.setLayout(new BorderLayout());
     myHighlightSettingsPanel.add(myErrorHighlightingPanel.getPanel(), BorderLayout.CENTER);
-    myTabbedPaneWrapper = new TabbedPaneWrapper();
-    myTabbedPaneWrapper.addTab(ApplicationBundle.message("tab.editor.settings.behavior"), myBehaviourPanel);
-    for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
-      myTabbedPaneWrapper.addTab(provider.getDisplayName(), provider.createComponent());
-    }
+
 
     myCbRenameLocalVariablesInplace.setVisible(OptionsApplicabilityFilter.isApplicable(OptionId.RENAME_IN_PLACE));
-  }
 
+    myConfigurable = new MyConfigurable();
+  }
 
 
   public void reset() {
@@ -136,9 +125,6 @@ public class EditorOptionsPanel {
     myCbRenameLocalVariablesInplace.setSelected(editorSettings.isVariableInplaceRenameEnabled());
 
     myErrorHighlightingPanel.reset();
-    for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
-      provider.reset();
-    }
   }
 
   public void apply() throws ConfigurationException {
@@ -217,9 +203,6 @@ public class EditorOptionsPanel {
       uiSettings.fireUISettingsChanged();
     }
     myErrorHighlightingPanel.apply();
-    for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
-      provider.apply();
-    }
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();
@@ -277,9 +260,6 @@ public class EditorOptionsPanel {
     isModified |= isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());
     
     isModified |= myErrorHighlightingPanel.isModified();
-    for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
-      isModified |= provider.isModified();
-    }
     return isModified;
   }
 
@@ -309,4 +289,54 @@ public class EditorOptionsPanel {
       return EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE;
     }
   }
+
+  public JComponent getComponent() {
+    return myBehaviourPanel;
+  }
+
+  public Configurable getConfigurable() {
+    return myConfigurable;
+  }
+
+  public class MyConfigurable implements SearchableConfigurable {
+    public String getId() {
+      return "Editor.Behavior";
+    }
+
+    public Runnable enableSearch(final String option) {
+      return null;
+    }
+
+    public String getDisplayName() {
+      return ApplicationBundle.message("tab.editor.settings.behavior");
+    }
+
+    public Icon getIcon() {
+      return null;
+    }
+
+    public String getHelpTopic() {
+      return null;
+    }
+
+    public JComponent createComponent() {
+      return myBehaviourPanel;
+    }
+
+    public boolean isModified() {
+      return EditorOptionsPanel.this.isModified();
+    }
+
+    public void apply() throws ConfigurationException {
+      EditorOptionsPanel.this.apply();
+    }
+
+    public void reset() {
+      EditorOptionsPanel.this.reset();
+    }
+
+    public void disposeUIResources() {
+    }
+  }
+
 }
