@@ -2,7 +2,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
@@ -202,9 +202,13 @@ public class PsiImplUtil {
   }
 
   public static PsiAnnotation findAnnotation(PsiModifierList modifierList, @NotNull String qualifiedName) {
+    final String shortName = StringUtil.getShortName(qualifiedName);
     PsiAnnotation[] annotations = modifierList.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
-      if (qualifiedName.equals(annotation.getQualifiedName())) return annotation;
+      final PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
+      if (referenceElement != null && shortName.equals(referenceElement.getReferenceName())) {
+        if (qualifiedName.equals(annotation.getQualifiedName())) return annotation;
+      }
     }
 
     return null;
