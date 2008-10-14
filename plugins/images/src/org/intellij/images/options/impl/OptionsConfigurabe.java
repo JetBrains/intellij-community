@@ -105,10 +105,6 @@ public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport 
     return "Images";
   }
 
-  public boolean clearSearch() {
-    return false;
-  }
-
   @Nullable
   public Runnable enableSearch(String option) {
     return null;
