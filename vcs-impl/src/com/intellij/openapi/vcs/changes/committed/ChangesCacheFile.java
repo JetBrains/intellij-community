@@ -669,13 +669,13 @@ public class ChangesCacheFile {
     private Map<Long, IndexEntry> myIndexEntryCache = new HashMap<Long, IndexEntry>();
     private Map<Long, CommittedChangeList> myPreviousChangeListsCache = new HashMap<Long, CommittedChangeList>();
     private List<LocalChangeList> myChangeLists;
-    private ChangeListManager myClManager;
+    private ChangeListManagerImpl myClManager;
 
     public boolean invoke() throws VcsException, IOException {
       if (myProject.isDisposed()) {
         return false;
       }
-      myClManager = ChangeListManager.getInstance(myProject);
+      myClManager = ChangeListManagerImpl.getInstanceImpl(myProject);
       final DiffProvider diffProvider = myVcs.getDiffProvider();
       if (diffProvider == null) return false;
       final Collection<FilePath> incomingFiles = myChangesProvider.getIncomingFiles(myLocation);
@@ -785,8 +785,10 @@ public class ChangesCacheFile {
         }
         beforeRevision.getFile().refresh();
         if (beforeRevision.getFile().getVirtualFile() == null || myCreatedFiles.contains(beforeRevision.getFile())) {
-          // file has already been deleted
-          return true;
+          // if not deleted from vcs, mark as incoming, otherwise file already deleted
+          final boolean locallyDeleted = myClManager.getDeletedFiles().contains(beforeRevision.getFile());
+          LOG.info(locallyDeleted ? "File deleted locally, change marked as incoming" : "File already deleted");
+          return !locallyDeleted;
         }
         else if (!myVcs.fileExistsInVcs(beforeRevision.getFile())) {
           LOG.info("File exists locally and is unversioned");
