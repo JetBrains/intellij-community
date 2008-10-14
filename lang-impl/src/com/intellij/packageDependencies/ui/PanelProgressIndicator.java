@@ -56,9 +56,13 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
   }
 
 
-  public void setIndeterminate(boolean indeterminate) {
+  public void setIndeterminate(final boolean indeterminate) {
     super.setIndeterminate(indeterminate);
-    myProgressPanel.myFractionProgress.setIndeterminate(indeterminate);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        myProgressPanel.myFractionProgress.setIndeterminate(indeterminate);
+      }
+    });
   }
 
   private void update() {
