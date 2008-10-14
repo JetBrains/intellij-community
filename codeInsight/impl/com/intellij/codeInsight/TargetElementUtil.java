@@ -210,7 +210,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   @Override
   public boolean includeSelfInGotoImplementation(final PsiElement element) {
-    final TargetElementEvaluator elementEvaluator = targetElementEvaluator.forLanguage(element.getLanguage());
+    final TargetElementEvaluator elementEvaluator = element != null ? targetElementEvaluator.forLanguage(element.getLanguage()):null;
     if (elementEvaluator != null) {
       return elementEvaluator.includeSelfInGotoImplementation(element);
     }
