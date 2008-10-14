@@ -15,6 +15,7 @@ import com.intellij.psi.WeighingComparable;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.ProximityLocation;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -23,6 +24,12 @@ public class PsiProximityComparator implements Comparator<Object> {
   public static final Key<ProximityStatistician> STATISTICS_KEY = Key.create("proximity");
   public static final Key<ProximityWeigher> WEIGHER_KEY = Key.create("proximity");
   private final PsiElement myContext;
+  private final FactoryMap<PsiElement, WeighingComparable<PsiElement, ProximityLocation>> myProximities = new FactoryMap<PsiElement, WeighingComparable<PsiElement, ProximityLocation>>() {
+    @Override
+    protected WeighingComparable<PsiElement, ProximityLocation> create(final PsiElement key) {
+      return getProximity(key, myContext);
+    }
+  };
 
   public PsiProximityComparator(PsiElement context) {
     myContext = context;
@@ -34,8 +41,8 @@ public class PsiProximityComparator implements Comparator<Object> {
     if (element1 == null) return element2 == null ? 0 : 1;
     if (element2 == null) return -1;
 
-    final WeighingComparable<PsiElement, ProximityLocation> proximity1 = getProximity(element1, myContext);
-    final WeighingComparable<PsiElement, ProximityLocation> proximity2 = getProximity(element2, myContext);
+    final WeighingComparable<PsiElement, ProximityLocation> proximity1 = myProximities.get(element1);
+    final WeighingComparable<PsiElement, ProximityLocation> proximity2 = myProximities.get(element2);
     if (proximity1 == null || proximity2 == null) {
       return 0;
     }
