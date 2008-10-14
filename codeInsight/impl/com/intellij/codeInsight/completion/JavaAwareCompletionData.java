@@ -41,7 +41,15 @@ public class JavaAwareCompletionData extends CompletionData{
                                    final PsiFile file,
                                    final ElementFilter filter,
                                    final CompletionVariant variant) {
-    final JavaCompletionProcessor processor = new JavaCompletionProcessor(position, filter);
+    completeReference(reference, position, set, tailType, file, filter, variant, true);
+  }
+
+  protected void completeReference(final PsiReference reference, final PsiElement position, final Set<LookupElement> set, final TailType tailType,
+                                   final PsiFile file,
+                                   final ElementFilter filter,
+                                   final CompletionVariant variant,
+                                   final boolean checkAccess) {
+    final JavaCompletionProcessor processor = new JavaCompletionProcessor(position, filter, checkAccess);
 
     if (reference instanceof PsiMultiReference) {
       int javaReferenceStart = -1;

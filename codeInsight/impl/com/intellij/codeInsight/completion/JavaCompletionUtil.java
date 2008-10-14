@@ -43,18 +43,6 @@ import java.util.*;
 
 public class JavaCompletionUtil {
   static final Key<SmartPsiElementPointer> QUALIFIER_TYPE_ATTR = Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"
-  static final NotNullLazyValue<CompletionData> ourJavaCompletionData = new NotNullLazyValue<CompletionData>() {
-    @NotNull
-    protected CompletionData compute() {
-      return new JavaCompletionData();
-    }
-  };
-  static final NotNullLazyValue<CompletionData> ourJava15CompletionData = new NotNullLazyValue<CompletionData>() {
-    @NotNull
-    protected CompletionData compute() {
-      return new Java15CompletionData();
-    }
-  };
   @NonNls
   public static final String GET_PREFIX = "get";
   @NonNls

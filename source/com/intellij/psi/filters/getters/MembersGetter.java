@@ -2,13 +2,11 @@ package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.JavaAwareCompletionData;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.filters.OrFilter;
-import com.intellij.psi.filters.element.ModifierFilter;
+import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -82,24 +80,24 @@ public class MembersGetter {
 
   private static void processMembers(final PsiElement context, final CompletionResultSet results, final PsiClass where,
                                      final boolean acceptMethods) {
-    final FilterScopeProcessor<PsiElement> processor = new FilterScopeProcessor<PsiElement>(new OrFilter(
-      new ClassFilter(PsiCompiledElement.class, false),
-      new ModifierFilter(PsiModifier.PRIVATE, false)
-    ));
+    final FilterScopeProcessor<PsiElement> processor = new FilterScopeProcessor<PsiElement>(TrueFilter.INSTANCE);
     where.processDeclarations(processor, ResolveState.initial(), null, context);
 
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
     for (final PsiElement result : processor.getResults()) {
-    if (result instanceof PsiMember && !(result instanceof PsiClass)) {
-      final PsiMember member = (PsiMember)result;
-      if (member.hasModifierProperty(PsiModifier.STATIC) && !PsiTreeUtil.isAncestor(member.getContainingClass(), context, false)) {
-        if (result instanceof PsiField && !member.hasModifierProperty(PsiModifier.FINAL)) continue;
-        if (result instanceof PsiMethod && acceptMethods) continue;
-        final LookupItem item = LookupItemUtil.objectToLookupItem(result);
-        item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-        JavaAwareCompletionData.qualify(item);
-        results.addElement(item);
+      if (result instanceof PsiMember && !(result instanceof PsiClass)) {
+        final PsiMember member = (PsiMember)result;
+        if (member.hasModifierProperty(PsiModifier.STATIC) &&
+            !PsiTreeUtil.isAncestor(member.getContainingClass(), context, false) &&
+            resolveHelper.isAccessible(member, context, null)) {
+          if (result instanceof PsiField && !member.hasModifierProperty(PsiModifier.FINAL)) continue;
+          if (result instanceof PsiMethod && acceptMethods) continue;
+          final LookupItem item = LookupItemUtil.objectToLookupItem(result);
+          item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+          JavaAwareCompletionData.qualify(item);
+          results.addElement(item);
+        }
       }
     }
-  }
   }
 }

@@ -40,8 +40,10 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
   private PsiType myQualifierType = null;
   private PsiClass myQualifierClass = null;
   private PrefixMatcher myMatcher;
+  private boolean myCheckAccess;
 
-  public JavaCompletionProcessor(PsiElement element, ElementFilter filter){
+  public JavaCompletionProcessor(PsiElement element, ElementFilter filter, final boolean checkAccess){
+    myCheckAccess = checkAccess;
     mySettings = CodeInsightSettings.getInstance();
     myResults = new ArrayList<CompletionElement>();
     myElement = element;
@@ -117,13 +119,19 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
         && myFilter.isAcceptable(new CandidateInfo(element, state.get(PsiSubstitutor.KEY)), myElement)) {
       final String name = PsiUtil.getName(element);
       if (StringUtil.isNotEmpty(name) && (myMatcher == null || myMatcher.prefixMatches(name))) {
-        PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(myElement.getProject()).getResolveHelper();
-        if(!(element instanceof PsiMember) || resolveHelper.isAccessible((PsiMember)element, myElement, myQualifierClass)){
+        if(isAccessible(element)){
           add(new CompletionElement(myQualifierType, element, state.get(PsiSubstitutor.KEY), myQualifierClass));
         }
       }
     }
     return true;
+  }
+
+  private boolean isAccessible(final PsiElement element) {
+    if (!myCheckAccess) return true;
+    if (!(element instanceof PsiMember)) return true;
+
+    return JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible((PsiMember)element, myElement, myQualifierClass);
   }
 
   private void add(CompletionElement element){

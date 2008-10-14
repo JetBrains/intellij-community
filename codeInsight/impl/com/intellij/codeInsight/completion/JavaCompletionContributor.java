@@ -27,8 +27,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
+import com.intellij.psi.filters.TrueFilter;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +49,8 @@ public class JavaCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> METHOD_START = or(
       psiElement(TokenType.WHITE_SPACE).afterLeaf(INSIDE_METHOD_TYPE_ELEMENT),
       INSIDE_METHOD_TYPE_ELEMENT);
+  private static final Java15CompletionData ourJava15CompletionData = new Java15CompletionData();
+  private static final JavaCompletionData ourJavaCompletionData = new JavaCompletionData();
 
   public boolean fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet _result) {
     if (parameters.getCompletionType() != CompletionType.BASIC) return true;
@@ -55,23 +60,37 @@ public class JavaCompletionContributor extends CompletionContributor {
       final int startOffset = parameters.getOffset();
       final PsiElement lastElement = file.findElementAt(startOffset - 1);
       final PsiElement insertedElement = parameters.getPosition();
-      final CompletionData completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
-        public CompletionData compute() {
+      final JavaAwareCompletionData completionData = ApplicationManager.getApplication().runReadAction(new Computable<JavaAwareCompletionData>() {
+        public JavaAwareCompletionData compute() {
           return getCompletionDataByElementInner(lastElement);
         }
       });
       final CompletionResultSet result = _result.withPrefixMatcher(completionData.findPrefix(insertedElement, startOffset));
       insertedElement.putUserData(PREFIX_MATCHER, result.getPrefixMatcher());
 
+      final boolean checkAccess = parameters.getInvocationCount() == 1;
+
       final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
-      final PsiReference ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
-        public PsiReference compute() {
-          return insertedElement.getContainingFile().findReferenceAt(startOffset);
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(startOffset);
+          if (ref != null) {
+            final boolean[] hasApplicableVariants = new boolean[]{false};
+            for (final CompletionVariant variant : completionData.findVariants(insertedElement, file)) {
+              variant.processReferenceCompletions(new PairConsumer<ElementFilter, TailType>() {
+                public void consume(final ElementFilter elementFilter, final TailType tailType) {
+                  hasApplicableVariants[0] = true;
+                  completionData.completeReference(ref, insertedElement, lookupSet, tailType, file, elementFilter, variant, checkAccess);
+                }
+              });
+            }
+
+            if (!hasApplicableVariants[0]) {
+              completionData.completeReference(ref, insertedElement, lookupSet, TailType.NONE, file, TrueFilter.INSTANCE, completionData.myGenericVariant, checkAccess);
+            }
+          }
         }
       });
-      if (ref != null) {
-        completionData.completeReference(ref, lookupSet, insertedElement, parameters.getOriginalFile(), startOffset);
-      }
 
       final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
       completionData.addKeywordVariants(keywordVariants, insertedElement, parameters.getOriginalFile());
@@ -106,10 +125,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     return true;
   }
 
-  private static CompletionData getCompletionDataByElementInner(PsiElement element) {
-    return element != null && PsiUtil.isLanguageLevel5OrHigher(element)
-           ? JavaCompletionUtil.ourJava15CompletionData.getValue()
-           : JavaCompletionUtil.ourJavaCompletionData.getValue();
+  private static JavaAwareCompletionData getCompletionDataByElementInner(PsiElement element) {
+    return element != null && PsiUtil.isLanguageLevel5OrHigher(element) ? ourJava15CompletionData : ourJavaCompletionData;
   }
 
 
