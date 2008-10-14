@@ -19,6 +19,9 @@
     <action id="ShowSettings">
       <keyboard-shortcut first-keystroke="control alt S"/>
     </action>
+    <action id="ShowProjectStructureSettings">
+      <keyboard-shortcut first-keystroke="control alt shift S"/>
+    </action>
     <action id="FullyExpandTreeNode">
       <keyboard-shortcut first-keystroke="MULTIPLY"/>
     </action>
@@ -938,6 +941,9 @@
 
     <action id="ShowSettings">
       <keyboard-shortcut first-keystroke="meta COMMA"/>
+    </action>
+    <action id="ShowProjectStructureSettings">
+      <keyboard-shortcut first-keystroke="meta PERIOD"/>
     </action>
     <action id="CodeCompletion">
       <keyboard-shortcut first-keystroke="control SPACE"/>
