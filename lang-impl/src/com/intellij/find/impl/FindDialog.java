@@ -203,8 +203,13 @@ final class FindDialog extends DialogWrapper {
     });
 
     Component editorComponent = comboBox.getEditor().getEditorComponent();
+
     if (editorComponent instanceof EditorTextField) {
-      EditorTextField etf = (EditorTextField) editorComponent;
+      final EditorTextField etf = (EditorTextField) editorComponent;
+
+      etf.setFocusTraversalPolicyProvider(true);
+      etf.setFocusTraversalPolicy(new EditorFocusTraversalPolicy());
+
       DocumentAdapter listener = new DocumentAdapter() {
         public void documentChanged(final DocumentEvent e) {
           handleComboBoxValueChanged(comboBox);
@@ -931,6 +936,38 @@ final class FindDialog extends DialogWrapper {
     }
     updateControls();
     validateFindButton();
+  }
+
+  private static class EditorFocusTraversalPolicy extends FocusTraversalPolicy {
+    @Override
+    public Component getComponentAfter(final Container aContainer, final Component aComponent) {
+      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
+      return cycleRootAncestor.getFocusTraversalPolicy().getComponentAfter(cycleRootAncestor, aContainer);
+    }
+
+    @Override
+    public Component getComponentBefore(final Container aContainer, final Component aComponent) {
+      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
+      return cycleRootAncestor.getFocusTraversalPolicy().getComponentBefore(cycleRootAncestor, aContainer);
+    }
+
+    @Override
+    public Component getFirstComponent(final Container aContainer) {
+      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
+      return cycleRootAncestor.getFocusTraversalPolicy().getFirstComponent(cycleRootAncestor);
+    }
+
+    @Override
+    public Component getLastComponent(final Container aContainer) {
+      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
+      return cycleRootAncestor.getFocusTraversalPolicy().getLastComponent(cycleRootAncestor);
+    }
+
+    @Override
+    public Component getDefaultComponent(final Container aContainer) {
+      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
+      return cycleRootAncestor.getFocusTraversalPolicy().getDefaultComponent(cycleRootAncestor);
+    }
   }
 }
 
