@@ -77,7 +77,7 @@ public class MavenParentRelativePathConverter extends MavenPropertyResolvingConv
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       GenericDomValue el = (GenericDomValue)myContext.getInvocationElement();
-      MavenId id = MavenArtifactConverterHelper.getId(myContext);
+      MavenId id = MavenArtifactCoordinatesHelper.getId(myContext);
 
       MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
       MavenProjectModel parentFile = manager.findProject(id);

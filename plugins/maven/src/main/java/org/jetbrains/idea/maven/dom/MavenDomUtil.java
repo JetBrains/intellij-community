@@ -6,6 +6,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomElement;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
 import org.jetbrains.idea.maven.dom.model.MavenParent;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
@@ -46,5 +48,10 @@ public class MavenDomUtil {
     }
 
     return result;
+  }
+
+  public static <T> T getImmediateParent(ConvertContext context, Class<T> clazz) {
+    DomElement parentElement = context.getInvocationElement().getParent();
+    return clazz.isInstance(parentElement) ? (T)parentElement : null;
   }
 }

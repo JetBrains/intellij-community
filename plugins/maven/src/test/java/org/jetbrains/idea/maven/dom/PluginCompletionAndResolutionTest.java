@@ -72,7 +72,8 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "build-helper-maven-plugin", "maven-eclipse-plugin");
+    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "build-helper-maven-plugin",
+                             "maven-eclipse-plugin");
   }
 
   public void testResolvingPlugins() throws Exception {
@@ -99,7 +100,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
 
   public void testResolvingAbsentPlugins() throws Exception {
     removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin");
-    
+
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -115,6 +116,36 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
     PsiReference ref = getReferenceAtCaret(myProjectPom);
     assertNotNull(ref);
     ref.resolve(); // shouldn't throw;
+  }
+
+  public void testDoNotHighlightAbsentGroupIdAndVersion() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+    checkHighlighting();
+  }
+
+  public void testHighlightingAbsentArtifactId() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <<error descr=\"'artifactId' child tag should be defined\">plugin</error>>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    checkHighlighting();
   }
 
   public void testBasicConfigurationCompletion() throws Exception {
@@ -206,7 +237,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
     assertNotNull(ref);
 
     String pluginPath =
-        "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
+      "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
 
@@ -240,7 +271,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
     assertNotNull(ref);
 
     String pluginPath =
-        "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
+      "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
 
@@ -320,7 +351,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
     assertNotNull(ref);
 
     String pluginPath =
-        "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
+      "plugins/org/apache/maven/plugins/maven-compiler-plugin/2.0.2/maven-compiler-plugin-2.0.2.jar!/META-INF/maven/plugin.xml";
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
 
@@ -539,7 +570,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
 
   public void testListElementWhatHasUnpluralizedNameCompletion() throws Exception {
     // NPE test - StringUtil.unpluralize returns null.
-    
+
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +

@@ -196,6 +196,42 @@ public class ParentCompletionAndResolutionTest extends MavenCompletionAndResolut
     checkHighlighting();
   }
 
+  public void testHighlightingAbsentGroupId() throws Throwable {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<<error descr=\"'groupId' child tag should be defined\">parent</error>>" +
+                  "  <artifactId><error>junit</error></artifactId>" +
+                  "  <version><error>4.0</error></version>" +
+                  "</parent>");
+    checkHighlighting();
+  }
+
+  public void testHighlightingAbsentArtifactId() throws Throwable {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<<error descr=\"'artifactId' child tag should be defined\">parent</error>>" +
+                  "  <groupId>junit</groupId>" +
+                  "  <version><error>4.0</error></version>" +
+                  "</parent>");
+    checkHighlighting();
+  }
+
+  public void testHighlightingAbsentVersion() throws Throwable {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<<error descr=\"'version' child tag should be defined\">parent</error>>" +
+                  "  <groupId>junit</groupId>" +
+                  "  <artifactId>junit</artifactId>" +
+                  "</parent>");
+    checkHighlighting();
+  }
+
   public void testHighlightingInvalidRelativePath() throws Throwable {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.dom;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
@@ -8,9 +7,9 @@ import org.jetbrains.idea.maven.utils.MavenId;
 
 import java.util.Set;
 
-public class MavenArtifactVersionConverter extends MavenArtifactConverter {
+public class MavenArtifactCoordinatesVersionConverter extends MavenArtifactCoordinatesConverter {
   @Override
-  protected boolean isValid(Project project, MavenProjectIndicesManager manager, MavenId id, ConvertContext context) {
+  protected boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
     if (StringUtil.isEmpty(id.groupId)
         || StringUtil.isEmpty(id.artifactId)
         || StringUtil.isEmpty(id.version)) {
@@ -26,7 +25,8 @@ public class MavenArtifactVersionConverter extends MavenArtifactConverter {
   }
 
   @Override
-  protected Set<String> getVariants(Project project, MavenProjectIndicesManager manager, MavenId id, ConvertContext context) {
+  protected Set<String> doGetVariants(MavenId id, MavenProjectIndicesManager manager
+  ) {
     return manager.getVersions(id.groupId, id.artifactId);
   }
 }

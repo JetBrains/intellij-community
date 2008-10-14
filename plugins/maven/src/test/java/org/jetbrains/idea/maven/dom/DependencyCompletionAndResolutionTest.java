@@ -866,4 +866,86 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
 
     assertNotNull(getIntentionAtCaret("Update Maven Indices"));
   }
+
+  public void testExclusionCompletion() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <exclusions>" +
+                     "      <exclusion>" +
+                     "        <groupId>jmock</groupId>" +
+                     "        <artifactId><caret></artifactId>" +
+                     "      </exclusion>" +
+                     "    </exclusions>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertCompletionVariants(myProjectPom, "jmock");
+  }
+
+  public void testExclusionHighlighting() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <exclusions>" +
+                     "      <exclusion>" +
+                     "        <groupId>jmock</groupId>" +
+                     "        <artifactId><error>foo</error></artifactId>" +
+                     "      </exclusion>" +
+                     "    </exclusions>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    checkHighlighting();
+  }
+
+  public void testExclusionHighlightingAbsentGroupId() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <exclusions>" +
+                     "      <<error descr=\"'groupId' child tag should be defined\">exclusion</error>>" +
+                     "        <artifactId><error>jmock</error></artifactId>" +
+                     "      </exclusion>" +
+                     "    </exclusions>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    checkHighlighting();
+  }
+
+  public void testExclusionHighlightingAbsentArtifactId() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <exclusions>" +
+                     "      <<error descr=\"'artifactId' child tag should be defined\">exclusion</error>>" +
+                     "        <groupId>jmock</groupId>" +
+                     "      </exclusion>" +
+                     "    </exclusions>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    checkHighlighting();
+  }
 }
