@@ -2,10 +2,11 @@ package org.jetbrains.plugins.gant.reference;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author ilyas
@@ -49,9 +51,21 @@ public class GantTargetReference implements PsiPolyVariantReference {
 
     // Add ant tasks
     final Project project = groovyFile.getProject();
-    for (PsiClass task : AntTasksProvider.getInstance(project).getAntTasks()) {
-      if (StringUtil.decapitalize(task.getName()).equals(myRefExpr.getName())) {
-        res.add(new GroovyResolveResultImpl(task, true));
+
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myRefExpr.getProject());
+    final PsiClass taskClass = facade.findClass(AntTasksProvider.ANT_TASK_CLASS, GlobalSearchScope.allScope(project));
+
+    final String name = myRefExpr.getName();
+    if (name != null && taskClass != null) {
+      final Set<String> tasks = AntTasksProvider.getInstance(project).getAntTasks();
+      final String capitalized = StringUtil.capitalize(name);
+      if (tasks.contains(capitalized)) {
+        final PsiClass[] classes = facade.getShortNamesCache().getClassesByName(capitalized, GlobalSearchScope.allScope(project));
+        for (PsiClass clazz : classes) {
+          if (clazz.isInheritor(taskClass, true)) {
+            res.add(new GroovyResolveResultImpl(clazz, true));
+          }
+        }
       }
     }
 
@@ -100,8 +114,8 @@ public class GantTargetReference implements PsiPolyVariantReference {
         String name = label.getName();
         pageProperties.add(factory.createLookupElement(name).setIcon(GantIcons.GANT_TASK));
       }
-      for (PsiClass task : AntTasksProvider.getInstance(file.getProject()).getAntTasks()) {
-        final String name = StringUtil.decapitalize(task.getName());
+      for (String taskName : AntTasksProvider.getInstance(file.getProject()).getAntTasks()) {
+        final String name = StringUtil.decapitalize(taskName);
         pageProperties.add(factory.createLookupElement(name).setIcon(GantIcons.ANT_TASK));
       }
     }

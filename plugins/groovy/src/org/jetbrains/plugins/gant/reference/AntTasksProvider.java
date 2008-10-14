@@ -3,28 +3,29 @@ package org.jetbrains.plugins.gant.reference;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.psi.SearchUtils;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * @author ilyas
  */
 public class AntTasksProvider implements ProjectComponent {
 
-  @NonNls private static final String ANT_TASK_CLASS = "org.apache.tools.ant.Task";
+  @NonNls public static final String ANT_TASK_CLASS = "org.apache.tools.ant.Task";
 
-  private ArrayList<PsiClass> myAntTaks = new ArrayList<PsiClass>();
+  private Set<String> myAntTaks = new HashSet<String>();
   private final Project myProject;
   private MessageBusConnection myRootConnection;
   private boolean needToRefresh = true;
@@ -80,7 +81,7 @@ public class AntTasksProvider implements ProjectComponent {
   public void disposeComponent() {
   }
 
-  synchronized public ArrayList<PsiClass> getAntTasks() {
+  synchronized public Set<String> getAntTasks() {
     if (needToRefresh) {
       myAntTaks = findAntTasks(myProject);
       needToRefresh = false;
@@ -88,21 +89,21 @@ public class AntTasksProvider implements ProjectComponent {
     return myAntTaks;
   }
 
-  private static ArrayList<PsiClass> findAntTasks(Project project) {
+  private static HashSet<String> findAntTasks(Project project) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final PsiClass taskClass = facade.findClass(ANT_TASK_CLASS, GlobalSearchScope.allScope(project));
 
     if (taskClass != null) {
       final Iterable<PsiClass> inheritors = SearchUtils.findClassInheritors(taskClass, true);
-      final ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
+      final HashSet<String> classNames = new HashSet<String>();
       for (PsiClass inheritor : inheritors) {
         if (!inheritor.hasModifierProperty(PsiModifier.ABSTRACT) && !inheritor.hasModifierProperty(PsiModifier.PRIVATE)) {
-          classes.add(inheritor);
+          classNames.add(inheritor.getName());
         }
       }
-      return classes;
+      return classNames;
     }
 
-    return new ArrayList<PsiClass>(0);
+    return new HashSet<String>(0);
   }
 }

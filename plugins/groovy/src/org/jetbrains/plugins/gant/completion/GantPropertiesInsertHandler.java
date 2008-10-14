@@ -7,12 +7,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.plugins.gant.util.GantUtils;
 import org.jetbrains.plugins.gant.reference.AntTasksProvider;
+import org.jetbrains.plugins.gant.util.GantUtils;
 import org.jetbrains.plugins.groovy.extensions.completion.ContextSpecificInsertHandler;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -44,8 +43,8 @@ public class GantPropertiesInsertHandler implements ContextSpecificInsertHandler
         if (target.getName().equals(str)) return true;
       }
 
-      for (PsiClass psiClass : AntTasksProvider.getInstance(file.getProject()).getAntTasks()) {
-        if (StringUtil.decapitalize(psiClass.getName()).equals(str)) {
+      for (String classsName : AntTasksProvider.getInstance(file.getProject()).getAntTasks()) {
+        if (StringUtil.decapitalize(classsName).equals(str)) {
           return true;
         }
       }
