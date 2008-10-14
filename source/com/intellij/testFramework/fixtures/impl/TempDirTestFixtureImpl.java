@@ -111,7 +111,8 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
 
   public void tearDown() throws Exception {
     for (final File fileToDelete : myFilesToDelete) {
-      assert FileUtil.delete(fileToDelete) : "Can't delete "+fileToDelete;
+      boolean deleted = FileUtil.delete(fileToDelete);
+      assert deleted : "Can't delete "+fileToDelete;
     }
     super.tearDown();
   }

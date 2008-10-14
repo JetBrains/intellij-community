@@ -19,10 +19,10 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class FileAttribute {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.FileAttribute");
   private static final Set<String> ourRegisteredIds = new HashSet<String>();
   private final String myId;
   private final int myVersion;
@@ -41,7 +40,8 @@ public class FileAttribute {
   public FileAttribute(@NonNls final String id, int version) {
     myId = id;
     myVersion = version;
-    assert ourRegisteredIds.add(id) : "Attribute id='" + id+ "' is not unique";
+    boolean added = ourRegisteredIds.add(id);
+    assert added : "Attribute id='" + id+ "' is not unique";
   }
 
   @Nullable
@@ -65,7 +65,7 @@ public class FileAttribute {
   }
 
   private static void ensureFileIsValid(final VirtualFile file) {
-    int id = ((NewVirtualFile)file).getId();
+    int id = ((VirtualFileWithId)file).getId();
     if (id <= 0) {
       throw new InvalidVirtualFileAccessException(file);
     }

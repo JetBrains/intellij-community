@@ -84,7 +84,8 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     Disposer.dispose(myProject);
 
     for (final File fileToDelete : myFilesToDelete) {
-      assert FileUtil.delete(fileToDelete) : "Can't delete "+fileToDelete;
+      boolean deleted = FileUtil.delete(fileToDelete);
+      assert deleted : "Can't delete "+fileToDelete;
     }
 
     myApplication.setDataProvider(null);
