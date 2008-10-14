@@ -511,14 +511,15 @@ public class FileBasedIndex implements ApplicationComponent {
     if (myRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, REBUILD_IN_PROGRESS)) {
       cleanupProcessedFlag();
 
-      final FileSystemSynchronizer synchronizer = new FileSystemSynchronizer();
-      synchronizer.setCancelable(false);
-      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-        synchronizer.registerCacheUpdater(new UnindexedFilesUpdater(project, ProjectRootManager.getInstance(project), this));
-      }
-
       final Runnable rebuildRunnable = new Runnable() {
         public void run() {
+
+          final FileSystemSynchronizer synchronizer = new FileSystemSynchronizer();
+          synchronizer.setCancelable(false);
+          for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+            synchronizer.registerCacheUpdater(new UnindexedFilesUpdater(project, ProjectRootManager.getInstance(project), FileBasedIndex.this));
+          }
+
           try {
             clearIndex(indexId);
             synchronizer.execute();
