@@ -27,6 +27,7 @@ public class MyTestInjector {
   private ConcatenationAwareInjector myJSInPlaceInjector;
   private ConcatenationAwareInjector mySeparatedJSInjector;
   private final PsiManager myPsiManager;
+  private ConcatenationAwareInjector myQLPrefixedInjector;
 
   public MyTestInjector(PsiManager psiManager) {
     myPsiManager = psiManager;
@@ -39,6 +40,7 @@ public class MyTestInjector {
     Language ql = findLanguageByID("JPAQL");
     Language js = findLanguageByID("JavaScript");
     myQLInPlaceInjector = registerForStringVarInitializer(project, ql, "ql", null, null);
+    myQLPrefixedInjector = registerForStringVarInitializer(project, ql, "qlPrefixed", "xxx", null);
     myJSInPlaceInjector = registerForStringVarInitializer(project, js, "js", null, null);
     mySeparatedJSInjector = registerForStringVarInitializer(project, js, "jsSeparated", " + ", " + 'separator'");
   }
@@ -77,6 +79,8 @@ public class MyTestInjector {
     b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(myJSInPlaceInjector);
     assert b;
     b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(mySeparatedJSInjector);
+    assert b;
+    b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(myQLPrefixedInjector);
     assert b;
   }
 

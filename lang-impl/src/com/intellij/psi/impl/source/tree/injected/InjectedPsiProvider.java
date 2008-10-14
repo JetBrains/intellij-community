@@ -361,6 +361,7 @@ class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places, Ps
           String rest = hostText.substring(startOffsetInHost, rangeInsideHost.getEndOffset());
           leafEncodedText += rest;
           incHostNum(shred.range.getEndOffset());
+          leafEncodedText += shred.prefix;
           startOffsetInHost = shred.getRangeInsideHost().getStartOffset();
         }
 
