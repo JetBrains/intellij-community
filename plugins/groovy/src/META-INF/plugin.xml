@@ -115,6 +115,7 @@
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.LateBoundReferencesSearcher"/>-->
 
     <!-- Grails and GSP -->
+    <frameworkSupport implementation="org.jetbrains.plugins.grails.config.GrailsAdditionalFrameworksProvider"/>
     <syntaxHighlighter key="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspSyntaxHiglighter"/>
     <annotator language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.annotator.GspAnnotator"/>
     <lang.braceMatcher language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.highlighter.GspPairedBraceMatcher"/>
