@@ -493,7 +493,11 @@ public abstract class ChangesTreeList<T> extends JPanel {
       myTextRenderer = new ColoredListCellRenderer() {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           final FilePath path = TreeModelBuilder.getPathForObject(value);
-          setIcon(path.getFileType().getIcon());
+          if (path.isDirectory()) {
+            setIcon(Icons.DIRECTORY_CLOSED_ICON);
+          } else {
+            setIcon(path.getFileType().getIcon());
+          }
           final FileStatus fileStatus;
           if (value instanceof Change) {
             fileStatus = ((Change) value).getFileStatus();
