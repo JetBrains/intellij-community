@@ -64,7 +64,9 @@ public class AntTasksProvider implements ProjectComponent {
   }
 
   public void projectClosed() {
-    myRootConnection.disconnect();
+    if (myRootConnection != null) {
+      myRootConnection.disconnect();
+    }
   }
 
   @NotNull
