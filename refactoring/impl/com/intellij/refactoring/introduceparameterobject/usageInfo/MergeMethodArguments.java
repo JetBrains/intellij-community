@@ -49,9 +49,16 @@ public class MergeMethodArguments extends FixableUsageInfo {
 
   public void fixUsage() throws IncorrectOperationException {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(method.getProject());
-    final PsiClass psiClass = myCreateInnerClass ? method.getContainingClass().findInnerClassByName(className, false) : psiFacade.findClass(StringUtil.getQualifiedName(packageName, className));
-    final List<ParameterInfo> parametersInfo = new ArrayList<ParameterInfo>();
     final PsiMethod deepestSuperMethod = method.findDeepestSuperMethod();
+    final PsiClass psiClass;
+    if (myCreateInnerClass) {
+      final PsiClass containingClass = deepestSuperMethod != null ? deepestSuperMethod.getContainingClass() : method.getContainingClass();
+      assert containingClass != null;
+      psiClass = containingClass.findInnerClassByName(className, false);
+    }
+    else {
+      psiClass = psiFacade.findClass(StringUtil.getQualifiedName(packageName, className));
+    }
     PsiSubstitutor subst = PsiSubstitutor.EMPTY;
     if (deepestSuperMethod != null) {
       final PsiClass parentClass = deepestSuperMethod.getContainingClass();
@@ -69,6 +76,7 @@ public class MergeMethodArguments extends FixableUsageInfo {
         }
       }
     }
+    final List<ParameterInfo> parametersInfo = new ArrayList<ParameterInfo>();
     parametersInfo.add(new ParameterInfo(-1, parameterName, new PsiImmediateClassType(psiClass, subst), null) {
       @Override
       public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {

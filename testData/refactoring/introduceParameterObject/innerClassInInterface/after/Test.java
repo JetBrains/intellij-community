@@ -1,9 +1,5 @@
-class Test {
-  void foo(Param param) {
-    bar(param.getS());
-  }
-
-  void bar(String s){}
+public interface Test {
+  void foo(Param param);
 
     public static class Param {
         private final String s;
@@ -17,3 +13,8 @@ class Test {
         }
     }
 }
+
+class TestImpl implements Test {
+  void foo(Param param){}
+}
+

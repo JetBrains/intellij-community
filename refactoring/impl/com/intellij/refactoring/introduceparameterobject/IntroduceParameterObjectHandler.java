@@ -32,13 +32,10 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     else {
       final CaretModel caretModel = editor.getCaretModel();
       final int position = caretModel.getOffset();
-      PsiElement selectedElement = file.findElementAt(position);
-      while (selectedElement != null) {
-        if (selectedElement instanceof PsiMethod) {
-          selectedMethod = (PsiMethod)selectedElement;
-          break;
-        }
-        selectedElement = selectedElement.getParent();
+      final PsiMethodCallExpression methodCallExpression =
+       PsiTreeUtil.getParentOfType(file.findElementAt(position), PsiMethodCallExpression.class);
+      if (methodCallExpression != null) {
+        selectedMethod = methodCallExpression.resolveMethod();
       }
     }
     if (selectedMethod == null) {

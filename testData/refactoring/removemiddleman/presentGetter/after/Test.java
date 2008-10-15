@@ -5,6 +5,6 @@ class Test implements I {
   }
 
     void bar(I i) {
-        i.getMyField().foo();
+    i.foo();
   }
 }

@@ -1,7 +1,6 @@
 package com.intellij.refactoring.removemiddleman;
 
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -56,12 +55,7 @@ public class DelegationUtils {
     else {
       return false;
     }
-    for (PsiMethod superMethod : method.findDeepestSuperMethods()) {
-      if (!isAbstract(superMethod)) return false;
-      for (PsiMethod hierarchyMethod : OverridingMethodsSearch.search(superMethod)) {
-        if (!isAbstract(hierarchyMethod) && !hierarchyMethod.equals(method)) return false;
-      }
-    }
+
     return true;
   }
 

@@ -60,10 +60,7 @@ public class RemoveMiddleManTest extends MultiFileTestCase{
     doTest();
   }
 
-  public void testVisibility() throws Exception {
-    doTest();
-  }
-
+  
   public void testInterface() throws Exception {
     doTest();
   }

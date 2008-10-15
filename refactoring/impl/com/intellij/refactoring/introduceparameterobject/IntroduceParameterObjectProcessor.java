@@ -266,7 +266,8 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       final PsiJavaFile newFile = (PsiJavaFile)PsiFileFactory.getInstance(method.getProject()).createFileFromText(className + ".java", classString);
       if (myCreateInnerClass) {
         final PsiClass containingClass = method.getContainingClass();
-        final PsiElement innerClass = containingClass.add(newFile.getClasses()[0]);
+        final PsiClass innerClass = (PsiClass)containingClass.add(newFile.getClasses()[0]);
+        innerClass.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
         JavaCodeStyleManager.getInstance(newFile.getProject()).shortenClassReferences(innerClass);
       } else {
         final PsiFile containingFile = method.getContainingFile();

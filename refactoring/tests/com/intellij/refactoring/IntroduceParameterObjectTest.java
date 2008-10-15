@@ -61,6 +61,10 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     doTest(false, true);
   }
 
+  public void testInnerClassInInterface() throws Exception {
+    doTest(false, true);
+  }
+
   public void testPrimitive() throws Exception {
     doTest();
   }

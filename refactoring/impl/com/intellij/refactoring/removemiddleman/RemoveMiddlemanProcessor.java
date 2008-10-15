@@ -2,27 +2,24 @@ package com.intellij.refactoring.removemiddleman;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.removemiddleman.usageInfo.ChangeClassVisibilityUsageInfo;
-import com.intellij.refactoring.removemiddleman.usageInfo.ChangeMethodVisibilityUsageInfo;
 import com.intellij.refactoring.removemiddleman.usageInfo.DeleteMethod;
 import com.intellij.refactoring.removemiddleman.usageInfo.InlineDelegatingCall;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
-import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#" + RemoveMiddlemanProcessor.class.getName());
@@ -56,39 +53,30 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
       final String getterName = PropertyUtil.suggestGetterName(project, field);
       final int[] paramPermutation = DelegationUtils.getParameterPermutation(method);
       final PsiMethod delegatedMethod = DelegationUtils.getDelegatedMethod(method);
-
       LOG.assertTrue(!DelegationUtils.isAbstract(method));
-      @Modifier String visibility = PsiModifier.PRIVATE;
-      visibility = processUsagesForMethod(memberInfo.isToAbstract(), method, paramPermutation, getterName, delegatedMethod, visibility, usages);
-      final PsiMethod[] deepestSuperMethods = method.findDeepestSuperMethods();
-      for (PsiMethod superMethod : deepestSuperMethods) {
-        visibility = processUsagesForMethod(memberInfo.isToAbstract(), superMethod, paramPermutation, getterName, delegatedMethod, visibility, usages);
-      }
-
-
-      final PsiClass delegateClass = delegatedMethod.getContainingClass();
-      if (VisibilityUtil.compare(visibility, VisibilityUtil.getVisibilityModifier(delegateClass.getModifierList())) < 0) {
-        usages.add(new ChangeClassVisibilityUsageInfo(delegateClass, visibility));
-      }
-
-      if (!delegateClass.isInterface() && VisibilityUtil.compare(visibility, VisibilityUtil.getVisibilityModifier(delegatedMethod.getModifierList())) < 0) {
-        usages.add(new ChangeMethodVisibilityUsageInfo(delegatedMethod, visibility));
-      }
+      processUsagesForMethod(memberInfo.isToAbstract(), method, paramPermutation, getterName, delegatedMethod, usages);
     }
   }
 
+  @Override
+  protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
+    final List<String> conflicts = new ArrayList<String>();
+    for (MemberInfo memberInfo : myDelegateMethodInfos) {
+      if (memberInfo.isChecked() && memberInfo.isToAbstract()) {
+        final PsiMember psiMember = memberInfo.getMember();
+        if (psiMember instanceof PsiMethod && ((PsiMethod)psiMember).findDeepestSuperMethods().length > 0) {
+          conflicts.add(SymbolPresentationUtil.getSymbolPresentableText(psiMember) + " will be deleted. Hierarchy will be broken");
+        }
+      }
+    }
+    return showConflicts(conflicts);
+  }
 
-  @Modifier
-  private String processUsagesForMethod(final boolean deleteMethodHierarchy, PsiMethod method, int[] paramPermutation, String getterName, PsiMethod delegatedMethod,
-                                        @Modifier String visibility,
+  private void processUsagesForMethod(final boolean deleteMethodHierarchy, PsiMethod method, int[] paramPermutation, String getterName, PsiMethod delegatedMethod,
                                         List<FixableUsageInfo> usages) {
     for (PsiReference reference : ReferencesSearch.search(method)) {
       final PsiElement referenceElement = reference.getElement();
       final PsiMethodCallExpression call = (PsiMethodCallExpression)referenceElement.getParent();
-      final @Modifier String v1 = VisibilityUtil.getPossibleVisibility(delegatedMethod, referenceElement);
-      if (!Comparing.strEqual(v1, VisibilityUtil.getVisibilityModifier(delegatedMethod.getModifierList()))) {
-        visibility = VisibilityUtil.getHighestVisibility(visibility, v1);
-      }
       final String access;
       if (call.getMethodExpression().getQualifierExpression() == null) {
         access = field.getName();
@@ -103,37 +91,13 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
     if (deleteMethodHierarchy) {
       usages.add(new DeleteMethod(method));
     }
-    return visibility;
   }
 
   protected void performRefactoring(UsageInfo[] usageInfos) {
-    final Set<PsiClass> classesForGetters = new HashSet<PsiClass>();
-    for (final MemberInfo memberInfo : myDelegateMethodInfos) {
-      if (!memberInfo.isChecked()) continue;
-      final PsiMethod[] deepestSuperMethods = ((PsiMethod)memberInfo.getMember()).findDeepestSuperMethods();
-      for (PsiMethod superMethod : deepestSuperMethods) {
-        classesForGetters.add(superMethod.getContainingClass());
-      }
-    }
     if (getter != null) {
       try {
         if (containingClass.findMethodBySignature(getter, false) == null) {
           containingClass.add(getter);
-        }
-        final PsiType returnType = getter.getReturnType();
-        assert returnType != null;
-        final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(containingClass.getProject()).getElementFactory();
-        for (PsiClass superClass : classesForGetters) {
-          if (superClass.findMethodBySignature(getter, false) != null) {
-            continue;
-          }
-          if (superClass.isInterface()) {
-            superClass.add(elementFactory.createMethodFromText(returnType.getCanonicalText() + ' ' + getter.getName() + "();", null));
-          }
-          else {
-            superClass.add(
-              elementFactory.createMethodFromText("public abstract " + (returnType.getCanonicalText() + ' ' + getter.getName() + "();"), null));
-          }
         }
       }
       catch (IncorrectOperationException e) {

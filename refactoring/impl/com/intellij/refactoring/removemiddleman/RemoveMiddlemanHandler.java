@@ -70,7 +70,7 @@ public class RemoveMiddlemanHandler implements RefactoringActionHandler {
     for (PsiMethod method : delegating) {
       final MemberInfo memberInfo = new MemberInfo(method);
       memberInfo.setChecked(true);
-      memberInfo.setToAbstract(true);
+      memberInfo.setToAbstract(method.findDeepestSuperMethods().length == 0);
       infos[i++] = memberInfo;
     }
     new RemoveMiddlemanDialog(field, infos).show();

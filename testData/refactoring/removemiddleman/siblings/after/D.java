@@ -2,7 +2,7 @@ class D {
   void foo(){}
 
   void bar(A a){
-      a.getMyField().foo();
+    a.foo();
   }
 
   void bazz(Test t){
