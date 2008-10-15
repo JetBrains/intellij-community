@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.lang.LanguageExtension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -241,6 +242,9 @@ public class TargetElementUtilBase {
   }
 
   public boolean includeSelfInGotoImplementation(final PsiElement element) {
-    return true;
+    final TargetElementEvaluator elementEvaluator = element != null ? targetElementEvaluator.forLanguage(element.getLanguage()):null;
+    return elementEvaluator == null || elementEvaluator.includeSelfInGotoImplementation(element);
   }
+
+  private LanguageExtension<TargetElementEvaluator> targetElementEvaluator = new LanguageExtension<TargetElementEvaluator>("com.intellij.targetElementEvaluator");
 }
