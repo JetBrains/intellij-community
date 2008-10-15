@@ -34,24 +34,41 @@ public class OSProcessHandler extends ProcessHandler {
   private final ProcessWaitFor myWaitFor;
 
   private static class ExecutorServiceHolder {
-    private static final ExecutorService ourThreadExecutorsService =
-        new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
-          @SuppressWarnings({"HardCodedStringLiteral"})
-          public Thread newThread(Runnable r) {
-            return new Thread(r, "OSProcessHandler pooled thread");
-          }
-        });
+    private static ExecutorService ourThreadExecutorsService = createServiceImpl();
+
+    static ThreadPoolExecutor createServiceImpl() {
+      return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
+        @SuppressWarnings({"HardCodedStringLiteral"})
+        public Thread newThread(Runnable r) {
+          return new Thread(r, "OSProcessHandler pooled thread");
+        }
+      });
+    }
   }
 
-  public static Future<?> executeOnPooledThread(Runnable task) {
+  /**
+   * Override this method in order to execute the task with a custom pool
+   *
+   * @param task a task to run
+   */
+  protected Future<?> executeOnPooledThread(Runnable task) {
     final Application application = ApplicationManager.getApplication();
 
     if (application != null) {
       return application.executeOnPooledThread(task);
     }
-    else {
 
-      return ExecutorServiceHolder.ourThreadExecutorsService.submit(task);
+    if (ExecutorServiceHolder.ourThreadExecutorsService.isShutdown()) { // in tests: the service might be shut down by a previous test
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      ExecutorServiceHolder.ourThreadExecutorsService = ExecutorServiceHolder.createServiceImpl();
+    }
+    return ExecutorServiceHolder.ourThreadExecutorsService.submit(task);
+  }
+
+  protected static void shutdownExecutorService() {
+    final Application application = ApplicationManager.getApplication();
+    if (application == null) {
+      ExecutorServiceHolder.ourThreadExecutorsService.shutdown();
     }
   }
 
@@ -61,7 +78,7 @@ public class OSProcessHandler extends ProcessHandler {
     myWaitFor = new ProcessWaitFor(process);
   }
 
-  private static class ProcessWaitFor  {
+  private class ProcessWaitFor  {
     private final Semaphore myWaitSemaphore = new Semaphore();
 
     private final Future<?> myWaitForThreadFuture;
