@@ -1,0 +1,15 @@
+<idea-plugin>
+    <id>com.intellij.myPlugin</id>
+    <extensionPoints>
+        <extensionPoint name="foo.bar"/>
+    </extensionPoints>
+
+  <depends>com.intellij.custom</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <myPlugin.foo.bar/>
+        <completion.contributor/>
+        <custom.custom/>
+        <<error descr="Element custom.error is not allowed here">custom.error</error>/>
+    </extensions>
+</idea-plugin>

@@ -19,13 +19,12 @@ import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author mike
@@ -33,9 +32,18 @@ import java.util.List;
 public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
   @NotNull
   public Collection<? extends IdeaPlugin> getVariants(final ConvertContext context) {
-    final XmlFile xmlFile = context.getFile();
+    return collectAllVisiblePlugins(context.getFile());
+  }
 
-    return collectAllVisiblePlugins(xmlFile);
+  @NotNull
+  @Override
+  public Set<String> getAdditionalVariants(@NotNull final ConvertContext context) {
+    return Collections.singleton("com.intellij.modules.vcs"); //todo this is a hack
+  }
+
+  @Override
+  public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
+    return DevKitBundle.message("error.cannot.resolve.plugin", s);
   }
 
   public static Collection<IdeaPlugin> collectAllVisiblePlugins(final XmlFile xmlFile) {

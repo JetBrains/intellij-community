@@ -13,10 +13,10 @@ import org.jetbrains.idea.devkit.dom.impl.ExtensionNsConverter;
 public interface Extensions extends DomElement {
   @NotNull
   @Attribute("defaultExtensionNs")
-  @Convert(ExtensionNsConverter.class)
+  @Convert(value=ExtensionNsConverter.class, soft=true)
   GenericAttributeValue<IdeaPlugin> getDefaultExtensionNs();
 
   @NotNull
-  @Convert(ExtensionNsConverter.class)
+  @Convert(value=ExtensionNsConverter.class, soft=true)
   GenericAttributeValue<IdeaPlugin> getXmlns();
 }
