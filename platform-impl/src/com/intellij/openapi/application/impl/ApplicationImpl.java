@@ -227,8 +227,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     if (PluginManager.isPluginClass(componentClassName)) {
       LOG.error(ex);
       PluginId pluginId = PluginManager.getPluginByClassName(componentClassName);
-      @NonNls final String errorMessage = "Plugin " + pluginId.getIdString() + " failed to initialize:\n" + ex.getMessage() +
-                                          "\nPlease remove the plugin and restart " + ApplicationNamesInfo.getInstance().getFullProductName() + ".";
+      @NonNls final String errorMessage = "Plugin " + pluginId.getIdString() + " failed to initialize and will be disabled:\n" + ex.getMessage() +
+                                          "\nPlease restart " + ApplicationNamesInfo.getInstance().getFullProductName() + ".";
+      PluginManager.disablePlugin(pluginId.getIdString());
       if (!myHeadlessMode) {
         JOptionPane.showMessageDialog(null, errorMessage);
       }

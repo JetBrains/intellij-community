@@ -3,6 +3,7 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.AppTopics;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.ReadFileType;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
@@ -91,14 +92,19 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         ourStandardFileTypes.put(fileType.getName(), new StandardFileType(fileType, Arrays.asList(matchers)));
       }
     };
-    for (final FileTypeFactory factory : Extensions.getExtensions(FileTypeFactory.FILE_TYPE_FACTORY_EP)) {
+    final FileTypeFactory[] fileTypeFactories = Extensions.getExtensions(FileTypeFactory.FILE_TYPE_FACTORY_EP);
+    for (final FileTypeFactory factory : fileTypeFactories) {
       try {
-        factory.createFileTypes(consumer);
+        initFactory(consumer, factory);
       }
-      catch (Throwable ex) {
-        LOG.error(ex);
+      catch (final Error ex) {
+        PluginManager.disableIncompatiblePlugin(factory, ex);
       }
     }
+  }
+
+  private static void initFactory(final FileTypeConsumer consumer, final FileTypeFactory factory) {
+    factory.createFileTypes(consumer);
   }
 
   // -------------------------------------------------------------------------

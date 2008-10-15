@@ -12,11 +12,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.LogProvider;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -910,6 +910,16 @@ public class PluginManager {
     }
   }
 
+  public static boolean disablePlugin(String id) {
+    try {
+      saveDisabledPlugins(Collections.singletonList(id), true);
+    }
+    catch (IOException e) {
+      return false;
+    }
+    return true;
+  }
+
   public static void saveDisabledPlugins(Collection<String> ids, boolean append) throws IOException {
     File plugins = new File(PathManager.getConfigPath(), PluginManager.DISABLED_PLUGINS_FILENAME);
     if (!plugins.isFile()) {
@@ -964,6 +974,26 @@ public class PluginManager {
           //do nothing
         }
       }
+    }
+  }
+
+  public static void disableIncompatiblePlugin(final Object cause, final Throwable ex) {
+    final PluginId pluginId = getPluginByClassName(cause.getClass().getName());
+    if (pluginId != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      final boolean success = disablePlugin(pluginId.getIdString());
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                        "Incompatible plugin detected: " + pluginId.getIdString() +
+                                           (success ? "\nThe plugin has been disabled" : ""),
+                                        "Plugin Manager",
+                                        JOptionPane.ERROR_MESSAGE);
+        }
+      });
+    }
+    else {
+      // should never happen
+      throw new RuntimeException(ex);
     }
   }
 
