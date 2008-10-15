@@ -217,7 +217,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (!isRunning()) return;
     ProgressManager.getInstance().checkCanceled();
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    if (!unitTestMode) {
       assert !ApplicationManager.getApplication().isDispatchThread();
     }
 
@@ -226,7 +227,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (myCount == 1) {
       myQueue.setMergingTimeSpan(200);
     } else {
-      myQueue.queue(myUpdate);
+      if (!unitTestMode) myQueue.queue(myUpdate);
     }
   }
 
