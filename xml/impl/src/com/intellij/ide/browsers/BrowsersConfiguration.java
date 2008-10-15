@@ -1,6 +1,5 @@
 package com.intellij.ide.browsers;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -130,7 +128,11 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
     }
   }
 
-  private Pair<String, Boolean> suggestBrowserPath(@NotNull final BrowserFamily browserFamily) {
+  void updateBrowserValue(final BrowserFamily family, final Pair<String, Boolean> stringBooleanPair) {
+    myBrowserToPathMap.put(family, stringBooleanPair);
+  }
+
+  Pair<String, Boolean> suggestBrowserPath(@NotNull final BrowserFamily browserFamily) {
     Pair<String, Boolean> result = myBrowserToPathMap.get(browserFamily);
     if (result == null) {
       final String path = browserFamily.getExecutionPath();
@@ -172,7 +174,7 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
 
   public JComponent createComponent() {
     if (mySettingsPanel == null) {
-      mySettingsPanel = new WebBrowsersPanel(myBrowserToPathMap);
+      mySettingsPanel = new WebBrowsersPanel(this);
     }
 
     return mySettingsPanel;
@@ -283,29 +285,18 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
           return null;
         }
 
-        @Nullable
-        private WebBrowserUrlProvider getProvider(@NotNull PsiFile file) {
-          final Language language = file.getViewProvider().getBaseLanguage();
-          final List<WebBrowserUrlProvider> providers = WebBrowserUrlProviders.INSTANCE.forKey(language);
-          if (providers.size() > 0) {
-            LOG.assertTrue(providers.size() == 1, "Only one WebBrowserUrlProvider per language (" + language.getDisplayName() + ") is allowed!");
-            return providers.get(0);
-          }
-
-          return null;
-        }
 
         public void actionPerformed(final AnActionEvent e) {
           final PsiFile psiFile = getFile(e.getDataContext());
           LOG.assertTrue(psiFile != null);
-          final WebBrowserUrlProvider provider = getProvider(psiFile);
+          final WebBrowserUrlProvider provider = WebBrowserUrlProviders.getProvider(psiFile);
           LOG.assertTrue(provider != null);
 
           final Project project = psiFile.getProject();
           PsiDocumentManager.getInstance(project).commitAllDocuments();
 
           try {
-            launchBrowser(family, provider.getUrl(psiFile, project, e.getInputEvent().isShiftDown()));
+            launchBrowser(family, provider.getUrl(psiFile, e.getInputEvent().isShiftDown()));
           }
           catch (WebBrowserUrlProvider.BrowserException e1) {
             Messages.showErrorDialog(e1.getMessage(), XmlBundle.message("browser.error"));
@@ -324,7 +315,7 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
             if (file != null) {
               final VirtualFile virtualFile = file.getVirtualFile();
               if (virtualFile != null && virtualFile.isInLocalFileSystem()) {
-                final WebBrowserUrlProvider urlProvider = getProvider(file);
+                final WebBrowserUrlProvider urlProvider = WebBrowserUrlProviders.getProvider(file);
                 visible = urlProvider != null;
               }
             }

@@ -24,14 +24,14 @@ public class WebBrowsersPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.browsers.WebBrowsersPanel");
 
   private JPanel mySettingsPanel;
-  private Map<BrowsersConfiguration.BrowserFamily, Pair<String, Boolean>> myBrowserToPathMap;
   private Map<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>> myBrowserSettingsMap =
       new HashMap<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>>();
+  private BrowsersConfiguration myConfiguration;
 
-  public WebBrowsersPanel(final Map<BrowsersConfiguration.BrowserFamily, Pair<String, Boolean>> browserToPathMap) {
+  public WebBrowsersPanel(final BrowsersConfiguration configuration) {
     setLayout(new BorderLayout());
 
-    myBrowserToPathMap = browserToPathMap;
+    myConfiguration = configuration;
 
     mySettingsPanel = new JPanel();
     mySettingsPanel.setLayout(new BoxLayout(mySettingsPanel, BoxLayout.Y_AXIS));
@@ -86,7 +86,7 @@ public class WebBrowsersPanel extends JPanel {
     result.add(buttonsPanel);
     container.add(result);
 
-    final Pair<String, Boolean> settings = myBrowserToPathMap.get(family);
+    final Pair<String, Boolean> settings = myConfiguration.suggestBrowserPath(family);
     field.getTextField().setText(settings.first);
     checkBox.setSelected(settings.second.booleanValue());
 
@@ -95,12 +95,11 @@ public class WebBrowsersPanel extends JPanel {
 
   public void dispose() {
     myBrowserSettingsMap = null;
-    myBrowserToPathMap = null;
   }
 
   public boolean isModified() {
     for (BrowsersConfiguration.BrowserFamily family : BrowsersConfiguration.BrowserFamily.values()) {
-      final Pair<String, Boolean> old = myBrowserToPathMap.get(family);
+      final Pair<String, Boolean> old = myConfiguration.suggestBrowserPath(family);
       final Pair<JCheckBox, TextFieldWithBrowseButton> settings = myBrowserSettingsMap.get(family);
 
       if (old.second.booleanValue() != settings.first.isSelected() || !old.first.equals(settings.second.getText())) {
@@ -114,14 +113,14 @@ public class WebBrowsersPanel extends JPanel {
   public void apply() {
     for (BrowsersConfiguration.BrowserFamily family : myBrowserSettingsMap.keySet()) {
       final Pair<JCheckBox, TextFieldWithBrowseButton> buttonPair = myBrowserSettingsMap.get(family);
-      myBrowserToPathMap.put(family, Pair.create(buttonPair.second.getText(), buttonPair.first.isSelected()));
+      myConfiguration.updateBrowserValue(family, Pair.create(buttonPair.second.getText(), buttonPair.first.isSelected()));
     }
   }
 
   public void reset() {
-    for (BrowsersConfiguration.BrowserFamily family : myBrowserToPathMap.keySet()) {
+    for (BrowsersConfiguration.BrowserFamily family : myBrowserSettingsMap.keySet()) {
       final Pair<JCheckBox, TextFieldWithBrowseButton> buttonPair = myBrowserSettingsMap.get(family);
-      final Pair<String, Boolean> pair = myBrowserToPathMap.get(family);
+      final Pair<String, Boolean> pair = myConfiguration.suggestBrowserPath(family);
       buttonPair.first.setSelected(pair.second.booleanValue());
       buttonPair.second.getTextField().setText(pair.first);
     }

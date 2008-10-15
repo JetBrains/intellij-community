@@ -122,7 +122,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   }
 
   private void setDefaultFontSettings(){
-    FONT_FACE = "dialog";
+    FONT_FACE = "Dialog";
     FONT_SIZE = 12;
   }
 

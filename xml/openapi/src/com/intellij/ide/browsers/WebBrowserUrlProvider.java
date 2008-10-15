@@ -1,6 +1,5 @@
 package com.intellij.ide.browsers;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,5 +17,5 @@ public abstract class WebBrowserUrlProvider {
   }
 
   @NotNull
-  public abstract String getUrl(@NotNull PsiFile file, @NotNull Project project, boolean shiftDown) throws Exception;
+  public abstract String getUrl(@NotNull PsiFile file, boolean shiftDown) throws Exception;
 }
