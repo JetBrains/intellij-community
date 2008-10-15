@@ -39,6 +39,7 @@ public interface IComponentStore {
     List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException;
     SaveSession save() throws IOException;
     void finishSave();
+    void reset();
 
     @Nullable
     Set<String> analyzeExternalChanges(Set<Pair<VirtualFile,StateStorage>> changedFiles);

@@ -320,6 +320,10 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
     mySession = null;
   }
 
+  public void reset(){
+    mySession = null;
+  }
+
   protected class MyExternalizationSession implements ExternalizationSession {
     CompoundExternalizationSession myCompoundExternalizationSession = new CompoundExternalizationSession();
 
@@ -440,15 +444,6 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   }
 
   public void dispose() {
-  }
-
-  public void reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles, @NotNull final Set<String> changedComponents) throws StateStorage.StateStorageException {
-    for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-      assert pair != null;
-      final StateStorage storage = pair.second;
-      assert storage != null : "Null storage for: " + pair.first;
-      storage.reload(changedComponents);
-    }
   }
 
   public void registerStreamProvider(StreamProvider streamProvider, final RoamingType type) {

@@ -8,7 +8,6 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.fs.IFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -20,14 +19,6 @@ import java.util.*;
 public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
   public ProjectWithModulesStoreImpl(final ProjectEx project) {
     super(project);
-  }
-
-  protected void doReload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull final Set<String> componentNames) throws StateStorage.StateStorageException {
-    super.doReload(changedFiles, componentNames);
-
-    for (Module module : getPersistentModules()) {
-      ((ComponentStoreImpl)((ModuleImpl)module).getStateStore()).doReload(changedFiles, componentNames);
-    }
   }
 
   protected void reinitComponents(final Set<String> componentNames) {
@@ -116,6 +107,14 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
       }
 
       super.finishSave();
+    }
+
+    public void reset() {
+      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
+        moduleSaveSession.reset();
+      }
+
+      super.reset();
     }
 
     protected void beforeSave() throws IOException {

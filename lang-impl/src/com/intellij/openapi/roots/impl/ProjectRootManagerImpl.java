@@ -120,7 +120,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
 
     public void beforeRootsChanged() {
-      if (myBatchLevel == 0 || !myChanged || myIsRootsChangedOnDemandStartedButNotDemanded) {
+      if (myBatchLevel == 0 || !myChanged) {
         if (fireBeforeRootsChanged(myFileTypes)) {
             myChanged = true;
           }
@@ -128,7 +128,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
 
     public void rootsChanged(boolean force) {
-      if (myBatchLevel == 0 || force || myRootsChangeCounter > 1) {
+      if (myBatchLevel == 0) {
         if (fireChange()){
           myChanged = false;
         }
@@ -418,23 +418,28 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private int myRootsChangeCounter = 0;
 
   private void doRootsChangedOnDemand(Runnable r) {
-    LOG.assertTrue(!myIsRootsChangedOnDemandStartedButNotDemanded, "Nested on-demand rootsChanged not supported");
-    LOG.assertTrue(myRootsChangeCounter == 0, "On-demand rootsChanged not allowed inside rootsChanged, rootsChanged level == " + myRootsChangeCounter) ;
-    myIsRootsChangedOnDemandStartedButNotDemanded = true;
-    try {
-      r.run();
-    }
-    finally {
-      if (myIsRootsChangedOnDemandStartedButNotDemanded) {
-        myIsRootsChangedOnDemandStartedButNotDemanded = false;
+    if (getBatchSession(false).myBatchLevel == 0) {
+      LOG.assertTrue(!myIsRootsChangedOnDemandStartedButNotDemanded, "Nested on-demand rootsChanged not supported");
+      LOG.assertTrue(myRootsChangeCounter == 0, "On-demand rootsChanged not allowed inside rootsChanged, rootsChanged level == " + myRootsChangeCounter) ;
+      myIsRootsChangedOnDemandStartedButNotDemanded = true;
+      try {
+        r.run();
       }
-      else {
-        if (myRootsChangeCounter != 1) {
-          LOG.assertTrue(false, "myRootsChangedCounter = " + myRootsChangeCounter);
+      finally {
+        if (myIsRootsChangedOnDemandStartedButNotDemanded) {
+          myIsRootsChangedOnDemandStartedButNotDemanded = false;
         }
-        myIsRootsChangedOnDemandStartedButNotDemanded = false;
-        rootsChangedInternal(false);
+        else {
+          if (myRootsChangeCounter != 1) {
+            LOG.assertTrue(false, "myRootsChangedCounter = " + myRootsChangeCounter);
+          }
+          myIsRootsChangedOnDemandStartedButNotDemanded = false;
+          rootsChangedInternal(false);
+        }
       }
+    }
+    else {
+      r.run();
     }
   }
 

@@ -128,10 +128,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         return storage;
       }
 
-      public void reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles, final Set<String> changedComponents) {
-        throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
-      }
-
       public void registerStreamProvider(final StreamProvider streamProvider, final RoamingType type) {
         throw new UnsupportedOperationException("Method registerStreamProvider not implemented in " + getClass());
       }
@@ -145,6 +141,10 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       public Collection<String> getStorageFileNames() {
         throw new UnsupportedOperationException("Method getStorageFileNames not implemented in " + getClass());
+      }
+
+      public void reset() {
+        
       }
     };
   }

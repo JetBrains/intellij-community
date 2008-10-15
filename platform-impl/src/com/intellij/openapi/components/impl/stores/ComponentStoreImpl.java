@@ -83,7 +83,14 @@ abstract class ComponentStoreImpl implements IComponentStore {
   public SaveSession startSave() throws IOException {
     try {
       final ComponentStoreImpl.SaveSessionImpl session = createSaveSession();
-      session.commit();
+      try {
+        session.commit();
+      }
+      catch (Throwable e) {
+        session.reset();
+        LOG.info(e);
+        throw new IOException(e.getMessage());
+      }
       mySession = session;
       return mySession;
     }
@@ -366,6 +373,13 @@ abstract class ComponentStoreImpl implements IComponentStore {
       mySession = null;
     }
 
+    public void reset() {
+      getStateStorageManager().reset();
+      myStorageManagerSaveSession = null;
+      ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
+      mySession = null;
+    }
+
     protected void commit() throws StateStorage.StateStorageException {
       final StateStorageManager storageManager = getStateStorageManager();
 
@@ -393,6 +407,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     public List<IFile> getAllStorageFiles(final boolean includingSubStructures) {
       return myStorageManagerSaveSession.getAllStorageFiles();
     }
+
   }
 
   protected boolean isReloadPossible(final Set<String> componentNames) {
@@ -421,6 +436,11 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   protected void doReload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull final Set<String> componentNames)
       throws StateStorage.StateStorageException {
-    getStateStorageManager().reload(changedFiles, componentNames);
+    for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
+      assert pair != null;
+      final StateStorage storage = pair.second;
+      assert storage != null : "Null storage for: " + pair.first;
+      storage.reload(componentNames);
+    }
   }
 }

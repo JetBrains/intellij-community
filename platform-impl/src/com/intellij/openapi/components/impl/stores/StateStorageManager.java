@@ -31,8 +31,6 @@ public interface StateStorageManager {
 
   void clearStateStorage(@NotNull String file);
 
-  void reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles, final Set<String> changedComponents) throws StateStorage.StateStorageException;
-
   ExternalizationSession startExternalization();
   SaveSession startSave(ExternalizationSession externalizationSession) ;
   void finishSave(SaveSession saveSession);
@@ -48,6 +46,8 @@ public interface StateStorageManager {
   void unregisterStreamProvider(StreamProvider streamProvider, final RoamingType roamingType);
 
   StreamProvider[] getStreamProviders(final RoamingType roamingType);
+
+  void reset();
 
 
   interface ExternalizationSession {
