@@ -30,10 +30,11 @@ public abstract class XmlIndex<V> implements FileBasedIndexExtension<String, V> 
     return new VirtualFileFilter() {
 
       private final ProjectFileIndex myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      private final VirtualFile myStandardSchemas = ExternalResourcesRootsProvider.getStandardSchemas();
 
       public boolean accept(final VirtualFile file) {
-        return myFileIndex.isInContent(file) || myFileIndex.isInLibraryClasses(file) || file.getParent() == myStandardSchemas;
+        final VirtualFile parent = file.getParent();
+        assert parent != null;
+        return myFileIndex.isInContent(file) || myFileIndex.isInLibraryClasses(file) || parent.getName().equals("standardSchemas");
       }
     };
   }
