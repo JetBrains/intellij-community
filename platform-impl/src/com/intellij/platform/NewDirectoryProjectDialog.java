@@ -32,6 +32,8 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
   private JPanel myProjectTypePanel;
   private String myBaseDir;
 
+  private static final Object EMPTY_PROJECT_GENERATOR = new Object();
+
   protected NewDirectoryProjectDialog(Project project) {
     super(project, true);
     setTitle("Create New Project");
@@ -69,7 +71,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
     }
     else {
       DefaultComboBoxModel model = new DefaultComboBoxModel();
-      model.addElement(null);
+      model.addElement(EMPTY_PROJECT_GENERATOR);
       for (DirectoryProjectGenerator generator : generators) {
         model.addElement(generator);
       }
@@ -80,7 +82,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
                                              final int index,
                                              final boolean selected,
                                              final boolean hasFocus) {
-          if (value == null) {
+          if (value == EMPTY_PROJECT_GENERATOR) {
             append("Empty project", SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
           else {
@@ -117,7 +119,9 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
 
   @Nullable
   public DirectoryProjectGenerator getProjectGenerator() {
-    return (DirectoryProjectGenerator) myProjectTypeComboBox.getSelectedItem();
+    final Object selItem = myProjectTypeComboBox.getSelectedItem();
+    if (selItem == EMPTY_PROJECT_GENERATOR) return null;
+    return (DirectoryProjectGenerator)selItem;
   }
 
   public JComponent getPreferredFocusedComponent() {
