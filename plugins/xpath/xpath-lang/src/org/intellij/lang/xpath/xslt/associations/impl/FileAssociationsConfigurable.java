@@ -27,6 +27,8 @@ import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +58,11 @@ public class FileAssociationsConfigurable implements FileOptionsProvider, NonDef
     }
 
     public JComponent createComponent() {
-        myEditor = new AssociationsEditor(myProject, myState.state);
+        myEditor = new ReadAction<AssociationsEditor>() {
+            protected void run(Result<AssociationsEditor> result) throws Throwable {
+                result.setResult(new AssociationsEditor(myProject, myState.state));
+            }
+        }.execute().getResultObject();
         return myEditor.getComponent();
     }
 
