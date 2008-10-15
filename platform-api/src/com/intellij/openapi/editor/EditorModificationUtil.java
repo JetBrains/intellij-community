@@ -230,8 +230,9 @@ public class EditorModificationUtil {
 
   public static int calcAfterLineEnd(Editor editor) {
     Document document = editor.getDocument();
-    int columnNumber = editor.getCaretModel().getLogicalPosition().column;
-    int lineNumber = editor.getCaretModel().getLogicalPosition().line;
+    LogicalPosition logicalPosition = editor.getCaretModel().getLogicalPosition();
+    int columnNumber = logicalPosition.column;
+    int lineNumber = logicalPosition.line;
     if (lineNumber >= document.getLineCount()) {
       return columnNumber;
     }
@@ -244,7 +245,7 @@ public class EditorModificationUtil {
     int afterLineEnd = calcAfterLineEnd(editor);
     if (afterLineEnd > 0) {
       final Project project = editor.getProject();
-      StringBuffer buf = new StringBuffer();
+      StringBuilder buf = new StringBuilder();
       final Document doc = editor.getDocument();
       final int caretOffset = editor.getCaretModel().getOffset();
       boolean atLineStart = caretOffset >= doc.getTextLength() || doc.getLineStartOffset(doc.getLineNumber(caretOffset)) == caretOffset;

@@ -106,21 +106,33 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public int getLineNumber(int offset) {
-    if (offset < myPrefixes[0].length()) return 0;
-    int lineNumber = myPrefixLineCount - 1;
+    int lineNumber = 0;
     String hostText = myDelegate.getText();
     for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
-      offset -= myPrefixes[i].length();
-      if (offset < 0) return lineNumber;
-      RangeMarker currentRange = myRelevantRangesInHostDocument[i];
-      int length = currentRange.getEndOffset() - currentRange.getStartOffset();
-      String rangeText = hostText.substring(currentRange.getStartOffset(), currentRange.getEndOffset());
-      if (offset < length) {
-        return lineNumber + StringUtil.getLineBreakCount(rangeText.substring(0, offset));
+      String prefix = myPrefixes[i];
+      String suffix = mySuffixes[i];
+      lineNumber += StringUtil.getLineBreakCount(prefix.substring(0, Math.min(offset, prefix.length())));
+      if (offset < prefix.length()) {
+        return lineNumber;
       }
-      offset -= length;
-      offset -= mySuffixes[i].length();
-      lineNumber += StringUtil.getLineBreakCount(rangeText);
+      offset -= prefix.length();
+      
+      RangeMarker currentRange = myRelevantRangesInHostDocument[i];
+      int rangeLength = currentRange.getEndOffset() - currentRange.getStartOffset();
+      String rangeText = hostText.substring(currentRange.getStartOffset(), currentRange.getEndOffset());
+
+      lineNumber += StringUtil.getLineBreakCount(rangeText.substring(0, Math.min(offset, rangeLength)));
+      if (offset < rangeLength) {
+        return lineNumber;
+      }
+      offset -= rangeLength;
+
+      lineNumber += StringUtil.getLineBreakCount(suffix.substring(0, Math.min(offset, suffix.length())));
+      if (offset < suffix.length()) {
+        return lineNumber;
+      }
+
+      offset -= suffix.length();
     }
     lineNumber = getLineCount() - 1;
     return lineNumber < 0 ? 0 : lineNumber;
