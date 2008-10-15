@@ -82,6 +82,10 @@ public class XDebugSessionImpl implements XDebugSession {
     myPauseActionSupported = isSupported;
   }
 
+  public void rebuildViews() {
+    mySessionTab.rebuildViews();
+  }
+
   public boolean isPauseActionSupported() {
     return myPauseActionSupported;
   }

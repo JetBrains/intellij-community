@@ -7,13 +7,15 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -25,10 +27,8 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +40,6 @@ import java.util.*;
 public class XDebuggerUtilImpl extends XDebuggerUtil {
   private XLineBreakpointType<?>[] myLineBreakpointTypes;
   private Map<Class<? extends XBreakpointType>, XBreakpointType<?,?>> myBreakpointTypeByClass;
-  private Map<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>> mySettingsByClass;
 
   public XLineBreakpointType<?>[] getLineBreakpointTypes() {
     if (myLineBreakpointTypes == null) {
@@ -103,15 +102,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   public <T extends XDebuggerSettings<?>> T getDebuggerSettings(Class<T> aClass) {
-    if (mySettingsByClass == null) {
-      mySettingsByClass = new HashMap<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>>();
-      XDebuggerSettings[] extensions = Extensions.getExtensions(XDebuggerSettings.EXTENSION_POINT);
-      for (XDebuggerSettings extension : extensions) {
-        mySettingsByClass.put(extension.getClass(), extension);
-      }
-    }
-    //noinspection unchecked
-    return (T)mySettingsByClass.get(aClass);
+    return XDebuggerSettingsManager.getInstance().getSettings(aClass);
   }
 
   @Nullable 

@@ -9,7 +9,7 @@ import com.intellij.openapi.Disposable;
  * @author nik
  */
 public abstract class XDebugViewBase implements Disposable {
-  protected enum SessionEvent {PAUSED, BEFORE_RESUME, RESUMED, STOPPED, FRAME_CHANGED}
+  protected enum SessionEvent {PAUSED, BEFORE_RESUME, RESUMED, STOPPED, FRAME_CHANGED, SETTINGS_CHANGED}
   protected final XDebugSession mySession;
   private MyDebugSessionListener mySessionListener;
 
@@ -17,6 +17,10 @@ public abstract class XDebugViewBase implements Disposable {
     mySession = session;
     mySessionListener = new MyDebugSessionListener();
     mySession.addSessionListener(mySessionListener);
+  }
+
+  public void rebuildView() {
+    onSessionEvent(SessionEvent.SETTINGS_CHANGED);
   }
 
   private void onSessionEvent(final SessionEvent event) {

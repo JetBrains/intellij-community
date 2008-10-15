@@ -2,11 +2,10 @@ package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author nik
@@ -18,8 +17,7 @@ public class XDebuggerSettingsPanelProviderImpl extends DebuggerSettingsPanelPro
 
   public Collection<? extends Configurable> getConfigurables(final Project project) {
     ArrayList<Configurable> list = new ArrayList<Configurable>();
-    XDebuggerSettings[] settingses = Extensions.getExtensions(XDebuggerSettings.EXTENSION_POINT);
-    for (XDebuggerSettings settings : settingses) {
+    for (XDebuggerSettings settings : XDebuggerSettingsManager.getInstance().getSettingsList()) {
       list.add(settings.createConfigurable());
     }
     return list;
@@ -27,6 +25,6 @@ public class XDebuggerSettingsPanelProviderImpl extends DebuggerSettingsPanelPro
 
   @Override
   public boolean hasAnySettingsPanels() {
-    return Extensions.getExtensions(XDebuggerSettings.EXTENSION_POINT).length > 0;
+    return !XDebuggerSettingsManager.getInstance().getSettingsList().isEmpty();
   }
 }

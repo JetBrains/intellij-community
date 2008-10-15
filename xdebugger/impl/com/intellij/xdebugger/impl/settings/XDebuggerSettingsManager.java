@@ -32,6 +32,7 @@ import java.util.*;
 public class XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingsManager.SettingsState>{
   @NonNls public static final String COMPONENT_NAME = "XDebuggerSettings";
   private Map<String, XDebuggerSettings<?>> mySettingsById;
+  private Map<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>> mySettingsByClass;
 
   public static XDebuggerSettingsManager getInstance() {
     return ServiceManager.getService(XDebuggerSettingsManager.class);
@@ -48,9 +49,9 @@ public class XDebuggerSettingsManager implements PersistentStateComponent<XDebug
     return settingsState;
   }
 
-  private Collection<XDebuggerSettings<?>> getSettingsList() {
+  public Collection<XDebuggerSettings<?>> getSettingsList() {
     initSettings();
-    return mySettingsById.values();
+    return Collections.unmodifiableCollection(mySettingsById.values());
   }
 
   public void loadState(final SettingsState state) {
@@ -77,10 +78,18 @@ public class XDebuggerSettingsManager implements PersistentStateComponent<XDebug
   private void initSettings() {
     if (mySettingsById == null) {
       mySettingsById = new HashMap<String, XDebuggerSettings<?>>();
-      for (XDebuggerSettings<?> settings : Extensions.getExtensions(XDebuggerSettings.EXTENSION_POINT)) {
+      mySettingsByClass = new HashMap<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>>();
+      for (XDebuggerSettings settings : Extensions.getExtensions(XDebuggerSettings.EXTENSION_POINT)) {
         mySettingsById.put(settings.getId(), settings);
+        mySettingsByClass.put(settings.getClass(), settings);
       }
     }
+  }
+
+  public <T extends XDebuggerSettings<?>> T getSettings(final Class<T> aClass) {
+    initSettings();
+    //noinspection unchecked
+    return (T)mySettingsByClass.get(aClass);
   }
 
   public static class SettingsState {

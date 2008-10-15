@@ -102,4 +102,6 @@ public interface XDebugSession {
   RunContentDescriptor getRunContentDescriptor();
 
   void setPauseActionSupported(boolean isSupported);
+
+  void rebuildViews();
 }

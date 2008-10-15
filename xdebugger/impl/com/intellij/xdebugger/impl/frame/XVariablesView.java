@@ -36,13 +36,15 @@ public class XVariablesView extends XDebugViewBase {
     XStackFrame stackFrame = mySession.getCurrentStackFrame();
     XDebuggerTree tree = myDebuggerTreePanel.getTree();
 
-    if (event == SessionEvent.BEFORE_RESUME) {
+    if (event == SessionEvent.BEFORE_RESUME || event == SessionEvent.SETTINGS_CHANGED) {
       if (myTreeRestorer != null) {
         myTreeRestorer.dispose();
       }
       myFrameEqualityObject = stackFrame != null ? stackFrame.getEqualityObject() : null;
       myTreeState = XDebuggerTreeState.saveState(tree);
-      return;
+      if (event == SessionEvent.BEFORE_RESUME) {
+        return;
+      }
     }
 
     tree.markNodesObsolete();

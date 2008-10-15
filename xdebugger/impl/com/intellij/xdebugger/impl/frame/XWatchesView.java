@@ -78,12 +78,14 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
     XStackFrame stackFrame = mySession.getCurrentStackFrame();
     XDebuggerTree tree = myTreePanel.getTree();
 
-    if (event == SessionEvent.BEFORE_RESUME) {
+    if (event == SessionEvent.BEFORE_RESUME || event == SessionEvent.SETTINGS_CHANGED) {
       if (myTreeRestorer != null) {
         myTreeRestorer.dispose();
       }
       myTreeState = XDebuggerTreeState.saveState(tree);
-      return;
+      if (event == SessionEvent.BEFORE_RESUME) {
+        return;
+      }
     }
 
     if (stackFrame != null) {
