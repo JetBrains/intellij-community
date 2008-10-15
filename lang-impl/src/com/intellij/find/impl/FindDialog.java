@@ -213,8 +213,6 @@ final class FindDialog extends DialogWrapper {
     if (editorComponent instanceof EditorTextField) {
       final EditorTextField etf = (EditorTextField) editorComponent;
 
-      etf.pleaseHandleShiftTab();
-
       DocumentAdapter listener = new DocumentAdapter() {
         public void documentChanged(final DocumentEvent e) {
           handleComboBoxValueChanged(comboBox);

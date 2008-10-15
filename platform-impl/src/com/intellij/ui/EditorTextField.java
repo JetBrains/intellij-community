@@ -85,9 +85,11 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
       public void focusLost(FocusEvent e) {
       }
     });
+
+    pleaseHandleShiftTab();
   }
 
-  public void pleaseHandleShiftTab() {
+  private void pleaseHandleShiftTab() {
     setFocusTraversalPolicyProvider(true);
     setFocusTraversalPolicy(new DelegatingToRootTraversalPolicy());
   }
