@@ -20,6 +20,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -203,6 +204,14 @@ public class TargetElementUtilBase {
   protected PsiElement getReferenceOrReferencedElement(PsiFile file, Editor editor, int flags, int offset) {
     PsiReference ref = findReference(editor, offset);
     if (ref == null) return null;
+
+    final Language language = ref.getElement().getLanguage();
+    final TargetElementEvaluator evaluator = targetElementEvaluator.forLanguage(language);
+    if (evaluator != null) {
+      final PsiElement element = evaluator.getElementByReference(ref);
+      if (element != null) return element;
+    }
+
     PsiManager manager = file.getManager();
     PsiElement refElement = ref.resolve();
     if (refElement == null) {
