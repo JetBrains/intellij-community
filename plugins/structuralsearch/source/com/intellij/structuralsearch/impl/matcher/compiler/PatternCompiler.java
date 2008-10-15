@@ -3,10 +3,10 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -44,29 +44,11 @@ public class PatternCompiler {
   }
 
   public static CompiledPattern compilePattern(final Project project, final MatchOptions options) {
-    final CompiledPattern[] result = new CompiledPattern[1];
-
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        result[0] = ApplicationManager.getApplication().runWriteAction(new Computable<CompiledPattern>() {
-          public CompiledPattern compute() {
-            return compilePatternImpl(project, options);
-          }
-        });
+    return new WriteAction<CompiledPattern>() {
+      protected void run(Result<CompiledPattern> result) throws Throwable {
+        result.setResult(compilePatternImpl(project, options));
       }
-    };
-
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeAndWait(
-        runnable,
-        ModalityState.defaultModalityState()
-      );
-    }
-
-    return result[0];
+    }.execute().getResultObject();
   }
 
   public static String getLastFindPlan() {
@@ -74,7 +56,7 @@ public class PatternCompiler {
   }
 
   private static CompiledPattern compilePatternImpl(Project project,MatchOptions options) {
-    final StringBuffer buf = new StringBuffer();
+    final StringBuilder buf = new StringBuilder();
     final CompileContext context = new CompileContext();
     if (ApplicationManager.getApplication().isUnitTestMode()) lastTestingContext = context;
 
