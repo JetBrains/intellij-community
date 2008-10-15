@@ -24,6 +24,14 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
     }
 
     public void testBackSlashVariants() throws Throwable {
+        doBackSlashVariantsTest();
+    }
+  
+    public void testBackSlashVariants2() throws Throwable {
+        doBackSlashVariantsTest();
+    }
+
+    private void doBackSlashVariantsTest() throws Throwable {
         java.util.List<String> nameList = new ArrayList<String>(Arrays.asList("d", "D", "s", "S", "w", "W", "b", "B", "A", "G", "Z", "z", "Q", "E",
                 "t", "n", "r", "f", "a", "e"));
         for (String[] stringArray : RegExpPropertyImpl.PROPERTY_NAMES) {
@@ -32,7 +40,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
         myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), nameList.toArray(new String[nameList.size()]));
     }
 
-    public void testPropertyVariants() throws Throwable {
+  public void testPropertyVariants() throws Throwable {
         java.util.List<String> nameList = new ArrayList<String>();
         for (String[] stringArray : RegExpPropertyImpl.PROPERTY_NAMES) {
             nameList.add("{" + stringArray[0] + "}");
