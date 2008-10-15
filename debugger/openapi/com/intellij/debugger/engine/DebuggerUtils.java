@@ -42,13 +42,14 @@ import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public abstract class DebuggerUtils  implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerUtils");
   private static final Key<Method> TO_STRING_METHOD_KEY = new Key<Method>("CachedToStringMethod");
+  public static final Set<String> ourPrimitiveTypeNames = new HashSet<String>(Arrays.asList(
+      "byte", "short", "int", "long", "float", "double", "boolean", "char"
+  ));
 
   @NonNls
   public static String getValueAsString(final EvaluationContext evaluationContext, Value value) throws EvaluateException {
@@ -393,6 +394,10 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
     }
     
     return ((PsiField)referent).getContainingClass().equals(method.getContainingClass());
+  }
+
+  public static boolean isPrimitiveType(final String typeName) {
+    return ourPrimitiveTypeNames.contains(typeName);
   }
 
   protected static class ArrayClass {

@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -17,8 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.sun.jdi.ClassNotLoadedException;
-import com.sun.jdi.PrimitiveType;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,16 +37,6 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
     setLvalue(true);
     myFrameProxy = local.getFrame();
     myLocalVariable = local;
-  }
-
-  private static boolean calcPrimitive(LocalVariableProxyImpl local) throws EvaluateException {
-    try {
-      return local.getType() instanceof PrimitiveType;
-    }
-    catch (ClassNotLoadedException ignored) {
-      // primitive types are always 'loaded', so if this has happenned, the type is defenitely not a primitive one
-    }
-    return false;
   }
 
   public LocalVariableProxyImpl getLocalVariable() {
@@ -86,8 +75,9 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     myIsVisible = myFrameProxy.isLocalVariableVisible(getLocalVariable());
     if (myIsVisible) {
-      myTypeName = getLocalVariable().getVariable().typeName();
-      myIsPrimitive = calcPrimitive(getLocalVariable());
+      final String typeName = getLocalVariable().typeName();
+      myTypeName = typeName;
+      myIsPrimitive = DebuggerUtils.isPrimitiveType(typeName);
       return myFrameProxy.getValue(getLocalVariable());
     }
 

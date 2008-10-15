@@ -4,6 +4,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -21,10 +22,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor{
   private final Field myField;
@@ -97,9 +94,6 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   }
 
 
-  private static final Set<String> ourPrimitiveTypeNames = new HashSet<String>(Arrays.asList(
-      "byte", "short", "int", "long", "float", "double", "boolean", "char"
-  ));
   public boolean isPrimitive() {
     if (myIsPrimitive == null) {
       final Value value = getValue();
@@ -107,7 +101,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
         myIsPrimitive = super.isPrimitive();
       }
       else {
-        myIsPrimitive = ourPrimitiveTypeNames.contains(myField.typeName())? Boolean.TRUE : Boolean.FALSE;
+        myIsPrimitive = DebuggerUtils.isPrimitiveType(myField.typeName()) ? Boolean.TRUE : Boolean.FALSE;
       }
     }
     return myIsPrimitive.booleanValue();
