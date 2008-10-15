@@ -134,6 +134,8 @@
     <iconProvider implementation="org.jetbrains.plugins.groovy.GroovyIconProvider"/>
 
     <configurationType implementation="org.jetbrains.plugins.grails.runner.GrailsRunConfigurationType"/>
+    <configurationType implementation="org.jetbrains.plugins.grails.tests.runner.GrailsTestRunConfigurationType"/>
+    <configurationProducer implementation="org.jetbrains.plugins.grails.tests.runner.GrailsTestRunConfigurationProducer"/>
 
     <facetType implementation="org.jetbrains.plugins.grails.config.GrailsFacetType"/>
 

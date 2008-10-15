@@ -64,10 +64,6 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   @NonNls private static final String DGROOVY_STARTER_CONF = "-Dgroovy.starter.conf";
   @NonNls private static final String DTOOLS_JAR = "-Dtools.jar=";
   @NonNls private static final String DGROOVY_HOME = "-Dgroovy.home=";
-  @NonNls private static final String JAR_EXTENSION = ".jar";
-  @NonNls private static final String EMBEDDABLE = "embeddable";
-  @NonNls private static final String LIB = "lib";
-
 
   public GroovyScriptRunConfiguration(GroovyScriptConfigurationFactory factory, Project project, String name) {
     super(name, new RunConfigurationModule(project), factory);
