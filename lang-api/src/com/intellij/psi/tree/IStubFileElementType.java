@@ -4,6 +4,7 @@
 package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.stubs.*;
 import org.jetbrains.annotations.NonNls;
@@ -40,5 +41,9 @@ public class IStubFileElementType<T extends PsiFileStub> extends IFileElementTyp
   }
 
   public void indexStub(final PsiFileStub stub, final IndexSink sink) {
+  }
+
+  public boolean shouldBuildStubFor(final VirtualFile file) {
+    return true;
   }
 }

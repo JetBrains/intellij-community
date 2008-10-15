@@ -16,7 +16,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -61,15 +60,14 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     public boolean acceptInput(final VirtualFile file) {
       final FileType fileType = file.getFileType();
       if (fileType instanceof LanguageFileType) {
-
-        // TODO[hack] prevent library sources from indexing... MUST fix to asking current project.
-        if (file.getFileSystem() instanceof JarFileSystem) {
-          return false;
-        }
-
         Language l = ((LanguageFileType)fileType).getLanguage();
         ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
-        return parserDefinition != null && parserDefinition.getFileNodeType() instanceof IStubFileElementType;
+        if (parserDefinition == null) return false;
+
+        final IFileElementType filetype = parserDefinition.getFileNodeType();
+        return filetype instanceof IStubFileElementType &&
+               (((IStubFileElementType)filetype).shouldBuildStubFor(file) ||
+                IndexingStamp.isFileIndexed(file, INDEX_ID, IndexInfrastructure.getIndexCreationStamp(INDEX_ID)));
       }
       else if (fileType.isBinary()) {
         final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);

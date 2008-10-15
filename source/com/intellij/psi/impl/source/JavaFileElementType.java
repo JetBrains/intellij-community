@@ -7,6 +7,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
@@ -39,6 +41,12 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> {
 
   public int getStubVersion() {
     return STUB_VERSION;
+  }
+
+  @Override
+  public boolean shouldBuildStubFor(final VirtualFile file) {
+    final VirtualFile dir = file.getParent();
+    return dir == null || dir.getUserData(LanguageLevel.KEY) != null;
   }
 
   public ASTNode parseContents(ASTNode chameleon) {
