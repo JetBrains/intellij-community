@@ -8,8 +8,8 @@ import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.Command;
@@ -48,34 +48,18 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
     myRevisionOrDate = revisionOrDate;
     myFile = CvsVfsUtil.getFileFor(parent, fileName);
     myIsDirectory = myFile.isDirectory();
-    Runnable writeAction = new Runnable(){
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                final String parentModule = CvsUtil.getModuleName(parent);
-                VirtualFile file = parent.findChild(fileName);
-                if (parentModule == null && file != null) {
-                  myModuleName = CvsUtil.getModuleName(file);
-                }
-                else {
-                  myModuleName = parentModule + "/" + fileName;
-                }
-              }
-            });
-
-          }
-        };
-
-    if (!ApplicationManager.getApplication().isDispatchThread()){
-      try {
-        ApplicationManager.getApplication().invokeAndWait(writeAction, ModalityState.defaultModalityState());
+    new WriteAction() {
+      protected void run(Result result) throws Throwable {
+        final String parentModule = CvsUtil.getModuleName(parent);
+        VirtualFile file = parent.findChild(fileName);
+        if (parentModule == null && file != null) {
+          myModuleName = CvsUtil.getModuleName(file);
+        }
+        else {
+          myModuleName = parentModule + "/" + fileName;
+        }
       }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    } else {
-      writeAction.run();
-    }
+    }.execute();
 
     addFile(myFile.getAbsolutePath());
   }

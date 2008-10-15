@@ -100,12 +100,14 @@ public class ServiceManagerImpl implements BaseComponent {
     }
 
     public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
-      if (myInitializedComponentInstance != null) return myInitializedComponentInstance;
+      Object instance = myInitializedComponentInstance;
+      if (instance != null) return instance;
 
       synchronized (this) {
-        if (myInitializedComponentInstance != null) return myInitializedComponentInstance; // DCL is fine, field is volatile
-        myInitializedComponentInstance = initializeInstance(container);
-        return myInitializedComponentInstance;
+        instance = myInitializedComponentInstance;
+        if (instance != null) return instance; // DCL is fine, field is volatile
+        myInitializedComponentInstance = instance = initializeInstance(container);
+        return instance;
       }
     }
 

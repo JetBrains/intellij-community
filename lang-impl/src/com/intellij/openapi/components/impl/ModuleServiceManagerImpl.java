@@ -3,7 +3,6 @@ package com.intellij.openapi.components.impl;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 
 /**
  * @author yole
@@ -11,8 +10,7 @@ import com.intellij.openapi.project.Project;
 public class ModuleServiceManagerImpl extends ServiceManagerImpl {
   private static final ExtensionPointName<ServiceDescriptor> MODULE_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.moduleService");
 
-  @SuppressWarnings({"UnusedDeclaration"})
-  public ModuleServiceManagerImpl(Project project, Module module) {
+  public ModuleServiceManagerImpl(Module module) {
     super(true);
     installEP(MODULE_SERVICES, module);
   }

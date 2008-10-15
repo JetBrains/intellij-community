@@ -18,7 +18,6 @@ package com.intellij.openapi.application;
 import com.intellij.ui.GuiUtils;
 
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
-
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<T>(this);
 
