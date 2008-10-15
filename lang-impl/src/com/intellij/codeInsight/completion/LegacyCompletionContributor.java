@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -67,34 +68,42 @@ public class LegacyCompletionContributor extends CompletionContributor {
 
   }
 
-  public static void completeReference(final CompletionParameters parameters, final CompletionResultSet result, CompletionData completionData) {
-    final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
+  public static void completeReference(final CompletionParameters parameters, final CompletionResultSet result, final CompletionData completionData) {
+    processReferences(parameters, result, completionData, new PairConsumer<PsiReference, CompletionResultSet>() {
+      public void consume(final PsiReference reference, final CompletionResultSet resultSet) {
+        final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
+        completionData.completeReference(reference, lookupSet, parameters.getPosition(), parameters.getOriginalFile(), parameters.getOffset());
+        for (final LookupElement item : lookupSet) {
+          resultSet.addElement(item);
+        }
+      }
+    });
+  }
+
+  public static void processReferences(final CompletionParameters parameters, final CompletionResultSet result, final CompletionData completionData,
+                                       final PairConsumer<PsiReference, CompletionResultSet> consumer) {
     final int startOffset = parameters.getOffset();
-    final PsiElement insertedElement = parameters.getPosition();
     final PsiReference ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
       public PsiReference compute() {
-        return insertedElement.getContainingFile().findReferenceAt(startOffset);
+        return parameters.getPosition().getContainingFile().findReferenceAt(startOffset);
       }
     });
     if (ref instanceof PsiMultiReference) {
       for (final PsiReference reference : completionData.getReferences((PsiMultiReference)ref)) {
-        int offsetInElement = startOffset - reference.getElement().getTextRange().getStartOffset();
-        final CompletionResultSet resultSet = result.withPrefixMatcher(
-            reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement));
-        completionData.completeReference(reference, lookupSet, insertedElement, parameters.getOriginalFile(), startOffset);
-        for (final LookupElement item : lookupSet) {
-          resultSet.addElement(item);
-        }
-        lookupSet.clear();
+        processReference(result, startOffset, consumer, reference);
       }
     }
     else if (ref != null) {
-      completionData.completeReference(ref, lookupSet, insertedElement, parameters.getOriginalFile(),
-                                       startOffset);
+      processReference(result, startOffset, consumer, ref);
     }
-    for (final LookupElement item : lookupSet) {
-      result.addElement(item);
-    }
+  }
+
+  private static void processReference(final CompletionResultSet result, final int startOffset, final PairConsumer<PsiReference, CompletionResultSet> consumer,
+                                       final PsiReference reference) {
+    int offsetInElement = startOffset - reference.getElement().getTextRange().getStartOffset();
+    final CompletionResultSet resultSet = result.withPrefixMatcher(
+        reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement));
+    consumer.consume(reference, resultSet);
   }
 
 

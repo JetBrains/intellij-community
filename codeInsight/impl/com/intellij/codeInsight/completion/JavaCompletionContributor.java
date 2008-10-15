@@ -65,49 +65,55 @@ public class JavaCompletionContributor extends CompletionContributor {
           return getCompletionDataByElementInner(lastElement);
         }
       });
-      final CompletionResultSet result = _result.withPrefixMatcher(completionData.findPrefix(insertedElement, startOffset));
-      insertedElement.putUserData(PREFIX_MATCHER, result.getPrefixMatcher());
 
       final boolean checkAccess = parameters.getInvocationCount() == 1;
 
-      final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(startOffset);
-          if (ref != null) {
-            final boolean[] hasApplicableVariants = new boolean[]{false};
-            for (final CompletionVariant variant : completionData.findVariants(insertedElement, file)) {
-              variant.processReferenceCompletions(new PairConsumer<ElementFilter, TailType>() {
-                public void consume(final ElementFilter elementFilter, final TailType tailType) {
-                  hasApplicableVariants[0] = true;
-                  completionData.completeReference(ref, insertedElement, lookupSet, tailType, file, elementFilter, variant, checkAccess);
-                }
-              });
-            }
+      LegacyCompletionContributor.processReferences(parameters, _result, completionData, new PairConsumer<PsiReference, CompletionResultSet>() {
+        public void consume(final PsiReference ref, final CompletionResultSet completionResultSet) {
+          insertedElement.putUserData(PREFIX_MATCHER, completionResultSet.getPrefixMatcher());
+          final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              final boolean[] hasApplicableVariants = new boolean[]{false};
+              for (final CompletionVariant variant : completionData.findVariants(insertedElement, file)) {
+                variant.processReferenceCompletions(new PairConsumer<ElementFilter, TailType>() {
+                  public void consume(final ElementFilter elementFilter, final TailType tailType) {
+                    hasApplicableVariants[0] = true;
+                    completionData.completeReference(ref, insertedElement, lookupSet, tailType, file, elementFilter, variant, checkAccess);
+                  }
+                });
+              }
 
-            if (!hasApplicableVariants[0]) {
-              completionData.completeReference(ref, insertedElement, lookupSet, TailType.NONE, file, TrueFilter.INSTANCE, completionData.myGenericVariant, checkAccess);
+              if (!hasApplicableVariants[0]) {
+                completionData.completeReference(ref, insertedElement, lookupSet, TailType.NONE, file, TrueFilter.INSTANCE,
+                                                 completionData.myGenericVariant, checkAccess);
+              }
             }
+          });
+          for (final LookupElement element : lookupSet) {
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                final Object completion = element.getObject();
+                if (completion instanceof PsiElement &&
+                    JavaCompletionUtil.isCompletionOfAnnotationMethod((PsiElement)completion, insertedElement)) {
+                  ((LookupItem)element).setTailType(TailType.EQ);
+                }
+                JavaCompletionUtil.highlightMemberOfContainer((LookupItem)element);
+              }
+            });
+
+            completionResultSet.addElement(element);
           }
         }
       });
 
+      final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
       final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
       completionData.addKeywordVariants(keywordVariants, insertedElement, parameters.getOriginalFile());
+      final CompletionResultSet result = _result.withPrefixMatcher(completionData.findPrefix(insertedElement, startOffset));
       completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile());
 
       for (final LookupElement item : lookupSet) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            final Object completion = item.getObject();
-            if (completion instanceof PsiElement &&
-                JavaCompletionUtil.isCompletionOfAnnotationMethod((PsiElement)completion, insertedElement)) {
-              ((LookupItem)item).setTailType(TailType.EQ);
-            }
-            JavaCompletionUtil.highlightMemberOfContainer((LookupItem)item);
-          }
-        });
-
         if (item.getInsertHandler() == null) {
           ((LookupItem)item).setInsertHandler(new InsertHandler() {
             public void handleInsert(final InsertionContext context, final LookupElement item) {

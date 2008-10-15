@@ -1,7 +1,6 @@
 package com.intellij.lang.properties;
 
 import com.intellij.AppTopics;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
@@ -15,8 +14,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
@@ -62,31 +59,10 @@ public class PropertiesReferenceManager implements ProjectComponent {
   }
 
   public void projectOpened() {
-    final ReferenceProvidersRegistry registry = ReferenceProvidersRegistry.getInstance(myProject);
-    registry.registerReferenceProvider(PsiLiteralExpression.class, new PropertiesReferenceProvider(true));
-    registry.registerReferenceProvider(new ElementFilter() {
-      public boolean isAcceptable(Object element, PsiElement context) {
-        if (context instanceof PsiLiteralExpression) {
-          PsiLiteralExpression literalExpression = (PsiLiteralExpression) context;
-          if (literalExpression.getParent() instanceof PsiNameValuePair) {
-            PsiNameValuePair nvp = (PsiNameValuePair) literalExpression.getParent();
-            if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(nvp.getName())) {
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-
-      public boolean isClassAcceptable(Class hintClass) {
-        return true;
-      }
-    }, PsiLiteralExpression.class, new ResourceBundleReferenceProvider());
-
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         refreshAllKnownPropertiesFiles();
-  }
+      }
     });
   }
 
