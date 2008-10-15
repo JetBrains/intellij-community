@@ -8,6 +8,7 @@ import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import org.jetbrains.annotations.NonNls;
@@ -103,12 +104,16 @@ public class ServiceManagerImpl implements BaseComponent {
       Object instance = myInitializedComponentInstance;
       if (instance != null) return instance;
 
-      synchronized (this) {
-        instance = myInitializedComponentInstance;
-        if (instance != null) return instance; // DCL is fine, field is volatile
-        myInitializedComponentInstance = instance = initializeInstance(container);
-        return instance;
-      }
+      return ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
+        public Object compute() {
+          synchronized (MyComponentAdapter.this) {
+            Object instance = myInitializedComponentInstance;
+            if (instance != null) return instance; // DCL is fine, field is volatile
+            myInitializedComponentInstance = instance = initializeInstance(container);
+            return instance;
+          }
+        }
+      });
     }
 
     private Object initializeInstance(final PicoContainer container) {
