@@ -1279,7 +1279,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private void restartIdleAlarm() {
     myIdleAlarm.cancelAllRequests();
-    myIdleAlarm.addRequest(myFlushRunnable, 250);
+    myIdleAlarm.addRequest(myFlushRunnable, 100);
   }
 
   private void flushIdleRequests() {

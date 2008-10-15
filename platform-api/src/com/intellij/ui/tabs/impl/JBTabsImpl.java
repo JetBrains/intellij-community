@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
@@ -317,18 +318,20 @@ public class JBTabsImpl extends JComponent
   }
 
   public void updateTabActions(final boolean validateNow) {
-    boolean changed = false;
-    for (TabLabel label : myInfo2Label.values()) {
-      changed |= label.updateTabActions();
+    final Ref<Boolean> changed = new Ref<Boolean>(Boolean.FALSE);
+    for (final TabInfo eachInfo : myInfo2Label.keySet()) {
+      updateTab(new Runnable() {
+        public void run() {
+          final boolean changes = myInfo2Label.get(eachInfo).updateTabActions();
+          changed.set(changed.get().booleanValue() || changes);
+        }
+      }, eachInfo);
     }
 
-    if (changed) {
+    if (changed.get().booleanValue()) {
       if (validateNow) {
         validate();
         paintImmediately(0, 0, getWidth(), getHeight());
-      }
-      else {
-        revalidateAndRepaint(false);
       }
     }
   }
@@ -447,16 +450,17 @@ public class JBTabsImpl extends JComponent
 
     myAllTabs = null;
 
-    add(label);
 
     updateText(info);
     updateIcon(info);
     updateSideComponent(info);
     updateTabActions(info);
 
+    add(label);
+
     adjust(info);
 
-    updateAll(false, true);
+    updateAll(false, false);
 
     if (info.isHidden()) {
       updateHiding();
@@ -714,11 +718,13 @@ public class JBTabsImpl extends JComponent
     final TabLabel label = myInfo2Label.get(info);
     final Dimension before = label.getPreferredSize();
     update.run();
-    final Dimension after = label.getPreferredSize();
-    if (after.equals(before)) {
-      label.repaint();
-    } else {
-      revalidateAndRepaint(false);
+    if (label.getRootPane() != null) {
+      final Dimension after = label.getPreferredSize();
+      if (after.equals(before)) {
+        label.repaint();
+      } else {
+        revalidateAndRepaint(false);
+      }
     }
   }
 
@@ -859,12 +865,14 @@ public class JBTabsImpl extends JComponent
     });
   }
 
-  public void setPaintBlocked(boolean blocked) {
+  public void setPaintBlocked(boolean blocked, final boolean takeSnapshot) {
     if (blocked && !myPaintBlocked) {
-      myImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-      final Graphics2D g = myImage.createGraphics();
-      super.paint(g);
-      g.dispose();
+      if (takeSnapshot) {
+        myImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+        final Graphics2D g = myImage.createGraphics();
+        super.paint(g);
+        g.dispose();
+      }
     }
 
     myPaintBlocked = blocked;
@@ -1070,12 +1078,13 @@ public class JBTabsImpl extends JComponent
 
     final GraphicsConfig config = new GraphicsConfig(g);
     config.setAntialiasing(true);
-
+    
     Graphics2D g2d = (Graphics2D)g;
 
 
     g.setColor(getBackground());
-    g.fillRect(0, 0, getWidth(), getHeight());
+    final Rectangle clip = g.getClipBounds();
+    g.fillRect(clip.x, clip.y, clip.width, clip.height);
 
     int arc = getArcSize();
 
@@ -1475,8 +1484,15 @@ public class JBTabsImpl extends JComponent
 
 
   public void paint(final Graphics g) {
+    Rectangle clip = g.getClipBounds();
+    if (clip == null) {
+      return;
+    }
+
     if (myPaintBlocked) {
-      g.drawImage(myImage, 0, 0, getWidth(), getHeight(), null);
+      if (myImage != null) {
+        g.drawImage(myImage, 0, 0, getWidth(), getHeight(), null);
+      }
       return;
     }
 
@@ -1859,7 +1875,10 @@ public class JBTabsImpl extends JComponent
     if (myFocused == focused) return;
 
     myFocused = focused;
-    repaint();
+
+    if (myPaintFocus) {
+      repaint();
+    }
   }
 
   public int getIndexOf(@Nullable final TabInfo tabInfo) {
@@ -2185,9 +2204,10 @@ public class JBTabsImpl extends JComponent
     for (int i = 0; i < getComponentCount(); i++) {
       final Component each = getComponent(i);
       if (each instanceof JComponent) {
-        final Object done = ((JComponent)each).getClientProperty(LAYOUT_DONE);
+        final JComponent jc = (JComponent)each;
+        final Object done = jc.getClientProperty(LAYOUT_DONE);
         if (!Boolean.TRUE.equals(done)) {
-          each.setBounds(0, 0, 0, 0);
+          layout(jc, new Rectangle(0, 0, 0, 0));
         }
       }
     }

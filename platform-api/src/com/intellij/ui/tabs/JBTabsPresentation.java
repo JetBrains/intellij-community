@@ -36,7 +36,7 @@ public interface JBTabsPresentation {
 
   JBTabsPresentation setRequestFocusOnLastFocusedComponent(boolean request);
 
-  void setPaintBlocked(boolean blocked);
+  void setPaintBlocked(boolean blocked, final boolean takeSnapshot);
 
   void setFocused(boolean focused);
 

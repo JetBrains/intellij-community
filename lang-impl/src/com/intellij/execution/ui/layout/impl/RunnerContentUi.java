@@ -939,7 +939,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   public void validate(final Content content, final ActiveRunnable toRestore) {
     final TabInfo current = myTabs.getSelectedInfo();
-    myTabs.getPresentation().setPaintBlocked(true);
+    myTabs.getPresentation().setPaintBlocked(true, true);
 
     select(content, false).doWhenDone(new Runnable() {
       public void run() {
@@ -947,7 +947,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         toRestore.run().doWhenDone(new Runnable() {
           public void run() {
             myTabs.select(current, true);
-            myTabs.getPresentation().setPaintBlocked(false);
+            myTabs.getPresentation().setPaintBlocked(false, true);
           }
         });
       }

@@ -152,6 +152,8 @@ public class TabLabel extends JPanel {
   }
 
   private void invalidateIfNeeded() {
+    if (myLabel.getRootPane() == null) return;
+
     if (myLabel.getSize() != null && myLabel.getSize().equals(myLabel.getPreferredSize())) return;
     myLabel.getParent().invalidate();
 

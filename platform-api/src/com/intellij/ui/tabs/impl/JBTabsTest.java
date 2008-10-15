@@ -134,7 +134,7 @@ public class JBTabsTest {
     final JCheckBox block = new JCheckBox("Block", false);
     block.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        tabs.setPaintBlocked(!block.isSelected());
+        tabs.setPaintBlocked(!block.isSelected(), true);
       }
     });
     south.add(block);
