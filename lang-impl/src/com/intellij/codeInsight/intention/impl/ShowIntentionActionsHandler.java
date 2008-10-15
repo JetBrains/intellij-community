@@ -99,8 +99,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
           });
           SwingUtilities.invokeLater(new Runnable(){
             public void run() {
-              if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
-                IntentionHintComponent.showIntentionHint(project, file, editor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, true);
+              if (editor.getComponent().isDisplayable()) {
+                if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
+                  IntentionHintComponent.showIntentionHint(project, file, editor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, true);
+                }
               }
             }
           });
