@@ -37,7 +37,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     List<PropertiesFile> propertiesFiles = getValue().getPropertiesFiles(myProject);
-    List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    Collection<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     for (PropertiesFile propertiesFile : propertiesFiles) {
       AbstractTreeNode node = new PsiFileNode(myProject, propertiesFile, getSettings());
       children.add(node);
@@ -46,6 +46,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
   }
 
   public boolean contains(@NotNull VirtualFile file) {
+    if (!file.isValid()) return false;
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
     if (!(psiFile instanceof PropertiesFile)) return false;
     PropertiesFile propertiesFile = (PropertiesFile)psiFile;

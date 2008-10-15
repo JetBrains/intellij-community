@@ -1,9 +1,9 @@
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.favoritesTreeView.FavoritesTreeNodeDescriptor;
-import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
@@ -28,7 +28,7 @@ import java.util.List;
 public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   protected final Project myProject;
 
-  public BaseProjectTreeBuilder(Project project, JTree tree, DefaultTreeModel treeModel, ProjectAbstractTreeStructureBase treeStructure, Comparator<NodeDescriptor> comparator) {
+  public BaseProjectTreeBuilder(Project project, JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure, Comparator<NodeDescriptor> comparator) {
     super(tree, treeModel, treeStructure, comparator);
     myProject = project;
   }
@@ -43,25 +43,17 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   protected final void expandNodeChildren(final DefaultMutableTreeNode node) {
     Object element = ((NodeDescriptor)node.getUserObject()).getElement();
-    VirtualFile[] virtualFiles = getFilesToRefresh(element);
+    VirtualFile virtualFile = getFileToRefresh(element);
     super.expandNodeChildren(node);
-    for (VirtualFile virtualFile : virtualFiles) {
+    if (virtualFile != null) {
       virtualFile.refresh(true, false);
     }
   }
 
-  private static VirtualFile[] getFilesToRefresh(Object element) {
-    final VirtualFile virtualFile;
-    if (element instanceof PsiDirectory){
-      virtualFile = ((PsiDirectory)element).getVirtualFile();
-    }
-    else if (element instanceof PsiFile){
-      virtualFile = ((PsiFile)element).getVirtualFile();
-    }
-    else{
-      virtualFile = null;
-    }
-    return virtualFile != null ? new VirtualFile[]{virtualFile} : VirtualFile.EMPTY_ARRAY;
+  private static VirtualFile getFileToRefresh(Object element) {
+    return element instanceof PsiDirectory
+           ? ((PsiDirectory)element).getVirtualFile()
+           : element instanceof PsiFile ? ((PsiFile)element).getVirtualFile() : null;
   }
 
   private List<AbstractTreeNode> getOrBuildChildren(AbstractTreeNode parent) {
@@ -139,7 +131,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     if (node instanceof DefaultMutableTreeNode) {
       final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
       if (userObject instanceof ProjectViewNode) {
-        final ProjectViewNode projectViewNode = (ProjectViewNode)userObject;
+        final AbstractTreeNode projectViewNode = (ProjectViewNode)userObject;
         return projectViewNode.canRepresent(element);
       }
     }

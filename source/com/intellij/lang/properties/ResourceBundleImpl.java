@@ -22,8 +22,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class ResourceBundleImpl implements ResourceBundle {
-  private final @NotNull VirtualFile myBaseDirectory;
-  private final @NotNull String myBaseName;
+  @NotNull private final VirtualFile myBaseDirectory;
+  @NotNull private final String myBaseName;
   @NonNls private static final String RESOURCE_BUNDLE_PREFIX = "resourceBundle:";
 
   public ResourceBundleImpl(@NotNull VirtualFile baseDirectory, @NotNull String baseName) {
