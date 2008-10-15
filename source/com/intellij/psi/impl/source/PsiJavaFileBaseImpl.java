@@ -25,6 +25,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
@@ -39,25 +40,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJavaFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaFileBaseImpl");
-  private static final Key<ResolveCache.MapPair<PsiJavaFile,ConcurrentMap<String, SoftReference<JavaResolveResult[]>>>> CACHED_CLASSES_MAP_KEY = Key.create("PsiJavaFileBaseImpl.CACHED_CLASSES_MAP_KEY");
 
   private final ConcurrentMap<PsiJavaFile,ConcurrentMap<String, SoftReference<JavaResolveResult[]>>> myGuessCache;
 
-  @NonNls private static final String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
-  private final ParameterizedCachedValueProvider<LanguageLevel,PsiJavaFile> myLanguageLevelProvider = new ParameterizedCachedValueProvider<LanguageLevel, PsiJavaFile>() {
-    public CachedValueProvider.Result<LanguageLevel> compute(PsiJavaFile param) {
-      LanguageLevel level = getLanguageLevelInner();
-      return CachedValueProvider.Result.create(level, ProjectRootManager.getInstance(getProject()));
+  @NonNls private static final String[] IMPLICIT_IMPORTS = { "java.lang" };
+  private static final ParameterizedCachedValueProvider<LanguageLevel,PsiJavaFileBaseImpl> LANGUAGE_LEVEL_PROVIDER = new ParameterizedCachedValueProvider<LanguageLevel, PsiJavaFileBaseImpl>() {
+    public CachedValueProvider.Result<LanguageLevel> compute(PsiJavaFileBaseImpl file) {
+      LanguageLevel level = file.getLanguageLevelInner();
+      return CachedValueProvider.Result.create(level, ProjectRootManager.getInstance(file.getProject()));
     }
   };
 
+  private static final Key<ResolveCache.MapPair<PsiJavaFile,ConcurrentMap<String, SoftReference<JavaResolveResult[]>>>> CACHED_CLASSES_MAP_KEY = Key.create("CACHED_CLASSES_MAP_KEY");
   protected PsiJavaFileBaseImpl(IElementType elementType, IElementType contentElementType, FileViewProvider viewProvider) {
     super(elementType, contentElementType, viewProvider);
     myGuessCache = myManager.getResolveCache().getOrCreateWeakMap(CACHED_CLASSES_MAP_KEY, false);
@@ -72,7 +71,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   @NotNull
   public PsiClass[] getClasses() {
-    final PsiJavaFileStub stub = (PsiJavaFileStub)getStub();
+    final StubElement<?> stub = getStub();
     if (stub != null) {
       return stub.getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
     }
@@ -92,17 +91,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
 
     PsiPackageStatement statement = getPackageStatement();
-    if (statement == null) {
-      return "";
-    }
-    else {
-      return statement.getPackageName();
-    }
+    return statement == null ? "" : statement.getPackageName();
   }
 
   @NotNull
   public PsiImportList getImportList() {
-    final PsiJavaFileStub stub = (PsiJavaFileStub)getStub();
+    final StubElement<?> stub = getStub();
     if (stub != null) {
       return stub.getChildrenByType(JavaStubElementTypes.IMPORT_LIST, PsiImportList.ARRAY_FACTORY)[0];
     }
@@ -178,13 +172,13 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return PsiImplUtil.namesToPackageReferences(myManager, IMPLICIT_IMPORTS);
   }
 
-  public static class StaticImportFilteringProcessor implements PsiScopeProcessor {
+  private static class StaticImportFilteringProcessor implements PsiScopeProcessor {
     private final PsiScopeProcessor myDelegate;
     private String myNameToFilter;
     private boolean myIsProcessingOnDemand;
-    private final HashSet<String> myHiddenNames = new HashSet<String>();
+    private final Collection<String> myHiddenNames = new HashSet<String>();
 
-    public StaticImportFilteringProcessor(PsiScopeProcessor delegate, String nameToFilter) {
+    private StaticImportFilteringProcessor(PsiScopeProcessor delegate, String nameToFilter) {
       myDelegate = delegate;
       myNameToFilter = nameToFilter;
     }
@@ -274,7 +268,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       //Single-type processing
       for (PsiImportStatement statement : importStatements) {
         if (!statement.isOnDemand()) {
-          if (nameHint != null) {
+          if (name != null) {
             String refText = statement.getQualifiedName();
             if (refText == null || !refText.endsWith(name)) continue;
           }
@@ -291,7 +285,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       // check in current package
       String packageName = getPackageName();
       PsiPackage aPackage = JavaPsiFacade.getInstance(myManager.getProject()).findPackage(packageName);
-      if (aPackage != null){
+      if (aPackage != null) {
         if (!aPackage.processDeclarations(processor, state, null, place)) {
           return false;
         }
@@ -418,10 +412,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return JavaCodeStyleManager.getInstance(getProject()).addImport(this, aClass);
   }
 
-  private static final Key<ParameterizedCachedValue<LanguageLevel, PsiJavaFile>> LANGUAGE_LEVEL = Key.create("LANGUAGE_LEVEL");
+  private static final Key<ParameterizedCachedValue<LanguageLevel, PsiJavaFileBaseImpl>> LANGUAGE_LEVEL_KEY = Key.create("LANGUAGE_LEVEL");
   @NotNull
   public LanguageLevel getLanguageLevel() {
-    return getManager().getCachedValuesManager().getParameterizedCachedValue(this, LANGUAGE_LEVEL, myLanguageLevelProvider, false, this);
+    return getManager().getCachedValuesManager().getParameterizedCachedValue(this, LANGUAGE_LEVEL_KEY, LANGUAGE_LEVEL_PROVIDER, false, this);
   }
 
   private LanguageLevel getLanguageLevelInner() {
