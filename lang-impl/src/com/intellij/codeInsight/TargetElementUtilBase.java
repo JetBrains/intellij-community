@@ -16,7 +16,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -143,16 +142,9 @@ public class TargetElementUtilBase {
     return null;
   }
 
-  protected static boolean isAcceptableReferencedElement(final PsiElement element, final PsiElement referenceOrReferencedElement) {
-    if (referenceOrReferencedElement != null && referenceOrReferencedElement.isValid()) {
-      for(AcceptableTargetProvider provider: Extensions.getExtensions(AcceptableTargetProvider.EP_NAME)) {
-        if (!provider.isAcceptableReferencedElement(element, referenceOrReferencedElement)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    return false;
+  protected boolean isAcceptableReferencedElement(final PsiElement element, final PsiElement referenceOrReferencedElement) {
+    return referenceOrReferencedElement != null &&
+        referenceOrReferencedElement.isValid();
   }
 
   @Nullable

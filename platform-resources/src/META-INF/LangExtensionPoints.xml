@@ -344,8 +344,6 @@
 
   <extensionPoint name="metaDataContributor" interface="com.intellij.psi.meta.MetaDataContributor"/>
 
-  <extensionPoint name="acceptableTargetProvider" interface="com.intellij.codeInsight.AcceptableTargetProvider"/>
-
   <extensionPoint name="documentationProvider"
                   interface="com.intellij.lang.documentation.DocumentationProvider"/>
 
