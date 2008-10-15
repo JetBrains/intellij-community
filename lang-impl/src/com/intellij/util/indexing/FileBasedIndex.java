@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -88,9 +87,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private static final int ALREADY_PROCESSED = 0x02;
 
   public void requestReindex(final VirtualFile file) {
-    if (shouldUpdateIndex(file, StubUpdatingIndex.INDEX_ID)) {
-      myFileContentAttic.offer(file);
-    }
+    myChangedFilesUpdater.scheduleInvalidation(file, true);
   }
 
   public interface InputFilter {
@@ -958,7 +955,7 @@ public class FileBasedIndex implements ApplicationComponent {
       });
     }
 
-    private void scheduleInvalidation(final VirtualFile file, final boolean saveContent) {
+    public void scheduleInvalidation(final VirtualFile file, final boolean saveContent) {
       if (file.isDirectory()) {
         if (isMock(file) || myManagingFS.wereChildrenAccessed(file)) {
           for (VirtualFile child : file.getChildren()) {
