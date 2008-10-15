@@ -125,8 +125,8 @@ class ChangeCollector {
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, "diff");
     handler.addParameters("--name-status", "--diff-filter=ADMRUX", "-M", "HEAD");
     handler.setNoSSH(true);
-    handler.endOptions();
     handler.setSilent(true);
+    handler.endOptions();
     try {
       String output = handler.run();
       String[] lines = output.split("\n");
@@ -166,6 +166,7 @@ class ChangeCollector {
     // prepare handler
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, "ls-files");
     handler.addParameters("-v", "--others", "--unmerged");
+    handler.setSilent(true);
     handler.setNoSSH(true);
     // run handler and collect changes
     String list = handler.run();
@@ -173,7 +174,7 @@ class ChangeCollector {
       if (line.length() == 0) {
         continue;
       }
-      String[] tokens = line.split("\t| ");
+      String[] tokens = line.split("[\t ]+");
       String file = GitUtil.unescapePath(tokens[tokens.length - 1]);
       if ("?".equals(tokens[0])) {
         myUnversioned.add(myVcsRoot.findFileByRelativePath(file));

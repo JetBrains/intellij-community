@@ -530,7 +530,7 @@ public class SSHMain {
             isNew = false;
             break;
           default:
-            throw new IllegalStateException("Unknow verification result: " + result);
+            throw new IllegalStateException("Unknown verification result: " + result);
         }
         String fingerprint = KnownHosts.createHexFingerprint(serverHostKeyAlgorithm, serverHostKey);
         boolean keyCheck = myXmlRpcClient.verifyServerHostKey(myHandlerNo, hostname, port, serverHostKeyAlgorithm, fingerprint, isNew);

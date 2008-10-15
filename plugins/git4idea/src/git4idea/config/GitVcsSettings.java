@@ -29,6 +29,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.LinkedList;
 
 /**
  * Git VCS settings
@@ -60,6 +62,29 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
    * The default executable for GIT
    */
   public String GIT_EXECUTABLE = defaultGit();
+  /**
+   * The previously entered authors of the commit (up to 10)
+   */
+  public String[] PREVIOUS_COMMIT_AUTHORS = {};
+  /**
+   * Limit for previous commit authors
+   */
+  private static int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16;
+
+  /**
+   * Save an author of the commit and make it the first one. If amount of authors exceeds the limit, remove least recently selected author.
+   *
+   * @param author an author to save
+   */
+  public void saveCommitAuthor(String author) {
+    LinkedList<String> authors = new LinkedList<String>(Arrays.asList(PREVIOUS_COMMIT_AUTHORS));
+    authors.remove(author);
+    while (authors.size() >= PREVIOUS_COMMIT_AUTHORS_LIMIT) {
+      authors.removeLast();
+    }
+    authors.addFirst(author);
+    PREVIOUS_COMMIT_AUTHORS = authors.toArray(new String[authors.size()]);
+  }
 
   /**
    * {@inheritDoc}

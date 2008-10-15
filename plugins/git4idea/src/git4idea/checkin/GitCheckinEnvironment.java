@@ -32,13 +32,17 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * Git environment for commit operations.
@@ -51,7 +55,20 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * The project
    */
-  private Project myProject;
+  private final Project myProject;
+  /**
+   * The project
+   */
+  private final GitVcsSettings mySettings;
+
+  /**
+   * The author for the next commit
+   */
+  private String myNextCommitAuthor = null;
+  /**
+   * The push option of the next commit
+   */
+  private Boolean myNextCommitIsPushed = null;
   /**
    * Dirty scope manager for the project
    */
@@ -71,10 +88,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    *
    * @param project           a project
    * @param dirtyScopeManager a dirty scope manager
+   * @param settings
    */
-  public GitCheckinEnvironment(@NotNull Project project, @NotNull final VcsDirtyScopeManager dirtyScopeManager) {
+  public GitCheckinEnvironment(@NotNull Project project,
+                               @NotNull final VcsDirtyScopeManager dirtyScopeManager,
+                               final GitVcsSettings settings) {
     myProject = project;
     myDirtyScopeManager = dirtyScopeManager;
+    mySettings = settings;
   }
 
   /**
@@ -90,7 +111,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   @Nullable
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel) {
-    return null;
+    return new GitCheckinOptions();
   }
 
   /**
@@ -146,7 +167,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           }
           try {
             if (updateIndex(myProject, root, files, exceptions)) {
-              commit(myProject, root, files, messageFile).run();
+              commit(myProject, root, files, messageFile, myNextCommitAuthor).run();
             }
           }
           catch (VcsException e) {
@@ -264,15 +285,23 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * Prepare delete files handler.
    *
-   * @param project the project
-   * @param root    a vcs root
-   * @param files   a files to commit
-   * @param message a message file to use
+   * @param project          the project
+   * @param root             a vcs root
+   * @param files            a files to commit
+   * @param message          a message file to use
+   * @param nextCommitAuthor
    * @return a simple handler that does the task
    */
-  public static GitSimpleHandler commit(Project project, VirtualFile root, Collection<FilePath> files, File message) {
+  public static GitSimpleHandler commit(Project project,
+                                        VirtualFile root,
+                                        Collection<FilePath> files,
+                                        File message,
+                                        final String nextCommitAuthor) {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, "commit");
     handler.addParameters("--only", "-F", message.getAbsolutePath());
+    if (nextCommitAuthor != null) {
+      handler.addParameters("--author=" + nextCommitAuthor);
+    }
     handler.endOptions();
     handler.addRelativePaths(files);
     handler.setNoSSH(true);
@@ -334,5 +363,101 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     // Note that the root is invalidated because changes are detected per-root anyway.
     // Otherwise it is not possible to detect moves.
     myDirtyScopeManager.dirDirtyRecursively(root);
+  }
+
+  /**
+   * Checkin options for git
+   */
+  private class GitCheckinOptions implements RefreshableOnComponent {
+    /**
+     * A container panel
+     */
+    private JPanel myPanel;
+    /**
+     * If checked, the changes are pushed to the server as well as connected.
+     */
+    private JCheckBox myPushChanges;
+    /**
+     * The author ComboBox, the dropdown contains previously selected authors.
+     */
+    private JComboBox myAuthor;
+
+    /**
+     * A constructor
+     */
+    GitCheckinOptions() {
+      myPanel = new JPanel(new GridBagLayout());
+      final Insets insets = new Insets(2, 2, 2, 2);
+      GridBagConstraints c = new GridBagConstraints();
+      c.gridx = 0;
+      c.gridy = 0;
+      c.anchor = GridBagConstraints.WEST;
+      c.insets = insets;
+      myPushChanges = new JCheckBox(GitBundle.message("commit.push.changes"));
+      myPushChanges.setToolTipText(GitBundle.getString("commit.push.changes.tooltip"));
+      // do not add checkbox until push implemented
+      // myPanel.add(myPushChanges, c);
+      c = new GridBagConstraints();
+      c.anchor = GridBagConstraints.WEST;
+      c.insets = insets;
+      c.gridx = 0;
+      c.gridy = 1;
+      final JLabel authorLabel = new JLabel(GitBundle.message("commit.author"));
+      myPanel.add(authorLabel, c);
+      c = new GridBagConstraints();
+      c.anchor = GridBagConstraints.CENTER;
+      c.insets = insets;
+      c.gridx = 0;
+      c.gridy = 2;
+      c.weightx = 1;
+      c.fill = GridBagConstraints.HORIZONTAL;
+      myAuthor = new JComboBox(mySettings.PREVIOUS_COMMIT_AUTHORS);
+      myAuthor.addItem("");
+      myAuthor.setSelectedItem("");
+      myAuthor.setEditable(true);
+      authorLabel.setLabelFor(myAuthor);
+      myAuthor.setToolTipText(GitBundle.getString("commit.author.tooltip"));
+      myPanel.add(myAuthor, c);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public JComponent getComponent() {
+      return myPanel;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void refresh() {
+      myAuthor.setSelectedItem("");
+      myPushChanges.setSelected(false);
+      myNextCommitAuthor = null;
+      myNextCommitIsPushed = null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void saveState() {
+      String author = (String)myAuthor.getSelectedItem();
+      myNextCommitAuthor = author.length() == 0 ? null : author;
+      if (author.length() == 0) {
+        myNextCommitAuthor = null;
+      }
+      else {
+        myNextCommitAuthor = author;
+        mySettings.saveCommitAuthor(author);
+      }
+      myNextCommitIsPushed = myPushChanges.isSelected();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void restoreState() {
+      refresh();
+    }
   }
 }
