@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
@@ -99,14 +100,17 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     setLayout(new BorderLayout());
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
 
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      updateActionsImmediately();
-    } else {
-      UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
-        public void run() {
-          updateActionsImmediately();
-        }
-      });
+    final Application app = ApplicationManager.getApplication();
+    if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
+      if (app.isDispatchThread()) {
+        updateActionsImmediately();
+      } else {
+        UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
+          public void run() {
+            updateActionsImmediately();
+          }
+        });
+      }
     }
 
     //
