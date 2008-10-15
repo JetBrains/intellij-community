@@ -99,11 +99,15 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     setLayout(new BorderLayout());
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
 
-    UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
-      public void run() {
-        updateActionsImmediately();
-      }
-    });
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      updateActionsImmediately();
+    } else {
+      UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
+        public void run() {
+          updateActionsImmediately();
+        }
+      });
+    }
 
     //
     keymapManager.addKeymapManagerListener(new WeakKeymapManagerListener(keymapManager, myKeymapManagerListener));
