@@ -41,7 +41,9 @@ public class StartUseVcsAction extends AnAction {
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       final String vcsName = dialog.getVcs();
       if (vcsName.length() > 0) {
-        data.getManager().setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", vcsName)));
+        final ProjectLevelVcsManager manager = data.getManager();
+        manager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", vcsName)));
+        manager.updateActiveVcss();
       }
     }
   }
