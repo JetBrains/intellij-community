@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
@@ -33,6 +32,9 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   private final Map<String, JarHandler> myHandlers = new HashMap<String, JarHandler>();
 
+  private static final class JarFileSystemImplLock {}
+  private static final Object LOCK = new JarFileSystemImplLock();
+
   public JarFileSystemImpl(MessageBus bus) {
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       public void before(final List<? extends VFileEvent> events) { }
@@ -44,7 +46,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
           if (event.getFileSystem() instanceof LocalFileSystem) {
             final String path = event.getPath();
             List<String> jarPaths = new ArrayList<String>();
-            synchronized (PersistentFS.LOCK) {
+            synchronized (LOCK) {
               jarPaths.addAll(myHandlers.keySet());
             }
 
@@ -81,7 +83,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   @Nullable
   private VirtualFile markDirty(final String path) {
     final JarHandler handler;
-    synchronized (PersistentFS.LOCK) {
+    synchronized (LOCK) {
       handler = myHandlers.remove(path);
     }
 
@@ -138,7 +140,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     JarHandler handler;
     JarHandler freshHanlder = null;
     
-    synchronized (PersistentFS.LOCK) {
+    synchronized (LOCK) {
       handler = myHandlers.get(jarRootPath);
       if (handler == null) {
         freshHanlder = handler = new JarHandler(this, jarRootPath.substring(0, jarRootPath.length() - JAR_SEPARATOR.length()));
