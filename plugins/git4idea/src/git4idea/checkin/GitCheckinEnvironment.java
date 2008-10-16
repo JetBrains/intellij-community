@@ -1,4 +1,3 @@
-package git4idea.checkin;
 /*
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at:
@@ -17,6 +16,7 @@ package git4idea.checkin;
  *
  * This code was originally derived from the MKS & Mercurial IDEA VCS plugins
  */
+package git4idea.checkin;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
+import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
@@ -169,6 +170,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
             if (updateIndex(myProject, root, files, exceptions)) {
               commit(myProject, root, files, messageFile, myNextCommitAuthor).run();
             }
+            if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue()) {
+              // push
+              try {
+                GitHandlerUtil
+                  .doSynchronouslyWithException(GitPushUtils.preparePush(myProject, root), GitBundle.message("pushing.all.changes"));
+              }
+              catch (VcsException ex) {
+                if (!isNoOrigin(ex)) {
+                  throw ex;
+                }
+              }
+            }
           }
           catch (VcsException e) {
             exceptions.add(e);
@@ -186,6 +199,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     return exceptions;
+  }
+
+  /**
+   * Check if the exception means that no origin was found for pus operation
+   *
+   * @param ex an exception to use
+   * @return true if exception means that canges cannot be pushed because repository is entirely local.
+   */
+  private static boolean isNoOrigin(final VcsException ex) {
+    return ex.getMessage().indexOf("': unable to chdir or not a git archive") != -1;
   }
 
   /**
@@ -343,7 +366,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       assert beforeRevision != null || afterRevision != null;
       // note that any path will work, because changes could happen within single vcs root
       final FilePath filePath = afterRevision != null ? afterRevision.getFile() : beforeRevision.getFile();
-      final VirtualFile vcsRoot = GitUtil.getVcsRoot(myProject, filePath);
+      final VirtualFile vcsRoot = GitUtil.getGitRoot(myProject, filePath);
       List<Change> changeList = result.get(vcsRoot);
       if (changeList == null) {
         changeList = new ArrayList<Change>();
@@ -395,7 +418,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.insets = insets;
       myPushChanges = new JCheckBox(GitBundle.message("commit.push.changes"));
       myPushChanges.setToolTipText(GitBundle.getString("commit.push.changes.tooltip"));
-      // do not add checkbox until push implemented
+      // disable non-working functionality
       // myPanel.add(myPushChanges, c);
       c = new GridBagConstraints();
       c.anchor = GridBagConstraints.WEST;

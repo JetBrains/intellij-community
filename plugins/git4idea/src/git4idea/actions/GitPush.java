@@ -18,16 +18,14 @@ package git4idea.actions;
  * This code was originally derived from the MKS & Mercurial IDEA VCS plugins
  */
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitCommandRunnable;
+import git4idea.checkin.GitPushUtils;
+import git4idea.commands.GitHandlerUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,20 +39,9 @@ public class GitPush extends BasicAction {
   protected void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
     throws VcsException {
     saveAll();
-
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
     for (VirtualFile root : roots) {
-      GitCommandRunnable cmdr = new GitCommandRunnable(project, vcs.getSettings(), root);
-      cmdr.setCommand(GitCommand.PUSH_CMD);
-      cmdr.setArgs(new String[]{"--mirror"});
-
-      ProgressManager manager = ProgressManager.getInstance();
-      manager.runProcessWithProgressSynchronously(cmdr, GitBundle.getString("pushing.all.changes"), false, project);
-
-      @SuppressWarnings({"ThrowableResultOfMethodCallIgnored"}) VcsException ex = cmdr.getException();
-      if (ex != null) {
-        GitUtil.showOperationError(project, ex, "git push --mirror");
-      }
+      GitHandlerUtil.doSynchronously(GitPushUtils.preparePush(project, root), GitBundle.getString("pushing.all.changes"), "git push");
     }
   }
 

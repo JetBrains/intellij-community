@@ -246,4 +246,45 @@ public class GitUtil {
   public static Date parseTimestamp(String value) {
     return new Date(Long.parseLong(value.trim()) * 1000);
   }
+
+  /**
+   * Get git roots from content roots
+   *
+   * @param roots git content roots
+   * @return a content root
+   */
+  public static Collection<VirtualFile> gitRoots(final Collection<VirtualFile> roots) {
+    HashSet<VirtualFile> rc = new HashSet<VirtualFile>();
+    for (VirtualFile root : roots) {
+      VirtualFile f = root;
+      do {
+        if (f.findFileByRelativePath(".git") != null) {
+          rc.add(f);
+          break;
+        }
+        f = f.getParent();
+      }
+      while (f != null);
+    }
+    return rc;
+  }
+
+  /**
+   * Return a git root for the file path (the parent directory with ".git" subdirectory)
+   *
+   * @param project  a project
+   * @param filePath a file path
+   * @return git root for the file
+   * @throws IllegalArgumentException if the file is not under git
+   */
+  public static VirtualFile getGitRoot(final Project project, final FilePath filePath) {
+    VirtualFile root = VcsUtil.getVcsRootFor(project, filePath);
+    while (root != null) {
+      if (root.findFileByRelativePath(".git") != null) {
+        return root;
+      }
+      root = root.getParent();
+    }
+    throw new IllegalArgumentException("The file " + filePath + " is not under git.");
+  }
 }

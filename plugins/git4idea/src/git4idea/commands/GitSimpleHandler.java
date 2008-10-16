@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +68,7 @@ public class GitSimpleHandler extends GitHandler {
    */
   @SuppressWarnings({"WeakerAccess"})
   public GitSimpleHandler(final Project project, final VirtualFile directory, @NonNls final String command) {
-    this(project, GitUtil.getIOFile(directory), command);
+    super(project, directory, command);
   }
 
   /**

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -53,7 +54,7 @@ public class GitChangeProvider implements ChangeProvider {
                          final ChangelistBuilder builder,
                          final ProgressIndicator progress,
                          final ChangeListManagerGate addGate) throws VcsException {
-    Collection<VirtualFile> roots = dirtyScope.getAffectedContentRoots();
+    Collection<VirtualFile> roots = GitUtil.gitRoots(dirtyScope.getAffectedContentRoots());
     for (VirtualFile root : roots) {
       ChangeCollector c = new ChangeCollector(myProject, root);
       for (Change file : c.changes()) {

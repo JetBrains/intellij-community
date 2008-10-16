@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +55,17 @@ public class GitLineHandler extends GitHandler {
   @SuppressWarnings({"WeakerAccess"})
   public GitLineHandler(@NotNull Project project, @NotNull File directory, @NonNls @NotNull String command) {
     super(project, directory, command);
+  }
+
+  /**
+   * A constructor
+   *
+   * @param project a project
+   * @param vcsRoot a process directory
+   * @param command a command to execute
+   */
+  public GitLineHandler(final Project project, final VirtualFile vcsRoot, @NonNls final String command) {
+    super(project, vcsRoot, command);
   }
 
   /**

@@ -165,7 +165,7 @@ class ChangeCollector {
   private void collectUnmergedAndUnversioned() throws VcsException {
     // prepare handler
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, "ls-files");
-    handler.addParameters("-v", "--others", "--unmerged");
+    handler.addParameters("-v", "--others", "--unmerged", "--exclude-standard");
     handler.setSilent(true);
     handler.setNoSSH(true);
     // run handler and collect changes

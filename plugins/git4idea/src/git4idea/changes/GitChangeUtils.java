@@ -103,6 +103,7 @@ public class GitChangeUtils {
     GitSimpleHandler handler = new GitSimpleHandler(project, vcsRoot, "rev-list");
     handler.addParameters("--timestamp", "--max-count=1", revisionNumber);
     handler.setNoSSH(true);
+    handler.setSilent(true);
     handler.endOptions();
     String output = handler.run();
     StringTokenizer stk = new StringTokenizer(output, "\n\r \t", false);

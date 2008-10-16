@@ -97,7 +97,7 @@ public abstract class GitHandler {
   /**
    * if true, the command execution is not logged in version control view
    */
-  private boolean mySilent;
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private boolean mySilent;
 
   /**
    * A constructor
@@ -114,6 +114,17 @@ public abstract class GitHandler {
     myCommandLine.setExePath(settings.GIT_EXECUTABLE);
     myCommandLine.setWorkingDirectory(myWorkingDirectory);
     myCommandLine.addParameter(command);
+  }
+
+  /**
+   * A constructor
+   *
+   * @param project a project
+   * @param vcsRoot a process directory
+   * @param command a command to execute
+   */
+  public GitHandler(final Project project, final VirtualFile vcsRoot, final String command) {
+    this(project, GitUtil.getIOFile(vcsRoot), command);
   }
 
   /**
@@ -419,7 +430,13 @@ public abstract class GitHandler {
     myHandler.waitFor();
   }
 
+  /**
+   * Set silent mode. When handler is silient, it does not logs command in version control console.
+   *
+   * @param silent a new value of the flag
+   */
   public void setSilent(final boolean silent) {
+    checkNotStarted();
     mySilent = silent;
   }
 }
