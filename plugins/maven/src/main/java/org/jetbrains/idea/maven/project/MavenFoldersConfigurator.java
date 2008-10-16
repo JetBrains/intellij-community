@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -47,7 +46,7 @@ public class MavenFoldersConfigurator {
             project.updateFolders(mavenProject);
           }
 
-          RootModelAdapter a = new RootModelAdapter(each);
+          RootModelAdapter a = new RootModelAdapter(each, null);
           new MavenFoldersConfigurator(project, settings, a).config(false);
 
           ModifiableRootModel model = a.getRootModel();

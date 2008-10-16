@@ -2,9 +2,12 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
@@ -67,7 +70,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
     return true;
   }
 
-  public void commit(final Project project) {
+  public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
     project.getComponent(MavenWorkspaceSettingsComponent.class).getState().myImporterSettings = getImporterPreferences();
     project.getComponent(MavenWorkspaceSettingsComponent.class).getState().myArtifactSettings = getArtifactPreferences();
     project.getComponent(MavenCore.class).loadState(myCoreSettings);
@@ -77,9 +80,10 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
     manager.setManagedFiles(myFiles);
     manager.setActiveProfiles(mySelectedProfiles);
     manager.setImportedMavenProjectModelManager(myMavenProjectTree);
-    manager.commit();
+    final List<Module> moduleList = manager.commit(model, modulesProvider);
 
     enusreRepositoryPathMacro();
+    return moduleList;
   }
 
   private void enusreRepositoryPathMacro() {

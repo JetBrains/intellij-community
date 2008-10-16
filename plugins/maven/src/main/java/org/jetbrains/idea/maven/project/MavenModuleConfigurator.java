@@ -4,6 +4,9 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
 import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.Nullable;
@@ -20,20 +23,25 @@ public class MavenModuleConfigurator {
   private MavenProjectModel myMavenProject;
   private Map<MavenProjectModel, String> myMavenProjectToModuleName;
   private MavenImportSettings mySettings;
+  private ModulesProvider myModulesProvider;
   private RootModelAdapter myRootModelAdapter;
+  private LibraryTableModifiableModelProvider myTableModifiableModelProvider;
 
   public MavenModuleConfigurator(Module module,
                                  ModifiableModuleModel moduleModel,
                                  MavenProjectsTree mavenTree,
                                  MavenProjectModel mavenProject,
                                  Map<MavenProjectModel, String> mavenProjectToModuleName,
-                                 MavenImportSettings settings) {
+                                 MavenImportSettings settings, final ModulesProvider modulesProvider) {
     myModule = module;
     myModuleModel = moduleModel;
     myMavenTree = mavenTree;
     myMavenProject = mavenProject;
     myMavenProjectToModuleName = mavenProjectToModuleName;
     mySettings = settings;
+    myModulesProvider = modulesProvider;
+    final ProjectLibrariesConfigurable configurable = ProjectLibrariesConfigurable.getInstance(module.getProject());
+    myTableModifiableModelProvider = configurable != null ? configurable.getModelProvider(true) : null;
   }
 
   public ModifiableRootModel getRootModel() {
@@ -41,7 +49,7 @@ public class MavenModuleConfigurator {
   }
 
   public void config(boolean isNewlyCreatedModule) {
-    myRootModelAdapter = new RootModelAdapter(myModule);
+    myRootModelAdapter = new RootModelAdapter(myModule, myModulesProvider);
     myRootModelAdapter.init(myMavenProject, isNewlyCreatedModule);
 
     configFolders();
@@ -89,7 +97,7 @@ public class MavenModuleConfigurator {
         myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), isExportable);
       }
       else {
-        myRootModelAdapter.addLibraryDependency(artifact, isExportable);
+        myRootModelAdapter.addLibraryDependency(artifact, isExportable, myTableModifiableModelProvider);
       }
     }
   }

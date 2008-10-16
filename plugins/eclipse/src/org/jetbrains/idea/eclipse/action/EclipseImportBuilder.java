@@ -15,13 +15,14 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.*;
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
 import org.jetbrains.idea.eclipse.direct.IdeaXml;
@@ -194,12 +195,12 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
     return true;
   }
 
-  public void commit(final Project project) {
+  public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
     final Collection<String> libraries = new TreeSet<String>();
-
+    final List<Module> result = new ArrayList<Module>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        convertModules(project, ideaProjectModel.getModules(), getParameters().linkConverted, getParameters().converterOptions, libraries);
+        result.addAll(convertModules(project, ideaProjectModel.getModules(), getParameters().linkConverted, getParameters().converterOptions, libraries, model));
       }
     });
 
@@ -214,6 +215,8 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
       Messages
         .showErrorDialog(project, EclipseBundle.message("eclipse.import.warning.undefinded.libraries", message.toString()), getTitle());
     }
+
+    return result;
   }
 
   private void createEclipseLibrary(final Project project, final Collection<String> libraries, final String libraryName) {
@@ -256,17 +259,16 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
     }
   }
 
-  public static void convertModules(final Project project,
-                                    final Collection<IdeaModuleModel> modules,
-                                    boolean link,
-                                    final EclipseToIdeaConverter.Options converterOptions,
-                                    final Collection<String> libraries) {
-    final ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
-    EclipseProjectImporter.convertModules(modifiableModuleModel, modules, converterOptions, libraries);
+  public static List<Module> convertModules(final Project project, final Collection<IdeaModuleModel> modules, boolean link, final EclipseToIdeaConverter.Options converterOptions,
+                                            final Collection<String> libraries,
+                                            final ModifiableModuleModel model) {
+    final ModifiableModuleModel modifiableModuleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
+    final List<Module> convertedModules = EclipseProjectImporter.convertModules(modifiableModuleModel, modules, converterOptions, libraries);
     for (IdeaModuleModel moduleModel : modules) {
       ClasspathStorage.setStorageType(modifiableModuleModel.findModuleByName(moduleModel.getName()), link ? EclipseClasspathStorageProvider.ID : ClasspathStorage.DEFAULT_STORAGE);
     }
-    modifiableModuleModel.commit();
+    if (model == null) modifiableModuleModel.commit();
+    return convertedModules;
   }
 
   public Parameters getParameters() {

@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,6 +16,10 @@ import java.io.File;
 
 public class MavenUtil {
   public static void invokeLater(final Project p, final Runnable r) {
+    invokeLater(p, ModalityState.defaultModalityState(), r);
+  }
+
+  public static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       r.run();
       return;
@@ -24,7 +29,7 @@ public class MavenUtil {
         if (p.isDisposed()) return;
         r.run();
       }
-    });
+    }, state);
   }
 
   public static File getPluginSystemDir(String folder) {
@@ -42,7 +47,9 @@ public class MavenUtil {
            "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
            "    <modelVersion>4.0.0</modelVersion>\n" +
            (inheritGroupId ? "" : "    <groupId>" + projectId.groupId + "</groupId>\n") +
-           "    <artifactId>" + projectId.artifactId + "</artifactId>\n" +
+           "    <artifactId>" +
+           projectId.artifactId +
+           "</artifactId>\n" +
            (inheritVersion ? "" : "    <version>" + projectId.version + "</version>\n") +
            "</project>";
   }
