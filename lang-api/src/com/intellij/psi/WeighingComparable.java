@@ -15,10 +15,10 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
       throw new UnsupportedOperationException("Method compareTo is not yet implemented in " + getClass().getName());
     }
   };
-  private final Comparable[] myComputedWeighs;
+  private Comparable[] myComputedWeighs;
   private final T myElement;
   private final Loc myLocation;
-  private final Weigher<T,Loc>[] myWeighers;
+  private Weigher<T,Loc>[] myWeighers;
 
   public WeighingComparable(final T element, final Loc location, final Weigher<T,Loc>[] weighers) {
     myElement = element;
@@ -28,6 +28,8 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
   }
 
   public int compareTo(final WeighingComparable<T,Loc> comparable) {
+    if (myComputedWeighs == comparable.myComputedWeighs) return 0;
+
     for (int i = 0; i < myComputedWeighs.length; i++) {
       final Comparable weight1 = getWeight(i);
       final Comparable weight2 = comparable.getWeight(i);
@@ -40,6 +42,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
         if (result != 0) return result;
       }
     }
+    myComputedWeighs = comparable.myComputedWeighs;
     return 0;
   }
 
