@@ -15,11 +15,11 @@
  */
 package com.siyeh.ipp.conditional;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.project.Project;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
@@ -100,7 +100,7 @@ public class ReplaceConditionalWithIfIntention extends Intention {
             final PsiElement expressionParent = expression.getParent();
             final boolean addBraces =
                     expressionParent instanceof PsiIfStatement;
-            if (addBraces) {
+            if (addBraces || thenExpression == null) {
                 newStatement.append('{');
             }
             appendElementTextWithoutParentheses(statement, expression,
@@ -108,11 +108,17 @@ public class ReplaceConditionalWithIfIntention extends Intention {
             if (addBraces) {
                 newStatement.append("} else {");
             } else {
+                if (thenExpression == null) {
+                    newStatement.append('}');
+                }
                 newStatement.append(" else ");
+                if (elseExpression == null) {
+                    newStatement.append('{');
+                }
             }
             appendElementTextWithoutParentheses(statement, expression,
                     elseExpression, newStatement);
-            if (addBraces) {
+            if (addBraces || elseExpression == null) {
                 newStatement.append('}');
             }
             replaceStatement(newStatement.toString(), statement);
