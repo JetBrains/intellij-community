@@ -63,7 +63,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     final int flags;
     private final boolean reviveOnEditorChange;
 
-    public HintInfo(LightweightHint hint, int flags, boolean reviveOnEditorChange) {
+    private HintInfo(LightweightHint hint, int flags, boolean reviveOnEditorChange) {
       this.hint = hint;
       this.flags = flags;
       this.reviveOnEditorChange = reviveOnEditorChange;

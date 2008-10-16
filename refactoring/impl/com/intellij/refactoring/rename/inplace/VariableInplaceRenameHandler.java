@@ -27,8 +27,9 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
 
     final RefactoringSupportProvider supportProvider = element != null ? LanguageRefactoringSupport.INSTANCE.forLanguage(element.getLanguage()):null;
-    if (supportProvider == null) return false;
-    return editor.getSettings().isVariableInplaceRenameEnabled() && supportProvider.doInplaceRenameFor(element, nameSuggestionContext);
+    return supportProvider != null &&
+           editor.getSettings().isVariableInplaceRenameEnabled() &&
+           supportProvider.doInplaceRenameFor(element, nameSuggestionContext);
   }
 
   public boolean isRenaming(final DataContext dataContext) {

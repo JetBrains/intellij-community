@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiElement;
@@ -14,13 +13,12 @@ import java.util.*;
  * @author mike
  */
 public class TemplateBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.TemplateBuilder");
-  private RangeMarker myContainerElement;
-  private Map<RangeMarker,Expression> myExpressions = new HashMap<RangeMarker, Expression>();
-  private Map<RangeMarker,String> myVariableExpressions = new HashMap<RangeMarker, String>();
-  private Map<RangeMarker, Boolean> myAlwaysStopAtMap = new HashMap<RangeMarker, Boolean>();
-  private Map<RangeMarker, String> myVariableNamesMap = new HashMap<RangeMarker, String>();
-  private Set<RangeMarker> myElements = new TreeSet<RangeMarker>(new Comparator<RangeMarker>() {
+  private final RangeMarker myContainerElement;
+  private final Map<RangeMarker,Expression> myExpressions = new HashMap<RangeMarker, Expression>();
+  private final Map<RangeMarker,String> myVariableExpressions = new HashMap<RangeMarker, String>();
+  private final Map<RangeMarker, Boolean> myAlwaysStopAtMap = new HashMap<RangeMarker, Boolean>();
+  private final Map<RangeMarker, String> myVariableNamesMap = new HashMap<RangeMarker, String>();
+  private final Set<RangeMarker> myElements = new TreeSet<RangeMarker>(new Comparator<RangeMarker>() {
     public int compare(final RangeMarker e1, final RangeMarker e2) {
       return e1.getStartOffset() - e2.getStartOffset();
     }
@@ -29,7 +27,7 @@ public class TemplateBuilder {
   private RangeMarker myEndElement;
   private RangeMarker mySelection;
   private final Document myDocument;
-  private PsiFile myFile;
+  private final PsiFile myFile;
 
   public TemplateBuilder(@NotNull PsiElement element) {
     myFile = element.getContainingFile();

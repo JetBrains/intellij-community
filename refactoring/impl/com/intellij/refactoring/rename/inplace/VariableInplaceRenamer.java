@@ -56,7 +56,7 @@ public class VariableInplaceRenamer {
   private final Editor myEditor;
   private final Project myProject;
 
-  private final static Stack<VariableInplaceRenamer> ourRenamersStack = new Stack<VariableInplaceRenamer>();
+  private static final Stack<VariableInplaceRenamer> ourRenamersStack = new Stack<VariableInplaceRenamer>();
 
   public VariableInplaceRenamer(PsiNameIdentifierOwner elementToRename, Editor editor) {
     myElementToRename = elementToRename;
@@ -95,7 +95,7 @@ public class VariableInplaceRenamer {
       assert scope != null:"Should have local search scope for inplace rename";
     }
 
-    final ResolveSnapshot snapshot = scope == null ? null : ResolveSnapshot.createSnapshot(scope);
+    final ResolveSnapshot snapshot = ResolveSnapshot.createSnapshot(scope);
     final TemplateBuilder builder = new TemplateBuilder(scope);
 
     final PsiElement nameIdentifier = myElementToRename.getNameIdentifier();
@@ -190,7 +190,7 @@ public class VariableInplaceRenamer {
     }
   }
 
-  private static void addHighlights(Map<TextRange,TextAttributes> ranges, Editor editor, ArrayList<RangeHighlighter> highlighters, HighlightManager highlightManager) {
+  private static void addHighlights(Map<TextRange,TextAttributes> ranges, Editor editor, Collection<RangeHighlighter> highlighters, HighlightManager highlightManager) {
     for (Map.Entry<TextRange, TextAttributes> entry : ranges.entrySet()) {
       TextRange range = entry.getKey();
       TextAttributes attributes = entry.getValue();
@@ -225,7 +225,7 @@ public class VariableInplaceRenamer {
 
   private void addVariable(final PsiElement element, final PsiElement selectedElement, final TemplateBuilder builder) {
     if (element == selectedElement) {
-      MyExpression expression = new MyExpression(myElementToRename.getName());
+      Expression expression = new MyExpression(myElementToRename.getName());
       builder.replaceElement(element, PRIMARY_VARIABLE_NAME, expression, true);
     }
     else {
@@ -244,9 +244,7 @@ public class VariableInplaceRenamer {
     PsiFile containingFile = elementToRename.getContainingFile();
     if (!PsiTreeUtil.isAncestor(containingFile, scopeElements[0], false)) return false;
 
-    String stringToSearch = ElementDescriptionUtil.getElementDescription(elementToRename, true
-                                                                                          ? NonCodeSearchDescriptionLocation.NON_JAVA
-                                                                                          : NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
+    String stringToSearch = ElementDescriptionUtil.getElementDescription(elementToRename, NonCodeSearchDescriptionLocation.NON_JAVA);
     List<UsageInfo> usages = new ArrayList<UsageInfo>();
     if (stringToSearch != null) {
       TextOccurrencesUtil.addUsagesInStringsAndComments(elementToRename, stringToSearch, usages, new TextOccurrencesUtil.UsageInfoFactory() {
@@ -263,7 +261,7 @@ public class VariableInplaceRenamer {
     private final String myName;
     private final LookupItem[] myLookupItems;
 
-    public MyExpression(String name) {
+    private MyExpression(String name) {
       myName = name;
       List<String> names = new ArrayList<String>();
       for(NameSuggestionProvider provider: Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
