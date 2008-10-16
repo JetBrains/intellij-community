@@ -2,25 +2,17 @@ package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
-import com.intellij.ui.classFilter.ClassFilterEditor;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class DebuggerGeneralConfigurable implements Configurable{
   private JRadioButton myRbSocket;
   private JRadioButton myRbShmem;
-  private JCheckBox myCbStepInfoFiltersEnabled;
-  private JCheckBox myCbSkipSyntheticMethods;
-  private JCheckBox myCbSkipConstructors;
-  private JCheckBox myCbSkipClassLoaders;
   private JCheckBox myHideDebuggerCheckBox;
   private JCheckBox myHotswapInBackground;
   private JCheckBox myCbCompileBeforeHotswap;
@@ -29,19 +21,9 @@ public class DebuggerGeneralConfigurable implements Configurable{
   private JRadioButton myRbAsk;
   private StateRestoringCheckBox myCbForceClassicVM;
   private JCheckBox myCbDisableJIT;
-  private ClassFilterEditor mySteppingFilterEditor;
   private JTextField myValueTooltipDelayField;
-  private JCheckBox myCbSkipSimpleGetters;
-  private final Project myProject;
-  private BaseRenderersConfigurable myBaseRenderersConfigurable;
-
-  public DebuggerGeneralConfigurable(Project project) {
-    myProject = project;
-    myBaseRenderersConfigurable = new BaseRenderersConfigurable(project);
-  }
 
   public void reset() {
-    myBaseRenderersConfigurable.reset();
     final DebuggerSettings settings = DebuggerSettings.getInstance();
     if (!SystemInfo.isWindows) {
       myRbSocket.setSelected(true);
@@ -56,21 +38,12 @@ public class DebuggerGeneralConfigurable implements Configurable{
       }
       myRbShmem.setEnabled(true);
     }
-    myCbSkipSimpleGetters.setSelected(settings.SKIP_GETTERS);
-    myCbSkipSyntheticMethods.setSelected(settings.SKIP_SYNTHETIC_METHODS);
-    myCbSkipConstructors.setSelected(settings.SKIP_CONSTRUCTORS);
-    myCbSkipClassLoaders.setSelected(settings.SKIP_CLASSLOADERS);
     myValueTooltipDelayField.setText(Integer.toString(settings.VALUE_LOOKUP_DELAY));
     myHideDebuggerCheckBox.setSelected(settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION);
     myHotswapInBackground.setSelected(settings.HOTSWAP_IN_BACKGROUND);
     myCbCompileBeforeHotswap.setSelected(settings.COMPILE_BEFORE_HOTSWAP);
     myCbForceClassicVM.setSelected(settings.FORCE_CLASSIC_VM);
     myCbDisableJIT.setSelected(settings.DISABLE_JIT);
-
-    myCbStepInfoFiltersEnabled.setSelected(settings.TRACING_FILTERS_ENABLED);
-
-    mySteppingFilterEditor.setFilters(settings.getSteppingFilters());
-    mySteppingFilterEditor.setEnabled(settings.TRACING_FILTERS_ENABLED);
 
     if(DebuggerSettings.RUN_HOTSWAP_ALWAYS.equals(settings.RUN_HOTSWAP_AFTER_COMPILE)) {
       myRbAlways.setSelected(true);
@@ -85,7 +58,6 @@ public class DebuggerGeneralConfigurable implements Configurable{
 
   public void apply() {
     getSettingsTo(DebuggerSettings.getInstance());
-    myBaseRenderersConfigurable.apply();
   }
 
   private void getSettingsTo(DebuggerSettings settings) {
@@ -95,10 +67,6 @@ public class DebuggerGeneralConfigurable implements Configurable{
     else {
       settings.DEBUGGER_TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
     }
-    settings.SKIP_GETTERS = myCbSkipSimpleGetters.isSelected();
-    settings.SKIP_SYNTHETIC_METHODS = myCbSkipSyntheticMethods.isSelected();
-    settings.SKIP_CONSTRUCTORS = myCbSkipConstructors.isSelected();
-    settings.SKIP_CLASSLOADERS = myCbSkipClassLoaders.isSelected();
     try {
       settings.VALUE_LOOKUP_DELAY = Integer.parseInt(myValueTooltipDelayField.getText().trim());
     }
@@ -109,10 +77,6 @@ public class DebuggerGeneralConfigurable implements Configurable{
     settings.COMPILE_BEFORE_HOTSWAP = myCbCompileBeforeHotswap.isSelected();
     settings.FORCE_CLASSIC_VM = myCbForceClassicVM.isSelectedWhenSelectable();
     settings.DISABLE_JIT = myCbDisableJIT.isSelected();
-    settings.TRACING_FILTERS_ENABLED = myCbStepInfoFiltersEnabled.isSelected();
-
-    mySteppingFilterEditor.stopEditing();
-    settings.setSteppingFilters(mySteppingFilterEditor.getFilters());
 
     if (myRbAlways.isSelected()) {
       settings.RUN_HOTSWAP_AFTER_COMPILE = DebuggerSettings.RUN_HOTSWAP_ALWAYS;
@@ -126,12 +90,10 @@ public class DebuggerGeneralConfigurable implements Configurable{
   }
 
   public boolean isModified() {
-    if (myBaseRenderersConfigurable.isModified()) {
-      return true;
-    }
-    final DebuggerSettings debuggerSettings = new DebuggerSettings();
+    final DebuggerSettings currentSettings = DebuggerSettings.getInstance();
+    final DebuggerSettings debuggerSettings = currentSettings.clone();
     getSettingsTo(debuggerSettings);
-    return !debuggerSettings.equals(DebuggerSettings.getInstance());
+    return !debuggerSettings.equals(currentSettings);
   }
 
   public String getDisplayName() {
@@ -149,24 +111,17 @@ public class DebuggerGeneralConfigurable implements Configurable{
   public JComponent createComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
-    final JComponent generalGroup = createGeneralGroup();
-    panel.add(generalGroup, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-
     final JComponent launchingGroup = createLaunchingGroup();
-    panel.add(launchingGroup, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(launchingGroup, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
-    final JComponent baseRenderersGroup = createBaseRenderersGroup();
-    panel.add(baseRenderersGroup, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-
-    final JComponent steppingGroup = createSteppingGroup();
-    panel.add(steppingGroup, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    final JComponent generalGroup = createGeneralGroup();
+    panel.add(generalGroup, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(10, 0, 0, 0), 0, 0));
 
     return panel;
   }
 
   private JComponent createGeneralGroup() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(getDisplayName()));
 
     myHideDebuggerCheckBox = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.hide.window"));
     int leftInset = 0;
@@ -214,12 +169,11 @@ public class DebuggerGeneralConfigurable implements Configurable{
     panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.debugger.general.configurable.group.launching")));
 
     myCbForceClassicVM = new StateRestoringCheckBox(DebuggerBundle.message("label.debugger.general.configurable.force.classic.vm"));
-    panel.add(myCbForceClassicVM, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(myCbForceClassicVM, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
     myCbDisableJIT = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.disable.jit"));
-    panel.add(myCbDisableJIT, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(myCbDisableJIT, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
-    panel.add(new JLabel(DebuggerBundle.message("label.debugger.general.configurable.debugger.transport")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     myRbSocket = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.socket"));
     myRbShmem = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.shmem"));
     final ButtonGroup gr = new ButtonGroup();
@@ -228,46 +182,16 @@ public class DebuggerGeneralConfigurable implements Configurable{
     final Box box = Box.createHorizontalBox();
     box.add(myRbSocket);
     box.add(myRbShmem);
-    panel.add(box, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
-    return panel;
-  }
+    final JPanel transportPanel = new JPanel(new BorderLayout());
+    transportPanel.add(new JLabel(DebuggerBundle.message("label.debugger.general.configurable.debugger.transport")), BorderLayout.WEST);
+    transportPanel.add(box, BorderLayout.CENTER);
+    panel.add(transportPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 6, 0, 0), 0, 0));
 
-  private JComponent createBaseRenderersGroup() {
-    final JComponent component = myBaseRenderersConfigurable.createComponent();
-    component.setBorder(IdeBorderFactory.createTitledBorder(
-      DebuggerBundle.message("label.debugger.general.configurable.group.base.renderers")));
-    return component;
-  }
-
-  private JComponent createSteppingGroup() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.debugger.general.configurable.group.stepping")));
-
-    myCbSkipSyntheticMethods = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.synthetic.methods"));
-    myCbSkipConstructors = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.constructors"));
-    myCbSkipClassLoaders = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.classloaders"));
-    myCbSkipSimpleGetters = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.simple.getters"));
-    myCbStepInfoFiltersEnabled = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.step.filters.list.header"));
-    panel.add(myCbSkipSyntheticMethods, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0),0, 0));
-    panel.add(myCbSkipConstructors, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0),0, 0));
-    panel.add(myCbSkipClassLoaders, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0),0, 0));
-    panel.add(myCbSkipSimpleGetters, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0),0, 0));
-    panel.add(myCbStepInfoFiltersEnabled, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8, 4, 0, 0),0, 0));
-
-    mySteppingFilterEditor = new ClassFilterEditor(myProject);
-    panel.add(mySteppingFilterEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 12, 0, 0),0, 0));
-
-    myCbStepInfoFiltersEnabled.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        mySteppingFilterEditor.setEnabled(myCbStepInfoFiltersEnabled.isSelected());
-      }
-    });
     return panel;
   }
 
   public void disposeUIResources() {
-    myBaseRenderersConfigurable.disposeUIResources();
   }
 
 }

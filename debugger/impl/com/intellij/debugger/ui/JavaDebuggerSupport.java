@@ -1,25 +1,23 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.settings.DebuggerGeneralConfigurable;
-import com.intellij.debugger.settings.UserRenderersConfigurable;
-import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.actions.*;
+import com.intellij.debugger.settings.*;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointFactory;
 import com.intellij.debugger.ui.breakpoints.BreakpointPanel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
-import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
+import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
+import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -187,8 +185,10 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     }
 
     public Collection<? extends Configurable> getConfigurables(final Project project) {
-      ArrayList<Configurable> configurables = new ArrayList<Configurable>();
-      configurables.add(new DebuggerGeneralConfigurable(project));
+      final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
+      configurables.add(new DebuggerGeneralConfigurable());
+      configurables.add(new BaseRenderersConfigurable(project));
+      configurables.add(new DebuggerSteppingConfigurable(project));
       configurables.add(new UserRenderersConfigurable(project));
       return configurables;
     }

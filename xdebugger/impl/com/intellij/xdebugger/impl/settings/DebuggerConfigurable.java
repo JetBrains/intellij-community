@@ -5,14 +5,12 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -23,7 +21,7 @@ import java.util.List;
 /**
  * @author Eugene Belyaev & Eugene Zhuravlev
  */
-public class DebuggerConfigurable extends TabbedConfigurable implements SearchableConfigurable {
+public class DebuggerConfigurable extends SearchableConfigurable.Parent.Abstract {
   public Icon getIcon() {
     return IconLoader.getIcon("/general/configurableDebugger.png");
   }
@@ -36,15 +34,14 @@ public class DebuggerConfigurable extends TabbedConfigurable implements Searchab
     return "project.propDebugger";
   }
 
-  protected List<Configurable> createConfigurables() {
-    ArrayList<Configurable> configurables = new ArrayList<Configurable>();
+  protected Configurable[] buildConfigurables() {
     Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     if(project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }
-    DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
-    List<DebuggerSettingsPanelProvider> providers = new ArrayList<DebuggerSettingsPanelProvider>();
-    for (DebuggerSupport support : supports) {
+    final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
+    final List<DebuggerSettingsPanelProvider> providers = new ArrayList<DebuggerSettingsPanelProvider>();
+    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
       providers.add(support.getSettingsPanelProvider());
     }
     Collections.sort(providers, new Comparator<DebuggerSettingsPanelProvider>() {
@@ -55,17 +52,7 @@ public class DebuggerConfigurable extends TabbedConfigurable implements Searchab
     for (DebuggerSettingsPanelProvider provider : providers) {
       configurables.addAll(provider.getConfigurables(project));
     }
-    return configurables;
-  }
-
-  public boolean hasAnyConfigurables() {
-    DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
-    for (DebuggerSupport support : supports) {
-      if (support.getSettingsPanelProvider().hasAnySettingsPanels()) {
-        return true;
-      }
-    }
-    return false;
+    return configurables.toArray(new Configurable[configurables.size()]);
   }
 
   public void apply() throws ConfigurationException {
@@ -78,10 +65,5 @@ public class DebuggerConfigurable extends TabbedConfigurable implements Searchab
   @NonNls
   public String getId() {
     return getHelpTopic();
-  }
-
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

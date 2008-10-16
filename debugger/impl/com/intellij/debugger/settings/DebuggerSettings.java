@@ -4,6 +4,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -17,7 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DebuggerSettings implements JDOMExternalizable, ApplicationComponent {
+public class DebuggerSettings implements JDOMExternalizable, ApplicationComponent, Cloneable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.DebuggerSettings");
   public static final int SOCKET_TRANSPORT = 0;
   public static final int SHMEM_TRANSPORT = 1;
 
@@ -148,6 +150,25 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
       DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters);
   }
 
+  public DebuggerSettings clone() {
+    try {
+      final DebuggerSettings cloned = (DebuggerSettings)super.clone();
+      cloned.myContentStates = new HashMap<String, ContentState>();
+      for (Map.Entry<String, ContentState> entry : myContentStates.entrySet()) {
+        cloned.myContentStates.put(entry.getKey(), entry.getValue().clone());
+      }
+      cloned.mySteppingFilters = new ClassFilter[mySteppingFilters.length];
+      for (int idx = 0; idx < mySteppingFilters.length; idx++) {
+        cloned.mySteppingFilters[idx] = mySteppingFilters[idx].clone();
+      }
+      return cloned;
+    }
+    catch (CloneNotSupportedException e) {
+      LOG.error(e);
+    }
+    return null;
+  }
+
   public String getComponentName() {
     return "DebuggerSettings";
   }
@@ -163,7 +184,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   }
 
 
-  public static class ContentState {
+  public static class ContentState implements Cloneable {
 
     private String myType;
     private boolean myMinimized;
@@ -253,6 +274,10 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
 
     public void setHorizontalToolbar(final boolean horizontalToolbar) {
       myHorizontalToolbar = horizontalToolbar;
+    }
+
+    public ContentState clone() throws CloneNotSupportedException {
+      return (ContentState)super.clone();
     }
   }
 
