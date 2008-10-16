@@ -25,15 +25,15 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
+import org.jetbrains.idea.svn.update.RefreshVFsSynchronously;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
 import java.io.File;
+import java.io.IOException;
 
 public class SvnCheckoutProvider implements CheckoutProvider {
 
@@ -59,8 +60,6 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       target.mkdirs();
     }
     final SVNException[] exception = new SVNException[1];
-    @NonNls String fileURL = "file://" + target.getAbsolutePath().replace(File.separatorChar, '/');
-    final VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(fileURL);
     final Ref<Boolean> actionStarted = new Ref<Boolean>(Boolean.TRUE);
 
     final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
@@ -107,6 +106,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           Messages.showErrorDialog(SvnBundle.message("message.text.cannot.checkout", exception[0].getMessage()), SvnBundle.message("message.title.check.out"));
         }
 
+        final VirtualFile vf = RefreshVFsSynchronously.findCreatedFile(target);
         if (vf != null) {
           vf.refresh(true, true, new Runnable() {
             public void run() {
@@ -124,6 +124,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       }
 
       private void notifyListener() {
+        notifyRootManagerIfUnderProject(project, target);
         if (listener != null) {
           if (!checkoutSuccessful.isNull()) {
             listener.directoryCheckedOut(target);
@@ -134,6 +135,24 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     };
 
     ProgressManager.getInstance().run(checkoutBackgroundTask);
+  }
+
+  private static void notifyRootManagerIfUnderProject(final Project project, final File directory) {
+    final ProjectLevelVcsManagerEx plVcsManager = ProjectLevelVcsManagerEx.getInstanceChecked(project);
+    final SvnVcs vcs = (SvnVcs) plVcsManager.findVcsByName(SvnVcs.VCS_NAME);
+
+    final VirtualFile[] files = vcs.getSvnFileUrlMapping().getNotFilteredRoots();
+    for (VirtualFile file : files) {
+      try {
+        if (FileUtil.isAncestor(new File(file.getPath()), directory, false)) {
+          plVcsManager.fireDirectoryMappingsChanged();
+          return;
+        }
+      }
+      catch (IOException e) {
+        //
+      }
+    }
   }
 
   public static boolean promptForWCopyFormat(final File target, final Project project) {

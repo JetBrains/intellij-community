@@ -33,8 +33,8 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -51,6 +51,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
@@ -123,7 +124,7 @@ public class SvnVcs extends AbstractVcs {
   private SvnCommittedChangesProvider myCommittedChangesProvider;
   private final VcsShowSettingOption myCheckoutOptions;
 
-  private final SvnFileUrlMappingRefresher myRootsInfo;
+  private final SvnFileUrlMappingImpl myRootsInfo;
 
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
@@ -133,6 +134,7 @@ public class SvnVcs extends AbstractVcs {
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
   public static final String pathToDirProps = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.DIR_PROPS_FILE_NAME;
   private final SvnChangelistListener myChangeListListener;
+  private MessageBusConnection myMessageBusConnection;
 
   static {
     //noinspection UseOfArchaicSystemPropertyAccessors
@@ -177,7 +179,7 @@ public class SvnVcs extends AbstractVcs {
     myDeleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
     myCheckoutOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKOUT, this);
 
-    myRootsInfo = new SvnFileUrlMappingRefresher(new SvnFileUrlMappingImpl(myProject, this));
+    myRootsInfo = new SvnFileUrlMappingImpl(myProject, this);
 
     final SvnBranchConfigurationManager.SvnSupportOptions supportOptions =
       SvnBranchConfigurationManager.getInstance(myProject).getSupportOptions();
@@ -189,6 +191,32 @@ public class SvnVcs extends AbstractVcs {
     } else {
       myChangeListListener = new SvnChangelistListener(myProject, createChangelistClient());
       ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
+    }
+
+    myMessageBusConnection = bus.connect();
+    myMessageBusConnection.subscribe(ProjectLevelVcsManagerImpl.VCS_MAPPING_CHANGED, new Runnable() {
+      public void run() {
+        invokeRefreshSvnRoots(true);
+      }
+    });
+
+    // do one time after project loaded
+    invokeRefreshSvnRoots(true);
+  }
+
+  public void invokeRefreshSvnRoots(final boolean hidden) {
+    final Runnable refresher = new Runnable() {
+      public void run() {
+        myRootsInfo.ensureInitialized();
+        myRootsInfo.realRefresh();
+      }
+    };
+    if (hidden) {
+      final Application appManager = ApplicationManager.getApplication();
+      appManager.executeOnPooledThread(refresher);
+    } else {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(refresher,
+        SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);
     }
   }
 
@@ -293,6 +321,7 @@ public class SvnVcs extends AbstractVcs {
 
   @Override
   public void deactivate() {
+    myMessageBusConnection.disconnect();
     VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
     SvnApplicationSettings.getInstance().svnDeactivated();
     new DefaultSVNRepositoryPool(null, null).shutdownConnections(true);
@@ -792,16 +821,17 @@ public class SvnVcs extends AbstractVcs {
 
   @NotNull
   public SvnFileUrlMapping getSvnFileUrlMapping() {
+    myRootsInfo.ensureInitialized();
     return myRootsInfo;
   }
 
   public List<WCInfo> getAllWcInfos() {
     final SvnFileUrlMapping urlMapping = getSvnFileUrlMapping();
 
-    final Map<String,SvnFileUrlMapping.RootUrlInfo> wcInfos = urlMapping.getAllWcInfos();
+    final Map<String, RootUrlInfo> wcInfos = urlMapping.getAllWcInfos();
     final List<WCInfo> infos = new ArrayList<WCInfo>();
-    for (Map.Entry<String, SvnFileUrlMapping.RootUrlInfo> entry : wcInfos.entrySet()) {
-      final SvnFileUrlMapping.RootUrlInfo value = entry.getValue();
+    for (Map.Entry<String, RootUrlInfo> entry : wcInfos.entrySet()) {
+      final RootUrlInfo value = entry.getValue();
       final File file = new File(entry.getKey());
       infos.add(new WCInfo(entry.getKey(), value.getAbsoluteUrlAsUrl(),
                            SvnFormatSelector.getWorkingCopyFormat(file), value.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file)));

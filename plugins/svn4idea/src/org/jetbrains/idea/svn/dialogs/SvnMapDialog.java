@@ -34,6 +34,7 @@ public class SvnMapDialog extends DialogWrapper {
   private JButton myChangeFormatButton;        
   private JButton myCorrectButton;
   private JLabel myWarningLabel;
+  private JButton myRefresh;
   private ListTableModel<WCInfo> myTableModel;
 
   private final Project myProject;
@@ -102,6 +103,15 @@ public class SvnMapDialog extends DialogWrapper {
 
     myChangeFormatButton.setEnabled((myTableView.getSelection().size() == 1) &&
                                     (! ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()));
+
+    myRefresh.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        SvnVcs.getInstance(myProject).invokeRefreshSvnRoots(false);
+        final List<WCInfo> infoList = vcs.getAllWcInfos();
+        myTableModel.setItems(infoList);
+        myTableView.repaint();
+      }
+    });
   }
 
   private void correctMappings(final SvnVcs vcs, final List<WCInfo> infos) {

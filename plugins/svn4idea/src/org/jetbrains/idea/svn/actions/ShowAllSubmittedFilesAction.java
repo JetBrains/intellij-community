@@ -30,10 +30,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnFileUrlMapping;
-import org.jetbrains.idea.svn.SvnRevisionNumber;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
@@ -110,7 +107,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
       final SVNURL repositoryUrl;
       if ((file != null) && file.isInLocalFileSystem()) {
         final SvnFileUrlMapping urlMapping = vcs.getSvnFileUrlMapping();
-        final SvnFileUrlMapping.RootUrlInfo wcRoot = urlMapping.getWcRootForFilePath(new File(file.getPath())).getSecond();
+        final RootUrlInfo wcRoot = urlMapping.getWcRootForFilePath(new File(file.getPath())).getSecond();
         if (wcRoot == null) {
           return null;
         }

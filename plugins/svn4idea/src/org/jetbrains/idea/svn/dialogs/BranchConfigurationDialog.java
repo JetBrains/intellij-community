@@ -151,7 +151,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
     if (directory == null) {
       return;
     }
-    Pair<String,SvnFileUrlMapping.RootUrlInfo> rootUrlInfoPair =
+    Pair<String, RootUrlInfo> rootUrlInfoPair =
         SvnVcs.getInstance(project).getSvnFileUrlMapping().getWcRootForFilePath(new File(directory.getPath()));
     if (rootUrlInfoPair == null) {
       return;

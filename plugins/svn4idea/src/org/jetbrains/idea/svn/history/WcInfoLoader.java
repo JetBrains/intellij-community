@@ -54,11 +54,11 @@ public class WcInfoLoader {
     }
     final SvnFileUrlMapping urlMapping = vcs.getSvnFileUrlMapping();
     final File file = new File(info.getPath());
-    final Pair<String, SvnFileUrlMapping.RootUrlInfo> infoPair = urlMapping.getWcRootForFilePath(file);
+    final Pair<String, RootUrlInfo> infoPair = urlMapping.getWcRootForFilePath(file);
     if (infoPair == null) {
       return null;
     }
-    final SvnFileUrlMapping.RootUrlInfo rootInfo = infoPair.getSecond();
+    final RootUrlInfo rootInfo = infoPair.getSecond();
     final WCInfo wcInfo = new WCInfo(infoPair.getFirst(), rootInfo.getAbsoluteUrlAsUrl(), SvnFormatSelector.getWorkingCopyFormat(file),
                                      rootInfo.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file));
     return createInfo(wcInfo, vcs, urlMapping);

@@ -159,7 +159,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   @Nullable
   private SVNURL getBranchForUrl(final String url) {
     final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
-    final Pair<String,SvnFileUrlMapping.RootUrlInfo> stringRootUrlInfoPair = urlMapping.getWcRootForFilePath(myRoot.getIOFile());
+    final Pair<String, RootUrlInfo> stringRootUrlInfoPair = urlMapping.getWcRootForFilePath(myRoot.getIOFile());
     if (stringRootUrlInfoPair == null) {
       return null;
     }

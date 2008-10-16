@@ -19,9 +19,10 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import java.io.File;
 import java.util.*;
 
-class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvnFileUrlMapping {
+class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFileUrlMappingImpl");
   
+  private volatile boolean myInitialized;
   private final Project myProject;
   private final SvnVcs myVcs;
 
@@ -30,19 +31,31 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
   private final Map<String, Pair<String, VirtualFile>> myUrl2FileMap;
   private final Map<String, VirtualFile> myFileRootsMap;
   private volatile boolean myUserRootsDiffersFromReal;
+  private VirtualFile[] myNotFilteredRoots;
+  private final ProjectLevelVcsManager myPlVcsManager;
 
   SvnFileUrlMappingImpl(final Project project, final SvnVcs vcs) {
     myProject = project;
     myVcs = vcs;
+    myPlVcsManager = ProjectLevelVcsManager.getInstance(project);
 
-    myFile2UrlMap = new HashMap<String, SvnFileUrlMappingRefresher.RootUrlInfo>();
+    myFile2UrlMap = new HashMap<String, RootUrlInfo>();
     myUrl2FileMap = new HashMap<String, Pair<String, VirtualFile>>();
     myFileRootsMap = new HashMap<String, VirtualFile>();
   }
 
+  public void ensureInitialized() {
+    synchronized (myMonitor) {
+      if (! myInitialized) {
+        artificialFill();
+        myInitialized = true;
+      }
+    }
+  }
+
   @Nullable
   public SVNURL getUrlForFile(final File file) {
-    final Pair<String, SvnFileUrlMappingRefresher.RootUrlInfo> rootInfo = getWcRootForFilePath(file);
+    final Pair<String, RootUrlInfo> rootInfo = getWcRootForFilePath(file);
 
     if (rootInfo == null) {
       return null;
@@ -164,21 +177,55 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
     }
   }
 
+  private static class MyData {
+    private final Map<String, Pair<String, VirtualFile>> myUrl2FileMap;
+    private final Map<String, RootUrlInfo> myFile2UrlMap;
+    private final Map<String, VirtualFile> myFileRootsMap;
+    private boolean myRootsDiffer;
+
+    private MyData() {
+      myUrl2FileMap = new HashMap<String, Pair<String, VirtualFile>>();
+      myFile2UrlMap = new HashMap<String, RootUrlInfo>();
+      myFileRootsMap = new HashMap<String, VirtualFile>();
+    }
+  }
+
+  private void takeFromData(final MyData data) {
+    synchronized (myMonitor) {
+      myUserRootsDiffersFromReal = data.myRootsDiffer;
+
+      myFile2UrlMap.clear();
+      myFile2UrlMap.putAll(data.myFile2UrlMap);
+
+      myFileRootsMap.clear();
+      myFileRootsMap.putAll(data.myFileRootsMap);
+
+      myUrl2FileMap.clear();
+      myUrl2FileMap.putAll(data.myUrl2FileMap);
+    }
+  }
+
+  private MyData putToData() {
+    synchronized (myMonitor) {
+      final MyData result = new MyData();
+      result.myRootsDiffer = myUserRootsDiffersFromReal;
+      result.myFile2UrlMap.putAll(myFile2UrlMap);
+      result.myFileRootsMap.putAll(myFileRootsMap);
+      result.myUrl2FileMap.putAll(myUrl2FileMap);
+      return result;
+    }
+  }
+
   private class FileUrlMappingCrawler implements NotNullFunction<VirtualFile, Collection<VirtualFile>> {
     private final SVNWCClient myClient;
     private VirtualFile myCurrentRoot;
-    private final Map<String, Pair<String, VirtualFile>> myUrl2FileMapCopy;
-    private final Map<String, RootUrlInfo> myFile2UrlMapCopy;
-    private final Map<String, VirtualFile> myFileRootsMapCopy;
-    private boolean myRootsDiffer;
+    private final MyData myData;
 
     private FileUrlMappingCrawler() {
-      myUrl2FileMapCopy = new HashMap<String, Pair<String, VirtualFile>>();
-      myFile2UrlMapCopy = new HashMap<String, RootUrlInfo>();
-      myFileRootsMapCopy = new HashMap<String, VirtualFile>();
-      myRootsDiffer = false;
+      myData = new MyData();
 
       myClient = myVcs.createWCClient();
+      myData.myRootsDiffer = false;
     }
 
     @NotNull
@@ -198,31 +245,20 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
 
       final String currentPath = FileUtil.toSystemDependentName(virtualFile.getPath()) + File.separator;
 
-      final SvnFileUrlMappingRefresher.RootUrlInfo rootInfo = new SvnFileUrlMappingRefresher.RootUrlInfo(repositoryUrl, info.getURL(),
-                                                                                                         SvnFormatSelector.getWorkingCopyFormat(ioFile));
+      final RootUrlInfo rootInfo = new RootUrlInfo(repositoryUrl, info.getURL(), SvnFormatSelector.getWorkingCopyFormat(ioFile));
 
-      if ((! myRootsDiffer) && (! myCurrentRoot.equals(virtualFile))) {
-        myRootsDiffer = true;
+      if ((! myData.myRootsDiffer) && (! myCurrentRoot.equals(virtualFile))) {
+        myData.myRootsDiffer = true;
       }
-      myFile2UrlMapCopy.put(currentPath, rootInfo);
-      myUrl2FileMapCopy.put(rootInfo.getAbsoluteUrl(), new Pair<String, VirtualFile>(currentPath, virtualFile));
-      myFileRootsMapCopy.put(rootInfo.getAbsoluteUrl(), myCurrentRoot);
+      myData.myFile2UrlMap.put(currentPath, rootInfo);
+      myData.myUrl2FileMap.put(rootInfo.getAbsoluteUrl(), new Pair<String, VirtualFile>(currentPath, virtualFile));
+      myData.myFileRootsMap.put(rootInfo.getAbsoluteUrl(), myCurrentRoot);
 
       return Collections.emptyList();
     }
 
     public void copyResults() {
-      synchronized (myMonitor) {
-        myUserRootsDiffersFromReal = myRootsDiffer;
-        myFile2UrlMap.clear();
-        myFile2UrlMap.putAll(myFile2UrlMapCopy);
-
-        myFileRootsMap.clear();
-        myFileRootsMap.putAll(myFileRootsMapCopy);
-
-        myUrl2FileMap.clear();
-        myUrl2FileMap.putAll(myUrl2FileMapCopy);
-      }
+      takeFromData(myData);
     }
 
     public void setCurrentRoot(final VirtualFile currentRoot) {
@@ -230,34 +266,55 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
     }
   }
 
-  public void doRefresh() {
-    //LOG.info("do refresh: " + new Time(System.currentTimeMillis()));
-    // will call convertsRoots
-    ProjectLevelVcsManager.getInstanceChecked(myProject).getRootsUnderVcs(myVcs);
+  private void artificialFill() {
+    myNotFilteredRoots = myPlVcsManager.getRootsUnderVcs(myVcs);
+    final FileUrlMappingCrawler crawler = new FileUrlMappingCrawler();
+    for (VirtualFile root : myNotFilteredRoots) {
+      crawler.setCurrentRoot(root);
+      crawler.fun(root);
+    }
+    synchronized (myMonitor) {
+      crawler.copyResults();
+    }
   }
 
   /**
    * for: convertions of roots in direct root search; update of roots in indirect root search
    */
   public List<VirtualFile> convertRoots(final List<VirtualFile> result) {
-    final FileUrlMappingCrawler crawler = new FileUrlMappingCrawler();
+    myNotFilteredRoots = result.toArray(new VirtualFile[result.size()]);
+    final Collection<Pair<String, VirtualFile>> pairCollection = myUrl2FileMap.values();
 
-    for (VirtualFile root : result) {
-      crawler.setCurrentRoot(root);
-      SvnUtil.crawlWCRoots(root, crawler);
+    if (pairCollection.isEmpty()) {
+      return result;
     }
-
-    final Collection<Pair<String, VirtualFile>> pairCollection;
-    synchronized (myMonitor) {
-      crawler.copyResults();
-      pairCollection = myUrl2FileMap.values();
-    }
-
     final List<VirtualFile> converted = new ArrayList<VirtualFile>();
     for (Pair<String, VirtualFile> pair : pairCollection) {
       converted.add(pair.getSecond());
     }
     return converted;
+  }
+
+  public void realRefresh() {
+    final VirtualFile[] roots;
+    synchronized (myMonitor) {
+      if (myNotFilteredRoots == null) {
+        // this will refresh
+        myPlVcsManager.getRootsUnderVcs(myVcs);
+      }
+
+      roots = myNotFilteredRoots;
+    }
+
+    final FileUrlMappingCrawler crawler = new FileUrlMappingCrawler();
+    for (VirtualFile root : roots) {
+      crawler.setCurrentRoot(root);
+      SvnUtil.crawlWCRoots(root, crawler);
+    }
+
+    synchronized (myMonitor) {
+      crawler.copyResults();
+    }
   }
 
   @Nullable
@@ -286,5 +343,9 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMappingRefresher.RefreshableSvn
       }
     }
     return null;
+  }
+
+  public VirtualFile[] getNotFilteredRoots() {
+    return myNotFilteredRoots;
   }
 }
