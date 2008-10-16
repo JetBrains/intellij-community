@@ -158,41 +158,38 @@ public class MavenEmbedderFactory {
   }
 
   public static MavenEmbedderWrapper createEmbedderForRead(MavenCoreSettings settings,
-                                                           MavenEmbedderLogger logger) {
-    return createEmbedderForRead(settings, logger, null);
+                                                           MavenConsole console) {
+    return createEmbedderForRead(settings, console, null);
   }
 
   public static MavenEmbedderWrapper createEmbedderForRead(MavenCoreSettings settings,
-                                                           MavenEmbedderLogger logger,
+                                                           MavenConsole console,
                                                            MavenProjectsTree projectsTree) {
-    return createEmbedder(settings, logger, new MyCustomizer(projectsTree, false));
+    return createEmbedder(settings, console, new MyCustomizer(projectsTree, false));
   }
 
   public static MavenEmbedderWrapper createEmbedderForResolve(MavenCoreSettings settings,
-                                                              MavenEmbedderLogger logger,
+                                                              MavenConsole console,
                                                               MavenProjectsTree projectsTree) {
-    return createEmbedder(settings, logger, new MyCustomizer(projectsTree, true));
+    return createEmbedder(settings, console, new MyCustomizer(projectsTree, true));
   }
 
-  public static MavenEmbedderWrapper createEmbedderForExecute(MavenCoreSettings settings, MavenEmbedderLogger logger) {
-    return createEmbedder(settings, logger, null);
+  public static MavenEmbedderWrapper createEmbedderForExecute(MavenCoreSettings settings,
+                                                              MavenConsole console) {
+    return createEmbedder(settings, console, null);
   }
 
-  private static MavenEmbedderWrapper createEmbedder(MavenCoreSettings settings, MavenEmbedderLogger logger, ContainerCustomizer customizer) {
+  private static MavenEmbedderWrapper createEmbedder(MavenCoreSettings settings,
+                                                     MavenConsole console,
+                                                     ContainerCustomizer customizer) {
     Configuration configuration = new DefaultConfiguration();
 
     configuration.setConfigurationCustomizer(customizer);
     configuration.setClassLoader(settings.getClass().getClassLoader());
     configuration.setLocalRepository(settings.getEffectiveLocalRepository());
 
-    //MavenEmbedderConsoleLogger l = new MavenEmbedderConsoleLogger();
-    //l.setThreshold(MavenEmbedderLogger.LEVEL_WARN);
-    if (logger == null) {
-      // todo
-      //System.out.println("Do not forget to add a sensible logger here");
-      logger = new MavenEmbedderConsoleLogger();
-      logger.setThreshold(MavenEmbedderLogger.LEVEL_WARN);
-    }
+    MavenEmbedderLogger logger = new MavenConsoleLogger(console);
+    logger.setThreshold(settings.getOutputLevel());
     configuration.setMavenEmbedderLogger(logger);
 
     File userSettingsFile = resolveUserSettingsFile(settings.getMavenSettingsFile());

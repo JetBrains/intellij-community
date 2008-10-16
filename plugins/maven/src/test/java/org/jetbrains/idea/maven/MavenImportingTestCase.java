@@ -20,10 +20,10 @@ import org.jetbrains.idea.maven.events.MavenEventsManager;
 import org.jetbrains.idea.maven.navigator.MavenTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.MavenEmbeddedExecutor;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
-import org.jetbrains.idea.maven.runner.TestConsoleAdapter;
+import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
+import org.jetbrains.idea.maven.runner.SoutMavenConsole;
 
 import java.io.File;
 import java.io.IOException;
@@ -313,7 +313,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       myMavenProjectsManager.doInitComponent(false);
       myMavenProjectsManager.setManagedFiles(files);
       myMavenProjectsManager.setActiveProfiles(myProfilesList);
-      myMavenProjectsManager.doReimport();
+      myMavenProjectsManager.doReimport(new NullMavenConsole());
       myMavenTree = myMavenProjectsManager.getMavenProjectTree();
     }
     catch (MavenProcessCanceledException e) {
@@ -334,7 +334,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     MavenRunnerParameters rp = new MavenRunnerParameters(true, dir.getPath(), Arrays.asList(goal), null);
     MavenRunnerSettings rs = new MavenRunnerSettings();
-    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(rp, getMavenCoreSettings(), rs, new TestConsoleAdapter());
+    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(rp, getMavenCoreSettings(), rs, new NullMavenConsole());
 
     e.execute(new ArrayList<MavenProject>(), new EmptyProgressIndicator());
   }

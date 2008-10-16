@@ -25,17 +25,17 @@ import java.awt.event.MouseEvent;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenImportRootStep extends ProjectImportWizardStep {
+public class MavenProjectRootStep extends ProjectImportWizardStep {
 
   private MavenCoreSettings myCoreSettings;
-  private MavenImportBuilder myImportContext;
+  private MavenProjectBuilder myImportContext;
   private MavenImportSettings myImporterSettings;
 
   private final JPanel myPanel;
   private NamePathComponent myRootPathComponent;
   private final MavenImportSettingsForm myImporterSettingsForm;
 
-  public MavenImportRootStep(WizardContext wizardContext) {
+  public MavenProjectRootStep(WizardContext wizardContext) {
     super(wizardContext);
 
     myImporterSettingsForm = new MavenImportSettingsForm(true) {
@@ -110,21 +110,21 @@ public class MavenImportRootStep extends ProjectImportWizardStep {
 
   private MavenCoreSettings getCoreSettings() {
     if (myCoreSettings == null) {
-      myCoreSettings = ((MavenImportBuilder)getBuilder()).getCoreState();
+      myCoreSettings = ((MavenProjectBuilder)getBuilder()).getCoreState();
     }
     return myCoreSettings;
   }
 
-  public MavenImportBuilder getImportContext() {
+  public MavenProjectBuilder getImportContext() {
     if (myImportContext == null) {
-      myImportContext = (MavenImportBuilder)getBuilder();
+      myImportContext = (MavenProjectBuilder)getBuilder();
     }
     return myImportContext;
   }
 
   public MavenImportSettings getImporterSettings() {
     if (myImporterSettings == null) {
-      myImporterSettings = ((MavenImportBuilder)getBuilder()).getImporterPreferences();
+      myImporterSettings = ((MavenProjectBuilder)getBuilder()).getImporterPreferences();
     }
     return myImporterSettings;
   }

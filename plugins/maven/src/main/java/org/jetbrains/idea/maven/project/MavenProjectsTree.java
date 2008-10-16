@@ -9,11 +9,12 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Parent;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenId;
-import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.dom.model.Dependency;
+import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.utils.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenId;
 
 import java.io.File;
 import java.util.*;
@@ -31,9 +32,10 @@ public class MavenProjectsTree {
   public void read(Collection<VirtualFile> filesToImport,
                    List<String> activeProfiles,
                    MavenCoreSettings mavenSettings,
+                   MavenConsole console,
                    MavenProcess p) throws MavenProcessCanceledException {
     myProfiles = activeProfiles;
-    update(filesToImport, mavenSettings, p, true);
+    update(filesToImport, mavenSettings, console, p, true);
     resolveIntermoduleDependencies();
   }
 
@@ -49,13 +51,13 @@ public class MavenProjectsTree {
     }
   }
 
-  public void update(Collection<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p) throws MavenProcessCanceledException {
-    update(files, mavenSettings, p, false);
+  public void update(Collection<VirtualFile> files, MavenCoreSettings mavenSettings, MavenConsole console, MavenProcess p) throws MavenProcessCanceledException {
+    update(files, mavenSettings, console, p, false);
   }
 
-  private void update(Collection<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p, boolean force)
+  private void update(Collection<VirtualFile> files, MavenCoreSettings mavenSettings, MavenConsole console, MavenProcess p, boolean force)
       throws MavenProcessCanceledException {
-    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(mavenSettings, null, this);
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(mavenSettings, console, this);
 
     try {
       Set<VirtualFile> readFiles = new HashSet<VirtualFile>();
@@ -225,7 +227,7 @@ public class MavenProjectsTree {
     }
   }
 
-  public void delete(List<VirtualFile> files, MavenCoreSettings mavenSettings, MavenProcess p) throws MavenProcessCanceledException {
+  public void delete(List<VirtualFile> files, MavenCoreSettings mavenSettings, MavenConsole console, MavenProcess p) throws MavenProcessCanceledException {
     List<MavenProjectModel> projectsToUpdate = new ArrayList<MavenProjectModel>();
     List<MavenProjectModel> removedProjects = new ArrayList<MavenProjectModel>();
 
@@ -246,7 +248,7 @@ public class MavenProjectsTree {
       filesToUpdate.add(each.getFile());
     }
 
-    update(filesToUpdate, mavenSettings, p);
+    update(filesToUpdate, mavenSettings, console, p);
   }
 
   private void doRemove(MavenProjectModel aggregator, MavenProjectModel project, List<MavenProjectModel> removedProjects)
@@ -394,8 +396,9 @@ public class MavenProjectsTree {
 
   public void resolve(MavenCoreSettings coreSettings,
                       MavenArtifactSettings artifactSettings,
+                      MavenConsole console,
                       MavenProcess p) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, null, this);
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, console, this);
 
     try {
       List<MavenProjectModel> projects = getProjects();
@@ -416,15 +419,16 @@ public class MavenProjectsTree {
   }
 
   public void generateSources(MavenCoreSettings coreSettings,
+                              MavenConsole console,
                               MavenProcess p) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, null, this);
+    MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedderForExecute(coreSettings, console);
 
     try {
       for (MavenProjectModel each : getProjects()) {
         p.checkCanceled();
         p.setText(ProjectBundle.message("maven.generating.sources.pom", FileUtil.toSystemDependentName(each.getPath())));
         p.setText2("");
-        each.generateSources(embedder);
+        each.generateSources(embedder, console);
       }
     }
     finally {
@@ -434,8 +438,9 @@ public class MavenProjectsTree {
 
   public void download(MavenCoreSettings coreSettings,
                        MavenArtifactSettings artifactSettings,
+                       MavenConsole console,
                        MavenProcess p) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings, null);
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings, console);
     try {
       doDownload(artifactSettings, p, e, getProjects(), true);
     }
@@ -460,8 +465,9 @@ public class MavenProjectsTree {
 
   public Artifact downloadArtifact(MavenProjectModel mavenProject,
                                    MavenId id,
-                                   MavenCoreSettings coreSettings) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings, null);
+                                   MavenCoreSettings coreSettings,
+                                   MavenConsole console) throws MavenProcessCanceledException {
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings, console);
     try {
       Artifact artifact = e.createArtifact(id.groupId,
                                            id.artifactId,

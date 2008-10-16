@@ -23,15 +23,15 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
     if (!super.isStepVisible()) {
       return false;
     }
-    final MavenImportBuilder importBuilder = getBuilder();
+    final MavenProjectBuilder importBuilder = getBuilder();
     if (importBuilder != null) {
       return !importBuilder.getProfiles().isEmpty();
     }
     return false;
   }
 
-  protected MavenImportBuilder getBuilder() {
-    return (MavenImportBuilder)super.getBuilder();
+  protected MavenProjectBuilder getBuilder() {
+    return (MavenProjectBuilder)super.getBuilder();
   }
 
   public void createUIComponents (){

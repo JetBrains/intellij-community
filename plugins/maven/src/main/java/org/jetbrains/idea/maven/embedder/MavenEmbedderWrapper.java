@@ -1,8 +1,8 @@
 package org.jetbrains.idea.maven.embedder;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.manager.WagonManager;
@@ -18,18 +18,17 @@ import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.extension.ExtensionScanningException;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
-import org.apache.maven.monitor.event.EventMonitor;
 import org.apache.maven.monitor.event.DefaultEventMonitor;
+import org.apache.maven.monitor.event.EventMonitor;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.reactor.MavenExecutionException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.jetbrains.idea.maven.core.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.project.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.project.TransferListenerAdapter;
-import org.jetbrains.idea.maven.utils.MavenEmbeddedLogger;
+import org.jetbrains.idea.maven.utils.MavenId;
 
 import java.io.File;
 import java.io.IOException;
@@ -196,10 +195,6 @@ public class MavenEmbedderWrapper {
     catch (ComponentLookupException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  public void setLogger(MavenEmbeddedLogger logger) {
-    myEmbedder.setLogger(logger);
   }
 
   public String getLocalRepository() {

@@ -178,7 +178,7 @@ public class MavenEventsManager extends DummyProjectComponent implements Persist
   public boolean execute(@NotNull Collection<MavenTask> mavenTasks, ProgressIndicator indicator) {
     final List<MavenRunnerParameters> parametersList = new ArrayList<MavenRunnerParameters>();
     for (MavenTask mavenTask : mavenTasks) {
-      final MavenRunnerParameters runnerParameters = mavenTask.createBuildParameters(myProjectsManager);
+      final MavenRunnerParameters runnerParameters = mavenTask.createRunnerParameters(myProjectsManager);
       if (runnerParameters == null) {
         return false;
       }

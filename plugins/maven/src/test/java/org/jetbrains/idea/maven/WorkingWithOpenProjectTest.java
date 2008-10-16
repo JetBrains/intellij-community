@@ -54,7 +54,7 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
                              "  </dependency>" +
                              "</dependencies>"));
     
-    myMavenProjectsManager.doReimport();
+    myMavenProjectsManager.doReimport(new NullMavenConsole());
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0");
   }

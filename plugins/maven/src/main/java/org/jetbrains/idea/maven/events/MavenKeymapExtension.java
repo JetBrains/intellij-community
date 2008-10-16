@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.events;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapExtension;
 import com.intellij.openapi.keymap.KeymapGroup;
@@ -12,10 +13,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.runner.MavenRunner;
+import org.jetbrains.idea.maven.runner.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenId;
@@ -181,12 +183,15 @@ public class MavenKeymapExtension implements KeymapExtension {
       Project project = e.getData(PlatformDataKeys.PROJECT);
       if (project == null) return;
 
-      MavenRunner runner = MavenRunner.getInstance(project);
-      if (runner.isRunning()) return;
+      MavenRunnerParameters params = new MavenTask(myPomPath, myGoal).createRunnerParameters(MavenProjectsManager.getInstance(project));
+      if (params == null) return;
 
-      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-      MavenRunnerParameters params = new MavenTask(myPomPath, myGoal).createBuildParameters(projectsManager);
-      if (params != null) runner.run(params);
+      try {
+        MavenRunConfigurationType.runConfiguration(project, params, e.getDataContext());
+      }
+      catch (ExecutionException ex) {
+        MavenLog.LOG.warn(ex);
+      }
     }
 
     public String toString() {

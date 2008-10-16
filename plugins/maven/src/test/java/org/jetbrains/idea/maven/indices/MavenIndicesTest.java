@@ -9,6 +9,7 @@ import org.apache.lucene.search.WildcardQuery;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderException;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.NullMavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.sonatype.nexus.index.ArtifactInfo;
 
@@ -43,7 +44,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   private void initIndices(String relativeDir) {
-    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings(), null).getEmbedder();
+    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings(), new NullMavenConsole()).getEmbedder();
     myIndicesDir = new File(myDir, relativeDir);
     myIndices = new MavenIndices(myEmbedder, myIndicesDir, new MavenIndex.IndexListener() {
       public void indexIsBroken(MavenIndex index) {

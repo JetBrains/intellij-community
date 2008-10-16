@@ -22,7 +22,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
     <projectOpenProcessor implementation="org.jetbrains.idea.maven.wizards.MavenProjectOpenProcessor"/>
-    <projectImportBuilder implementation="org.jetbrains.idea.maven.wizards.MavenImportBuilder"/>
+    <projectImportBuilder implementation="org.jetbrains.idea.maven.wizards.MavenProjectBuilder"/>
     <moduleType id="MAVEN_MODULE" implementationClass="org.jetbrains.idea.maven.wizards.MavenModuleType"/>
 
     <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.events.MavenStepsBeforeRunProvider"/>
@@ -107,36 +107,13 @@
       </action>
 
       <action id="Maven.ToggleSkipTests"
-              class="org.jetbrains.idea.maven.runner.action.ToggleSkipTestsAction" text="Toggle 'Skip tests' mode"
+              class="org.jetbrains.idea.maven.core.action.ToggleSkipTestsAction" text="Toggle 'Skip tests' mode"
               description="Toggle 'Skip tests' mode for Maven"
               icon="/nodes/exceptionClass.png">
       </action>
 
       <action id="Maven.Help"
               class="com.intellij.ide.actions.ContextHelpAction" text="Help"/>
-    </group>
-
-    <group id="Maven.OutputToolbar" description="Output toolbar">
-      <action id="Maven.Rerun"
-              class="org.jetbrains.idea.maven.runner.action.RerunMavenAction"
-              text="Rerun"
-              description="Reruns the latest Maven goal"
-              icon="/actions/refreshUsages.png"/>
-      <action id="Maven.PauseOutput"
-              class="org.jetbrains.idea.maven.runner.action.PauseOutputAction"
-              text="Pause/Resume Output"
-              description="Pauses/resumes the output in the output window"
-              icon="/actions/pause.png"/>
-      <action id="Maven.Stop"
-              class="org.jetbrains.idea.maven.runner.action.StopMavenAction"
-              text="Stop"
-              description="Stops the currently running Maven goal"
-              icon="/actions/suspend.png"/>
-      <action id="Maven.CloseOutput"
-              class="org.jetbrains.idea.maven.runner.action.CloseOutputPanelAction"
-              text="Close Output Panel"
-              description="Closes the output window"
-              icon="/actions/cancel.png"/>
     </group>
 
     <group id="Maven.PomTreeView">
@@ -151,12 +128,6 @@
               description="Show ignored projects"
               icon="/actions/showHiddens.png"/>
     </group>
-
-    <action id="Maven.Run"
-            class="org.jetbrains.idea.maven.runner.action.RunGoalsAction" text="_Run Goal"
-            description="Execute selected goal"
-            icon="/actions/execute.png">
-    </action>
 
     <group id="Maven.State">
       <action id="Maven.Ignore"
@@ -236,7 +207,6 @@
     </group>
 
     <group id="Maven.PomMenu" popup="true">
-      <reference id="Maven.Run"/>
       <reference ref="RunContextGroup"/>
       <separator/>
       <reference id="Maven.RemoveManagedFiles"/>
@@ -246,7 +216,6 @@
     </group>
 
     <group id="Maven.GoalMenu" popup="true">
-      <reference id="Maven.Run"/>
       <reference ref="RunContextGroup"/>
       <separator/>
       <reference ref="Maven.EventsGroup"/>

@@ -8,21 +8,19 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.Strings;
-import org.jetbrains.idea.maven.runner.RunnerBundle;
-import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 
 import javax.swing.*;
 
 /**
  * @author Vladislav.Kaznacheev
  */
-public abstract class MavenRunConfigurable implements Configurable {
+public abstract class MavenRunnerParametersConfigurable implements Configurable {
   private JPanel panel;
   protected LabeledComponent<TextFieldWithBrowseButton> workingDirComponent;
   protected LabeledComponent<JTextField> goalsComponent;
   private LabeledComponent<JTextField> profilesComponent;
 
-  public MavenRunConfigurable() {
+  public MavenRunnerParametersConfigurable() {
     workingDirComponent.getComponent().addBrowseFolderListener(RunnerBundle.message("maven.select.maven.project.file"), "", null,
                                                         new FileChooserDescriptor(true, false, false, false, false, false));
   }

@@ -52,7 +52,7 @@ public class MavenTask implements Cloneable, Comparable {
   }
 
   @Nullable
-  public MavenRunnerParameters createBuildParameters(final MavenProjectsManager projectsManager) {
+  public MavenRunnerParameters createRunnerParameters(final MavenProjectsManager projectsManager) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(pomPath);
     if (virtualFile != null) {
       return new MavenRunnerParameters(true, virtualFile.getParent().getPath(),

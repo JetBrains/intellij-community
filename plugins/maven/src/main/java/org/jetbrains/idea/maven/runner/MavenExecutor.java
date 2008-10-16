@@ -22,7 +22,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.utils.MavenLogUtil;
+import org.jetbrains.idea.maven.embedder.MavenConsole;
 
 import java.text.MessageFormat;
 import java.util.List;
@@ -32,7 +32,7 @@ public abstract class MavenExecutor  {
   final MavenCoreSettings myCoreSettings;
   final MavenRunnerSettings myRunnerSettings;
   private String myCaption;
-  protected ConsoleAdapter myConsole;
+  protected MavenConsole myConsole;
   private String myAction;
 
   private boolean stopped = true;
@@ -43,7 +43,7 @@ public abstract class MavenExecutor  {
                        MavenCoreSettings coreSettings,
                        MavenRunnerSettings runnerSettings,
                        String caption,
-                       ConsoleAdapter console) {
+                       MavenConsole console) {
     myParameters = parameters;
     myCoreSettings = coreSettings;
     myRunnerSettings = runnerSettings;
@@ -55,7 +55,7 @@ public abstract class MavenExecutor  {
     return myCaption;
   }
 
-  public ConsoleAdapter getConsole() {
+  public MavenConsole getConsole() {
     return myConsole;
   }
 
@@ -100,15 +100,15 @@ public abstract class MavenExecutor  {
 
   protected boolean printExitSummary() {
     if (isCancelled()) {
-      myConsole.systemMessage(MavenLogUtil.LEVEL_INFO, RunnerBundle.message("maven.execution.aborted"), null);
+      myConsole.systemMessage(MavenConsole.LEVEL_INFO, RunnerBundle.message("maven.execution.aborted"), null);
       return false;
     }
     else if (exitCode == 0) {
-      myConsole.systemMessage(MavenLogUtil.LEVEL_INFO, RunnerBundle.message("maven.execution.finished"), null);
+      myConsole.systemMessage(MavenConsole.LEVEL_INFO, RunnerBundle.message("maven.execution.finished"), null);
       return true;
     }
     else {
-      myConsole.systemMessage(MavenLogUtil.LEVEL_ERROR, RunnerBundle.message("maven.execution.terminated.abnormally", exitCode), null);
+      myConsole.systemMessage(MavenConsole.LEVEL_ERROR, RunnerBundle.message("maven.execution.terminated.abnormally", exitCode), null);
       return false;
     }
   }

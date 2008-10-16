@@ -8,24 +8,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.core.MavenCoreConfigurable;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.action.CompositeConfigurable;
-import org.jetbrains.idea.maven.runner.MavenRunnerConfigurable;
-import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
-import org.jetbrains.idea.maven.runner.MavenRunConfigurable;
-import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 
 import javax.swing.*;
 
 /**
  * @author Vladislav.Kaznacheev
  */
-class MavenRunSettingsEditor extends SettingsEditor<MavenRunConfiguration> {
+public class MavenRunnerSettingsEditor extends SettingsEditor<MavenRunConfiguration> {
   private MavenRunConfiguration configuration;
 
   Configurable myCompositeConfigurable;
 
-  public MavenRunSettingsEditor(final Project p) {
+  public MavenRunnerSettingsEditor(final Project p) {
     myCompositeConfigurable = new CompositeConfigurable(
-       new MavenRunConfigurable() {
+       new MavenRunnerParametersConfigurable() {
       protected MavenRunnerParameters getParameters() {
         return configuration.getRunnerParameters();
       }
@@ -33,7 +29,7 @@ class MavenRunSettingsEditor extends SettingsEditor<MavenRunConfiguration> {
       protected MavenCoreSettings getState() {
         return configuration.getCoreSettings();
       }
-    }, new MavenRunnerConfigurable(p, true) {
+    }, new MavenRunnerSettingsConfigurable(p, true) {
       protected MavenRunnerSettings getState() {
         return configuration.getRunnerSettings();
       }

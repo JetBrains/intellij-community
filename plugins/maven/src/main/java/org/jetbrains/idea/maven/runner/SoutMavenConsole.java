@@ -5,9 +5,10 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.util.Key;
 import org.apache.maven.execution.MavenExecutionRequest;
+import org.jetbrains.idea.maven.embedder.MavenConsole;
 
-public class TestConsoleAdapter extends ConsoleAdapter {
-  public TestConsoleAdapter() {
+public class SoutMavenConsole extends MavenConsole {
+  public SoutMavenConsole() {
     super(MavenExecutionRequest.LOGGING_LEVEL_DEBUG, true);
   }
 

@@ -18,12 +18,12 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase {
-  public MavenProjectOpenProcessor(final MavenImportBuilder builder) {
+  public MavenProjectOpenProcessor(final MavenProjectBuilder builder) {
     super(builder);
   }
 
-  public MavenImportBuilder getBuilder() {
-    return (MavenImportBuilder)super.getBuilder();
+  public MavenProjectBuilder getBuilder() {
+    return (MavenProjectBuilder)super.getBuilder();
   }
 
   @Nullable

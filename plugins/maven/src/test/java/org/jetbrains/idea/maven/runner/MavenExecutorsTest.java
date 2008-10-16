@@ -6,7 +6,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.utils.MavenLogUtil;
+import org.jetbrains.idea.maven.NullMavenConsole;
+import org.jetbrains.idea.maven.embedder.MavenConsole;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,11 +37,11 @@ public class MavenExecutorsTest extends MavenTestCase {
 
     MavenExecutor e;
     if (useEmbedder) {
-      e = new MavenEmbeddedExecutor(params, getMavenCoreSettings(), settings, new TestConsoleAdapter());
+      e = new MavenEmbeddedExecutor(params, getMavenCoreSettings(), settings, new NullMavenConsole());
     }
     else {
       settings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA);
-      e = new MavenExternalExecutor(params, getMavenCoreSettings(), settings, new TestConsoleAdapter());
+      e = new MavenExternalExecutor(params, getMavenCoreSettings(), settings, new NullMavenConsole());
     }
 
     assertTrue(e.execute(new ArrayList<MavenProject>(), new EmptyProgressIndicator()));
@@ -61,7 +62,7 @@ public class MavenExecutorsTest extends MavenTestCase {
     doTestReportingEmbedderErrors(
         "compile",
         "[ERROR] Compilation failure" +
-        MavenLogUtil.LINE_SEPARATOR +
+        MavenConsole.LINE_SEPARATOR +
         FileUtil.toSystemDependentName(file.getPath()) + ":[1,0] class or interface expected");
   }
 
@@ -69,7 +70,7 @@ public class MavenExecutorsTest extends MavenTestCase {
     doTestReportingEmbedderErrors(
         "archetype:create",
         "[ERROR] Error creating from archetype" +
-        MavenLogUtil.LINE_SEPARATOR + MavenLogUtil.LINE_SEPARATOR +
+        MavenConsole.LINE_SEPARATOR + MavenConsole.LINE_SEPARATOR +
         "Artifact ID must be specified when creating a new project from an archetype.");
   }
 
@@ -77,10 +78,9 @@ public class MavenExecutorsTest extends MavenTestCase {
     MavenRunnerParameters params = new MavenRunnerParameters(true, getProjectPath(), Arrays.asList(goal), null);
 
     final StringBuffer buffer = new StringBuffer();
-    TestConsoleAdapter console = new TestConsoleAdapter() {
+    MavenConsole console = new NullMavenConsole() {
       @Override
       protected void doPrint(String text, OutputType type) {
-        super.doPrint(text, type);
         buffer.append(text);
       }
     };
@@ -112,7 +112,7 @@ public class MavenExecutorsTest extends MavenTestCase {
                                      "<version>1</version>");
 
     MavenRunnerParameters params = new MavenRunnerParameters(true, getProjectPath(), Arrays.asList("compile"), null);
-    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(params, getMavenCoreSettings(), new MavenRunnerSettings(), new TestConsoleAdapter())
+    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(params, getMavenCoreSettings(), new MavenRunnerSettings(), new NullMavenConsole())
         ;
 
     ArrayList<MavenProject> result = new ArrayList<MavenProject>();

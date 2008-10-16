@@ -1,12 +1,14 @@
 package org.jetbrains.idea.maven.runner;
 
-import com.intellij.execution.LocatableConfigurationType;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunManagerEx;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,8 +19,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.runner.RunnerBundle;
-import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 
 import javax.swing.*;
 import java.util.List;
@@ -112,14 +112,9 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
   }
 
   public RunnerAndConfigurationSettings createConfigurationByLocation(Location l) {
-    final MavenRunnerParameters runnerParameters = createBuildParameters(l);
-    if (runnerParameters == null) return null;
-
-    final RunnerAndConfigurationSettingsImpl settings = RunManagerEx.getInstanceEx(l.getProject())
-      .createConfiguration(generateName(l.getProject(), runnerParameters), myFactory);
-    MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
-    runConfiguration.setRunnerParameters(runnerParameters);
-    return settings;
+    final MavenRunnerParameters params = createBuildParameters(l);
+    if (params == null) return null;
+    return createRunnerAndConfigurationSettings(params, l.getProject());
   }
 
   public boolean isConfigurationByLocation(RunConfiguration configuration, Location location) {
@@ -137,4 +132,20 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     return new MavenRunnerParameters(true, f.getParent().getPath(), goals, profiles);
   }
 
+  public static void runConfiguration(Project project, MavenRunnerParameters params, DataContext dataContext) throws ExecutionException {
+    RunnerAndConfigurationSettings settings = createRunnerAndConfigurationSettings(params, project);
+
+    ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(DefaultRunExecutor.EXECUTOR_ID);
+    runner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(runner, settings, dataContext));
+  }
+
+  private static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(MavenRunnerParameters params, Project projact) {
+    MavenRunConfigurationType type = ConfigurationTypeUtil.findConfigurationType(MavenRunConfigurationType.class);
+
+    final RunnerAndConfigurationSettingsImpl settings = RunManagerEx.getInstanceEx(projact)
+      .createConfiguration(generateName(projact, params), type.myFactory);
+    MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
+    runConfiguration.setRunnerParameters(params);
+    return settings;
+  }
 }

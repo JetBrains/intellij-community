@@ -15,19 +15,19 @@ import org.jetbrains.idea.maven.project.MavenProjectModel;
 import java.io.File;
 
 public class MavenProjectImportProvider extends ProjectImportProvider {
-  public MavenProjectImportProvider(final MavenImportBuilder builder) {
+  public MavenProjectImportProvider(final MavenProjectBuilder builder) {
     super(builder);
   }
 
   public ModuleWizardStep[] createSteps(WizardContext wizardContext) {
     final ProjectWizardStepFactory stepFactory = ProjectWizardStepFactory.getInstance();
-    return new ModuleWizardStep[]{new MavenImportRootStep(wizardContext), new SelectProfilesStep(wizardContext),
+    return new ModuleWizardStep[]{new MavenProjectRootStep(wizardContext), new SelectProfilesStep(wizardContext),
       new SelectImportedProjectsStep<MavenProjectModel>(wizardContext) {
         protected String getElementText(final MavenProjectModel node) {
           final StringBuilder stringBuilder = new StringBuilder();
           stringBuilder.append(node.getMavenId());
           final String relPath =
-            VfsUtil.getRelativePath(node.getFile().getParent(), ((MavenImportBuilder)getBuilder()).getRootDirectory(), File.separatorChar);
+            VfsUtil.getRelativePath(node.getFile().getParent(), ((MavenProjectBuilder)getBuilder()).getRootDirectory(), File.separatorChar);
           if (relPath.length() != 0) {
             stringBuilder.append(" [").append(relPath).append("]");
           }
@@ -36,7 +36,7 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
 
         public void updateDataModel() {
           super.updateDataModel();
-          getWizardContext().setProjectName(((MavenImportBuilder)getBuilder()).getSuggestedProjectName());
+          getWizardContext().setProjectName(((MavenProjectBuilder)getBuilder()).getSuggestedProjectName());
         }
 
         public String getHelpId() {

@@ -16,6 +16,7 @@ import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.runner.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.FileFinder;
 
 import javax.swing.*;
@@ -28,7 +29,7 @@ import java.util.Set;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> {
+public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel> {
   private final static Icon ICON = IconLoader.getIcon("/images/mavenEmblem.png");
 
   private Project myProjectToUpdate;
@@ -135,7 +136,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
   private void collectProfiles() {
     myProfiles = new ArrayList<String>();
 
-    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(getCoreState(), null);
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(getCoreState(), new SoutMavenConsole());
     try {
       for (VirtualFile f : myFiles) {
         MavenProjectHolder holder = MavenReader.readProject(e, f, new ArrayList<String>());
@@ -196,6 +197,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel> 
     myMavenProjectTree.read(myFiles,
                             mySelectedProfiles,
                             getCoreState(),
+                            new SoutMavenConsole(), 
                             p);
   }
 

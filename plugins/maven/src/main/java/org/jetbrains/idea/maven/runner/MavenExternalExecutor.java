@@ -27,7 +27,7 @@ import com.intellij.openapi.util.Key;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.utils.MavenLogUtil;
+import org.jetbrains.idea.maven.embedder.MavenConsole;
 
 import java.util.List;
 
@@ -41,7 +41,7 @@ public class MavenExternalExecutor extends MavenExecutor {
   public MavenExternalExecutor(MavenRunnerParameters parameters,
                                MavenCoreSettings coreSettings,
                                MavenRunnerSettings runnerSettings,
-                               ConsoleAdapter console) {
+                               MavenConsole console) {
     super(parameters, coreSettings, runnerSettings, RunnerBundle.message("external.executor.caption"), console);
   }
 
@@ -53,7 +53,7 @@ public class MavenExternalExecutor extends MavenExecutor {
           new DefaultJavaProcessHandler(MavenExternalParameters.createJavaParameters(myParameters, myCoreSettings, myRunnerSettings)) {
             public void notifyTextAvailable(String text, Key outputType) {
               // todo move this logic to ConsoleAdapter class
-              if (!myConsole.isSuppressed(MavenLogUtil.getLevel(text))) {
+              if (!myConsole.isSuppressed(text)) {
                 super.notifyTextAvailable(text, outputType);
               }
               updateProgress(indicator, text);
@@ -63,7 +63,7 @@ public class MavenExternalExecutor extends MavenExecutor {
       myConsole.attachToProcess(myProcessHandler);
     }
     catch (ExecutionException e) {
-      myConsole.systemMessage(MavenLogUtil.LEVEL_FATAL, RunnerBundle.message("external.startup.failed", e.getMessage()), null);
+      myConsole.systemMessage(MavenConsole.LEVEL_FATAL, RunnerBundle.message("external.startup.failed", e.getMessage()), null);
       return false;
     }
 

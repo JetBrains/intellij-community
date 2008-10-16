@@ -19,11 +19,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.runner.MavenRunner;
-import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
-import org.jetbrains.idea.maven.runner.RunnerBundle;
-import org.jetbrains.idea.maven.runner.MavenExternalParameters;
-import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 
 import java.io.File;
 
@@ -42,7 +37,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new MavenRunSettingsEditor(getProject());
+    return new MavenRunnerSettingsEditor(getProject());
   }
 
   public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {

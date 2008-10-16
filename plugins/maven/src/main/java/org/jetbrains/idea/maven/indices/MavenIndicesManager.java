@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.runner.SoutMavenConsole;
 
 import java.io.File;
 import java.util.*;
@@ -73,7 +74,7 @@ public class MavenIndicesManager implements ApplicationComponent {
 
     MavenCoreSettings settings = MavenCore.getInstance(ProjectManager.getInstance().getDefaultProject()).getState();
 
-    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(settings, null).getEmbedder();
+    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(settings, new SoutMavenConsole()).getEmbedder();
     File dir = myTestIndicesDir == null
                ? MavenUtil.getPluginSystemDir("Indices")
                : myTestIndicesDir;
