@@ -407,6 +407,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     }
 
     public boolean hasChangedSinceLastAccess(IFile file) {
+      if (myBackup == null) return false;
+
       final Long ts = myBackup.get(file);
       if (ts == null) return false;
       if (!file.exists()) return true;
@@ -415,6 +417,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     }
 
     public void updateBackupTimeStamps() {
+      if (myBackup == null) return;
+      
       for (final Map.Entry<IFile, Long> entry : myBackup.entrySet()) {
         final IFile file = entry.getKey();
         if (file.exists()) {
