@@ -19,11 +19,14 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+
+import java.util.Collection;
 
 /**
  * @author ven
@@ -36,7 +39,11 @@ public class GrClosureType extends PsiClassType {
   private boolean[] myOptionals;
   private PsiManager myManager;
 
-  private GrClosureType(GlobalSearchScope scope, @Nullable PsiType returnType, PsiType[] parameters, boolean[] optionals, PsiManager manager) {
+  private GrClosureType(GlobalSearchScope scope,
+                        @Nullable PsiType returnType,
+                        PsiType[] parameters,
+                        boolean[] optionals,
+                        PsiManager manager) {
     myScope = scope;
     myReturnType = returnType;
     myParameterTypes = parameters;
@@ -132,7 +139,7 @@ public class GrClosureType extends PsiClassType {
 
   public boolean equals(Object obj) {
     if (obj instanceof GrClosureType) {
-      GrClosureType other = (GrClosureType) obj;
+      GrClosureType other = (GrClosureType)obj;
       if (!Comparing.equal(myReturnType, other.myReturnType)) return false;
       if (myParameterTypes.length != other.myParameterTypes.length) return false;
       for (int i = 0; i < myParameterTypes.length; i++) {
@@ -147,7 +154,7 @@ public class GrClosureType extends PsiClassType {
 
   public boolean isAssignableFrom(@NotNull PsiType type) {
     if (type instanceof GrClosureType) {
-      GrClosureType other = (GrClosureType) type;
+      GrClosureType other = (GrClosureType)type;
       if (myReturnType == null || other.myReturnType == null) {
         return myReturnType == null && other.myReturnType == null;
       }
@@ -191,14 +198,24 @@ public class GrClosureType extends PsiClassType {
     boolean[] optionals = new boolean[parameters.length];
     for (int i = 0; i < optionals.length; i++) {
       PsiParameter parameter = parameters[i];
-      optionals[i] = parameter instanceof GrParameter && ((GrParameter) parameter).isOptional();
+      if (parameter instanceof GrParameter) {
+        optionals[i] = ((GrParameter)parameter).isOptional();
+      } else if (i == 0) { // for implicit "it" parameter
+        final Collection<PsiReference> all = ReferencesSearch.search(parameter).findAll();
+        optionals[i] = all.size() == 0;
+      } else {
+        optionals[i] = false;
+      }
       parameterTypes[i] = parameter.getType();
     }
     return create(returnType, parameterTypes, optionals, manager, scope);
   }
 
-  public static GrClosureType create(PsiType returnType, PsiType[] parameterTypes, boolean[] optionals,
-                                     PsiManager manager, GlobalSearchScope scope) {
+  public static GrClosureType create(PsiType returnType,
+                                     PsiType[] parameterTypes,
+                                     boolean[] optionals,
+                                     PsiManager manager,
+                                     GlobalSearchScope scope) {
     return new GrClosureType(scope, returnType, parameterTypes, optionals, manager);
   }
 
