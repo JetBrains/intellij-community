@@ -90,7 +90,7 @@ public interface FacetDetectorRegistry<C extends FacetConfiguration> {
                                          @NotNull UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector);
 
   /**
-   * Register detector to be used for both on-the-fly auto-detection and auto-detection in the module wizrd
+   * Register detector to be used for both on-the-fly auto-detection and auto-detection in the module wizard
    * @param fileType type of facet descriptor files
    * @param virtualFileFilter fileter for facet descriptor files
    * @param detector
@@ -100,7 +100,7 @@ public interface FacetDetectorRegistry<C extends FacetConfiguration> {
   void registerUniversalDetector(@NotNull FileType fileType, @NotNull VirtualFilePattern virtualFilePattern, @NotNull FacetDetector<VirtualFile, C> facetDetector);
 
   /**
-   * Register detector to be used for both on-the-fly auto-detection and auto-detection in the module wizrd
+   * Register detector to be used for both on-the-fly auto-detection and auto-detection in the module wizard
    * @param fileType type of facet descriptor files
    * @param virtualFilePattern filter for facet descriptors
    * @param facetDetector detector
