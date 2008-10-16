@@ -133,6 +133,10 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addStdResource(resource, STANDARD_SCHEMAS + fileName);
   }
 
+  public void addInternalResource(@NonNls String resource, @NonNls String fileName, Class clazz) {
+    addStdResource(resource, STANDARD_SCHEMAS + fileName, clazz);
+  }
+
   public void addInternalResource(@NonNls String resource, @NonNls String version, @NonNls String fileName) {
     addStdResource(resource, version, STANDARD_SCHEMAS + fileName, getClass());
   }
