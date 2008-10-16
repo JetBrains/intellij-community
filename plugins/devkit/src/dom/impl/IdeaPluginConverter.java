@@ -16,6 +16,7 @@ import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,11 @@ import java.util.*;
  * @author mike
  */
 public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
+  @NonNls private static final Set<String> PLATFORM_MODULES = CollectionFactory.newTroveSet("com.intellij.modules.platform",
+                                                                                            "com.intellij.modules.lang",
+                                                                                            "com.intellij.modules.vcs",
+                                                                                            "com.intellij.modules.xdebugger");
+
   @NotNull
   public Collection<? extends IdeaPlugin> getVariants(final ConvertContext context) {
     return collectAllVisiblePlugins(context.getFile());
@@ -38,7 +44,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
   @NotNull
   @Override
   public Set<String> getAdditionalVariants(@NotNull final ConvertContext context) {
-    return Collections.singleton("com.intellij.modules.vcs"); //todo this is a hack
+    return PLATFORM_MODULES;
   }
 
   @Override
