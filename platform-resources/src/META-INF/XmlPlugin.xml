@@ -48,6 +48,8 @@
     <editorSmartKeysConfigurable implementation="com.intellij.application.options.editor.WebEditorOptionsProvider"/>
     <editorAppearanceConfigurable implementation="com.intellij.application.options.editor.WebEditorAppearanceConfigurable"/>
 
+    <highlightErrorFilter implementation="com.intellij.codeInsight.highlighting.HtmlClosingTagErrorFilter"/>
+
     <fileBasedIndex implementation="com.intellij.xml.index.XmlTagNamesIndex"/>
     <fileBasedIndex implementation="com.intellij.xml.index.XmlNamespaceIndex"/>
     <indexedRootsProvider implementation="com.intellij.xml.index.ExternalResourcesRootsProvider"/>

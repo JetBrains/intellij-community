@@ -9,14 +9,17 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +45,18 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
           endTagName = findEndTagName(errorElement);
           if (endTagName != null) {
             registerProblem(holder, tag, start, endTagName);
+          }
+        }
+      }
+      else if (parent instanceof PsiErrorElement) {
+        if (XmlTokenType.XML_NAME == ((XmlToken)psiElement).getTokenType()) {
+          final PsiFile psiFile = psiElement.getContainingFile();
+          if (psiFile != null && (HTMLLanguage.INSTANCE == psiFile.getViewProvider().getBaseLanguage() || HTMLLanguage.INSTANCE == parent.getLanguage())) {
+            final String message = XmlErrorMessages.message("xml.parsing.closing.tag.mathes.nothing");
+            if (message.equals(((PsiErrorElement)parent).getErrorDescription())) {
+              final Annotation annotation = holder.createWarningAnnotation(parent, message);
+              annotation.registerFix(new RemoveExtraClosingTagIntentionAction());
+            }
           }
         }
       }

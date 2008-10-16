@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.problems.ProblemImpl;
+import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.util.ProperTextRange;
@@ -159,7 +160,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     myHighlights = result;
   }
 
-  private void addInjectedPsiHighlights(final List<PsiElement> elements, final Condition<PsiErrorElement>[] errorFilters) {
+  private void addInjectedPsiHighlights(final List<PsiElement> elements, final HighlightErrorFilter[] errorFilters) {
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(myFile);
     Collection<PsiElement> hosts = new THashSet<PsiElement>(elements.size() + injected.size());
 
@@ -259,7 +260,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return textRange;
   }
 
-  private static void highlightInjectedIn(final PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder, final Condition<PsiErrorElement>[] errorFilters) {
+  private static void highlightInjectedIn(final PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder, final HighlightErrorFilter[] errorFilters) {
     final DocumentWindow documentRange = ((VirtualFileWindow)injectedPsi.getContainingFile().getViewProvider().getVirtualFile()).getDocumentWindow();
     assert documentRange != null;
     assert documentRange.getText().equals(injectedPsi.getText());
@@ -298,8 +299,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
 
       @Override public void visitErrorElement(PsiErrorElement element) {
-        for (final Condition<PsiErrorElement> errorFilter : errorFilters) {
-          if (errorFilter.value(element)) return;
+        for (final HighlightErrorFilter errorFilter : errorFilters) {
+          if (!errorFilter.shouldHighlightErrorElement(element)) return;
         }
 
         HighlightInfo info = DefaultHighlightVisitor.createErrorElementInfo(element);

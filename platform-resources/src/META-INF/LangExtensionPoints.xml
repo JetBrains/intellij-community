@@ -21,7 +21,7 @@
                   interface="com.intellij.codeInsight.daemon.impl.HighlightVisitor"
                   area="IDEA_PROJECT"/>
   <extensionPoint name="highlightErrorFilter"
-                  interface="com.intellij.openapi.util.Condition"
+                  interface="com.intellij.codeInsight.highlighting.HighlightErrorFilter"
                   area="IDEA_PROJECT"/>
   <extensionPoint name="errorQuickFixProvider"
                   interface="com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider"/>

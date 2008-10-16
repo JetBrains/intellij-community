@@ -9,11 +9,10 @@ import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.XmlElementFactory;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
@@ -86,7 +85,7 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
             target = XmlTagUtil.getStartTagNameElement((XmlTag)parent);
           }
           else {
-            target = XmlTagUtil.getEndTagNameElement((XmlTag) parent);
+            target = XmlTagUtil.getEndTagNameElement((XmlTag)parent);
             if (target == null) {
               final PsiErrorElement errorElement = PsiTreeUtil.getChildOfType(parent, PsiErrorElement.class);
               target = XmlWrongClosingTagNameInspection.findEndTagName(errorElement);
@@ -96,12 +95,10 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
       }
 
       if (target != null) {
-        try {
-          final XmlTag newTag = XmlElementFactory.getInstance(project).createTagFromText("<" + myTargetName + "/>");
-          target.replace(newTag.getChildren()[1]);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+        final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+        if (document != null) {
+          final TextRange textRange = target.getTextRange();
+          document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), myTargetName);
         }
       }
 

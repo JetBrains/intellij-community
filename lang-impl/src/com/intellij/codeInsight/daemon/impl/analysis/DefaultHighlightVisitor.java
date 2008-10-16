@@ -4,13 +4,13 @@ import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
+import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -24,8 +24,8 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
   private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl();
   private HighlightInfoHolder myHolder;
 
-  public static final ExtensionPointName<Condition<PsiErrorElement>> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.highlightErrorFilter");
-  private final Condition<PsiErrorElement>[] myErrorFilters;
+  public static final ExtensionPointName<HighlightErrorFilter> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.highlightErrorFilter");
+  private final HighlightErrorFilter[] myErrorFilters;
   private final Project myProject;
 
   public DefaultHighlightVisitor(Project project) {
@@ -84,8 +84,8 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
   }
 
   public void visitErrorElement(final PsiErrorElement element) {
-    for(Condition<PsiErrorElement> errorFilter: myErrorFilters) {
-      if (errorFilter.value(element)) return;
+    for(HighlightErrorFilter errorFilter: myErrorFilters) {
+      if (!errorFilter.shouldHighlightErrorElement(element)) return;
     }
 
     HighlightInfo info = createErrorElementInfo(element);

@@ -14,8 +14,11 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
@@ -54,21 +57,33 @@ public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix, Inte
     }
 
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-    doFix(project, psiElement);
+    doFix(psiElement);
   }
 
   public boolean startInWriteAction() {
     return true;
   }
 
-  private void doFix(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {
-    final XmlToken endNameToken = (XmlToken) element;
+  private static void doFix(@NotNull final PsiElement element) throws IncorrectOperationException {
+    final XmlToken endNameToken = (XmlToken)element;
     final PsiElement tagElement = endNameToken.getParent();
-    if (!(tagElement instanceof XmlTag)) return;
+    if (!(tagElement instanceof XmlTag) && !(tagElement instanceof PsiErrorElement)) return;
 
-    final ASTNode astNode = tagElement.getNode();
-    final ASTNode endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(astNode);
-    tagElement.deleteChildRange(endTagStart.getPsi(), tagElement.getLastChild());
+    if (tagElement instanceof PsiErrorElement) {
+      tagElement.delete();
+    }
+    else {
+      final ASTNode astNode = tagElement.getNode();
+      if (astNode != null) {
+        final ASTNode endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(astNode);
+        if (endTagStart != null) {
+          final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(tagElement.getContainingFile());
+          if (document != null) {
+            document.deleteString(endTagStart.getStartOffset(), tagElement.getLastChild().getTextRange().getEndOffset());
+          }
+        }
+      }
+    }
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
@@ -78,7 +93,7 @@ public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix, Inte
 
     new WriteCommandAction(project) {
       protected void run(final Result result) throws Throwable {
-        doFix(project, element);
+        doFix(element);
       }
     }.execute();
   }
