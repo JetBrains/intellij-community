@@ -1,0 +1,8 @@
+inc<caret>
+
+target(aaa: "") {
+
+}
+-----
+includeTargets
+includeTool

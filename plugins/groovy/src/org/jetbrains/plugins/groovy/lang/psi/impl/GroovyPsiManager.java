@@ -166,22 +166,18 @@ public class GroovyPsiManager implements ProjectComponent {
    *
    * @param file
    */
-  private void buildGroovyScriptExtensionProperties(final GroovyFile file) {
+  private void buildGroovyScriptExtensionProperties() {
     final HashMap<String, List<PsiField>> newMap = new HashMap<String, List<PsiField>>();
     for (ScriptMembersProvider provider : ScriptMembersProviderRegistry.getInstance().getProviders()) {
-      if (provider.canBeProcessed(file)) {
-        provider.addExtensionProperties(newMap, file.getProject());
-      }
+      provider.addExtensionProperties(newMap, myProject);
     }
     myScriptProperties = newMap;
   }
 
-  private void buildGroovyScriptExtensionMethods(final GroovyFile file) {
+  private void buildGroovyScriptExtensionMethods() {
     final HashMap<String, List<PsiMethod>> newMap = new HashMap<String, List<PsiMethod>>();
     for (ScriptMembersProvider provider : ScriptMembersProviderRegistry.getInstance().getProviders()) {
-      if (provider.canBeProcessed(file)) {
-        provider.addExtensionMethods(newMap, file.getProject());
-      }
+      provider.addExtensionMethods(newMap, myProject);
     }
     myScriptMethods = newMap;
   }
@@ -288,7 +284,7 @@ public class GroovyPsiManager implements ProjectComponent {
 
   public List<PsiField> getDefaultScriptProperties(GroovyFile file) {
     if (myScriptProperties == null) {
-      buildGroovyScriptExtensionProperties(file);
+      buildGroovyScriptExtensionProperties();
     }
     final String ext = getScriptType(file);
     if (myScriptProperties == null || ext == null) {
@@ -302,7 +298,7 @@ public class GroovyPsiManager implements ProjectComponent {
 
   public List<PsiMethod> getDefaultScriptMethods(GroovyFile file) {
     if (myScriptMethods == null) {
-      buildGroovyScriptExtensionMethods(file);
+      buildGroovyScriptExtensionMethods();
     }
     final String ext = getScriptType(file);
     if (myScriptMethods == null || ext == null) {

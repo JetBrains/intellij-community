@@ -1,0 +1,8 @@
+target(genga: "") {
+}
+
+target(aaa: "") {
+    depends(gen<caret>)
+}
+-----
+genga
