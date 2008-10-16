@@ -289,7 +289,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       final Font font = myTextLabel.getFont();
       myTextLabel.setFont(font.deriveFont(myContext.isHoldingFilter() ? Font.BOLD : Font.PLAIN));
 
-      myTextLabel.setForeground(fg);
+      myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : fg);
 
       return result;
     }
