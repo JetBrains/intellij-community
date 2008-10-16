@@ -265,7 +265,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         final PyReferenceExpression import_src = from_import_stmt.getImportSource();
         if (import_src != null) {
           processor.setNotice(" | " + import_src.getName());
-          PyResolveUtil.treeCrawlUp(processor, import_src.resolve()); // names from that module
+          PyResolveUtil.treeCrawlUp(processor, true, import_src.resolve()); // names from that module
         }
       }
     }
