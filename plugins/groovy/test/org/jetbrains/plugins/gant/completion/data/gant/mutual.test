@@ -5,4 +5,5 @@ target(aaa: "") {
     depends(gen<caret>)
 }
 -----
+generateKey
 genga
