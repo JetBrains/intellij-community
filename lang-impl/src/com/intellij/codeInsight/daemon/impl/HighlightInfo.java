@@ -238,6 +238,7 @@ public class HighlightInfo {
            && ((HighlightInfo)obj).endOffset == endOffset
            && ((HighlightInfo)obj).type == type
            && Comparing.equal(((HighlightInfo)obj).gutterIconRenderer, gutterIconRenderer)
+           && Comparing.equal(((HighlightInfo)obj).forcedTextAttributes, forcedTextAttributes)
            && Comparing.strEqual(((HighlightInfo)obj).description, description);
   }
 

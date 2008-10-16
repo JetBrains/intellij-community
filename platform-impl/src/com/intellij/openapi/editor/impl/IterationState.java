@@ -103,18 +103,16 @@ public final class IterationState {
 
     myCurrentViewHighlighterIdx = initHighlighterIterator(start, myViewHighlighters, longestViewHighlighterLength);
     while (myCurrentViewHighlighterIdx < myViewHighlighters.size()) {
-      myNextViewHighlighter = myViewHighlighters.get(myCurrentViewHighlighterIdx);
+      myNextViewHighlighter = myViewHighlighters.get(myCurrentViewHighlighterIdx++);
       if (!skipHighlighter(myNextViewHighlighter)) break;
-      myCurrentViewHighlighterIdx++;
     }
     if (myCurrentViewHighlighterIdx == myViewHighlighters.size()) myNextViewHighlighter = null;
 
     myCurrentDocHighlighterIdx = initHighlighterIterator(start, myDocumentHighlighters, longestDocHighlighterLength);
     myNextDocumentHighlighter = null;
     while (myCurrentDocHighlighterIdx < myDocumentHighlighters.size()) {
-      myNextDocumentHighlighter = myDocumentHighlighters.get(myCurrentDocHighlighterIdx);
+      myNextDocumentHighlighter = myDocumentHighlighters.get(myCurrentDocHighlighterIdx++);
       if (!skipHighlighter(myNextDocumentHighlighter)) break;
-      myCurrentDocHighlighterIdx++;
     }
     if (myCurrentDocHighlighterIdx == myDocumentHighlighters.size()) myNextDocumentHighlighter = null;
 
