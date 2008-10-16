@@ -120,6 +120,8 @@ public class JBTabsImpl extends JComponent
 
   private TimedDeadzone.Length myTabActionsMouseDeadzone = TimedDeadzone.DEFAULT;
 
+  private long myRemoveDefferredRequest;
+
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
     myProject = project;
     myActionManager = actionManager;
@@ -599,20 +601,29 @@ public class JBTabsImpl extends JComponent
 
   private ActionCallback removeDeferred() {
     final ActionCallback callback = new ActionCallback();
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
+
+    final long executionRequest = ++myRemoveDefferredRequest;
+
+    myFocusManager.doWhenFocusSettlesDown(new Runnable() {
       public void run() {
-        removeDeferredNow();
+        if (myRemoveDefferredRequest == executionRequest) {
+          removeDeferredNow();
+        }
+
         callback.setDone();
       }
     });
+
     return callback;
+  }
+
+  @Override
+  public boolean isOptimizedDrawingEnabled() {
+    return false;
   }
 
   private void queueForRemove(Component c) {
     if (c instanceof JComponent) {
-      final JComponent jc = (JComponent)c;
-      layout(jc, 0, 0, 0, 0);
       addToDeferredRemove(c);
     } else {
       remove(c);
@@ -642,7 +653,7 @@ public class JBTabsImpl extends JComponent
       }
     }
 
-    System.out.println(" - removing " + (removingInfo != null ? " component for " + removingInfo : each));
+    //System.out.println(" - removing " + (removingInfo != null ? " component for " + removingInfo : each));
   }
 
   @Nullable
@@ -1042,6 +1053,10 @@ public class JBTabsImpl extends JComponent
 
     for (TabInfo each : myHiddenInfos) {
       reset(each, resetLabels);
+    }
+
+    for (Component eachDeferred : myDeferredToRemove.keySet()) {
+      resetLayout((JComponent)eachDeferred);
     }
   }
 
@@ -1488,6 +1503,8 @@ public class JBTabsImpl extends JComponent
     if (clip == null) {
       return;
     }
+
+    //System.out.println("JBTabsImpl.paint clip=" + clip);
 
     if (myPaintBlocked) {
       if (myImage != null) {
