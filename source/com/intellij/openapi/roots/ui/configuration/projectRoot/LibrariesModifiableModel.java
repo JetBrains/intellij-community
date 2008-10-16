@@ -4,8 +4,10 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,14 +23,18 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   private Set<Library> myRemovedLibraries = new HashSet<Library>();
 
   private LibraryTable.ModifiableModel myLibrariesModifiableModel;
+  private Project myProject;
 
-  public LibrariesModifiableModel(final LibraryTable table) {
+  public LibrariesModifiableModel(final LibraryTable table, final Project project) {
+    myProject = project;
     myLibrariesModifiableModel = table.getModifiableModel();
   }
 
   public Library createLibrary(String name) {
     final Library library = myLibrariesModifiableModel.createLibrary(name);
-    createLibraryEditor(library);
+    //createLibraryEditor(library);
+    final BaseLibrariesConfigurable configurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
+    configurable.createLibraryNode(library);
     return library;
   }
 
@@ -111,4 +117,7 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
     }
   }
 
+  public Library.ModifiableModel getLibraryModifiableModel(final Library library) {
+    return getLibraryEditor(library).getModel();
+  }
 }

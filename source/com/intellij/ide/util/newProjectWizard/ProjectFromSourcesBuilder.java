@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
@@ -71,10 +72,10 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
     return mySourcePaths;
   }
 
-  public void commit(final Project project) {
+  public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
     final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
     final Map<LibraryDescriptor, Library> projectLibs = new HashMap<LibraryDescriptor, Library>();
-    
+    final List<Module> result = new ArrayList<Module>();
     // create project-level libraries
     Exception e = ApplicationManager.getApplication().runWriteAction(new Computable<Exception>() {
       public Exception compute() {
@@ -112,9 +113,10 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
     Exception ex = ApplicationManager.getApplication().runWriteAction(new Computable<Exception>() {
       public Exception compute() {
         try {
-          final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
+          final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
           for (final ModuleDescriptor moduleDescriptor : myChosenModules) {
             final Module module = createModule(project, moduleDescriptor, sourceRootToPrefixMap, projectLibs, moduleModel);
+            result.add(module);
             descriptorToModuleMap.put(moduleDescriptor, module);
           }
           moduleModel.commit();
@@ -162,6 +164,8 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
     if (ex != null) {
       Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", ex.getMessage()), IdeBundle.message("title.add.module"));
     }
+
+    return result;
   }
 
   public void addConfigurationUpdater(ProjectConfigurationUpdater updater) {

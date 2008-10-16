@@ -6,7 +6,6 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.ide.util.BrowseFilesListener;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
@@ -297,10 +296,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
             parentWindow.removeWindowListener(this);
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
-                final ModuleBuilder builder = myModulesConfigurator.runModuleWizard(parentWindow);
-                if (builder != null) {
-                  myModulesConfigurator.addModule(builder);
-                }
+                myModulesConfigurator.addModule(parentWindow);
               }
             });
           }

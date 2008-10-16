@@ -5,9 +5,9 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
+import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.actions.AddFacetActionGroup;
-import com.intellij.facet.Facet;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ModuleGroupUtil;
@@ -29,11 +29,9 @@ import com.intellij.openapi.roots.impl.ClonableOrderEntry;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -194,8 +192,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       myRoot.removeAllChildren();
     }
 
-    final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
-    final LibrariesModifiableModel projectLibrariesProvider = new LibrariesModifiableModel(table);
+    //final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    //final LibrariesModifiableModel projectLibrariesProvider = new LibrariesModifiableModel(table);
     //myLevel2Providers.put(LibraryTablesRegistrar.PROJECT_LEVEL, projectLibrariesProvider);
     //
     //myProjectNode.add(myLevel2Nodes.get(LibraryTablesRegistrar.PROJECT_LEVEL));
@@ -449,9 +447,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private void addModule() {
-    final Module module = myContext.myModulesConfigurator.addModule(myTree);
-    if (module != null) {
-      addModuleNode(module);
+    final List<Module> modules = myContext.myModulesConfigurator.addModule(myTree);
+    if (modules != null) {
+      for (Module module : modules) {
+        addModuleNode(module);
+      }
     }
   }
 

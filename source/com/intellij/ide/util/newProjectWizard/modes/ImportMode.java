@@ -57,7 +57,7 @@ public class ImportMode extends WizardMode {
   }
 
   public boolean isAvailable(WizardContext context) {
-    return context.getProject() == null;
+    return true;
   }
 
   @Nullable
@@ -72,9 +72,4 @@ public class ImportMode extends WizardMode {
 
   public void onChosen(final boolean enabled) {}
 
-  @Nullable
-  public String getFootnote(final WizardContext wizardContext) {
-    if (wizardContext.isCreatingNewProject()) return null;
-    return ProjectBundle.message("project.new.wizard.import.footnote");
-  }
 }

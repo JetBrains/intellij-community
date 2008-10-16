@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -46,11 +47,11 @@ public class NewModuleAction extends AnAction {
         return;
       }
       if (builder instanceof ModuleBuilder) {
-        Module module = ((ModuleBuilder) builder).commitModule(project);
+        Module module = ((ModuleBuilder) builder).commitModule(project, null);
         processCreatedModule(module, dataFromContext);
       }
       else {
-        builder.commit(project);
+        builder.commit(project, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
       }
     }
   }

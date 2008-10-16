@@ -20,15 +20,20 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+
+import java.util.List;
 
 public abstract class ProjectBuilder {
   public boolean isUpdate() {
     return false;
   }
 
-  public abstract void commit(final Project project);
+  public abstract List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider);
 
   public boolean validate(Project current, Project dest) {
     return true;

@@ -139,7 +139,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       rootModel = editor.getModifiableRootModel();
     }
     if (rootModel == null) {
-      rootModel = ModuleRootManager.getInstance(module);
+      createModuleEditor(module);
+      rootModel = getModuleEditor(module).getModifiableRootModel();
     }
 
     return rootModel;
@@ -265,19 +266,23 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
 
   @Nullable
-  public Module addModule(Component parent) {
+  public List<Module> addModule(Component parent) {
     if (myProject.isDefault()) return null;
-    final ModuleBuilder builder = runModuleWizard(parent);
-    if (builder != null) {
-      final Module module = createModule(builder);
-      if (module != null) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            createModuleEditor(module);
-          }
-        });
+    final ProjectBuilder builder = runModuleWizard(parent);
+    if (builder != null ) {
+      final List<Module> modules = new ArrayList<Module>();
+      final List<Module> commitedModules = builder.commit(myProject, myModuleModel, this);
+      if (commitedModules != null) {
+        modules.addAll(commitedModules);
       }
-      return module;
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+         public void run() {
+           for (Module module : modules) {
+             createModuleEditor(module);
+           }
+         }
+       });
+      return modules;
     }
     return null;
   }
@@ -319,7 +324,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Nullable
-  ModuleBuilder runModuleWizard(Component dialogParent) {
+  ProjectBuilder runModuleWizard(Component dialogParent) {
     AddModuleWizard wizard = new AddModuleWizard(dialogParent, myProject, this);
     wizard.show();
     if (wizard.isOK()) {
@@ -336,7 +341,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       if (!builder.validate(myProject, myProject)) {
         return null;
       }
-      return (ModuleBuilder)wizard.getProjectBuilder();
+      return wizard.getProjectBuilder();
     }
 
     return null;

@@ -6,7 +6,6 @@ package com.intellij.projectImport;
 
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 
@@ -22,7 +21,6 @@ import java.util.List;
 public class ImportChooserStep extends ProjectImportWizardStep {
   private final StepSequence mySequence;
   private JList myList;
-  private JCheckBox myUpdateCurrentProject;
   private final JPanel myPanel;
 
   public ImportChooserStep(final ProjectImportProvider[] providers, final StepSequence sequence, final WizardContext context) {
@@ -47,10 +45,6 @@ public class ImportChooserStep extends ProjectImportWizardStep {
       }
     });
     myPanel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
-    final boolean selected = ProjectImportBuilder.getCurrentProject() != null;
-    myUpdateCurrentProject = new JCheckBox(ProjectBundle.message("project.import.reuse.current.project.checkbox.name"), false);
-    myUpdateCurrentProject.setVisible(selected);
-    myPanel.add(myUpdateCurrentProject, BorderLayout.SOUTH);
     myList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
         final ProjectImportProvider provider = (ProjectImportProvider)myList.getSelectedValue();
@@ -87,7 +81,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
       mySequence.setType(((ProjectImportProvider)selectedValue).getId());
       final ProjectImportBuilder builder = ((ProjectImportProvider)selectedValue).getBuilder();
       getWizardContext().setProjectBuilder(builder);
-      builder.setUpdate(myUpdateCurrentProject.isSelected());
+      builder.setUpdate(getWizardContext().getProject() != null);
     }
   }
 

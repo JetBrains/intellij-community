@@ -84,7 +84,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   private void createLibrariesNode(final LibraryTable table,
                                      LibrariesModifiableModel provider,
                                      final LibraryTableModifiableModelProvider modelProvider) {
-    provider = new LibrariesModifiableModel(table);
+    provider = new LibrariesModifiableModel(table, myProject);
     final Library[] libraries = provider.getLibraries();
     for (Library library : libraries) {
       addNode(new MyNode(new LibraryConfigurable(modelProvider, library, myProject, TREE_UPDATER)), myRoot);
@@ -249,7 +249,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
             model.addRoot(file, type);
           }
         }
-        configurable.createLibraryNode(model);
+
       }
     }
 

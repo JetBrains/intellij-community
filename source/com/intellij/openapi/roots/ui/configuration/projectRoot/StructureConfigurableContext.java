@@ -384,10 +384,10 @@ public class StructureConfigurableContext implements Disposable {
     final LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
 
     myLevel2Providers.clear();
-    myLevel2Providers.put(LibraryTablesRegistrar.APPLICATION_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getLibraryTable()));
-    myLevel2Providers.put(LibraryTablesRegistrar.PROJECT_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getLibraryTable(myProject)));
+    myLevel2Providers.put(LibraryTablesRegistrar.APPLICATION_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getLibraryTable(), myProject));
+    myLevel2Providers.put(LibraryTablesRegistrar.PROJECT_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getLibraryTable(myProject), myProject));
     for (final LibraryTable table : tablesRegistrar.getCustomLibraryTables()) {
-      myLevel2Providers.put(table.getTableLevel(), new LibrariesModifiableModel(table));
+      myLevel2Providers.put(table.getTableLevel(), new LibrariesModifiableModel(table, myProject));
     }
   }
 

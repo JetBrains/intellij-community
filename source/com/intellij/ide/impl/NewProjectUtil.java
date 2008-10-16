@@ -116,7 +116,7 @@ public class NewProjectUtil {
       }
 
       if (projectBuilder != null) {
-        projectBuilder.commit(newProject);
+        projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
       }
 
       final boolean need2OpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter();

@@ -23,6 +23,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class ModuleBuilder extends ProjectBuilder{
@@ -152,11 +154,11 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return true;
   }
 
-  public void commit(final Project project) {
-    commitModule(project);
+  public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
+    return Collections.singletonList(commitModule(project, model));
   }
 
-  public Module commitModule(final Project project) {
+  public Module commitModule(final Project project, final ModifiableModuleModel model) {
     final Ref<Module> result = new Ref<Module>();
     if (canCreateModule()) {
       if (myName == null) {
@@ -168,7 +170,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
       Exception ex = ApplicationManager.getApplication().runWriteAction(new Computable<Exception>() {
         public Exception compute() {
           try {
-            final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
+            final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
             result.set(createAndCommit(moduleModel, true));
             return null;
           }
