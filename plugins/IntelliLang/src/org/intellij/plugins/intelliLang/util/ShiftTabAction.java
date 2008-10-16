@@ -65,6 +65,7 @@ public class ShiftTabAction extends AnAction {
    * Call this method to enable Sift-Tab support for the supplied EditorTextField.
    */
   public static void attachTo(EditorTextField textField) {
+    // TODO following code seems not needed due to textField.pleaseHandleShiftTab()
     new ShiftTabAction(textField).registerCustomShortcutSet(SHIFT_TAB, textField);
   }
 }
