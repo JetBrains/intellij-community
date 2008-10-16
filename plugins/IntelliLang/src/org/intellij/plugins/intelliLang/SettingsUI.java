@@ -57,9 +57,9 @@ class SettingsUI implements PersistentStateComponent<MasterDetailsComponent.UISt
   private JPanel myPatternAnnotationPanel;
   private JPanel mySubstAnnotationPanel;
 
-  private ReferenceEditorWithBrowseButton myAnnotationField;
-  private ReferenceEditorWithBrowseButton myPatternField;
-  private ReferenceEditorWithBrowseButton mySubstField;
+  private final ReferenceEditorWithBrowseButton myAnnotationField;
+  private final ReferenceEditorWithBrowseButton myPatternField;
+  private final ReferenceEditorWithBrowseButton mySubstField;
 
   SettingsUI(@NotNull final Project project, Configuration configuration) {
     myConfiguration = configuration;
@@ -183,7 +183,7 @@ class SettingsUI implements PersistentStateComponent<MasterDetailsComponent.UISt
     private final Project myProject;
     private final ReferenceEditorWithBrowseButton myField;
 
-    public BrowseClassListener(Project project, ReferenceEditorWithBrowseButton annotationField) {
+    private BrowseClassListener(Project project, ReferenceEditorWithBrowseButton annotationField) {
       myProject = project;
       myField = annotationField;
     }
