@@ -137,18 +137,18 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       myExistingClassCompatible = existingClassIsCompatible(existingClass, parameters, getterNames);
       if (!myExistingClassCompatible) return;
     }
-    findUsagesForMethod(method, usages);
+    findUsagesForMethod(method, usages, false);
 
     final PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
     for (PsiMethod siblingMethod : overridingMethods) {
-      findUsagesForMethod(siblingMethod, usages);
+      findUsagesForMethod(siblingMethod, usages, true);
     }
   }
 
-  private void findUsagesForMethod(PsiMethod overridingMethod, List<FixableUsageInfo> usages) {
+  private void findUsagesForMethod(PsiMethod overridingMethod, List<FixableUsageInfo> usages, boolean overriding) {
     final String fixedParamName = calculateNewParamNameForMethod(overridingMethod);
 
-    usages.add(new MergeMethodArguments(overridingMethod, className, packageName, fixedParamName, paramsToMerge, typeParams, keepMethodAsDelegate, myCreateInnerClass));
+    usages.add(new MergeMethodArguments(overridingMethod, className, packageName, fixedParamName, paramsToMerge, typeParams, keepMethodAsDelegate, myCreateInnerClass, overriding));
 
     final ParamUsageVisitor visitor = new ParamUsageVisitor(overridingMethod, paramsToMerge);
     overridingMethod.accept(visitor);

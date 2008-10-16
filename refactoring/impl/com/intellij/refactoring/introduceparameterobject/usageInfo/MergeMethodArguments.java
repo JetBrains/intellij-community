@@ -20,6 +20,7 @@ import java.util.Map;
 public class MergeMethodArguments extends FixableUsageInfo {
   private final PsiMethod method;
   private final boolean myCreateInnerClass;
+  private boolean myOverriding;
   private final boolean myKeepMethodAsDelegate;
   private final List<PsiTypeParameter> typeParams;
   private final String className;
@@ -34,7 +35,7 @@ public class MergeMethodArguments extends FixableUsageInfo {
                               String parameterName,
                               int[] paramsToMerge,
                               List<PsiTypeParameter> typeParams,
-                              final boolean keepMethodAsDelegate, final boolean createInnerClass) {
+                              final boolean keepMethodAsDelegate, final boolean createInnerClass, final boolean overriding) {
     super(method);
     this.paramsToMerge = paramsToMerge;
     this.packageName = packageName;
@@ -42,6 +43,7 @@ public class MergeMethodArguments extends FixableUsageInfo {
     this.parameterName = parameterName;
     this.method = method;
     myCreateInnerClass = createInnerClass;
+    myOverriding = overriding;
     lastParamIsVararg = method.isVarArgs();
     myKeepMethodAsDelegate = keepMethodAsDelegate;
     this.typeParams = new ArrayList<PsiTypeParameter>(typeParams);
@@ -52,7 +54,7 @@ public class MergeMethodArguments extends FixableUsageInfo {
     final PsiMethod deepestSuperMethod = method.findDeepestSuperMethod();
     final PsiClass psiClass;
     if (myCreateInnerClass) {
-      final PsiClass containingClass = deepestSuperMethod != null ? deepestSuperMethod.getContainingClass() : method.getContainingClass();
+      final PsiClass containingClass = deepestSuperMethod != null && myOverriding ? deepestSuperMethod.getContainingClass() : method.getContainingClass();
       assert containingClass != null;
       psiClass = containingClass.findInnerClassByName(className, false);
     }
