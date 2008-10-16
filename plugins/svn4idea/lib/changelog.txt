@@ -1,3 +1,26 @@
+== version 1.2.0
+
++ Possible NPE on WC to URL copy operation fixed.
++ Log operation didn't work properly with 'limit' options set to value 
+  larger than Integer.MAX_VALUE, fixed. 
++ OSGI manifest fixes.
+
+== version 1.2.0-rc4
+
++ JNA library updated to version 3.0.5.
++ jsvnlook 'cat' and 'lock' commands added.
++ Update operation didn't work properly on sparse directories with 1.4.x Subversion servers, fixed.
++ SASL: minor bugfixes.
++ Other bugfixes.
+
+== version 1.2.0-rc3
+
++ SVNKit Eclipse plugin divided into two features: core svnkit library and optional JNA library.
++ SVNKit Eclipse plugin made compatible with base OSGI framework.
++ SVN+SSH protocol performance improvements.
++ File uid and guid wasn't properly fetched on OSX and BSD.
++ Other bugfixes and minor improvements.
+
 == version 1.2.0-rc2
 
 + SASL: incorrect output buffer size might result in failed commits, fixed.
