@@ -64,10 +64,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         helper.installToolTipHandler(this);
       }
 
-      @Override
-      public TreePath getNextMatch(final String prefix, final int startingRow, final Position.Bias bias) {
-        return null;
-      }
     };
 
     myTree.setRowHeight(-1);

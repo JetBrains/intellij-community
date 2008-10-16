@@ -27,6 +27,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.Position;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.TreeSelectionEvent;
@@ -94,14 +95,20 @@ public class SimpleTree extends JTree implements CellEditorListener {
     }
   }
 
+  public SimpleTree(TreeModel aModel) {
+    this();
+    setModel(aModel);
+  }
+
   protected void configureUiHelper(final TreeUIHelper helper) {
     helper.installTreeSpeedSearch(this);
     helper.installToolTipHandler(this);
   }
 
-  public SimpleTree(TreeModel aModel) {
-    this();
-    setModel(aModel);
+  @Override
+  public TreePath getNextMatch(final String prefix, final int startingRow, final Position.Bias bias) {
+    // turn JTree Speed Search off
+    return null;
   }
 
   public boolean accept(AbstractTreeBuilder builder, SimpleNodeVisitor visitor) {
