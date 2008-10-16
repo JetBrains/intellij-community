@@ -1,11 +1,13 @@
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -34,7 +36,12 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     if (myBaseDir != null && vcs.getName().equals(mappingList.getVcsFor(myBaseDir)) && vcs.fileIsUnderVcs(new FilePathImpl(myBaseDir))) {
       result.add(myBaseDir);
     }
-    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    // assertion for read access inside
+    final Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
+      public Module[] compute() {
+        return ModuleManager.getInstance(myProject).getModules();
+      }
+    });
     for(Module module: modules) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       for(VirtualFile file: files) {

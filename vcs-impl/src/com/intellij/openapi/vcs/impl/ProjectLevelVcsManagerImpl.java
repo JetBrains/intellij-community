@@ -69,6 +69,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EditorAdapter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -513,6 +514,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public void cleanupMappings() {
     myDirectoryMappingList.cleanupMappings();
+    fireDirectoryMappingsChanged();
   }
 
   public List<VcsDirectoryMapping> getDirectoryMappings() {
@@ -552,18 +554,22 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (myMappingsLoaded) return;            // ignore per-module VCS settings if the mapping table was loaded from .ipr
     myHaveLegacyVcsConfiguration = true;
     myDirectoryMappingList.setDirectoryMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
+    fireDirectoryMappingsChanged();
   }
 
   public void setAutoDirectoryMapping(String path, String activeVcsName) {
     myDirectoryMappingList.setDirectoryMapping(path, activeVcsName);
+    fireDirectoryMappingsChanged();
   }
 
   public void removeDirectoryMapping(VcsDirectoryMapping mapping) {
     myDirectoryMappingList.removeDirectoryMapping(mapping);
+    fireDirectoryMappingsChanged();
   }
 
   public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
     myDirectoryMappingList.setDirectoryMappings(items);
+    fireDirectoryMappingsChanged();
   }
 
   public void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator) {
@@ -872,5 +878,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public CheckoutProvider.Listener getCompositeCheckoutListener() {
     return new CompositeCheckoutListener(myProject);
+  }
+
+  public static final Topic<Runnable> VCS_MAPPING_CHANGED = new Topic<Runnable>("VCS_MAPPING_CHANGED", Runnable.class);
+
+  public void fireDirectoryMappingsChanged() {
+    if (myIsInitialized && (! myIsDisposed)) {
+      myProject.getMessageBus().asyncPublisher(VCS_MAPPING_CHANGED).run();
+    }
   }
 }
