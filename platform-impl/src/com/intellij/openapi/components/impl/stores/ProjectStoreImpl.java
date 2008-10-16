@@ -702,16 +702,17 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       finishSave(saveSession);
     }
 
-    myProject.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateStarted();
+    if (!componentNames.isEmpty()) {
+      myProject.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateStarted();
 
-    try {
-      doReload(changedFiles, componentNames);
-      reinitComponents(componentNames);
+      try {
+        doReload(changedFiles, componentNames);
+        reinitComponents(componentNames);
+      }
+      finally {
+        myProject.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished();
+      }
     }
-    finally {
-      myProject.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished();
-    }
-
 
 
     return true;

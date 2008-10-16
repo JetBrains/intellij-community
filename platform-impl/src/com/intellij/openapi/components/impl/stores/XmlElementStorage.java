@@ -40,7 +40,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected final StreamProvider myStreamProvider;
   protected final String myFileSpec;
   private final ComponentRoamingManager myComponentRoamingManager;
-  private final boolean myIsProjectSettings;
+  protected final boolean myIsProjectSettings;
+  protected boolean myBlockSavingTheContent = false;
   protected Integer myUpToDateHash;
   private boolean mySavingDisabled = false;
 
@@ -97,9 +98,9 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   @NotNull
   protected StorageData loadData(final boolean useProvidersData) throws StateStorageException {
-    StorageData result = createStorageData();
-
     Document document = loadDocument();
+
+    StorageData result = createStorageData();
 
     if (document != null) {
       loadState(result, document.getRootElement());
@@ -276,6 +277,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     private boolean _needsSave(final Integer hash) {
+      if (myBlockSavingTheContent) return false;
       if (myUpToDateHash == null) {
         if (hash != null) {
           if (!phisicalContentNeedsSave()) {
@@ -330,6 +332,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
     public final void save() throws StateStorageException {
       assert mySession == this;
+
+      if (myBlockSavingTheContent) return;
 
       Integer hash = calcHash();
       try {
@@ -421,9 +425,19 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     @Nullable
     public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
       try {
-        final StorageData storageData = loadData(false);
+        Document document = loadDocument();
 
-        return storageData.getDifference(myStorageData);
+        StorageData storageData = createStorageData();
+
+        if (document != null) {
+          loadState(storageData, document.getRootElement());
+          return storageData.getDifference(myStorageData);
+        }
+        else {
+          return Collections.emptySet();
+        }
+
+
       }
       catch (StateStorageException e) {
         LOG.info(e);

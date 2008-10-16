@@ -8,7 +8,6 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
@@ -117,22 +116,24 @@ public class FileBasedStorage extends XmlElementStorage {
     }
 
     protected void doSave() throws StateStorageException {
-      final byte[] text = StorageUtil.printDocument(getDocumentToSave());
+      if (!myBlockSavingTheContent) {
+        final byte[] text = StorageUtil.printDocument(getDocumentToSave());
 
-      //StorageUtil.save(myFile, text);
-      VirtualFile virtualFile = ensureVirtualFile();
-      if (virtualFile != null) {
-        try {
-          OutputStream out = virtualFile.getOutputStream(this);
+        //StorageUtil.save(myFile, text);
+        VirtualFile virtualFile = ensureVirtualFile();
+        if (virtualFile != null) {
           try {
-            out.write(text);
+            OutputStream out = virtualFile.getOutputStream(this);
+            try {
+              out.write(text);
+            }
+            finally {
+              out.close();
+            }
           }
-          finally {
-            out.close();
+          catch (IOException e) {
+            LOG.error(e);
           }
-        }
-        catch (IOException e) {
-          LOG.error(e);
         }
       }
     }
@@ -240,6 +241,7 @@ VirtualFile result = LocalFileSystem.getInstance().findFileByIoFile(myFile);
 
   @Nullable
   protected Document loadDocument() throws StateStorage.StateStorageException {
+    myBlockSavingTheContent = false;
     try {
       VirtualFile file = getVirtualFile();
       if (file == null || file.isDirectory()) {
@@ -250,41 +252,36 @@ VirtualFile result = LocalFileSystem.getInstance().findFileByIoFile(myFile);
       }
     }
     catch (final JDOMException e) {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        SwingUtilities.invokeLater(new Runnable(){
-          public void run() {
-            JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                          "Cannot load settings from file '" + myFile.getPath() + "': " + e.getLocalizedMessage() + "\n" +
-                                          "File content will be recreated",
-                                          "Load Settings",
-                                          JOptionPane.ERROR_MESSAGE);
-          }
-        });
-      }
-
-      /*
-      throw new StateStorage.StateStorageException(
-        "Error while parsing " + myFile.getAbsolutePath() + ".\nFile is probably corrupted:\n" + e.getMessage(), e);
-        */
-      return createEmptyElement();
+      return processReadException(e);
     }
     catch (final IOException e) {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        SwingUtilities.invokeLater(new Runnable(){
-          public void run() {
-            JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                          "Cannot load settings from file '" + myFile.getPath() + "': " + e.getLocalizedMessage() + "\n" +
-                                          "File content will be recreated",
-                                          "Load Settings",
-                                          JOptionPane.ERROR_MESSAGE);
-          }
-        });
-      }
-
-      return createEmptyElement();
-
-      //throw new StateStorage.StateStorageException("Error while loading " + myFile.getAbsolutePath() + ": " + e.getMessage(), e);
+      return processReadException(e);
     }
+  }
+
+  private Document processReadException(final Exception e) {
+    myBlockSavingTheContent = isProjectOrModuleFile();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      SwingUtilities.invokeLater(new Runnable(){
+        public void run() {
+          JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                        "Cannot load settings from file '" + myFile.getPath() + "': " + e.getLocalizedMessage() + "\n" +
+                                        getInvalidContentMessage(),
+                                        "Load Settings",
+                                        JOptionPane.ERROR_MESSAGE);
+        }
+      });
+    }
+
+    return null;
+  }
+
+  private boolean isProjectOrModuleFile() {
+    return myIsProjectSettings || myFileSpec.equals("$MODULE_FILE$");
+  }
+
+  private String getInvalidContentMessage() {
+    return isProjectOrModuleFile() ? "Please correct the file content" : "File content will be recreated";
   }
 
   private Document loadDocumentImpl(final VirtualFile file) throws IOException, JDOMException {
@@ -338,12 +335,6 @@ VirtualFile result = LocalFileSystem.getInstance().findFileByIoFile(myFile);
 
   private static boolean startsWith(final byte[] buffer, final int read, final byte[] bom) {
     return read >= bom.length && ArrayUtil.startsWith(buffer, bom);
-  }
-
-  private Document createEmptyElement() {
-    final Element element = new Element(myRootElementName);
-    element.setAttribute("version", String.valueOf(ProjectManagerImpl.CURRENT_FORMAT_VERSION));
-    return new Document(element);
   }
 
   public String getFileName() {
