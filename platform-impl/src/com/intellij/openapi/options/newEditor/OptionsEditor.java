@@ -64,7 +64,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   ContentWrapper myContentWrapper = new ContentWrapper();
 
 
-  Map<Configurable, JComponent> myConfigurable2Componenet = new HashMap<Configurable, JComponent>();
+  Map<Configurable, JComponent> myConfigurable2Component = new HashMap<Configurable, JComponent>();
   Map<Configurable, ActionCallback> myConfigurable2LoadCallback = new HashMap<Configurable, ActionCallback>();
 
   private MyColleague myColleague;
@@ -206,7 +206,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private ActionCallback getUiFor(final Configurable configurable) {
     final ActionCallback result = new ActionCallback();
 
-    if (!myConfigurable2Componenet.containsKey(configurable)) {
+    if (!myConfigurable2Component.containsKey(configurable)) {
 
       final ActionCallback readyCallback = myConfigurable2LoadCallback.get(configurable);
       if (readyCallback != null) {
@@ -218,26 +218,13 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
           final JComponent c = configurable.createComponent();
-
-          final SearchableConfigurable.Parent responsibleParent = myTree.getResponsibleParentFor(configurable);
-          boolean reset = true;
-          if (responsibleParent != null && myConfigurable2Componenet.containsKey(responsibleParent)) {
-            reset = !responsibleParent.isResponsibleForChildren();
+          if (!myConfigurable2Component.containsKey(configurable)) {
+            configurable.reset();
           }
-
-          if (reset) {
-            reset(configurable, false);
-
-            if (responsibleParent != null && !myConfigurable2Componenet.containsKey(responsibleParent)) {
-              final JComponent parentComp = responsibleParent.createComponent();
-              myConfigurable2Componenet.put(responsibleParent, parentComp);
-            }
-          }
-
 
           UIUtil.invokeLaterIfNeeded(new Runnable() {
             public void run() {
-              myConfigurable2Componenet.put(configurable, c);
+              myConfigurable2Component.put(configurable, c);
               result.setDone();
               myConfigurable2LoadCallback.remove(configurable);
             }
@@ -280,14 +267,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   private void checkModified(final Configurable configurable) {
-    final Configurable parent = myTree.getResponsibleParentFor(configurable);
-    Configurable actual = parent != null ? parent : configurable;
-
     fireModification(configurable);
-    fireModification(actual);
   }
 
   private void fireModification(final Configurable actual) {
+    if (!myConfigurable2Component.containsKey(actual)) return;
+
     if (actual != null && actual.isModified()) {
       getContext().fireModifiedAdded(actual, null);
     } else if (actual != null && !actual.isModified() && !getContext().getErrors().containsKey(actual)) {
@@ -297,7 +282,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   private void updateErrorBanner() {
     final Configurable current = getContext().getCurrentConfigurable();
-    final JComponent c = myConfigurable2Componenet.get(current);
+    final JComponent c = myConfigurable2Component.get(current);
     myContentWrapper.setContent(c, getContext().getErrors().get(current));
   }
 
@@ -423,7 +408,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
             final Configurable eachParentConfigurable = eachParentEditor.getConfigurable();
             if (myOptionContainers.contains(eachParentConfigurable) && eachParentConfigurable instanceof SearchableConfigurable.Parent) {
               final SearchableConfigurable.Parent eachParentSearchable = (SearchableConfigurable.Parent)eachParentConfigurable;
-              if (eachParentSearchable.isResponsibleForChildren()) return true;
+              if (eachParentSearchable.isToShowWhenChildIsShown()) return true;
             }
           }
 
@@ -471,7 +456,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
 
 
-    final Set<Configurable> configurables = myConfigurable2Componenet.keySet();
+    final Set<Configurable> configurables = myConfigurable2Component.keySet();
     for (Iterator<Configurable> iterator = configurables.iterator(); iterator.hasNext();) {
       Configurable each = iterator.next();
       each.disposeUIResources();

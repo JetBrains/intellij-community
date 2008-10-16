@@ -31,13 +31,13 @@ public interface SearchableConfigurable extends Configurable {
   @Nullable Runnable enableSearch(String option);
 
   interface Parent extends SearchableConfigurable, Composite {
-    boolean isResponsibleForChildren();
+    boolean isToShowWhenChildIsShown();
 
     abstract class Abstract implements Parent {
       private Configurable[] myKids;
 
-      public boolean isResponsibleForChildren() {
-        return false;
+      public boolean isToShowWhenChildIsShown() {
+        return true;
       }
 
       public JComponent createComponent() {

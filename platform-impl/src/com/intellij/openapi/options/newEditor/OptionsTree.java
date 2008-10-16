@@ -3,7 +3,6 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ErrorLabel;
@@ -19,9 +18,9 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.Position;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.text.Position;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -29,8 +28,8 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.*;
 import java.util.List;
 
@@ -221,18 +220,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       return null;
     }
   }
-
-  @Nullable
-  public SearchableConfigurable.Parent getResponsibleParentFor(Configurable configurable) {
-    final Configurable parent = getParentFor(configurable);
-    if (parent instanceof SearchableConfigurable.Parent) {
-      final SearchableConfigurable.Parent searchableParent = (SearchableConfigurable.Parent)parent;
-      return searchableParent.isResponsibleForChildren() ? searchableParent : null;
-    } else {
-      return null;
-    }
-  }
-
 
   class Renderer extends GroupedElementsRenderer.Tree implements TreeCellRenderer {
 
