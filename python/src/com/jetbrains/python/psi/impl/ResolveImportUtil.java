@@ -130,9 +130,23 @@ public class ResolveImportUtil {
 
       }
 
-      // .. or in SDK roots
       final Module module = ModuleUtil.findModuleForPsiElement(importRef);
       if (module != null) {
+        // maybe it's an import that expects the project dir to be on PYTHONPATH, e.g. we're editing a python module source.
+        // usual "dir or file" logic applies.
+        // TODO: implement a proper module-like approach for "project's dirs on pythonpath", minding proper search order
+        VirtualFile f = module.getProject().getBaseDir();
+        if (f.getName().equals(the_name)) {
+          VirtualFile initpy = f.findChild(INIT_PY);
+          if (initpy != null) {
+            PsiFile initfile = importRef.getManager().findFile(initpy);
+            if (initfile != null) {
+              initfile.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE); // we really resolved to the dir
+              return initfile;
+            }
+          }
+        }
+        // else look in SDK roots
         RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
           @Nullable
           public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
@@ -140,12 +154,13 @@ public class ResolveImportUtil {
             LookupRootVisitor visitor = new LookupRootVisitor(the_name, importRef.getManager());
             visitRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), visitor);
             return visitor.getResult();
-            /*return resolveInRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), the_name, importRef);*/
           }
         };
-        return ModuleRootManager.getInstance(module).processOrder(resolvePolicy, null);
+        PsiElement ret = ModuleRootManager.getInstance(module).processOrder(resolvePolicy, null);
+        if (ret != null) return ret;
       }
       else {
+        // no module, another way to look in SDK roots
         try {
           for (OrderEntry entry: ProjectRootManager.getInstance(importRef.getProject()).getFileIndex().getOrderEntriesForFile(
                 importRef.getContainingFile().getVirtualFile()
@@ -327,7 +342,7 @@ public class ResolveImportUtil {
       if (file != null) return file;
       final PsiDirectory subdir = dir.findSubdirectory(referencedName);
       if (subdir != null) return subdir;
-      else { // XXX faulty: not a subdir, not a file; could be a name in parent/__init__.py
+      else { // XXX faulty? not a subdir, not a file; could be a name in parent/__init__.py
         final PsiFile initPy = dir.findFile(INIT_PY);
         if (initPy == containingFile) return ret; // don't dive into the file we're in
         if (initPy != null) {
