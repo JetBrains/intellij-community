@@ -1393,4 +1393,19 @@ public class StringUtil {
       return def;
     }
   }
+
+  public static int getOccurenceCount(final String text, final char c) {
+    int res = 0;
+    int i = 0;
+    while (i < text.length()) {
+      i = text.indexOf(c, i);
+      if (i >= 0) {
+        res++;
+        i++;
+      } else {
+        break;
+      }
+    }
+    return res;
+  }
 }
