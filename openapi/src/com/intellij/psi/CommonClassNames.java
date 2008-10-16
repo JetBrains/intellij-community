@@ -25,6 +25,7 @@ public interface CommonClassNames {
   @NonNls String JAVA_LANG_CLASS = "java.lang.Class";
   @NonNls String JAVA_LANG_STRING = "java.lang.String";
   @NonNls String JAVA_LANG_THROWABLE = "java.lang.Throwable";
+  @NonNls String JAVA_LANG_ANNOTATION_ANNOTATION = "java.lang.annotation.Annotation";
   @NonNls String JAVA_LANG_ERROR = "java.lang.Error";
   @NonNls String JAVA_LANG_RUNTIME_EXCEPTION = "java.lang.RuntimeException";
   @NonNls String JAVA_LANG_ENUM = "java.lang.Enum";
