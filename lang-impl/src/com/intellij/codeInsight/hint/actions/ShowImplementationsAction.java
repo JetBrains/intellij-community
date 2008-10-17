@@ -47,6 +47,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
@@ -150,7 +151,8 @@ public class ShowImplementationsAction extends AnAction {
     showImplementations(impls, project, text, editor, file);
   }
 
-  private static void showImplementations(final PsiElement[] impls, final Project project, final String text, final Editor editor,
+  private static void showImplementations(final PsiElement[] impls, final Project project, final String text,
+                                          final Editor editor,
                                           final PsiFile file) {
     if (impls == null || impls.length == 0) return;
 
@@ -159,7 +161,15 @@ public class ShowImplementationsAction extends AnAction {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE);
     }
 
-    final ImplementationViewComponent component = new ImplementationViewComponent(impls);
+    int index = 0;
+    if (file != null && impls.length > 1) {
+      final VirtualFile virtualFile = file.getVirtualFile();
+      final PsiFile containingFile = impls[0].getContainingFile();
+      if (virtualFile != null && containingFile != null && virtualFile.equals(containingFile.getVirtualFile())) {
+        index = 1;
+      }
+    }
+    final ImplementationViewComponent component = new ImplementationViewComponent(impls, index);
     if (component.hasElementsToShow()) {
       final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor() {
         public void updatePopup(Object lookupItemObject) {

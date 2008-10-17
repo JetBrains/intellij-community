@@ -107,11 +107,9 @@ public class ImplementationViewComponent extends JPanel {
     }
   }
 
-  public ImplementationViewComponent(PsiElement[] elements) {
+  public ImplementationViewComponent(PsiElement[] elements, final int index) {
     super(new BorderLayout());
     List<PsiElement> candidates = new ArrayList<PsiElement>(elements.length);
-    myIndex = 0;
-
     List<FileDescriptor> files = new ArrayList<FileDescriptor>(elements.length);
     for (PsiElement element : elements) {
       PsiFile file = getContainingFile(element);
@@ -121,15 +119,16 @@ public class ImplementationViewComponent extends JPanel {
     }
     myElements = candidates.toArray(new PsiElement[candidates.size()]);
     if (myElements.length == 0) return;
+    myIndex = index < myElements.length ? index : 0;
 
-    final Project project = elements[0].getProject();
+    final Project project = elements[myIndex].getProject();
     EditorFactory factory = EditorFactory.getInstance();
     Document doc = factory.createDocument("");
     doc.setReadOnly(true);
     myEditor = factory.createEditor(doc, project);
-    PsiFile psiFile = getContainingFile(myElements[0]);
+    PsiFile psiFile = getContainingFile(myElements[myIndex]);
     String fileName = psiFile.getName();
-    final Language language = myElements[0].getLanguage();
+    final Language language = myElements[myIndex].getLanguage();
 
     if (psiFile.getFileType() instanceof LanguageFileType &&
         ((LanguageFileType)psiFile.getFileType()).getLanguage() != language
