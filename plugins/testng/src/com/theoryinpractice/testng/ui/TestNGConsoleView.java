@@ -26,9 +26,7 @@ import org.testng.remote.strprotocol.TestResultMessage;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,14 +37,13 @@ public class TestNGConsoleView implements ConsoleView
     @NonNls private static Pattern EXPECTED_NOT_SAME_BUT_WAS_PATTERN = Pattern.compile("(.*)expected not same with:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
     private ConsoleView console;
     private TestNGResults testNGResults;
-    private final List<Printable> allOutput = new ArrayList<Printable>();
-    private int mark;
+    private final List<Printable> currentTestOutput = new ArrayList<Printable>();
     private TestNGConsoleProperties consoleProperties;
-    private Set<TestResultMessage> results = new HashSet<TestResultMessage>();
+    private final List<Printable> nonTestOutput = new ArrayList<Printable>();
 
-    public TestNGConsoleView(TestNGConfiguration config, final RunnerSettings runnerSettings,
+  public TestNGConsoleView(TestNGConfiguration config, final RunnerSettings runnerSettings,
                              final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
-      this.consoleProperties = new TestNGConsoleProperties(config);
+      consoleProperties = new TestNGConsoleProperties(config);
       final Project project = config.getProject();
       console = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
       consoleProperties.setConsole(this);
@@ -74,10 +71,6 @@ public class TestNGConsoleView implements ConsoleView
 
     public void addTestResult(TestResultMessage result) {
       if (testNGResults != null) {
-        if (!results.contains(result)) {
-          mark();
-          results.add(result);
-        }
         int exceptionMark = 0;
         final String stackTrace = result.getStackTrace();
         if (stackTrace != null && stackTrace.length() > 10) {
@@ -87,12 +80,28 @@ public class TestNGConsoleView implements ConsoleView
           for (Printable printable : printables) {
             printable.print(console); //enable for root element
           }
-          synchronized (allOutput) {
-            exceptionMark = allOutput.size() - mark;
-            allOutput.addAll(printables);
+          synchronized (currentTestOutput) {
+            exceptionMark = currentTestOutput.size();
+            currentTestOutput.addAll(printables);
           }
         }
-        testNGResults.addTestResult(result, getPrintablesSinceMark(), exceptionMark);
+        testNGResults.addTestResult(result, new ArrayList<Printable>(currentTestOutput), exceptionMark);
+
+        synchronized (currentTestOutput) {
+          currentTestOutput.clear();
+        }
+      }
+    }
+
+    public void testStarted(TestResultMessage result) {
+      if (testNGResults != null) {
+        synchronized (currentTestOutput) {
+          if (!currentTestOutput.isEmpty()) { //non empty for first test only
+            nonTestOutput.addAll(currentTestOutput);
+            currentTestOutput.clear();
+          }
+        }
+        testNGResults.testStarted(result);
       }
     }
 
@@ -125,18 +134,6 @@ public class TestNGConsoleView implements ConsoleView
             }
         }
         return builder.toString();
-    }
-
-  public void mark() {
-    synchronized (allOutput) {
-      mark = allOutput.size();
-    }
-  }
-
-    public List<Printable> getPrintablesSinceMark() {
-        synchronized (allOutput) {
-            return new ArrayList<Printable>(allOutput.subList(mark, allOutput.size()));
-        }
     }
 
     public void dispose() {
@@ -178,13 +175,17 @@ public class TestNGConsoleView implements ConsoleView
 
     public void print(String s, ConsoleViewContentType contentType) {
         Chunk chunk = new Chunk(s, contentType);
-        synchronized (allOutput) {
-            allOutput.add(chunk);
+        synchronized (currentTestOutput) {
+            currentTestOutput.add(chunk);
         }
     }
 
     public void reset() {
-        setView(allOutput, 0);
+      final List<Printable> printables = new ArrayList<Printable>();
+      printables.addAll(nonTestOutput);
+      printables.addAll(testNGResults.getRoot().getOutput());
+      printables.addAll(currentTestOutput);
+      setView(printables, 0);
     }
 
     public void clear() {
@@ -279,6 +280,10 @@ public class TestNGConsoleView implements ConsoleView
         public Chunk(String text, ConsoleViewContentType contentType) {
             this.text = text;
             this.contentType = contentType;
+        }
+
+        public String toString() {
+          return text;
         }
     }
 }

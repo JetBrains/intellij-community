@@ -42,7 +42,7 @@ public class TestNGRemoteListener implements IRemoteSuiteListener, IRemoteTestLi
     }
 
     public void onTestStart(TestResultMessage trm) {
-        console.addTestResult(trm);
+        console.testStarted(trm);
     }
 
     public void onFinish(TestMessage tm) {

@@ -195,19 +195,15 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
       }
     }
 
-    public void addTestResult(TestResultMessage result, List<Printable> output, int exceptionMark) {
-
-        // TODO This should be an action button which rebuilds the tree when toggled.
-        boolean flattenPackages = true;
-
-        TestProxy classNode;
-        if (flattenPackages) {
-            classNode = getPackageClassNodeFor(result);
-        } else {
-            classNode = getClassNodeFor(result);
-        }
-        //test started or failed to start
-        if (!started.containsKey(result) || !Comparing.strEqual(started.get(result).getResultMessage().getTestDescription(), result.getTestDescription())) {
+    public void testStarted(TestResultMessage result) {
+            // TODO This should be an action button which rebuilds the tree when toggled.
+            boolean flattenPackages = true;
+            TestProxy classNode;
+            if (flattenPackages) {
+              classNode = getPackageClassNodeFor(result);
+            } else {
+              classNode = getClassNodeFor(result);
+            }
             TestProxy proxy = new TestProxy();
             proxy.setParent(classNode);
             proxy.setResultMessage(result);
@@ -220,7 +216,9 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
             if (TestNGConsoleProperties.TRACK_RUNNING_TEST.value(consoleProperties)) {
                 selectTest(proxy);
             }
-        }
+    }
+
+    public void addTestResult(TestResultMessage result, List<Printable> output, int exceptionMark) {
         final TestProxy testCase = started.get(result);
         if (testCase != null) {
             testCase.setResultMessage(result);
@@ -228,9 +226,8 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
             testCase.setExceptionMark(exceptionMark);
         }
 
-        if (result.getResult() != MessageHelper.TEST_STARTED) {
-            model.addTestResult(result);
-        }
+        model.addTestResult(result);
+
 
         if (result.getResult() == MessageHelper.PASSED_TEST) {
             //passed++;
