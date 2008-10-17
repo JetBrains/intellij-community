@@ -270,7 +270,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
           }
         }
 
-        int forcedWidth = -1;
+        int forcedWidth = 2000;
         final TreePath path = tree.getPathForRow(row);
         final boolean toStretch = tree.isVisible() && path != null;
 
