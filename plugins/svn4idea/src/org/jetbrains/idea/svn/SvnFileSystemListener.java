@@ -526,7 +526,9 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         filterOutInvalid(toRefreshDirs);
 
         final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-        vcsDirtyScopeManager.filesDirty(toRefreshFiles, toRefreshDirs);
+        final boolean markedDirty = vcsDirtyScopeManager.filesDirty(toRefreshFiles, toRefreshDirs);
+
+        LOG.assertTrue(markedDirty, "One of changed files was not marked as dirty");
       }
     });
     session.addAllFiles(myFilesToRefresh);

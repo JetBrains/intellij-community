@@ -180,6 +180,8 @@ public class SvnChangeProvider implements ChangeProvider {
     }
 
     if (!foundRename) {
+      // for debug
+      LOG.info("Rename not found for " + copiedFile.getFilePath().getPresentableUrl());
       processStatus(copiedFile.getFilePath(), copiedStatus, builder, null);
     }
   }
