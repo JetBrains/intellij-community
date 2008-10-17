@@ -228,7 +228,7 @@ public class AbstractVcsTestCase {
   protected VcsDirtyScope getAllDirtyScope() {
     VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     dirtyScopeManager.markEverythingDirty();
-    List<VcsDirtyScope> scopes = dirtyScopeManager.retrieveScopes();
+    List<VcsDirtyScope> scopes = dirtyScopeManager.retrieveScopes().getScopes();
     Assert.assertEquals(1, scopes.size());
     return scopes.get(0);
   }
@@ -237,7 +237,7 @@ public class AbstractVcsTestCase {
     VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     dirtyScopeManager.retrieveScopes();  // ensure that everything besides the file is clean
     dirtyScopeManager.fileDirty(file);
-    List<VcsDirtyScope> scopes = dirtyScopeManager.retrieveScopes();
+    List<VcsDirtyScope> scopes = dirtyScopeManager.retrieveScopes().getScopes();
     Assert.assertEquals(1, scopes.size());
     return scopes.get(0);
   }

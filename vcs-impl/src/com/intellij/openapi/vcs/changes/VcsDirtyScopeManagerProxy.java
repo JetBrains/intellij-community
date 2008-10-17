@@ -6,7 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -59,26 +58,28 @@ class VcsDirtyScopeManagerProxy extends VcsDirtyScopeManager {
     myDirs.add(path);
   }
 
-  public List<VcsDirtyScope> retrieveScopes() {
+  public VcsInvalidated retrieveScopes() {
     throw new UnsupportedOperationException();
   }
 
-  public void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
+  public boolean filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
     if (filesDirty != null) {
       myFiles.addAll(filesDirty);
     }
     if (dirsRecursivelyDirty != null) {
       myDirs.addAll(dirsRecursivelyDirty);
     }
+    return true;
   }
 
-  public void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
+  public boolean filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
     if (filesDirty != null) {
       myVFiles.addAll(filesDirty);
     }
     if (dirsRecursivelyDirty != null) {
       myVDirs.addAll(dirsRecursivelyDirty);
     }
+    return true;
   }
 
   public void callRealManager(final VcsDirtyScopeManager manager) {

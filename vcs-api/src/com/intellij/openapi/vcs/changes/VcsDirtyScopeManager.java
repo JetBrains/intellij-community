@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Manages asynchronous file status updating for files under VCS.
@@ -83,15 +82,15 @@ public abstract class VcsDirtyScopeManager {
 
   public abstract void dirDirtyRecursively(FilePath path);
 
-  public abstract List<VcsDirtyScope> retrieveScopes();
+  public abstract VcsInvalidated retrieveScopes();
 
   /**
    * Requests an asynchronous file status update for all files specified and under the specified directories
    */
-  public abstract void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty);
+  public abstract boolean filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty);
 
   /**
    * Requests an asynchronous file status update for all files specified and under the specified directories
    */
-  public abstract void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty);
+  public abstract boolean filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty);
 }

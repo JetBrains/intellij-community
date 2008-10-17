@@ -1,8 +1,9 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.changes.DirtBuilder;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectBaseDirectory;
@@ -43,8 +44,8 @@ public class BasicDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     return ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir);
   }
 
-  public void markDefaultRootsDirty(final VcsDirtyScopeManagerImpl vcsDirtyScopeManager) {
-    vcsDirtyScopeManager.dirDirtyRecursively(ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir));
+  public void markDefaultRootsDirty(final DirtBuilder builder) {
+    builder.addDirtyDirRecursively(new FilePathImpl(ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir)));
   }
 
 }

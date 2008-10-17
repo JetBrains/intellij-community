@@ -8,12 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeImpl;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.DirtBuilder;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -83,28 +79,25 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     return null;
   }
 
-  public void markDefaultRootsDirty(final VcsDirtyScopeManagerImpl vcsDirtyScopeManager) {
-    for(Module module: ModuleManager.getInstance(myProject).getModules()) {
+  public void markDefaultRootsDirty(final DirtBuilder builder) {
+    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    for(Module module: modules) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       for(VirtualFile file: files) {
-        final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
-        if (vcs != null) {
-          vcsDirtyScopeManager.getScope(vcs).addDirtyDirRecursively(new FilePathImpl(file));
-        }
+        builder.addDirtyDirRecursively(new FilePathImpl(file));
       }
     }
 
-    final AbstractVcs[] abstractVcses = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
-    for(AbstractVcs vcs: abstractVcses) {
-      final VcsDirtyScopeImpl scope = vcsDirtyScopeManager.getScope(vcs);
-      final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(vcs);
-      for(VirtualFile root: roots) {
-        if (root.equals(myProject.getBaseDir())) {
-          scope.addDirtyFile(new FilePathImpl(root));
-        }
-        else {
-          scope.addDirtyDirRecursively(new FilePathImpl(root));
-        }
+    final VirtualFile baseDir = myProject.getBaseDir();
+    final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    final VcsRoot[] vcsRoots = plVcsManager.getAllVcsRoots();
+
+    for (VcsRoot root : vcsRoots) {
+      if (root.equals(baseDir)) {
+        builder.addDirtyFile(root);
+      }
+      else {
+        builder.addDirtyDirRecursively(root);
       }
     }
   }

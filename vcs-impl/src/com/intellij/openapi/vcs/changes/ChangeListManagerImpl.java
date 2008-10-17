@@ -199,11 +199,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       LOG.error(ex);
       return;
     }
-    final boolean wasEverythingDirty = dirtyScopeManager.isEverythingDirty();
-    final List<VcsDirtyScope> scopes = dirtyScopeManager.retrieveScopes();
-    if ((! wasEverythingDirty) && scopes.isEmpty()) {
+    final VcsInvalidated invalidated = dirtyScopeManager.retrieveScopes();
+    if (invalidated == null || invalidated.isEmpty()) {
       return;
     }
+    final boolean wasEverythingDirty = invalidated.isEverythingDirty();
+    final List<VcsDirtyScope> scopes = invalidated.getScopes();
 
     try {
       checkIfDisposed();

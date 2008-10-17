@@ -2,8 +2,8 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.changes.DirtBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,5 +27,5 @@ public abstract class DefaultVcsRootPolicy {
   @Nullable
   public abstract VirtualFile getVcsRootFor(final VirtualFile file);
 
-  public abstract void markDefaultRootsDirty(final VcsDirtyScopeManagerImpl vcsDirtyScopeManager);
+  public abstract void markDefaultRootsDirty(final DirtBuilder builder);
 }
