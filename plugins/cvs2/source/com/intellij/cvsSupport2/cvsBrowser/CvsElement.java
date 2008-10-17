@@ -230,6 +230,14 @@ public class CvsElement extends DefaultMutableTreeNode implements CvsTabbedWindo
       myPeriodAlarm.cancelAllRequests();
       myModel.getCvsTree().getTree().setEnabled(true);
       myLoadingThreadFuture = null;
+      SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (isNodeChild(myLoadingNode)) {
+              remove(myLoadingNode);
+              getModel().reload(CvsElement.this);
+            }
+          }
+      });
     }
 
     public void loginAborted() {
