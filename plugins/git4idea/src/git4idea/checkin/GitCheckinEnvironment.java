@@ -103,7 +103,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * {@inheritDoc}
    */
   public boolean keepChangeListAfterCommit(ChangeList changeList) {
-    // TODO review it later
     return false;
   }
 
@@ -418,8 +417,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.insets = insets;
       myPushChanges = new JCheckBox(GitBundle.message("commit.push.changes"));
       myPushChanges.setToolTipText(GitBundle.getString("commit.push.changes.tooltip"));
-      // disable non-working functionality
-      // myPanel.add(myPushChanges, c);
+      myPanel.add(myPushChanges, c);
       c = new GridBagConstraints();
       c.anchor = GridBagConstraints.WEST;
       c.insets = insets;
@@ -435,7 +433,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
       myAuthor = new JComboBox(mySettings.PREVIOUS_COMMIT_AUTHORS);
-      myAuthor.addItem("");
+      myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");
       myAuthor.setEditable(true);
       authorLabel.setLabelFor(myAuthor);
