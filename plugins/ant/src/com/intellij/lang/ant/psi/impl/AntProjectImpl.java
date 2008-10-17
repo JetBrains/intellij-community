@@ -80,6 +80,9 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   public void clearImports() {
     synchronized (PsiLock.LOCK) {
+      if (myBuildingImports != 0) {
+        return;
+      }
       myImports = null;
       myCachedImportsArray = null;
       myImportsDependentProperties = null;
@@ -173,6 +176,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
    * task, but also a fake file which aggregates definitions resolved from all
    * entity references under the root tag.
    */
+  int myBuildingImports = 0;
   @NotNull
   public AntFile[] getImportedFiles() {
     synchronized (PsiLock.LOCK) {
@@ -182,6 +186,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
         final XmlTag se = getSourceElement();
         final PsiFile psiFile = se.getContainingFile();
         final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+        myBuildingImports++;
         try {
           for (final XmlTag tag : se.getSubTags()) {
             // !!! a tag doesn't belong to the current file, so we decide it's resolved via an entity ref
@@ -223,6 +228,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
         }
         finally {
           StringBuilderSpinAllocator.dispose(builder);
+          myBuildingImports--;
         }
       }
       if (myCachedImportsArray == null) {
