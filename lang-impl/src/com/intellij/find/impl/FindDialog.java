@@ -13,6 +13,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -529,9 +530,14 @@ final class FindDialog extends DialogWrapper {
     final Component editorComponent = inputComboBox.getEditor().getEditorComponent();
 
     if (editorComponent instanceof EditorTextField) {
-      final @NonNls String s = myCbRegularExpressions.isSelectedWhenSelectable() ? "*.regexp" : "*.txt";
-      final FileType fileType =
-        FileTypeManager.getInstance().getFileTypeByFileName(s);
+      boolean selected = myCbRegularExpressions.isSelectedWhenSelectable();
+      final @NonNls String s = selected ? "*.regexp" : "*.txt";
+      FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(s);
+
+      if (selected && fileType == FileTypes.UNKNOWN) {
+        fileType = FileTypeManager.getInstance().getFileTypeByFileName("*.txt"); // RegExp plugin is not installed
+      }
+
       final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(s, fileType, ((EditorTextField)editorComponent).getText(), -1, true);
 
       ((EditorTextField)editorComponent).setNewDocumentAndFileType(fileType, PsiDocumentManager.getInstance(myProject).getDocument(file));
