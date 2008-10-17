@@ -26,7 +26,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
   }
 
   public void renderElement(final LookupItem item, final Object element, final LookupElementPresentationEx presentation) {
-    presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item));
+    presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item, presentation.isReal()));
 
     final boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
     final boolean grayed = item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null;

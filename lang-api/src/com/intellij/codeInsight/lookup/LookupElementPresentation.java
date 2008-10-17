@@ -28,4 +28,10 @@ public interface LookupElementPresentation {
   void setTypeText(@Nullable String text);
 
   void setTypeText(@Nullable String text, @Nullable Icon icon);
+
+  /**
+   * @return whether the presentation is requested to actually render lookup element on screen, or just to estimate its width.
+   * In the second, 'non-real' case, some heavy operations (e.g. getIcon()) can be omitted (only icon width is important)
+   */
+  boolean isReal();
 }

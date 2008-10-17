@@ -299,6 +299,10 @@ class LookupCellRenderer implements ListCellRenderer {
       setTypeTextLabel(myItem, myBackground, myForeground, myList, text, icon);
     }
 
+    public boolean isReal() {
+      return true;
+    }
+
     public void setContext(final LookupElement item, final Color background, final Color foreground, final JList list, final boolean selected) {
       myItem = item;
       myBackground = background;
@@ -331,6 +335,11 @@ class LookupCellRenderer implements ListCellRenderer {
 
     private WidthCalculatingPresentation(final LookupElementPresentationImpl basePresentation) {
       myBasePresentation = basePresentation;
+    }
+
+    @Override
+    public boolean isReal() {
+      return false;
     }
 
     @Override

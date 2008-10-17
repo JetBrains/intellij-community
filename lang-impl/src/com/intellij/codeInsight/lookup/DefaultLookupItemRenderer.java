@@ -4,11 +4,13 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.util.Icons;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -18,9 +20,10 @@ import javax.swing.*;
  */
 public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>{
   public static final DefaultLookupItemRenderer INSTANCE = new DefaultLookupItemRenderer();
+  private static final Icon SAMPLE_ICON = Icons.CLASS_ICON;
 
   public void renderElement(final LookupItem item, final LookupElementPresentation presentation) {
-    presentation.setIcon(getRawIcon(item));
+    presentation.setIcon(getRawIcon(item, presentation.isReal()));
     final boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
     final boolean grayed = item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null;
 
@@ -30,13 +33,22 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
   }
 
   @Nullable
-  public static Icon getRawIcon(final LookupItem item) {
+  public static Icon getRawIcon(final LookupItem item, boolean real) {
     Icon icon = (Icon)item.getAttribute(LookupItem.ICON_ATTR);
     if (icon != null) return icon;
 
     Object o = item.getObject();
 
-    int flags = CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS ? Iconable.ICON_FLAG_VISIBILITY : 0;
+    final boolean withVisibility = CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS;
+    int flags = withVisibility ? Iconable.ICON_FLAG_VISIBILITY : 0;
+    if (!real) {
+      if (item.getObject() instanceof String) {
+        return new EmptyIcon(0, 0);
+      }
+
+      return new EmptyIcon(withVisibility ? SAMPLE_ICON.getIconWidth() * 2 : SAMPLE_ICON.getIconWidth(), SAMPLE_ICON.getIconHeight());
+    }
+
     if (o instanceof Iconable && !(o instanceof PsiElement)) {
       return ((Iconable)o).getIcon(flags);
     }
