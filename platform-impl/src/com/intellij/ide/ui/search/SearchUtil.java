@@ -7,6 +7,7 @@ package com.intellij.ide.ui.search;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
@@ -59,11 +60,31 @@ public class SearchUtil {
       if (configurable instanceof SearchableConfigurable) {
         TreeSet<OptionDescription> configurableOptions = new TreeSet<OptionDescription>();
         options.put((SearchableConfigurable)configurable, configurableOptions);
-        final JComponent component = configurable.createComponent();
-        processUILabel(configurable.getDisplayName(), configurableOptions, null);
-        processComponent(component, configurableOptions, null);
+        if (configurable instanceof Configurable.Composite) {
+          final Configurable[] children = ((Configurable.Composite)configurable).getConfigurables();
+          processConfigurables(children, options);
+        }
+
+        if (configurable instanceof MasterDetails) {
+          final MasterDetails md = (MasterDetails)configurable;
+          md.initUi();
+          _processComponent(configurable, configurableOptions, md.getMaster());
+          _processComponent(configurable, configurableOptions, md.getDetails().getComponent());
+        }
+        else {
+          _processComponent(configurable, configurableOptions, configurable.createComponent());
+        }
       }
     }
+  }
+
+  private static void _processComponent(final Configurable configurable, final TreeSet<OptionDescription> configurableOptions,
+                                        final JComponent component) {
+
+    if (component == null) return;
+
+    processUILabel(configurable.getDisplayName(), configurableOptions, null);
+    processComponent(component, configurableOptions, null);
   }
 
   public static void processComponent(final JComponent component, final Set<OptionDescription> configurableOptions, @NonNls String path) {
