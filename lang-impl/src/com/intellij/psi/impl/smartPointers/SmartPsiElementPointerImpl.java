@@ -186,6 +186,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
       // LOG.assertTrue(!documentManager.isUncommited(document));
 
+      assert document != null : myFile.getName();
       if (documentManager.isUncommited(document)) {
         mySyncMarkerIsValid = false;
         myMarker = document.createRangeMarker(0, 0, false);
