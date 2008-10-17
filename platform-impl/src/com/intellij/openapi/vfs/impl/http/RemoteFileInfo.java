@@ -103,7 +103,7 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     final File localIOFile;
 
     synchronized (myLock) {
-      LOG.debug("Downloading finished, size = " + myLocalFile.length() + ", file type=" + fileType);
+      LOG.debug("Downloading finished, size = " + myLocalFile.length() + ", file type=" + (fileType != null ? fileType.getName() : "null"));
       if (fileType != null) {
         String fileName = myLocalFile.getName();
         int dot = fileName.lastIndexOf('.');
