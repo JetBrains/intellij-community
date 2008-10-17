@@ -281,7 +281,13 @@ public class ApplyPatchDialog extends DialogWrapper {
     final VirtualFile patchFile = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
         final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileName);
-        if (file != null) file.refresh(false, false);
+        if (file != null) {
+          file.refresh(false, false);
+          if (file.isDirectory()) {
+            // we are looking for file not directory
+            return null;
+          }
+        }
         return file;
       }
     });
