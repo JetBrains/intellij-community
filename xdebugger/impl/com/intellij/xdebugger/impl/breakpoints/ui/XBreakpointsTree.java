@@ -34,7 +34,7 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
                            Collection<XBreakpointGroupingRule<B, ?>> groupingRules) {
     super(new BreakpointsTreeCellRenderer(), root);
     myRoot = root;
-    myComparator = new TreeNodeComparator(type);
+    myComparator = new TreeNodeComparator<B>(type);
     setGroupingRulesInternal(groupingRules);
   }
 
@@ -100,6 +100,13 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
       myGroups.put(groupingRule, group);
     }
     return group;
+  }
+
+  @Override
+  protected void onNodeStateChanged(final CheckedTreeNode node) {
+    if (node instanceof BreakpointNode) {
+      ((BreakpointNode)node).getBreakpoint().setEnabled(node.isChecked());
+    }
   }
 
   public void setGroupingRules(List<XBreakpointGroupingRule<B, ?>> groupingRules) {
