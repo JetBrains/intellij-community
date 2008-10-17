@@ -106,11 +106,13 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
     public void refreshErrorStatusChanged(@Nullable final VcsException lastError) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          if (lastError != null) {
-            myComponent.setErrorText("Error refreshing changes: " + lastError.getMessage());
-          }
-          else {
-            myComponent.setErrorText("");
+          if (myComponent != null && !myProject.isDisposed()) {
+            if (lastError != null) {
+              myComponent.setErrorText("Error refreshing changes: " + lastError.getMessage());
+            }
+            else {
+              myComponent.setErrorText("");
+            }
           }
         }
       });
