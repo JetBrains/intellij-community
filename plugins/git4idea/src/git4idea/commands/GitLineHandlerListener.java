@@ -27,5 +27,6 @@ public interface GitLineHandlerListener extends GitHandlerListener {
    * @param line       a line of the text
    * @param outputType a type of output
    */
+  @SuppressWarnings({"UnusedParameters"})
   void onLineAvaiable(String line, Key outputType);
 }

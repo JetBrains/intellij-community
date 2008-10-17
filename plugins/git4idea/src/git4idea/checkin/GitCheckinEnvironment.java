@@ -173,8 +173,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
             if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue()) {
               // push
               try {
-                GitHandlerUtil
-                  .doSynchronouslyWithException(GitPushUtils.preparePush(myProject, root), GitBundle.message("pushing.all.changes"));
+                GitHandlerUtil.doSynchronouslyWithException(GitPushUtils.preparePush(myProject, root));
               }
               catch (VcsException ex) {
                 if (!isNoOrigin(ex)) {
@@ -208,6 +207,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @return true if exception means that canges cannot be pushed because repository is entirely local.
    */
   private static boolean isNoOrigin(final VcsException ex) {
+    //noinspection HardCodedStringLiteral
     return ex.getMessage().indexOf("': unable to chdir or not a git archive") != -1;
   }
 
@@ -315,11 +315,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @param nextCommitAuthor
    * @return a simple handler that does the task
    */
-  public static GitSimpleHandler commit(Project project,
-                                        VirtualFile root,
-                                        Collection<FilePath> files,
-                                        File message,
-                                        final String nextCommitAuthor) {
+  private static GitSimpleHandler commit(Project project,
+                                         VirtualFile root,
+                                         Collection<FilePath> files,
+                                         File message,
+                                         final String nextCommitAuthor) {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, "commit");
     handler.addParameters("--only", "-F", message.getAbsolutePath());
     if (nextCommitAuthor != null) {
@@ -395,15 +395,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     /**
      * A container panel
      */
-    private JPanel myPanel;
+    private final JPanel myPanel;
     /**
      * If checked, the changes are pushed to the server as well as connected.
      */
-    private JCheckBox myPushChanges;
+    private final JCheckBox myPushChanges;
     /**
      * The author ComboBox, the dropdown contains previously selected authors.
      */
-    private JComboBox myAuthor;
+    private final JComboBox myAuthor;
 
     /**
      * A constructor

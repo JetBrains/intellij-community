@@ -42,7 +42,7 @@ public class GitMergeProvider implements MergeProvider {
   /**
    * The project instance
    */
-  private Project myProject;
+  private final Project myProject;
   /**
    * A revision number for a revision being merged with.
    */

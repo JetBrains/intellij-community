@@ -139,7 +139,7 @@ public abstract class GitHandler {
    *
    * @param value if value is true, the custom ssh is not used for the command.
    */
-  @SuppressWarnings({"WeakerAccess"})
+  @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
   public void setNoSSH(boolean value) {
     checkNotStarted();
     myNoSSHFlag = value;
@@ -435,6 +435,7 @@ public abstract class GitHandler {
    *
    * @param silent a new value of the flag
    */
+  @SuppressWarnings({"SameParameterValue"})
   public void setSilent(final boolean silent) {
     checkNotStarted();
     mySilent = silent;

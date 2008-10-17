@@ -187,6 +187,7 @@ public class GitSSHService implements ApplicationComponent {
    * @param res     a resource
    * @return a path to classpath entry
    */
+  @SuppressWarnings({"SameParameterValue"})
   private static String getJarForResource(Class context, String res) {
     String resourceRoot = PathManager.getResourceRoot(context, res);
     return new File(resourceRoot).getAbsoluteFile().getAbsolutePath();

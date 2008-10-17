@@ -69,7 +69,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
   /**
    * Limit for previous commit authors
    */
-  private static int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16;
+  private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16;
 
   /**
    * Save an author of the commit and make it the first one. If amount of authors exceeds the limit, remove least recently selected author.

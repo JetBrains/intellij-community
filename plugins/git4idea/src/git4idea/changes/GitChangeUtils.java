@@ -98,6 +98,7 @@ public class GitChangeUtils {
    * @return a resolved revision
    * @throws VcsException if there is a problem with running git
    */
+  @SuppressWarnings({"SameParameterValue"})
   public static GitRevisionNumber loadRevision(final Project project, final VirtualFile vcsRoot, @NonNls final String revisionNumber)
     throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, vcsRoot, "rev-list");

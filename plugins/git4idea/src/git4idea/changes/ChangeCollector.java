@@ -179,21 +179,23 @@ class ChangeCollector {
       if ("?".equals(tokens[0])) {
         myUnversioned.add(myVcsRoot.findFileByRelativePath(file));
       }
-      else if ("M".equals(tokens[0])) {
-        if (!myUnmergedNames.add(file)) {
-          continue;
+      else { //noinspection HardCodedStringLiteral
+        if ("M".equals(tokens[0])) {
+          if (!myUnmergedNames.add(file)) {
+            continue;
+          }
+          // TODO handle conflict rename-modify
+          // TODO handle conflict copy-modify
+          // TODO handle conflict delete-modify
+          // TODO handle conflict rename-delete
+          // assume modify-modify conflict
+          ContentRevision before = GitContentRevision.createRevision(myVcsRoot, file, new GitRevisionNumber("orig_head"), myProject, false);
+          ContentRevision after = GitContentRevision.createRevision(myVcsRoot, file, null, myProject, false);
+          myChanges.add(new Change(before, after, FileStatus.MERGED_WITH_CONFLICTS));
         }
-        // TODO handle conflict rename-modify
-        // TODO handle conflict copy-modify
-        // TODO handle conflict delete-modify
-        // TODO handle conflict rename-delete
-        // assume modify-modify conflict
-        ContentRevision before = GitContentRevision.createRevision(myVcsRoot, file, new GitRevisionNumber("orig_head"), myProject, false);
-        ContentRevision after = GitContentRevision.createRevision(myVcsRoot, file, null, myProject, false);
-        myChanges.add(new Change(before, after, FileStatus.MERGED_WITH_CONFLICTS));
-      }
-      else {
-        throw new VcsException("Unsupported type of the merge conflict detected: " + line);
+        else {
+          throw new VcsException("Unsupported type of the merge conflict detected: " + line);
+        }
       }
     }
   }

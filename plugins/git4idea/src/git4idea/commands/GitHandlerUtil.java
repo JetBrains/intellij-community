@@ -128,7 +128,7 @@ public class GitHandlerUtil {
    * Run handler in the current thread
    *
    * @param handler              a handler to run
-   * @param manager              a progress manager
+   * @param indicator            a progress manager
    * @param setIndeterminateFlag if true handler is configured as indeterminate
    */
   private static void runInCurrentThread(final GitHandler handler, final ProgressIndicator indicator, final boolean setIndeterminateFlag) {
@@ -147,11 +147,10 @@ public class GitHandlerUtil {
   /**
    * Run synchrnously using progress indicator, but throw an exeption instead of showing error dialog
    *
-   * @param handler        a handler to use
-   * @param operationTitle a title of the operation
+   * @param handler a handler to use
    * @throws VcsException if there is problem with running git operation
    */
-  public static void doSynchronouslyWithException(final GitLineHandler handler, String operationTitle) throws VcsException {
+  public static void doSynchronouslyWithException(final GitLineHandler handler) throws VcsException {
     final ProgressManager manager = ProgressManager.getInstance();
     final VcsException[] ex = new VcsException[1];
     handler.addLineListener(new GitLineHandlerListenerProgress(manager.getProgressIndicator(), handler, "") {
