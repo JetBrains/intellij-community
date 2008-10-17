@@ -11,11 +11,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public class JavaPsiClassReferenceElement extends LookupItem<PsiClass> {
+public class JavaPsiClassReferenceElement extends LookupItem<Object> {             
   public static final InsertHandler<JavaPsiClassReferenceElement> JAVA_CLASS_INSERT_HANDLER = new InsertHandler<JavaPsiClassReferenceElement>() {
     public void handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
       final PsiJavaCodeReferenceElement element =
@@ -46,13 +47,21 @@ public class JavaPsiClassReferenceElement extends LookupItem<PsiClass> {
       new DefaultInsertHandler().handleInsert(context, item);
     }
   };
-  private PsiClass myClass;
+  private final PsiAnchor myClass;
+  private final String myQualifiedName;
 
   public JavaPsiClassReferenceElement(PsiClass psiClass) {
-    super(psiClass, psiClass.getName());
+    super(psiClass.getName(), psiClass.getName());
+    myClass = PsiAnchor.create(psiClass);
+    myQualifiedName = psiClass.getQualifiedName();
     JavaAwareCompletionData.setShowFQN(this);
-    myClass = psiClass;
     setInsertHandler(JAVA_CLASS_INSERT_HANDLER);
+  }
+
+  @NotNull
+  @Override
+  public PsiClass getObject() {
+    return (PsiClass)myClass.retrieve();
   }
 
   @Override
@@ -62,12 +71,12 @@ public class JavaPsiClassReferenceElement extends LookupItem<PsiClass> {
 
     final JavaPsiClassReferenceElement that = (JavaPsiClassReferenceElement)o;
 
-    return Comparing.equal(myClass.getQualifiedName(), that.myClass.getQualifiedName());
+    return Comparing.equal(myQualifiedName, that.myQualifiedName);
   }
 
   @Override
   public int hashCode() {
-    final String s = myClass.getQualifiedName();
+    final String s = myQualifiedName;
     return s == null ? 239 : s.hashCode();
   }
 }
