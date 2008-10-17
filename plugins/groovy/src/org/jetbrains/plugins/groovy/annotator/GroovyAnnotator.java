@@ -34,7 +34,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.annotator.DomainClassAnnotator;
-import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
+import org.jetbrains.plugins.grails.util.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;

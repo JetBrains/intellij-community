@@ -145,6 +145,8 @@
                     serviceImplementation="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"/>
     <projectService serviceInterface="org.jetbrains.plugins.grails.lang.gsp.psi.GspPsiElementFactory"
                     serviceImplementation="org.jetbrains.plugins.grails.lang.gsp.psi.GspPsiElementFactoryImpl"/>
+    <projectService serviceInterface="org.jetbrains.plugins.grails.references.domain.DomainClassMembersProvider"
+                    serviceImplementation="org.jetbrains.plugins.grails.references.domain.DomainClassMembersProvider"/>
 
     <moduleType id="GRAILS_MODULE" implementationClass="org.jetbrains.plugins.grails.module.GrailsModuleType"/>
 

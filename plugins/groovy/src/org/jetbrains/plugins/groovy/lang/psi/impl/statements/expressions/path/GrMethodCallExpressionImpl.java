@@ -177,8 +177,25 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
   public GroovyResolveResult[] getMethodVariants() {
     final GrExpression invoked = getInvokedExpression();
     if (!(invoked instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
+    final ArrayList<GroovyResolveResult> res = new ArrayList<GroovyResolveResult>();
 
-    return ((GrReferenceExpression) invoked).getSameNameVariants();
+    final GroovyResolveResult[] variants = ((GrReferenceExpression)invoked).getSameNameVariants();
+    if (variants.length == 0) {
+      final PsiReference[] refs = invoked.getReferences();
+      for (PsiReference ref : refs) {
+        if (ref instanceof PsiPolyVariantReference) {
+          PsiPolyVariantReference reference = (PsiPolyVariantReference)ref;
+          final ResolveResult[] results = reference.multiResolve(false);
+          for (ResolveResult result : results) {
+            if (result instanceof GroovyResolveResult) {
+              res.add((GroovyResolveResult)result);
+            }
+          }
+        }
+      }
+      return res.toArray(new GroovyResolveResult[res.size()]);
+    }
+    return variants;
   }
 
   /*

@@ -205,7 +205,7 @@ public class GroovyCompletionData extends CompletionData {
                                           Set<LookupElement> set,
                                           final PsiFile file,
                                           final CompletionData completionData) {
-        checkForEmptyPackage(reference);
+        //checkForEmptyPackage(reference);
         completeReference(reference, position, set, TailType.NONE, file, TrueFilter.INSTANCE, this);
       }
     };
