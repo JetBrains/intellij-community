@@ -23,12 +23,14 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.checkin.GitPushUtils;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -40,7 +42,7 @@ public class GitPush extends BasicAction {
     throws VcsException {
     saveAll();
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
-    for (VirtualFile root : roots) {
+    for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(roots))) {
       GitHandlerUtil.doSynchronously(GitPushUtils.preparePush(project, root), GitBundle.getString("pushing.all.changes"), "git push");
     }
   }
