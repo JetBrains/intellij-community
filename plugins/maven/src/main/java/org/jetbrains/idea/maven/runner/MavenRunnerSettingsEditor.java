@@ -5,9 +5,9 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.core.MavenCoreConfigurable;
-import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.action.CompositeConfigurable;
+import org.jetbrains.idea.maven.project.MavenGeneralConfigurable;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.runner.CompositeConfigurable;
 
 import javax.swing.*;
 
@@ -25,11 +25,11 @@ public class MavenRunnerSettingsEditor extends SettingsEditor<MavenRunConfigurat
       protected MavenRunnerParameters getParameters() {
         return configuration.getRunnerParameters();
       }
-    }, new MavenCoreConfigurable() {
-      protected MavenCoreSettings getState() {
+    }, new MavenGeneralConfigurable() {
+      protected MavenGeneralSettings getState() {
         return configuration.getCoreSettings();
       }
-    }, new MavenRunnerSettingsConfigurable(p, true) {
+    }, new MavenRunnerConfigurable(p, true) {
       protected MavenRunnerSettings getState() {
         return configuration.getRunnerSettings();
       }

@@ -15,7 +15,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.MessageView;
-import org.jetbrains.idea.maven.core.MavenCoreSettings;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
@@ -34,13 +34,13 @@ public class MavenConsoleImpl extends MavenConsole {
   private final AtomicBoolean isOpen = new AtomicBoolean(false);
   private final Pair<MavenRunnerParameters, MavenRunnerSettings> myParametersAndSettings;
 
-  public MavenConsoleImpl(String title, Project project, MavenCoreSettings coreSettings) {
+  public MavenConsoleImpl(String title, Project project, MavenGeneralSettings coreSettings) {
     this(title, project, coreSettings, null);
   }
 
   public MavenConsoleImpl(String title,
                           Project project,
-                          MavenCoreSettings coreSettings,
+                          MavenGeneralSettings coreSettings,
                           Pair<MavenRunnerParameters, MavenRunnerSettings> parametersAndSettings) {
     super(coreSettings.getOutputLevel(), coreSettings.isPrintErrorStackTraces());
     myTitle = title;

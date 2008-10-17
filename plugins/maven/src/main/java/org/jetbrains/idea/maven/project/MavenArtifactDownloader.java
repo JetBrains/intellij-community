@@ -12,7 +12,7 @@ import java.io.File;
 import java.util.*;
 
 public class MavenArtifactDownloader {
-  private final MavenArtifactSettings mySettings;
+  private final MavenDownloadingSettings mySettings;
   private final MavenEmbedderWrapper myEmbedder;
   private final MavenProcess myProgress;
   private final MavenProjectsTree myProjectsTree;
@@ -20,7 +20,7 @@ public class MavenArtifactDownloader {
 
   public static void download(MavenProjectsTree projectsTree,
                               List<MavenProjectModel> mavenProjects,
-                              MavenArtifactSettings settings,
+                              MavenDownloadingSettings settings,
                               boolean demand,
                               MavenEmbedderWrapper embedder,
                               MavenProcess p) throws MavenProcessCanceledException {
@@ -29,7 +29,7 @@ public class MavenArtifactDownloader {
 
   private MavenArtifactDownloader(MavenProjectsTree projectsTree,
                                   List<MavenProjectModel> mavenProjects,
-                                  MavenArtifactSettings settings,
+                                  MavenDownloadingSettings settings,
                                   MavenEmbedderWrapper embedder,
                                   MavenProcess p) {
     myProjectsTree = projectsTree;
@@ -61,8 +61,8 @@ public class MavenArtifactDownloader {
     }
   }
 
-  private boolean shouldDownload(MavenArtifactSettings.UPDATE_MODE level, boolean demand) {
-    return level == MavenArtifactSettings.UPDATE_MODE.ALWAYS || (level == MavenArtifactSettings.UPDATE_MODE.ON_DEMAND && demand);
+  private boolean shouldDownload(MavenDownloadingSettings.UPDATE_MODE level, boolean demand) {
+    return level == MavenDownloadingSettings.UPDATE_MODE.ALWAYS || (level == MavenDownloadingSettings.UPDATE_MODE.ON_DEMAND && demand);
   }
 
   private void scheduleFilesRefresh(final List<File> downloadedFiles) {

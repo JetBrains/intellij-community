@@ -21,7 +21,7 @@ public abstract class MavenIndicesStressTest extends MavenTestCase implements Ma
     helper.copy("local2", "local1");
     //setRepositoryPath(fixture.getTestDataPath("local1"));
 
-    MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings(), new NullMavenConsole()).getEmbedder();
+    MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenGeneralSettings(), new NullMavenConsole()).getEmbedder();
     File indicesDir = new File(myDir, "indices");
 
     final MavenIndices indices = new MavenIndices(embedder, indicesDir, this);
@@ -81,7 +81,7 @@ public abstract class MavenIndicesStressTest extends MavenTestCase implements Ma
     helper.copy("local2", "local1");
     setRepositoryPath(helper.getTestDataPath("local1"));
 
-    MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings(), new NullMavenConsole()).getEmbedder();
+    MavenEmbedder embedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenGeneralSettings(), new NullMavenConsole()).getEmbedder();
     File indicesDir = new File(myDir, "indices");
 
     MavenIndices indices = new MavenIndices(embedder, indicesDir, this);

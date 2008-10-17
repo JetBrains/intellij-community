@@ -44,7 +44,7 @@ public class MavenIndicesTest extends MavenImportingTestCase {
   }
 
   private void initIndices(String relativeDir) {
-    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenCoreSettings(), new NullMavenConsole()).getEmbedder();
+    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenGeneralSettings(), new NullMavenConsole()).getEmbedder();
     myIndicesDir = new File(myDir, relativeDir);
     myIndices = new MavenIndices(myEmbedder, myIndicesDir, new MavenIndex.IndexListener() {
       public void indexIsBroken(MavenIndex index) {

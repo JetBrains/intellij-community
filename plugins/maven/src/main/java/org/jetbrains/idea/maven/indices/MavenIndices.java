@@ -8,7 +8,7 @@ import org.apache.maven.settings.Proxy;
 import org.apache.maven.wagon.proxy.ProxyInfo;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
-import org.jetbrains.idea.maven.core.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.sonatype.nexus.index.NexusIndexer;
 import org.sonatype.nexus.index.ArtifactContextProducer;
 import org.sonatype.nexus.index.updater.IndexUpdater;

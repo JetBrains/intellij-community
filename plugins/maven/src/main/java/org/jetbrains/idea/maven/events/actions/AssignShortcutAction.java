@@ -7,7 +7,7 @@ import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.MavenDataKeys;
+import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.events.MavenEventsManager;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 

@@ -25,7 +25,7 @@ public class MavenProjectConfigurator {
   private ModifiableModuleModel myModuleModel;
   private MavenProjectsTree myMavenTree;
   private Map<VirtualFile, Module> myFileToModuleMapping;
-  private MavenImportSettings myImporterSettings;
+  private MavenImportingSettings myImportingSettings;
   private List<ModifiableRootModel> myRootModelsToCommit = new ArrayList<ModifiableRootModel>();
 
   private Map<MavenProjectModel, Module> myMavenProjectToModule = new HashMap<MavenProjectModel, Module>();
@@ -37,11 +37,11 @@ public class MavenProjectConfigurator {
   public MavenProjectConfigurator(Project p,
                                   MavenProjectsTree projectsTree,
                                   Map<VirtualFile, Module> fileToModuleMapping,
-                                  MavenImportSettings importerSettings) {
+                                  MavenImportingSettings importingSettings) {
     myProject = p;
     myMavenTree = projectsTree;
     myFileToModuleMapping = fileToModuleMapping;
-    myImporterSettings = importerSettings;
+    myImportingSettings = importingSettings;
   }
 
   public List<PostProjectConfigurationTask> config(final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
@@ -78,7 +78,7 @@ public class MavenProjectConfigurator {
       if (!each.isResolved() || each.getFile() == null) continue;
       files.add(each.getFile());
     }
-    
+
     LocalFileSystem.getInstance().refreshIoFiles(files);
   }
 
@@ -90,7 +90,7 @@ public class MavenProjectConfigurator {
                               myMavenProjectToModule,
                               myMavenProjectToModuleName,
                               myMavenProjectToModulePath,
-                              myImporterSettings.getDedicatedModuleDir());
+                              myImportingSettings.getDedicatedModuleDir());
   }
 
   private void configSettings() {
@@ -111,7 +111,7 @@ public class MavenProjectConfigurator {
 
     int result = Messages.showYesNoDialog(myProject,
                                           ProjectBundle.message("maven.import.message.delete.obsolete", formatted),
-                                          ProjectBundle.message("maven.import"),
+                                          ProjectBundle.message("maven.tab.importing"),
                                           Messages.getQuestionIcon());
     if (result == 1) return;// NO
 
@@ -179,7 +179,7 @@ public class MavenProjectConfigurator {
   }
 
   private boolean shouldCreateModuleFor(MavenProjectModel project) {
-    return myImporterSettings.isCreateModulesForAggregators() || !project.isAggregator();
+    return myImportingSettings.isCreateModulesForAggregators() || !project.isAggregator();
   }
 
   private boolean ensureModuleCreated(MavenProjectModel project) {
@@ -195,14 +195,15 @@ public class MavenProjectConfigurator {
     return true;
   }
 
-  private MavenModuleConfigurator createModuleConfigurator(Module module, MavenProjectModel mavenProject,
-                                                           final ModulesProvider modulesProvider) {
+  private MavenModuleConfigurator createModuleConfigurator(Module module,
+                                                           MavenProjectModel mavenProject,
+                                                           ModulesProvider modulesProvider) {
     return new MavenModuleConfigurator(module,
                                        myModuleModel,
                                        myMavenTree,
                                        mavenProject,
                                        myMavenProjectToModuleName,
-                                       myImporterSettings,
+                                       myImportingSettings,
                                        modulesProvider
     );
   }
@@ -218,7 +219,7 @@ public class MavenProjectConfigurator {
   }
 
   private void configModuleGroups() {
-    if (!myImporterSettings.isCreateModuleGroups()) return;
+    if (!myImportingSettings.isCreateModuleGroups()) return;
 
     final Stack<String> groups = new Stack<String>();
     final boolean createTopLevelGroup = myMavenTree.getRootProjects().size() > 1;

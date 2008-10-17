@@ -28,7 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.core.MavenCoreSettings;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.RunnerBundle;
@@ -47,7 +47,7 @@ public class MavenExternalParameters {
   @NonNls private static final String MAVEN_OPTS = "MAVEN_OPTS";
 
   public static JavaParameters createJavaParameters(final MavenRunnerParameters parameters,
-                                                    final MavenCoreSettings coreSettings,
+                                                    final MavenGeneralSettings coreSettings,
                                                     final MavenRunnerSettings runnerSettings) throws ExecutionException {
     final JavaParameters params = new JavaParameters();
 
@@ -114,7 +114,7 @@ public class MavenExternalParameters {
   }
 
   private static List<String> createMavenParameters(final List<String> list,
-                                                    final MavenCoreSettings coreSettings,
+                                                    final MavenGeneralSettings coreSettings,
                                                     final MavenRunnerSettings runnerSettings,
                                                     final MavenRunnerParameters parameters) {
     encodeCoreAndRunnerSettings(coreSettings, runnerSettings, list);
@@ -162,7 +162,7 @@ public class MavenExternalParameters {
     cmdList.add(MessageFormat.format("-D{0}={1}", key, value));
   }
 
-  private static String resolveMavenHome(@NotNull MavenCoreSettings coreSettings) throws ExecutionException {
+  private static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings) throws ExecutionException {
     final File file = MavenEmbedderFactory.resolveMavenHomeDirectory(coreSettings.getMavenHome());
 
     if (file == null) {
@@ -206,7 +206,7 @@ public class MavenExternalParameters {
     return classpathEntries;
   }
 
-  private static void encodeCoreAndRunnerSettings(MavenCoreSettings coreSettings, MavenRunnerSettings runnerSettings,
+  private static void encodeCoreAndRunnerSettings(MavenGeneralSettings coreSettings, MavenRunnerSettings runnerSettings,
                                                   @NonNls List<String> cmdList) {
     if (coreSettings.isWorkOffline()) {
       cmdList.add("--offline");

@@ -21,7 +21,7 @@ package org.jetbrains.idea.maven.runner;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import org.apache.maven.project.MavenProject;
-import org.jetbrains.idea.maven.core.MavenCoreSettings;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 
 import java.text.MessageFormat;
@@ -29,7 +29,7 @@ import java.util.List;
 
 public abstract class MavenExecutor  {
   final MavenRunnerParameters myParameters;
-  final MavenCoreSettings myCoreSettings;
+  final MavenGeneralSettings myCoreSettings;
   final MavenRunnerSettings myRunnerSettings;
   private String myCaption;
   protected MavenConsole myConsole;
@@ -40,7 +40,7 @@ public abstract class MavenExecutor  {
   private int exitCode = 0;
 
   public MavenExecutor(MavenRunnerParameters parameters,
-                       MavenCoreSettings coreSettings,
+                       MavenGeneralSettings coreSettings,
                        MavenRunnerSettings runnerSettings,
                        String caption,
                        MavenConsole console) {

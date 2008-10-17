@@ -11,7 +11,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.*;
 import org.apache.maven.wagon.proxy.ProxyInfo;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.core.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.project.TransferListenerAdapter;
 import org.sonatype.nexus.index.*;
 import org.sonatype.nexus.index.context.IndexContextInInconsistentStateException;

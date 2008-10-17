@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.core;
+package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.diagnostic.Logger;
 

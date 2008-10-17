@@ -1,12 +1,10 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.lucene.search.Query;
 import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.DummyProjectComponent;
@@ -42,12 +40,6 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
   }
 
   public void doInit() {
-    MavenCore.getInstance(myProject).addConfigurableFactory(new MavenCore.ConfigurableFactory() {
-      public Configurable createConfigurable() {
-        return new MavenIndicesConfigurable(myProject);
-      }
-    });
-
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       updateIndicesList();
     }

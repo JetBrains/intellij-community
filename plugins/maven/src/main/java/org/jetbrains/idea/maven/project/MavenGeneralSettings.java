@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.core;
+package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.Comparing;
 import org.apache.maven.execution.MavenExecutionRequest;
@@ -12,7 +12,7 @@ import java.io.File;
  * @author Vladislav.Kaznacheev
  */
 @SuppressWarnings({"UnusedDeclaration"})
-public class MavenCoreSettings implements Cloneable {
+public class MavenGeneralSettings implements Cloneable {
 
   private boolean workOffline = false;
   @NotNull private String mavenHome = "";
@@ -150,7 +150,7 @@ public class MavenCoreSettings implements Cloneable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final MavenCoreSettings that = (MavenCoreSettings)o;
+    final MavenGeneralSettings that = (MavenGeneralSettings)o;
 
     if (nonRecursive != that.nonRecursive) return false;
     if (outputLevel != that.outputLevel) return false;
@@ -184,9 +184,9 @@ public class MavenCoreSettings implements Cloneable {
   }
 
   @Override
-  public MavenCoreSettings clone() {
+  public MavenGeneralSettings clone() {
     try {
-      return (MavenCoreSettings)super.clone();
+      return (MavenGeneralSettings)super.clone();
     }
     catch (CloneNotSupportedException e) {
       throw new Error(e);

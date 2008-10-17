@@ -22,7 +22,7 @@ public class MavenModuleConfigurator {
   private MavenProjectsTree myMavenTree;
   private MavenProjectModel myMavenProject;
   private Map<MavenProjectModel, String> myMavenProjectToModuleName;
-  private MavenImportSettings mySettings;
+  private MavenImportingSettings mySettings;
   private ModulesProvider myModulesProvider;
   private RootModelAdapter myRootModelAdapter;
   private LibraryTableModifiableModelProvider myTableModifiableModelProvider;
@@ -32,7 +32,8 @@ public class MavenModuleConfigurator {
                                  MavenProjectsTree mavenTree,
                                  MavenProjectModel mavenProject,
                                  Map<MavenProjectModel, String> mavenProjectToModuleName,
-                                 MavenImportSettings settings, final ModulesProvider modulesProvider) {
+                                 MavenImportingSettings settings,
+                                 ModulesProvider modulesProvider) {
     myModule = module;
     myModuleModel = moduleModel;
     myMavenTree = mavenTree;

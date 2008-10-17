@@ -14,8 +14,7 @@ import com.intellij.projectImport.ProjectImportBuilder;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Profile;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.core.MavenCoreSettings;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.project.*;
@@ -37,9 +36,9 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
 
   private Project myProjectToUpdate;
 
-  private MavenCoreSettings myCoreSettings;
-  private MavenImportSettings myImporterSettings;
-  private MavenArtifactSettings myArtifactSettings;
+  private MavenGeneralSettings myGeneralSettingsCache;
+  private MavenImportingSettings myImportingSettingsCache;
+  private MavenDownloadingSettings myDownloadingSettingsCache;
 
   private VirtualFile myImportRoot;
   private List<VirtualFile> myFiles;
@@ -71,9 +70,9 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
   }
 
   public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
-    project.getComponent(MavenWorkspaceSettingsComponent.class).getState().myImporterSettings = getImporterPreferences();
-    project.getComponent(MavenWorkspaceSettingsComponent.class).getState().myArtifactSettings = getArtifactPreferences();
-    project.getComponent(MavenCore.class).loadState(myCoreSettings);
+    project.getComponent(MavenWorkspaceSettingsComponent.class).getState().generalSettings = getGeneralSettings();
+    project.getComponent(MavenWorkspaceSettingsComponent.class).getState().importingSettings = getImportingSettings();
+    project.getComponent(MavenWorkspaceSettingsComponent.class).getState().downloadingSettings = getDownloadingSettings();
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
 
@@ -87,7 +86,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
   }
 
   private void enusreRepositoryPathMacro() {
-    final File repo = myCoreSettings.getEffectiveLocalRepository();
+    final File repo = getGeneralSettings().getEffectiveLocalRepository();
     final PathMacros macros = PathMacros.getInstance();
 
     for (String each : macros.getAllMacroNames()) {
@@ -121,9 +120,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenProcess.MavenTask() {
       public void run(MavenProcess p) throws MavenProcessCanceledException {
         p.setText(ProjectBundle.message("maven.locating.files"));
-        myFiles = FileFinder.findPomFiles(getImportRoot().getChildren(),
-                                          getImporterPreferences().isLookForNested(),
-                                          p.getIndicator(),
+        myFiles = FileFinder.findPomFiles(getImportRoot().getChildren(), getImportingSettings().isLookForNested(), p.getIndicator(),
                                           new ArrayList<VirtualFile>());
 
         collectProfiles();
@@ -140,7 +137,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
   private void collectProfiles() {
     myProfiles = new ArrayList<String>();
 
-    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(getCoreState(), new SoutMavenConsole());
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(getGeneralSettings(), new SoutMavenConsole());
     try {
       for (VirtualFile f : myFiles) {
         MavenProjectHolder holder = MavenReader.readProject(e, f, new ArrayList<String>());
@@ -198,11 +195,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
 
   private void readMavenProjectTree(MavenProcess p) throws MavenProcessCanceledException {
     myMavenProjectTree = new MavenProjectsTree();
-    myMavenProjectTree.read(myFiles,
-                            mySelectedProfiles,
-                            getCoreState(),
-                            new SoutMavenConsole(), 
-                            p);
+    myMavenProjectTree.read(myFiles, mySelectedProfiles, getGeneralSettings(), new SoutMavenConsole(), p);
   }
 
   public List<MavenProjectModel> getList() {
@@ -227,27 +220,25 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
     myOpenModulesConfigurator = on;
   }
 
-  public MavenCoreSettings getCoreState() {
-    if (myCoreSettings == null) {
-      myCoreSettings = getProject().getComponent(MavenCore.class).getState().clone();
+  public MavenGeneralSettings getGeneralSettings() {
+    if (myGeneralSettingsCache == null) {
+      myGeneralSettingsCache = getProject().getComponent(MavenWorkspaceSettingsComponent.class).getState().generalSettings.clone();
     }
-    return myCoreSettings;
+    return myGeneralSettingsCache;
   }
 
-  public MavenImportSettings getImporterPreferences() {
-    if (myImporterSettings == null) {
-      myImporterSettings = getProject().getComponent(MavenWorkspaceSettingsComponent.class).getState()
-          .myImporterSettings.clone();
+  public MavenImportingSettings getImportingSettings() {
+    if (myImportingSettingsCache == null) {
+      myImportingSettingsCache = getProject().getComponent(MavenWorkspaceSettingsComponent.class).getState().importingSettings.clone();
     }
-    return myImporterSettings;
+    return myImportingSettingsCache;
   }
 
-  private MavenArtifactSettings getArtifactPreferences() {
-    if (myArtifactSettings == null) {
-      myArtifactSettings = getProject().getComponent(MavenWorkspaceSettingsComponent.class).getState()
-          .myArtifactSettings.clone();
+  private MavenDownloadingSettings getDownloadingSettings() {
+    if (myDownloadingSettingsCache == null) {
+      myDownloadingSettingsCache = getProject().getComponent(MavenWorkspaceSettingsComponent.class).getState().downloadingSettings.clone();
     }
-    return myArtifactSettings;
+    return myDownloadingSettingsCache;
   }
 
   private Project getProject() {

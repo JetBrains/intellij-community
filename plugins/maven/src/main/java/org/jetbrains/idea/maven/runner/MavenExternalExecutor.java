@@ -26,7 +26,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.maven.core.MavenCoreSettings;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 
 import java.util.List;
@@ -39,7 +39,7 @@ public class MavenExternalExecutor extends MavenExecutor {
   @NonNls private static final int INFO_PREFIX_SIZE = "[INFO] ".length();
 
   public MavenExternalExecutor(MavenRunnerParameters parameters,
-                               MavenCoreSettings coreSettings,
+                               MavenGeneralSettings coreSettings,
                                MavenRunnerSettings runnerSettings,
                                MavenConsole console) {
     super(parameters, coreSettings, runnerSettings, RunnerBundle.message("external.executor.caption"), console);

@@ -9,7 +9,7 @@ import org.apache.maven.artifact.resolver.filter.ArtifactFilter;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.OverConstrainedVersionException;
 import org.apache.maven.artifact.versioning.VersionRange;
-import org.jetbrains.idea.maven.core.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.File;
 import java.io.FileOutputStream;

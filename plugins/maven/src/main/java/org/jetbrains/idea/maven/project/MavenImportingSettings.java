@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenImportSettings implements Cloneable {
+public class MavenImportingSettings implements Cloneable {
   @NotNull private String dedicatedModuleDir = "";
   private boolean lookForNested = false;
   private boolean autoSync = false;
@@ -84,7 +84,7 @@ public class MavenImportSettings implements Cloneable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final MavenImportSettings that = (MavenImportSettings)o;
+    final MavenImportingSettings that = (MavenImportingSettings)o;
 
     if (createModuleGroups != that.createModuleGroups) return false;
     if (lookForNested != that.lookForNested) return false;
@@ -112,9 +112,9 @@ public class MavenImportSettings implements Cloneable {
   }
 
   @Override
-  public MavenImportSettings clone() {
+  public MavenImportingSettings clone() {
     try {
-      return (MavenImportSettings)super.clone();
+      return (MavenImportingSettings)super.clone();
     }
     catch (CloneNotSupportedException e) {
       throw new Error(e);

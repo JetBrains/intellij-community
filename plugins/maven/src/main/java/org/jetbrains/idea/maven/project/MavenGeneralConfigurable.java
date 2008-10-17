@@ -15,7 +15,7 @@
  * =========================================================================
  */
 
-package org.jetbrains.idea.maven.core;
+package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.options.Configurable;
 import org.apache.maven.execution.MavenExecutionRequest;
@@ -29,7 +29,7 @@ import javax.swing.*;
 /**
  * @author Ralf Quebbemann (ralfq@codehaus.org)
  */
-public abstract class MavenCoreConfigurable implements Configurable {
+public abstract class MavenGeneralConfigurable implements Configurable {
   private JCheckBox checkboxWorkOffline;
   private JPanel panel;
   private JComboBox comboboxOutputLevel;
@@ -39,18 +39,19 @@ public abstract class MavenCoreConfigurable implements Configurable {
   private JComboBox comboboxPluginUpdatePolicy;
   private JCheckBox checkboxUsePluginRegistry;
   private JCheckBox checkboxNonRecursive;
-  private MavenPathsForm mavenPathsForm;
+  private MavenEnvironmentForm mavenPathsForm;
   private final DefaultComboBoxModel comboboxModelOutputLevel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel comboboxModelChecksumPolicy = new DefaultComboBoxModel();
   private final DefaultComboBoxModel comboboxModelMultiprojectBuildFailPolicy = new DefaultComboBoxModel();
   private final DefaultComboBoxModel comboboxModelPluginUpdatePolicy = new DefaultComboBoxModel();
 
-  protected abstract MavenCoreSettings getState();
+  protected abstract MavenGeneralSettings getState();
 
   private void fillComboboxFailureBehavior() {
-    ComboBoxUtil.setModel(comboboxMultiprojectBuildFailPolicy, comboboxModelMultiprojectBuildFailPolicy, new Object[][]{
-      {MavenExecutionRequest.REACTOR_FAIL_FAST, "Stop at first failure"}, {MavenExecutionRequest.REACTOR_FAIL_AT_END, "Fail at the end"},
-      {MavenExecutionRequest.REACTOR_FAIL_NEVER, "Never fail"}});
+    ComboBoxUtil.setModel(comboboxMultiprojectBuildFailPolicy, comboboxModelMultiprojectBuildFailPolicy,
+                          new Object[][]{{MavenExecutionRequest.REACTOR_FAIL_FAST, "Stop at first failure"},
+                            {MavenExecutionRequest.REACTOR_FAIL_AT_END, "Fail at the end"},
+                            {MavenExecutionRequest.REACTOR_FAIL_NEVER, "Never fail"}});
   }
 
   private void fillComboboxPluginUpdatePolicy() {
@@ -59,15 +60,17 @@ public abstract class MavenCoreConfigurable implements Configurable {
   }
 
   private void fillComboboxChecksumPolicy() {
-    ComboBoxUtil.setModel(comboboxChecksumPolicy, comboboxModelChecksumPolicy, new Object[][]{{"", "No Global Policy"},
-      {MavenExecutionRequest.CHECKSUM_POLICY_FAIL, "Strict (Fail)"}, {MavenExecutionRequest.CHECKSUM_POLICY_WARN, "Lax (Warn Only)"}});
+    ComboBoxUtil.setModel(comboboxChecksumPolicy, comboboxModelChecksumPolicy,
+                          new Object[][]{{"", "No Global Policy"}, {MavenExecutionRequest.CHECKSUM_POLICY_FAIL, "Strict (Fail)"},
+                            {MavenExecutionRequest.CHECKSUM_POLICY_WARN, "Lax (Warn Only)"}});
   }
 
   private void fillComboboxOutputLevel() {
-    ComboBoxUtil.setModel(comboboxOutputLevel, comboboxModelOutputLevel, new Object[][]{
-      {MavenExecutionRequest.LOGGING_LEVEL_DEBUG, "Debug"}, {MavenExecutionRequest.LOGGING_LEVEL_INFO, "Info"},
-      {MavenExecutionRequest.LOGGING_LEVEL_WARN, "Warn"}, {MavenExecutionRequest.LOGGING_LEVEL_ERROR, "Error"},
-      {MavenExecutionRequest.LOGGING_LEVEL_FATAL, "Fatal"}, {MavenExecutionRequest.LOGGING_LEVEL_DISABLED, "Disabled"}});
+    ComboBoxUtil.setModel(comboboxOutputLevel, comboboxModelOutputLevel,
+                          new Object[][]{{MavenExecutionRequest.LOGGING_LEVEL_DEBUG, "Debug"},
+                            {MavenExecutionRequest.LOGGING_LEVEL_INFO, "Info"}, {MavenExecutionRequest.LOGGING_LEVEL_WARN, "Warn"},
+                            {MavenExecutionRequest.LOGGING_LEVEL_ERROR, "Error"}, {MavenExecutionRequest.LOGGING_LEVEL_FATAL, "Fatal"},
+                            {MavenExecutionRequest.LOGGING_LEVEL_DISABLED, "Disabled"}});
   }
 
   public JComponent createComponent() {
@@ -80,7 +83,7 @@ public abstract class MavenCoreConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    MavenCoreSettings formData = new MavenCoreSettings();
+    MavenGeneralSettings formData = new MavenGeneralSettings();
     setData(formData);
     return !formData.equals(getState());
   }
@@ -93,7 +96,7 @@ public abstract class MavenCoreConfigurable implements Configurable {
     getData(getState());
   }
 
-  private void setData(MavenCoreSettings data) {
+  private void setData(MavenGeneralSettings data) {
     data.setWorkOffline(checkboxWorkOffline.isSelected());
     mavenPathsForm.setData(data);
 
@@ -102,18 +105,18 @@ public abstract class MavenCoreConfigurable implements Configurable {
     data.setNonRecursive(checkboxNonRecursive.isSelected());
 
     Integer level = (Integer)ComboBoxUtil.getSelectedValue(comboboxModelOutputLevel);
-    if(level!=null){
+    if (level != null) {
       data.setOutputLevel(level);
     }
     data.setChecksumPolicy(ComboBoxUtil.getSelectedString(comboboxModelChecksumPolicy));
     data.setFailureBehavior(ComboBoxUtil.getSelectedString(comboboxModelMultiprojectBuildFailPolicy));
     Boolean policy = (Boolean)ComboBoxUtil.getSelectedValue(comboboxModelPluginUpdatePolicy);
-    if(policy!=null){
+    if (policy != null) {
       data.setPluginUpdatePolicy(policy);
     }
   }
 
-  private void getData(MavenCoreSettings data) {
+  private void getData(MavenGeneralSettings data) {
     checkboxWorkOffline.setSelected(data.isWorkOffline());
 
     mavenPathsForm.getData(data);
@@ -134,7 +137,7 @@ public abstract class MavenCoreConfigurable implements Configurable {
 
   @Nls
   public String getDisplayName() {
-    return CoreBundle.message("maven.tab.general");
+    return ProjectBundle.message("maven.tab.general");
   }
 
   @Nullable

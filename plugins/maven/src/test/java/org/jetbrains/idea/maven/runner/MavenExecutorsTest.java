@@ -37,11 +37,11 @@ public class MavenExecutorsTest extends MavenTestCase {
 
     MavenExecutor e;
     if (useEmbedder) {
-      e = new MavenEmbeddedExecutor(params, getMavenCoreSettings(), settings, new NullMavenConsole());
+      e = new MavenEmbeddedExecutor(params, getMavenGeneralSettings(), settings, new NullMavenConsole());
     }
     else {
       settings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA);
-      e = new MavenExternalExecutor(params, getMavenCoreSettings(), settings, new NullMavenConsole());
+      e = new MavenExternalExecutor(params, getMavenGeneralSettings(), settings, new NullMavenConsole());
     }
 
     assertTrue(e.execute(new ArrayList<MavenProject>(), new EmptyProgressIndicator()));
@@ -85,7 +85,7 @@ public class MavenExecutorsTest extends MavenTestCase {
       }
     };
 
-    MavenExecutor e = new MavenEmbeddedExecutor(params, getMavenCoreSettings(), new MavenRunnerSettings(), console);
+    MavenExecutor e = new MavenEmbeddedExecutor(params, getMavenGeneralSettings(), new MavenRunnerSettings(), console);
     e.execute(new ArrayList<MavenProject>(), new EmptyProgressIndicator());
     assertTrue(buffer.toString(), buffer.toString().contains(containingString));
   }
@@ -112,7 +112,7 @@ public class MavenExecutorsTest extends MavenTestCase {
                                      "<version>1</version>");
 
     MavenRunnerParameters params = new MavenRunnerParameters(true, getProjectPath(), Arrays.asList("compile"), null);
-    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(params, getMavenCoreSettings(), new MavenRunnerSettings(), new NullMavenConsole())
+    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(params, getMavenGeneralSettings(), new MavenRunnerSettings(), new NullMavenConsole())
         ;
 
     ArrayList<MavenProject> result = new ArrayList<MavenProject>();

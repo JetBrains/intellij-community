@@ -13,8 +13,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import junit.framework.TestCase;
-import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.core.MavenCoreSettings;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -146,12 +146,8 @@ public abstract class MavenTestCase extends TestCase {
     }.executeSilently().throwException();
   }
 
-  protected MavenCore getMavenCore() {
-    return MavenCore.getInstance(myProject);
-  }
-
-  protected MavenCoreSettings getMavenCoreSettings() {
-    return getMavenCore().getState();
+  protected MavenGeneralSettings getMavenGeneralSettings() {
+    return MavenProjectsManager.getInstance(myProject).getGeneralSettings();
   }
 
   protected String getRepositoryPath() {
@@ -160,11 +156,11 @@ public abstract class MavenTestCase extends TestCase {
   }
 
   protected File getRepositoryFile() {
-    return getMavenCoreSettings().getEffectiveLocalRepository();
+    return getMavenGeneralSettings().getEffectiveLocalRepository();
   }
 
   protected void setRepositoryPath(String path) {
-    getMavenCoreSettings().setLocalRepository(path);
+    getMavenGeneralSettings().setLocalRepository(path);
   }
 
   protected String getProjectPath() {
@@ -179,7 +175,7 @@ public abstract class MavenTestCase extends TestCase {
     File file = new File(myDir, "settings.xml");
     file.createNewFile();
     FileUtil.writeToFile(file, content.getBytes());
-    getMavenCoreSettings().setMavenSettingsFile(file.getPath());
+    getMavenGeneralSettings().setMavenSettingsFile(file.getPath());
   }
 
   protected Module createModule(String name) throws IOException {

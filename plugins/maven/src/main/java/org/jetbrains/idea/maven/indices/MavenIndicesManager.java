@@ -21,12 +21,12 @@ import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.MavenLog;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.runner.SoutMavenConsole;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.*;
@@ -72,7 +72,7 @@ public class MavenIndicesManager implements ApplicationComponent {
   private void ensureInitialized() {
     if (myIndices != null) return;
 
-    MavenCoreSettings settings = MavenCore.getInstance(ProjectManager.getInstance().getDefaultProject()).getState();
+    MavenGeneralSettings settings = MavenProjectsManager.getInstance(ProjectManager.getInstance().getDefaultProject()).getGeneralSettings();
 
     myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(settings, new SoutMavenConsole()).getEmbedder();
     File dir = myTestIndicesDir == null

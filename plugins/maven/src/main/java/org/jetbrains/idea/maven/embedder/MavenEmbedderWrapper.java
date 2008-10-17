@@ -25,7 +25,7 @@ import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.reactor.MavenExecutionException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-import org.jetbrains.idea.maven.core.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.project.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.project.TransferListenerAdapter;
 import org.jetbrains.idea.maven.utils.MavenId;

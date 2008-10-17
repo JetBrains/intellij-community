@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.core.action;
+package org.jetbrains.idea.maven.runner;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;

@@ -11,19 +11,19 @@ import javax.swing.*;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class ImportSettingsConfigurable implements Configurable {
-  private MavenImportSettings myImporterSettings;
+public class MavenImportingConfigurable implements Configurable {
+  private MavenImportingSettings myImportingSettings;
 
   private JPanel panel;
-  private MavenImportSettingsForm mySettingsForm;
+  private MavenImportingSettingsForm mySettingsForm;
 
-  public ImportSettingsConfigurable(MavenImportSettings importerSettings) {
-    myImporterSettings = importerSettings;
+  public MavenImportingConfigurable(MavenImportingSettings importingSettings) {
+    myImportingSettings = importingSettings;
   }
 
   @Nls
   public String getDisplayName() {
-    return ProjectBundle.message("maven.import");
+    return ProjectBundle.message("maven.tab.importing");
   }
 
   @Nullable
@@ -42,15 +42,15 @@ public class ImportSettingsConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    return mySettingsForm.isModified(myImporterSettings);
+    return mySettingsForm.isModified(myImportingSettings);
   }
 
   public void apply() throws ConfigurationException {
-    mySettingsForm.getData(myImporterSettings);
+    mySettingsForm.getData(myImportingSettings);
   }
 
   public void reset() {
-    mySettingsForm.setData(myImporterSettings);
+    mySettingsForm.setData(myImportingSettings);
   }
 
   public void disposeUIResources() {

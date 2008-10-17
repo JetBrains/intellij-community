@@ -1,9 +1,7 @@
 package org.jetbrains.idea.maven.project;
 
-/**
- * Author: Vladislav.Kaznacheev
- */
 public class MavenWorkspaceSettings {
-  public MavenImportSettings myImporterSettings = new MavenImportSettings();
-  public MavenArtifactSettings myArtifactSettings = new MavenArtifactSettings();
+  public MavenGeneralSettings generalSettings = new MavenGeneralSettings();
+  public MavenImportingSettings importingSettings = new MavenImportingSettings();
+  public MavenDownloadingSettings downloadingSettings = new MavenDownloadingSettings();
 }

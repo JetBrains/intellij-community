@@ -17,8 +17,8 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.core.MavenCoreSettings;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
 
@@ -71,7 +71,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     return Module.EMPTY_ARRAY;
   }
 
-  public MavenCoreSettings getCoreSettings() {
+  public MavenGeneralSettings getCoreSettings() {
     return mySettings.myCoreSettings;
   }
 
@@ -116,7 +116,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
   public static class MavenSettings implements Cloneable {
     public static final String TAG = "MavenSettings";
 
-    public MavenCoreSettings myCoreSettings;
+    public MavenGeneralSettings myCoreSettings;
     public MavenRunnerSettings myRunnerSettings;
     public MavenRunnerParameters myRunnerParameters;
 
@@ -125,7 +125,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     }
 
     public MavenSettings(Project project) {
-      this(MavenCore.getInstance(project).getState(),
+      this(MavenProjectsManager.getInstance(project).getGeneralSettings(),
            MavenRunner.getInstance(project).getState(),
            new MavenRunnerParameters());
     }
@@ -134,7 +134,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
       this(that.myCoreSettings, that.myRunnerSettings, that.myRunnerParameters);
     }
 
-    private MavenSettings(MavenCoreSettings cs, MavenRunnerSettings rs, MavenRunnerParameters rp) {
+    private MavenSettings(MavenGeneralSettings cs, MavenRunnerSettings rs, MavenRunnerParameters rp) {
       myCoreSettings = cs.clone();
       myRunnerSettings = rs.clone();
       myRunnerSettings.setUseMavenEmbedder(false);

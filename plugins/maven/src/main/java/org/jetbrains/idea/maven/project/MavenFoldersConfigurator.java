@@ -20,12 +20,12 @@ import java.util.Map;
 
 public class MavenFoldersConfigurator {
   private MavenProjectModel myMavenProject;
-  private MavenImportSettings myPrefs;
+  private MavenImportingSettings myImportingSettings;
   private RootModelAdapter myModel;
 
   public static void updateProjectFolders(final Project project, final List<MavenProject> updatedProjects) {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-    final MavenImportSettings settings = manager.getImportSettings();
+    final MavenImportingSettings settings = manager.getImportingSettings();
 
     final Map<VirtualFile, MavenProject> fileToProjectMapping = new HashMap<VirtualFile, MavenProject>();
 
@@ -66,9 +66,9 @@ public class MavenFoldersConfigurator {
     });
   }
 
-  public MavenFoldersConfigurator(MavenProjectModel mavenProject, MavenImportSettings settings, RootModelAdapter model) {
+  public MavenFoldersConfigurator(MavenProjectModel mavenProject, MavenImportingSettings settings, RootModelAdapter model) {
     myMavenProject = mavenProject;
-    myPrefs = settings;
+    myImportingSettings = settings;
     myModel = model;
   }
 
@@ -99,7 +99,7 @@ public class MavenFoldersConfigurator {
   }
 
   private void configOutputFolders() {
-    if (myPrefs.isUseMavenOutput()) {
+    if (myImportingSettings.isUseMavenOutput()) {
       myModel.useModuleOutput(myMavenProject.getOutputDirectory(),
                               myMavenProject.getTestOutputDirectory());
     }

@@ -11,11 +11,8 @@ import com.intellij.projectImport.ProjectImportWizardStep;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.MavenPathsForm;
-import org.jetbrains.idea.maven.project.MavenImportSettingsForm;
-import org.jetbrains.idea.maven.project.MavenImportSettings;
-import org.jetbrains.idea.maven.project.ProjectBundle;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.project.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,18 +24,18 @@ import java.awt.event.MouseEvent;
  */
 public class MavenProjectRootStep extends ProjectImportWizardStep {
 
-  private MavenCoreSettings myCoreSettings;
+  private MavenGeneralSettings myCoreSettings;
   private MavenProjectBuilder myImportContext;
-  private MavenImportSettings myImporterSettings;
+  private MavenImportingSettings myImportingSettings;
 
   private final JPanel myPanel;
   private NamePathComponent myRootPathComponent;
-  private final MavenImportSettingsForm myImporterSettingsForm;
+  private final MavenImportingSettingsForm myImporterSettingsForm;
 
   public MavenProjectRootStep(WizardContext wizardContext) {
     super(wizardContext);
 
-    myImporterSettingsForm = new MavenImportSettingsForm(true) {
+    myImporterSettingsForm = new MavenImportingSettingsForm(true) {
       public String getDefaultModuleDir() {
         return myRootPathComponent.getPath();
       }
@@ -76,7 +73,7 @@ public class MavenProjectRootStep extends ProjectImportWizardStep {
   }
 
   public void updateDataModel() {
-    final MavenImportSettings settings = getImporterSettings();
+    final MavenImportingSettings settings = getImportingSettings();
     myImporterSettingsForm.getData(settings);
     suggestProjectNameAndPath(settings.getDedicatedModuleDir(), myRootPathComponent.getPath());
   }
@@ -101,16 +98,16 @@ public class MavenProjectRootStep extends ProjectImportWizardStep {
         myRootPathComponent.getPathComponent().selectAll();
       }
     }
-    myImporterSettingsForm.setData(getImporterSettings());
+    myImporterSettingsForm.setData(getImportingSettings());
   }
 
   public JComponent getPreferredFocusedComponent() {
     return myRootPathComponent.getPathComponent();
   }
 
-  private MavenCoreSettings getCoreSettings() {
+  private MavenGeneralSettings getCoreSettings() {
     if (myCoreSettings == null) {
-      myCoreSettings = ((MavenProjectBuilder)getBuilder()).getCoreState();
+      myCoreSettings = ((MavenProjectBuilder)getBuilder()).getGeneralSettings();
     }
     return myCoreSettings;
   }
@@ -122,11 +119,11 @@ public class MavenProjectRootStep extends ProjectImportWizardStep {
     return myImportContext;
   }
 
-  public MavenImportSettings getImporterSettings() {
-    if (myImporterSettings == null) {
-      myImporterSettings = ((MavenProjectBuilder)getBuilder()).getImporterPreferences();
+  public MavenImportingSettings getImportingSettings() {
+    if (myImportingSettings == null) {
+      myImportingSettings = ((MavenProjectBuilder)getBuilder()).getImportingSettings();
     }
-    return myImporterSettings;
+    return myImportingSettings;
   }
 
   @NonNls
@@ -135,7 +132,7 @@ public class MavenProjectRootStep extends ProjectImportWizardStep {
   }
 
   class MavenPathsConfigurable implements Configurable {
-    MavenPathsForm myForm = new MavenPathsForm();
+    MavenEnvironmentForm myForm = new MavenEnvironmentForm();
 
     @Nls
     public String getDisplayName() {

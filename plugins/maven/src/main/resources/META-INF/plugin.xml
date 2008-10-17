@@ -25,6 +25,8 @@
     <projectImportBuilder implementation="org.jetbrains.idea.maven.wizards.MavenProjectBuilder"/>
     <moduleType id="MAVEN_MODULE" implementationClass="org.jetbrains.idea.maven.wizards.MavenModuleType"/>
 
+    <projectConfigurable implementation="org.jetbrains.idea.maven.utils.MavenSettings" order="last"/>
+
     <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.events.MavenStepsBeforeRunProvider"/>
     <keymapExtension implementation="org.jetbrains.idea.maven.events.MavenKeymapExtension"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -34,7 +36,7 @@
 
     <selectInTarget implementation="org.jetbrains.idea.maven.navigator.SelectInMavenNavigatorTarget"/>
 
-    <iconProvider implementation="org.jetbrains.idea.maven.core.MavenIconProvider"/>
+    <iconProvider implementation="org.jetbrains.idea.maven.utils.MavenIconProvider"/>
 
     <xml.elementDescriptorProvider implementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorProvider"/>
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenModelDomDescription"/>
@@ -61,10 +63,6 @@
 
   <project-components>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.core.MavenCore</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.idea.maven.project.MavenProjectsManager</implementation-class>
     </component>
     <component>
@@ -88,26 +86,14 @@
 
   <actions>
     <group id="Maven.Core">
-      <action id="Maven.ShowSettings"
-              class="org.jetbrains.idea.maven.core.action.ShowSettingsAction" text="Maven settings"
-              description="Edit Maven integration settings for the current project"
-              icon="/images/mavenSettings.png">
-      </action>
-
-      <action id="Maven.ShowDefaultSettings"
-              class="org.jetbrains.idea.maven.core.action.ShowDefaultSettingsAction" text="Default Maven settings"
-              description="Edit default Maven integration settings"
-              icon="/general/applicationSettings.png">
-      </action>
-
       <action id="Maven.ToggleOffline"
-              class="org.jetbrains.idea.maven.core.action.ToggleOfflineAction" text="Toggle Offline mode"
+              class="org.jetbrains.idea.maven.project.action.ToggleOfflineAction" text="Toggle Offline mode"
               description="Toggle Offline mode for Maven"
               icon="/images/offlineMode.png">
       </action>
 
       <action id="Maven.ToggleSkipTests"
-              class="org.jetbrains.idea.maven.core.action.ToggleSkipTestsAction" text="Toggle 'Skip tests' mode"
+              class="org.jetbrains.idea.maven.project.action.ToggleSkipTestsAction" text="Toggle 'Skip tests' mode"
               description="Toggle 'Skip tests' mode for Maven"
               icon="/nodes/exceptionClass.png">
       </action>
@@ -188,20 +174,18 @@
     </group>
 
     <group id="Maven.PomTreeToolbar" description="Pom Tree toolbar">
-      <reference id="Maven.PomTreeView"/>
-      <separator/>
-      <reference id="Maven.AddManagedFile"/>
-      <reference id="Maven.RemoveManagedFiles"/>
-      <separator/>
       <reference id="Maven.Reimport"/>
       <!--<reference id="Maven.UpdateDependencies"/>-->
       <reference id="Maven.UpdateFolders"/>
       <reference id="Maven.DownloadArtifacts"/>
       <separator/>
-      <reference id="Maven.ShowSettings"/>
-      <reference id="Maven.ShowDefaultSettings"/>
+      <reference id="Maven.AddManagedFile"/>
+      <reference id="Maven.RemoveManagedFiles"/>
+      <separator/>
       <reference id="Maven.ToggleOffline"/>
       <reference id="Maven.ToggleSkipTests"/>
+      <separator/>
+      <reference id="Maven.PomTreeView"/>
       <separator/>
       <reference id="Maven.Help"/>
     </group>

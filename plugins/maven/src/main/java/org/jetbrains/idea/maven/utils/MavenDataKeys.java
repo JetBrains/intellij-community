@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.core;
+package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.idea.maven.project.MavenProjectModel;

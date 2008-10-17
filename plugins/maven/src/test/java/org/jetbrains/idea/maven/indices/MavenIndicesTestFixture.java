@@ -2,7 +2,7 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.idea.maven.core.MavenCore;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +34,7 @@ public class MavenIndicesTestFixture {
       addToRepository(each);
     }
 
-    MavenCore.getInstance(myProject).getState().setLocalRepository(myRepositoryHelper.getTestDataPath(myLocalRepoDir));
+    MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(myRepositoryHelper.getTestDataPath(myLocalRepoDir));
 
     getIndicesManager().setTestIndexDir(new File(myDir, "MavenIndices"));
     myIndicesManager = MavenProjectIndicesManager.getInstance(myProject);

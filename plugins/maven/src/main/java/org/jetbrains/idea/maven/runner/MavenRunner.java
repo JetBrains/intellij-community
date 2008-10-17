@@ -5,7 +5,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -15,9 +14,8 @@ import com.intellij.openapi.util.Pair;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.MavenLog;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenConsoleHelper;
 import org.jetbrains.idea.maven.embedder.MavenConsoleImpl;
@@ -30,7 +28,6 @@ import java.util.List;
 @State(name = "MavenRunner", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
 public class MavenRunner extends DummyProjectComponent implements PersistentStateComponent<MavenRunnerSettings> {
   private final Project myProject;
-  private final MavenCore myMavenCore;
 
   private MavenRunnerSettings mySettings = new MavenRunnerSettings();
 
@@ -38,21 +35,9 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
     return project.getComponent(MavenRunner.class);
   }
 
-  public MavenRunner(final Project project, MavenCore mavenCore) {
+  public MavenRunner(final Project project) {
     super("MavenRunner");
-
     myProject = project;
-    myMavenCore = mavenCore;
-
-    mavenCore.addConfigurableFactory(new MavenCore.ConfigurableFactory() {
-      public Configurable createConfigurable() {
-        return new MavenRunnerSettingsConfigurable(project, false) {
-          protected MavenRunnerSettings getState() {
-            return mySettings;
-          }
-        };
-      }
-    });
   }
 
   public MavenRunnerSettings getState() {
@@ -74,10 +59,10 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
   public void run(final MavenRunnerParameters parameters, final MavenRunnerSettings settings, final Runnable onComplete) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final MavenConsole console = createConsole(myMavenCore.getState(),
+    final MavenConsole console = createConsole(getGeneralSettings(),
                                                Pair.create(parameters, settings));
     try {
-      final MavenExecutor[] executor = new MavenExecutor[]{createExecutor(parameters, myMavenCore.getState(), settings, console)};
+      final MavenExecutor[] executor = new MavenExecutor[]{createExecutor(parameters, getGeneralSettings(), settings, console)};
 
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, executor[0].getCaption(), true) {
         public void run(@NotNull ProgressIndicator indicator) {
@@ -125,13 +110,17 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
     }
   }
 
+  private MavenGeneralSettings getGeneralSettings() {
+    return MavenProjectsManager.getInstance(myProject).getGeneralSettings();
+  }
+
 
   public boolean runBatch(List<MavenRunnerParameters> commands,
-                          @Nullable MavenCoreSettings coreSettings,
+                          @Nullable MavenGeneralSettings coreSettings,
                           @Nullable MavenRunnerSettings runnerSettings,
                           @Nullable final String action,
                           ProgressIndicator indicator) {
-    final MavenCoreSettings effectiveCoreSettings = coreSettings != null ? coreSettings : myMavenCore.getState();
+    final MavenGeneralSettings effectiveCoreSettings = coreSettings != null ? coreSettings : getGeneralSettings();
     final MavenRunnerSettings effectiveRunnerSettings = runnerSettings != null ? runnerSettings : getState();
 
     MavenConsole console = createConsole(effectiveCoreSettings, null);
@@ -165,7 +154,7 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
     MavenProjectsManager.getInstance(myProject).updateProjectFolders(processedProjects);
   }
 
-  private MavenConsole createConsole(MavenCoreSettings coreSettings,
+  private MavenConsole createConsole(MavenGeneralSettings coreSettings,
                                      Pair<MavenRunnerParameters, MavenRunnerSettings> parametersAndSettings) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new SoutMavenConsole();
@@ -174,7 +163,7 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
   }
 
   private MavenExecutor createExecutor(MavenRunnerParameters taskParameters,
-                                       MavenCoreSettings coreSettings,
+                                       MavenGeneralSettings coreSettings,
                                        MavenRunnerSettings runnerSettings,
                                        MavenConsole console) {
     if (runnerSettings.isUseMavenEmbedder()) {

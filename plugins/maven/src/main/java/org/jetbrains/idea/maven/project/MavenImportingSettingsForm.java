@@ -12,7 +12,7 @@ import java.awt.event.ActionListener;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenImportSettingsForm {
+public class MavenImportingSettingsForm {
 
   private JPanel panel;
   private JCheckBox myModuleDirCheckBox;
@@ -25,11 +25,11 @@ public class MavenImportSettingsForm {
   private JCheckBox myUpdateFoldersOnImportCheckBox;
   private JCheckBox myImportIsBackgroundCheckBox;
 
-  public MavenImportSettingsForm() {
+  public MavenImportingSettingsForm() {
     this(false);
   }
 
-  public MavenImportSettingsForm(boolean isImportStep) {
+  public MavenImportingSettingsForm(boolean isImportStep) {
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -67,7 +67,7 @@ public class MavenImportSettingsForm {
     return panel;
   }
 
-  public void getData(MavenImportSettings data) {
+  public void getData(MavenImportingSettings data) {
     data.setDedicatedModuleDir(myModuleDirCheckBox.isSelected() ? myModuleDirControl.getText() : "");
     data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
     data.setAutoSync(myAutoSyncCheckBox.isSelected());
@@ -78,7 +78,7 @@ public class MavenImportSettingsForm {
     data.setImportInBackground(myImportIsBackgroundCheckBox.isSelected());
   }
 
-  public void setData(final MavenImportSettings data) {
+  public void setData(final MavenImportingSettings data) {
     myModuleDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
     myModuleDirControl.setText(data.getDedicatedModuleDir());
 
@@ -93,8 +93,8 @@ public class MavenImportSettingsForm {
     enableControls();
   }
 
-  public boolean isModified(MavenImportSettings settings) {
-    MavenImportSettings formData = new MavenImportSettings();
+  public boolean isModified(MavenImportingSettings settings) {
+    MavenImportingSettings formData = new MavenImportingSettings();
     getData(formData);
     return !formData.equals(settings);
   }

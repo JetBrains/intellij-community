@@ -11,8 +11,8 @@ import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.MavenLog;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.JDOMReader;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
@@ -157,29 +157,29 @@ public class MavenEmbedderFactory {
     return Arrays.asList(standardGoals);
   }
 
-  public static MavenEmbedderWrapper createEmbedderForRead(MavenCoreSettings settings,
+  public static MavenEmbedderWrapper createEmbedderForRead(MavenGeneralSettings settings,
                                                            MavenConsole console) {
     return createEmbedderForRead(settings, console, null);
   }
 
-  public static MavenEmbedderWrapper createEmbedderForRead(MavenCoreSettings settings,
+  public static MavenEmbedderWrapper createEmbedderForRead(MavenGeneralSettings settings,
                                                            MavenConsole console,
                                                            MavenProjectsTree projectsTree) {
     return createEmbedder(settings, console, new MyCustomizer(projectsTree, false));
   }
 
-  public static MavenEmbedderWrapper createEmbedderForResolve(MavenCoreSettings settings,
+  public static MavenEmbedderWrapper createEmbedderForResolve(MavenGeneralSettings settings,
                                                               MavenConsole console,
                                                               MavenProjectsTree projectsTree) {
     return createEmbedder(settings, console, new MyCustomizer(projectsTree, true));
   }
 
-  public static MavenEmbedderWrapper createEmbedderForExecute(MavenCoreSettings settings,
+  public static MavenEmbedderWrapper createEmbedderForExecute(MavenGeneralSettings settings,
                                                               MavenConsole console) {
     return createEmbedder(settings, console, null);
   }
 
-  private static MavenEmbedderWrapper createEmbedder(MavenCoreSettings settings,
+  private static MavenEmbedderWrapper createEmbedder(MavenGeneralSettings settings,
                                                      MavenConsole console,
                                                      ContainerCustomizer customizer) {
     Configuration configuration = new DefaultConfiguration();
