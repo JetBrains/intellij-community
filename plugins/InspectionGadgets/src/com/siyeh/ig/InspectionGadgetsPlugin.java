@@ -945,6 +945,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(MethodMayBeStaticInspection.class);
         m_inspectionClasses.add(ObjectAllocationInLoopInspection.class);
         m_inspectionClasses.add(RandomDoubleForRandomIntegerInspection.class);
+        m_inspectionClasses.add(RedundantStringFormatCallInspection.class);
         m_inspectionClasses.add(SetReplaceableByEnumSetInspection.class);
         m_inspectionClasses.add(SizeReplaceableByIsEmptyInspection.class);
         m_inspectionClasses.add(StringBufferMustHaveInitialCapacityInspection.class);
