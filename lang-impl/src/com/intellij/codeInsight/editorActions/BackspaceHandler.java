@@ -84,7 +84,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       if (c == '{' && c1 != '}') return true;
 
       HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
-      BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
+      BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
       if (!braceMatcher.isLBraceToken(iterator, chars, fileType) &&
           !braceMatcher.isRBraceToken(iterator, chars, fileType)
           ) {

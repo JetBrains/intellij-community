@@ -27,8 +27,7 @@ public abstract class BraceMatcherBasedSelectioner extends ExtendWordSelectionHa
     if (fileType == null) return super.select(e, editorText, cursorOffset, editor);
     final TextRange totalRange = e.getTextRange();
     final HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(totalRange.getStartOffset());
-    final BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
-    if (braceMatcher == null) return super.select(e, editorText, cursorOffset, editor);
+    final BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
 
     final ArrayList<TextRange> result = new ArrayList<TextRange>();
     final LinkedList<Pair<Integer, IElementType>> stack = new LinkedList<Pair<Integer, IElementType>>();

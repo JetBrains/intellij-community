@@ -178,7 +178,7 @@ public class TypedHandler implements TypedActionHandler {
       if (handleRParen(editor, fileType)) return;
     }
     else if ('"' == charTyped || '\'' == charTyped){
-      if (handleQuote(editor, fileType, charTyped, dataContext)) return;
+      if (handleQuote(editor, charTyped, dataContext, file)) return;
     }
 
     myOriginalHandler.execute(editor, charTyped, dataContext);
@@ -253,7 +253,7 @@ public class TypedHandler implements TypedActionHandler {
     boolean atEndOfDocument = offset == editor.getDocument().getTextLength();
 
     if (!atEndOfDocument) iterator.retreat();
-    BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
+    BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
     if (iterator.atEnd()) return;
     IElementType braceTokenType = iterator.getTokenType();
     if (!braceMatcher.isLBraceToken(iterator, editor.getDocument().getCharsSequence(), fileType)) return;
@@ -303,9 +303,9 @@ public class TypedHandler implements TypedActionHandler {
     if (offset == editor.getDocument().getTextLength()) return false;
 
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
-    BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
     if (iterator.atEnd()) return false;
 
+    BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
     if (!braceMatcher.isRBraceToken(iterator, editor.getDocument().getCharsSequence(), fileType)) {
       return false;
     }
@@ -327,9 +327,9 @@ public class TypedHandler implements TypedActionHandler {
     return true;
   }
 
-  private boolean handleQuote(Editor editor, FileType fileType, char quote, DataContext dataContext) {
+  private boolean handleQuote(Editor editor, char quote, DataContext dataContext, PsiFile file) {
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) return false;
-    final QuoteHandler quoteHandler = getQuoteHandlerForType(fileType);
+    final QuoteHandler quoteHandler = getQuoteHandler(file);
     if (quoteHandler == null) return false;
 
     int offset = editor.getCaretModel().getOffset();
@@ -444,10 +444,10 @@ public class TypedHandler implements TypedActionHandler {
       PsiElement element = file.findElementAt(offset);
       if (element == null) return;
 
-      BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(file.getFileType());
       EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
       HighlighterIterator iterator = highlighter.createIterator(offset);
 
+      BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(file.getFileType(), iterator);
       if (element.getNode() != null && braceMatcher.isStructuralBrace(iterator, chars, file.getFileType())) {
         final Runnable action = new Runnable() {
           public void run(){

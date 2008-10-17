@@ -10,8 +10,10 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -26,16 +28,15 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobScheduler;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -371,7 +372,7 @@ public class BraceHighlightingHandler {
               int start = lbraceStart;
               if (!(myPsiFile instanceof PsiPlainTextFile)) {
                 PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                start = BraceMatchingUtil.getBraceMatcher(myFileType).getCodeConstructStart(myPsiFile, lbraceStart);
+                start = BraceMatchingUtil.getBraceMatcher(myFileType, PsiUtilBase.getLanguageAtOffset(myPsiFile, lbraceStart)).getCodeConstructStart(myPsiFile, lbraceStart);
               }
               TextRange range = new TextRange(start, lbraceEnd);
               int line1 = myDocument.getLineNumber(range.getStartOffset());

@@ -61,7 +61,7 @@ public class EnterAfterUnmatchedBraceHandler implements EnterHandlerDelegate {
 
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
-    BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
+    BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
 
     if (!braceMatcher.isLBraceToken(iterator, chars, fileType) ||
         !braceMatcher.isStructuralBrace(iterator, chars, fileType)
