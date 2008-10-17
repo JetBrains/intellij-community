@@ -23,6 +23,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -56,11 +57,12 @@ import java.util.List;
  * User: anna
  * Date: 29-May-2006
  */
-public abstract class MasterDetailsComponent implements Configurable, PersistentStateComponent<MasterDetailsComponent.UIState>, DetailsComponent.Facade {
+public abstract class MasterDetailsComponent implements Configurable, PersistentStateComponent<MasterDetailsComponent.UIState>, DetailsComponent.Facade,
+                                                        MasterDetails {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.MasterDetailsComponent");
   protected static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
   protected NamedConfigurable myCurrentConfigurable;
-  private final Splitter mySplitter;
+  private final Splitter mySplitter = new Splitter(false, .2f);
 
 
   @NonNls public static final String TREE_OBJECT = "treeObject";
@@ -74,6 +76,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     public void queryPlace(@NotNull final Place place) {
     }
   });
+  private JScrollPane myMaster;
 
   public void setHistory(final History history) {
     myHistory = history;
@@ -117,14 +120,23 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   private boolean myHasDeletedItems;
   protected AutoScrollToSourceHandler myAutoScrollHandler;
 
+  private boolean myToReinitWholePanel = true;
+
   protected MasterDetailsComponent() {
+    installAutoScroll();
+
+    reinintWholePanelIfNeeded();
+  }
+
+  private void reinintWholePanelIfNeeded() {
+    if (!myToReinitWholePanel) return;
+
     myWholePanel = new JPanel(new BorderLayout()) {
       public void addNotify() {
         super.addNotify();
         MasterDetailsComponent.this.addNotify();
       }
     };
-    mySplitter = new Splitter(false, .2f);
     mySplitter.setHonorComponentsMinimumSize(true);
     myWholePanel.add(mySplitter, BorderLayout.CENTER);
 
@@ -134,9 +146,10 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
         return new Dimension(Math.max(original.width, 100), original.height);
       }
     };
-      
+
     left.add(myNorthPanel, BorderLayout.NORTH);
-    left.add(new JScrollPane(myTree), BorderLayout.CENTER);
+    myMaster = new JScrollPane(myTree);
+    left.add(myMaster, BorderLayout.CENTER);
     mySplitter.setFirstComponent(left);
 
     final JPanel right = new JPanel(new BorderLayout());
@@ -144,6 +157,12 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
 
     mySplitter.setSecondComponent(right);
 
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(myWholePanel);
+
+    myToReinitWholePanel = false;
+  }
+
+  private void installAutoScroll() {
     myAutoScrollHandler = new AutoScrollToSourceHandler() {
       protected boolean isAutoScrollMode() {
         return isAutoScrollEnabled();
@@ -162,7 +181,6 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       }
     };
     myAutoScrollHandler.install(myTree);
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(myWholePanel);
   }
 
   protected void addNotify() {
@@ -234,6 +252,8 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   }
 
   public JComponent createComponent() {
+    reinintWholePanelIfNeeded();
+
     SwingUtilities.updateComponentTreeUI(myWholePanel);
     final JPanel panel = new JPanel(new BorderLayout()) {
       public Dimension getPreferredSize() {
@@ -766,4 +786,21 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     }
   }
 
+  public JComponent getToolbar() {
+    myToReinitWholePanel = true;
+    return myNorthPanel;
+  }
+
+  public JComponent getMaster() {
+    myToReinitWholePanel = true;
+    return myMaster;
+  }
+
+  public DetailsComponent getDetails() {
+    myToReinitWholePanel = true;
+    return myDetails;
+  }
+
+  public void initUi() {
+  }
 }

@@ -266,7 +266,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void createScope(final boolean isLocal, String title, final PackageSet set) {
-    final String newName = Messages.showInputDialog(myWholePanel, IdeBundle.message("add.scope.name.label"), title,
+    final String newName = Messages.showInputDialog(myTree, IdeBundle.message("add.scope.name.label"), title,
                                                     Messages.getInformationIcon(), createUniqueName(), new InputValidator() {
       public boolean checkInput(String inputString) {
         final NamedScopesHolder holder = isLocal ? myLocalScopesManager : mySharedScopesManager;

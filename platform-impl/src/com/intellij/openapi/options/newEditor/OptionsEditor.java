@@ -4,20 +4,17 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.EdtRunnable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.openapi.util.EdtRunnable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.SearchTextField;
@@ -40,6 +37,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
@@ -47,7 +46,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.newEditor.OptionsEditor");
 
-  @NonNls static final String SPLITTER_PROPORTION = "options.splitter.proportions";
+  @NonNls static final String MAIN_SPLITTER_PROPORTION = "options.splitter.main.proportions";
+  @NonNls static final String DETAILS_SPLITTER_PROPORTION = "options.splitter.details.proportions";
 
   Project myProject;
 
@@ -57,21 +57,20 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   OptionsTree myTree;
   MySearchField mySearch;
-  Splitter mySplitter;
+  Splitter myMainSplitter;
   JComponent myToolbar;
 
-  DetailsComponent myDetails = new DetailsComponent().setEmptyContentText("Select configuration element in the tree to edit its settings");
+  DetailsComponent myOwnDetails = new DetailsComponent().setEmptyContentText("Select configuration element in the tree to edit its settings");
   ContentWrapper myContentWrapper = new ContentWrapper();
 
 
-  Map<Configurable, JComponent> myConfigurable2Component = new HashMap<Configurable, JComponent>();
+  Map<Configurable, ConfigurableContent> myConfigurable2Content = new HashMap<Configurable, ConfigurableContent>();
   Map<Configurable, ActionCallback> myConfigurable2LoadCallback = new HashMap<Configurable, ActionCallback>();
 
   private MyColleague myColleague;
 
   MergingUpdateQueue myModificationChecker;
   private ConfigurableGroup[] myGroups;
-  private IdeGlassPane myGlassPane;
 
   private SpotlightPainter mySpotlightPainter = new SpotlightPainter();
   private MergingUpdateQueue mySpotlightUpdate;
@@ -129,28 +128,18 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     setLayout(new BorderLayout());
 
-    mySplitter = new Splitter(false);
-    mySplitter.setFirstComponent(left);
-    mySplitter.setHonorComponentsMinimumSize(false);
+    myMainSplitter = new Splitter(false);
+    myMainSplitter.setFirstComponent(left);
+    myMainSplitter.setHonorComponentsMinimumSize(false);
 
-    myLoadingDecorator = new LoadingDecorator(myDetails.getComponent(), project);
-    mySplitter.setSecondComponent(myLoadingDecorator.getComponent());
-
-    float proportion = .3f;
-    try {
-      final String p = PropertiesComponent.getInstance(myProject).getValue(SPLITTER_PROPORTION);
-      if (p != null) {
-        proportion = Float.valueOf(p);
-      }
-    }
-    catch (NumberFormatException e) {
-      LOG.debug(e);
-    }
+    myLoadingDecorator = new LoadingDecorator(myOwnDetails.getComponent(), project);
+    myMainSplitter.setSecondComponent(myLoadingDecorator.getComponent());
 
 
-    mySplitter.setProportion(proportion);
+    myMainSplitter.setProportion(readPropertion(.3f, MAIN_SPLITTER_PROPORTION));
+    myContentWrapper.mySplitter.setProportion(readPropertion(.2f, DETAILS_SPLITTER_PROPORTION));
 
-    add(mySplitter, BorderLayout.CENTER);
+    add(myMainSplitter, BorderLayout.CENTER);
 
     myColleague = new MyColleague();
     getContext().addColleague(myColleague);
@@ -169,9 +158,23 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     IdeGlassPaneUtil.installPainter(myContentWrapper, mySpotlightPainter, this);
   }
 
+  private float readPropertion(final float defaultValue, final String propertyName) {
+    float proportion = defaultValue;
+    try {
+      final String p = PropertiesComponent.getInstance(myProject).getValue(propertyName);
+      if (p != null) {
+        proportion = Float.valueOf(p);
+      }
+    }
+    catch (NumberFormatException e) {
+      LOG.debug(e);
+    }
+    return proportion;
+  }
+
   private void processSelected(final Configurable configurable, final Configurable oldConfigurable) {
     if (configurable == null) {
-      myDetails.setContent(null);
+      myOwnDetails.setContent(null);
 
       updateSpotlight(true);
       checkModified(oldConfigurable);
@@ -184,13 +187,13 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
           updateErrorBanner();
 
-          myDetails.setContent(myContentWrapper);
-          myDetails.setBannerMinHeight(myToolbar.getHeight());
-          myDetails.setText(getBannerText(configurable));
+          myOwnDetails.setContent(myContentWrapper);
+          myOwnDetails.setBannerMinHeight(myToolbar.getHeight());
+          myOwnDetails.setText(getBannerText(configurable));
 
 
-          myDetails.setBannerActions(new Action[] {new ResetAction(configurable)});
-          myDetails.updateBannerActions();
+          myOwnDetails.setBannerActions(new Action[] {new ResetAction(configurable)});
+          myOwnDetails.updateBannerActions();
 
           myLoadingDecorator.stopLoading();
 
@@ -206,7 +209,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private ActionCallback getUiFor(final Configurable configurable) {
     final ActionCallback result = new ActionCallback();
 
-    if (!myConfigurable2Component.containsKey(configurable)) {
+    if (!myConfigurable2Content.containsKey(configurable)) {
 
       final ActionCallback readyCallback = myConfigurable2LoadCallback.get(configurable);
       if (readyCallback != null) {
@@ -217,18 +220,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       myLoadingDecorator.startLoading(false);
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
-          final JComponent c = configurable.createComponent();
-          if (!myConfigurable2Component.containsKey(configurable)) {
-            configurable.reset();
-          }
-
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            public void run() {
-              myConfigurable2Component.put(configurable, c);
-              result.setDone();
-              myConfigurable2LoadCallback.remove(configurable);
-            }
-          });
+          initConfigurable(configurable, result);
         }
       });
 
@@ -237,6 +229,28 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
 
     return result;
+  }
+
+  private void initConfigurable(final Configurable configurable, final ActionCallback result) {
+    final Ref<ConfigurableContent> content = new Ref<ConfigurableContent>();
+
+    if (configurable instanceof MasterDetails) {
+      content.set(new Details((MasterDetails)configurable));
+    } else {
+      content.set(new Simple(configurable));
+    }
+
+    if (!myConfigurable2Content.containsKey(configurable)) {
+      configurable.reset();
+    }
+
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        myConfigurable2Content.put(configurable, content.get());
+        result.setDone();
+        myConfigurable2LoadCallback.remove(configurable);
+      }
+    });
   }
 
 
@@ -271,7 +285,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   private void fireModification(final Configurable actual) {
-    if (!myConfigurable2Component.containsKey(actual)) return;
+    if (!myConfigurable2Content.containsKey(actual)) return;
 
     if (actual != null && actual.isModified()) {
       getContext().fireModifiedAdded(actual, null);
@@ -282,8 +296,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   private void updateErrorBanner() {
     final Configurable current = getContext().getCurrentConfigurable();
-    final JComponent c = myConfigurable2Component.get(current);
-    myContentWrapper.setContent(c, getContext().getErrors().get(current));
+    final ConfigurableContent content = myConfigurable2Content.get(current);
+    content.set(myContentWrapper);
   }
 
   @Nullable
@@ -316,18 +330,35 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     private JLabel myErrorLabel;
 
-    private JComponent myContent;
+    private JComponent mySimpleContent;
     private ConfigurationException myException;
+
+
+    private JComponent myMaster;
+    private JComponent myToolbar;
+    private DetailsComponent myDetails;
+
+    private Splitter mySplitter = new Splitter(false);
+    private JPanel myLeft = new JPanel(new BorderLayout());
+    public float myLastSplitterProproprtion;
 
     private ContentWrapper() {
       setLayout(new BorderLayout());
       myErrorLabel = new JLabel();
       myErrorLabel.setOpaque(true);
       myErrorLabel.setBackground(LightColors.RED);
+
+      myLeft = new JPanel(new BorderLayout());
+
+      mySplitter.addPropertyChangeListener(Splitter.PROP_PROPORTION, new PropertyChangeListener() {
+        public void propertyChange(final PropertyChangeEvent evt) {
+          myLastSplitterProproprtion = ((Float)evt.getNewValue()).floatValue();
+        }
+      });
     }
 
     void setContent(JComponent c, ConfigurationException e) {
-      if (myContent == c && myException == e) return;
+      if (mySimpleContent == c && myException == e) return;
 
       removeAll();
 
@@ -340,13 +371,53 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         add(myErrorLabel, BorderLayout.NORTH);
       }
 
-      myContent = c;
+      mySimpleContent = c;
       myException = e;
+
+      myMaster = null;
+      myToolbar = null;
+      myDetails = null;
+      mySplitter.setFirstComponent(null);
+      mySplitter.setSecondComponent(null);
     }
+
+    void setContent(JComponent master, JComponent toolbar, DetailsComponent details, ConfigurationException e) {
+      if (myMaster == master && myToolbar == toolbar && myDetails == details && myException == e) return;
+
+      myMaster = master;
+      myToolbar = toolbar;
+      myDetails = details;
+      myException = e;
+
+
+      removeAll();
+      myLeft.removeAll();
+
+      myLeft.add(myToolbar, BorderLayout.NORTH);
+      myLeft.add(myMaster, BorderLayout.CENTER);
+
+      myDetails.setBannerMinHeight(myToolbar.getPreferredSize().height);
+
+      mySplitter.setFirstComponent(myLeft);
+      mySplitter.setSecondComponent(myDetails.getComponent());
+      mySplitter.setProportion(myLastSplitterProproprtion);
+
+      add(mySplitter, BorderLayout.CENTER);
+
+      mySimpleContent = null;
+    }
+
 
     @Override
     public boolean isNull() {
-      return super.isNull() || NullableComponent.Check.isNull(myContent);
+      final boolean superNull = super.isNull();
+      if (superNull) return superNull;
+
+      if (myMaster == null) {
+        return NullableComponent.Check.isNull(mySimpleContent);
+      } else {
+        return NullableComponent.Check.isNull(myMaster);
+      }
     }
   }
 
@@ -451,12 +522,14 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   public void dispose() {
-    PropertiesComponent.getInstance(myProject).setValue(SPLITTER_PROPORTION, String.valueOf(mySplitter.getProportion()));
+    final PropertiesComponent props = PropertiesComponent.getInstance(myProject);
+    props.setValue(MAIN_SPLITTER_PROPORTION, String.valueOf(myMainSplitter.getProportion()));
+    props.setValue(DETAILS_SPLITTER_PROPORTION, String.valueOf(myContentWrapper.myLastSplitterProproprtion));
+
     Toolkit.getDefaultToolkit().removeAWTEventListener(this);
 
 
-
-    final Set<Configurable> configurables = myConfigurable2Component.keySet();
+    final Set<Configurable> configurables = myConfigurable2Content.keySet();
     for (Iterator<Configurable> iterator = configurables.iterator(); iterator.hasNext();) {
       Configurable each = iterator.next();
       each.disposeUIResources();
@@ -490,7 +563,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     private void updateIfCurrent(final Configurable configurable) {
       if (getContext().getCurrentConfigurable() == configurable) {
         updateErrorBanner();
-        myDetails.updateBannerActions();
+        myOwnDetails.updateBannerActions();
       }
     }
   }
@@ -624,5 +697,49 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       return true;
     }
   }
+
+
+  abstract class ConfigurableContent {
+    abstract void set(ContentWrapper wrapper);
+  }
+
+  class Simple extends ConfigurableContent {
+
+    JComponent myComponent;
+    Configurable myConfigurable;
+
+    Simple(final Configurable configurable) {
+      myConfigurable = configurable;
+      myComponent = configurable.createComponent();
+    }
+
+    void set(final ContentWrapper wrapper) {
+      myOwnDetails.setDetailsModeEnabled(true);
+      wrapper.setContent(myComponent, getContext().getErrors().get(myConfigurable));
+    }
+  }
+
+  class Details extends ConfigurableContent {
+
+    MasterDetails myConfigurable;
+    DetailsComponent myDetails;
+    JComponent myMaster;
+    JComponent myToolbar;
+
+    Details(final MasterDetails configurable) {
+      myConfigurable = configurable;
+      myConfigurable.initUi();
+      myDetails = myConfigurable.getDetails();
+      myMaster = myConfigurable.getMaster();
+      myToolbar = myConfigurable.getToolbar();
+    }
+
+    void set(final ContentWrapper wrapper) {
+      myOwnDetails.setDetailsModeEnabled(false);
+      wrapper.setContent(myMaster, myToolbar, myDetails, getContext().getErrors().get(myConfigurable));
+    }
+  }
+
+
 
 }

@@ -27,6 +27,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.awt.geom.GeneralPath;
 
 public class DetailsComponent  {
@@ -42,11 +44,12 @@ public class DetailsComponent  {
   private NonOpaquePanel myBanner;
 
   private String myBannerText;
+  private boolean myDetailsEnabled = true;
 
   public DetailsComponent() {
     myComponent = new JPanel(new BorderLayout()) {
       protected void paintComponent(final Graphics g) {
-        if (NullableComponent.Check.isNull(myContentWrapper)) return;
+        if (NullableComponent.Check.isNull(myContentWrapper) || !myDetailsEnabled) return;
 
         GraphicsConfig c = new GraphicsConfig(g);
         c.setAntialiasing(true);
@@ -98,8 +101,25 @@ public class DetailsComponent  {
 
     myBanner.add(myBannerLabel, BorderLayout.CENTER);
 
-    myComponent.add(myBanner, BorderLayout.NORTH);
     myEmptyContentLabel = new JLabel("", JLabel.CENTER);
+
+    revalidateDetailsMode();
+  }
+
+  private void revalidateDetailsMode() {
+    myComponent.removeAll();
+
+    if (myDetailsEnabled) {
+      myComponent.add(myBanner, BorderLayout.NORTH);
+    }
+
+    if (myContentWrapper != null) {
+      myComponent.add(myContentWrapper, BorderLayout.CENTER);
+      invalidateContentBorder();
+    }
+
+    myComponent.revalidate();
+    myComponent.repaint();
   }
 
   public void setBannerActions(Action[] actions) {
@@ -120,7 +140,9 @@ public class DetailsComponent  {
     myContentWrapper = new MyWrapper(c);
 
     myContentWrapper.setOpaque(false);
-    myContentWrapper.setBorder(new EmptyBorder(5, 5, 5, 5));
+
+    invalidateContentBorder();
+
     myComponent.add(myContentWrapper, BorderLayout.CENTER);
 
     updateBanner();
@@ -129,7 +151,13 @@ public class DetailsComponent  {
     myComponent.repaint();
   }
 
-
+  private void invalidateContentBorder() {
+    if (myDetailsEnabled) {
+      myContentWrapper.setBorder(new EmptyBorder(5, 5, 5, 5));
+    } else {
+      myContentWrapper.setBorder(null);
+    }
+  }
 
 
   public void setText(String text) {
@@ -177,6 +205,15 @@ public class DetailsComponent  {
     d.setContent(c);
 
     frame.getContentPane().add(content, BorderLayout.CENTER);
+    final JCheckBox details = new JCheckBox("Details");
+    details.setSelected(true);
+    frame.getContentPane().add(details, BorderLayout.SOUTH);
+    details.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        d.setDetailsModeEnabled(details.isSelected());
+      }
+    });
+
 
     frame.setBounds(300, 300, 300, 300);
     frame.show();
@@ -184,6 +221,14 @@ public class DetailsComponent  {
 
   public void updateBannerActions() {
     myBannerLabel.updateActions();
+  }
+
+  public void setDetailsModeEnabled(final boolean enabled) {
+    if (myDetailsEnabled == enabled) return;
+
+    myDetailsEnabled = enabled;
+
+    revalidateDetailsMode();
   }
 
 
@@ -202,5 +247,7 @@ public class DetailsComponent  {
       return getTargetComponent() == myEmptyContentLabel;
     }
   }
+
+
 
 }
