@@ -4,10 +4,12 @@
  */
 package com.intellij.util.containers;
 
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -27,5 +29,9 @@ public class CollectionFactory {
 
   public static <T> T[] ar(T... elements) {
     return elements;
+  }
+
+  public static <T,V> Map<T, V> newTroveMap() {
+    return new THashMap<T,V>();
   }
 }
