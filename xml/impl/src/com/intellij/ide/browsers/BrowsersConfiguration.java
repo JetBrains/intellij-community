@@ -1,23 +1,22 @@
 package com.intellij.ide.browsers;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.browsers.actions.WebOpenInAction;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xml.XmlBundle;
 import org.jdom.Element;
@@ -39,22 +38,13 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.browsers.BrowsersConfiguration");
   private static final Icon ICON = IconLoader.getIcon("/general/browsersettings.png");
 
-  private static final Icon SAFARI_ICON = IconLoader.getIcon("/xml/browsers/safari16.png");
-  private static final Icon FIREFOX_ICON = IconLoader.getIcon("/xml/browsers/firefox16.png");
-  private static final Icon EXPLORER_ICON = IconLoader.getIcon("/xml/browsers/explorer16.png");
-  private static final Icon OPERA_ICON = IconLoader.getIcon("/xml/browsers/opera16.png");
-  private static final Icon CHROME_ICON = IconLoader.getIcon("/xml/browsers/chrome16.png");
-  private WebBrowsersPanel mySettingsPanel;
-
-  private Map<BrowserFamily, Pair<String, Boolean>> myBrowserToPathMap = new HashMap<BrowserFamily, Pair<String, Boolean>>();
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static enum BrowserFamily {
-    EXPLORER(XmlBundle.message("browsers.explorer"), "iexplore", null, null, EXPLORER_ICON),
-    SAFARI(XmlBundle.message("browsers.safari"), "safari", "safari", "Safari", SAFARI_ICON),
-    OPERA(XmlBundle.message("browsers.opera"), "opera", "opera", "Opera", OPERA_ICON),
-    FIREFOX(XmlBundle.message("browsers.firefox"), "firefox", "firefox", "Firefox", FIREFOX_ICON),
-    CHROME(XmlBundle.message("browsers.chrome"), "chrome", null, null, CHROME_ICON);
+    EXPLORER(XmlBundle.message("browsers.explorer"), "iexplore", null, null, IconLoader.getIcon("/xml/browsers/explorer16.png")),
+    SAFARI(XmlBundle.message("browsers.safari"), "safari", "safari", "Safari", IconLoader.getIcon("/xml/browsers/safari16.png")),
+    OPERA(XmlBundle.message("browsers.opera"), "opera", "opera", "Opera", IconLoader.getIcon("/xml/browsers/opera16.png")),
+    FIREFOX(XmlBundle.message("browsers.firefox"), "firefox", "firefox", "Firefox", IconLoader.getIcon("/xml/browsers/firefox16.png")),
+    CHROME(XmlBundle.message("browsers.chrome"), "chrome", null, null, IconLoader.getIcon("/xml/browsers/chrome16.png"));
 
     private String myName;
     private String myWindowsPath;
@@ -94,6 +84,9 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
     }
   }
 
+  private WebBrowsersPanel mySettingsPanel;
+  private Map<BrowserFamily, Pair<String, Boolean>> myBrowserToPathMap = new HashMap<BrowserFamily, Pair<String, Boolean>>();
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   public Element getState() {
     @NonNls Element element = new Element("WebBrowsersConfiguration");
@@ -132,7 +125,7 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
     myBrowserToPathMap.put(family, stringBooleanPair);
   }
 
-  Pair<String, Boolean> suggestBrowserPath(@NotNull final BrowserFamily browserFamily) {
+  public Pair<String, Boolean> suggestBrowserPath(@NotNull final BrowserFamily browserFamily) {
     Pair<String, Boolean> result = myBrowserToPathMap.get(browserFamily);
     if (result == null) {
       final String path = browserFamily.getExecutionPath();
@@ -217,14 +210,16 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
         if (SystemInfo.isWindows9x) {
           if (path.indexOf(File.separatorChar) != -1) {
             command = new String[]{path, url};
-          } else {
+          }
+          else {
             command = new String[]{"command.com", "/c", "start", path, url};
           }
         }
         else if (SystemInfo.isWindows) {
           if (path.indexOf(File.separatorChar) != -1) {
             command = new String[]{path, url};
-          } else {
+          }
+          else {
             command = new String[]{"cmd.exe", "/c", "start", path, url};
           }
         }
@@ -245,7 +240,8 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
         }
       }
       else {
-        Messages.showErrorDialog(XmlBundle.message("browser.path.not.specified", family.getName()), XmlBundle.message("browser.path.not.specified.title"));
+        Messages.showErrorDialog(XmlBundle.message("browser.path.not.specified", family.getName()),
+                                 XmlBundle.message("browser.path.not.specified.title"));
       }
     }
     else {
@@ -253,94 +249,19 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
     }
   }
 
-  public void installBrowserActions() {
-    installBrowserAction(BrowserFamily.FIREFOX);
-    installBrowserAction(BrowserFamily.EXPLORER);
-    installBrowserAction(BrowserFamily.SAFARI);
-    installBrowserAction(BrowserFamily.CHROME);
-    installBrowserAction(BrowserFamily.OPERA);
-  }
-
-  private void installBrowserAction(@NotNull final BrowserFamily family) {
+  private static void installBrowserActions() {
     final ActionManager actionManager = ActionManager.getInstance();
+    AnAction actionGroup = actionManager.getAction("EditorContextBarMenu");
+    if (actionGroup == null) {
+      actionGroup = new DefaultActionGroup();
+      actionManager.registerAction("EditorContextBarMenu", actionGroup);
+    }
 
-    @NonNls final String actionId = "BROWSER_" + family.toString();
-    AnAction action = actionManager.getAction(actionId);
-    if (action == null) {
-      action = new AnAction(family.getName(), XmlBundle.message("browser.description", family.getName()), getBrowserIcon(family)) {
-        @Nullable
-        private PsiFile getFile(@NotNull final DataContext context) {
-          final Editor editor = PlatformDataKeys.EDITOR.getData(context);
-          if (editor != null) {
-            final Project project = editor.getProject();
-            if (project != null) {
-              final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-              final PsiFile psiFile = manager.getPsiFile(editor.getDocument());
-              if (psiFile != null) {
-                return psiFile;
-              }
-            }
-          }
-
-          return null;
-        }
-
-
-        public void actionPerformed(final AnActionEvent e) {
-          final PsiFile psiFile = getFile(e.getDataContext());
-          LOG.assertTrue(psiFile != null);
-          final WebBrowserUrlProvider provider = WebBrowserUrlProviders.getProvider(psiFile);
-          LOG.assertTrue(provider != null);
-
-          final Project project = psiFile.getProject();
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-          try {
-            launchBrowser(family, provider.getUrl(psiFile, e.getInputEvent().isShiftDown()));
-          }
-          catch (WebBrowserUrlProvider.BrowserException e1) {
-            Messages.showErrorDialog(e1.getMessage(), XmlBundle.message("browser.error"));
-          }
-          catch (Exception e1) {
-            LOG.error(e1);
-          }
-        }
-
-        @Override
-        public void update(final AnActionEvent e) {
-          boolean visible = suggestBrowserPath(family).second.booleanValue();
-          if (visible) {
-            visible = false;
-            final PsiFile file = getFile(e.getDataContext());
-            if (file != null) {
-              final VirtualFile virtualFile = file.getVirtualFile();
-              if (virtualFile != null && virtualFile.isInLocalFileSystem()) {
-                final WebBrowserUrlProvider urlProvider = WebBrowserUrlProviders.getProvider(file);
-                visible = urlProvider != null;
-              }
-            }
-          }
-
-          final Presentation presentation = e.getPresentation();
-          presentation.setVisible(visible);
-        }
-      };
-
-      actionManager.registerAction(actionId, action);
-
-      AnAction actionGroup = actionManager.getAction("EditorContextBarMenu");
-      if (actionGroup == null) {
-        actionGroup = new DefaultActionGroup();
-        actionManager.registerAction("EditorContextBarMenu", actionGroup);
-      }
-
-      if (actionGroup instanceof DefaultActionGroup) {
-        ((DefaultActionGroup)actionGroup).add(action);
+    if (actionGroup instanceof DefaultActionGroup) {
+      final AnAction anAction = actionManager.getAction(WebOpenInAction.ACTION_GROUP);
+      if (anAction != null && anAction instanceof DefaultActionGroup) {
+        ((DefaultActionGroup)actionGroup).addAll((ActionGroup)anAction);
       }
     }
-  }
-
-  private static Icon getBrowserIcon(final BrowserFamily family) {
-    return family.getIcon();
   }
 }
