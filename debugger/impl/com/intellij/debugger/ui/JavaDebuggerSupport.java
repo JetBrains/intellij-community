@@ -186,10 +186,11 @@ public class JavaDebuggerSupport extends DebuggerSupport {
 
     public Collection<? extends Configurable> getConfigurables(final Project project) {
       final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
-      configurables.add(new DebuggerGeneralConfigurable());
+      configurables.add(new DebuggerLaunchingConfigurable());
       configurables.add(new DebuggerDataViewsConfigurable(project));
       configurables.add(new DebuggerSteppingConfigurable(project));
       configurables.add(new UserRenderersConfigurable(project));
+      configurables.add(new DebuggerHotswapConfigurable());
       return configurables;
     }
 
