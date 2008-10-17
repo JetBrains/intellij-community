@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.ui.MultiLineTooltipUI;
 import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -48,8 +49,9 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel{
     myDepthLabel.setVisible(descend);
     myDepthLabel.setLabelFor(myDepthCombo);
 
-    final String updateOnDemandEnabled = System.getProperty("subversion.update.on.demand");
-    final boolean enable = "yes".equals(updateOnDemandEnabled);
+    //final String updateOnDemandEnabled = System.getProperty("subversion.update.on.demand");
+    //final boolean enable = "yes".equals(updateOnDemandEnabled);
+    final boolean enable = true;
 
     myLockOnDemand.setVisible(enable);
     if (enable) {
@@ -83,5 +85,18 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel{
 
   protected DepthCombo getDepthBox() {
     return myDepthCombo;
+  }
+
+  private void createUIComponents() {
+    myLockOnDemand = new JCheckBox() {
+      @Override
+      public JToolTip createToolTip() {
+        JToolTip toolTip = new JToolTip(){{
+          setUI(new MultiLineTooltipUI());
+        }};
+        toolTip.setComponent(this);
+        return toolTip;
+      }
+    };
   }
 }
