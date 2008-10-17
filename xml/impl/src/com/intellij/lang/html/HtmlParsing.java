@@ -124,7 +124,9 @@ public class HtmlParsing {
     }
 
     String tagName = originalTagName.toLowerCase();
-    if (ddordt(tagName) && ddordt(parentName)) {
+    if ((ddordt(tagName) && ddordt(parentName)) ||
+        (tagName.equals(parentName) && HtmlUtil.isOptionalEndForHtmlTagL(tagName))
+       ) {
       tag.rollbackTo();
       myTagMarkersStack.pop();
       return false;
@@ -215,11 +217,6 @@ public class HtmlParsing {
         String childName = myTagNamesStack.pop();
 
         if (isOptionalTagEnd) {
-          if (tagName.equals(childName)) {
-            tag.doneBefore(XmlElementType.HTML_TAG, childMarker);
-            return true;
-          }
-
           boolean foundMatch = childTerminatesParentInStack(childName, true);
           if (foundMatch) {
             myTagMarkersStack.pop();
