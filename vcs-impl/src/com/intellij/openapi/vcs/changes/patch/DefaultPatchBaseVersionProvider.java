@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 
@@ -58,6 +59,8 @@ public class DefaultPatchBaseVersionProvider {
     if (myVcs == null) {
       return;
     }
+    final VcsHistoryProvider historyProvider = myVcs.getVcsHistoryProvider();
+    if (historyProvider == null) return;
 
     VcsRevisionNumber revision = null;
     if (myRevisionPattern != null) {
@@ -77,7 +80,7 @@ public class DefaultPatchBaseVersionProvider {
       }
     }
     try {
-      final VcsHistorySession session = myVcs.getVcsHistoryProvider().createSessionFor(filePath);
+      final VcsHistorySession session = historyProvider.createSessionFor(filePath);
       if (session == null) return;
       final List<VcsFileRevision> list = session.getRevisionList();
       if (list == null) return;
