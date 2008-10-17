@@ -19,7 +19,7 @@ import java.awt.event.ItemListener;
 /**
  * @author Eugene Belyaev
  */
-public class BaseRenderersConfigurable implements Configurable {
+public class DebuggerDataViewsConfigurable implements Configurable {
   private JCheckBox myCbAutoscroll;
   private JCheckBox myCbShowSyntheticFields;
   private JCheckBox myCbSort;
@@ -36,9 +36,11 @@ public class BaseRenderersConfigurable implements Configurable {
   private JRadioButton myRbAllThatOverride;
   private JRadioButton myRbFromList;
   private ClassFilterEditor myToStringFilterEditor;
+  private JTextField myValueTooltipDelayField;
+  
   private final Project myProject;
 
-  public BaseRenderersConfigurable(Project project) {
+  public DebuggerDataViewsConfigurable(Project project) {
     myProject = project;
     myArrayRendererConfigurable = new ArrayRendererConfigurable(NodeRendererSettings.getInstance().getArrayRenderer());
   }
@@ -71,8 +73,8 @@ public class BaseRenderersConfigurable implements Configurable {
         }
       }
     });
-    myCbShowDeclaredType = new JCheckBox("Show declared type");
-    myCbShowObjectId = new JCheckBox("Show object id");
+    myCbShowDeclaredType = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.declared.type"));
+    myCbShowObjectId = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.object.id"));
 
     myCbEnableToString = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.enable.tostring"));
     myRbAllThatOverride = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.all.overridding"));
@@ -95,25 +97,40 @@ public class BaseRenderersConfigurable implements Configurable {
       }
     });
 
-    panel.add(myCbSort, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 10), 0, 0));
-    panel.add(myCbAutoscroll, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 10), 0, 0));
-    panel.add(myCbEnableAlternateViews, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 2, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 10), 0, 0));
+    panel.add(myCbSort, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 0), 0, 0));
+    panel.add(myCbAutoscroll, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 0), 0, 0));
 
-    panel.add(myCbShowStatic, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 10), 0, 0));
-    panel.add(myCbShowStaticFinalFields, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 12, 0, 10), 0, 0));
-    panel.add(myCbShowSyntheticFields, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 2, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 10), 0, 0));
+    final JLabel tooltipLabel = new JLabel(DebuggerBundle.message("label.debugger.general.configurable.tooltips.delay"));
+    panel.add(tooltipLabel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
+    myValueTooltipDelayField = new JTextField(10);
+    panel.add(myValueTooltipDelayField, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 0), 0, 0));
+    tooltipLabel.setLabelFor(myValueTooltipDelayField);
 
-    panel.add(myCbShowDeclaredType, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 10), 0, 0));
-    panel.add(myCbShowObjectId, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 10), 0, 0));
+    final JPanel showPanel = new JPanel(new GridBagLayout());
+    showPanel.setBorder(BorderFactory.createTitledBorder("Show"));
 
-    panel.add(myArrayRendererConfigurable.createComponent(), new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 2, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(2, 8, 0, 0), 0, 0));
-    panel.add(myCbHideNullArrayElements, new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 0), 0, 0));
+    showPanel.add(myCbShowDeclaredType, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
+    showPanel.add(myCbShowObjectId, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
+    showPanel.add(myCbShowSyntheticFields, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 10, 0, 0), 0, 0));
+    showPanel.add(myCbShowStatic, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 10, 0, 0), 0, 0));
+    showPanel.add(myCbShowStaticFinalFields, new GridBagConstraints(2, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 10, 0, 0), 0, 0));
 
+    panel.add(showPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(4, 6, 0, 0), 0, 0));
+
+    final JPanel arraysPanel = new JPanel(new BorderLayout());
+    final JComponent arraysComponent = myArrayRendererConfigurable.createComponent();
+    arraysComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
+    arraysPanel.add(arraysComponent, BorderLayout.CENTER);
+    arraysPanel.add(myCbHideNullArrayElements, BorderLayout.SOUTH);
+    arraysPanel.setBorder(BorderFactory.createTitledBorder("Arrays"));
+    panel.add(arraysPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(4, 6, 0, 0), 0, 0));
+
+    panel.add(myCbEnableAlternateViews, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(10, 6, 0, 10), 0, 0));
     // starting 4-th row
-    panel.add(myCbEnableToString, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 4, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(10, 4, 0, 0), 0, 0));
-    panel.add(myRbAllThatOverride, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 4, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 8, 0, 0), 0, 0));
-    panel.add(myRbFromList, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 4, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 8, 0, 0), 0, 0));
-    panel.add(myToStringFilterEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 4, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 16, 0, 0), 0, 0));
+    panel.add(myCbEnableToString, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 0), 0, 0));
+    panel.add(myRbAllThatOverride, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 12, 0, 0), 0, 0));
+    panel.add(myRbFromList, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 12, 0, 0), 0, 0));
+    panel.add(myToStringFilterEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 12, 0, 0), 0, 0));
 
     return panel;
   }
@@ -126,6 +143,11 @@ public class BaseRenderersConfigurable implements Configurable {
     final ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
+    try {
+      DebuggerSettings.getInstance().VALUE_LOOKUP_DELAY = Integer.parseInt(myValueTooltipDelayField.getText().trim());
+    }
+    catch (NumberFormatException e) {
+    }
     generalSettings.AUTOSCROLL_TO_NEW_LOCALS  = myCbAutoscroll.isSelected();
     rendererSettings.setAlternateCollectionViewsEnabled(myCbEnableAlternateViews.isSelected());
     generalSettings.HIDE_NULL_ARRAY_ELEMENTS  = myCbHideNullArrayElements.isSelected();
@@ -150,6 +172,7 @@ public class BaseRenderersConfigurable implements Configurable {
     final ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
+    myValueTooltipDelayField.setText(Integer.toString(DebuggerSettings.getInstance().VALUE_LOOKUP_DELAY));
     myCbAutoscroll.setSelected(generalSettings.AUTOSCROLL_TO_NEW_LOCALS);
     myCbHideNullArrayElements.setSelected(generalSettings.HIDE_NULL_ARRAY_ELEMENTS);
     myCbEnableAlternateViews.setSelected(rendererSettings.areAlternateCollectionViewsEnabled());
@@ -181,7 +204,16 @@ public class BaseRenderersConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    return areGeneralSettingsModified() || areDefaultRenderersModified();
+    return areGeneralSettingsModified() || areDefaultRenderersModified() || areDebuggerSettingsModified();
+  }
+
+  private boolean areDebuggerSettingsModified() {
+    try {
+      return DebuggerSettings.getInstance().VALUE_LOOKUP_DELAY != Integer.parseInt(myValueTooltipDelayField.getText().trim());
+    }
+    catch (NumberFormatException e) {
+    }
+    return false;
   }
 
   private boolean areGeneralSettingsModified() {

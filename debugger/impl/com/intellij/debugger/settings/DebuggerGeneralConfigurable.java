@@ -21,7 +21,6 @@ public class DebuggerGeneralConfigurable implements Configurable{
   private JRadioButton myRbAsk;
   private StateRestoringCheckBox myCbForceClassicVM;
   private JCheckBox myCbDisableJIT;
-  private JTextField myValueTooltipDelayField;
 
   public void reset() {
     final DebuggerSettings settings = DebuggerSettings.getInstance();
@@ -38,7 +37,6 @@ public class DebuggerGeneralConfigurable implements Configurable{
       }
       myRbShmem.setEnabled(true);
     }
-    myValueTooltipDelayField.setText(Integer.toString(settings.VALUE_LOOKUP_DELAY));
     myHideDebuggerCheckBox.setSelected(settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION);
     myHotswapInBackground.setSelected(settings.HOTSWAP_IN_BACKGROUND);
     myCbCompileBeforeHotswap.setSelected(settings.COMPILE_BEFORE_HOTSWAP);
@@ -66,11 +64,6 @@ public class DebuggerGeneralConfigurable implements Configurable{
     }
     else {
       settings.DEBUGGER_TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
-    }
-    try {
-      settings.VALUE_LOOKUP_DELAY = Integer.parseInt(myValueTooltipDelayField.getText().trim());
-    }
-    catch (NumberFormatException e) {
     }
     settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION = myHideDebuggerCheckBox.isSelected();
     settings.HOTSWAP_IN_BACKGROUND = myHotswapInBackground.isSelected();
@@ -133,13 +126,6 @@ public class DebuggerGeneralConfigurable implements Configurable{
       }
     }
     panel.add(myHideDebuggerCheckBox, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-
-
-    final JLabel tooltipLabel = new JLabel(DebuggerBundle.message("label.debugger.general.configurable.tooltips.delay"));
-    panel.add(tooltipLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, leftInset, 0, 0), 0, 0));
-    myValueTooltipDelayField = new JTextField(10);
-    panel.add(myValueTooltipDelayField, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    tooltipLabel.setLabelFor(myValueTooltipDelayField);
 
     myCbCompileBeforeHotswap = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.compile.before.hotswap"));
     panel.add(myCbCompileBeforeHotswap, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));

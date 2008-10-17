@@ -1,7 +1,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.settings.BaseRenderersConfigurable;
+import com.intellij.debugger.settings.DebuggerDataViewsConfigurable;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.UserRenderersConfigurable;
 import com.intellij.debugger.ui.impl.FrameDebuggerTree;
@@ -32,7 +32,7 @@ public class CustomizeContextViewAction extends DebuggerAction{
     final CompositeConfigurable configurable = new TabbedConfigurable() {
       protected List<Configurable> createConfigurables() {
         ArrayList<Configurable> array = new ArrayList<Configurable>();
-        array.add(new BaseRenderersConfigurable(project));
+        array.add(new DebuggerDataViewsConfigurable(project));
         array.add(new UserRenderersConfigurable(project));
         return array;
       }
