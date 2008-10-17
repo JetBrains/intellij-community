@@ -9,6 +9,7 @@ package com.intellij.find.impl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.StringComboboxEditor;
 
 import javax.swing.*;
@@ -19,15 +20,19 @@ public class RevealingSpaceComboboxEditor extends StringComboboxEditor {
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        getEditor().getSettings().setWhitespacesShown(true);
+        Editor editor = getEditor();
+        if (editor != null) {
+          editor.getSettings().setWhitespacesShown(true);
+        }
       }
     });
   }
 
   public void setItem(Object anObject) {
     super.setItem(anObject);
-    if (getEditor() != null) {
-      getEditor().getSettings().setWhitespacesShown(true);
+    Editor editor = getEditor();
+    if (editor != null) {
+      editor.getSettings().setWhitespacesShown(true);
     }
   }
 }
