@@ -18,9 +18,9 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.text.Position;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -64,6 +64,10 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         helper.installToolTipHandler(this);
       }
 
+      @Override
+      public boolean getScrollableTracksViewportWidth() {
+        return true;
+      }
     };
 
     myTree.setRowHeight(-1);
@@ -102,6 +106,15 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     });
 
     final JScrollPane scrolls = new JScrollPane(myTree);
+    final JScrollBar sb = new JScrollBar(JScrollBar.HORIZONTAL) {
+      @Override
+      public void setVisible(final boolean aFlag) {
+        super.setVisible(aFlag);
+      }
+    };
+    scrolls.setHorizontalScrollBar(sb);
+
+    myTree.setBorder(new EmptyBorder(2, 2, 2, 2));
     add(scrolls, BorderLayout.CENTER);
 
     mySelection = new MergingUpdateQueue("OptionsTree", 150, false, this, this, this).setRestartTimerOnAdd(true);
@@ -179,6 +192,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
   }
 
   void revalidateTree() {
+    myTree.invalidate();
     myTree.setRowHeight(myTree.getRowHeight() == -1 ? -2 : -1);
     myTree.revalidate();
     myTree.repaint();
@@ -219,6 +233,12 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
   class Renderer extends GroupedElementsRenderer.Tree implements TreeCellRenderer {
 
+    @Override
+    protected void layout() {
+      myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
+      myRendererComponent.add(myComponent, BorderLayout.CENTER);
+    }
+
     public Component getTreeCellRendererComponent(final JTree tree,
                                                   final Object value,
                                                   final boolean selected,
@@ -251,9 +271,22 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         }
 
         int forcedWidth = -1;
-        if (group != null && tree.isVisible()) {
-          final Rectangle bounds = tree.getVisibleRect();
-          forcedWidth = bounds.width > 0 ? bounds.width - 2 : forcedWidth;
+        final TreePath path = tree.getPathForRow(row);
+        final boolean toStretch = tree.isVisible() && path != null;
+
+        if (toStretch) {
+          final Rectangle visibleRect = tree.getVisibleRect();
+
+          int nestingLevel = tree.isRootVisible() ? path.getPathCount() - 1 : path.getPathCount() - 2;
+
+          final int left = UIManager.getInt("Tree.leftChildIndent");
+          final int right = UIManager.getInt("Tree.rightChildIndent");
+
+          final Insets treeInsets = tree.getInsets();
+
+          int indent = (left + right) * nestingLevel + (treeInsets != null ? treeInsets.left + treeInsets.right : 0);
+
+          forcedWidth = visibleRect.width > 0 ? visibleRect.width - indent: forcedWidth;
         }
 
         result = configureComponent(base.getText(), base.getText(), null, null, selected, group != null,

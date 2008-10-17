@@ -14,15 +14,15 @@ public abstract class GroupedElementsRenderer {
   final static Border ourSelectedBorder = new DottedBorder(SELECTED_FRAME_FOREGROUND);
   final static Border ourBorder = BorderFactory.createEmptyBorder(1, 1, 1, 1);
 
-  SeparatorWithText mySeparatorComponent = new SeparatorWithText();
-  JComponent myComponent;
-  JPanel myRendererComponent;
+  protected SeparatorWithText mySeparatorComponent = new SeparatorWithText();
+  protected JComponent myComponent;
+  protected MyComponent myRendererComponent;
 
   protected ErrorLabel myTextLabel;
 
 
   public GroupedElementsRenderer() {
-    myRendererComponent = new OpaquePanel(new BorderLayout(), getBackground());
+    myRendererComponent = new MyComponent();
 
     myComponent = createItemComponent();
 
@@ -54,6 +54,8 @@ public abstract class GroupedElementsRenderer {
       setDeselected(myComponent);
       setDeselected(myTextLabel);
     }
+
+    myRendererComponent.setPrefereedWidth(preferredForcedWidth);
 
     return myRendererComponent;
   }
@@ -107,7 +109,7 @@ public abstract class GroupedElementsRenderer {
 
   public static abstract class Tree extends GroupedElementsRenderer {
 
-    protected final void layout() {
+    protected void layout() {
       myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
       myRendererComponent.add(myComponent, BorderLayout.WEST);
     }
@@ -126,6 +128,26 @@ public abstract class GroupedElementsRenderer {
 
     protected final Color getForeground() {
       return UIUtil.getTreeTextForeground();
+    }
+  }
+
+  protected class MyComponent extends OpaquePanel {
+
+    private int myPrefWidth = -1;
+
+    public MyComponent() {
+      super(new BorderLayout(), GroupedElementsRenderer.this.getBackground());
+    }
+
+    public void setPrefereedWidth(final int minWidth) {
+      myPrefWidth = minWidth;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      final Dimension size = super.getPreferredSize();
+      size.width = myPrefWidth == -1 ? size.width : myPrefWidth;
+      return size;
     }
   }
 

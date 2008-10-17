@@ -802,5 +802,6 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   }
 
   public void initUi() {
+    createComponent();
   }
 }

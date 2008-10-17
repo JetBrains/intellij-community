@@ -358,7 +358,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
 
     void setContent(JComponent c, ConfigurationException e) {
-      if (mySimpleContent == c && myException == e) return;
+      if (c != null && mySimpleContent == c && myException == e) return;
 
       removeAll();
 

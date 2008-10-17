@@ -4121,9 +4121,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
             else {
               if (c == '\n') {
-                if (line >= myLineWidths.size()) {
-                  System.out.println("EditorImpl$EditorSizeContainer.validateSizes");
-                }
                 myLineWidths.set(line, x);
                 if (line + 1 >= lineCount || myLineWidths.getQuick(line + 1) != -1) break;
                 offset++;

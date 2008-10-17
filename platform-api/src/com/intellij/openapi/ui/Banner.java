@@ -27,8 +27,13 @@ public class Banner extends NonOpaquePanel implements PropertyChangeListener{
   public Banner() {
     setLayout(new BorderLayout());
 
-    myText = new JLabel("", JLabel.LEFT);
-    myText.setFont(myText.getFont().deriveFont(Font.BOLD));
+    myText = new JLabel("", JLabel.LEFT) {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        setFont(getFont().deriveFont(Font.BOLD, getFont().getSize()));
+      }
+    };
     setBorder(new EmptyBorder(2, 6, 2, 4));
 
     add(myText, BorderLayout.CENTER);
