@@ -14,17 +14,14 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.inspections.SecondUnsafeCallQuickFix;
+import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
+import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -33,46 +30,47 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
  * User: Dmitry.Krasilschikov
  * Date: 13.11.2007
  */
-public class SecondUnsafeCallInspection extends LocalInspectionTool {
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new GroovyPsiElementVisitor(new GroovyElementVisitor() {
-      public void visitReferenceExpression(GrReferenceExpression refExpression) {
-        checkForSecondUnsafeCall(refExpression, holder);
-      }
-    });
-  }
+public class SecondUnsafeCallInspection extends BaseInspection {
+  //@NotNull
+  //public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  //  return new GroovyPsiElementVisitor(new GroovyElementVisitor() {
+  //    public void visitReferenceExpression(GrReferenceExpression refExpression) {
+  //      checkForSecondUnsafeCall(refExpression, holder);
+  //    }
+  //  });
+  //}
 
-  private void checkForSecondUnsafeCall(GrExpression expression, ProblemsHolder holder) {
-    checkForSecondUnsafeCall(expression, holder, null);
-  }
-
-  private void checkForSecondUnsafeCall(GrExpression expression, ProblemsHolder holder, PsiElement hightlightElement) {
-    if (hightlightElement == null) hightlightElement = expression;
-
-    final GrReferenceExpression referenceExpression = (GrReferenceExpression) expression;
-
-    if (GroovyElementTypes.mDOT.equals(referenceExpression.getDotTokenType())) {
-      //        a?.b or a?.b()
-      final GrExpression qualifierExpression = referenceExpression.getQualifierExpression();
-      //        a?.b()
-      if (qualifierExpression instanceof GrMethodCallExpression) {
-        final GrExpression expression1 = ((GrMethodCallExpression) qualifierExpression).getInvokedExpression();
-        //        a?.b
-        if (!(expression1 instanceof GrReferenceExpression)) return;
-
-        if (GroovyElementTypes.mOPTIONAL_DOT.equals(((GrReferenceExpression) expression1).getDotTokenType())) {
-          holder.registerProblem(hightlightElement, GroovyInspectionBundle.message("call.can.throw.npe"), new SecondUnsafeCallQuickFix());
-        }
-      } else
-        //        a?.b
-        if (qualifierExpression instanceof GrReferenceExpression) {
-          if (GroovyElementTypes.mOPTIONAL_DOT.equals(((GrReferenceExpression) qualifierExpression).getDotTokenType())) {
-            holder.registerProblem(hightlightElement, GroovyInspectionBundle.message("call.can.throw.npe"), new SecondUnsafeCallQuickFix());
-          }
-        }
-    }
-  }
+  //private void checkForSecondUnsafeCall(GrExpression expression, ProblemsHolder holder) {
+  //  checkForSecondUnsafeCall(expression, holder, null);
+  //}
+  //
+  //private void checkForSecondUnsafeCall(GrExpression expression, ProblemsHolder holder, PsiElement hightlightElement) {
+  //  if (hightlightElement == null) hightlightElement = expression;
+  //
+  //  final GrReferenceExpression referenceExpression = (GrReferenceExpression)expression;
+  //
+  //  if (GroovyElementTypes.mDOT.equals(referenceExpression.getDotTokenType())) {
+  //    //        a?.b or a?.b()
+  //    final GrExpression qualifierExpression = referenceExpression.getQualifierExpression();
+  //    //        a?.b()
+  //    if (qualifierExpression instanceof GrMethodCallExpression) {
+  //      final GrExpression expression1 = ((GrMethodCallExpression)qualifierExpression).getInvokedExpression();
+  //      //        a?.b
+  //      if (!(expression1 instanceof GrReferenceExpression)) return;
+  //
+  //      if (GroovyElementTypes.mOPTIONAL_DOT.equals(((GrReferenceExpression)expression1).getDotTokenType())) {
+  //        holder.registerProblem(hightlightElement, GroovyInspectionBundle.message("call.can.throw.npe"), new SecondUnsafeCallQuickFix());
+  //      }
+  //    }
+  //    else
+  //      //        a?.b
+  //      if (qualifierExpression instanceof GrReferenceExpression) {
+  //        if (GroovyElementTypes.mOPTIONAL_DOT.equals(((GrReferenceExpression)qualifierExpression).getDotTokenType())) {
+  //          holder.registerProblem(hightlightElement, GroovyInspectionBundle.message("call.can.throw.npe"), new SecondUnsafeCallQuickFix());
+  //        }
+  //      }
+  //  }
+  //}
 
   @Nls
   @NotNull
@@ -92,18 +90,79 @@ public class SecondUnsafeCallInspection extends LocalInspectionTool {
     return "SecondUnsafeCall";
   }
 
+  protected BaseInspectionVisitor buildVisitor() {
+    return new BaseInspectionVisitor() {
+      public void visitReferenceExpression(GrReferenceExpression expression) {
+        //if (hightlightElement == null) hightlightElement = expression;
+
+        final GrReferenceExpression referenceExpression = (GrReferenceExpression)expression;
+
+        if (GroovyElementTypes.mDOT.equals(referenceExpression.getDotTokenType())) {
+          //        a?.b or a?.b()
+          final GrExpression qualifierExpression = referenceExpression.getQualifierExpression();
+          //        a?.b()
+          if (qualifierExpression instanceof GrMethodCallExpression) {
+            final GrExpression expression1 = ((GrMethodCallExpression)qualifierExpression).getInvokedExpression();
+            //        a?.b
+            if (!(expression1 instanceof GrReferenceExpression)) return;
+
+            if (GroovyElementTypes.mOPTIONAL_DOT.equals(((GrReferenceExpression)expression1).getDotTokenType())) {
+              registerError(expression, GroovyInspectionBundle.message("call.can.throw.npe")/*, new SecondUnsafeCallQuickFix()*/);
+            }
+          }
+          else
+            //        a?.b
+            if (qualifierExpression instanceof GrReferenceExpression) {
+              if (GroovyElementTypes.mOPTIONAL_DOT.equals(((GrReferenceExpression)qualifierExpression).getDotTokenType())) {
+                registerError(expression, GroovyInspectionBundle.message("call.can.throw.npe"),
+                                       new SecondUnsafeCallQuickFix());
+              }
+            }
+        }
+      }
+    };
+  }
+
+  //private static class Visitor extends BaseInspectionVisitor {
+  //
+  //  public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+  //    super.visitReferenceExpression(referenceExpression);
+  //
+  //
+  //
+  //    final GrExpression returnValue = referenceExpression.getReturnValue();
+  //    if (returnValue != null) {
+  //      return;
+  //    }
+  //    final GrMethod method =
+  //        PsiTreeUtil.getParentOfType(referenceExpression, GrMethod.class);
+  //    if (method == null) {
+  //      return;
+  //    }
+  //    final GrOpenBlock body = method.getBlock();
+  //    if (body == null) {
+  //      return;
+  //    }
+  //    if (ControlFlowUtils.openBlockCompletesWithStatement(body, referenceExpression)) {
+  //      registerStatementError(referenceExpression);
+  //    }
+  //  }
+  //}
+
   public boolean isEnabledByDefault() {
     return true;
   }
 
-  private IElementType getDotType(PsiElement element) {
-    if (element instanceof GrReferenceExpression) return ((GrReferenceExpression) element).getDotTokenType();
-    else if (element instanceof GrMethodCallExpression) {
-      final GrExpression invokedExpr = ((GrMethodCallExpression) element).getInvokedExpression();
-
-      if (invokedExpr instanceof GrReferenceExpression) return ((GrReferenceExpression) element).getDotTokenType();
-    }
-
-    return null;
-  }
+  //private IElementType getDotType(PsiElement element) {
+  //  if (element instanceof GrReferenceExpression) {
+  //    return ((GrReferenceExpression)element).getDotTokenType();
+  //  }
+  //  else if (element instanceof GrMethodCallExpression) {
+  //    final GrExpression invokedExpr = ((GrMethodCallExpression)element).getInvokedExpression();
+  //
+  //    if (invokedExpr instanceof GrReferenceExpression) return ((GrReferenceExpression)element).getDotTokenType();
+  //  }
+  //
+  //  return null;
+  //}
 }
