@@ -1,9 +1,11 @@
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -18,7 +20,7 @@ import java.util.Set;
 public class Banner extends NonOpaquePanel implements PropertyChangeListener{
 
   private int myBannerMinHeight;
-  private JLabel myText;
+  private JComponent myText = new MyText();
 
   private NonOpaquePanel myActionsPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT, 2, 2));
 
@@ -27,13 +29,6 @@ public class Banner extends NonOpaquePanel implements PropertyChangeListener{
   public Banner() {
     setLayout(new BorderLayout());
 
-    myText = new JLabel("", JLabel.LEFT) {
-      @Override
-      public void updateUI() {
-        super.updateUI();
-        setFont(getFont().deriveFont(Font.BOLD, getFont().getSize()));
-      }
-    };
     setBorder(new EmptyBorder(2, 6, 2, 4));
 
     add(myText, BorderLayout.CENTER);
@@ -94,14 +89,55 @@ public class Banner extends NonOpaquePanel implements PropertyChangeListener{
     repaint();
   }
 
-  public void setText(final String text) {
-    myText.setText(text);
+  public void setText(@Nullable final String... text) {
+    myText.removeAll();
+    if (text == null) return;
+
+    for (int i = 0; i < text.length; i++) {
+      final JLabel eachLabel = new JLabel(text[i]);
+      eachLabel.setBorder(new EmptyBorder(0, 0, 0, 4));
+      eachLabel.setVerticalTextPosition(JLabel.TOP);
+      eachLabel.setFont(eachLabel.getFont().deriveFont(Font.BOLD, eachLabel.getFont().getSize()));
+      myText.add(eachLabel);
+      if (i < text.length - 1) {
+        final JLabel eachIcon = new JLabel(IconLoader.getIcon("/general/comboArrowRight.png"));
+        eachIcon.setBorder(new EmptyBorder(0, 0, 0, 4));
+        myText.add(eachIcon);
+      }
+    }
   }
 
   public void updateActions() {
     final Set<Action> actions = myActions.keySet();
     for (Iterator<Action> iterator = actions.iterator(); iterator.hasNext();) {
       updateAction(iterator.next());
+    }
+  }
+
+
+  private static class MyText extends NonOpaquePanel {
+    @Override
+    public void doLayout() {
+      int x = 0;
+      for (int i = 0; i < getComponentCount(); i++) {
+        final Component each = getComponent(i);
+        final Dimension eachSize = each.getPreferredSize();
+        each.setBounds(x, 0, eachSize.width, getHeight());
+        x += each.getBounds().width;
+      }
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = new Dimension();
+      for (int i = 0; i < getComponentCount(); i++) {
+        final Component each = getComponent(i);
+        final Dimension eachSize = each.getPreferredSize();
+        size.width += eachSize.width;
+        size.height = Math.max(size.height, eachSize.height);
+      }
+
+      return size;
     }
   }
 }

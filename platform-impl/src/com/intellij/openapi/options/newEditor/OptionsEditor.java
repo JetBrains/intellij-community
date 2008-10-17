@@ -185,7 +185,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           if (current != configurable) return;
 
 
-          updateErrorBanner();
+          updateDetails();
 
           myOwnDetails.setContent(myContentWrapper);
           myOwnDetails.setBannerMinHeight(myToolbar.getHeight());
@@ -266,18 +266,14 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
   }
 
-  private String getBannerText(Configurable configurable) {
+  private String[] getBannerText(Configurable configurable) {
     final List<Configurable> list = myTree.getPathToRoot(configurable);
-    StringBuffer result = new StringBuffer();
-    for (int i = list.size() - 1; i >= 0; i--) {
-      Configurable each = list.get(i);
-      result.append(each.getDisplayName());
-      if (i > 0) {
-        result.append(" : ");
-      }
+    final String[] result = new String[list.size()];
+    int add = 0;
+    for (int i = list.size() - 1; i >=0; i--) {
+      result[add++] = list.get(i).getDisplayName();
     }
-
-    return result.toString();
+    return result;
   }
 
   private void checkModified(final Configurable configurable) {
@@ -294,7 +290,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
   }
 
-  private void updateErrorBanner() {
+  private void updateDetails() {
     final Configurable current = getContext().getCurrentConfigurable();
     final ConfigurableContent content = myConfigurable2Content.get(current);
     content.set(myContentWrapper);
@@ -562,7 +558,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     private void updateIfCurrent(final Configurable configurable) {
       if (getContext().getCurrentConfigurable() == configurable) {
-        updateErrorBanner();
+        updateDetails();
         myOwnDetails.updateBannerActions();
       }
     }
@@ -736,6 +732,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     void set(final ContentWrapper wrapper) {
       myOwnDetails.setDetailsModeEnabled(false);
+      myDetails.setPrefix(getBannerText((Configurable)myConfigurable));
       wrapper.setContent(myMaster, myToolbar, myDetails, getContext().getErrors().get(myConfigurable));
     }
   }
