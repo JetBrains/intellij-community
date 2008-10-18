@@ -85,6 +85,31 @@ public class PyBuiltinCache {
   }
   
   @Nullable
+  public PyClassType getDictType() {
+    return _getObjectType("dict");
+  }
+
+  @Nullable
+  public PyClassType getIntType() {
+    return _getObjectType("int");
+  }
+
+  @Nullable
+  public PyClassType getFloatType() {
+    return _getObjectType("float");
+  }
+
+  @Nullable
+  public PyClassType getComplexType() {
+    return _getObjectType("complex");
+  }
+
+  @Nullable
+  public PyClassType getStrType() {
+    return _getObjectType("str");
+  }
+
+  @Nullable
   public PyClassType getOldstyleClassobjType() {
     return _getObjectType("___Classobj");
   }

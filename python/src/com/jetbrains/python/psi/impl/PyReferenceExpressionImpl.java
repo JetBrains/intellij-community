@@ -137,6 +137,20 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (qualifier != null) {
       PyType qualifierType = qualifier.getType();
       if (qualifierType != null) {
+        if (qualifier instanceof PyQualifiedExpression) {
+          // enrich the type info with any fields assigned nearby
+          List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers((PyQualifiedExpression)qualifier);
+          if (qualifier_path != null) {
+            PyResolveUtil.AssignmentCollectProcessor<PyQualifiedExpression> proc =
+              new PyResolveUtil.AssignmentCollectProcessor<PyQualifiedExpression>(qualifier_path)
+            ;
+            PyResolveUtil.treeCrawlUp(proc, qualifier);
+            for (PyExpression ex : proc.getResult()) {
+              if (referencedName.equals(ex.getName())) return ex;
+            }
+          }
+        }
+        // resolve within the type proper
         return qualifierType.resolveMember(referencedName);
       }
       return null;

@@ -33,6 +33,6 @@ public class PyDictLiteralExpressionImpl extends PyElementImpl implements PyDict
   }
 
   public PyType getType() {
-    return null;
+    return PyBuiltinCache.getInstance(getProject()).getDictType();
   }
 }

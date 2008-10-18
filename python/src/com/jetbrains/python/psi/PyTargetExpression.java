@@ -19,7 +19,6 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,9 +27,11 @@ import org.jetbrains.annotations.Nullable;
  * Time: 22:52:10
  * To change this template use File | Settings | File Templates.
  */
-public interface PyTargetExpression extends PyExpression, PsiNamedElement, StubBasedPsiElement<PyTargetExpressionStub> {
+public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedElement, StubBasedPsiElement<PyTargetExpressionStub> {
   PyTargetExpression[] EMPTY_ARRAY = new PyTargetExpression[0];
   
+  /*
   @Nullable
   PyExpression getQualifier();
+  */
 }

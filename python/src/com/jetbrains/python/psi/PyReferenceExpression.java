@@ -27,13 +27,15 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 public interface PyReferenceExpression 
-extends PsiReferenceEx, PyExpression, PsiPolyVariantReference 
+extends PsiReferenceEx, PyQualifiedExpression, PsiPolyVariantReference
 {
   PyReferenceExpression[] EMPTY_ARRAY = new PyReferenceExpression[0];
 
   @Nullable
   String getReferencedName();
 
+  /*
   @Nullable
   PyExpression getQualifier();
+  */
 }

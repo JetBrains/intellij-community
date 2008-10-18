@@ -92,9 +92,9 @@ public class PyResolveUtil {
   /**
    * Crawls up the PSI tree, checking nodes as if crawling backwards through source lexemes.
    * @param processor a visitor that says when the crawl is done and collects info.
-   * @param elt element from which we start (not checked by processor); if null, the search immediately fails.
+   * @param elt element from which we start (not checked by processor); if null, the search immediately returns null.
    * @param roof if not null, search continues only below the roof and including it.
-   * @param fromunder if true, search not above elt, but from a [possibly imaginary] node right below elt; so elt gets analyzed, too.
+   * @param fromunder if true, begin search not above elt, but from a [possibly imaginary] node right below elt; so elt gets analyzed, too.
    * @return first element that the processor accepted.
    */
   @Nullable
@@ -208,22 +208,22 @@ public class PyResolveUtil {
 
 
   /**
-   * Tries to match two [qualified] reference expression paths; target must be a 'sublist' of source to match.
+   * Tries to match two [qualified] reference expression paths by names; target must be a 'sublist' of source to match.
    * E.g., 'a.b.c.d' and 'a.b.c' would match, while 'a.b.c' and 'a.b.c.d' would not. Eqaully, 'a.b.c' and 'a.b.d' would not match.
    * If either source or target is null, false is returned.
-   * @see #unwindRefPath(PyReferenceExpression).
+   * @see #unwindQualifiers(PyQualifiedExpression) .
    * @param source_path expression path to match (the longer list of qualifiers).
    * @param target_path expression path to match against (hopeful sublist of qualifiers of source).
    * @return true if source matches target.
    */
-  public static boolean matchPaths(List<PyReferenceExpression> source_path, List<PyReferenceExpression> target_path) {
+  public static <S extends PyExpression, T extends PyExpression> boolean pathsMatch(List<S> source_path, List<T> target_path) {
     // turn qualifiers into lists
     if ((source_path == null) || (target_path == null)) return false;
     // compare until target is exhausted
-    Iterator<PyReferenceExpression> source_iter = source_path.iterator();
-    for (final PyReferenceExpression target_elt : target_path) {
+    Iterator<S> source_iter = source_path.iterator();
+    for (final T target_elt : target_path) {
       if (source_iter.hasNext()) {
-        PyReferenceExpression source_elt = source_iter.next();
+        S source_elt = source_iter.next();
         if (!target_elt.getText().equals(source_elt.getText())) return false;
       }
       else return false; // source exhausted before target
@@ -233,20 +233,20 @@ public class PyResolveUtil {
 
   /**
    * Unwinds a [multi-level] qualified expression into a path, as seen in source text, i.e. outermost qualifier first.
-   * If any qualifier happens to be not a reference expression, or expr is null, null is returned.
+   * If any qualifier happens to be not a PyQualifiedExpression, or expr is null, null is returned.
    * @param expr an experssion to unwind.
    * @return path as a list of ref expressions, or null.
    */
   @Nullable
-  public static List<PyReferenceExpression> unwindRefPath(final PyReferenceExpression expr) {
-    final List<PyReferenceExpression> path = new LinkedList<PyReferenceExpression>();
+  public static <T extends PyQualifiedExpression> List<T> unwindQualifiers(final T expr) {
+    final List<T> path = new LinkedList<T>();
     PyExpression maybe_step;
-    PyReferenceExpression step = expr;
+    T step = expr;
     try {
       while (step != null) {
         path.add(0, step);
         maybe_step = step.getQualifier();
-        step = (PyReferenceExpression)maybe_step;
+        step = (T)maybe_step;
       }
     }
     catch (ClassCastException e) {
@@ -528,6 +528,77 @@ public class PyResolveUtil {
 
     public boolean accept(final Object target) {
       return (instance != target);
+    }
+  }
+
+  /**
+   * Collects all assignments in context above given element, if they match given naming pattern.
+   * Used to track creation of attributes by assignment (e.g in constructor).
+   */
+  public static class AssignmentCollectProcessor<T extends PyExpression> implements PsiScopeProcessor {
+
+    List<T> my_qualifier;
+    List<PyExpression> my_result;
+    Set<String> my_seen_names;
+
+    /**
+     * Creates an instance to collect assignments of attributes to the object identified by 'qualifier'.
+     * E.g. if qualifier = {"foo", "bar"} then assignments like "foo.bar.baz = ..." will be considered.
+     * The collection continues up to the point of latest redefinition of the object identified by 'qualifier',
+     * that is, up to the point of something like "foo.bar = ..." or "foo = ...".
+     * @param qualifier qualifying names, outermost first; must not be empty.
+     */
+    public AssignmentCollectProcessor(@NotNull List<T> qualifier) {
+      assert qualifier.size() > 0;
+      my_qualifier = qualifier;
+      my_result = new ArrayList<PyExpression>();
+      my_seen_names = new HashSet<String>();
+    }
+
+    public boolean execute(final PsiElement element, final ResolveState state) {
+      if (element instanceof PyAssignmentStatement) {
+        final PyAssignmentStatement assignment = (PyAssignmentStatement)element;
+        for (PyExpression ex : assignment.getTargets()) {
+          if (ex instanceof PyTargetExpression) {
+            final PyTargetExpression target = (PyTargetExpression)ex;
+            List<PyTargetExpression> quals = unwindQualifiers(target);
+            if (quals != null) {
+              if  (quals.size() == my_qualifier.size()+1 && pathsMatch(quals, my_qualifier)) {
+                // a new attribute follows last qualifier; collect it.
+                PyTargetExpression last_elt = quals.get(quals.size() - 1); // last item is the outermost, new, attribute.
+                String last_elt_name = last_elt.getName();
+                if (!my_seen_names.contains(last_elt_name)) { // no dupes, only remember the latest
+                  my_result.add(last_elt);
+                  my_seen_names.add(last_elt_name);
+                }
+              }
+              else if (quals.size() < my_qualifier.size()+1 && pathsMatch(my_qualifier, quals)) {
+                // qualifier(s) get redefined; collect no more.
+                return false;
+              }
+            }
+          }
+
+        }
+      }
+      return true; // nothing interesting found, continue
+    }
+
+    /**
+     * @return a collection of exressions (parts of assignment expressions) where new attributes were defined. E.g. for "a.b.c = 1",
+     * the expression for 'c' is in the result. 
+     */
+    @NotNull
+    public Collection<PyExpression> getResult() {
+      return my_result;
+    }
+
+    public <T> T getHint(final Class<T> hintClass) {
+      return null;
+    }
+
+    public void handleEvent(final Event event, final Object associated) {
+      // empty
     }
   }
 }

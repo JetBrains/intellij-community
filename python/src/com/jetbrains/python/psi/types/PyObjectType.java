@@ -15,6 +15,7 @@ import java.util.Set;
  * Date: Jun 6, 2008
  * Time: 8:39:17 AM
  */
+@Deprecated
 public class PyObjectType extends PyClassType implements PyType {
 
   protected PyClass myClass;

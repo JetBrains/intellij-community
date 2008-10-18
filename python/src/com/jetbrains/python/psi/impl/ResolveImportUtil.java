@@ -87,10 +87,10 @@ public class ResolveImportUtil {
     Set being_imported = myBeingImported.get();
     PsiFile containing_file = importRef.getContainingFile();
     PsiElement last_resolved = null;
-    List<PyReferenceExpression> ref_path = PyResolveUtil.unwindRefPath(importRef);
+    List<PyReferenceExpression> ref_path = PyResolveUtil.unwindQualifiers(importRef);
     // join path to form the FQN: (a, b, c) -> a.b.c.
     StringBuffer pathbuf = new StringBuffer();
-    for (PyReferenceExpression pathelt : ref_path) pathbuf.append(pathelt.getName()).append(".");
+    for (PyQualifiedExpression pathelt : ref_path) pathbuf.append(pathelt.getName()).append(".");
     if (referencedName != null) pathbuf.append(referencedName);
     final String import_fqname = pathbuf.toString();
     if (being_imported.contains(import_fqname)) return null; // already trying this path, unable to recurse

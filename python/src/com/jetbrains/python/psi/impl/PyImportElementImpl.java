@@ -71,9 +71,9 @@ public class PyImportElementImpl extends PyElementImpl implements PyImportElemen
           PyReferenceExpression place_ref = PsiTreeUtil.getChildOfType(place, PyReferenceExpression.class);
           if (place_ref != null) {
             // unfold all qualifiers of import and reference and compare them
-            List<PyReferenceExpression> place_path = PyResolveUtil.unwindRefPath(place_ref);
-            List<PyReferenceExpression> ref_path = PyResolveUtil.unwindRefPath(importRef);
-            if (PyResolveUtil.matchPaths(place_path, ref_path)) {
+            List<PyReferenceExpression> place_path = PyResolveUtil.unwindQualifiers(place_ref);
+            List<PyReferenceExpression> ref_path = PyResolveUtil.unwindQualifiers(importRef);
+            if (PyResolveUtil.pathsMatch(place_path, ref_path)) {
               assert ref_path != null; // extraneous, but makes npe inspection happy
               for (PyReferenceExpression rex: ref_path) { // the thing the processor is looking for must be somewhere here
                 final PsiElement elt = rex.resolve();
@@ -93,7 +93,7 @@ public class PyImportElementImpl extends PyElementImpl implements PyImportElemen
   public Iterable<PyElement> iterateNames() {
     PyElement ret = getAsName();
     if (ret == null) {
-      List<PyReferenceExpression> unwound_path = PyResolveUtil.unwindRefPath(getImportReference());
+      List<PyReferenceExpression> unwound_path = PyResolveUtil.unwindQualifiers(getImportReference());
       if ((unwound_path != null) && (unwound_path.size() > 0)) ret = unwound_path.get(0); 
     }
     return new SingleIterable<PyElement>(ret);
