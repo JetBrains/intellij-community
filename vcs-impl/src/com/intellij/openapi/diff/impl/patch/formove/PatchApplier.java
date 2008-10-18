@@ -13,14 +13,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshSession;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -52,6 +54,7 @@ public class PatchApplier {
     myVerifier = new PathsVerifier(myProject, myBaseDirectory, myPatches);
   }
 
+  // todo progress
   public ApplyPatchStatus execute() {
     myRemainingPatches.addAll(myPatches);
 
@@ -84,20 +87,38 @@ public class PatchApplier {
     });
     showApplyStatus(refStatus.get());
 
-    final List<VirtualFile> directlyAffected = myVerifier.getDirectlyAffected();
-    final List<VirtualFile> indirectlyAffected = myVerifier.getAllAffected();
-
-    refreshIndirectlyAffected(indirectlyAffected);
-    final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-    vcsDirtyScopeManager.filesDirty(directlyAffected, null);
-    if ((myTargetChangeList != null) && (! directlyAffected.isEmpty())) {
-      ApplyPatchAction.moveChangesOfVsToList(myProject, directlyAffected, myTargetChangeList);
-    } else {
-      final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-      changeListManager.scheduleUpdate();
-    }
+    refreshFiles();
 
     return refStatus.get();
+  }
+
+  private void refreshFiles() {
+    final List<FilePath> directlyAffected = myVerifier.getDirectlyAffected();
+    final List<VirtualFile> indirectlyAffected = myVerifier.getAllAffected();
+
+    final RefreshSession session = RefreshQueue.getInstance().createSession(false, true, new Runnable() {
+      public void run() {
+        if (myProject.isDisposed()) return;
+
+        final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+        if ((myTargetChangeList != null) && (! directlyAffected.isEmpty()) &&
+            (! myTargetChangeList.getName().equals(changeListManager.getDefaultListName()))) {
+          changeListManager.invokeAfterUpdate(new FilesMover(changeListManager, directlyAffected), InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
+          VcsBundle.message("change.lists.manager.move.changes.to.list"),
+          new Consumer<VcsDirtyScopeManager>() {
+            public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
+              vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
+            }
+          });
+        } else {
+          final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+          // will schedule update
+          vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
+        }
+      }
+    });
+    session.addAllFiles(indirectlyAffected);
+    session.launch();
   }
 
   @Nullable
@@ -275,4 +296,25 @@ public class PatchApplier {
     return child;
   }
 
+  private class FilesMover implements Runnable {
+    private final ChangeListManager myChangeListManager;
+    private final List<FilePath> myDirectlyAffected;
+
+    public FilesMover(final ChangeListManager changeListManager, final List<FilePath> directlyAffected) {
+      myChangeListManager = changeListManager;
+      myDirectlyAffected = directlyAffected;
+    }
+
+    public void run() {
+      List<Change> changes = new ArrayList<Change>();
+      for(FilePath file: myDirectlyAffected) {
+        final Change change = myChangeListManager.getChange(file);
+        if (change != null) {
+          changes.add(change);
+        }
+      }
+
+      myChangeListManager.moveChangesTo(myTargetChangeList, changes.toArray(new Change[changes.size()]));
+    }
+  }
 }

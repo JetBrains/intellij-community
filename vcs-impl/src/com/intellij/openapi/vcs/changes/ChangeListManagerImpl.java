@@ -546,26 +546,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Nullable
   public Change getChange(final FilePath file) {
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) {
-      return null;
-    }
     synchronized (myDataLock) {
-      final LocalChangeList list = myWorker.getListCopy(virtualFile);
-      if (list != null) {
-        for (Change change : list.getChanges()) {
-          final ContentRevision afterRevision = change.getAfterRevision();
-          if (afterRevision != null && afterRevision.getFile().equals(file)) {
-            return change;
-          }
-          final ContentRevision beforeRevision = change.getBeforeRevision();
-          if (beforeRevision != null && beforeRevision.getFile().equals(file)) {
-            return change;
-          }
-        }
-      }
-
-      return null;
+      return myWorker.getChangeForPath(file);
     }
   }
 

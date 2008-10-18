@@ -292,6 +292,23 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return null;
   }
 
+  @Nullable
+  public Change getChangeForPath(final FilePath file) {
+    for (LocalChangeList list : myMap.values()) {
+      for (Change change : list.getChanges()) {
+        final ContentRevision afterRevision = change.getAfterRevision();
+        if (afterRevision != null && afterRevision.getFile().equals(file)) {
+          return change;
+        }
+        final ContentRevision beforeRevision = change.getBeforeRevision();
+        if (beforeRevision != null && beforeRevision.getFile().equals(file)) {
+          return change;
+        }
+      }
+    }
+    return null;
+  }
+
   public FileStatus getStatus(final VirtualFile file) {
     return myIdx.getStatus(file);
   }

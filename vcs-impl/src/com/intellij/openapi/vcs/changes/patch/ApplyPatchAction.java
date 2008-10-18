@@ -31,16 +31,11 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ApplyPatchAction extends AnAction {
@@ -180,43 +175,6 @@ public class ApplyPatchAction extends AnAction {
     }
     else {
       e.getPresentation().setEnabled(project != null);
-    }
-  }
-
-  public static void moveChangesOfVsToList(final Project project, final List<VirtualFile> files, final LocalChangeList targetChangeList) {
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    if (targetChangeList != changeListManager.getDefaultChangeList()) {
-      changeListManager.invokeAfterUpdate(new Runnable() {
-        public void run() {
-          List<Change> changes = new ArrayList<Change>();
-          for(VirtualFile file: files) {
-            final Change change = changeListManager.getChange(file);
-            if (change != null) {
-              changes.add(change);
-            }
-          }
-
-          changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[changes.size()]));
-        }
-      }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, VcsBundle.message("change.lists.manager.move.changes.to.list"));
-    }
-  }
-
-  public static void moveChangesToList(final Project project, final List<FilePath> files, final LocalChangeList targetChangeList) {
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    if (targetChangeList != changeListManager.getDefaultChangeList()) {
-      changeListManager.invokeAfterUpdate(new Runnable() {
-        public void run() {
-          List<Change> changes = new ArrayList<Change>();
-          for(FilePath file: files) {
-            final Change change = changeListManager.getChange(file);
-            if (change != null) {
-              changes.add(change);
-            }
-          }
-          changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[changes.size()]));
-        }
-      }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, VcsBundle.message("change.lists.manager.move.changes.to.list"));
     }
   }
 

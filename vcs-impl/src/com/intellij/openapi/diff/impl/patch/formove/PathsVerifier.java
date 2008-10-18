@@ -5,6 +5,8 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
@@ -15,10 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PathsVerifier {
   // in
@@ -27,7 +26,7 @@ public class PathsVerifier {
   private final List<FilePatch> myPatches;
   // temp
   private final Map<VirtualFile, MovedFileData> myMovedFiles;
-  private final List<VirtualFile> myMoveResults;
+  private final List<FilePath> myBeforePaths;
   private final List<VirtualFile> myCreatedDirectories;
   // out
   private final List<Pair<VirtualFile, FilePatch>> myTextPatches;
@@ -40,7 +39,7 @@ public class PathsVerifier {
     myPatches = patches;
 
     myMovedFiles = new HashMap<VirtualFile, MovedFileData>();
-    myMoveResults = new ArrayList<VirtualFile>();
+    myBeforePaths = new ArrayList<FilePath>();
     myCreatedDirectories = new ArrayList<VirtualFile>();
     myTextPatches = new ArrayList<Pair<VirtualFile,FilePatch>>();
     myBinaryPatches = new ArrayList<Pair<VirtualFile,FilePatch>>();
@@ -48,24 +47,41 @@ public class PathsVerifier {
   }
 
   // those to be moved to CL: target + created dirs
-  public List<VirtualFile> getDirectlyAffected() {
-    final List<VirtualFile> affected = new ArrayList<VirtualFile>();
-    affected.addAll(myCreatedDirectories);
-    affected.addAll(myWritableFiles);
-    affected.removeAll(myMovedFiles.keySet());
-    affected.addAll(myMoveResults);
+  public List<FilePath> getDirectlyAffected() {
+    final List<FilePath> affected = new ArrayList<FilePath>();
+    addAllFilePath(myCreatedDirectories, affected);
+    addAllFilePath(myWritableFiles, affected);
+    affected.addAll(myBeforePaths);
     return affected;
   }
 
   // old parents of moved files
   public List<VirtualFile> getAllAffected() {
-    final List<VirtualFile> affected = getDirectlyAffected();
-    for (MovedFileData data : myMovedFiles.values()) {
-      affected.add(data.getNewParent());
-      // old parent
-      affected.add(data.getCurrent().getParent());
+    final List<VirtualFile> affected = new ArrayList<VirtualFile>();
+    affected.addAll(myCreatedDirectories);
+    affected.addAll(myWritableFiles);
+
+    // after files' parent
+    for (VirtualFile file : myMovedFiles.keySet()) {
+      final VirtualFile parent = file.getParent();
+      if (parent != null) {
+        affected.add(parent);
+      }
+    }
+    // before..
+    for (FilePath path : myBeforePaths) {
+      final FilePath parent = path.getParentPath();
+      if (parent != null) {
+        affected.add(parent.getVirtualFile());
+      }
     }
     return affected;
+  }
+  
+  private void addAllFilePath(final Collection<VirtualFile> files, final Collection<FilePath> paths) {
+    for (VirtualFile file : files) {
+      paths.add(new FilePathImpl(file));
+    }
   }
 
   public boolean execute() {
@@ -136,6 +152,7 @@ public class PathsVerifier {
         return false;
       }
       addPatch(myPatch, beforeFile);
+      myBeforePaths.add(new FilePathImpl(beforeFile.getParent(), beforeFile.getName(), beforeFile.isDirectory()));
       return true;
     }
   }
@@ -391,8 +408,8 @@ public class PathsVerifier {
   public void doMoveIfNeeded(final VirtualFile file) throws IOException {
     final MovedFileData movedFile = myMovedFiles.get(file);
     if (movedFile != null) {
+      myBeforePaths.add(new FilePathImpl(file.getParent(), file.getName(), file.isDirectory()));
       final VirtualFile moveResult = movedFile.doMove();
-      myMoveResults.add(moveResult);
     }
   }
 
