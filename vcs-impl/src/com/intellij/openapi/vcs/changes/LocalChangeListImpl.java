@@ -33,7 +33,6 @@ public class LocalChangeListImpl extends LocalChangeList {
   private Collection<Change> myOutdatedChanges;
   private boolean myIsInUpdate = false;
   private ChangeHashSet myChangesBeforeUpdate;
-  private ChangeListWorker.LocalListListener myLocalListener;
 
   public static LocalChangeListImpl createEmptyChangeListImpl(Project project, String name) {
     return new LocalChangeListImpl(project, name);
@@ -120,9 +119,6 @@ public class LocalChangeListImpl extends LocalChangeList {
   synchronized void addChange(Change change) {
     if (!myIsInUpdate) myReadChangesCache = null;
     myChanges.add(change);
-    if (myLocalListener != null) {
-      myLocalListener.changeAdded(myName, change);
-    }
   }
 
   synchronized Change removeChange(Change change) {
@@ -132,17 +128,15 @@ public class LocalChangeListImpl extends LocalChangeList {
         if (! myIsInUpdate) {
           myReadChangesCache = null;
         }
-        if (myLocalListener != null) {
-          myLocalListener.changeRemoved(myName, localChange);
-        }
         return localChange;
       }
     }
     return null;
   }
 
-  synchronized void startProcessingChanges(final Project project, @Nullable final VcsDirtyScope scope) {
+  synchronized Collection<Change> startProcessingChanges(final Project project, @Nullable final VcsDirtyScope scope) {
     createReadChangesCache();
+    final Collection<Change> result = new ArrayList<Change>();
     myChangesBeforeUpdate = new ChangeHashSet(myChanges);
     myOutdatedChanges = new ArrayList<Change>();
     final ExcludedFileIndex fileIndex = ExcludedFileIndex.getInstance(project);
@@ -151,9 +145,7 @@ public class LocalChangeListImpl extends LocalChangeList {
       final ContentRevision after = oldBoy.getAfterRevision();
       if (scope == null || before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())
         || isIgnoredChange(oldBoy, fileIndex)) {
-        if (myLocalListener != null) {
-          myLocalListener.changeRemoved(myName, oldBoy);
-        }
+        result.add(oldBoy);
         myIsInUpdate = true;
         removeChange(oldBoy);
         myOutdatedChanges.add(oldBoy);
@@ -162,6 +154,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     if (isDefault()) {
       myIsInUpdate = true;
     }
+    return result;
   }
 
   private static boolean isIgnoredChange(final Change change, final ExcludedFileIndex fileIndex) {
@@ -293,9 +286,5 @@ public class LocalChangeListImpl extends LocalChangeList {
       if (aIndex >= 0) return (Change)_set [aIndex];
       return null;
     }
-  }
-
-  void setLocalListener(final ChangeListWorker.LocalListListener localListener) {
-    myLocalListener = localListener;
   }
 }

@@ -19,17 +19,19 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   private final boolean myUpdateUnversioned;
   private final IgnoredFilesComponent myIgnoredFilesComponent;
   private final ExcludedFileIndex myIndex;
+  private final ChangeListManagerGate myGate;
 
   UpdatingChangeListBuilder(final ChangeListWorker changeListWorker,
                             final FileHolderComposite composite,
                             final Getter<Boolean> disposedGetter,
                             final boolean updateUnversioned,
-                            final IgnoredFilesComponent ignoredFilesComponent) {
+                            final IgnoredFilesComponent ignoredFilesComponent, final ChangeListManagerGate gate) {
     myChangeListWorker = changeListWorker;
     myComposite = composite;
     myDisposedGetter = disposedGetter;
     myUpdateUnversioned = updateUnversioned;
     myIgnoredFilesComponent = ignoredFilesComponent;
+    myGate = gate;
     myIndex = ExcludedFileIndex.getInstance(changeListWorker.getProject());
   }
 
@@ -72,8 +74,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (changeListName != null) {
       list = myChangeListWorker.getCopyByName(changeListName);
       if (list == null) {
-        list = myChangeListWorker.addChangeList(changeListName, null, true);
-        myChangeListWorker.startProcessingChanges(list.getName(), myScope);
+        list = myGate.addChangeList(changeListName, null);
       }
     }
     processChangeInList(change, list);

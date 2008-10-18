@@ -228,14 +228,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         myChangesViewManager.scheduleRefresh();
       }
 
+      final ChangeListManagerGate gate = changeListWorker.createSelfGate();
+
       // do actual requests about file statuses
       final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(changeListWorker, composite, new Getter<Boolean>() {
         public Boolean get() {
           return myUpdater.isStopped();
         }
-      }, updateUnversionedFiles, myIgnoredIdeaLevel);
-
-      final ChangeListManagerGate gate = changeListWorker.createSelfGate();
+      }, updateUnversionedFiles, myIgnoredIdeaLevel, gate);
 
       for (final VcsDirtyScope scope : scopes) {
         final AbstractVcs vcs = scope.getVcs();
@@ -253,15 +253,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       
       synchronized (myDataLock) {
         // do same modifications to change lists as was done during update + do delayed notifications
+        if (wasEverythingDirty) {
+          changeListWorker.notifyDoneProcessingChanges(myListeners);
+        }
         myModifier.exitUpdate();
         myModifier.apply(changeListWorker);
         myModifier.clearQueue();
         // update member from copy
         myWorker.takeData(changeListWorker);
 
-        if (wasEverythingDirty) {
-          changeListWorker.notifyDoneProcessingChanges(myListeners);
-        }
         if (updateUnversionedFiles) {
           boolean statusChanged = !myComposite.equals(composite);
           myComposite = composite;
@@ -524,9 +524,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Nullable
   public Change getChange(VirtualFile file) {
     synchronized (myDataLock) {
-      final String name = myWorker.getListName(file);
-      if (name != null) {
-        final LocalChangeList list = myWorker.getCopyByName(name);
+      final LocalChangeList list = myWorker.getListCopy(file);
+      if (list != null) {
         for (Change change : list.getChanges()) {
           final ContentRevision afterRevision = change.getAfterRevision();
           if (afterRevision != null) {
@@ -552,9 +551,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       return null;
     }
     synchronized (myDataLock) {
-      final String name = myWorker.getListName(virtualFile);
-      if (name != null) {
-        final LocalChangeList list = myWorker.getCopyByName(name);
+      final LocalChangeList list = myWorker.getListCopy(virtualFile);
+      if (list != null) {
         for (Change change : list.getChanges()) {
           final ContentRevision afterRevision = change.getAfterRevision();
           if (afterRevision != null && afterRevision.getFile().equals(file)) {

@@ -25,7 +25,7 @@ public class Modifier implements ChangeListsWriteOperations {
   }
 
   public LocalChangeList addChangeList(@NotNull final String name, final String comment) {
-    final AddList command = new AddList(name, comment, myInsideUpdate);
+    final AddList command = new AddList(name, comment);
     impl(command);
     return command.getNewListCopy();
   }

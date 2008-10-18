@@ -41,7 +41,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     LocalChangeList defaultList = null;
     for (LocalChangeList changeList : worker.myMap.values()) {
       final LocalChangeList copy = changeList.copy();
-      ((LocalChangeListImpl) copy).setLocalListener(myIdx);
       
       final String changeListName = copy.getName();
       myMap.put(changeListName, copy);
@@ -102,24 +101,16 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return list != null;
   }
 
-  public void startProcessingChanges(@NotNull final String name, final VcsDirtyScope scope) {
-    final LocalChangeList changeList = myMap.get(name);
-    if (changeList != null) {
-      ((LocalChangeListImpl) changeList).startProcessingChanges(myProject, scope);
-    }
-  }
-
   public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String description) {
     return addChangeList(name, description, false);
   }
 
-  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String description, final boolean inUpdate) {
+  LocalChangeList addChangeList(@NotNull final String name, @Nullable final String description, final boolean inUpdate) {
     final boolean contains = myMap.containsKey(name);
     LOG.assertTrue(! contains, "Attempt to create duplicate changelist " + name);
     if (! contains) {
       final LocalChangeListImpl newList = (LocalChangeListImpl) LocalChangeList.createEmptyChangeList(myProject, name);
-      newList.setLocalListener(myIdx);
-      
+
       if (description != null) {
         newList.setComment(description);
       }
@@ -137,6 +128,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     final LocalChangeList changeList = myMap.get(name);
     if (changeList != null) {
       ((LocalChangeListImpl) changeList).addChange(change);
+      myIdx.changeAdded(change);
     }
     return changeList != null;
   }
@@ -145,9 +137,13 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     assert myDefault != null;
     for (LocalChangeList list : myMap.values()) {
       if (list.isDefault()) continue;
-      if (((LocalChangeListImpl) list).processChange(change)) return;
+      if (((LocalChangeListImpl) list).processChange(change)) {
+        myIdx.changeAdded(change);
+        return;
+      }
     }
     ((LocalChangeListImpl) myDefault).processChange(change);
+    myIdx.changeAdded(change);
   }
 
   public boolean removeChangeList(@NotNull String name) {
@@ -161,7 +157,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     final String listName = list.getName();
 
     for (Change change : list.getChanges()) {
-      myIdx.changeRemoved(listName, change);
       ((LocalChangeListImpl) myDefault).addChange(change);
     }
 
@@ -195,7 +190,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       ((LocalChangeListImpl) list).setNameImpl(toName);
       myMap.remove(fromName);
       myMap.put(toName, list);
-      myIdx.renamed(toName, list.getChanges());
     }
     return list != null;
   }
@@ -227,8 +221,12 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   public void notifyStartProcessingChanges(final VcsDirtyScope scope) {
+    final Collection<Change> oldChanges = new ArrayList<Change>();
     for (LocalChangeList list : myMap.values()) {
-      ((LocalChangeListImpl) list).startProcessingChanges(myProject, scope);
+      oldChanges.addAll(((LocalChangeListImpl) list).startProcessingChanges(myProject, scope));
+    }
+    for (Change change : oldChanges) {
+      myIdx.changeRemoved(change);
     }
   }
 
@@ -256,37 +254,38 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return myDefault == null ? null : myDefault.getName();
   }
 
-  public interface LocalListListener {
-    void changeAdded(final String listName, final Change change);
-    void changeRemoved(final String listName, final Change change);
-  }
-
-
   public List<File> getAffectedPaths() {
     return myIdx.getAffectedPaths();
   }
 
   @NotNull
   public List<VirtualFile> getAffectedFiles() {
-    return myIdx.getAffectedFiles();
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (LocalChangeList list : myMap.values()) {
+      for (Change change : list.getChanges()) {
+        final ContentRevision before = change.getBeforeRevision();
+        final ContentRevision after = change.getAfterRevision();
+        if (before != null) {
+          result.add(before.getFile().getVirtualFile());
+        }
+        if (after != null) {
+          result.add(after.getFile().getVirtualFile());
+        }
+      }
+    }
+    return result;
   }
 
-  // should be tested
-  public String getListName(@NotNull final VirtualFile file) {
-    final String listName = myIdx.getListName(file);
-    if (listName == null || ((listName != null) && myMap.containsKey(listName))) {
-      return listName;
-    }
-    LOG.info("Error: index does not coinside with change lists map. list name: " + listName + " for file: " + file.getPath());
+  public LocalChangeList getListCopy(@NotNull final VirtualFile file) {
     for (LocalChangeList list : myMap.values()) {
       for (Change change : list.getChanges()) {
         if (change.getAfterRevision() != null &&
             Comparing.equal(change.getAfterRevision().getFile().getVirtualFile(), file)) {
-          return listName;
+          return list.copy();
         }
         if (change.getBeforeRevision() != null &&
             Comparing.equal(change.getBeforeRevision().getFile().getVirtualFile(), file)) {
-          return listName;
+          return list.copy();
         }
       }
     }
@@ -376,5 +375,15 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       }
       return list;
     }
+  }
+
+  // used by methods related to user modifications
+  interface UserAccess {
+
+  }
+
+  // used only by UpdatingListBuilder to fill lists
+  interface BuilderAccess {
+
   }
 }

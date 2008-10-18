@@ -8,17 +8,15 @@ import com.intellij.util.EventDispatcher;
 public class AddList implements ChangeListCommand {
   private final String myName;
   private final String myComment;
-  private final boolean myInsideUpdate;
   private LocalChangeList myNewListCopy;
 
-  public AddList(final String name, final String comment, final boolean insideUpdate) {
+  public AddList(final String name, final String comment) {
     myName = name;
     myComment = comment;
-    myInsideUpdate = insideUpdate;
   }
 
   public void apply(final ChangeListWorker worker) {
-    myNewListCopy = worker.addChangeList(myName, myComment, myInsideUpdate);
+    myNewListCopy = worker.addChangeList(myName, myComment);
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
