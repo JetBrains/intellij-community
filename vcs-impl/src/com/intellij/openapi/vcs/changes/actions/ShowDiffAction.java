@@ -195,8 +195,7 @@ public class ShowDiffAction extends AnAction {
     Collections.addAll(changesList, changes);
     for(int i=changesList.size()-1; i >= 0; i--) {
       final FilePath path = ChangesUtil.getFilePath(changesList.get(i));
-      //if (path.isDirectory() || path.getFileType().isBinary()) {
-      if (path.isDirectory()) {
+      if (path.isDirectory() || path.getFileType().isBinary()) {
         changesList.remove(i);
       }
     }
