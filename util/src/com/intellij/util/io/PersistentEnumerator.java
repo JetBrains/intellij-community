@@ -51,7 +51,7 @@ public class PersistentEnumerator<Data> implements Forceable {
   private static final byte[] FIRST_VECTOR = new byte[SLOTS_PER_FIRST_VECTOR * 4];
 
 
-  protected final MappedFile myStorage;
+  protected final ResizeableMappedFile myStorage;
 
   private boolean myClosed = false;
   private boolean myDirty = false;
@@ -130,7 +130,7 @@ public class PersistentEnumerator<Data> implements Forceable {
       }
     }
 
-    myStorage = new MappedFile(myFile, initialSize);
+    myStorage = new ResizeableMappedFile(myFile, initialSize);
     myKeyStream = new MyAppenderStream(keystreamFile());
 
     if (myStorage.length() == 0) {
@@ -349,7 +349,7 @@ public class PersistentEnumerator<Data> implements Forceable {
       byte[] buf = prepareEntryRecordBuf(hashCode, myKeyStream.size());
       myDataDescriptor.save(myKeyStream, value);
 
-      final MappedFile storage = myStorage;
+      final ResizeableMappedFile storage = myStorage;
       final int pos = (int)storage.length();
       storage.put(pos, buf, 0, buf.length);
 
@@ -416,7 +416,7 @@ public class PersistentEnumerator<Data> implements Forceable {
 
   public synchronized Data valueOf(int idx) throws IOException {
     myKeyStream.flush();
-    final MappedFile storage = myStorage;
+    final ResizeableMappedFile storage = myStorage;
     int addr = storage.getInt(idx + KEY_REF_OFFSET);
     myKeyReadStream.setup(addr, myKeyStream.size());
     return myDataDescriptor.read(myKeyReadStream);
@@ -468,9 +468,9 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   public synchronized void flush() throws IOException {
-     if (myStorage.isMapped() || isDirty()) {
+     if (myStorage.isDirty() || isDirty()) {
        markDirty(false);
-       myStorage.flush();
+       myStorage.force();
      }
    }
 

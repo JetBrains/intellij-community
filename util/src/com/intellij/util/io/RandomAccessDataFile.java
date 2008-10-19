@@ -117,6 +117,11 @@ public class RandomAccessDataFile implements Forceable {
     return myTypedIOBuffer[0];
   }
 
+  public long getLong(long addr) {
+    get(addr, myTypedIOBuffer, 0, 8);
+    return Bits.getLong(myTypedIOBuffer, 0);
+  }
+
   public String getUTF(long addr) {
     try {
       int len = getInt(addr);
@@ -139,11 +144,6 @@ public class RandomAccessDataFile implements Forceable {
     catch (UnsupportedEncodingException e) {
       // Can't be
     }
-  }
-
-  public long getLong(long addr) {
-    get(addr, myTypedIOBuffer, 0, 8);
-    return Bits.getLong(myTypedIOBuffer, 0);
   }
 
   public long length() {

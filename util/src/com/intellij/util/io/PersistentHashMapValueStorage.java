@@ -4,7 +4,6 @@
 package com.intellij.util.io;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 
 public class PersistentHashMapValueStorage {
   private final DataOutputStream myAppender;
@@ -108,7 +107,12 @@ public class PersistentHashMapValueStorage {
 
   public void switchToCompactionMode() {
     myReader.dispose();
-    myReader = new MappedReader(myFile);
+    try {
+      myReader = new MappedReader(myFile);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     myCompactionMode = true;
   }
 
@@ -122,20 +126,19 @@ public class PersistentHashMapValueStorage {
   }
 
   private static class MappedReader implements RAReader {
-    private final MappedBufferWrapper myHolder;
+    private final PagedFileStorage myHolder;
 
-    private MappedReader(File file) {
-      myHolder = new ReadOnlyMappedBufferWrapper(file, 0);
+    private MappedReader(File file) throws IOException {
+      myHolder = new PagedFileStorage(file);
+      myHolder.length();
     }
 
     public void get(final long addr, final byte[] dst, final int off, final int len) {
-      final ByteBuffer buf = myHolder.buf();
-      buf.position((int)addr);
-      buf.get(dst, off, len);
+      myHolder.get((int)addr, dst, off, len);
     }
 
     public void dispose() {
-      myHolder.dispose();
+      myHolder.close();
     }
   }
 

@@ -15,21 +15,41 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.Forceable;
+import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Map;
 
 /**
  * @author max
  */
-public final class PagedFileStorage {
-  private final static int BUFFER_SIZE = 512 * 1024; // half a meg
-  private MappedBufferWrapper[] myBuffers = null;
+public class PagedFileStorage implements Forceable {
+  private final static int BUFFER_SIZE = 256 * 1024;
+  private final SLRUCache<Integer, MappedBufferWrapper> myBuffersCache = new SLRUCache<Integer, MappedBufferWrapper>(20, 10) {
+    @NotNull
+    public MappedBufferWrapper createValue(final Integer offset) {
+      int off = offset.intValue() * BUFFER_SIZE;
+      if (off > length()) {
+        throw new IndexOutOfBoundsException();
+      }
+      return new ReadWriteMappedBufferWrapper(myFile, off, Math.min((int)(length() - off), BUFFER_SIZE));
+    }
 
+    @Override
+    protected void onDropFromCache(final Integer key, final MappedBufferWrapper buf) {
+      buf.dispose();
+    }
+  };
+
+  private final byte[] myTypedIOBuffer = new byte[8];
+  private boolean isDirty = false;
   private final File myFile;
   private long mySize = -1;
   @NonNls private static final String RW = "rw";
@@ -38,44 +58,38 @@ public final class PagedFileStorage {
     myFile = file;
   }
 
-  private synchronized void map() throws IOException {
-    mySize = myFile.length();
-    int intSize = (int)mySize;
-    myBuffers = new MappedBufferWrapper[intSize / BUFFER_SIZE + 1];
-    for (int i = 0; i < myBuffers.length; i++) {
-      final int offset = i * BUFFER_SIZE;
-      if (offset < intSize) {
-        myBuffers[i] = new ReadWriteMappedBufferWrapper(myFile, offset, Math.min(intSize - offset, BUFFER_SIZE));
-      }
-    }
+  public File getFile() {
+    return myFile;
   }
 
-  public short getShort(int index) {
-    int page = index / BUFFER_SIZE;
-    int offset = index % BUFFER_SIZE;
-
-    return getBuffer(page).getShort(offset);
+  public void putInt(int addr, int value) {
+    Bits.putInt(myTypedIOBuffer, 0, value);
+    put(addr, myTypedIOBuffer, 0, 4);
   }
 
-  public void putShort(int index, short value) {
-    int page = index / BUFFER_SIZE;
-    int offset = index % BUFFER_SIZE;
-
-    getBuffer(page).putShort(offset, value);
+  public int getInt(int addr) {
+    get(addr, myTypedIOBuffer, 0, 4);
+    return Bits.getInt(myTypedIOBuffer, 0);
   }
 
-  public int getInt(int index) {
-    int page = index / BUFFER_SIZE;
-    int offset = index % BUFFER_SIZE;
-
-    return getBuffer(page).getInt(offset);
+  public void putLong(int addr, long value) {
+    Bits.putLong(myTypedIOBuffer, 0, value);
+    put(addr, myTypedIOBuffer, 0, 8);
   }
 
-  public void putInt(int index, int value) {
-    int page = index / BUFFER_SIZE;
-    int offset = index % BUFFER_SIZE;
+  public void putByte(final int addr, final byte b) {
+    myTypedIOBuffer[0] = b;
+    put(addr, myTypedIOBuffer, 0, 1);
+  }
 
-    getBuffer(page).putInt(offset, value);
+  public byte getByte(int addr) {
+    get(addr, myTypedIOBuffer, 0, 1);
+    return myTypedIOBuffer[0];
+  }
+
+  public long getLong(int addr) {
+    get(addr, myTypedIOBuffer, 0, 8);
+    return Bits.getLong(myTypedIOBuffer, 0);
   }
 
   public byte get(int index) {
@@ -86,6 +100,7 @@ public final class PagedFileStorage {
   }
 
   public void put(int index, byte value) {
+    isDirty = true;
     int page = index / BUFFER_SIZE;
     int offset = index % BUFFER_SIZE;
 
@@ -113,6 +128,7 @@ public final class PagedFileStorage {
   }
 
   public void put(int index, byte[] src, int offset, int length) {
+    isDirty = true;
     int i = index;
     int o = offset;
     int l = length;
@@ -133,16 +149,20 @@ public final class PagedFileStorage {
   }
 
   public void close() {
-    unmap();
+    force();
+    unmapAll();
+  }
+
+  private void unmapAll() {
+    myBuffersCache.clear();
   }
 
   public void resize(int newSize) throws IOException {
     int oldSize = (int)myFile.length();
     if (oldSize == newSize) return;
 
-    unmap();
+    unmapAll();
     resizeFile(newSize);
-    map();
 
     // it is not guaranteed that new portition will consist of null
     // after resize, so we should fill it manually
@@ -150,54 +170,50 @@ public final class PagedFileStorage {
     if (delta > 0) fillWithZeros(oldSize, delta);
   }
 
-  private void resizeFile(int newSzie) throws IOException {
+  private void resizeFile(int newSize) throws IOException {
     RandomAccessFile raf = new RandomAccessFile(myFile, RW);
     try {
-      raf.setLength(newSzie);
+      raf.setLength(newSize);
     }
     finally {
       raf.close();
     }
+    mySize = newSize;
   }
 
+  private final static int MAX_FILLER_SIZE = 8192;
   private void fillWithZeros(int from, int length) {
-    byte[] buff = new byte[length];
+    byte[] buff = new byte[MAX_FILLER_SIZE];
     Arrays.fill(buff, (byte)0);
-    put(from, buff, 0, buff.length);
+
+    while (length > 0) {
+      final int filled = Math.min(length, MAX_FILLER_SIZE);
+      put(from, buff, 0, filled);
+      length -= filled;
+      from += filled;
+    }
   }
 
 
-  public synchronized final long length() {
+  public final long length() {
     if (mySize == -1) {
-      try {
-        map();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      mySize = myFile.length();
     }
     return mySize;
   }
 
-  private synchronized void unmap() {
-    if (myBuffers != null) {
-      for (int i = 0; i < myBuffers.length; i++) {
-        MappedBufferWrapper buffer = myBuffers[i];
-        if (buffer != null) {
-          buffer.dispose();
-          myBuffers[i] = null;
-        }
-      }
-    }
-  }
-
   private ByteBuffer getBuffer(int page) {
-    return myBuffers[page].buf();
+    return myBuffersCache.get(page).buf();
   }
 
-  public void flush() {
-    for (MappedBufferWrapper wrapper : myBuffers) {
-      wrapper.flush();
+  public void force() {
+    for (Map.Entry<Integer, MappedBufferWrapper> entry : myBuffersCache.entrySet()) {
+      entry.getValue().flush();
     }
+    isDirty = false;
+  }
+
+  public boolean isDirty() {
+    return isDirty;
   }
 }

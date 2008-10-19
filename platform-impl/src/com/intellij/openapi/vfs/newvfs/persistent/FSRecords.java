@@ -11,8 +11,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.IntArrayList;
-import com.intellij.util.io.MappedFile;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.ResizeableMappedFile;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.Storage;
 import gnu.trove.TIntArrayList;
@@ -80,7 +80,7 @@ public class FSRecords implements Disposable, Forceable {
 
     private static PersistentStringEnumerator myNames;
     private static Storage myAttributes;
-    private static MappedFile myRecords;
+    private static ResizeableMappedFile myRecords;
     private static final TIntArrayList myFreeRecords = new TIntArrayList();
 
     private static boolean myDirty = false;
@@ -149,7 +149,7 @@ public class FSRecords implements Disposable, Forceable {
         }
         myNames = new PersistentStringEnumerator(namesFile);
         myAttributes = Storage.create(attributesFile.getCanonicalPath());
-        myRecords = new MappedFile(recordsFile, 20 * 1024);
+        myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024);
 
         if (myRecords.length() == 0) {
           cleanRecord(0); // Clean header
@@ -269,7 +269,7 @@ public class FSRecords implements Disposable, Forceable {
       return myAttributes;
     }
 
-    public static MappedFile getRecords() {
+    public static ResizeableMappedFile getRecords() {
       return myRecords;
     }
 
@@ -322,7 +322,7 @@ public class FSRecords implements Disposable, Forceable {
       return id;
     }
 
-    private static RuntimeException handleError(final IOException e) {
+    private static RuntimeException handleError(final Throwable e) {
       if (!myCorrupted) {
         createBrokenMarkerFile();
         myCorrupted = true;
@@ -344,7 +344,7 @@ public class FSRecords implements Disposable, Forceable {
     myConnection = DbConnection.connect();
   }
 
-  private static MappedFile getRecords() {
+  private static ResizeableMappedFile getRecords() {
     return DbConnection.getRecords();
   }
 
@@ -367,6 +367,7 @@ public class FSRecords implements Disposable, Forceable {
           LOG.assertTrue(filelength % RECORD_SIZE == 0);
           int newrecord = filelength / RECORD_SIZE;
           DbConnection.cleanRecord(newrecord);
+          assert filelength + RECORD_SIZE == getRecords().length();
           return newrecord;
         }
         else {
@@ -623,12 +624,7 @@ public class FSRecords implements Disposable, Forceable {
 
   public static int getModCount() {
     synchronized (lock) {
-      try {
-        return getRecords().getInt(HEADER_GLOBAL_MODCOUNT_OFFSET);
-      }
-      catch (IOException e) {
-        throw DbConnection.handleError(e);
-      }
+      return getRecords().getInt(HEADER_GLOBAL_MODCOUNT_OFFSET);
     }
   }
 
@@ -643,7 +639,7 @@ public class FSRecords implements Disposable, Forceable {
 
         return parentId;
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
@@ -694,12 +690,7 @@ public class FSRecords implements Disposable, Forceable {
 
   public static int getFlags(int id) {
     synchronized (lock) {
-      try {
-        return getRecords().getInt(id * RECORD_SIZE + FLAGS_OFFSET);
-      }
-      catch (IOException e) {
-        throw DbConnection.handleError(e);
-      }
+      return getRecords().getInt(id * RECORD_SIZE + FLAGS_OFFSET);
     }
   }
 
@@ -720,12 +711,7 @@ public class FSRecords implements Disposable, Forceable {
 
   public static long getLength(int id) {
     synchronized (lock) {
-      try {
-        return getRecords().getLong(id * RECORD_SIZE + LENGTH_OFFSET);
-      }
-      catch (IOException e) {
-        throw DbConnection.handleError(e);
-      }
+      return getRecords().getLong(id * RECORD_SIZE + LENGTH_OFFSET);
     }
   }
 
@@ -744,12 +730,7 @@ public class FSRecords implements Disposable, Forceable {
 
   public static long getTimestamp(int id) {
     synchronized (lock) {
-      try {
-        return getRecords().getLong(id * RECORD_SIZE + TIMESTAMP_OFFSET);
-      }
-      catch (IOException e) {
-        throw DbConnection.handleError(e);
-      }
+      return getRecords().getLong(id * RECORD_SIZE + TIMESTAMP_OFFSET);
     }
   }
 
@@ -768,12 +749,7 @@ public class FSRecords implements Disposable, Forceable {
 
   public static int getModCount(int id) {
     synchronized (lock) {
-      try {
-        return getRecords().getInt(id * RECORD_SIZE + MODCOUNT_OFFSET);
-      }
-      catch (IOException e) {
-        throw DbConnection.handleError(e);
-      }
+      return getRecords().getInt(id * RECORD_SIZE + MODCOUNT_OFFSET);
     }
   }
 

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class SLRUMap<K,V> {
   private final Map<K,V> myProtectedQueue;
@@ -92,6 +93,12 @@ public class SLRUMap<K,V> {
     }
 
     return false;
+  }
+
+  public Set<Map.Entry<K, V>> entrySet() {
+    Set<Map.Entry<K, V>> set = new HashSet<Map.Entry<K,V>>(myProtectedQueue.entrySet());
+    set.addAll(myProbationalQueue.entrySet());
+    return set;
   }
 
   public void clear() {
