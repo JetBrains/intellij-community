@@ -50,7 +50,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -79,7 +79,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -903,20 +902,14 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
   }
 
   public PsiElement add(@NotNull PsiElement psiElement) throws IncorrectOperationException {
-    GrTypeDefinitionBody body = getBody();
+    final GrTypeDefinitionBody body = getBody();
 
-    if (body == null) {
-      final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
-      final GrTypeDefinition td = factory.createTypeDefinition("class A {}");
-      body = td.getBody();
-      getNode().addChild(body.getNode());
-    }
-    assert body != null;
+    if (body == null) throw new IncorrectOperationException("Class must have body");
 
     final PsiElement lBrace = body.getLBrace();
     final PsiElement rBrace = body.getRBrace();
 
-    if (lBrace == null) throw new IncorrectOperationException("Left curly  brace is not found");
+    if (lBrace == null) throw new IncorrectOperationException("L brace unfound");
     PsiElement anchor = null;
 
     if (psiElement instanceof GrMethod && ((GrMethod)psiElement).isConstructor()) {
@@ -925,7 +918,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
       if (memberDeclarations.length == 0 && rBrace != null) {
         anchor = rBrace.getPrevSibling();
-      } else {
+      } else if (memberDeclarations.length > 0 ) {
         for (GrMembersDeclaration memberDeclaration : memberDeclarations) {
           if (memberDeclaration instanceof GrMethodImpl) {
             anchor = memberDeclaration.getPrevSibling();
@@ -940,29 +933,22 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
       anchor = lBrace.getNextSibling();
     }
 
-    final ASTNode bodyNode = body.getNode();
-    final ASTNode elemNode = psiElement.getNode();
-    if (!psiElement.isPhysical()) return psiElement;
-
-    assert elemNode != null;
+    ASTNode bodyNode = body.getNode();
     if (anchor != null) {
-      ASTNode anchorNode = anchor.getNode();
-      assert anchorNode != null;
-      if (GroovyElementTypes.mSEMI.equals(anchorNode.getElementType())) {
+      ASTNode node = anchor.getNode();
+      assert node != null;
+      if (GroovyElementTypes.mSEMI.equals(node.getElementType())) {
         anchor = anchor.getNextSibling();
-        if (anchor != null) {
-          anchorNode = anchor.getNode();
-        }
+        node = anchor.getNode();
       }
       // hack for rename refactoring
-      if (anchorNode != null) {
-        bodyNode.addChild(elemNode, anchorNode);
-        bodyNode.addLeaf(GroovyTokenTypes.mNLS, "\n", elemNode);
-      } else {
-        bodyNode.addChild(elemNode);
+      ASTNode elemNode = psiElement.getNode();
+      if (elemNode != null && node != null) {
+        bodyNode.addChild(elemNode, node);
+        bodyNode.addLeaf(GroovyTokenTypes.mNLS, "\n", psiElement.getNode());
       }
     } else {
-      bodyNode.addChild(elemNode);
+      bodyNode.addChild(psiElement.getNode());
     }
 
     return psiElement;

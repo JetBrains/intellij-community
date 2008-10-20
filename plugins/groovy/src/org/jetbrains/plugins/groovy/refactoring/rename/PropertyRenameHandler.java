@@ -28,9 +28,9 @@ public class PropertyRenameHandler implements RenameHandler {
   }
 
   private GrField getProperty(DataContext dataContext) {
-    final PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
-    if (element instanceof GrField && ((GrField) element).isProperty()) return (GrField) element;
-    if (element instanceof GrAccessorMethod) return ((GrAccessorMethod) element).getProperty();
+    final PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    if (element instanceof GrField && ((GrField)element).isProperty()) return (GrField)element;
+    if (element instanceof GrAccessorMethod) return ((GrAccessorMethod)element).getProperty();
     return null;
   }
 
@@ -65,10 +65,8 @@ public class PropertyRenameHandler implements RenameHandler {
 
       final PsiMethod setter = myProperty.getSetter();
       if (setter != null) {
-        if (!(setter instanceof GrAccessorMethod)) {
-          final String setterName = PropertyUtil.suggestSetterName(newName);
-          rename.addElement(setter, setterName);
-        }
+        final String setterName = PropertyUtil.suggestSetterName(newName);
+        rename.addElement(setter, setterName);
       }
 
       final PsiMethod[] getters = myProperty.getGetters();
