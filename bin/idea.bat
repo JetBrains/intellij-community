@@ -51,6 +51,11 @@ SET CLASS_PATH=%CLASS_PATH%;%IDEA_JDK%\lib\tools.jar
 :: ---------------------------------------------------------------------
 IF NOT "%IDEA_CLASS_PATH%" == "" SET CLASS_PATH=%CLASS_PATH%;%IDEA_CLASS_PATH%
 
+IF EXIST "%IDEA_HOME%\patch.jar" (
+  MOVE /Y "%IDEA_HOME%\patch.jar" "%TEMP%\idea.patch.jar"
+  "%JAVA_EXE%" %JVM_ARGS% -jar "%TEMP%\idea.patch.jar" install ..\
+)
+
 "%JAVA_EXE%" %JVM_ARGS% -cp "%CLASS_PATH%" %IDEA_MAIN_CLASS_NAME% %*
 
 SET PATH=%OLD_PATH%
