@@ -369,7 +369,8 @@ public class ControlFlowUtils {
       @NotNull GrStatement statement) {
     GroovyPsiElement statementToCheck = statement;
     while (true) {
-      if (statementToCheck == null) {
+      if (!(statementToCheck instanceof GrExpression ||
+          statementToCheck instanceof GrReturnStatement)) {
         return false;
       }
       final GroovyPsiElement container =
@@ -381,10 +382,8 @@ public class ControlFlowUtils {
         return false;
       }
       if (container instanceof GrCodeBlock) {
-        if (statementToCheck instanceof GrStatement) {
-          if (!statementIsLastInCodeBlock((GrCodeBlock) container, (GrStatement) statementToCheck)) {
-            return false;
-          }
+        if (!statementIsLastInCodeBlock((GrCodeBlock)container, (GrStatement)statementToCheck)) {
+          return false;
         }
         if (container.equals(body)) {
           return true;
