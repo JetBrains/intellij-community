@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.*;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
@@ -81,19 +82,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   private static final Key<PsiFile> CACHED_PSI_FILE_COPY_IN_FILECONTENT = Key.create("CACHED_PSI_FILE_COPY_IN_FILECONTENT");
   
-  public static final int BEFORE_CHILD_ADDITION = 0;
-  public static final int BEFORE_CHILD_REMOVAL = 1;
-  public static final int BEFORE_CHILD_REPLACEMENT = 2;
-  public static final int BEFORE_CHILD_MOVEMENT = 3;
-  public static final int BEFORE_CHILDREN_CHANGE = 4;
-  public static final int BEFORE_PROPERTY_CHANGE = 5;
-  public static final int CHILD_ADDED = 6;
-  public static final int CHILD_REMOVED = 7;
-  public static final int CHILD_REPLACED = 8;
-  public static final int CHILD_MOVED = 9;
-  public static final int CHILDREN_CHANGED = 10;
-  public static final int PROPERTY_CHANGED = 11;
-
   private final List<LanguageInjector> myLanguageInjectors = new CopyOnWriteArrayList<LanguageInjector>();
   private final ProgressManager myProgressManager;
 
@@ -557,6 +545,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   private void fireEvent(PsiTreeChangeEventImpl event) {
+    System.out.println("PSIEvent: "+event.getCode());
     boolean isRealTreeChange = event.getCode() != PROPERTY_CHANGED && event.getCode() != BEFORE_PROPERTY_CHANGE;
 
     PsiFile file = event.getFile();

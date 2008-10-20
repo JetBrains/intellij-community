@@ -6,17 +6,32 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeEvent;
 
 public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
-  private int myCode;
+  public enum PsiEventType {
+    BEFORE_CHILD_ADDITION,
+    BEFORE_CHILD_REMOVAL,
+    BEFORE_CHILD_REPLACEMENT,
+    BEFORE_CHILD_MOVEMENT,
+    BEFORE_CHILDREN_CHANGE,
+    BEFORE_PROPERTY_CHANGE,
+    CHILD_ADDED,
+    CHILD_REMOVED,
+    CHILD_REPLACED,
+    CHILD_MOVED,
+    CHILDREN_CHANGED,
+    PROPERTY_CHANGED
+  }
+
+  private PsiEventType myCode;
 
   public PsiTreeChangeEventImpl(PsiManager manager) {
     super(manager);
   }
 
-  public int getCode() {
+  public PsiEventType getCode() {
     return myCode;
   }
 
-  public void setCode(int code) {
+  public void setCode(PsiEventType code) {
     myCode = code;
   }
 

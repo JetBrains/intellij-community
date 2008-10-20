@@ -413,36 +413,36 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       boolean changedInsideCodeBlock = false;
 
       switch (event.getCode()) {
-        case PsiManagerImpl.BEFORE_CHILDREN_CHANGE:
+        case BEFORE_CHILDREN_CHANGE:
           if (event.getParent() instanceof PsiFile) {
             changedInsideCodeBlock = true;
             break; // May be caused by fake PSI event from PomTransaction. A real event will anyway follow.
           }
 
           //noinspection fallthrough
-        case PsiManagerImpl.CHILDREN_CHANGED:
+        case CHILDREN_CHANGED:
           changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
           break;
 
-        case PsiManagerImpl.BEFORE_CHILD_ADDITION:
-        case PsiManagerImpl.BEFORE_CHILD_REMOVAL:
-        case PsiManagerImpl.CHILD_ADDED:
-        case PsiManagerImpl.CHILD_REMOVED:
+        case BEFORE_CHILD_ADDITION:
+        case BEFORE_CHILD_REMOVAL:
+        case CHILD_ADDED:
+        case CHILD_REMOVED:
           changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
           break;
 
-        case PsiManagerImpl.BEFORE_PROPERTY_CHANGE:
-        case PsiManagerImpl.PROPERTY_CHANGED:
+        case BEFORE_PROPERTY_CHANGE:
+        case PROPERTY_CHANGED:
           changedInsideCodeBlock = false;
           break;
 
-        case PsiManagerImpl.BEFORE_CHILD_REPLACEMENT:
-        case PsiManagerImpl.CHILD_REPLACED:
+        case BEFORE_CHILD_REPLACEMENT:
+        case CHILD_REPLACED:
           changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
           break;
 
-        case PsiManagerImpl.BEFORE_CHILD_MOVEMENT:
-        case PsiManagerImpl.CHILD_MOVED:
+        case BEFORE_CHILD_MOVEMENT:
+        case CHILD_MOVED:
           changedInsideCodeBlock = isInsideCodeBlock(event.getOldParent()) && isInsideCodeBlock(event.getNewParent());
           break;
 
