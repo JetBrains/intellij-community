@@ -92,7 +92,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
         VirtualFile file = event.getFile();
         if (!file.isDirectory()) {
-          if (!((ApplicationImpl)ApplicationManager.getApplication()).isSaving()) {
+          if (!((ApplicationImpl)ApplicationManager.getApplication()).isSaving() && event.getRequestor() == null) {
             saveChangedProjectFile(file, null, storage);
           }
         }
@@ -108,7 +108,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
             public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
               VirtualFile file = event.getFile();
-              if (!file.isDirectory() && !((ApplicationImpl)ApplicationManager.getApplication()).isSaving()) {
+              if (!file.isDirectory() && !((ApplicationImpl)ApplicationManager.getApplication()).isSaving() && event.getRequestor() == null) {
                 saveChangedProjectFile(file, project, storage);
               }
             }
@@ -449,7 +449,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           }
 
           for (final Project projectToReload : projectsToReload) {
-            reloadProject(projectToReload);
+            reloadProjectImpl(projectToReload, false, false);
           }
 
           myChangedProjectFiles.clear();
@@ -658,7 +658,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public void reloadProject(final Project p) {
-    reloadProject(p, false);
+    reloadProjectImpl(p, true, false);
+  }
+
+  public void reloadProjectImpl(final Project p, final boolean clearCopyToRestore, boolean takeMemorySnapshot) {
+    if (clearCopyToRestore) {
+      mySavedCopies.clear();
+      mySavedTimestamps.clear();
+    }
+    reloadProject(p, takeMemorySnapshot);
   }
 
   public void reloadProject(final Project p, final boolean takeMemorySnapshot) {
