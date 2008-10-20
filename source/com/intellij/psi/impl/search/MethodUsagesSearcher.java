@@ -5,14 +5,14 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 
@@ -77,7 +77,11 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
                                                                               searchContext, true);
     if (!toContinue) return false;
 
-    final String propertyName = PropertyUtil.getPropertyName(method);
+    final String propertyName = ApplicationManager.getApplication().runReadAction(new Computable<String>(){
+      public String compute() {
+        return PropertyUtil.getPropertyName(method);
+      }
+    });
     if (propertyName != null) {
       if (searchScope instanceof GlobalSearchScope) {
         GlobalSearchScope restrictedSeachScope = GlobalSearchScope.getScopeRestrictedByFileTypes(
