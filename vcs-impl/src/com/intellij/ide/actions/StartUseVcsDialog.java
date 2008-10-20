@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -76,7 +77,12 @@ public class StartUseVcsDialog extends DialogWrapper {
 
   @Override
   protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction()};
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  }
+
+  @Override
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("reference.version.control.enable.version.control.integration");
   }
 
   @Override
