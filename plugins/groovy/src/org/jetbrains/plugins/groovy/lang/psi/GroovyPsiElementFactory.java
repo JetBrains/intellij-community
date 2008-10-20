@@ -109,9 +109,9 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract PsiElement createStringLiteral(String text);
 
-  public abstract PsiElement createModifierFormText(String name);
+  public abstract PsiElement createModifierFromText(String name);
 
-  public abstract GrCodeBlock createMethodBodyFormText(String text);
+  public abstract GrCodeBlock createMethodBodyFromText(String text);
 
   public abstract GrVariableDeclaration createSimpleVariableDeclaration(String name, String typeText);
 

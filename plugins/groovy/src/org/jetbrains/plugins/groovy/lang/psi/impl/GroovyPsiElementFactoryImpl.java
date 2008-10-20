@@ -261,12 +261,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return ((GrReferenceExpression) createDummyFile("a.'" + text + "'").getTopStatements()[0]).getReferenceNameElement();
   }
 
-  public PsiElement createModifierFormText(String name) {
+  public PsiElement createModifierFromText(String name) {
     final GroovyFileBase file = createDummyFile(name + " def foo () {}");
     return file.getTopLevelDefinitions()[0].getFirstChild().getFirstChild();
   }
 
-  public GrCodeBlock createMethodBodyFormText(String text) {
+  public GrCodeBlock createMethodBodyFromText(String text) {
     final GroovyFileBase file = createDummyFile("def foo () {" + text + "}");
     final GrMethod method = (GrMethod) file.getTopLevelDefinitions()[0];
     return method.getBlock();
