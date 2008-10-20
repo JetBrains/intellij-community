@@ -177,8 +177,13 @@ public class RenameUtil {
       LOG.error("Unknown element type");
     }
 
+    boolean hasBindables = false;
     for (UsageInfo usage : usages) {
-      rename(usage, newName);
+      if (!(usage.getReference() instanceof BindablePsiReference)) {
+        rename(usage, newName);
+      } else {
+        hasBindables = true;
+      }
     }
 
     if (writableMetaData != null) {
@@ -188,6 +193,19 @@ public class RenameUtil {
       ((PsiNamedElement)namedElement).setName(newName);
     }
 
+    if (hasBindables) {
+      for (UsageInfo usage : usages) {
+        final PsiReference ref = usage.getReference();
+        if (ref instanceof BindablePsiReference) {
+          try {
+            ref.bindToElement(namedElement);
+          }
+          catch (IncorrectOperationException e) {//fall back to old scheme
+            ref.handleElementRename(newName);
+          }
+        }
+      }
+    }
     listener.elementRenamed(namedElement);
   }
 

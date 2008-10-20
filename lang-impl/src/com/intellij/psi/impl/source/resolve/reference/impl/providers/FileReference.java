@@ -19,6 +19,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.*;
+import com.intellij.refactoring.rename.BindablePsiReference;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,9 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class FileReference implements FileReferenceOwner, PsiPolyVariantReference, QuickFixProvider<FileReference>, LocalQuickFixProvider, EmptyResolveMessageProvider {
+public class FileReference implements FileReferenceOwner, PsiPolyVariantReference,
+                                      QuickFixProvider<FileReference>, LocalQuickFixProvider,
+                                      EmptyResolveMessageProvider, BindablePsiReference {
   public static final FileReference[] EMPTY = new FileReference[0];
 
   private final int myIndex;
@@ -377,7 +380,10 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       checkNotNull(curItem, curVFile, dstVFile);
       assert curItem != null;
       if (curItem.equals(dstItem)) {
-        return getElement();
+        if (getCanonicalText().equals(dstItem.getName())) {
+          return getElement();
+        }
+        return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), getRangeInElement(), file.getName());
       }
       newName = PsiFileSystemItemUtil.getRelativePath(curItem, dstItem);
       if (newName == null) {
