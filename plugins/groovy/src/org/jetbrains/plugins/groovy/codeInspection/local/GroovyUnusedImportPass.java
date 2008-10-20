@@ -49,7 +49,7 @@ import java.util.Set;
  * @author ilyas
  */
 public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
-  private PsiFile myFile;
+  private final PsiFile myFile;
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPass");
   private volatile Set<GrImportStatement> myUnusedImports = Collections.emptySet();
 

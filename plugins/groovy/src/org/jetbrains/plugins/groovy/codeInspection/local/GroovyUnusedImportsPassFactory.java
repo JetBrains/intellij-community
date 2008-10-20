@@ -14,13 +14,14 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.local;
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.psi.PsiFile;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.openapi.editor.Editor;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * @author ilyas
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NonNls;
 public class GroovyUnusedImportsPassFactory implements TextEditorHighlightingPassFactory {
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+    if (!(file instanceof GroovyFile)) return null;
     return new GroovyUnusedImportPass(file, editor);
   }
 
