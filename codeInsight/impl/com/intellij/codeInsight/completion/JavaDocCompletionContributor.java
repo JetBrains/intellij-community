@@ -187,7 +187,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       final CharSequence chars = editor.getDocument().getCharsSequence();
       int endOffset = editor.getCaretModel().getOffset();
       final Project project = context.getProject();
-      int afterSharp = CharArrayUtil.shiftBackwardUntil(chars, endOffset, "#") + 1;
+      int afterSharp = CharArrayUtil.shiftBackwardUntil(chars, endOffset - 1, "#") + 1;
       int signatureOffset = afterSharp;
 
       PsiElement element = context.getFile().findElementAt(signatureOffset - 1);
