@@ -132,6 +132,10 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       if ("".equals(name)) return Result.CONTINUE;
 
       int tagOffset = tag.getTextRange().getStartOffset();
+
+      final XmlToken nameToken = XmlUtil.getTokenOfType(tag, XmlTokenType.XML_NAME);
+      if (nameToken != null && nameToken.getTextRange().getStartOffset() > offset) return Result.CONTINUE;
+
       HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(tagOffset);
       if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), editedFile.getFileType(), iterator, true,true)) return Result.CONTINUE;
 
