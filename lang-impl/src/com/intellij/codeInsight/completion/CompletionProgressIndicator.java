@@ -23,9 +23,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
@@ -89,7 +89,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     });
     myLookup.setCalculating(true);
 
-    myQueue = new MergingUpdateQueue("completion lookup progress", 2000, true, myEditor.getContentComponent());
+    myQueue = new MergingUpdateQueue("completion lookup progress", 200, true, myEditor.getContentComponent());
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     registerItself();
@@ -126,11 +126,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void showLookup() {
-    if (myLookup.isCalculating()) {
-      final AsyncProcessIcon processIcon = myLookup.getProcessIcon();
-      processIcon.setVisible(true);
-      processIcon.resume();
-    }
     updateLookup();
   }
 
@@ -166,13 +161,21 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myEditor.isDisposed() || myDisposed) return;
 
-    myFreezeSemaphore.up();
     myLookup.updateList();
     if (!myInitialized) {
       myInitialized = true;
+      if (myLookup.isCalculating()) {
+        final AsyncProcessIcon processIcon = myLookup.getProcessIcon();
+        processIcon.setVisible(true);
+        processIcon.resume();
+      }
       myLookup.show();
     }
     else if (myLookup.isVisible()) {
+      if (myEditor.getComponent().getRootPane() == null) {
+        LOG.assertTrue(false, "Null root pane");
+      }
+
       Point point=myLookup.calculatePosition();
       Dimension preferredSize = myLookup.getComponent().getPreferredSize();
       myLookup.setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
@@ -224,11 +227,22 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     myLookup.addItem(item);
     myCount++;
+    if (unitTestMode) return;
+
     if (myCount == 1) {
-      myQueue.setMergingTimeSpan(200);
-    } else {
-      if (!unitTestMode) myQueue.queue(myUpdate);
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          try {
+            Thread.sleep(300);
+          }
+          catch (InterruptedException e) {
+            LOG.error(e);
+          }
+          myFreezeSemaphore.up();
+        }
+      });
     }
+    myQueue.queue(myUpdate);
   }
 
   public void closeAndFinish() {

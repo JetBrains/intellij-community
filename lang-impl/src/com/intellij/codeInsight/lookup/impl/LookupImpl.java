@@ -188,15 +188,17 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     updateList();
   }
 
-  public synchronized void addItem(LookupElement item) {
+  public void addItem(LookupElement item) {
     if (item.getUserData(USED_LOOKUP_ELEMENT) != null) {
       LOG.assertTrue(false, "An attempt to reuse lookup item detected. Giving the same lookup element instance to more than one lookup or completion process is prohibited: item=" + item);
     }
 
     item.putUserData(USED_LOOKUP_ELEMENT, Boolean.TRUE);
 
-    myItems.add(item);
-    addItemWeight(item);
+    synchronized (myItems) {
+      myItems.add(item);
+      addItemWeight(item);
+    }
     int maxWidth = myCellRenderer.updateMaximumWidth(item);
     myLookupWidth = Math.max(maxWidth, myLookupWidth);
   }
@@ -233,8 +235,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myList;
   }
 
-  public synchronized LookupElement[] getItems(){
-    return myItems.toArray(new LookupElement[myItems.size()]);
+  public LookupElement[] getItems(){
+    synchronized (myItems) {
+      return myItems.toArray(new LookupElement[myItems.size()]);
+    }
   }
 
   public void setAdvertisementText(@Nullable String text) {
@@ -257,97 +261,99 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     updateList();
   }
 
-  public final synchronized void updateList() {
-    int minPrefixLength = myItems.isEmpty() ? 0 : Integer.MAX_VALUE;
-    for (final LookupElement item : myItems) {
-      minPrefixLength = Math.min(item.getPrefixMatcher().getPrefix().length(), minPrefixLength);
-    }
-    if (myMinPrefixLength != minPrefixLength) {
-      myLookupStartMarker = null;
-    }
-    myMinPrefixLength = minPrefixLength;
+  public final void updateList() {
+    synchronized (myItems) {
+      int minPrefixLength = myItems.isEmpty() ? 0 : Integer.MAX_VALUE;
+      for (final LookupElement item : myItems) {
+        minPrefixLength = Math.min(item.getPrefixMatcher().getPrefix().length(), minPrefixLength);
+      }
+      if (myMinPrefixLength != minPrefixLength) {
+        myLookupStartMarker = null;
+      }
+      myMinPrefixLength = minPrefixLength;
 
-    Object oldSelected = !myDirty ? null : myList.getSelectedValue();
-    DefaultListModel model = (DefaultListModel)myList.getModel();
-    model.clear();
+      Object oldSelected = !myDirty ? null : myList.getSelectedValue();
+      DefaultListModel model = (DefaultListModel)myList.getModel();
+      model.clear();
 
-    ArrayList<LookupElement> allItems = new ArrayList<LookupElement>();
-    Set<LookupElement> firstItems = new THashSet<LookupElement>();
+      ArrayList<LookupElement> allItems = new ArrayList<LookupElement>();
+      Set<LookupElement> firstItems = new THashSet<LookupElement>();
 
-    final boolean hasPreselectedItem = !myDirty && myPreselectedItem != EMPTY_LOOKUP_ITEM;
-    boolean addPreselected = hasPreselectedItem;
+      final boolean hasPreselectedItem = !myDirty && myPreselectedItem != EMPTY_LOOKUP_ITEM;
+      boolean addPreselected = hasPreselectedItem;
 
-    for (final LookupItemWeightComparable comparable : myItemsMap.keySet()) {
-      final List<LookupElement> suitable = new SmartList<LookupElement>();
-      for (final LookupElement item : myItemsMap.get(comparable)) {
-        if (prefixMatches(item)) {
-          suitable.add(item);
+      for (final LookupItemWeightComparable comparable : myItemsMap.keySet()) {
+        final List<LookupElement> suitable = new SmartList<LookupElement>();
+        for (final LookupElement item : myItemsMap.get(comparable)) {
+          if (prefixMatches(item)) {
+            suitable.add(item);
+          }
+        }
+
+        if (allItems.size() + suitable.size() + (addPreselected ? 1 : 0) > MAX_PREFERRED_COUNT) break;
+        for (final LookupElement item : suitable) {
+          allItems.add(item);
+          firstItems.add(item);
+          model.addElement(item);
+
+          if (hasPreselectedItem && item == myPreselectedItem) {
+            addPreselected = false;
+          }
         }
       }
+      if (addPreselected) {
+        allItems.add(myPreselectedItem);
+        firstItems.add(myPreselectedItem);
+        model.addElement(myPreselectedItem);
+      }
 
-      if (allItems.size() + suitable.size() + (addPreselected ? 1 : 0) > MAX_PREFERRED_COUNT) break;
-      for (final LookupElement item : suitable) {
-        allItems.add(item);
-        firstItems.add(item);
+      myPreferredItemsCount = allItems.size();
+
+      for (LookupElement item : myItems) {
+        if (!firstItems.contains(item) && prefixMatches(item)) {
+          model.addElement(item);
+          allItems.add(item);
+        }
+      }
+      boolean isEmpty = allItems.isEmpty();
+      if (isEmpty) {
+        LookupItem<String> item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"));
+        item.setPrefixMatcher(new CamelHumpMatcher(""));
+        if (!myCalculating) {
+          final int maxWidth = myCellRenderer.updateMaximumWidth(item);
+          myList.setFixedCellWidth(Math.max(maxWidth, myLookupWidth));
+        }
+
         model.addElement(item);
-
-        if (hasPreselectedItem && item == myPreselectedItem) {
-          addPreselected = false;
-        }
-      }
-    }
-    if (addPreselected) {
-      allItems.add(myPreselectedItem);
-      firstItems.add(myPreselectedItem);
-      model.addElement(myPreselectedItem);
-    }
-
-    myPreferredItemsCount = allItems.size();
-
-    for (LookupElement item : myItems) {
-      if (!firstItems.contains(item) && prefixMatches(item)) {
-        model.addElement(item);
         allItems.add(item);
-      }
-    }
-    boolean isEmpty = allItems.isEmpty();
-    if (isEmpty) {
-      LookupItem<String> item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"));
-      item.setPrefixMatcher(new CamelHumpMatcher(""));
-      if (!myCalculating) {
-        final int maxWidth = myCellRenderer.updateMaximumWidth(item);
-        myList.setFixedCellWidth(Math.max(maxWidth, myLookupWidth));
-      }
-
-      model.addElement(item);
-      allItems.add(item);
-    } else {
-      myList.setFixedCellWidth(myLookupWidth);
-    }
-    myList.setFixedCellHeight(myCellRenderer.getListCellRendererComponent(myList, myList.getModel().getElementAt(0), 0, false, false).getPreferredSize().height);
-
-    myList.setVisibleRowCount(Math.min(myList.getModel().getSize(), CodeInsightSettings.getInstance().LOOKUP_HEIGHT));
-
-    myAdComponent.setText(myAdText);
-    if (StringUtil.isNotEmpty(myAdText)) {
-      myAdComponent.setPreferredSize(new Dimension(myAdComponent.getPreferredSize().width, myProcessIcon.getPreferredSize().height));
-    } else {
-      myAdComponent.setPreferredSize(new Dimension(0, 0));
-    }
-
-    if (!isEmpty) {
-      if (oldSelected != null) {
-        if (!ListScrollingUtil.selectItem(myList, oldSelected)) {
-          selectMostPreferableItem();
-        }
       } else {
-        if (myPreselectedItem == EMPTY_LOOKUP_ITEM) {
-          selectMostPreferableItem();
-          myPreselectedItem = getCurrentItem();
-        } else if (hasPreselectedItem) {
-          ListScrollingUtil.selectItem(myList, myPreselectedItem);
+        myList.setFixedCellWidth(myLookupWidth);
+      }
+      myList.setFixedCellHeight(myCellRenderer.getListCellRendererComponent(myList, myList.getModel().getElementAt(0), 0, false, false).getPreferredSize().height);
+
+      myList.setVisibleRowCount(Math.min(myList.getModel().getSize(), CodeInsightSettings.getInstance().LOOKUP_HEIGHT));
+
+      myAdComponent.setText(myAdText);
+      if (StringUtil.isNotEmpty(myAdText)) {
+        myAdComponent.setPreferredSize(new Dimension(myAdComponent.getPreferredSize().width, myProcessIcon.getPreferredSize().height));
+      } else {
+        myAdComponent.setPreferredSize(new Dimension(0, 0));
+      }
+
+      if (!isEmpty) {
+        if (oldSelected != null) {
+          if (!ListScrollingUtil.selectItem(myList, oldSelected)) {
+            selectMostPreferableItem();
+          }
         } else {
-          selectMostPreferableItem();
+          if (myPreselectedItem == EMPTY_LOOKUP_ITEM) {
+            selectMostPreferableItem();
+            myPreselectedItem = getCurrentItem();
+          } else if (hasPreselectedItem) {
+            ListScrollingUtil.selectItem(myList, myPreselectedItem);
+          } else {
+            selectMostPreferableItem();
+          }
         }
       }
     }
@@ -371,7 +377,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     JComponent editorComponent = myEditor.getComponent();
     JComponent internalComponent = myEditor.getContentComponent();
     final JRootPane rootPane = editorComponent.getRootPane();
-    LOG.assertTrue(rootPane != null, myItems);
+    if (rootPane == null) {
+      synchronized (myItems) {
+        LOG.assertTrue(false, myItems);
+      }
+    }
     JLayeredPane layeredPane = rootPane.getLayeredPane();
     Point layeredPanePoint=SwingUtilities.convertPoint(internalComponent,location, layeredPane);
     layeredPanePoint.x -= myCellRenderer.getIconIndent();
@@ -470,9 +480,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myEditor.addEditorMouseListener(myEditorMouseListener);
 
     myList.addListSelectionListener(new ListSelectionListener() {
+      private LookupElement oldItem = null; 
+
       public void valueChanged(ListSelectionEvent e){
         LookupElement item = getCurrentItem();
-        fireCurrentItemChanged(item);
+        if (oldItem != item) {
+          fireCurrentItemChanged(item);
+        }
+        oldItem = item;
       }
     });
 
@@ -541,7 +556,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     Rectangle listBounds=myList.getBounds();
     final JRootPane pane = myList.getRootPane();
     if (pane == null) {
-      LOG.assertTrue(false, myItems);
+      synchronized (myItems) {
+        LOG.assertTrue(false, myItems);
+      }
     }
     JLayeredPane layeredPane= pane.getLayeredPane();
     Point layeredPanePoint=SwingUtilities.convertPoint(myList,listBounds.x,listBounds.y,layeredPane);
@@ -672,14 +689,16 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myEditor.getDocument().insertString(offset, afterCaret);
 
     final String newPrefix = presentPrefix + afterCaret;
-    for (Iterator<LookupElement> it = myItems.iterator(); it.hasNext();) {
-      LookupElement item = it.next();
-      if (!item.setPrefixMatcher(item.getPrefixMatcher().cloneWithPrefix(newPrefix))) {
-        it.remove();
+    synchronized (myItems) {
+      for (Iterator<LookupElement> it = myItems.iterator(); it.hasNext();) {
+        LookupElement item = it.next();
+        if (!item.setPrefixMatcher(item.getPrefixMatcher().cloneWithPrefix(newPrefix))) {
+          it.remove();
+        }
       }
+      myAdditionalPrefix = "";
+      updateList();
     }
-    myAdditionalPrefix = "";
-    updateList();
 
     offset += afterCaret.length();
     myInitialOffset = offset;
@@ -796,10 +815,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  public synchronized LookupElement[] getSortedItems() {
-    final LookupElement[] result = new LookupElement[myList.getModel().getSize()];
-    ((DefaultListModel)myList.getModel()).copyInto(result);
-    return result;
+  public LookupElement[] getSortedItems() {
+    synchronized (myItems) {
+      final LookupElement[] result = new LookupElement[myList.getModel().getSize()];
+      ((DefaultListModel)myList.getModel()).copyInto(result);
+      return result;
+    }
   }
 
 }
