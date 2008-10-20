@@ -14,7 +14,7 @@ public abstract class XValueModifier {
    */
   public abstract void setValue(@NotNull String expression, @NotNull XModificationCallback callback);
 
-  public static interface XModificationCallback {
+  public interface XModificationCallback {
     void valueModified();
 
     void errorOccured(@NotNull String errorMessage);
