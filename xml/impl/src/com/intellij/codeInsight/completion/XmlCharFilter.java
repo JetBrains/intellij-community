@@ -41,8 +41,8 @@ public class XmlCharFilter extends CharFilter {
         if (!(language instanceof XMLLanguage)) {
           return false;
         }
-        return true;
       }
+      return true;
     }
     return false;
   }
