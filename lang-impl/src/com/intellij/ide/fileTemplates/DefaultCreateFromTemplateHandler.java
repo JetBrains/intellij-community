@@ -5,6 +5,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.Properties;
@@ -24,6 +25,11 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
 
     directory.checkCreateFile(fileName);
     PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, templateText);
+
+    if (template.isAdjust()) {
+      CodeStyleManager.getInstance(project).reformat(file);
+    }
+
     file = (PsiFile)directory.add(file);
     return file;
   }
