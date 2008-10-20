@@ -545,7 +545,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   private void fireEvent(PsiTreeChangeEventImpl event) {
-    System.out.println("PSIEvent: "+event.getCode());
     boolean isRealTreeChange = event.getCode() != PROPERTY_CHANGED && event.getCode() != BEFORE_PROPERTY_CHANGE;
 
     PsiFile file = event.getFile();
