@@ -941,6 +941,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
     final ASTNode bodyNode = body.getNode();
     final ASTNode elemNode = psiElement.getNode();
+    if (!psiElement.isPhysical()) return psiElement;
+
     assert elemNode != null;
     if (anchor != null) {
       ASTNode anchorNode = anchor.getNode();
