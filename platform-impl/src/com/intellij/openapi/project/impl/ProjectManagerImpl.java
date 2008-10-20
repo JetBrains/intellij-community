@@ -544,10 +544,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     else {
       StringBuilder filesBuilder = new StringBuilder();
       boolean first = true;
+      Set<String> alreadyShown = new HashSet<String>();
       for (Pair<VirtualFile, StateStorage> cause : causes) {
-        if (!first) filesBuilder.append("\n");
-        first = false;
-        filesBuilder.append(cause.first.getPresentableUrl());
+        String url = cause.first.getPresentableUrl();
+        if (!alreadyShown.contains(url)) {
+          if (!first) filesBuilder.append("\n");
+          first = false;
+          filesBuilder.append(url);
+          alreadyShown.add(url);
+        }
       }
       message = ProjectBundle.message("project.reload.external.change.multiple", filesBuilder.toString());
     }
