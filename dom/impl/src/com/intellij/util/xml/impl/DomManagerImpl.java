@@ -161,6 +161,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
           private final List<XmlFile> myDeletedFiles = new SmartList<XmlFile>();
 
           public void contentsChanged(VirtualFileEvent event) {
+            if (event.isFromSave()) return;
+
             processVfsChange(event.getFile());
           }
 
