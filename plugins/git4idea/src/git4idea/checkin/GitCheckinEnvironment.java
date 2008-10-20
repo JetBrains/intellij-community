@@ -241,7 +241,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     if (!removed.isEmpty()) {
       try {
-        GitSimpleHandler.delete(project, root, removed).run();
+        GitSimpleHandler handler = new GitSimpleHandler(project, root, "rm");
+        handler.addParameters("--ignore-unmatch");
+        handler.addRelativePaths(removed);
+        handler.setNoSSH(true);
+        handler.run();
       }
       catch (VcsException ex) {
         exceptions.add(ex);
