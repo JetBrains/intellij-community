@@ -19,10 +19,7 @@ package git4idea.actions;
  */
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -72,6 +69,12 @@ public class GitMergeTool extends BasicAction {
    */
   @Override
   protected boolean isEnabled(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile... vFiles) {
+    FileStatusManager fs = FileStatusManager.getInstance(project);
+    for (VirtualFile f : vFiles) {
+      if (fs.getStatus(f) != FileStatus.MERGED_WITH_CONFLICTS) {
+        return false;
+      }
+    }
     return true;
   }
 }
