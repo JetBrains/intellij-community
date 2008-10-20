@@ -36,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -604,7 +605,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     if (cachedNamespace != null && myModCount == curModCount) {
       return cachedNamespace;
     }
-    cachedNamespace = getNamespaceByPrefix(getNamespacePrefix());
+    final String prefix = getNamespacePrefix();
+    cachedNamespace = getNamespaceByPrefix(prefix);
     myCachedNamespace = cachedNamespace;
     myModCount = curModCount;
     return cachedNamespace;
@@ -680,7 +682,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       known.addAll(Arrays.asList(((XmlTag)parent).knownNamespaces()));
     }
     else {
-      final XmlFile xmlFile = XmlUtil.getContainingFile(this);
+      final XmlFile xmlFile = XmlExtension.getExtensionByElement(this).getContainingFile(this);
       final XmlTag rootTag = xmlFile.getDocument().getRootTag();
       if (rootTag != this) known.addAll(Arrays.asList(rootTag.knownNamespaces()));
     }
