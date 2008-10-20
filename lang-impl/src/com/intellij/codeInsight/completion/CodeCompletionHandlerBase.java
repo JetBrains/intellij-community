@@ -312,7 +312,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
     PsiElement element = findElementAt(fileCopy, context.getStartOffset());
     if (element == null) {
-      LOG.assertTrue(false, "offset " + context.getStartOffset() + " at:\n" + fileCopy.getText());
+      LOG.assertTrue(false, "offset " + context.getStartOffset() + " at:\ntext=\"" + fileCopy.getText() + "\"\ninstance=" + fileCopy);
     }
     return Pair.create(context, element);
   }
