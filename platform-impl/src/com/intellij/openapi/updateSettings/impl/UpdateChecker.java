@@ -19,8 +19,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Document;
@@ -29,8 +32,11 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -63,10 +69,15 @@ public final class UpdateChecker {
 
   private static class StringHolder {
     private static final String UPDATE_URL = ApplicationInfoEx.getInstanceEx().getUpdateUrls().getCheckingUrl();
+    private static final String PATCHES_URL = ApplicationInfoEx.getInstanceEx().getUpdateUrls().getPatchesUrl();
   }
 
   private static String getUpdateUrl() {
     return StringHolder.UPDATE_URL;
+  }
+
+  private static String getPatchesUrl() {
+    return StringHolder.PATCHES_URL;
   }
 
   public static boolean isMyVeryFirstOpening() {
@@ -118,7 +129,8 @@ public final class UpdateChecker {
       final String failedMessage = IdeBundle.message("connection.failed.message", StringUtil.join(failed, ","));
       if (showErrorDialog) {
         Messages.showErrorDialog(failedMessage, IdeBundle.message("title.connection.error"));
-      } else {
+      }
+      else {
         LOG.info(failedMessage);
       }
     }
@@ -146,7 +158,7 @@ public final class UpdateChecker {
         continue;
       }
 
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           try {
             final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -184,8 +196,9 @@ public final class UpdateChecker {
       throw new ConnectionException(t);
     }
 
-    final String availBuild = document.getRootElement().getChild(ELEMENT_BUILD).getTextTrim();
-    final String availVersion = document.getRootElement().getChild(ELEMENT_VERSION).getTextTrim();
+    Element root = document.getRootElement();
+    final String availBuild = root.getChild(ELEMENT_BUILD).getTextTrim();
+    final String availVersion = root.getChild(ELEMENT_VERSION).getTextTrim();
     String ourBuild = ApplicationInfo.getInstance().getBuildNumber().trim();
     if (BUILD_NUMBER_STUB.equals(ourBuild)) ourBuild = Integer.toString(Integer.MAX_VALUE);
 
@@ -193,11 +206,23 @@ public final class UpdateChecker {
       LOG.debug("build available:'" + availBuild + "' ourBuild='" + ourBuild + "' ");
     }
 
+
+    Element patchElements = root.getChild("patches");
+    List<PatchInfo> patches = new ArrayList<PatchInfo>();
+    if (patchElements != null) {
+      for (Element each : (List<Element>)patchElements.getChildren()) {
+        String fromBuild = each.getAttributeValue("from").trim();
+        String toBuild = each.getAttributeValue("to").trim();
+        String size = each.getAttributeValue("size").trim();
+        patches.add(new PatchInfo(fromBuild, toBuild, size));
+      }
+    }
+
     try {
       final int iAvailBuild = Integer.parseInt(availBuild);
       final int iOurBuild = Integer.parseInt(ourBuild);
       if (iAvailBuild > iOurBuild) {
-        return new NewVersion(iAvailBuild, availVersion);
+        return new NewVersion(iAvailBuild, availVersion, patches);
       }
       return null;
     }
@@ -214,8 +239,8 @@ public final class UpdateChecker {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: loadVersionInfo(UPDATE_URL='" + url + "' )");
     }
-    final Document[] document = new Document[] {null};
-    final Exception[] exception = new Exception[] {null};
+    final Document[] document = new Document[]{null};
+    final Exception[] exception = new Exception[]{null};
     Future<?> downloadThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         try {
@@ -262,7 +287,6 @@ public final class UpdateChecker {
     dialog.show();
   }
 
-
   public static boolean install(List<PluginDownloader> downloaders) {
     boolean installed = false;
     for (PluginDownloader downloader : downloaders) {
@@ -278,21 +302,115 @@ public final class UpdateChecker {
     return installed;
   }
 
+  public static boolean downloadAndInstallPatch(final NewVersion newVersion) {
+    final boolean[] result = new boolean[1];
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        try {
+          result[0] = doDownloadAndInstallPatch(newVersion, ProgressManager.getInstance().getProgressIndicator());
+        }
+        catch (final IOException e) {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              Messages.showErrorDialog(e.getMessage(), "Failed to download patch file");
+            }
+          });
+          LOG.info(e);
+        }
+      }
+    }, IdeBundle.message("update.downloading.patch.progress.title"), true, null);
+    return result[0];
+  }
+
+  private static boolean doDownloadAndInstallPatch(NewVersion newVersion, ProgressIndicator i) throws IOException {
+    PatchInfo patch = newVersion.findPatchFor(ApplicationInfo.getInstance().getBuildNumber().trim());
+    if (patch == null) throw new IOException("No patch is available for current version");
+
+    String osSuffix = "";
+    if (SystemInfo.isWindows) osSuffix = "-win";
+    if (SystemInfo.isMac) osSuffix = "-mac";
+    if (SystemInfo.isUnix) osSuffix = "-unix";
+
+    String fileName = "idea-" + patch.getFromBuild() + "-" + patch.getToBuild() + "-patch" + osSuffix + ".jar";
+    URLConnection connection = null;
+    InputStream in = null;
+    OutputStream out = null;
+
+    File patchFile = new File(PathManager.getHomePath(), "patch.jar");
+    try {
+      connection = new URL(new URL(getPatchesUrl()), fileName).openConnection();
+      in = UrlConnectionUtil.getConnectionInputStreamWithException(connection, i);
+      out = new BufferedOutputStream(new FileOutputStream(patchFile));
+
+      StreamUtil.copyStreamContent(in, out);
+    }
+    catch (IOException e) {
+      patchFile.delete();
+      throw e;
+    }
+    catch (Throwable e) {
+      patchFile.delete();
+      throw new RuntimeException(e);
+    }
+    finally {
+      if (out != null) out.close();
+      if (in != null) in.close();
+      if (connection instanceof HttpURLConnection) ((HttpURLConnection)connection).disconnect();
+    }
+
+    return true;
+  }
+
   public static class NewVersion {
-    private final int latestBuild;
-    private final String latestVersion;
+    private final int myLatestBuild;
+    private final String myLatestVersion;
+    private List<PatchInfo> myPatches;
+
+    public NewVersion(int build, String version, List<PatchInfo> patches) {
+      myLatestBuild = build;
+      myLatestVersion = version;
+      myPatches = patches;
+    }
 
     public int getLatestBuild() {
-      return latestBuild;
+      return myLatestBuild;
     }
 
     public String getLatestVersion() {
-      return latestVersion;
+      return myLatestVersion;
     }
 
-    public NewVersion(int build, String version) {
-      latestBuild = build;
-      latestVersion = version;
+    public PatchInfo findPatchFor(String build) {
+      for (PatchInfo each : myPatches) {
+        if (each.myFromBuild.equals(build) && each.myToBuild.equals(String.valueOf(myLatestBuild))) {
+          return each;
+        }
+      }
+      return null;
+    }
+  }
+
+  public static class PatchInfo {
+    private String myFromBuild;
+    private String myToBuild;
+    private String mySize;
+
+    public PatchInfo(String fromBuild, String toBuild, String size) {
+      myFromBuild = fromBuild;
+      myToBuild = toBuild;
+      mySize = size;
+    }
+
+    public String getFromBuild() {
+      return myFromBuild;
+    }
+
+    public String getToBuild() {
+      return myToBuild;
+    }
+
+    public String getSize() {
+      return mySize;
     }
   }
 
