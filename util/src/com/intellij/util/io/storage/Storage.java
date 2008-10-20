@@ -209,6 +209,8 @@ public class Storage implements Disposable, Forceable {
   }
 
   private void appendBytes(int record, byte[] bytes) {
+    assert record > 0;
+
     int delta = bytes.length;
     if (delta == 0) return;
 
@@ -236,6 +238,8 @@ public class Storage implements Disposable, Forceable {
   }
 
   public void writeBytes(int record, byte[] bytes) {
+    assert record > 0;
+
     synchronized (lock) {
       final int requiredLength = bytes.length;
       final int currentCapacity = myRecordsTable.getCapacity(record);
@@ -292,6 +296,8 @@ public class Storage implements Disposable, Forceable {
   }
 
   public byte[] readBytes(int record) {
+    assert record > 0;
+
     synchronized (lock) {
       final int length = myRecordsTable.getSize(record);
       if (length == 0) return ArrayUtil.EMPTY_BYTE_ARRAY;
@@ -306,6 +312,7 @@ public class Storage implements Disposable, Forceable {
   }
 
   public void deleteRecord(int record) {
+    assert record > 0;
     synchronized (lock) {
       myRecordsTable.deleteRecord(record);
     }
