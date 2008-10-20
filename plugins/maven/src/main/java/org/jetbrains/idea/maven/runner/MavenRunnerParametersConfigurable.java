@@ -5,9 +5,11 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.Strings;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import javax.swing.*;
 
@@ -21,8 +23,15 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable 
   private LabeledComponent<JTextField> profilesComponent;
 
   public MavenRunnerParametersConfigurable() {
-    workingDirComponent.getComponent().addBrowseFolderListener(RunnerBundle.message("maven.select.maven.project.file"), "", null,
-                                                        new FileChooserDescriptor(true, false, false, false, false, false));
+    workingDirComponent.getComponent().addBrowseFolderListener(
+      RunnerBundle.message("maven.select.maven.project.file"), "", null,
+      new FileChooserDescriptor(false, true, false, false, false, false) {
+        @Override
+        public boolean isFileSelectable(VirtualFile file) {
+          if (!super.isFileSelectable(file)) return false;
+          return file.findChild(MavenConstants.POM_XML) != null;
+        }
+      });
   }
 
   public JComponent createComponent() {

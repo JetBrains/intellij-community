@@ -19,6 +19,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import java.io.File;
 
@@ -93,6 +94,12 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     Element mavenSettingsElement = element.getChild(MavenSettings.TAG);
     if(mavenSettingsElement!=null){
       mySettings = XmlSerializer.deserialize(mavenSettingsElement, MavenSettings.class);
+
+      // fix old settings format
+      File workingDir = mySettings.myRunnerParameters.getWorkingDirFile();
+      if (MavenConstants.POM_XML.equals(workingDir.getName())) {
+        mySettings.myRunnerParameters.setWorkingDirPath(workingDir.getParent());
+      }
     }
   }
 
