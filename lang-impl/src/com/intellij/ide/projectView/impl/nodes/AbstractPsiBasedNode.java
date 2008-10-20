@@ -40,7 +40,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   }
 
   @Nullable
-  protected abstract PsiElement extractPsiFromValue();
+  public abstract PsiElement extractPsiFromValue();
   @Nullable
   protected abstract Collection<AbstractTreeNode> getChildrenImpl();
   protected abstract void updateImpl(final PresentationData data);
