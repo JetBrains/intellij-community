@@ -16,6 +16,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -157,9 +158,12 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     if (lang == null || LanguageCommenters.INSTANCE.forLanguage(lang) == null) {
       lang = file.getLanguage();
     }
-    if (lang == null || LanguageCommenters.INSTANCE.forLanguage(lang) == null) {
-      lang = file.getViewProvider().getBaseLanguage();
+    final FileViewProvider viewProvider = file.getViewProvider();
+    if (viewProvider instanceof TemplateLanguageFileViewProvider &&
+        lang == ((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage()) {
+      lang = viewProvider.getBaseLanguage();
     }
+
     return LanguageCommenters.INSTANCE.forLanguage(lang);
   }
 

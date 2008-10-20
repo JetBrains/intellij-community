@@ -394,7 +394,10 @@ public class PsiUtilBase {
     if (lang == null) return null;
 
     if (selectionModel.hasSelection()) {
-      lang = evaluateLanguageInRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), file, lang);
+      final Language rangeLanguage = evaluateLanguageInRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), file);
+      if (rangeLanguage == null) return file.getLanguage();
+
+      lang = rangeLanguage;
     }
 
     return narrowLanguage(lang, file.getLanguage());
@@ -404,7 +407,7 @@ public class PsiUtilBase {
     return narrowLanguage(element.getLanguage(), element.getContainingFile().getLanguage());
   }
 
-  public static Language narrowLanguage(final Language language, final Language candidate) {
+  private static Language narrowLanguage(final Language language, final Language candidate) {
     if (candidate.isKindOf(language)) return candidate;
     return language;
   }
@@ -425,22 +428,30 @@ public class PsiUtilBase {
                                             caretOffset == selectionModel.getSelectionEnd()
                                             ? selectionModel.getSelectionStart()
                                             : caretOffset;
-    PsiElement elt = getElementAtOffset(file, mostProbablyCorrectLanguageOffset);
+    return getPsiFileAtOffset(file, mostProbablyCorrectLanguageOffset);
+  }
+
+  public static PsiFile getPsiFileAtOffset(final PsiFile file, final int offset) {
+    PsiElement elt = getElementAtOffset(file, offset);
     if (elt == null) return file;
 
     assert elt.isValid() : elt + "; file: "+file + "; isvalid: "+file.isValid();
     return elt.getContainingFile();
   }
 
-  public static Language evaluateLanguageInRange(final int start, final int end, final PsiFile file, Language lang) {
+  @Nullable
+  public static Language evaluateLanguageInRange(final int start, final int end, final PsiFile file) {
+    Language lang = null;
     int curOffset = start;
     do {
       PsiElement elt = getElementAtOffset(file, curOffset);
       if (elt == null) break;
       if (!(elt instanceof PsiWhiteSpace)) {
-        if (!Comparing.equal(lang, findLanguageFromElement(elt,file))) {
-          lang = file.getLanguage();
-          break;
+        final Language language = findLanguageFromElement(elt, file);
+        if (lang == null) {
+          lang = language;
+        } else if (lang != language) {
+          return null;
         }
       }
       int endOffset = elt.getTextRange().getEndOffset();

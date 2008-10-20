@@ -4,7 +4,6 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
@@ -13,10 +12,13 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
@@ -29,6 +31,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   private Project myProject;
   private PsiFile myFile;
   private Document myDocument;
+  private Editor myEditor;
   private int myStartOffset;
   private int myEndOffset;
   private int myLine1;
@@ -42,6 +45,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     myProject = project;
     myFile = file.getViewProvider().getPsi(file.getViewProvider().getBaseLanguage());
     myDocument = editor.getDocument();
+    myEditor = editor;
 
     if (!myFile.isWritable()) {
       if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(myDocument, project)) {
@@ -134,15 +138,10 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     boolean singleline = myLine1 == myLine2;
     int offset = myDocument.getLineStartOffset(myLine1);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
-    Language languageAtStart = PsiUtilBase.getLanguageAtOffset(myFile, offset);
     final Language languageSuitableForCompleteFragment = PsiUtilBase.evaluateLanguageInRange(offset, CharArrayUtil.shiftBackward(
-      myDocument.getCharsSequence(), myDocument.getLineEndOffset(myLine2), " \t\n"), myFile, languageAtStart);
+      myDocument.getCharsSequence(), myDocument.getLineEndOffset(myLine2), " \t\n"), myFile);
 
-    Commenter blockSuitableCommenter = languageSuitableForCompleteFragment != languageAtStart ? LanguageCommenters.INSTANCE
-      .forLanguage(languageSuitableForCompleteFragment) : null;
-    if (blockSuitableCommenter == null && LanguageCommenters.INSTANCE.forLanguage(languageAtStart) == null) {
-      blockSuitableCommenter = LanguageCommenters.INSTANCE.forLanguage(myFile.getLanguage());
-    }
+    Commenter blockSuitableCommenter = languageSuitableForCompleteFragment == null ? LanguageCommenters.INSTANCE.forLanguage(myFile.getLanguage()) : null;
 
     if (blockSuitableCommenter == null && myFile.getFileType() instanceof AbstractFileType) {
       blockSuitableCommenter = new Commenter() {
@@ -268,9 +267,15 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
     int offset = myDocument.getLineStartOffset(line);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
-    Language language = PsiUtilBase.getLanguageAtOffset(myFile, offset);
+    final FileViewProvider viewProvider = myFile.getViewProvider();
+    final Language language = PsiUtilBase.getLanguageAtOffset(myFile, offset);
+    if (viewProvider instanceof TemplateLanguageFileViewProvider &&
+        language == ((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage()) {
+      return LanguageCommenters.INSTANCE.forLanguage(viewProvider.getBaseLanguage());
+    }
+
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
-    return commenter == null ? LanguageCommenters.INSTANCE.forLanguage(myFile.getViewProvider().getBaseLanguage()) : commenter;
+    return commenter == null ? LanguageCommenters.INSTANCE.forLanguage(viewProvider.getBaseLanguage()) : commenter;
   }
 
   private Indent computeMinIndent(int line1, int line2, CharSequence chars, CodeStyleManager codeStyleManager, FileType fileType) {
@@ -341,7 +346,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     }
   }
 
-  private void commentLine(int line, int offset, Commenter commenter) {
+  private void commentLine(int line, int offset, @Nullable Commenter commenter) {
     if (commenter == null) commenter = findCommenter(line);
     if (commenter == null) return;
     String prefix = commenter.getLineCommentPrefix();
