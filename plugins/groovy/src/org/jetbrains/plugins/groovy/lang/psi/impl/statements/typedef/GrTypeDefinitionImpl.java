@@ -909,6 +909,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
       final GrTypeDefinition td = factory.createTypeDefinition("class A {}");
       body = td.getBody();
+      getNode().addChild(body.getNode());
     }
     assert body != null;
 
