@@ -31,7 +31,7 @@ import java.util.Map;
  * @author max
  */
 public class PagedFileStorage implements Forceable {
-  private final static int BUFFER_SIZE = 256 * 1024;
+  private final static int BUFFER_SIZE = 10 * 1024 * 1024; // 10M
   private final SLRUCache<Integer, MappedBufferWrapper> myBuffersCache = new SLRUCache<Integer, MappedBufferWrapper>(20, 10) {
     @NotNull
     public MappedBufferWrapper createValue(final Integer offset) {
