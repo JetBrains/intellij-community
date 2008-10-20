@@ -477,11 +477,12 @@ public class DocumentationManager {
     }, 10);
   }
 
-  @Nullable
+  @NotNull 
   public static DocumentationProvider getProviderFromElement(final PsiElement element) {
     return getProviderFromElement(element, null);
   }
 
+  @NotNull
   private static DocumentationProvider getProviderFromElement(final PsiElement element, PsiElement originalElement) {
     if (originalElement == null) {
       originalElement = getOriginalElement(element);

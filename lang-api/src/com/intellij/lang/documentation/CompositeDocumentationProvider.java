@@ -22,10 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class CompositeDocumentationProvider extends ExtensibleDocumentationProvider{
 
@@ -114,6 +111,10 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
         return;
       }
     }
+  }
+
+  public List<DocumentationProvider> getProviders() {
+    return Collections.unmodifiableList(myProviders);
   }
 
   @Override
