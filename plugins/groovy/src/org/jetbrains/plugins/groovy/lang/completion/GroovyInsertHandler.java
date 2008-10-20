@@ -45,7 +45,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
   private static final String CLOSURE_CLASS = "groovy.lang.Closure";
 
   public void handleInsert(InsertionContext context, LookupElement item) {
-    @NonNls Object obj = ((MutableLookupElement)item).getObject();
+    @NonNls Object obj = item.getObject();
     if (obj instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) obj;
       PsiParameter[] parameters = method.getParameterList().getParameters();
