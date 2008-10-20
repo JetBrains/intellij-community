@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -195,13 +196,19 @@ public class CodeInsightUtil {
 
   private static void getSubtypes(final PsiElement context, final PsiClassType baseType, final int arrayDim,
                                   final boolean getRawSubtypes, final Set<PsiType> result){
-    final PsiClassType.ClassResolveResult baseResult = JavaCompletionUtil.originalize(baseType).resolveGenerics();
+    final PsiClassType.ClassResolveResult baseResult =
+      ApplicationManager.getApplication().runReadAction(new Computable<PsiClassType.ClassResolveResult>() {
+        public PsiClassType.ClassResolveResult compute() {
+          return JavaCompletionUtil.originalize(baseType).resolveGenerics();
+        }
+      });
     final PsiClass baseClass = baseResult.getElement();
     final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
     if(baseClass == null) return;
 
+    final GlobalSearchScope scope = context.getResolveScope();
     final Query<PsiClass> query = new FilteredQuery<PsiClass>(
-      ClassInheritorsSearch.search(baseClass, context.getResolveScope(), true, false, false), new Condition<PsiClass>() {
+      ClassInheritorsSearch.search(baseClass, scope, true, false, false), new Condition<PsiClass>() {
       public boolean value(final PsiClass psiClass) {
         return !(psiClass instanceof PsiTypeParameter);
       }

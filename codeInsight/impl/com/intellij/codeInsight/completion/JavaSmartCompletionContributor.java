@@ -427,11 +427,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         }
       }).booleanValue();
       if (shouldSearchForInheritors) {
-        final Set<PsiType> psiTypes = ApplicationManager.getApplication().runReadAction(new Computable<Set<PsiType>>() {
-          public Set<PsiType> compute() {
-            return CodeInsightUtil.addSubtypes(type, identifierCopy, false);
-          }
-        });
+        final Set<PsiType> psiTypes = CodeInsightUtil.addSubtypes(type, identifierCopy, false);
         for (final PsiType psiType : psiTypes) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
