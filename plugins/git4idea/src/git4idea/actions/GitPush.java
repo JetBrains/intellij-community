@@ -27,6 +27,7 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.checkin.GitPushUtils;
 import git4idea.commands.GitHandlerUtil;
+import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,12 +39,15 @@ import java.util.List;
  */
 public class GitPush extends BasicAction {
   @Override
-  protected void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
-    throws VcsException {
+  protected void perform(@NotNull Project project,
+                         GitVcs vcs,
+                         final @NotNull List<VcsException> exceptions,
+                         @NotNull VirtualFile[] affectedFiles) throws VcsException {
     saveAll();
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
     for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(roots))) {
-      GitHandlerUtil.doSynchronously(GitPushUtils.preparePush(project, root), GitBundle.getString("pushing.all.changes"), "git push");
+      final GitLineHandler handler = GitPushUtils.preparePush(project, root);
+      GitHandlerUtil.doSynchronously(handler, GitBundle.getString("pushing.all.changes"), "git push");
     }
   }
 

@@ -18,15 +18,27 @@ package git4idea.commands;
 import com.intellij.openapi.util.Key;
 
 /**
- * Listener for line events
+ * An adapter for line handler
  */
-public interface GitLineHandlerListener extends GitHandlerListener {
+public class GitLineHandlerAdapter implements GitLineHandlerListener {
   /**
-   * This method is invoked when line (as separated by \n or \r) becomes avaialbe.
-   *
-   * @param line       a line of the text
-   * @param outputType a type of output (one of constants from {@link com.intellij.execution.process.ProcessOutputTypes})
+   * {@inheritDoc}
    */
-  @SuppressWarnings({"UnusedParameters"})
-  void onLineAvaiable(String line, Key outputType);
+  public void onLineAvaiable(final String line, final Key outputType) {
+    // do nothing
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public void processTerminted(final int exitCode) {
+    // do nothing
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public void startFailed(final Throwable exception) {
+    // do nothing
+  }
 }

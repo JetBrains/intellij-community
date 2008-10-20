@@ -171,13 +171,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
             }
             if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue()) {
               // push
-              try {
-                GitHandlerUtil.doSynchronouslyWithException(GitPushUtils.preparePush(myProject, root));
-              }
-              catch (VcsException ex) {
-                if (!isNoOrigin(ex)) {
-                  throw ex;
-                }
+              Collection<VcsException> problems = GitHandlerUtil.doSynchronouslyWithExceptions(GitPushUtils.preparePush(myProject, root));
+              for (VcsException ex : problems) {
+                exceptions.add(ex);
               }
             }
           }
@@ -195,7 +191,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     catch (IOException ex) {
       exceptions.add(new VcsException("Creation of commit message file failed", ex));
     }
-
     return exceptions;
   }
 

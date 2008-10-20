@@ -287,4 +287,22 @@ public class GitUtil {
     }
     throw new IllegalArgumentException("The file " + filePath + " is not under git.");
   }
+
+  /**
+   * Check if the virtual file under git
+   *
+   * @param project a context project
+   * @param vFile   a virtual file
+   * @return true if the file is under git
+   */
+  public static boolean isUnderGit(final Project project, final VirtualFile vFile) {
+    VirtualFile root = vFile;
+    while (root != null) {
+      if (root.findFileByRelativePath(".git") != null) {
+        return true;
+      }
+      root = root.getParent();
+    }
+    return false;
+  }
 }

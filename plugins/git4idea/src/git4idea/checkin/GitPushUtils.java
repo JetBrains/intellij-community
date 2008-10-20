@@ -15,9 +15,13 @@
  */
 package git4idea.checkin;
 
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLineHandlerAdapter;
 
 /**
  * Utilities that support pushing to remote repository
@@ -37,8 +41,16 @@ public class GitPushUtils {
    * @return a prepared push handler
    */
   public static GitLineHandler preparePush(Project project, VirtualFile vcsRoot) {
-    GitLineHandler rc = new GitLineHandler(project, vcsRoot, "push");
-    rc.addParameters("-v", "--mirror");
+    final GitLineHandler rc = new GitLineHandler(project, vcsRoot, "push");
+    rc.addParameters("-v", "--all");
+    rc.addLineListener(new GitLineHandlerAdapter() {
+      @Override
+      public void onLineAvaiable(final String line, final Key outputType) {
+        if (outputType == ProcessOutputTypes.STDERR && line.startsWith(" ! [")) {
+          rc.addError(new VcsException("Rejected push: " + line));
+        }
+      }
+    });
     return rc;
   }
 }

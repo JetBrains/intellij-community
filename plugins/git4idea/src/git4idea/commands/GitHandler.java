@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import git4idea.GitUtil;
@@ -35,15 +36,16 @@ import org.jetbrains.git4idea.ssh.GitSSHGUIHandler;
 import org.jetbrains.git4idea.ssh.GitSSHService;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A handler for git commands
  */
 public abstract class GitHandler {
+  /**
+   * Error list
+   */
+  private final List<VcsException> errors = Collections.synchronizedList(new LinkedList<VcsException>());
   /**
    * the logger
    */
@@ -125,6 +127,22 @@ public abstract class GitHandler {
    */
   public GitHandler(final Project project, final VirtualFile vcsRoot, final String command) {
     this(project, GitUtil.getIOFile(vcsRoot), command);
+  }
+
+  /**
+   * add error to the error list
+   *
+   * @param ex VcsExetpion
+   */
+  public void addError(VcsException ex) {
+    errors.add(ex);
+  }
+
+  /**
+   * @return unmodifiable list of errors.
+   */
+  public List<VcsException> errors() {
+    return Collections.unmodifiableList(errors);
   }
 
   /**

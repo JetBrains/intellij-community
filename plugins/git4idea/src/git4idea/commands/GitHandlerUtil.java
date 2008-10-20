@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Handler utilities that allow running handlers with progress indicators
@@ -150,30 +150,23 @@ public class GitHandlerUtil {
    * @param handler a handler to use
    * @throws VcsException if there is problem with running git operation
    */
-  public static void doSynchronouslyWithException(final GitLineHandler handler) throws VcsException {
+  public static Collection<VcsException> doSynchronouslyWithExceptions(final GitLineHandler handler) {
     final ProgressManager manager = ProgressManager.getInstance();
-    final VcsException[] ex = new VcsException[1];
     handler.addLineListener(new GitLineHandlerListenerProgress(manager.getProgressIndicator(), handler, "") {
       @Override
       public void processTerminted(final int exitCode) {
         if (exitCode != 0) {
-          String text = getErrorText();
-          if (text == null || text.length() == 0) {
-            text = GitBundle.message("git.error.exit", exitCode);
-          }
-          ex[0] = new VcsException(text);
+          ensureError(exitCode);
         }
       }
 
       @Override
       public void startFailed(final Throwable exception) {
-        ex[0] = new VcsException("Git start failed: " + exception.toString(), exception);
+        handler.addError(new VcsException("Git start failed: " + exception.toString(), exception));
       }
     });
     runInCurrentThread(handler, manager.getProgressIndicator(), false);
-    if (ex[0] != null) {
-      throw ex[0];
-    }
+    return handler.errors();
   }
 
   /**
@@ -205,16 +198,39 @@ public class GitHandlerUtil {
      */
     public void processTerminted(final int exitCode) {
       if (exitCode != 0) {
+        ensureError(exitCode);
         EventQueue.invokeLater(new Runnable() {
           public void run() {
-            String text = getErrorText();
-            if (text == null || text.length() == 0) {
-              text = GitBundle.message("git.error.exit", exitCode);
-            }
-            GitUtil.showOperationError(myHandler.project(), myOperationName, text);
+            GitUtil.showOperationError(myHandler.project(), myOperationName, getAllErrors());
           }
         });
       }
+    }
+
+    /**
+     * Ensure that at least one error is available in case if the process exited with non-zero exit code
+     *
+     * @param exitCode
+     */
+    protected void ensureError(final int exitCode) {
+      String text = getErrorText();
+      if ((text == null || text.length() == 0) && myHandler.errors().size() == 0) {
+        myHandler.addError(new VcsException(GitBundle.message("git.error.exit", exitCode)));
+      }
+    }
+
+    /**
+     * @return a text for all errors in the handler
+     */
+    protected String getAllErrors() {
+      StringBuilder text = new StringBuilder();
+      for (VcsException e : myHandler.errors()) {
+        if (text.length() > 0) {
+          text.append('\n');
+        }
+        text.append(e.getMessage());
+      }
+      return text.toString();
     }
 
     /**
@@ -275,10 +291,6 @@ public class GitHandlerUtil {
    */
   private static class GitLineHandlerListenerProgress extends GitLineHandlerListenerBase {
     /**
-     * error lines
-     */
-    final ArrayList<String> errorLines = new ArrayList<String>();
-    /**
      * a progress manager to use
      */
     private final ProgressIndicator myProgressIndicator;
@@ -299,14 +311,8 @@ public class GitHandlerUtil {
      * {@inheritDoc}
      */
     protected String getErrorText() {
-      StringBuilder builder = new StringBuilder();
-      for (String l : errorLines) {
-        if (builder.length() > 0) {
-          builder.append('\n');
-        }
-        builder.append(l);
-      }
-      return builder.toString().trim();
+      // all lines are already calcualated as errors
+      return "";
     }
 
     /**
@@ -314,7 +320,7 @@ public class GitHandlerUtil {
      */
     public void onLineAvaiable(final String line, final Key outputType) {
       if (isErrorLine(line.trim())) {
-        errorLines.add(line);
+        myHandler.addError(new VcsException(line));
       }
       if (myProgressIndicator != null) {
         myProgressIndicator.setText2(line);

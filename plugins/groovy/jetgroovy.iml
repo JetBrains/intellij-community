@@ -28,5 +28,6 @@
     <orderEntry type="module" module-name="codeInsight-tests" />
     <orderEntry type="library" name="Ant" level="project" />
   </component>
+  <component name="ProjectRunConfigurationManager" />
 </module>
 
