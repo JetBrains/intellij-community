@@ -19,15 +19,17 @@ package com.jetbrains.python.psi;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Created by IntelliJ IDEA.
+ * Describes a generalized expression, possibly typed.
  * User: yole
  * Date: 29.05.2005
- * Time: 10:41:59
- * To change this template use File | Settings | File Templates.
  */
 public interface PyExpression extends PyElement {
   PyExpression[] EMPTY_ARRAY = new PyExpression[0];
+  List<PyExpression> EMPTY_LIST = new ArrayList<PyExpression>(0);
 
   @Nullable
   PyType getType();

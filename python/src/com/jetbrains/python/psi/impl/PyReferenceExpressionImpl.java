@@ -36,9 +36,7 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -141,11 +139,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           // enrich the type info with any fields assigned nearby
           List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers((PyQualifiedExpression)qualifier);
           if (qualifier_path != null) {
+            /*
             PyResolveUtil.AssignmentCollectProcessor<PyQualifiedExpression> proc =
               new PyResolveUtil.AssignmentCollectProcessor<PyQualifiedExpression>(qualifier_path)
             ;
             PyResolveUtil.treeCrawlUp(proc, qualifier);
-            for (PyExpression ex : proc.getResult()) {
+            */
+            for (PyExpression ex : /*proc.getResult()*/ collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
               if (referencedName.equals(ex.getName())) return ex;
             }
           }
@@ -180,6 +180,18 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       ret = PyResolveUtil.resolveOffContext(this);
     }
     return ret;
+  }
+
+  private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
+    List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers(qualifier);
+    if (qualifier_path != null) {
+      PyResolveUtil.AssignmentCollectProcessor<PyQualifiedExpression> proc =
+        new PyResolveUtil.AssignmentCollectProcessor<PyQualifiedExpression>(qualifier_path)
+      ;
+      PyResolveUtil.treeCrawlUp(proc, qualifier);
+      return proc.getResult();
+    }
+    else return EMPTY_LIST;
   }
 
   /**
@@ -255,7 +267,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (qualifier != null) {
       PyType qualifierType = qualifier.getType();
       if (qualifierType != null) {
-        return qualifierType.getCompletionVariants(this);
+        ArrayList<Object> variants = new ArrayList<Object>();
+        if (qualifier instanceof PyQualifiedExpression) {
+          Collection<PyExpression> attrs = collectAssignedAttributes((PyQualifiedExpression)qualifier);
+          variants.addAll(attrs);
+          Collections.addAll(variants, qualifierType.getCompletionVariants(this));
+          return variants.toArray();
+        }
+        else return qualifierType.getCompletionVariants(this);
       }
       return new Object[0];
     }
