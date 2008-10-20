@@ -97,6 +97,30 @@ public class GitUtil {
     return result;
   }
 
+  /**
+   * Sort files by Git root
+   *
+   * @param virtualFiles files to sort
+   * @return sorted files
+   */
+  @NotNull
+  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(@NotNull Collection<VirtualFile> virtualFiles) {
+    Map<VirtualFile, List<VirtualFile>> result = new HashMap<VirtualFile, List<VirtualFile>>();
+    for (VirtualFile file : virtualFiles) {
+      final VirtualFile vcsRoot = getGitRoot(file);
+      assert vcsRoot != null;
+      List<VirtualFile> files = result.get(vcsRoot);
+      if (files == null) {
+        files = new ArrayList<VirtualFile>();
+        result.put(vcsRoot, files);
+      }
+      files.add(file);
+    }
+
+    return result;
+  }
+
+
   @NotNull
   public static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(Project project, VirtualFile[] affectedFiles) {
     return sortFilesByVcsRoot(project, Arrays.asList(affectedFiles));
@@ -289,13 +313,30 @@ public class GitUtil {
   }
 
   /**
+   * Return a git root for the file path (the parent directory with ".git" subdirectory)
+   *
+   * @return git root for the file
+   * @throws IllegalArgumentException if the file is not under git
+   */
+  public static VirtualFile getGitRoot(@NotNull final VirtualFile file) {
+    VirtualFile root = file;
+    while (root != null) {
+      if (root.findFileByRelativePath(".git") != null) {
+        return root;
+      }
+      root = root.getParent();
+    }
+    throw new IllegalArgumentException("The file " + file.getPath() + " is not under git.");
+  }
+
+
+  /**
    * Check if the virtual file under git
    *
-   * @param project a context project
-   * @param vFile   a virtual file
+   * @param vFile a virtual file
    * @return true if the file is under git
    */
-  public static boolean isUnderGit(final Project project, final VirtualFile vFile) {
+  public static boolean isUnderGit(final VirtualFile vFile) {
     VirtualFile root = vFile;
     while (root != null) {
       if (root.findFileByRelativePath(".git") != null) {

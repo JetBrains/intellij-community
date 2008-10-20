@@ -15,6 +15,7 @@
  */
 package git4idea.rollback;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -22,8 +23,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
-import git4idea.commands.GitCommand;
-import git4idea.config.GitVcsSettings;
+import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,21 +40,15 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
   /**
    * The project
    */
-  private final Project project;
-  /**
-   * GIT settings
-   */
-  private final GitVcsSettings settings;
+  private final Project myProject;
 
   /**
    * A constructor
    *
-   * @param project  the context project
-   * @param settings the GIT settings in the project
+   * @param project the context project
    */
-  public GitRollbackEnvironment(@NotNull Project project, @NotNull GitVcsSettings settings) {
-    this.project = project;
-    this.settings = settings;
+  public GitRollbackEnvironment(@NotNull Project project) {
+    myProject = project;
   }
 
   /**
@@ -100,28 +94,27 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
         case NEW:
           // note that this the only change that could happen
           // for HEAD-less working directories.
-          registerFile(project, toUnindex, c.getAfterRevision().getFile());
+          registerFile(myProject, toUnindex, c.getAfterRevision().getFile());
           break;
         case MOVED:
-          registerFile(project, toRevert, c.getBeforeRevision().getFile());
-          registerFile(project, toUnindex, c.getAfterRevision().getFile());
+          registerFile(myProject, toRevert, c.getBeforeRevision().getFile());
+          registerFile(myProject, toUnindex, c.getAfterRevision().getFile());
           toDelete.add(c.getAfterRevision().getFile());
           break;
         case MODIFICATION:
           // note that changes are also removed from index, if they got into index somehow
-          registerFile(project, toUnindex, c.getBeforeRevision().getFile());
-          registerFile(project, toRevert, c.getBeforeRevision().getFile());
+          registerFile(myProject, toUnindex, c.getBeforeRevision().getFile());
+          registerFile(myProject, toRevert, c.getBeforeRevision().getFile());
           break;
         case DELETED:
-          registerFile(project, toRevert, c.getBeforeRevision().getFile());
+          registerFile(myProject, toRevert, c.getBeforeRevision().getFile());
           break;
       }
     }
     // unindex files
     for (Map.Entry<VirtualFile, List<FilePath>> entry : toUnindex.entrySet()) {
-      GitCommand cmd = new GitCommand(project, settings, entry.getKey());
       try {
-        cmd.unindex(entry.getValue());
+        unindex(entry.getKey(), entry.getValue());
       }
       catch (VcsException e) {
         result.add(e);
@@ -143,9 +136,8 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
     }
     // revert files from HEAD
     for (Map.Entry<VirtualFile, List<FilePath>> entry : toRevert.entrySet()) {
-      GitCommand cmd = new GitCommand(project, settings, entry.getKey());
       try {
-        cmd.revert(entry.getValue());
+        revert(entry.getKey(), entry.getValue());
       }
       catch (VcsException e) {
         result.add(e);
@@ -155,18 +147,59 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
   }
 
   /**
+   * Reverts the list of files we are passed.
+   *
+   * @param files The array of files to revert.
+   * @throws VcsException Id it breaks.
+   */
+  public void revert(final VirtualFile root, final List<FilePath> files) throws VcsException {
+    GitSimpleHandler handler = new GitSimpleHandler(myProject, root, "checkout");
+    handler.setNoSSH(true);
+    handler.addParameters("HEAD");
+    handler.endOptions();
+    handler.addRelativePaths(files);
+    handler.run();
+  }
+
+  /**
+   * Remove file paths from index (git remove --cached).
+   *
+   * @param root  a git root
+   * @param files files to remove from index. @throws VcsException if there is a problem with running command
+   */
+  private void unindex(final VirtualFile root, final List<FilePath> files) throws VcsException {
+    GitSimpleHandler handler = new GitSimpleHandler(myProject, root, "rm");
+    handler.setNoSSH(true);
+    handler.addParameters("--cached");
+    handler.endOptions();
+    handler.addRelativePaths(files);
+    handler.run();
+  }
+
+
+  /**
    * Register file in the map under uppropriate root
    *
    * @param file  a file to register
    * @param files a map to use
    */
   private static void registerFile(Project project, Map<VirtualFile, List<FilePath>> files, FilePath file) {
-    final VirtualFile root = GitUtil.getVcsRoot(project, file);
+    final VirtualFile root = GitUtil.getGitRoot(project, file);
     List<FilePath> paths = files.get(root);
     if (paths == null) {
       paths = new ArrayList<FilePath>();
       files.put(root, paths);
     }
     paths.add(file);
+  }
+
+  /**
+   * Get instance of the service
+   *
+   * @param project a context project
+   * @return a project-specific instance of the service
+   */
+  public static GitRollbackEnvironment getInstance(final Project project) {
+    return ServiceManager.getService(project, GitRollbackEnvironment.class);
   }
 }

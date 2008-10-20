@@ -22,17 +22,19 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitCommand;
-import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
+import git4idea.rollback.GitRollbackEnvironment;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Git "revert" action
@@ -42,16 +44,21 @@ public class GitRevert extends BasicAction {
   public void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
     throws VcsException {
     saveAll();
-
-    final Map<VirtualFile, List<VirtualFile>> roots = GitUtil.sortFilesByVcsRoot(project, affectedFiles);
-    for (VirtualFile root : roots.keySet()) {
-      GitCommand command = new GitCommand(project, GitVcsSettings.getInstance(project), root);
-      command.revertVirtualFiles(roots.get(root));
+    final ChangeListManager changeManager = ChangeListManager.getInstance(project);
+    final List<Change> changes = new ArrayList<Change>();
+    final HashSet<VirtualFile> roots = new HashSet<VirtualFile>();
+    for (VirtualFile f : affectedFiles) {
+      Change ch = changeManager.getChange(f);
+      if (ch != null) {
+        roots.add(VcsUtil.getVcsRootFor(project, f));
+        changes.add(ch);
+      }
     }
-
+    GitRollbackEnvironment re = GitRollbackEnvironment.getInstance(project);
+    re.rollbackChanges(changes);
     VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
-    for (VirtualFile file : affectedFiles) {
-      mgr.fileDirty(file);
+    for (VirtualFile file : roots) {
+      mgr.dirDirtyRecursively(file);
       file.refresh(true, true);
     }
   }
