@@ -4,14 +4,15 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
-import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -21,17 +22,28 @@ public class JavaCompletionStatistician extends CompletionStatistician{
   @NonNls public static final String CLASS_NAME_COMPLETION_PREFIX = "classNameCompletion#";
 
   public StatisticsInfo serialize(final LookupElement element, final CompletionLocation location) {
-    if (!(element instanceof MutableLookupElement)) return null;
-
-    final Object o = ((MutableLookupElement)element).getObject();
+    final Object o = element.getObject();
 
     if (o instanceof PsiLocalVariable || o instanceof PsiParameter || o instanceof PsiThisExpression) {
       return StatisticsInfo.EMPTY;
     }
 
+    final ExpectedTypeInfo[] infos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
+    if (infos != null && infos.length > 0) {
+      final boolean primitivesOnly = ContainerUtil.and(infos, new Condition<ExpectedTypeInfo>() {
+        public boolean value(final ExpectedTypeInfo info) {
+          return info.getType() instanceof PsiPrimitiveType;
+        }
+      });
+      if (primitivesOnly) {
+        return StatisticsInfo.EMPTY; //collecting statistics on primitive types usually has only negative effects
+      }
+    }
+
+    if (!(element instanceof LookupItem)) return null;
+
     PsiType qualifierType = JavaCompletionUtil.getQualifierType((LookupItem) element);
     if (qualifierType == null) {
-      final ExpectedTypeInfo[] infos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
       if (infos != null && infos.length > 0) {
         qualifierType = infos[0].getDefaultType();
       }
