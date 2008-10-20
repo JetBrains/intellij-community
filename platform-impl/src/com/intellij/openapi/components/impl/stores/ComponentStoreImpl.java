@@ -267,7 +267,9 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   private static String getComponentName(@NotNull final PersistentStateComponent<?> persistentStateComponent) {
     final State stateSpec = getStateSpec(persistentStateComponent);
-    assert stateSpec != null;
+    if (stateSpec == null) {
+      LOG.assertTrue(false, "Null state spec for " + persistentStateComponent);
+    }
     return stateSpec.name();
   }
 
