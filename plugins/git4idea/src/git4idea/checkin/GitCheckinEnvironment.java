@@ -146,9 +146,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       File messageFile = createMessageFile(message);
       try {
         Map<VirtualFile, List<Change>> sortedChanges = sortChangesByVcsRoot(changes);
-        for (VirtualFile root : sortedChanges.keySet()) {
+        for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
           Set<FilePath> files = new HashSet<FilePath>();
-          for (Change change : changes) {
+          final VirtualFile root = entry.getKey();
+          for (Change change : entry.getValue()) {
             switch (change.getType()) {
               case NEW:
               case MODIFICATION:
