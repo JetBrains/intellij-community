@@ -108,7 +108,7 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     String sep = "";
     for (Float proportion : proportions) {
       result.append(sep);

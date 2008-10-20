@@ -56,7 +56,7 @@ public class ResoureBundleEditorProvider implements FileEditorProvider, Applicat
   }
 
   @NotNull
-  public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file){
+  public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
     return new ResourceBundleEditor.ResourceBundleEditorState(null);
   }
 

@@ -63,7 +63,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
             final List children = myElement.getChildren(HistoryEntry.TAG);
             myElement = null;
             //noinspection unchecked
-            for (final Element e : ((Iterable<Element>)children)) {
+            for (final Element e : (Iterable<Element>)children) {
               try {
                 myEntriesList.add(new HistoryEntry(myProject, e));
               }
@@ -106,8 +106,8 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(myProject);
 
     final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = editorManager.getEditorsWithProviders(file);
-    final FileEditor         []      editors = editorsWithProviders.getFirst();
-    final FileEditorProvider [] oldProviders = editorsWithProviders.getSecond();
+    final FileEditor[] editors = editorsWithProviders.getFirst();
+    final FileEditorProvider[] oldProviders = editorsWithProviders.getSecond();
     if (editors.length <= 0) {
       LOG.assertTrue(false, "No editors for file " + file.getPresentableUrl());
     }
@@ -120,11 +120,11 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
     if(entry != null){
       myEntriesList.remove(entry);
       myEntriesList.add(entry);
-    }else{
+    }
+    else{
       final FileEditorState[] states=new FileEditorState[editors.length];
       final FileEditorProvider[] providers=new FileEditorProvider[editors.length];
       for (int i = states.length - 1; i >= 0; i--) {
-        //final FileEditorProvider provider = FileEditorManagerEx.getInstanceEx(myProject).getProvider(editors[i]);
         final FileEditorProvider provider = oldProviders [i];
         LOG.assertTrue(provider != null);
         providers[i] = provider;

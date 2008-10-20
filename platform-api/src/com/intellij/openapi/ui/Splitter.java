@@ -60,7 +60,7 @@ public class Splitter extends JPanel {
   private JComponent myFirstComponent;
   private final FocusWatcher myFocusWatcher;
   private boolean myShowDividerControls;
-  private static Rectangle myNullBounds = new Rectangle();
+  private static final Rectangle myNullBounds = new Rectangle();
 
 
   /**

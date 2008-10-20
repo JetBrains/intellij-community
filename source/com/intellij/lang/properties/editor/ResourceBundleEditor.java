@@ -10,6 +10,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.properties.PropertiesFilesManager;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
@@ -34,6 +35,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -67,26 +69,27 @@ import java.util.List;
 
 public class ResourceBundleEditor extends UserDataHolderBase implements FileEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.editor.ResourceBundleEditor");
-
   private JPanel myPanel;
   private JPanel myValuesPanel;
   private JPanel myStructureViewPanel;
+  private JPanel mySplitParent;
   private final StructureViewComponent myStructureViewComponent;
   private final Map<PropertiesFile, Editor> myEditors;
   private final ResourceBundle myResourceBundle;
   private final Map<PropertiesFile, JPanel> myTitledPanels;
   private final JComponent myNoPropertySelectedPanel = new NoPropertySelectedPanel().getComponent();
-  private Map<Editor, DocumentListener> myDocumentListeners = new THashMap<Editor, DocumentListener>();
+  private final Map<Editor, DocumentListener> myDocumentListeners = new THashMap<Editor, DocumentListener>();
   private final Project myProject;
   private boolean myDisposed;
-  private DataProviderPanel myDataProviderPanel;
+  private final DataProviderPanel myDataProviderPanel;
   // user pressed backslash in the corresponding editor.
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
-  private Set<PropertiesFile> myBackSlashPressed = new THashSet<PropertiesFile>();
+  private final Set<PropertiesFile> myBackSlashPressed = new THashSet<PropertiesFile>();
   @NonNls private static final String VALUES = "values";
   @NonNls private static final String NO_PROPERTY_SELECTED = "noPropertySelected";
   private PropertiesFilesManager.PropertiesFileListener myPropertiesFileListener;
   private PsiTreeChangeAdapter myPsiTreeChangeAdapter;
+  @NonNls protected static final String PROPORTION_PROPERTY = "RESOURCE_BUNDLE_SPLITTER_PROPORTION";
 
   public ResourceBundleEditor(Project project, ResourceBundle resourceBundle) {
     myProject = project;
@@ -141,7 +144,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
     List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
 
-    GridBagConstraints gc = new GridBagConstraints(0, 0, 0, 0, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+    GridBagConstraints gc = new GridBagConstraints(0, 0, 0, 0, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                                    new Insets(5, 5, 5, 5), 0, 0);
     releaseAllEditors();
     myTitledPanels.clear();
@@ -159,7 +162,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       gc.gridheight = 1;
       gc.gridwidth = GridBagConstraints.REMAINDER;
       gc.weightx = 1;
-      gc.weighty = 0;
+      gc.weighty = 1;
+      gc.anchor = GridBagConstraints.CENTER;
 
       Locale locale = propertiesFile.getLocale();
       ArrayList<String> names = new ArrayList<String>();
@@ -177,14 +181,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       if (!names.isEmpty()) {
         title += " ("+StringUtil.join(names, "/")+")";
       }
-      JPanel panel = new JPanel(new BorderLayout());
-      panel.setBorder(IdeBorderFactory.createTitledBorder(title));
-      panel.setMinimumSize(new Dimension(-1, 100));
       JPanel comp = new JPanel(new BorderLayout());
       comp.add(editor.getComponent(), BorderLayout.CENTER);
-      panel.add(comp, BorderLayout.CENTER);
-      myTitledPanels.put(propertiesFile, panel);
-      valuesPanelComponent.add(panel, gc);
+      comp.setBorder(IdeBorderFactory.createTitledBorder(title));
+      myTitledPanels.put(propertiesFile, comp);
+      valuesPanelComponent.add(comp, gc);
     }
 
     gc.gridx = 0;
@@ -196,7 +197,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
     valuesPanelComponent.add(new JPanel(), gc);
     myValuesPanel.repaint();
-
   }
 
   private void installPropertiesChangeListeners() {
@@ -508,12 +508,33 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     return new ResourceBundleEditorState(getSelectedPropertyName());
   }
 
+  private Splitter getSplitter() {
+    return (Splitter)mySplitParent.getComponents()[0];
+  }
+
   public void setState(@NotNull FileEditorState state) {
-    String propertyName = ((ResourceBundleEditorState)state).myPropertyName;
+    ResourceBundleEditorState myState = (ResourceBundleEditorState)state;
+    String propertyName = myState.myPropertyName;
     if (propertyName != null) {
       myStructureViewComponent.select(propertyName, true);
       selectionChanged();
     }
+    float proportion = 0.5f;
+    try {
+      String value = PropertiesComponent.getInstance(myProject).getValue(PROPORTION_PROPERTY);
+      if (value != null) {
+        proportion = Float.parseFloat(value);
+      }
+    }
+    catch (NumberFormatException ignored) {
+    }
+
+    final float proportion1 = proportion;
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        getSplitter().setProportion(proportion1);
+      }
+    });
   }
 
   public boolean isModified() {
@@ -553,6 +574,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   public void dispose() {
+    float proportion = getSplitter().getProportion();
+    PropertiesComponent.getInstance(myProject).setValue(PROPORTION_PROPERTY, Double.toString(proportion));
+
     myDisposed = true;
     uninstallListeners();
     Disposer.dispose(myStructureViewComponent);
@@ -583,7 +607,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     Document document = editorFactory.createDocument("");
     EditorEx editor = (EditorEx)editorFactory.createEditor(document);
     reinitSettings(editor);
-
     return editor;
   }
 
@@ -601,10 +624,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     settings.setRightMargin(60);
 
     editor.setHighlighter(new LexerEditorHighlighter(new PropertiesValueHighlighter(), scheme));
+    editor.setVerticalScrollbarVisible(true);
   }
 
   private class DataProviderPanel extends JPanel implements DataProvider {
-    public DataProviderPanel(final JPanel panel) {
+    private DataProviderPanel(final JPanel panel) {
       super(new BorderLayout());
       add(panel, BorderLayout.CENTER);
     }
@@ -614,5 +638,4 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       return ResourceBundleEditor.this.getData(dataId);
     }
   }
-
 }
