@@ -318,6 +318,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     });
   }
 
+  public IntentionAction findSingleIntention(@NotNull final String hint) throws Throwable {
+    final List<IntentionAction> list = filterAvailableIntentions(hint);
+    if (list.size() != 1) {
+      Assert.fail(StringUtil.join(getAvailableIntentions(), new Function<IntentionAction, String>() {
+        public String fun(final IntentionAction intentionAction) {
+          return intentionAction.getText();
+        }
+      }, ", "));
+    }
+    return UsefulTestCase.assertOneElement(list);
+  }
+
   public IntentionAction getAvailableIntention(final String intentionName, final String... filePaths) throws Throwable {
     List<IntentionAction> intentions = getAvailableIntentions(filePaths);
     return CodeInsightTestUtil.findIntentionByText(intentions, intentionName);

@@ -19,7 +19,7 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ClassTemplate {
-  @NonNls String value();
+  @NonNls String value() default "";
 
   /**
    * @return affects the quick fix presentable text, 'Create class ...' or 'Create interface ...', etc.

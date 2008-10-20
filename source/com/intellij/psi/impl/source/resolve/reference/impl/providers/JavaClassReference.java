@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
@@ -35,9 +34,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.ClassKind;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -432,9 +431,9 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     }
 
     boolean createJavaClass = !canReferencePackage();
-    final Pair<String,ClassKind> pair = JavaClassReferenceProvider.CLASS_TEMPLATE.getValue(getOptions());
-    final ClassKind kind = createJavaClass ? pair != null ? pair.second : ClassKind.CLASS : null;
-    final String templateName = pair == null ? null : pair.first;
+    ClassKind kind = createJavaClass ? JavaClassReferenceProvider.CLASS_KIND.getValue(getOptions()) : null;
+    if (createJavaClass && kind == null) kind = ClassKind.CLASS;
+    final String templateName = JavaClassReferenceProvider.CLASS_TEMPLATE.getValue(getOptions());
     final TextRange range = new TextRange(references[0].getRangeInElement().getStartOffset(),
                                           getRangeInElement().getEndOffset());
     final String qualifiedName = range.substring(getElement().getText());

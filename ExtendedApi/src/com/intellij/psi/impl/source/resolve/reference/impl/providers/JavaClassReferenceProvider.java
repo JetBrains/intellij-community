@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
@@ -32,7 +31,8 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public static final CustomizationKey<Boolean> RESOLVE_QUALIFIED_CLASS_NAME =
     new CustomizationKey<Boolean>(PsiBundle.message("qualified.resolve.class.reference.provider.option"));
   public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<String[]>("EXTEND_CLASS_NAMES");
-  public static final CustomizationKey<Pair<String, ClassKind>> CLASS_TEMPLATE = new CustomizationKey<Pair<String, ClassKind>>("CLASS_TEMPLATE");
+  public static final CustomizationKey<String> CLASS_TEMPLATE = new CustomizationKey<String>("CLASS_TEMPLATE");
+  public static final CustomizationKey<ClassKind> CLASS_KIND = new CustomizationKey<ClassKind>("CLASS_KIND");
   public static final CustomizationKey<Boolean> INSTANTIATABLE = new CustomizationKey<Boolean>("INSTANTIATABLE");
   public static final CustomizationKey<Boolean> CONCRETE = new CustomizationKey<Boolean>("CONCRETE");
   public static final CustomizationKey<Boolean> NOT_INTERFACE = new CustomizationKey<Boolean>("NOT_INTERFACE");

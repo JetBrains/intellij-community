@@ -5,7 +5,6 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -64,8 +63,11 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
     }
 
     ClassTemplate template = genericDomValue.getAnnotation(ClassTemplate.class);
-    if (template != null && StringUtil.isNotEmpty(template.value())) {
-      provider.setOption(JavaClassReferenceProvider.CLASS_TEMPLATE, Pair.create(template.value(), template.kind()));
+    if (template != null) {
+      if (StringUtil.isNotEmpty(template.value())) {
+        provider.setOption(JavaClassReferenceProvider.CLASS_TEMPLATE, template.value());
+      }
+      provider.setOption(JavaClassReferenceProvider.CLASS_KIND, template.kind());
     }
 
     provider.setSoft(true);

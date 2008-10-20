@@ -179,6 +179,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   List<IntentionAction> filterAvailableIntentions(@NotNull String hint) throws Throwable;
 
+  IntentionAction findSingleIntention(@NotNull String hint) throws Throwable;
+
   IntentionAction getAvailableIntention(final String intentionName, final String... filePaths) throws Throwable;
 
   /**
