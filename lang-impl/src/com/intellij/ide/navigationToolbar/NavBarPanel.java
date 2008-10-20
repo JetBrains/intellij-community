@@ -65,7 +65,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
-import com.intellij.ui.DottedBorder;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
@@ -570,7 +569,11 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
             doubleClick(selectedValue);
           }
           else {
-            navigateInsideBar(selectedValue);
+            SwingUtilities.invokeLater(new Runnable(){
+              public void run() {
+                navigateInsideBar(selectedValue);
+              }
+            });
           }
           return PopupStep.FINAL_CHOICE;
         }
@@ -582,10 +585,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       step.setDefaultOptionIndex(index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0);
       myNodePopup = new ListPopupImpl(step) {
         protected ListCellRenderer getListElementRenderer() { return new MySiblingsListCellRenderer();}
-        public boolean canClose() {
-          final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
-          return focusedComponent != NavBarPanel.this && !isAncestorOf(focusedComponent);
-        }
+
       };
       myNodePopup.registerAction("left", KeyEvent.VK_LEFT, 0, new AbstractAction() {
         public void actionPerformed(ActionEvent e) {
@@ -610,17 +610,15 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private void navigateInsideBar(Object object) {
     myModel.updateModel(object);
     immediateUpdateList(true);
-    select();
+    myModel.setSelectedIndex(myList.size() - 1);
 
     if (myHint != null) {
-      immediateUpdateList(false); //to set up preffered size
       final Dimension dimension = getPreferredSize();
       final Rectangle bounds = myHint.getBounds();
       myHint.setBounds(bounds.x, bounds.y, dimension.width, dimension.height);
-      select(); //restore selection
     }
 
-    validate(); //calc bounds
+    revalidate(); //calc bounds
     restorePopup();
   }
 
