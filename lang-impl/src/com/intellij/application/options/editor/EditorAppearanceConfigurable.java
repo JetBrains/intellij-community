@@ -148,4 +148,12 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   protected List<UnnamedConfigurable> createConfigurables() {
     return Arrays.asList(Extensions.getExtensions(EP_NAME));
   }
+
+  public String getId() {
+    return "editor.preferences.appearance";
+  }
+
+  public Runnable enableSearch(final String option) {
+    return null;
+  }
 }

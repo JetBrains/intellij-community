@@ -434,7 +434,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
           public void run() {
             final @NonNls String searchPattern = mySearchField.getText();
             if (searchPattern != null && searchPattern.length() > 0) {
-              myOptionContainers = optionsRegistrar.getConfigurables(myGroups, e.getType(), myOptionContainers, searchPattern, myProject);
+              myOptionContainers = optionsRegistrar.getConfigurables(myGroups, e.getType(), myOptionContainers, searchPattern, myProject).getContentHits();
             }
             else {
               myOptionContainers = null;

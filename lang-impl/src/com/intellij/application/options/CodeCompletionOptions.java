@@ -46,11 +46,13 @@ public class CodeCompletionOptions extends BaseConfigurable implements Searchabl
   }
 
   public String getId() {
-    return getHelpTopic();
+    return "editor.preferences.completion";
   }
 
   @Nullable
   public Runnable enableSearch(String option) {
     return null;
   }
+
+
 }

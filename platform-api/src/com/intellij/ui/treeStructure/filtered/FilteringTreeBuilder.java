@@ -5,6 +5,7 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.PatchedDefaultMutableTreeNode;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -32,8 +33,8 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
     if (filter instanceof ElementFilter.Active) {
       ((ElementFilter.Active)filter).addListener(new ElementFilter.Listener() {
-        public void update() {
-          refilter();
+        public void update(final Object preferredSelection) {
+          refilter(preferredSelection);
         }
       }, this);
     }
@@ -68,20 +69,29 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   }
 
   public void refilter() {
+    refilter(null);
+  }
+
+  public void refilter(final Object preferredSelection) {
     if (myRefilterQueue == null) {
-      refilterNow();
+      refilterNow(preferredSelection);
     } else {
       myRefilterQueue.queue(new Update(this) {
         public void run() {
-          refilterNow();
+          refilterNow(preferredSelection);
         }
       });
     }
   }
 
-  private void refilterNow() {
+  private void refilterNow(Object preferredSelection) {
     Object selectedObject = getSelected();
-    final Object toSelect = isSelectable(selectedObject) ? selectedObject : null;
+
+    final Ref<Object> toSelect = new Ref<Object>(isSelectable(selectedObject) ? selectedObject : null);
+    if (preferredSelection != null) {
+      toSelect.set(preferredSelection);
+    }
+
 
     ((FilteringTreeStructure) getTreeStructure()).refilter();
     updateFromRoot();
@@ -92,7 +102,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
         public boolean accept(SimpleNode simpleNode) {
           if (simpleNode instanceof FilteringTreeStructure.Node) {
             FilteringTreeStructure.Node node = (FilteringTreeStructure.Node)simpleNode;
-            return node.getDelegate().equals(toSelect);
+            return node.getDelegate().equals(toSelect.get());
           }
           else {
             return false;

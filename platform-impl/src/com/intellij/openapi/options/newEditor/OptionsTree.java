@@ -231,6 +231,10 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     }
   }
 
+  public SimpleNode findNodeFor(final Configurable toSelect) {
+    return myConfigurable2Node.get(toSelect);
+  }
+
   class Renderer extends GroupedElementsRenderer.Tree implements TreeCellRenderer {
 
     @Override

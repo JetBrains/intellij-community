@@ -179,4 +179,12 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
       return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
     }
   }
+
+  public String getId() {
+    return "editor.preferences.tabs";
+  }
+
+  public Runnable enableSearch(final String option) {
+    return null;
+  }
 }

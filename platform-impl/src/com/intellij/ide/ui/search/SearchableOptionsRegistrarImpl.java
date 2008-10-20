@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
@@ -149,20 +150,39 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   }
 
   @NotNull
-  public Set<Configurable> getConfigurables(ConfigurableGroup[] groups,
+  public ConfigurableHit getConfigurables(ConfigurableGroup[] groups,
                                             final DocumentEvent.EventType type,
                                             Set<Configurable> configurables,
                                             String option,
                                             Project project) {
 
+    final ConfigurableHit hits = new ConfigurableHit();
+    final Set<Configurable> contentHits = hits.getContentHits();
+
     Set<String> options = getProcessedWordsWithoutStemming(option);
     if (configurables == null) {
-      configurables = new HashSet<Configurable>();
       for (ConfigurableGroup group : groups) {
-        configurables.addAll(Arrays.asList(group.getConfigurables()));
+        contentHits.addAll(expandGroup(group));
+      }
+    } else {
+      contentHits.addAll(configurables);
+    }
+
+    if (option != null) {
+      String optionToCheck = option.trim().toLowerCase();
+      for (Configurable each : contentHits) {
+        if (each.getDisplayName() == null) continue;
+        final List<String> allWords = StringUtil.getWordsIn(each.getDisplayName().toLowerCase());
+        for (int i = 0; i < allWords.size(); i++) {
+          String eachWord = allWords.get(i);
+          if (eachWord.startsWith(optionToCheck)) {
+            hits.getNameHits().add(each);
+          }
+        }
       }
     }
-    final Set<Configurable> currentConfigurables = new HashSet<Configurable>(configurables);
+
+    final Set<Configurable> currentConfigurables = new HashSet<Configurable>(contentHits);
     if (options.isEmpty()) { //operate with substring
       options.add(option);
     }
@@ -170,8 +190,8 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     for (String opt : options) {
       final Set<OptionDescription> optionIds = getAcceptableDescriptions(opt);
       if (optionIds == null) {
-        configurables.clear();
-        return configurables;
+        contentHits.clear();
+        return hits;
       }
       final Set<String> ids = new HashSet<String>();
       for (OptionDescription id : optionIds) {
@@ -183,7 +203,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       helpIds.retainAll(ids);
     }
     if (helpIds != null) {
-      for (Iterator<Configurable> it = configurables.iterator(); it.hasNext();) {
+      for (Iterator<Configurable> it = contentHits.iterator(); it.hasNext();) {
         Configurable configurable = it.next();
         if (CodeStyleFacade.getInstance(project).isUnsuitableCodestyleConfigurable(configurable)) {
           it.remove();
@@ -194,10 +214,27 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         }
       }
     }
-    if (type == DocumentEvent.EventType.REMOVE && currentConfigurables.equals(configurables)) {
+    if (type == DocumentEvent.EventType.REMOVE && currentConfigurables.equals(contentHits)) {
       return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
     }
-    return configurables;
+    return hits;
+  }
+
+  private List<Configurable> expandGroup(final ConfigurableGroup group) {
+    final Configurable[] configurables = group.getConfigurables();
+    ArrayList<Configurable> result = new ArrayList<Configurable>();
+    result.addAll(Arrays.asList(configurables));
+    for (Configurable each : configurables) {
+      addChildren(each, result);
+    }
+    return result;
+  }
+
+  private void addChildren(Configurable configurable, ArrayList<Configurable> list) {
+    if (configurable instanceof Configurable.Composite) {
+      final Configurable[] kids = ((Configurable.Composite)configurable).getConfigurables();
+      list.addAll(Arrays.asList(kids));
+    }
   }
 
   @Nullable

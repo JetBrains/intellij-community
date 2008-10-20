@@ -59,4 +59,12 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
   protected List<CodeFoldingOptionsProvider> createConfigurables() {
     return Arrays.asList(Extensions.getExtensions(CodeFoldingOptionsProvider.EP_NAME));
   }
+
+  public String getId() {
+    return "editor.preferences.folding";
+  }
+
+  public Runnable enableSearch(final String option) {
+    return null;
+  }
 }

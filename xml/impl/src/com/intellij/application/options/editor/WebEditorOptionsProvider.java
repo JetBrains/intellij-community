@@ -53,4 +53,12 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
 
   public void disposeUIResources() {
   }
+
+  public String getId() {
+    return "editor.preferences.webOptions";
+  }
+
+  public Runnable enableSearch(final String option) {
+    return null;
+  }
 }

@@ -195,4 +195,12 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
       return -1;
     }
   }
+
+  public String getId() {
+    return "editor.preferences.smartKeys";
+  }
+
+  public Runnable enableSearch(final String option) {
+    return null;
+  }
 }

@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.options;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 /**
@@ -28,6 +30,7 @@ public interface UnnamedConfigurable {
    *
    * @return the component instance.
    */
+  @Nullable
   JComponent createComponent();
 
   /**

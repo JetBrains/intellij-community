@@ -1,16 +1,18 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.help.HelpManager;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.Map;
 
 public class OptionsEditorDialog extends DialogWrapper {
@@ -82,6 +84,18 @@ public class OptionsEditorDialog extends DialogWrapper {
     }
 
     super.doOKAction();
+  }
+
+  @Override
+  public void doCancelAction(final AWTEvent source) {
+    if (source instanceof KeyEvent) {
+      if (myEditor.getContext().isHoldingFilter()) {
+        myEditor.clearFilter();
+        return;
+      }
+    }
+
+    super.doCancelAction(source);
   }
 
   @Override

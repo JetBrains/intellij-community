@@ -273,7 +273,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
             @NonNls final String searchPattern = mySearchField.getText();
             if (searchPattern != null && searchPattern.length() > 0) {
               myOptionContainers = optionsRegistrar.getConfigurables(myGroups, e.getType(), myOptionContainers, searchPattern,
-                                                                     myProject);
+                                                                     myProject).getContentHits();
             }
             else {
               myOptionContainers = null;

@@ -6,6 +6,7 @@ package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -15,20 +16,20 @@ public interface ElementFilter<T> {
   boolean shouldBeShowing(T value);
 
   interface Active<T> extends ElementFilter<T> {
-    void fireUpdate();
+    void fireUpdate(@Nullable final T preferredSelection);
 
-    void addListener(Listener listener, Disposable parent);
+    void addListener(Listener<T> listener, Disposable parent);
 
     abstract class Impl<T> implements Active<T> {
-      Set<Listener> myListeners = new CopyOnWriteArraySet<Listener>();
+      Set<Listener<T>> myListeners = new CopyOnWriteArraySet<Listener<T>>();
 
-      public void fireUpdate() {
-        for (final Listener myListener : myListeners) {
-          myListener.update();
+      public void fireUpdate(final T preferredSelection) {
+        for (final Listener<T> myListener : myListeners) {
+          myListener.update(preferredSelection);
         }
       }
 
-      public void addListener(final Listener listener, final Disposable parent) {
+      public void addListener(final Listener<T> listener, final Disposable parent) {
         myListeners.add(listener);
         Disposer.register(parent, new Disposable() {
           public void dispose() {
@@ -41,8 +42,8 @@ public interface ElementFilter<T> {
 
   }
 
-  interface Listener {
-    void update();
+  interface Listener<T> {
+    void update(@Nullable final T preferredSelection);
   }
 
 }

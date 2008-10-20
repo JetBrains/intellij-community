@@ -32,6 +32,8 @@ public interface SearchableConfigurable extends Configurable {
 
   interface Parent extends SearchableConfigurable, Composite {
     boolean isToShowWhenChildIsShown();
+    boolean hasOwnContent();
+
 
     abstract class Abstract implements Parent {
       private Configurable[] myKids;
@@ -42,6 +44,10 @@ public interface SearchableConfigurable extends Configurable {
 
       public JComponent createComponent() {
         return null;
+      }
+
+      public boolean hasOwnContent() {
+        return false;
       }
 
       public boolean isModified() {

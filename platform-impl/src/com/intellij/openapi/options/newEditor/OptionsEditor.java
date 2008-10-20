@@ -2,6 +2,7 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.ide.ui.search.ConfigurableHit;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -75,13 +76,14 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private SpotlightPainter mySpotlightPainter = new SpotlightPainter();
   private MergingUpdateQueue mySpotlightUpdate;
   private LoadingDecorator myLoadingDecorator;
+  private Filter myFilter;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProject = project;
     myGroups = groups;
 
-    final Filter filter = new Filter();
-    myContext = new OptionsEditorContext(filter);
+    myFilter = new Filter();
+    myContext = new OptionsEditorContext(myFilter);
 
     mySearch = new MySearchField() {
       @Override
@@ -99,15 +101,15 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     Disposer.register(this, myTree);
     mySearch.addDocumentListener(new DocumentListener() {
       public void insertUpdate(final DocumentEvent e) {
-        filter.update(e);
+        myFilter.update(e);
       }
 
       public void removeUpdate(final DocumentEvent e) {
-        filter.update(e);
+        myFilter.update(e);
       }
 
       public void changedUpdate(final DocumentEvent e) {
-        filter.update(e);
+        myFilter.update(e);
       }
     });
 
@@ -458,55 +460,57 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private class Filter extends ElementFilter.Active.Impl<SimpleNode> {
 
     SearchableOptionsRegistrar myIndex = SearchableOptionsRegistrar.getInstance();
-    Set<Configurable> myOptionContainers = null;
+    Set<Configurable> myFiltered = null;
+    ConfigurableHit myHits;
 
 
     public boolean shouldBeShowing(final SimpleNode value) {
-      if (myOptionContainers == null) return true;
-      
+      if (myFiltered == null) return true;
+
       if (value instanceof OptionsTree.EditorNode) {
-        final OptionsTree.EditorNode node = (OptionsTree.EditorNode)value;
-        if (myOptionContainers.contains(node.getConfigurable())) return true;
-
-        SimpleNode eachParent = node.getParent();
-        while (eachParent != null) {
-          if (eachParent instanceof OptionsTree.EditorNode) {
-            final OptionsTree.EditorNode eachParentEditor = (OptionsTree.EditorNode)eachParent;
-            final Configurable eachParentConfigurable = eachParentEditor.getConfigurable();
-            if (myOptionContainers.contains(eachParentConfigurable) && eachParentConfigurable instanceof SearchableConfigurable.Parent) {
-              final SearchableConfigurable.Parent eachParentSearchable = (SearchableConfigurable.Parent)eachParentConfigurable;
-              if (eachParentSearchable.isToShowWhenChildIsShown()) return true;
-            }
-          }
-
-          eachParent = eachParent.getParent();
-        }
-
-        return false;
-      } else {
-        return true;
+        return myFiltered.contains(((OptionsTree.EditorNode)value).getConfigurable());
       }
+
+      return true;
     }
 
     public void update(DocumentEvent e) {
       final String text = mySearch.getText();
       if (text == null || text.length() == 0) {
         myContext.setHoldingFilter(false);
-        myOptionContainers = null;
+        myFiltered = null;
       } else {
         myContext.setHoldingFilter(true);
-        myOptionContainers = myIndex.getConfigurables(myGroups, e.getType(), myOptionContainers, text, myProject);
+        myHits = myIndex.getConfigurables(myGroups, e.getType(), myFiltered, text, myProject);
+        myFiltered = myHits.getAll();
       }
 
-      if (myOptionContainers != null && myOptionContainers.size() == 0) {
+      if (myFiltered != null && myFiltered.size() == 0) {
         mySearch.getTextEditor().setBackground(LightColors.RED);
       } else {
         mySearch.getTextEditor().setBackground(UIUtil.getTextFieldBackground());
       }
 
+
+      Configurable toSelect = null;
+      final Configurable current = getContext().getCurrentConfigurable();
+      if (myFiltered == null || !myFiltered.contains(current)) {
+        if (myHits != null) {
+          if (myHits.getNameHits().size() > 0) {
+            toSelect = myHits.getNameHits().iterator().next();
+          } else if (myHits.getContentHits().size() > 0) {
+            toSelect = myHits.getContentHits().iterator().next();
+          }
+        }
+      }
+
       updateSpotlight(false);
 
-      fireUpdate();
+      fireUpdate(myTree.findNodeFor(toSelect));
+    }
+
+    private boolean isEmptyParent(Configurable configurable) {
+      return false;
     }
   }
 
@@ -673,8 +677,13 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           myVisible = true;
           runnable.run();
 
+          boolean pushFilteringFurther = true;
+          if (myFilter.myHits != null) {
+            pushFilteringFurther = !myFilter.myHits.getNameHits().contains(current);
+          }
+          
           final Runnable ownSearch = searchable.enableSearch(text);
-          if (ownSearch != null) {
+          if (pushFilteringFurther && ownSearch != null) {
             ownSearch.run();
           }
           fireNeedsRepaint(myContentWrapper);
@@ -737,6 +746,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
   }
 
-
+  public void clearFilter() {
+    mySearch.setText("");
+  }
 
 }

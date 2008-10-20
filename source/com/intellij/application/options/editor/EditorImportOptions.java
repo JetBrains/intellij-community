@@ -167,4 +167,12 @@ public class EditorImportOptions implements EditorOptionsProvider {
   public String getHelpTopic() {
     return null;
   }
+
+  public String getId() {
+    return "editor.preferences.import";
+  }
+
+  public Runnable enableSearch(final String option) {
+    return null;
+  }
 }

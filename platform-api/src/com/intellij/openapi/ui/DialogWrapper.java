@@ -437,6 +437,16 @@ public abstract class DialogWrapper {
   }
 
   /**
+   * You can use this method if you want to know by which event this actions got triggered. It is called only if
+   * the cancel action was triggered by some input event, <code>doCancelAction</code> is called otherwise.
+   * @param source
+   * @see #doCancelAction
+   */
+  public void doCancelAction(AWTEvent source) {
+    doCancelAction();    
+  }
+
+  /**
    * Programmatically perform a "click" of default dialog's button. The method does
    * nothing if the dialog has no default button.
    */
@@ -857,7 +867,7 @@ public abstract class DialogWrapper {
           menuSelectionManager.clearSelectedPath();
         }
         else if (ApplicationManager.getApplication() == null || !StackingPopupDispatcher.getInstance().isPopupFocused()) {
-          doCancelAction();
+          doCancelAction(e);
         }
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);

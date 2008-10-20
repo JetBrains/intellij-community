@@ -402,7 +402,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      myWrapper.doCancelAction();
+      myWrapper.doCancelAction(e.getInputEvent());
     }
   }
 
@@ -674,7 +674,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       public void windowClosing(WindowEvent e) {
         DialogWrapper dialogWrapper = getDialogWrapper();
         if (dialogWrapper.shouldCloseOnCross()) {
-          dialogWrapper.doCancelAction();
+          dialogWrapper.doCancelAction(e);
         }
       }
 
