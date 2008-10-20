@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -39,6 +40,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null) return false;
+    if (Extensions.getExtensions(TestFrameworkDescriptor.EXTENSION_NAME).length == 0) return false;
 
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
     if (psiClass == null ||
