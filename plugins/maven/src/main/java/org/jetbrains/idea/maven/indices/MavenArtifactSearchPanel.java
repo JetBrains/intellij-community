@@ -68,7 +68,7 @@ public class MavenArtifactSearchPanel extends JPanel {
         if (myAlarm.getActiveRequestCount() > 0) return;
 
         boolean hasSelection = !myResultList.isSelectionEmpty();
-        myListener.selectedChanged(hasSelection);
+        myListener.canSelectStateChanged(MavenArtifactSearchPanel.this, hasSelection);
       }
     });
 
@@ -120,7 +120,7 @@ public class MavenArtifactSearchPanel extends JPanel {
   }
 
   public void scheduleSearch() {
-    myListener.searchStarted();
+    myListener.canSelectStateChanged(this, false);
 
     // evaluate text value in the swing thread
     final String text = mySearchField.getText();
@@ -148,8 +148,6 @@ public class MavenArtifactSearchPanel extends JPanel {
         if (myProject.isDisposed()) return;
         myResultList.setModel(model);
         myResultList.setSelectionRow(0);
-
-        myListener.searchFinished();
       }
     });
   }
@@ -213,7 +211,6 @@ public class MavenArtifactSearchPanel extends JPanel {
   private static class MyArtifactCellRenderer extends JPanel implements TreeCellRenderer {
     protected SimpleColoredComponent myLeftComponent = new SimpleColoredComponent();
     protected SimpleColoredComponent myRightComponent = new SimpleColoredComponent();
-    private JTree myTree;
 
     private MyArtifactCellRenderer() {
       setLayout(new BorderLayout());
@@ -223,7 +220,6 @@ public class MavenArtifactSearchPanel extends JPanel {
                                                   boolean hasFocus) {
       myLeftComponent.clear();
       myRightComponent.clear();
-      myTree = tree;
 
       if (UIUtil.isUnderQuaquaLookAndFeel()) {
           setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
@@ -296,8 +292,6 @@ public class MavenArtifactSearchPanel extends JPanel {
 
   public interface Listener {
     void doubleClicked();
-    void selectedChanged(boolean hasSelection);
-    void searchStarted();
-    void searchFinished();
+    void canSelectStateChanged(MavenArtifactSearchPanel from, boolean canSelect);
   }
 }

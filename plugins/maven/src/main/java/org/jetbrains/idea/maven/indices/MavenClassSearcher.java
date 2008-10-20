@@ -23,9 +23,17 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
     boolean exactSearch = pattern.endsWith(" ");
     pattern = pattern.trim();
     if (!exactSearch) pattern += "*";
-    Term term = new Term(ArtifactInfo.NAMES, pattern);
 
-    return new Pair<String, Query>(pattern, exactSearch ? new TermQuery(term) : new WildcardQuery(term));
+    String queryPattern = pattern;
+    int dot = pattern.lastIndexOf(".");
+    if (dot != -1) {
+      queryPattern = queryPattern.substring(dot + 1);
+    }
+
+    Term term = new Term(ArtifactInfo.NAMES, queryPattern);
+
+    return new Pair<String, Query>(pattern, exactSearch
+                                            ? new TermQuery(term) : new WildcardQuery(term));
   }
 
   protected Collection<MavenClassSearchResult> processResults(Set<ArtifactInfo> infos, String pattern, int maxResult) {
@@ -33,9 +41,11 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
       pattern = "^(.*)$";
     }
     else {
+      boolean hasPackage = pattern.indexOf(".") != -1;
       pattern = pattern.replace(".", "/");
       pattern = pattern.replaceAll("\\*", "[^/]*?");
-      pattern = "^(.*?/" + pattern + ")$";
+      if (!hasPackage) pattern = ".*?/" + pattern;
+      pattern = "^(" + pattern + ")$"; 
     }
     Pattern p;
     try {

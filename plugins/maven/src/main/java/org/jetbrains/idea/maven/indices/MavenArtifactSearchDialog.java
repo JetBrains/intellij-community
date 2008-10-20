@@ -5,7 +5,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.idea.maven.utils.MavenId;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 import java.awt.event.KeyEvent;
+import java.util.Map;
+import java.util.HashMap;
 
 public class MavenArtifactSearchDialog extends DialogWrapper {
   private MavenId myResult;
@@ -13,6 +17,8 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
   private JTabbedPane myTabbedPane;
   private MavenArtifactSearchPanel myArtifactsPanel;
   private MavenArtifactSearchPanel myClassesPanel;
+
+  private Map<MavenArtifactSearchPanel, Boolean> myOkButtonStates = new HashMap<MavenArtifactSearchPanel, Boolean>();
 
   public static MavenId searchForClass(Project project, String className) {
     MavenArtifactSearchDialog d = new MavenArtifactSearchDialog(project, className, true);
@@ -36,7 +42,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
     initComponents(project, initialText, classMode);
 
     setTitle("Maven Artifact Search");
-    setOKActionEnabled(false);
+    updateOkButtonState();
     init();
 
     myArtifactsPanel.scheduleSearch();
@@ -51,16 +57,9 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
         clickDefaultButton();
       }
 
-      public void selectedChanged(boolean hasSelection) {
-        setOKActionEnabled(hasSelection);
-      }
-
-      public void searchFinished() {
-
-      }
-
-      public void searchStarted() {
-
+      public void canSelectStateChanged(MavenArtifactSearchPanel from, boolean canSelect) {
+        myOkButtonStates.put(from, canSelect);
+        updateOkButtonState();
       }
     };
 
@@ -76,7 +75,19 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
     myTabbedPane.setMnemonicAt(1, KeyEvent.VK_C);
     myTabbedPane.setDisplayedMnemonicIndexAt(1, myTabbedPane.getTitleAt(1).indexOf("class"));
 
-    setOKActionEnabled(false);
+    myTabbedPane.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        updateOkButtonState();
+      }
+    });
+
+    updateOkButtonState();
+  }
+
+  private void updateOkButtonState() {
+    Boolean canSelect = myOkButtonStates.get(myTabbedPane.getSelectedComponent());
+    if (canSelect == null) canSelect = false;
+    setOKActionEnabled(canSelect);
   }
 
   @Override

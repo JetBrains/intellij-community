@@ -50,7 +50,13 @@ public class MavenSearcherTest extends MavenTestCase {
                              "JUnit4TestCaseFacade(junit.framework) junit:junit:4.0",
                              "JUnitCore(org.junit.runner) junit:junit:4.0");
 
-    //assertClassSearchResults("org.junit.After", "junit:junit:4.0");
+    assertClassSearchResults("org.junit.After",
+                             "After(org.junit) junit:junit:4.0",
+                             "AfterClass(org.junit) junit:junit:4.0");
+
+    // do not include other packages
+    assertClassSearchResults("junit.framework.Test ",
+                             "Test(junit.framework) junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1");
 
     assertClassSearchResults("!@][#$%)(^&*()_"); // shouldn't throw
   }
