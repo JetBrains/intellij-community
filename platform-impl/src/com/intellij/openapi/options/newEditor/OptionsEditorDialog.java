@@ -88,9 +88,18 @@ public class OptionsEditorDialog extends DialogWrapper {
 
   @Override
   public void doCancelAction(final AWTEvent source) {
-    if (source instanceof KeyEvent) {
+    if (source instanceof KeyEvent || source instanceof ActionEvent) {
+      if (myEditor.isFilterFieldVisible() && myEditor.isSearchFieldFocused()) {
+        if (myEditor.getContext().isHoldingFilter()) {
+          myEditor.clearFilter();
+        } else {
+          myEditor.setFilterFieldVisible(false, false, false);
+        }
+        return;
+      }
       if (myEditor.getContext().isHoldingFilter()) {
         myEditor.clearFilter();
+        myEditor.setFilterFieldVisible(false, false, false);
         return;
       }
     }

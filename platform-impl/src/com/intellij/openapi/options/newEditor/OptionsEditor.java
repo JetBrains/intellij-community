@@ -1,8 +1,8 @@
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.ide.ui.search.ConfigurableHit;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.ide.ui.search.ConfigurableHit;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.BackAction;
 import com.intellij.ui.navigation.ForwardAction;
 import com.intellij.ui.navigation.History;
@@ -73,10 +74,15 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   MergingUpdateQueue myModificationChecker;
   private ConfigurableGroup[] myGroups;
 
-  private SpotlightPainter mySpotlightPainter = new SpotlightPainter();
-  private MergingUpdateQueue mySpotlightUpdate;
-  private LoadingDecorator myLoadingDecorator;
-  private Filter myFilter;
+  SpotlightPainter mySpotlightPainter = new SpotlightPainter();
+  MergingUpdateQueue mySpotlightUpdate;
+  LoadingDecorator myLoadingDecorator;
+  Filter myFilter;
+
+  Wrapper mySearchWrapper = new Wrapper();
+  JPanel myLeftSide;
+
+  boolean myFilterFocumentWasChanged;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProject = project;
@@ -94,9 +100,18 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     myTree = new OptionsTree(myProject, groups, getContext()) {
       @Override
       protected void onTreeKeyEvent(final KeyEvent e) {
-        mySearch.keyEventToTextField(e);
+        myFilterFocumentWasChanged = false;
+        try {
+          mySearch.keyEventToTextField(e);
+        }
+        finally {
+          if (myFilterFocumentWasChanged && !isFilterFieldVisible()) {
+            setFilterFieldVisible(true, false, false);
+          }
+        }
       }
     };
+
     getContext().addColleague(myTree);
     Disposer.register(this, myTree);
     mySearch.addDocumentListener(new DocumentListener() {
@@ -117,21 +132,27 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     toolbarActions.add(new BackAction(myTree));
     toolbarActions.add(new ForwardAction(myTree));
+    toolbarActions.addSeparator();
+    toolbarActions.add(new ShowSearchFieldAction(this));
     final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, true);
     tb.setTargetComponent(this);
-    final JComponent toolbar = tb.getComponent();
+    myToolbar = tb.getComponent();
 
 
-    final JPanel left = new JPanel(new BorderLayout());
-    myToolbar = toolbar;
-    left.add(myToolbar, BorderLayout.NORTH);
-    left.add(myTree, BorderLayout.CENTER);
-    left.add(mySearch, BorderLayout.SOUTH);
+    myLeftSide = new JPanel(new BorderLayout());
+
+    final NonOpaquePanel toolbarPanel = new NonOpaquePanel(new BorderLayout());
+    toolbarPanel.add(myToolbar, BorderLayout.NORTH);
+    toolbarPanel.add(mySearchWrapper, BorderLayout.CENTER);
+
+    myLeftSide.add(toolbarPanel, BorderLayout.NORTH);
+
+    myLeftSide.add(myTree, BorderLayout.CENTER);
 
     setLayout(new BorderLayout());
 
     myMainSplitter = new Splitter(false);
-    myMainSplitter.setFirstComponent(left);
+    myMainSplitter.setFirstComponent(myLeftSide);
     myMainSplitter.setHonorComponentsMinimumSize(false);
 
     myLoadingDecorator = new LoadingDecorator(myOwnDetails.getComponent(), project);
@@ -258,11 +279,17 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   private void updateSpotlight(boolean now) {
     if (now) {
-      mySpotlightPainter.updateForCurrentConfigurable();
+      final boolean success = mySpotlightPainter.updateForCurrentConfigurable();
+      if (!success) {
+        updateSpotlight(false);
+      }
     } else {
       mySpotlightUpdate.queue(new Update(this) {
         public void run() {
-          mySpotlightPainter.updateForCurrentConfigurable();
+          final boolean success = mySpotlightPainter.updateForCurrentConfigurable();
+          if (!success) {
+            updateSpotlight(false);
+          }
         }
       });
     }
@@ -304,6 +331,29 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return current != null ? current.getHelpTopic() : null;
   }
 
+  public boolean isFilterFieldVisible() {
+    return mySearch.getParent() == mySearchWrapper;
+  }
+
+  public void setFilterFieldVisible(final boolean visible, boolean requestFocus, boolean checkFocus) {
+    if (isFilterFieldVisible() && checkFocus && requestFocus && !isSearchFieldFocused()) {
+      UIUtil.requestFocus(mySearch);
+      return;
+    }
+
+    mySearchWrapper.setContent(visible ? mySearch : null);
+
+    myLeftSide.revalidate();
+    myLeftSide.repaint();
+
+    if (visible && requestFocus) {
+      UIUtil.requestFocus(mySearch);
+    }
+  }
+
+  public boolean isSearchFieldFocused() {
+    return mySearch.getTextEditor().isFocusOwner();
+  }
 
   class ResetAction extends AbstractAction {
     Configurable myConfigurable;
@@ -507,6 +557,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       updateSpotlight(false);
 
       fireUpdate(myTree.findNodeFor(toSelect));
+
+      myFilterFocumentWasChanged = true;
     }
 
     private boolean isEmptyParent(Configurable configurable) {
@@ -656,17 +708,20 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       }
     }
 
-    public void updateForCurrentConfigurable() {
+    public boolean updateForCurrentConfigurable() {
       final Configurable current = getContext().getCurrentConfigurable();
+
+      if (current != null && !myConfigurable2Content.containsKey(current)) return false;
+
       final String text = mySearch.getText();
 
       try {
-        if (myLastConfigurable == current && myLastText != null && myLastText.equals(text)) return;
+        if (myLastConfigurable == current && myLastText != null && myLastText.equals(text)) return true;
 
         if (!(current instanceof SearchableConfigurable)) {
           myVisible = false;
           myGP.clear();
-          return;
+          return true;
         }
 
         myGP.clear();
@@ -695,6 +750,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         myLastConfigurable = current;
         myContentWrapper.repaint();
       }
+
+      return true;
     }
 
     @Override
