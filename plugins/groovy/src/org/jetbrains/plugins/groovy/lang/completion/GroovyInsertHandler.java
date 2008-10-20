@@ -31,7 +31,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
@@ -96,6 +98,28 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       Document document = editor.getDocument();
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
         handleOverwrite(editor.getCaretModel().getOffset(), document);
+      }
+    } else if (obj instanceof PsiClass) {
+      final PsiClass clazz = (PsiClass)obj;
+      Editor editor = context.getEditor();
+      Document document = editor.getDocument();
+      PsiFile file = PsiDocumentManager.getInstance(clazz.getProject()).getPsiFile(document);
+      PsiElement elementAt = file.findElementAt(context.getStartOffset());
+      CaretModel caretModel = editor.getCaretModel();
+      int offset = context.getStartOffset() + clazz.getName().length();
+      final PsiElement parent = elementAt.getParent();
+      if (parent instanceof GrCodeReferenceElement &&
+          parent.getParent() instanceof GrNewExpression) {
+        document.insertString(offset, "()");
+        final PsiMethod[] methods = clazz.getConstructors();
+        for (PsiMethod method : methods) {
+          if (method.getParameterList().getParameters().length > 0) {
+            caretModel.moveToOffset(offset + 1);
+            return;
+          }
+        }
+        caretModel.moveToOffset(offset + 2);
+        return;
       }
     }
 
