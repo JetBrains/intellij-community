@@ -9,6 +9,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -102,7 +103,8 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
         new WriteAction() {
           protected void run(Result result) throws Throwable {
             final T component = getComponent();
-            getEditorTextField(component).getDocument().replaceString(0, getValue().length(), value == null ? "" : value);
+            final Document document = getEditorTextField(component).getDocument();
+            document.replaceString(0, document.getTextLength(), value == null ? "" : value);
           }
         }.execute();
       }
