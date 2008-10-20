@@ -10,6 +10,8 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 /**
  * @author nik
  */
@@ -37,8 +39,13 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
   public VirtualFilePattern xmlWithRootTag(final ElementPattern<String> tagNamePattern) {
     return with(new PatternCondition<VirtualFile>("xmlWithRootTag") {
       public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
-        String tagName = NanoXmlUtil.parseHeader(virtualFile).getRootTagLocalName();
-        return tagName != null && tagNamePattern.getCondition().accepts(tagName, context);
+        try {
+          String tagName = NanoXmlUtil.parseHeaderWithException(virtualFile).getRootTagLocalName();
+          return tagName != null && tagNamePattern.getCondition().accepts(tagName, context);
+        }
+        catch (IOException e) {
+          return false;
+        }
       }
     });
   }
