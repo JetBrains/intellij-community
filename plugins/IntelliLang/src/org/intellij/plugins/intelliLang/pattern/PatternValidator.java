@@ -180,7 +180,7 @@ public class PatternValidator extends LocalInspectionTool {
             else {
               element = AnnotationUtilEx.getAnnotatedElementFor(expression, AnnotationUtilEx.LookupType.PREFER_CONTEXT);
             }
-            if (element != null) {
+            if (element != null && PsiUtilEx.isLanguageAnnotationTarget(element)) {
               PsiAnnotation[] annotations = AnnotationUtilEx.getAnnotationFrom(element, myConfiguration.getPatternAnnotationPair(), true);
               checkExpression(expression, annotations, holder);
             }
@@ -250,10 +250,10 @@ public class PatternValidator extends LocalInspectionTool {
         else {
           e = expr;
         }
-
+        final PsiModifierListOwner owner = e instanceof PsiModifierListOwner? (PsiModifierListOwner)e : null;
         LocalQuickFix quickFix;
-        if (e instanceof PsiModifierListOwner) {
-          PsiAnnotation[] resolvedAnnos = AnnotationUtilEx.getAnnotationFrom((PsiModifierListOwner)e, myConfiguration.getPatternAnnotationPair(), true);
+        if (owner != null && PsiUtilEx.isLanguageAnnotationTarget(owner)) {
+          PsiAnnotation[] resolvedAnnos = AnnotationUtilEx.getAnnotationFrom(owner, myConfiguration.getPatternAnnotationPair(), true);
           if (resolvedAnnos.length == 2 && annotations.length == 2 && Comparing.strEqual(resolvedAnnos[1].getQualifiedName(), annotations[1].getQualifiedName())) {
             // both target and source annotated indirectly with the same anno
             return;

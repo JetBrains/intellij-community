@@ -149,27 +149,13 @@ public class AnnotationUtilEx {
                                                   Pair<String, ? extends Set<String>> annotationName,
                                                   boolean allowIndirect,
                                                   boolean inHierarchy) {
-    if (owner instanceof PsiMethod) {
-      final PsiType returnType = ((PsiMethod)owner).getReturnType();
-      if (returnType == null || !PsiUtilEx.isStringOrStringArray(returnType)) {
-        return PsiAnnotation.EMPTY_ARRAY;
-      }
-    }
-    else if (owner instanceof PsiVariable) {
-      final PsiType type = ((PsiVariable)owner).getType();
-      if (!PsiUtilEx.isStringOrStringArray(type)) {
-        return PsiAnnotation.EMPTY_ARRAY;
-      }
-    }
-    else {
-      return PsiAnnotation.EMPTY_ARRAY;
-    }
+    if (!PsiUtilEx.isLanguageAnnotationTarget(owner)) return PsiAnnotation.EMPTY_ARRAY;
 
-    if (AnnotationUtil.isAnnotated(owner, annotationName.first, inHierarchy)) {
-      final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(owner, annotationName.second);
-      assert annotation != null;
-
-      return new PsiAnnotation[]{annotation};
+    final PsiAnnotation directAnnotation = inHierarchy?
+      AnnotationUtil.findAnnotationInHierarchy(owner, annotationName.second) :
+      AnnotationUtil.findAnnotation(owner, annotationName.second);
+    if (directAnnotation != null) {
+      return new PsiAnnotation[]{directAnnotation};
     }
     if (allowIndirect) {
       final PsiAnnotation[] annotations = getAnnotations(owner, inHierarchy);

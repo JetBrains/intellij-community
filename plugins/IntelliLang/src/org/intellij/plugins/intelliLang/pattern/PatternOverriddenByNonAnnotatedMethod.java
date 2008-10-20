@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.util.AnnotateFix;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
+import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +61,7 @@ public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
       @Override
       public void visitMethod(PsiMethod method) {
         final PsiIdentifier psiIdentifier = method.getNameIdentifier();
-        if (psiIdentifier == null) {
+        if (psiIdentifier == null || !PsiUtilEx.isLanguageAnnotationTarget(method)) {
           return;
         }
 

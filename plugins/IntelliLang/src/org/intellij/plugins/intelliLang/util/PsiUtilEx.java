@@ -15,22 +15,20 @@
  */
 package org.intellij.plugins.intelliLang.util;
 
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.JavaReferenceEditorUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiUtilEx {
-  @NonNls
-  private static final String JAVA_LANG_STRING = "java.lang.String";
 
   private PsiUtilEx() {
   }
@@ -85,8 +83,12 @@ public class PsiUtilEx {
   }
 
   public static boolean isString(@NotNull PsiType type) {
-    // PsiType.equalsToText() seems to be kinda expensive (says the profiler)
-    return JAVA_LANG_STRING.equals(type.getCanonicalText());
+    if (type instanceof PsiClassType) {
+      // optimization. doesn't require resolve
+      final String shortName = ((PsiClassType)type).getClassName();
+      if (!Comparing.equal(shortName, CommonClassNames.JAVA_LANG_STRING_SHORT)) return false;
+    }
+    return CommonClassNames.JAVA_LANG_STRING.equals(type.getCanonicalText());
   }
 
   public static boolean isStringOrStringArray(@NotNull PsiType type) {
@@ -105,5 +107,24 @@ public class PsiUtilEx {
     else {
       return JavaReferenceEditorUtil.createTypeDocument(s, PsiManager.getInstance(project));
     }
+  }
+
+  public static boolean isLanguageAnnotationTarget(final PsiModifierListOwner owner) {
+    if (owner instanceof PsiMethod) {
+      final PsiType returnType = ((PsiMethod)owner).getReturnType();
+      if (returnType == null || !isStringOrStringArray(returnType)) {
+        return false;
+      }
+    }
+    else if (owner instanceof PsiVariable) {
+      final PsiType type = ((PsiVariable)owner).getType();
+      if (!isStringOrStringArray(type)) {
+        return false;
+      }
+    }
+    else {
+      return false;
+    }
+    return true;
   }
 }

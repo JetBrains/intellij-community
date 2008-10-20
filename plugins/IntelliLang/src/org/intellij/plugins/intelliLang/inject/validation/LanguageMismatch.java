@@ -107,14 +107,14 @@ public class LanguageMismatch extends LocalInspectionTool {
     }
 
     final PsiModifierListOwner contextOwner = AnnotationUtilEx.getAnnotatedElementFor(expression, AnnotationUtilEx.LookupType.CONTEXT_ONLY);
-    if (contextOwner != null) {
+    if (contextOwner != null && PsiUtilEx.isLanguageAnnotationTarget(contextOwner)) {
       final PsiAnnotation[] annotations = AnnotationUtilEx.getAnnotationFrom(contextOwner, annotationName, true);
       if (annotations.length > 0) {
         final String expected = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
         if (expected != null) {
           final PsiModifierListOwner declOwner =
               AnnotationUtilEx.getAnnotatedElementFor(expression, AnnotationUtilEx.LookupType.PREFER_DECLARATION);
-          if (declOwner != null) {
+          if (declOwner != null && PsiUtilEx.isLanguageAnnotationTarget(declOwner)) {
             final PsiAnnotation[] as = AnnotationUtilEx.getAnnotationFrom(declOwner, annotationName, true);
             if (as.length > 0) {
               final String actual = AnnotationUtilEx.calcAnnotationValue(as, "value");

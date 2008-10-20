@@ -56,7 +56,7 @@ final class LanguageReferenceProvider extends PsiReferenceProvider {
       else {
         final PsiModifierListOwner owner =
             AnnotationUtilEx.getAnnotatedElementFor(expression, AnnotationUtilEx.LookupType.PREFER_DECLARATION);
-        if (owner != null) {
+        if (owner != null && PsiUtilEx.isLanguageAnnotationTarget(owner)) {
           final PsiAnnotation[] annotations = AnnotationUtilEx.getAnnotationFrom(owner, myConfig.getPatternAnnotationPair(), true);
           if (annotations.length > 0) {
             final String pattern = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
