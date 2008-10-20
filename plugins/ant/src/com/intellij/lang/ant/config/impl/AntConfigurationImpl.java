@@ -698,47 +698,52 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                   removeBuildFile(file);
                 }
                 // then fill the configuration with the files configured in xml
+                List<Pair<Element, AntBuildFileBase>> buildFiles = new ArrayList<Pair<Element, AntBuildFileBase>>(files.size());
                 for (Pair<Element, VirtualFile> pair : files) {
                   final Element element = pair.getFirst();
                   final VirtualFile file = pair.getSecond();
                   try {
                     final AntBuildFileBase buildFile = addBuildFileImpl(file);
                     buildFile.readProperties(element);
-
-                    for (final Object o1 : element.getChildren(EXECUTE_ON_ELEMENT)) {
-                      Element e = (Element)o1;
-                      String eventId = e.getAttributeValue(EVENT_ELEMENT);
-                      ExecutionEvent event = null;
-                      String targetName = e.getAttributeValue(TARGET_ELEMENT);
-                      if (ExecuteBeforeCompilationEvent.TYPE_ID.equals(eventId)) {
-                        event = ExecuteBeforeCompilationEvent.getInstance();
-                      }
-                      else if (ExecuteAfterCompilationEvent.TYPE_ID.equals(eventId)) {
-                        event = ExecuteAfterCompilationEvent.getInstance();
-                      }
-                      else if (ExecuteBeforeRunEvent.TYPE_ID.equals(eventId)) {
-                        event = new ExecuteBeforeRunEvent();
-                      }
-                      else if (ExecuteCompositeTargetEvent.TYPE_ID.equals(eventId)) {
-                        try {
-                          event = new ExecuteCompositeTargetEvent(targetName);
-                        }
-                        catch (WrongNameFormatException e1) {
-                          LOG.info(e1);
-                          event = null;
-                        }
-                      }
-                      if (event != null) {
-                        event.readExternal(e, getProject());
-                        setTargetForEvent(buildFile, targetName, event);
-                      }
-                    }
-
+                    buildFiles.add(new Pair<Element, AntBuildFileBase>(element, buildFile));
                   }
                   catch (AntNoFileException ignored) {
                   }
                   catch (InvalidDataException e) {
                     LOG.error(e);
+                  }
+                }
+                // updating properties separately to avoid  unnecesary building of PSI after clearing caches
+                for (Pair<Element, AntBuildFileBase> pair : buildFiles) {
+                  final AntBuildFileBase buildFile = pair.getSecond();
+                  buildFile.updateProperties();
+                  for (final Object o1 : pair.getFirst().getChildren(EXECUTE_ON_ELEMENT)) {
+                    Element e = (Element)o1;
+                    String eventId = e.getAttributeValue(EVENT_ELEMENT);
+                    ExecutionEvent event = null;
+                    String targetName = e.getAttributeValue(TARGET_ELEMENT);
+                    if (ExecuteBeforeCompilationEvent.TYPE_ID.equals(eventId)) {
+                      event = ExecuteBeforeCompilationEvent.getInstance();
+                    }
+                    else if (ExecuteAfterCompilationEvent.TYPE_ID.equals(eventId)) {
+                      event = ExecuteAfterCompilationEvent.getInstance();
+                    }
+                    else if (ExecuteBeforeRunEvent.TYPE_ID.equals(eventId)) {
+                      event = new ExecuteBeforeRunEvent();
+                    }
+                    else if (ExecuteCompositeTargetEvent.TYPE_ID.equals(eventId)) {
+                      try {
+                        event = new ExecuteCompositeTargetEvent(targetName);
+                      }
+                      catch (WrongNameFormatException e1) {
+                        LOG.info(e1);
+                        event = null;
+                      }
+                    }
+                    if (event != null) {
+                      event.readExternal(e, getProject());
+                      setTargetForEvent(buildFile, targetName, event);
+                    }
                   }
                 }
                 AntWorkspaceConfiguration.getInstance(getProject()).loadFileProperties();
