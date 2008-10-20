@@ -5,13 +5,11 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.ObjectCache;
+import com.intellij.util.Alarm;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,33 +22,20 @@ import java.util.*;
 public final class AntIntrospector {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.psi.impl.AntIntrospector");
   private final Object myHelper;
-  private static final ObjectCache<String, SoftReference<Object>> ourCache = new ObjectCache<String, SoftReference<Object>>(); 
-  
-  public AntIntrospector(final Class aClass) throws ClassNotFoundException, NoSuchMethodException,
-                                               IllegalAccessException, InvocationTargetException {
+  //private static final ObjectCache<String, SoftReference<Object>> ourCache = new ObjectCache<String, SoftReference<Object>>(300);
+  private static final HashMap<Class, Object> ourCache = new HashMap<Class, Object>();
+  private static final Object ourNullObject = new Object();
+  private static final Alarm ourCacheCleaner = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private static final int CACHE_CLEAN_TIMEOUT = 10000; // 10 seconds
+
+  public AntIntrospector(final Class aClass) {
     myHelper = getHelper(aClass);
   }
 
+  @Nullable
   public static AntIntrospector getInstance(Class c) {
-    try {
-      return new AntIntrospector(c);
-    }
-    catch (ClassNotFoundException ignored) {
-    }
-    catch (NoSuchMethodException ignored) {
-    }
-    catch (IllegalAccessException ignored) {
-    }
-    catch (InvocationTargetException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof RuntimeException) {
-        throw (RuntimeException)cause;
-      }
-      if (cause instanceof Error) {
-        throw (Error)cause;
-      }
-    }
-    return null;
+    final AntIntrospector antIntrospector = new AntIntrospector(c);
+    return antIntrospector.myHelper == null? null : antIntrospector;
   }
 
   private <T> T invokeMethod(@NonNls String methodName, final boolean ignoreErrors, Object... params) {
@@ -135,64 +120,74 @@ public final class AntIntrospector {
   //private static int ourAttempts = 0;
   //private static int ourHits = 0;
   @Nullable
-  private static Object getHelper(Class aClass) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-    final String key;
+  private static Object getHelper(final Class aClass) {
     final ClassLoader loader = aClass.getClassLoader();
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append(aClass.getName());
-      if (loader != null) {
-        builder.append("_");
-        builder.append(loader.hashCode());
-      }
-      key = builder.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    //final String key;
+    //final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    //try {
+    //  builder.append(aClass.getName());
+    //  if (loader != null) {
+    //    builder.append("_");
+    //    builder.append(loader.hashCode());
+    //  }
+    //  key = builder.toString();
+    //}
+    //finally {
+    //  StringBuilderSpinAllocator.dispose(builder);
+    //}
     
     Object result = null;
-    
+
     synchronized (ourCache) {
-      //++ourAttempts;
-      final SoftReference<Object> ref = ourCache.tryKey(key);
-      result = (ref == null) ? null : ref.get();
-      if (result == null && ref != null) {
-        ourCache.remove(key);
-      }
-      // for debug purposes
-      //if (result != null) {
-      //  ++ourHits;
-      //  final double hitRate = (ourAttempts > 0) ? ((double)ourHits / (double)ourAttempts) : 0;
-      //  System.out.println("cache hit! (" + key + ") "  + hitRate);
+      result = ourCache.get(aClass);
+      //final SoftReference<Object> ref = ourCache.get(aClass);
+      //result = (ref == null) ? null : ref.get();
+      //if (result == null && ref != null) {
+      //  ourCache.remove(aClass);
       //}
     }
     
     if (result == null) {
-      final Class<?> helperClass = loader != null? loader.loadClass(IntrospectionHelper.class.getName()) : IntrospectionHelper.class;
-      final Method getHelperMethod = helperClass.getMethod("getHelper", Class.class);
-      result = getHelperMethod.invoke(null, aClass);
+      result = ourNullObject;
+      Class<?> helperClass = null;
+      try {
+        helperClass = loader != null? loader.loadClass(IntrospectionHelper.class.getName()) : IntrospectionHelper.class;
+        final Method getHelperMethod = helperClass.getMethod("getHelper", Class.class);
+        result = getHelperMethod.invoke(null, aClass);
+      }
+      catch (ClassNotFoundException e) {
+        LOG.info(e);
+      }
+      catch (NoSuchMethodException e) {
+        LOG.info(e);
+      }
+      catch (IllegalAccessException e) {
+        LOG.info(e);
+      }
+      catch (InvocationTargetException ignored) {
+      }
 
-      if (result != null) {
-        synchronized (ourCache) {
+      synchronized (ourCache) {
+        if (helperClass != null) {
           clearAntStaticCache(helperClass);
-          ourCache.cacheObject(key, new SoftReference<Object>(result));
         }
+        //ourCache.put(aClass, new SoftReference<Object>(result));
+        ourCache.put(aClass, result);
       }
     }
-    
-    return result;
+    scheduleCacheCleaning();
+    return result == ourNullObject? null : result;
   }
   
-  private static int ourClearAttemptCount = 0;
+  //private static int ourClearAttemptCount = 0;
   
   private static void clearAntStaticCache(final Class helperClass) {
-    if (++ourClearAttemptCount > 1000) { // allow not more than 1000 helpers cached inside ant
-      ourClearAttemptCount = 0;
-    }
-    else {
-      return;
-    }
+    //if (++ourClearAttemptCount > 1000) { // allow not more than 1000 helpers cached inside ant
+    //  ourClearAttemptCount = 0;
+    //}
+    //else {
+    //  return;
+    //}
     
     // for ant 1.7, there is a dedicated method for cache clearing
     try {
@@ -210,6 +205,17 @@ public final class AntIntrospector {
         // ignore.
       }
     }
+  }
+
+  private static void scheduleCacheCleaning() {
+    ourCacheCleaner.cancelAllRequests();
+    ourCacheCleaner.addRequest(new Runnable() {
+      public void run() {
+        synchronized (ourCache) {
+          ourCache.clear();
+        }
+      }
+    }, CACHE_CLEAN_TIMEOUT);
   }
 
 }
