@@ -17,6 +17,7 @@ package com.siyeh.ipp.conditional;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -158,6 +159,13 @@ public class ReplaceConditionalWithIfIntention extends Intention {
         final PsiElement[] children = element.getChildren();
         if (children.length == 0) {
             out.append(element.getText());
+            if (element instanceof PsiComment) {
+                final PsiComment comment = (PsiComment)element;
+                final IElementType tokenType = comment.getTokenType();
+                if (tokenType == JavaTokenType.END_OF_LINE_COMMENT) {
+                    out.append('\n');
+                }
+            }
             return;
         }
         for (PsiElement child : children) {
