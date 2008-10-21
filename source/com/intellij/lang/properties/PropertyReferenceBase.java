@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
@@ -21,6 +22,7 @@ import java.util.*;
  * @author nik
  */
 public abstract class PropertyReferenceBase implements PsiPolyVariantReference, EmptyResolveMessageProvider {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.PropertyReferenceBase");
   protected final String myKey;
   protected final PsiElement myElement;
   protected boolean mySoft;
@@ -76,7 +78,9 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     }
     else {
       ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(myElement);
-      assert manipulator != null;
+      if (manipulator == null) {
+        LOG.assertTrue(false, "Cannot find manipulator for " + myElement);
+      }
       return manipulator.handleContentChange(myElement, getRangeInElement(), newElementName);
     }
   }
