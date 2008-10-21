@@ -13,6 +13,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlExtension;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -78,11 +79,14 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
 
       if (FOR_ATTR_NAME.equals(name)) {
         return new PsiReference[]{
-          jsfNs && element.getText().indexOf(':') != -1 ? new IdRefReference(element) {
+          jsfNs && element.getText().indexOf(':') == -1 ?
+          new IdRefReference(element):
+          new IdRefReference(element) {
             public boolean isSoft() {
-              return true;
+              final XmlAttributeDescriptor descriptor = ((XmlAttribute)parentElement).getDescriptor();
+              return descriptor != null ? !descriptor.hasIdRefType() : false;
             }
-          } :new IdRefReference(element)
+          }
         };
       }
       else {
