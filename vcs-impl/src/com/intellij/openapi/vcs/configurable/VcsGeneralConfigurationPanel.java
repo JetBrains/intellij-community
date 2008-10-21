@@ -6,8 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.committed.CacheSettingsDialog;
-import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsDialog;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -16,8 +14,6 @@ import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -47,8 +43,6 @@ public class VcsGeneralConfigurationPanel implements Configurable {
   private JPanel myRemoveConfirmationPanel;
   private JPanel myAddConfirmationPanel;
   private JCheckBox myCbOfferToMoveChanges;
-  private JButton myConfigureIgnoredFilesButton;
-  private JButton myConfigureHistoryCacheButton;
   private JComboBox myFailedCommitChangelistCombo;
 
   public VcsGeneralConfigurationPanel(final Project project) {
@@ -80,18 +74,6 @@ public class VcsGeneralConfigurationPanel implements Configurable {
     }
 
     myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());
-
-    myConfigureIgnoredFilesButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        IgnoredSettingsDialog.configure(myProject);
-      }
-    });
-    myConfigureHistoryCacheButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        CacheSettingsDialog.showSettingsDialog(myProject);
-      }
-    });
-    myConfigureHistoryCacheButton.setEnabled(! project.isDefault());
   }
 
   public void apply() throws ConfigurationException {

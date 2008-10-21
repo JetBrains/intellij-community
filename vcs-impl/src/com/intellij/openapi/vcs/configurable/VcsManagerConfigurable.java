@@ -6,9 +6,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.committed.CacheSettingsPanel;
+import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract {
   public static final Icon ICON = IconLoader.getIcon("/general/configurableVcs.png");
@@ -47,12 +51,19 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
         generalPanel.updateAvailableOptions(activeVcses);
       }
     });
-    return new Configurable[]{
-      mappings,
-      generalPanel, 
-      new VcsBackgroundOperationsConfigurationPanel(myProject),
-      new IssueNavigationConfigurationPanel(myProject)
-    };
+
+    List<Configurable> result = new ArrayList<Configurable>();
+
+    result.add(mappings);
+    result.add(generalPanel);
+    result.add(new VcsBackgroundOperationsConfigurationPanel(myProject));
+    result.add(new IgnoredSettingsPanel(myProject));
+    if (!myProject.isDefault()) {
+      result.add(new CacheSettingsPanel(myProject));
+    }
+    result.add(new IssueNavigationConfigurationPanel(myProject));
+
+    return result.toArray(new Configurable[result.size()]);
 
   }
 
