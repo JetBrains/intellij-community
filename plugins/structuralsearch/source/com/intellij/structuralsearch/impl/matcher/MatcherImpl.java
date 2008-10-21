@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -234,6 +235,7 @@ public class MatcherImpl {
     }
 
     final Language ourPatternLanguage = ((LanguageFileType)options.getFileType()).getLanguage();
+    final Language ourPatternLanguage2 = ourPatternLanguage == StdLanguages.XML ? StdLanguages.XHTML:null;
     SearchScope searchScope = compiledPattern.getScope();
     boolean ourOptimizedScope = searchScope != null;
     if (!ourOptimizedScope) searchScope = options.getScope();
@@ -251,7 +253,7 @@ public class MatcherImpl {
               final FileViewProvider viewProvider = file.getViewProvider();
 
               for(Language lang: viewProvider.getLanguages()) {
-                if (lang != ourPatternLanguage) continue;
+                if (lang != ourPatternLanguage && lang != ourPatternLanguage2) continue;
                 ++totalFilesToScan;
                 scheduler.addOneTask( new MatchOneFile(viewProvider.getPsi(lang)) );
               }
