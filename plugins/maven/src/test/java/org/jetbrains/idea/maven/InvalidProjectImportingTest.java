@@ -122,7 +122,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     MavenProjectModel root = getRootProjects().get(0);
     assertProblems(root, true);
 
-    assertProblems(getModules(root).get(0), false, "Pom file has syntax errors.");
+    assertProblems(getModules(root).get(0), false, "end tag name </project> must be the same as start tag <version> from line 1 (position: TEXT seen ...</artifactId><version>1</project>... @1:348) ");
   }
 
   public void testSeveratInvalidModulesAndWithSameName() throws Exception {

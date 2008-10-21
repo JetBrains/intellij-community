@@ -90,7 +90,6 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     return null;
   }
 
-
   private static final Comparator<SimpleNode> nodeComparator = new Comparator<SimpleNode>() {
     public int compare(SimpleNode o1, SimpleNode o2) {
       if (o1 instanceof ProfilesNode) return -1;
@@ -572,7 +571,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     }
 
     private void updateNode() {
-      updateErrorLevelAndDescription();
+      updateErrorLevel();
       updateNameAndDescription();
 
       savedPath = myProjectModel.getFile().getPath();
@@ -583,11 +582,10 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       regroupNested();
     }
 
-    private void updateErrorLevelAndDescription() {
+    private void updateErrorLevel() {
       List<MavenProjectModelProblem> problems = myProjectModel.getProblems();
       if (problems.isEmpty()) {
         setNodeErrorLevel(ErrorLevel.NONE);
-        setDescription("No problem");
       }
       else {
         boolean isError = false;
@@ -597,7 +595,6 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
             break;
           }
         }
-        setDescription("Problems!!!");
         setNodeErrorLevel(isError ? ErrorLevel.ERROR : ErrorLevel.WARNING);
       }
     }
@@ -675,12 +672,30 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
         else {
           desc.append("<td colspan=2></td>");
         }
-        desc.append("<td valign=top>" + each.getDescription());
+        desc.append("<td valign=top>" + wrappedText(each));
         desc.append("</tr>");
       }
       desc.append("</table>");
       desc.append("</td>");
       desc.append("</tr>");
+    }
+
+    private String wrappedText(MavenProjectModelProblem each) {
+      String text = each.getDescription();
+      StringBuffer result = new StringBuffer();
+      int count = 0;
+      for (int i = 0; i < text.length(); i++) {
+        char ch = text.charAt(i);
+        result.append(ch);
+
+        if (count++ > 80) {
+          if (ch == ' ') {
+            count = 0;
+            result.append("<br>");
+          }
+        }
+      }
+      return result.toString();
     }
 
     private List<MavenProjectModelProblem> collectProblems(boolean critical) {
