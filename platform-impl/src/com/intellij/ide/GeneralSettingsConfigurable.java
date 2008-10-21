@@ -1,9 +1,7 @@
 package com.intellij.ide;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -58,15 +56,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     catch (NumberFormatException e) {
     }
 
-    //
 
-    if (!FileTypeManagerEx.getInstanceEx().isIgnoredFilesListEqualToCurrent(myComponent.myIgnoreFilesField.getText())) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          FileTypeManagerEx.getInstanceEx().setIgnoredFilesList(myComponent.myIgnoreFilesField.getText());
-        }
-      });
-    }
 
     final Object item = myComponent.myEncodingsCombo.getSelectedItem();
     if (SYSTEM_DEFAULT_ENCODING.equals(item)) {
@@ -98,17 +88,13 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     }
     isModified |= inactiveTimeout > 0 && settings.getInactiveTimeout() != inactiveTimeout;
 
-    isModified |= !FileTypeManagerEx.getInstanceEx().isIgnoredFilesListEqualToCurrent(myComponent.myIgnoreFilesField.getText());
+
 
     isModified |= settings.isSearchInBackground() != myComponent.mySearchInBackground.isSelected();
 
     isModified |= isEncodingModified();
 
     return isModified;
-  }
-
-  private static boolean isModified(JToggleButton checkBox, boolean value) {
-    return checkBox.isSelected() != value;
   }
 
   public JComponent createComponent() {
@@ -130,7 +116,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
     myComponent.myBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, descriptor);
 
-    myComponent.myIgnoreFilesField.setText("##### ##############");
+
 
     return myComponent.myPanel;
   }
@@ -158,7 +144,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     myComponent.myConfirmExit.setSelected(settings.isConfirmExit());
     myComponent.myCyclicBufferSize.setText(settings.getCyclicBufferSize() / 1024 + "");
 
-    myComponent.myIgnoreFilesField.setText(FileTypeManagerEx.getInstanceEx().getIgnoredFilesList());
+    
 
     if (settings.isUseDefaultBrowser()) {
       myComponent.myUseSystemDefaultBrowser.setSelected(true);
@@ -204,7 +190,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
   private static class MyComponent {
     JPanel myPanel;
     private TextFieldWithBrowseButton myBrowserPathField;
-    private JTextField myIgnoreFilesField;
+
     private JCheckBox myChkReopenLastProject;
     private JCheckBox myChkSyncOnFrameActivation;
     private JCheckBox myChkSaveOnFrameDeactivation;

@@ -59,6 +59,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       }
     });
     myPatterns.attachActions(this);
+    myFileTypePanel.myIgnoreFilesField.setText("##### ##############");
     return myFileTypePanel.getComponent();
   }
 
@@ -97,6 +98,9 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
+        if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
+          myManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
+        }
         myManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
       }
     });
@@ -109,9 +113,12 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
     updateFileTypeList();
     updateExtensionList();
+    
+    myFileTypePanel.myIgnoreFilesField.setText(myManager.getIgnoredFilesList());
   }
 
   public boolean isModified() {
+    if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) return true;
     HashSet types = new HashSet(Arrays.asList(getModifiableFileTypes()));
     return !myTempPatternsTable.equals(myManager.getExtensionMap()) || !myTempFileTypes.equals(types) ||
            !myOriginalToEditedMap.isEmpty();
@@ -486,6 +493,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     private JPanel myWholePanel;
     private RecognizedFileTypes myRecognizedFileType;
     private PatternsPanel myPatterns;
+    private JTextField myIgnoreFilesField;
 
     public JComponent getComponent() {
       return myWholePanel;
