@@ -103,10 +103,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     checkApply(roots, ProjectBundle.message("rename.message.prefix.scope"), ProjectBundle.message("rename.scope.title"));
     super.apply();
     processScopes();
-    myState.order.clear();
-    for (int i = 0; i < myRoot.getChildCount(); i++) {
-      myState.order.add(((MyNode)myRoot.getChildAt(i)).getDisplayName());
-    }
+
+    loadStateOrder();
   }
 
   public boolean isModified() {
@@ -148,6 +146,9 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     myRoot.removeAllChildren();
     loadScopes(mySharedScopesManager);
     loadScopes(myLocalScopesManager);
+
+    loadStateOrder();
+
     TreeUtil.sort(myRoot, new Comparator<DefaultMutableTreeNode>() {
       public int compare(final DefaultMutableTreeNode o1, final DefaultMutableTreeNode o2) {
         final int idx1 = myState.order.indexOf(((MyNode)o1).getDisplayName());
@@ -155,6 +156,13 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
         return idx1 - idx2;
       }
     });
+  }
+
+  private void loadStateOrder() {
+    myState.order.clear();
+    for (int i = 0; i < myRoot.getChildCount(); i++) {
+      myState.order.add(((MyNode)myRoot.getChildAt(i)).getDisplayName());
+    }
   }
 
   private void loadScopes(final NamedScopesHolder holder) {
