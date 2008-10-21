@@ -195,25 +195,30 @@ public class Alarm implements Disposable {
     public void run() {
       try {
         if (!myDisposed) {
-          final Runnable task = myTask;
-          if (task == null) return;
-          myTask = null;
-          if (myModalityState != null) {
-            synchronized (LOCK) {
-              myRequests.remove(this);
+          synchronized (LOCK) {
+            if (myTask == null) return;
+          }
+
+          final Runnable scheduledTask = new Runnable() {
+            public void run() {
+              final Runnable task;
+              synchronized (LOCK) {
+                task = myTask;
+                if (task == null) return;
+                myTask = null;
+
+                myRequests.remove(Request.this);
+              }
+
+              task.run();
             }
-            ApplicationManager.getApplication().invokeLater(task, myModalityState);
+          };
+
+          if (myModalityState != null) {
+            ApplicationManager.getApplication().invokeLater(scheduledTask, myModalityState);
           }
           else {
-            myFuture = myExecutorService.submit(new Runnable() {
-              public void run() {
-                synchronized (LOCK) {
-                  myRequests.remove(Request.this);
-                }
-
-                task.run();
-              }
-            });
+            myFuture = myExecutorService.submit(scheduledTask);
           }
         }
       }
@@ -239,10 +244,12 @@ public class Alarm implements Disposable {
     }
 
     private void cancel() {
-      if (myFuture != null) {
-        myFuture.cancel(false);
+      synchronized (LOCK) {
+        if (myFuture != null) {
+          myFuture.cancel(false);
+        }
+        myTask = null;
       }
-      myTask = null;
     }
   }
 
