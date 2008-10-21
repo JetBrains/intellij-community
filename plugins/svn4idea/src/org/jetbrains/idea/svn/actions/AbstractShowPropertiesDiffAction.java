@@ -4,6 +4,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -14,6 +17,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
@@ -28,6 +32,7 @@ import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -87,30 +92,64 @@ abstract class AbstractShowPropertiesDiffAction extends AnAction {
     }
 
     final Change change = changes[0];
-    final SvnVcs vcs = SvnVcs.getInstance(project);
-    final SVNWCClient client = vcs.createWCClient();
 
-    try {
-      final SVNRevision beforeRevisionValue = getBeforeRevisionValue(change, vcs);
-      final SVNRevision afterRevision = getAfterRevisionValue(change, vcs);
+    final CalculateAndShow worker = new CalculateAndShow(project, change, e.getPresentation().getText());
+    ProgressManager.getInstance().run(worker);
+  }
 
-      final String beforeContent = getPropertyList(change.getBeforeRevision(), beforeRevisionValue, client);
-      // gets exactly WORKING revision property
-      final String afterContent = getPropertyList(change.getAfterRevision(), afterRevision, client);
+  private class CalculateAndShow extends Task.Backgroundable {
+    private final Change myChange;
+    private String myBeforeContent;
+    private String myAfterContent;
+    private SVNRevision myBeforeRevisionValue;
+    private SVNRevision myAfterRevision;
+    private SVNException myException;
+    private final String myErrorTitle;
 
-      final SimpleDiffRequest diffRequest = new SimpleDiffRequest(project, getDiffWindowTitle(change));
-      if (compareRevisions(beforeRevisionValue, afterRevision) >= 0) {
-        // before ahead
-        diffRequest.setContents(new SimpleContent(afterContent), new SimpleContent(beforeContent));
-        diffRequest.setContentTitles(revisionToString(afterRevision), revisionToString(beforeRevisionValue));
-      } else {
-        diffRequest.setContents(new SimpleContent(beforeContent), new SimpleContent(afterContent));
-        diffRequest.setContentTitles(revisionToString(beforeRevisionValue), revisionToString(afterRevision));
-      }
-      DiffManager.getInstance().getDiffTool().show(diffRequest);
+    private CalculateAndShow(@Nullable final Project project, final Change change, final String errorTitle) {
+      super(project, SvnBundle.message("fetching.properties.contents.progress.title"), true, Backgroundable.DEAF);
+      myChange = change;
+      myErrorTitle = errorTitle;
     }
-    catch (SVNException exc) {
-      Messages.showErrorDialog(exc.getMessage(), e.getPresentation().getText());
+
+    public void run(@NotNull final ProgressIndicator indicator) {
+      final SvnVcs vcs = SvnVcs.getInstance(myProject);
+      final SVNWCClient client = vcs.createWCClient();
+
+      try {
+        myBeforeRevisionValue = getBeforeRevisionValue(myChange, vcs);
+        myAfterRevision = getAfterRevisionValue(myChange, vcs);
+
+        myBeforeContent = getPropertyList(myChange.getBeforeRevision(), myBeforeRevisionValue, client);
+        indicator.checkCanceled();
+        // gets exactly WORKING revision property
+        myAfterContent = getPropertyList(myChange.getAfterRevision(), myAfterRevision, client);
+      }
+      catch (SVNException exc) {
+        myException = exc;
+      }
+
+      // since sometimes called from modal dialog (commit changes dialog)
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          if (myException != null) {
+            Messages.showErrorDialog(myException.getMessage(), myErrorTitle);
+            return;
+          }
+          if (myBeforeContent != null && myAfterContent != null && myBeforeRevisionValue != null && myAfterRevision != null) {
+            final SimpleDiffRequest diffRequest = new SimpleDiffRequest(myProject, getDiffWindowTitle(myChange));
+            if (compareRevisions(myBeforeRevisionValue, myAfterRevision) >= 0) {
+              // before ahead
+              diffRequest.setContents(new SimpleContent(myAfterContent), new SimpleContent(myBeforeContent));
+              diffRequest.setContentTitles(revisionToString(myAfterRevision), revisionToString(myBeforeRevisionValue));
+            } else {
+              diffRequest.setContents(new SimpleContent(myBeforeContent), new SimpleContent(myAfterContent));
+              diffRequest.setContentTitles(revisionToString(myBeforeRevisionValue), revisionToString(myAfterRevision));
+            }
+            DiffManager.getInstance().getDiffTool().show(diffRequest);
+          }
+        }
+      });
     }
   }
 
@@ -165,13 +204,26 @@ abstract class AbstractShowPropertiesDiffAction extends AnAction {
     final List<SVNPropertyData> lines = new ArrayList<SVNPropertyData>();
 
     final File ioFile = contentRevision.getFile().getIOFile();
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.checkCanceled();
+      indicator.setText(SvnBundle.message("show.properties.diff.progress.text.revision.information", revision.toString()));
+    }
 
     final ISVNPropertyHandler propertyHandler = new ISVNPropertyHandler() {
       public void handleProperty(final File path, final SVNPropertyData property) throws SVNException {
+        if (indicator != null) {
+          indicator.checkCanceled();
+          indicator.setText2(SvnBundle.message("show.properties.diff.progress.text2.property.information", property.getName()));
+        }
         lines.add(property);
       }
 
       public void handleProperty(final SVNURL url, final SVNPropertyData property) throws SVNException {
+        if (indicator != null) {
+          indicator.checkCanceled();
+          indicator.setText2(SvnBundle.message("show.properties.diff.progress.text2.property.information", property.getName()));
+        }
         lines.add(property);
       }
 
