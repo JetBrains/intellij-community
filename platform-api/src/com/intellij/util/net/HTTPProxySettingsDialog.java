@@ -54,7 +54,7 @@ public class HTTPProxySettingsDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    return panel;
+    return panel.getComponent();
   }
 
   protected Action[] createActions() {

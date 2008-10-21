@@ -109,6 +109,8 @@
 
   <!-- Plugins -->
   <applicationConfigurable implementation="com.intellij.ide.plugins.PluginManagerConfigurable"/>
+  <applicationConfigurable implementation="com.intellij.util.net.HttpConfigurable"/>
+  <applicationConfigurable implementation="com.intellij.openapi.diff.impl.external.DiffOptionsForm"/>
 
   <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
   <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"

@@ -17,6 +17,8 @@ package com.intellij.util.net;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -24,7 +26,9 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.GuiUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.net.*;
 
@@ -35,7 +39,7 @@ import java.net.*;
  * Time: 3:58:23 PM
  * To change this template use Options | File Templates.
  */
-public class HttpConfigurable implements JDOMExternalizable, ApplicationComponent {
+public class HttpConfigurable implements JDOMExternalizable, ApplicationComponent, SearchableConfigurable {
   public boolean USE_HTTP_PROXY = false;
   public String PROXY_HOST = "";
   public int PROXY_PORT = 80;
@@ -44,6 +48,8 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
   public String PROXY_LOGIN = "";
   public String PROXY_PASSWORD_CRYPT = "";
   public boolean KEEP_PROXY_PASSWORD = false;
+
+  private HTTPProxySettingsPanel myPanel;
 
   public static HttpConfigurable getInstance() {
     return ServiceManager.getService(HttpConfigurable.class);
@@ -149,5 +155,53 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
       System.setProperty("proxySet", "false");
       Authenticator.setDefault(null);
     }
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(final String option) {
+    return null;
+  }
+
+  @Nls
+  public String getDisplayName() {
+    return "HTTP Proxy";
+  }
+
+  public Icon getIcon() {
+    return null;
+  }
+
+  public String getHelpTopic() {
+    return "http.proxy";
+  }
+
+  public JComponent createComponent() {
+    if (myPanel == null) {
+      myPanel = new HTTPProxySettingsPanel();
+    }
+    return myPanel.getComponent();
+  }
+
+  public boolean isModified() {
+    return myPanel != null && myPanel.isModified();
+  }
+
+  public void apply() throws ConfigurationException {
+    if (myPanel != null) {
+      myPanel.apply();
+    }
+  }
+
+  public void reset() {
+    if (myPanel != null) {
+      myPanel.reset();
+    }
+  }
+
+  public void disposeUIResources() {
+    myPanel = null;
   }
 }

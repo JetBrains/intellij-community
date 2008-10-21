@@ -2,18 +2,20 @@ package com.intellij.openapi.diff.impl.external;
 
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
 import com.intellij.util.config.StringProperty;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class DiffOptionsForm {
+public class DiffOptionsForm implements SearchableConfigurable {
   private JComponent myPanel;
   // Garbage
   private JCheckBox myEnableFolders;
@@ -51,6 +53,30 @@ public class DiffOptionsForm {
     for (ToolPath tool : myTools) {
       tool.reset();
     }
+  }
+
+  public void disposeUIResources() {
+  }
+
+  @Nls
+  public String getDisplayName() {
+    return "Diff";
+  }
+
+  public Icon getIcon() {
+    return null;
+  }
+
+  public String getHelpTopic() {
+    return "diff";
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(final String option) {
+    return null;
   }
 
   private static class ToolPath {

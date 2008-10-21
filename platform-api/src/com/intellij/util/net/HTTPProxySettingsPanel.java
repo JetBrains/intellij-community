@@ -28,7 +28,7 @@ import java.awt.event.ActionListener;
  * Time: 3:52:47 PM
  * To change this template use Options | File Templates.
  */
-public class HTTPProxySettingsPanel extends JPanel {
+public class HTTPProxySettingsPanel{
   private JPanel myMainPanel;
 
   private JTextField myProxyLoginTextField;
@@ -64,8 +64,6 @@ public class HTTPProxySettingsPanel extends JPanel {
   }
 
   public HTTPProxySettingsPanel() {
-    add(myMainPanel);
-
     myProxyAuthCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         enableProxyAuthentication(myProxyAuthCheckBox.isSelected());
@@ -77,8 +75,6 @@ public class HTTPProxySettingsPanel extends JPanel {
         enableProxy(myUseProxyCheckBox.isSelected());
       }
     });
-
-    reset();
   }
 
   public void reset() {
@@ -132,5 +128,9 @@ public class HTTPProxySettingsPanel extends JPanel {
     myProxyPasswordTextField.setEnabled(enabled);
 
     myRememberProxyPasswordCheckBox.setEnabled(enabled);
+  }
+
+  public JComponent getComponent() {
+    return myMainPanel;
   }
 }

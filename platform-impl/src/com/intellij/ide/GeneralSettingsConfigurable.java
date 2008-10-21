@@ -1,8 +1,6 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diff.impl.external.DiffOptionsForm;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
@@ -14,7 +12,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.util.net.HTTPProxySettingsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,13 +19,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.nio.charset.Charset;
 
 public class GeneralSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable {
-  private DiffOptionsForm myDiffOptions;
   private MyComponent myComponent;
   @NonNls private static final String SYSTEM_DEFAULT_ENCODING = "System Default";
 
@@ -72,9 +67,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
         }
       });
     }
-    getDiffOptions().apply();
-
-    myComponent.myHTTPProxySettingsEditor.apply();
 
     final Object item = myComponent.myEncodingsCombo.getSelectedItem();
     if (SYSTEM_DEFAULT_ENCODING.equals(item)) {
@@ -108,13 +100,11 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
 
     isModified |= !FileTypeManagerEx.getInstanceEx().isIgnoredFilesListEqualToCurrent(myComponent.myIgnoreFilesField.getText());
 
-    isModified |= myComponent.myHTTPProxySettingsEditor.isModified();
-
     isModified |= settings.isSearchInBackground() != myComponent.mySearchInBackground.isSelected();
 
     isModified |= isEncodingModified();
 
-    return isModified || getDiffOptions().isModified();
+    return isModified;
   }
 
   private static boolean isModified(JToggleButton checkBox, boolean value) {
@@ -125,10 +115,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
 
 //    optionGroup.add(getDiffOptions().getPanel());
     myComponent = new MyComponent();
-    myComponent.myDiffOptionsPanel.setLayout(new BorderLayout());
-    myComponent.myDiffOptionsPanel.add(getDiffOptions().createComponent(), BorderLayout.CENTER);
-
-    // AutoSave if inactive
 
     myComponent.myChkAutoSaveIfInactive.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
@@ -159,7 +145,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
 
   public void reset() {
     GeneralSettings settings = GeneralSettings.getInstance();
-    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     myComponent.myBrowserPathField.setText(settings.getBrowserPath());
     myComponent.myChkReopenLastProject.setSelected(settings.isReopenLastProject());
     myComponent.myChkSyncOnFrameActivation.setSelected(settings.isSyncOnFrameActivation());
@@ -174,7 +159,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     myComponent.myCyclicBufferSize.setText(settings.getCyclicBufferSize() / 1024 + "");
 
     myComponent.myIgnoreFilesField.setText(FileTypeManagerEx.getInstanceEx().getIgnoredFilesList());
-    getDiffOptions().reset();
 
     if (settings.isUseDefaultBrowser()) {
       myComponent.myUseSystemDefaultBrowser.setSelected(true);
@@ -183,7 +167,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
       myComponent.myUseUserDefinedBrowser.setSelected(true);
     }
     myComponent.updateBrowserField();
-    myComponent.myHTTPProxySettingsEditor.reset();
 
     myComponent.mySearchInBackground.setSelected(settings.isSearchInBackground());
 
@@ -202,7 +185,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
 
   public void disposeUIResources() {
     myComponent = null;
-    myDiffOptions = null;
   }
 
   @NotNull
@@ -228,15 +210,11 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     private JCheckBox myChkSaveOnFrameDeactivation;
     private JCheckBox myChkAutoSaveIfInactive;
     private JTextField myTfInactiveTimeout;
-    private JPanel myDiffOptionsPanel;
     private JRadioButton myUseSystemDefaultBrowser;
     private JRadioButton myUseUserDefinedBrowser;
     private JCheckBox myUseCyclicBuffer;
     private JTextField myCyclicBufferSize;
     public JCheckBox myConfirmExit;
-    private JPanel myHTTPProxyPanel;
-
-    private final HTTPProxySettingsPanel myHTTPProxySettingsEditor;
     private JCheckBox mySearchInBackground;
     private JComboBox myEncodingsCombo;
 
@@ -254,10 +232,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
         myUseSystemDefaultBrowser.setVisible(false);
         myUseUserDefinedBrowser.setVisible(false);
       }
-
-      myHTTPProxySettingsEditor = new HTTPProxySettingsPanel();
-      myHTTPProxyPanel.setLayout(new BorderLayout());
-      myHTTPProxyPanel.add(myHTTPProxySettingsEditor, BorderLayout.WEST);
     }
 
     private void updateBrowserField() {
@@ -267,11 +241,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
       myBrowserPathField.getTextField().setEnabled(myUseUserDefinedBrowser.isSelected());
       myBrowserPathField.getButton().setEnabled(myUseUserDefinedBrowser.isSelected());
     }
-  }
-
-  private DiffOptionsForm getDiffOptions() {
-    if (myDiffOptions == null) myDiffOptions = new DiffOptionsForm();
-    return myDiffOptions;
   }
 
   public String getId() {
