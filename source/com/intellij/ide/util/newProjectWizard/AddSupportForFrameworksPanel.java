@@ -5,7 +5,9 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.facet.impl.ui.FacetTypeFrameworkSupportProvider;
-import com.intellij.facet.impl.ui.libraries.*;
+import com.intellij.facet.impl.ui.libraries.LibrariesCompositionDialog;
+import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
+import com.intellij.facet.impl.ui.libraries.LibraryDownloadingMirrorsMap;
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.facet.ui.libraries.RemoteRepositoryInfo;
@@ -17,10 +19,11 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.graph.CachingSemiGraph;
-import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.DFSTBuilder;
+import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,11 +44,12 @@ public class AddSupportForFrameworksPanel {
   private static final int INDENT = 20;
   private static final int SPACE_AFTER_TITLE = 5;
   private static final int VERTICAL_SPACE = 5;
+  private static final int GAP_BETWEEN_GROUPS = 10;
   private JPanel myMainPanel;
   private JPanel myFrameworksTreePanel;
   private JButton myChangeButton;
   private JPanel myDownloadingOptionsPanel;
-  private List<FrameworkSupportSettings> myRoots;
+  private List<List<FrameworkSupportSettings>> myGroups;
   private final LibrariesContainer myLibrariesContainer;
   private final Computable<String> myBaseDirForLibrariesGetter;
   private final List<FrameworkSupportProvider> myProviders;
@@ -60,7 +64,7 @@ public class AddSupportForFrameworksPanel {
     myMirrorsMap = creatMirrorsMap();
 
     final JPanel treePanel = new JPanel(new GridBagLayout());
-    addSettingsComponents(myRoots, treePanel, 0);
+    addGroupPanels(myGroups, treePanel, 0);
     myFrameworksTreePanel.add(treePanel, BorderLayout.WEST);
     myChangeButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -120,31 +124,42 @@ public class AddSupportForFrameworksPanel {
     return true;
   }
 
-  private JPanel addSettingsComponents(final List<FrameworkSupportSettings> list, JPanel treePanel, int level) {
-    for (FrameworkSupportSettings root : list) {
-      addSettingsComponents(root, treePanel, level);
+  private JPanel addGroupPanels(final List<List<FrameworkSupportSettings>> groups, JPanel treePanel, int level) {
+    boolean first = true;
+    for (List<FrameworkSupportSettings> group : groups) {
+      addSettingsComponents(group, treePanel, level, !first);
+      first = false;
     }
     return treePanel;
   }
 
-  private void addSettingsComponents(final FrameworkSupportSettings frameworkSupport, JPanel parentPanel, int level) {
+  private void addSettingsComponents(final List<FrameworkSupportSettings> list, JPanel treePanel, int level, boolean addGapBefore) {
+    boolean first = true;
+    for (FrameworkSupportSettings root : list) {
+      addSettingsComponents(root, treePanel, level, first && addGapBefore);
+      first = false;
+    }
+  }
+
+  private void addSettingsComponents(final FrameworkSupportSettings frameworkSupport, JPanel parentPanel, int level, boolean addGapBefore) {
     if (frameworkSupport.getParentNode() != null) {
       frameworkSupport.setEnabled(false);
     }
     JComponent configurableComponent = frameworkSupport.getConfigurable().getComponent();
     int gridwidth = configurableComponent != null ? 1 : GridBagConstraints.REMAINDER;
+    final int gap = addGapBefore ? GAP_BETWEEN_GROUPS : 0;
     parentPanel.add(frameworkSupport.myCheckBox, createConstraints(0, GridBagConstraints.RELATIVE, gridwidth, 1,
-                                                                   new Insets(0, INDENT * level, VERTICAL_SPACE, SPACE_AFTER_TITLE)));
+                                                                   new Insets(gap, INDENT * level, VERTICAL_SPACE, SPACE_AFTER_TITLE)));
     if (configurableComponent != null) {
       parentPanel.add(configurableComponent, createConstraints(1, GridBagConstraints.RELATIVE, GridBagConstraints.REMAINDER, 1,
-                                                               new Insets(0, 0, VERTICAL_SPACE, 0)));
+                                                               new Insets(gap, 0, VERTICAL_SPACE, 0)));
     }
 
     if (frameworkSupport.myChildren.isEmpty()) {
       return;
     }
 
-    addSettingsComponents(frameworkSupport.myChildren, parentPanel, level + 1);
+    addSettingsComponents(frameworkSupport.myChildren, parentPanel, level + 1, false);
   }
 
   private static GridBagConstraints createConstraints(final int gridx, final int gridy, final int gridwidth, final int gridheight,
@@ -155,40 +170,30 @@ public class AddSupportForFrameworksPanel {
 
   private void createNodes() {
     Map<String, FrameworkSupportSettings> nodes = new HashMap<String, FrameworkSupportSettings>();
+    MultiValuesMap<String, FrameworkSupportSettings> groups = new MultiValuesMap<String, FrameworkSupportSettings>(true);
     for (FrameworkSupportProvider frameworkSupport : myProviders) {
-      createNode(frameworkSupport, nodes);
+      createNode(frameworkSupport, nodes, groups);
     }
 
-    myRoots = new ArrayList<FrameworkSupportSettings>();
-    for (FrameworkSupportSettings settings : nodes.values()) {
-      if (settings.getParentNode() == null) {
-        myRoots.add(settings);
+    myGroups = new ArrayList<List<FrameworkSupportSettings>>();
+    for (String groupId : groups.keySet()) {
+      final Collection<FrameworkSupportSettings> collection = groups.get(groupId);
+      if (collection != null) {
+        final List<FrameworkSupportSettings> group = new ArrayList<FrameworkSupportSettings>();
+        for (FrameworkSupportSettings settings : collection) {
+          if (settings.getParentNode() == null) {
+            group.add(settings);
+          }
+        }
+        sortByTitle(group);
+        myGroups.add(group);
       }
-    }
-
-    DFSTBuilder<FrameworkSupportProvider> builder = new DFSTBuilder<FrameworkSupportProvider>(GraphGenerator.create(CachingSemiGraph.create(new ProvidersGraph(myProviders))));
-    if (!builder.isAcyclic()) {
-      Pair<FrameworkSupportProvider,FrameworkSupportProvider> pair = builder.getCircularDependency();
-      LOG.error("Circular dependency between providers '" + pair.getFirst().getId() + "' and '" + pair.getSecond().getId() + "' was found.");
-    }
-
-    final Comparator<FrameworkSupportProvider> comparator = builder.comparator();
-    sortNodes(myRoots, new Comparator<FrameworkSupportSettings>() {
-      public int compare(final FrameworkSupportSettings o1, final FrameworkSupportSettings o2) {
-        return comparator.compare(o1.getProvider(), o2.getProvider());
-      }
-    });
-  }
-
-  private static void sortNodes(final List<FrameworkSupportSettings> list, final Comparator<FrameworkSupportSettings> comparator) {
-    Collections.sort(list, comparator);
-    for (FrameworkSupportSettings frameworkSupportSettings : list) {
-      sortNodes(frameworkSupportSettings.myChildren, comparator);
     }
   }
 
   @Nullable
-  private FrameworkSupportSettings createNode(final FrameworkSupportProvider provider, final Map<String, FrameworkSupportSettings> nodes) {
+  private FrameworkSupportSettings createNode(final FrameworkSupportProvider provider, final Map<String, FrameworkSupportSettings> nodes,
+                                              final MultiValuesMap<String, FrameworkSupportSettings> groups) {
     FrameworkSupportSettings node = nodes.get(provider.getId());
     if (node == null) {
       String underlyingFrameworkId = provider.getUnderlyingFrameworkId();
@@ -199,10 +204,11 @@ public class AddSupportForFrameworksPanel {
           LOG.info("Cannot find id = " + underlyingFrameworkId);
           return null;
         }
-        parentNode = createNode(parentProvider, nodes);
+        parentNode = createNode(parentProvider, nodes, groups);
       }
       node = new FrameworkSupportSettings(provider, parentNode);
       nodes.put(provider.getId(), node);
+      groups.put(provider.getGroupId(), node);
     }
     return node;
   }
@@ -235,18 +241,25 @@ public class AddSupportForFrameworksPanel {
 
   private List<FrameworkSupportSettings> getFrameworksSettingsList(final boolean selectedOnly) {
     ArrayList<FrameworkSupportSettings> list = new ArrayList<FrameworkSupportSettings>();
-    if (myRoots != null) {
-      addChildFrameworks(myRoots, list, selectedOnly);
+    if (myGroups != null) {
+      for (List<FrameworkSupportSettings> group : myGroups) {
+        addChildFrameworks(group, list, selectedOnly);
+      }
     }
     return list;
   }
 
-  private static void sortByTitle(List<FrameworkSupportProvider> providers) {
-    Collections.sort(providers, new Comparator<FrameworkSupportProvider>() {
-      public int compare(final FrameworkSupportProvider o1, final FrameworkSupportProvider o2) {
-        return getTitleWithoutMnemonic(o2).compareTo(getTitleWithoutMnemonic(o1));
+  private static void sortByTitle(List<FrameworkSupportSettings> settingsList) {
+    if (settingsList.isEmpty()) return;
+
+    Collections.sort(settingsList, new Comparator<FrameworkSupportSettings>() {
+      public int compare(final FrameworkSupportSettings o1, final FrameworkSupportSettings o2) {
+        return getTitleWithoutMnemonic(o1.getProvider()).compareTo(getTitleWithoutMnemonic(o2.getProvider()));
       }
     });
+    for (FrameworkSupportSettings settings : settingsList) {
+      sortByTitle(settings.myChildren);
+    }
   }
 
   private static String getTitleWithoutMnemonic(final FrameworkSupportProvider provider) {
@@ -266,6 +279,8 @@ public class AddSupportForFrameworksPanel {
   public void addSupport(final Module module, final ModifiableRootModel rootModel) {
     List<Library> addedLibraries = new ArrayList<Library>();
     List<FrameworkSupportSettings> selectedFrameworks = getFrameworksSettingsList(true);
+    sortFrameworks(selectedFrameworks);
+
     for (FrameworkSupportSettings settings : selectedFrameworks) {
       FrameworkSupportConfigurable configurable = settings.getConfigurable();
 
@@ -279,6 +294,21 @@ public class AddSupportForFrameworksPanel {
         ((FacetTypeFrameworkSupportProvider)provider).processAddedLibraries(module, addedLibraries);
       }
     }
+  }
+
+  private void sortFrameworks(final List<FrameworkSupportSettings> selectedFrameworks) {
+    DFSTBuilder<FrameworkSupportProvider> builder = new DFSTBuilder<FrameworkSupportProvider>(GraphGenerator.create(CachingSemiGraph.create(new ProvidersGraph(myProviders))));
+    if (!builder.isAcyclic()) {
+      Pair<FrameworkSupportProvider,FrameworkSupportProvider> pair = builder.getCircularDependency();
+      LOG.error("Circular dependency between providers '" + pair.getFirst().getId() + "' and '" + pair.getSecond().getId() + "' was found.");
+    }
+
+    final Comparator<FrameworkSupportProvider> comparator = builder.comparator();
+    Collections.sort(selectedFrameworks, new Comparator<FrameworkSupportSettings>() {
+      public int compare(final FrameworkSupportSettings o1, final FrameworkSupportSettings o2) {
+        return comparator.compare(o1.getProvider(), o2.getProvider());
+      }
+    });
   }
 
   public class FrameworkSupportSettings {
@@ -360,7 +390,6 @@ public class AddSupportForFrameworksPanel {
 
     public ProvidersGraph(final List<FrameworkSupportProvider> frameworkSupportProviders) {
       myFrameworkSupportProviders = new ArrayList<FrameworkSupportProvider>(frameworkSupportProviders);
-      sortByTitle(myFrameworkSupportProviders);
     }
 
     public Collection<FrameworkSupportProvider> getNodes() {
@@ -383,7 +412,6 @@ public class AddSupportForFrameworksPanel {
           dependencies.add(dependency);
         }
       }
-      sortByTitle(dependencies);
       return dependencies.iterator();
     }
   }

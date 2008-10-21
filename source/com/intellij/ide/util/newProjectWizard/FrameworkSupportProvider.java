@@ -46,6 +46,11 @@ public abstract class FrameworkSupportProvider {
     return myTitle;
   }
 
+  @Nullable @NonNls
+  public String getGroupId() {
+    return null;
+  }
+
   @Nullable
   public Icon getIcon() {
     return null;
