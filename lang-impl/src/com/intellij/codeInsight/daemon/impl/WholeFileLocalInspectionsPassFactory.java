@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.LOCAL_INSPECTIONS);
-    if (textRange == null) return null;
+    if (textRange == null || !wholeFileToolsDefined(file)) return null;
     return new LocalInspectionsPass(file, editor.getDocument(), 0, file.getTextLength()) {
       LocalInspectionTool[] getInspectionTools(InspectionProfileWrapper profile) {
         LocalInspectionTool[] tools = super.getInspectionTools(profile);
@@ -53,5 +54,14 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
         // inspected in LIP already
       }
     };
+  }
+
+  private boolean wholeFileToolsDefined(PsiFile file) {
+    final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(file);
+    final LocalInspectionTool[] tools = profile.getHighlightingLocalInspectionTools();
+    for (LocalInspectionTool tool : tools) {
+      if (tool.runForWholeFile()) return true;
+    }
+    return false;
   }
 }

@@ -4,6 +4,9 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.lang.ExternalLanguageAnnotators;
+import com.intellij.lang.Language;
+import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -12,6 +15,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author cdr
@@ -31,11 +36,20 @@ public class ExternalToolPassFactory extends AbstractProjectComponent implements
 
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    TextRange textRange = calculateRangeToProcessForSyntaxPass(editor);
-    return textRange == null ? null : new ExternalToolPass(file, editor, textRange.getStartOffset(), textRange.getEndOffset());
+    TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.EXTERNAL_TOOLS);
+    if (textRange == null || !externalAnnotatorsDefined(file)) {
+      return null;
+    }
+    return new ExternalToolPass(file, editor, textRange.getStartOffset(), textRange.getEndOffset());
   }
 
-  private static TextRange calculateRangeToProcessForSyntaxPass(Editor editor) {
-    return FileStatusMap.getDirtyTextRange(editor, Pass.EXTERNAL_TOOLS);
+  private static boolean externalAnnotatorsDefined(PsiFile file) {
+    for (Language language : file.getViewProvider().getLanguages()) {
+      final List<ExternalAnnotator> externalAnnotators = ExternalLanguageAnnotators.INSTANCE.allForLanguage(language);
+      if (!externalAnnotators.isEmpty()) {
+        return true;
+      }
+    }
+    return false;
   }
 }

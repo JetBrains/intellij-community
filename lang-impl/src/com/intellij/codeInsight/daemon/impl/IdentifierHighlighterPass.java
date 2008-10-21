@@ -2,7 +2,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -29,9 +28,9 @@ import java.util.Collections;
 public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   private final PsiFile myFile;
   private final Editor myEditor;
-  private Collection<TextRange> myReadAccessRanges = new ArrayList<TextRange>();
-  private Collection<TextRange> myWriteAccessRanges = new ArrayList<TextRange>();
-  private int myCaretOffset;
+  private final Collection<TextRange> myReadAccessRanges = new ArrayList<TextRange>();
+  private final Collection<TextRange> myWriteAccessRanges = new ArrayList<TextRange>();
+  private final int myCaretOffset;
   private PsiElement myTarget;
 
   private static final HighlightInfoType ourReadHighlightInfoType = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES);
@@ -45,9 +44,6 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(final ProgressIndicator progress) {
-    if (!CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET) {
-      return;
-    }
     myTarget = TargetElementUtilBase.getInstance().findTargetElement(myEditor,
                                                                      TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
                                                                      TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED,
