@@ -324,7 +324,7 @@ public class PsiUtilBase {
   }
 
   @NotNull
-  public static Language findLanguageFromElement(final PsiElement elt, final PsiFile file) {
+  private static Language findLanguageFromElement(final PsiElement elt, final PsiFile file) {
     return file.getViewProvider().getRootLanguage(elt);
   }
 
