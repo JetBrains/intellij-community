@@ -92,7 +92,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
         VirtualFile file = event.getFile();
         if (!file.isDirectory()) {
-          if (!((ApplicationImpl)ApplicationManager.getApplication()).isSaving() && event.getRequestor() == null) {
+          if (!((ApplicationImpl)ApplicationManager.getApplication()).isSaving() && !(event.getRequestor() instanceof StateStorage.SaveSession)) {
             saveChangedProjectFile(file, null, storage);
           }
         }
@@ -108,7 +108,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
             public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
               VirtualFile file = event.getFile();
-              if (!file.isDirectory() && !((ApplicationImpl)ApplicationManager.getApplication()).isSaving() && event.getRequestor() == null) {
+              if (!file.isDirectory() && !((ApplicationImpl)ApplicationManager.getApplication()).isSaving() && !(event.getRequestor() instanceof StateStorage.SaveSession)) {
                 saveChangedProjectFile(file, project, storage);
               }
             }

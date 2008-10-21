@@ -1,16 +1,18 @@
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.changes.committed.CacheSettingsDialog;
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsDialog;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,7 +21,7 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-public class VcsGeneralConfigurationPanel {
+public class VcsGeneralConfigurationPanel implements Configurable {
 
   private JCheckBox myForceNonEmptyComment;
   private JCheckBox myShowReadOnlyStatusDialog;
@@ -273,4 +275,25 @@ public class VcsGeneralConfigurationPanel {
     }
     return StringUtil.join(result, ", ");
   }
+
+  @Nls
+  public String getDisplayName() {
+    return "Settings";
+  }
+
+  public Icon getIcon() {
+    return null;
+  }
+
+  public String getHelpTopic() {
+    return null;
+  }
+
+  public JComponent createComponent() {
+    return getPanel();
+  }
+
+  public void disposeUIResources() {
+  }
+
 }

@@ -5,32 +5,37 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.AbstractTableCellEditor;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.table.TableCellRenderer;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
-import java.io.File;
 
 /**
  * @author yole
  */
-public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
+public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements Configurable {
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
   private final TableView<VcsDirectoryMapping> myDirectoryMappingTable;
@@ -259,6 +264,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
 
   public void apply() {
     myVcsManager.setDirectoryMappings(myModel.getItems());
+    initializeModel();
   }
 
   public boolean isModified() {
@@ -290,5 +296,25 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
       }
     }
     return vcses;
+  }
+
+  @Nls
+  public String getDisplayName() {
+    return "Mappings";
+  }
+
+  public Icon getIcon() {
+    return null;
+  }
+
+  public String getHelpTopic() {
+    return null;
+  }
+
+  public JComponent createComponent() {
+    return this;
+  }
+
+  public void disposeUIResources() {
   }
 }

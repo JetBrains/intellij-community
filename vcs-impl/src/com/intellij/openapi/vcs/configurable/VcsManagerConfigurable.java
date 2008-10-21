@@ -1,16 +1,16 @@
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
 
-public class VcsManagerConfigurable implements SearchableConfigurable {
-  private VcsManagerConfigurablePanel myPanel;
+public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract {
   public static final Icon ICON = IconLoader.getIcon("/general/configurableVcs.png");
   private final Project myProject;
 
@@ -34,34 +34,24 @@ public class VcsManagerConfigurable implements SearchableConfigurable {
     return ICON;
   }
 
-  public JComponent createComponent() {
-    myPanel = new VcsManagerConfigurablePanel(myProject);
-    return myPanel.getPanel();
-  }
-
-  public void apply() throws ConfigurationException {
-    myPanel.apply();
-  }
-
-  public void reset() {
-    myPanel.reset();
-  }
-
-  public void disposeUIResources() {
-    myPanel = null;
-  }
-
-  public boolean isModified() {
-    return myPanel.isModified();
-  }
-
-
   public String getId() {
     return getHelpTopic();
   }
 
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
+  protected Configurable[] buildConfigurables() {
+    VcsDirectoryConfigurationPanel mappings = new VcsDirectoryConfigurationPanel(myProject);
+    final VcsGeneralConfigurationPanel generalPanel = new VcsGeneralConfigurationPanel(myProject);
+    generalPanel.updateAvailableOptions(mappings.getActiveVcses());
+    final IssueNavigationConfigurationPanel navPanel = new IssueNavigationConfigurationPanel(myProject);
+    mappings.addVcsListener(new ModuleVcsListener() {
+      public void activeVcsSetChanged(Collection<AbstractVcs> activeVcses) {
+        generalPanel.updateAvailableOptions(activeVcses);
+      }
+    });
+    return new Configurable[]{
+      mappings, generalPanel, navPanel
+    };
+
   }
+
 }

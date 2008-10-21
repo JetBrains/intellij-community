@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
@@ -7,6 +8,7 @@ import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -20,7 +22,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class IssueNavigationConfigurationPanel extends JPanel {
+public class IssueNavigationConfigurationPanel extends JPanel implements Configurable {
   private JPanel myPanel;
   private JTable myLinkTable;
   private JButton myAddButton;
@@ -137,5 +139,25 @@ public class IssueNavigationConfigurationPanel extends JPanel {
       myLinks,
       0);
     myLinkTable.setModel(myModel);
+  }
+
+    @Nls
+  public String getDisplayName() {
+    return "Issue Navigation";
+  }
+
+  public Icon getIcon() {
+    return null;
+  }
+
+  public String getHelpTopic() {
+    return null;
+  }
+
+  public JComponent createComponent() {
+    return this;
+  }
+
+  public void disposeUIResources() {
   }
 }
