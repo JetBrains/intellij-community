@@ -147,7 +147,10 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     loadScopes(mySharedScopesManager);
     loadScopes(myLocalScopesManager);
 
-    loadStateOrder();
+    if (isModified()) {
+      loadStateOrder();
+    }
+
 
     TreeUtil.sort(myRoot, new Comparator<DefaultMutableTreeNode>() {
       public int compare(final DefaultMutableTreeNode o1, final DefaultMutableTreeNode o2) {
