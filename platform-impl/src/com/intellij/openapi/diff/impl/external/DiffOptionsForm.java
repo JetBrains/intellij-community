@@ -60,7 +60,7 @@ public class DiffOptionsForm implements SearchableConfigurable {
 
   @Nls
   public String getDisplayName() {
-    return "Diff";
+    return "External Diff Tools";
   }
 
   public Icon getIcon() {
