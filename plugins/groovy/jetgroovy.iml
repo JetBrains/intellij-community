@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="module" module-name="codeInsight-tests" />
     <orderEntry type="library" name="Ant" level="project" />
+    <orderEntry type="library" name="Groovy" level="project" />
   </component>
 </module>
 
