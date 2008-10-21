@@ -618,6 +618,12 @@ class AbstractTreeUi {
     Object[] children = getChildrenFor(getBuilder().getTreeStructureElement(descriptor));
     if (children.length == 0) {
       removeLoadingNode(node);
+    } else {
+      addNodeAction(descriptor, new NodeAction() {
+        public void onReady(final DefaultMutableTreeNode node) {
+          removeLoadingNode(node);
+        }
+      });
     }
   }
 
@@ -1876,7 +1882,7 @@ class AbstractTreeUi {
       myUnbuiltNodes.remove(node);
       final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
       alarm.addRequest(new Runnable() {
-        public void run() {
+        public void run() {                     
           myTree.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         }
       }, WAIT_CURSOR_DELAY);

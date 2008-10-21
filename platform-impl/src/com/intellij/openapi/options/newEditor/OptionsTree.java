@@ -106,13 +106,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     });
 
     final JScrollPane scrolls = new JScrollPane(myTree);
-    final JScrollBar sb = new JScrollBar(JScrollBar.HORIZONTAL) {
-      @Override
-      public void setVisible(final boolean aFlag) {
-        super.setVisible(aFlag);
-      }
-    };
-    scrolls.setHorizontalScrollBar(sb);
+    scrolls.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
     myTree.setBorder(new EmptyBorder(2, 2, 2, 2));
     add(scrolls, BorderLayout.CENTER);
