@@ -49,9 +49,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   private final PropertyChangeSupport myPropertyChangeSupport;
   private boolean myUseDefaultBrowser = true;
   private String myLastProjectLocation;
-  private boolean myUseCyclicBuffer = true;
   private boolean mySearchInBackground;
-  private int myCyclicBufferSize = 1024*1024; //1Mb
   private boolean myConfirmExit = true;
   @NonNls private static final String ELEMENT_OPTION = "option";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
@@ -297,24 +295,6 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
         }
       }
 
-      if (OPTION_USE_CYCLIC_BUFFER.equals(name)) {
-        try {
-          myUseCyclicBuffer = Boolean.valueOf(value).booleanValue();
-        }
-        catch (Exception ex) {
-          myUseCyclicBuffer = false;
-        }
-      }
-
-      if (OPTION_CYCLIC_BUFFER_SIZE.equals(name)) {
-        try {
-          myCyclicBufferSize = Integer.parseInt(value);
-        }
-        catch (Exception ex) {
-          myCyclicBufferSize = 0;
-        }
-      }
-
       if (OPTION_SEARCH_IN_BACKGROUND.equals(name)) {
         try {
           mySearchInBackground = Boolean.valueOf(value).booleanValue();
@@ -402,16 +382,6 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     parentNode.addContent(optionElement);
 
     optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_USE_CYCLIC_BUFFER);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(myUseCyclicBuffer));
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_CYCLIC_BUFFER_SIZE);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, Integer.toString(myCyclicBufferSize));
-    parentNode.addContent(optionElement);
-    
-    optionElement = new Element(ELEMENT_OPTION);
     optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_SEARCH_IN_BACKGROUND);
     optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(mySearchInBackground));
     parentNode.addContent(optionElement);
@@ -456,13 +426,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     myUseDefaultBrowser = value;
   }
 
-  public boolean isUseCyclicBuffer() {
-    return myUseCyclicBuffer;
-  }
 
-  public void setUseCyclicBuffer(final boolean useCyclicBuffer) {
-    myUseCyclicBuffer = useCyclicBuffer;
-  }
 
   public boolean isConfirmExit() {
     return myConfirmExit;
@@ -470,14 +434,6 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
 
   public void setConfirmExit(boolean confirmExit) {
     myConfirmExit = confirmExit;
-  }
-
-  public int getCyclicBufferSize() {
-    return myCyclicBufferSize;
-  }
-
-  public void setCyclicBufferSize(final int cyclicBufferSize) {
-    myCyclicBufferSize = cyclicBufferSize;
   }
 
   public boolean isSearchInBackground() {

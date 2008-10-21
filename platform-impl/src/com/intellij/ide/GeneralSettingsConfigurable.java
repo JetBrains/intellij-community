@@ -33,16 +33,8 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     settings.setSyncOnFrameActivation(myComponent.myChkSyncOnFrameActivation.isSelected());
     settings.setSaveOnFrameDeactivation(myComponent.myChkSaveOnFrameDeactivation.isSelected());
     settings.setUseDefaultBrowser(myComponent.myUseSystemDefaultBrowser.isSelected());
-    settings.setUseCyclicBuffer(myComponent.myUseCyclicBuffer.isSelected());
     settings.setConfirmExit(myComponent.myConfirmExit.isSelected());
     settings.setSearchInBackground(myComponent.mySearchInBackground.isSelected());
-
-    try {
-      settings.setCyclicBufferSize(Integer.parseInt(myComponent.myCyclicBufferSize.getText()) * 1024);
-    }
-    catch (NumberFormatException e) {
-      settings.setCyclicBufferSize(0);
-    }
 
     // AutoSave in inactive
 
@@ -76,9 +68,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     isModified |= settings.isSaveOnFrameDeactivation() != myComponent.myChkSaveOnFrameDeactivation.isSelected();
     isModified |= settings.isAutoSaveIfInactive() != myComponent.myChkAutoSaveIfInactive.isSelected();
     isModified |= settings.isUseDefaultBrowser() != myComponent.myUseSystemDefaultBrowser.isSelected();
-    isModified |= settings.isUseCyclicBuffer() != myComponent.myUseCyclicBuffer.isSelected();
     isModified |= settings.isConfirmExit() != myComponent.myConfirmExit.isSelected();
-    isModified |= !Comparing.strEqual(settings.getCyclicBufferSize() / 1024 + "", myComponent.myCyclicBufferSize.getText());
 
     int inactiveTimeout = -1;
     try {
@@ -105,11 +95,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     myComponent.myChkAutoSaveIfInactive.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         myComponent.myTfInactiveTimeout.setEditable(myComponent.myChkAutoSaveIfInactive.isSelected());
-      }
-    });
-    myComponent.myUseCyclicBuffer.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        myComponent.myCyclicBufferSize.setEditable(myComponent.myUseCyclicBuffer.isSelected());
       }
     });
 
@@ -139,10 +124,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     myComponent.myChkAutoSaveIfInactive.setSelected(settings.isAutoSaveIfInactive());
     myComponent.myTfInactiveTimeout.setText(Integer.toString(settings.getInactiveTimeout()));
     myComponent.myTfInactiveTimeout.setEditable(settings.isAutoSaveIfInactive());
-    myComponent.myUseCyclicBuffer.setSelected(settings.isUseCyclicBuffer());
-    myComponent.myCyclicBufferSize.setEditable(settings.isUseCyclicBuffer());
     myComponent.myConfirmExit.setSelected(settings.isConfirmExit());
-    myComponent.myCyclicBufferSize.setText(settings.getCyclicBufferSize() / 1024 + "");
 
     
 
@@ -198,8 +180,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     private JTextField myTfInactiveTimeout;
     private JRadioButton myUseSystemDefaultBrowser;
     private JRadioButton myUseUserDefinedBrowser;
-    private JCheckBox myUseCyclicBuffer;
-    private JTextField myCyclicBufferSize;
     public JCheckBox myConfirmExit;
     private JCheckBox mySearchInBackground;
     private JComboBox myEncodingsCombo;

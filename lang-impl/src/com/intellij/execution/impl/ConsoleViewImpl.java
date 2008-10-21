@@ -7,7 +7,10 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
-import com.intellij.ide.*;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DataAccessor;
+import com.intellij.ide.DataAccessors;
+import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -86,8 +89,26 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
 
   private final DisposedPsiManagerCheck myPsiDisposedCheck;
   private ConsoleState myState = ConsoleState.NOT_STARTED;
-  private final int CYCLIC_BUFFER_SIZE = GeneralSettings.getInstance().getCyclicBufferSize();
-  private final boolean USE_CYCLIC_BUFFER = GeneralSettings.getInstance().isUseCyclicBuffer();
+  private final int CYCLIC_BUFFER_SIZE = getCycleBufferSize();
+
+  private static int getCycleBufferSize() {
+    final String cycleBufferSizeProperty = System.getProperty("idea.cycle.buffer.size");
+    if (cycleBufferSizeProperty == null) return 1024 * 1024;
+    try {
+      return Integer.parseInt(cycleBufferSizeProperty) * 1024;
+    }
+    catch (NumberFormatException e) {
+      return 1024 * 1024;
+    }
+  }
+
+  private final boolean USE_CYCLIC_BUFFER = useCycleBuffer();
+
+  private static boolean useCycleBuffer() {
+    final String useCycleBufferProperty = System.getProperty("idea.cycle.buffer.size");
+    return useCycleBufferProperty == null || !"disabled".equalsIgnoreCase(useCycleBufferProperty);
+  }
+
   private static final int HYPERLINK_LAYER = HighlighterLayer.SELECTION - 123;
   private final Alarm mySpareTimeAlarm = new Alarm();
 
