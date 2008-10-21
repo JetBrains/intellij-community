@@ -17,11 +17,16 @@ package git4idea;
  * This code was originally derived from the MKS & Mercurial IDEA VCS plugins
  */
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
+import java.util.StringTokenizer;
 
 /**
  * Git revision number
@@ -205,5 +210,24 @@ public class GitRevisionNumber implements VcsRevisionNumber {
    */
   public static GitRevisionNumber createRevision(String rev) {
     return new GitRevisionNumber(rev);
+  }
+
+  /**
+   * Resolve revision number for the specified revision
+   *
+   * @param project a project
+   * @param vcsRoot a vcs root
+   * @param rev     a revision expression
+   * @return a resolved revision number with correct time
+   */
+  public static GitRevisionNumber resolve(Project project, VirtualFile vcsRoot, String rev) throws VcsException {
+    GitSimpleHandler h = new GitSimpleHandler(project, vcsRoot, "rev-list");
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.addParameters("--timestamp", "--max-count=1", rev);
+    h.endOptions();
+    StringTokenizer stk = new StringTokenizer(h.run(), "\n\r \t", false);
+    Date timestamp = GitUtil.parseTimestamp(stk.nextToken());
+    return new GitRevisionNumber(stk.nextToken(), timestamp);
   }
 }

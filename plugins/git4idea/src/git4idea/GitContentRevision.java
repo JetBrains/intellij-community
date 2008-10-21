@@ -12,6 +12,7 @@ package git4idea;
  * Copyright 2007 Decentrix Inc
  * Copyright 2007 Aspiro AS
  * Copyright 2008 MQSoftware
+ * Copyright 2008 JetBrains s.r.o.
  * Authors: gevession, Erlend Simonsen & Mark Scott
  *
  * This code was originally derived from the MKS & Mercurial IDEA VCS plugins
@@ -25,8 +26,7 @@ import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.commands.GitCommand;
-import git4idea.config.GitVcsSettings;
+import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,33 +34,46 @@ import org.jetbrains.annotations.Nullable;
  * Git content revision
  */
 public class GitContentRevision implements ContentRevision {
-  private final FilePath file;
-  private final GitRevisionNumber revision;
-  private final Project project;
+  /**
+   * the file path
+   */
+  @NotNull private final FilePath myFile;
+  /**
+   * the revision number
+   */
+  @NotNull private final GitRevisionNumber myRevision;
+  /**
+   * the context project
+   */
+  @NotNull private final Project myProject;
+
 
   public GitContentRevision(@NotNull FilePath file, @NotNull GitRevisionNumber revision, @NotNull Project project) {
-    this.project = project;
-    this.file = file;
-    this.revision = revision;
+    myProject = project;
+    myFile = file;
+    myRevision = revision;
   }
 
   @Nullable
   public String getContent() throws VcsException {
-    if (file == null || file.isDirectory()) return null;
-
-    GitCommand command = new GitCommand(project, GitVcsSettings.getInstance(project), GitUtil.getVcsRoot(project, file));
-
-    return command.getContents(file.getPath(), revision.getRev());
+    if (myFile.isDirectory()) {
+      return null;
+    }
+    VirtualFile root = GitUtil.getGitRoot(myProject, myFile);
+    GitSimpleHandler h = new GitSimpleHandler(myProject, root, "show");
+    h.setNoSSH(true);
+    h.addParameters(myRevision.getRev() + ":" + GitUtil.relativePath(root, myFile));
+    return h.run();
   }
 
   @NotNull
   public FilePath getFile() {
-    return file;
+    return myFile;
   }
 
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
-    return revision;
+    return myRevision;
   }
 
   public boolean equals(Object obj) {
@@ -68,12 +81,11 @@ public class GitContentRevision implements ContentRevision {
     if ((obj == null) || (obj.getClass() != getClass())) return false;
 
     GitContentRevision test = (GitContentRevision)obj;
-    return (file.equals(test.file) && revision.equals(test.revision));
+    return (myFile.equals(test.myFile) && myRevision.equals(test.myRevision));
   }
 
   public int hashCode() {
-    if (file != null && revision != null) return file.hashCode() + revision.hashCode();
-    return 0;
+    return myFile.hashCode() + myRevision.hashCode();
   }
 
   /**

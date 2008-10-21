@@ -22,7 +22,6 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +35,7 @@ import org.jetbrains.git4idea.ssh.GitSSHGUIHandler;
 import org.jetbrains.git4idea.ssh.GitSSHService;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -88,6 +88,10 @@ public abstract class GitHandler {
    * exit code or null if exit code is not yet availale
    */
   private Integer myExitCode;
+  /**
+   * Character set to use for IO
+   */
+  @NonNls private Charset myCharset = Charset.forName("UTF-8");
   /**
    * No ssh flag
    */
@@ -218,7 +222,7 @@ public abstract class GitHandler {
   public void addRelativePaths(@NotNull final Collection<FilePath> filePaths) {
     checkNotStarted();
     for (FilePath path : filePaths) {
-      myCommandLine.addParameter(relativePath(myWorkingDirectory, path));
+      myCommandLine.addParameter(GitUtil.relativePath(myWorkingDirectory, path));
     }
   }
 
@@ -232,50 +236,8 @@ public abstract class GitHandler {
   public void addRelativeFiles(@NotNull final Collection<VirtualFile> files) {
     checkNotStarted();
     for (VirtualFile file : files) {
-      myCommandLine.addParameter(relativePath(myWorkingDirectory, file));
+      myCommandLine.addParameter(GitUtil.relativePath(myWorkingDirectory, file));
     }
-  }
-
-
-  /**
-   * Get relative path
-   *
-   * @param root a root path
-   * @param path a path to file (possibly deleted file)
-   * @return a relative path
-   * @throws IllegalArgumentException if path is not under root.
-   */
-  private static String relativePath(final File root, FilePath path) {
-    return relativePath(root, path.getIOFile());
-  }
-
-  /**
-   * Get relative path
-   *
-   * @param root a root path
-   * @param file a virtual file
-   * @return a relative path
-   * @throws IllegalArgumentException if path is not under root.
-   */
-  private static String relativePath(final File root, VirtualFile file) {
-    return relativePath(root, GitUtil.getIOFile(file));
-  }
-
-
-  /**
-   * Get relative path
-   *
-   * @param root a root path
-   * @param path a path to file (possibly deleted file)
-   * @return a relative path
-   * @throws IllegalArgumentException if path is not under root.
-   */
-  private static String relativePath(final File root, File path) {
-    String rc = FileUtil.getRelativePath(root, path);
-    if (rc == null) {
-      throw new IllegalArgumentException("The file " + path + " cannot be made relative to " + root);
-    }
-    return rc.replace(File.separatorChar, '/');
   }
 
   /**
@@ -349,7 +311,12 @@ public abstract class GitHandler {
       myCommandLine.setEnvParams(env);
       // start process
       myProcess = myCommandLine.createProcess();
-      myHandler = new OSProcessHandler(myProcess, myCommandLine.getCommandLineString());
+      myHandler = new OSProcessHandler(myProcess, myCommandLine.getCommandLineString()) {
+        @Override
+        public Charset getCharset() {
+          return myCharset == null ? super.getCharset() : myCharset;
+        }
+      };
       myHandler.addProcessListener(new ProcessListener() {
         public void startNotified(final ProcessEvent event) {
           // do nothing
@@ -457,5 +424,21 @@ public abstract class GitHandler {
   public void setSilent(final boolean silent) {
     checkNotStarted();
     mySilent = silent;
+  }
+
+  /**
+   * @return a charcter set to use for IO
+   */
+  public Charset getCharset() {
+    return myCharset;
+  }
+
+  /**
+   * Set character set for IO
+   *
+   * @param charset a character set
+   */
+  public void setCharset(final Charset charset) {
+    myCharset = charset;
   }
 }

@@ -22,6 +22,7 @@ package git4idea;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -345,5 +346,58 @@ public class GitUtil {
       root = root.getParent();
     }
     return false;
+  }
+
+  /**
+   * Get relative path
+   *
+   * @param root a root path
+   * @param path a path to file (possibly deleted file)
+   * @return a relative path
+   * @throws IllegalArgumentException if path is not under root.
+   */
+  public static String relativePath(final VirtualFile root, FilePath path) {
+    return relativePath(getIOFile(root), path.getIOFile());
+  }
+
+
+  /**
+   * Get relative path
+   *
+   * @param root a root path
+   * @param path a path to file (possibly deleted file)
+   * @return a relative path
+   * @throws IllegalArgumentException if path is not under root.
+   */
+  public static String relativePath(final File root, FilePath path) {
+    return relativePath(root, path.getIOFile());
+  }
+
+  /**
+   * Get relative path
+   *
+   * @param root a root path
+   * @param file a virtual file
+   * @return a relative path
+   * @throws IllegalArgumentException if path is not under root.
+   */
+  public static String relativePath(final File root, VirtualFile file) {
+    return relativePath(root, getIOFile(file));
+  }
+
+  /**
+   * Get relative path
+   *
+   * @param root a root path
+   * @param path a path to file (possibly deleted file)
+   * @return a relative path
+   * @throws IllegalArgumentException if path is not under root.
+   */
+  public static String relativePath(final File root, File path) {
+    String rc = FileUtil.getRelativePath(root, path);
+    if (rc == null) {
+      throw new IllegalArgumentException("The file " + path + " cannot be made relative to " + root);
+    }
+    return rc.replace(File.separatorChar, '/');
   }
 }

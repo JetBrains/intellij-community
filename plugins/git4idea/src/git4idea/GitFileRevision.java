@@ -22,18 +22,24 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import git4idea.commands.GitCommand;
-import git4idea.config.GitVcsSettings;
+import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.Date;
 
 /**
  * Git file revision
  */
 public class GitFileRevision implements VcsFileRevision, Comparable<VcsFileRevision> {
+  /**
+   * encoding to be used for binary output
+   */
+  final static Charset BIN_ENCODING = Charset.forName("ISO-8859-1");
   private final FilePath path;
   private final GitRevisionNumber revision;
   private final String author;
@@ -77,13 +83,17 @@ public class GitFileRevision implements VcsFileRevision, Comparable<VcsFileRevis
   }
 
   public synchronized void loadContent() throws VcsException {
-    GitCommand command = new GitCommand(project, GitVcsSettings.getInstance(project), GitUtil.getVcsRoot(project, path));
-    String c = command.getContents(path.getPath(), revision.getRev());
-    if (c != null && c.length() > 0) {
-      content = c.getBytes();
+    final VirtualFile root = GitUtil.getGitRoot(project, path);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, "show");
+    h.setNoSSH(true);
+    h.setCharset(BIN_ENCODING);
+    h.addParameters(revision.getRev() + ":" + GitUtil.relativePath(root, path));
+    String result = h.run();
+    try {
+      content = result.getBytes(BIN_ENCODING.name());
     }
-    else {
-      content = null;
+    catch (UnsupportedEncodingException e) {
+      throw new VcsException("Unable to locate encoding: " + BIN_ENCODING.name() + " Reason: " + e.toString(), e);
     }
   }
 

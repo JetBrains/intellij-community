@@ -94,17 +94,14 @@ public class GitHistoryProvider implements VcsHistoryProvider {
    * {@inheritDoc}
    */
   @Nullable
-  public VcsHistorySession createSessionFor(FilePath filePath) throws VcsException {
+  public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
     GitCommand command = new GitCommand(project, settings, GitUtil.getVcsRoot(project, filePath));
     List<VcsFileRevision> revisions = command.log(filePath);
-    final FilePath path = filePath;
-
     return new VcsHistorySession(revisions) {
       @Nullable
       protected VcsRevisionNumber calcCurrentRevisionNumber() {
-        GitCommand command = new GitCommand(project, settings, GitUtil.getVcsRoot(project, path));
         try {
-          return command.getCurrenFileRevision(path);
+          return GitHistoryUtils.getCurrentRevision(project, filePath);
         }
         catch (VcsException e) {
           // likely the file is not under VCS anymore.
