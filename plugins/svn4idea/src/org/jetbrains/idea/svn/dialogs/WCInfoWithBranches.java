@@ -10,12 +10,16 @@ import java.util.List;
 public class WCInfoWithBranches extends WCInfo {
   private final List<Branch> myBranches;
   private final VirtualFile myRoot;
+  private final String myTrunkRoot;
 
   public WCInfoWithBranches(final String path, final SVNURL url, final WorkingCopyFormat format, final String repositoryRoot, final boolean isWcRoot,
-                            final List<Branch> branches, final VirtualFile root) {
+                            final List<Branch> branches,
+                            final VirtualFile root,
+                            final String trunkToot) {
     super(path, url, format, repositoryRoot, isWcRoot);
     myBranches = branches;
     myRoot = root;
+    myTrunkRoot = trunkToot;
   }
 
   // to be used in combo
@@ -24,12 +28,21 @@ public class WCInfoWithBranches extends WCInfo {
     return getPath();
   }
 
+  @Override
+  public VirtualFile getVcsRoot() {
+    return myRoot;
+  }
+
   public List<Branch> getBranches() {
     return myBranches;
   }
 
   public VirtualFile getRoot() {
     return myRoot;
+  }
+
+  public String getTrunkRoot() {
+    return myTrunkRoot;
   }
 
   public static class Branch {

@@ -34,13 +34,13 @@ public class MergeInfoHolder {
   // used ONLY when refresh is triggered
   private final Map<Pair<String, String>, MergeinfoCached> myCachedMap;
 
-  private Getter<WCPaths> myRootGetter;
+  private Getter<WCInfoWithBranches> myRootGetter;
   private Getter<WCInfoWithBranches.Branch> myBranchGetter;
   private Getter<String> myWcPathGetter;
   private Getter<Boolean> myEnabledHolder;
   private MyDecorator myDecorator;
 
-  public MergeInfoHolder(final Project project, final DecoratorManager manager, final Getter<WCPaths> rootGetter,
+  public MergeInfoHolder(final Project project, final DecoratorManager manager, final Getter<WCInfoWithBranches> rootGetter,
                          final Getter<WCInfoWithBranches.Branch> branchGetter,
                          final Getter<String> wcPathGetter, Getter<Boolean> enabledHolder) {
     myRootGetter = rootGetter;
@@ -96,7 +96,7 @@ public class MergeInfoHolder {
   }
 
   private class MyRefresher implements CommittedChangeListsListener {
-    private final WCPaths myRefreshedRoot;
+    private final WCInfoWithBranches myRefreshedRoot;
     private final WCInfoWithBranches.Branch myRefreshedBranch;
     private final String myBranchPath;
 

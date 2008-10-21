@@ -103,7 +103,8 @@ public class WcInfoLoader {
 
     final List<WCInfoWithBranches.Branch> items = createBranchesList(url, configuration);
     return new WCInfoWithBranches(info.getPath(), info.getUrl(), info.getFormat(),
-                                                                         info.getRepositoryRoot(), info.isIsWcRoot(), items, root);
+                                                                         info.getRepositoryRoot(), info.isIsWcRoot(), items, root,
+                                                                         configuration.getTrunkUrl());
   }
 
   private List<WCInfoWithBranches.Branch> createBranchesList(final String url, final SvnBranchConfiguration configuration) {

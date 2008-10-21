@@ -18,6 +18,7 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -40,6 +41,12 @@ public class SvnMergeInfoCache {
     myState = new MyState();
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     myClient = vcs.createWCClient();
+    myClient.setOptions(new DefaultSVNOptions() {
+      @Override
+      public byte[] getNativeEOL() {
+        return new byte[]{'\n'};
+      }
+    });
   }
 
   public static SvnMergeInfoCache getInstance(final Project project) {
@@ -88,12 +95,12 @@ public class SvnMergeInfoCache {
   }
 
   // only refresh might have changed; for branches/roots change, another method is used
-  public MergeCheckResult getState(final WCPaths info, final SvnChangeList list, final WCInfoWithBranches.Branch selectedBranch) {
+  public MergeCheckResult getState(final WCInfoWithBranches info, final SvnChangeList list, final WCInfoWithBranches.Branch selectedBranch) {
     return getState(info, list, selectedBranch, null);
   }
 
   // only refresh might have changed; for branches/roots change, another method is used
-  public MergeCheckResult getState(final WCPaths info, final SvnChangeList list, final WCInfoWithBranches.Branch selectedBranch,
+  public MergeCheckResult getState(final WCInfoWithBranches info, final SvnChangeList list, final WCInfoWithBranches.Branch selectedBranch,
                                    final String branchPath) {
     final String currentUrl = info.getRootUrl();
     final String branchUrl = selectedBranch.getUrl();
@@ -107,7 +114,7 @@ public class SvnMergeInfoCache {
       branchInfo = rootMapping.getBranchInfo(branchUrl);
     }
     if (branchInfo == null) {
-      branchInfo = new BranchInfo(SvnVcs.getInstance(myProject), info.getRepoUrl(), branchUrl, currentUrl, myClient);
+      branchInfo = new BranchInfo(SvnVcs.getInstance(myProject), info.getRepoUrl(), branchUrl, currentUrl, info.getTrunkRoot(), myClient);
       rootMapping.addBranchInfo(branchUrl, branchInfo);
     }
 
@@ -194,17 +201,20 @@ public class SvnMergeInfoCache {
     private final String myRepositoryRoot;
     private final String myBranchUrl;
     private final String myTrunkUrl;
+    private final String myTrunkCorrected;
     private final String myRelativeTrunk;
     private final SVNWCClient myClient;
     private final SvnVcs myVcs;
 
     private CopyRevison myCopyRevison;
 
-    private BranchInfo(final SvnVcs vcs, final String repositoryRoot, final String branchUrl, final String trunkUrl, final SVNWCClient client) {
+    private BranchInfo(final SvnVcs vcs, final String repositoryRoot, final String branchUrl, final String trunkUrl,
+                       final String trunkCorrected, final SVNWCClient client) {
       myVcs = vcs;
       myRepositoryRoot = repositoryRoot;
       myBranchUrl = branchUrl;
       myTrunkUrl = trunkUrl;
+      myTrunkCorrected = trunkCorrected;
       myClient = client;
       myRelativeTrunk = myTrunkUrl.substring(myRepositoryRoot.length());
 
@@ -288,14 +298,13 @@ public class SvnMergeInfoCache {
                             final String branchPath) {
       for (String path : paths) {
         final String absoluteInTrunkPath = SVNPathUtil.append(myRepositoryRoot, path);
-        if (! absoluteInTrunkPath.startsWith(myTrunkUrl)) {
+        if (! absoluteInTrunkPath.startsWith(myTrunkCorrected)) {
           notExistsRef.set(Boolean.TRUE); /// ?
           return;
         }
-        final String relativeToTrunkPath = absoluteInTrunkPath.substring(myTrunkUrl.length());
-        //final String absolutePath = SVNPathUtil.append(myBranchUrl, relativeToTrunkPath);
+        final String relativeToTrunkPath = absoluteInTrunkPath.substring(myTrunkCorrected.length());
 
-        final MergeCheckResult pathResult = checkOnePathLocally(number, branchPath, relativeToTrunkPath);
+        final MergeCheckResult pathResult = checkOnePathLocally(number, branchPath, relativeToTrunkPath, path);
         if (MergeCheckResult.MERGED.equals(pathResult)) {
           mergedRef.set(Boolean.TRUE);
         } else if (MergeCheckResult.NOT_EXISTS.equals(pathResult)) {
@@ -304,7 +313,7 @@ public class SvnMergeInfoCache {
       }
     }
 
-    private MergeCheckResult checkOnePathLocally(final long number, final String head, final String tail) {
+    private MergeCheckResult checkOnePathLocally(final long number, final String head, final String tail, final String trunkRelativeUrl) {
       if ((myNonExistingPaths.contains(head)) || (head.length() == 0)) {
         return MergeCheckResult.NOT_EXISTS;
       }
@@ -313,7 +322,7 @@ public class SvnMergeInfoCache {
         if (mergeInfo.contains(number)) {
           return MergeCheckResult.getInstance(mergeInfo.contains(number));
         }
-        return goDownLocally(number, head, tail);
+        return goDownLocally(number, head, tail, trunkRelativeUrl);
       }
 
       LOG.debug("checking " + head + " tail: " + tail);
@@ -328,7 +337,7 @@ public class SvnMergeInfoCache {
           if (value != null) {
             final Map<String, SVNMergeRangeList> map = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(value.getString()), null);
             for (String key : map.keySet()) {
-              if ((key != null) && (key.startsWith(myRelativeTrunk))) {
+              if ((key != null) && (trunkRelativeUrl.startsWith(key))) {
                 propertyFound = true;
                 final Set<Long> revisions = new HashSet<Long>();
                 final SVNMergeRangeList rangesList = map.get(key);
@@ -365,10 +374,10 @@ public class SvnMergeInfoCache {
         return MergeCheckResult.NOT_MERGED;
       }
 
-      return goDownLocally(number, head, tail);
+      return goDownLocally(number, head, tail, trunkRelativeUrl);
     }
 
-    private MergeCheckResult goDownLocally(final long number, final String head, final String tail) {
+    private MergeCheckResult goDownLocally(final long number, final String head, final String tail, final String trunkRelativeUrl) {
       final String fixedTail = (tail.startsWith("/")) ? tail.substring(1) : tail;
       final String newTail = SVNPathUtil.removeHead(fixedTail);
       if (newTail.length() == 0) {
@@ -381,10 +390,10 @@ public class SvnMergeInfoCache {
       final String newHead = SVNPathUtil.append(head, headOfTail);
 
       LOG.debug("goDown: newHead: " + newHead + " oldHead: " + head);
-      return checkOnePathLocally(number, newHead, newTail);
+      return checkOnePathLocally(number, newHead, newTail, trunkRelativeUrl);
     }
 
-    private MergeCheckResult checkOnePath(final long number, final String head, final String tail, final String branchPath) {
+    /*private MergeCheckResult checkOnePath(final long number, final String head, final String tail, final String branchPath) {
       if ((myNonExistingPaths.contains(head)) || (head.length() == 0)) {
         return MergeCheckResult.NOT_EXISTS;
       }
@@ -408,7 +417,7 @@ public class SvnMergeInfoCache {
           if (value != null) {
             final Map<String, SVNMergeRangeList> map = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(value.getString()), null);
             for (String key : map.keySet()) {
-              if ((key != null) && (key.startsWith(myRelativeTrunk))) {
+              if ((key != null) && (myRelativeTrunk.startsWith(key))) {
                 propertyFound = true;
                 final Set<Long> revisions = new HashSet<Long>();
                 final SVNMergeRangeList rangesList = map.get(key);
@@ -462,7 +471,7 @@ public class SvnMergeInfoCache {
 
       LOG.debug("goDown: newHead: " + newHead + " oldHead: " + head);
       return checkOnePath(number, newHead, newTail, branchPath);
-    }
+    }*/
   }
 
   private static class MyCurrentUrlData {

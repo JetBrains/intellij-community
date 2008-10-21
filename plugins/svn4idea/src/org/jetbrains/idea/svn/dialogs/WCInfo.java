@@ -2,6 +2,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.tmatesoft.svn.core.SVNURL;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public class WCInfo implements WCPaths {
   private final String myPath;
@@ -20,6 +21,10 @@ public class WCInfo implements WCPaths {
 
   public String getPath() {
     return myPath;
+  }
+
+  public VirtualFile getVcsRoot() {
+    return null;
   }
 
   public SVNURL getUrl() {

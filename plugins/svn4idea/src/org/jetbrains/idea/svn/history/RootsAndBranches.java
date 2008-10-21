@@ -17,12 +17,12 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangeListDecorator;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListsListener;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.AbstractIntegrateChangesAction;
 import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
@@ -314,22 +314,20 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     public String getPath() {
       return myPath;
     }
+
+    public VirtualFile getVcsRoot() {
+      // not used actually
+      return null;
+    }
   }
 
   private MergeInfoHolder createHolder(final SvnMergeInfoRootPanelManual panel) {
-    return new MergeInfoHolder(myProject, myManager, new Getter<WCPaths>() {
-      public WCPaths get() {
+    return new MergeInfoHolder(myProject, myManager, new Getter<WCInfoWithBranches>() {
+      public WCInfoWithBranches get() {
         if (myFromHereDirection) {
           return panel.getWcInfo();
         } else {
-          final WCInfoWithBranches.Branch branch = panel.getBranch();
-          final String local = panel.getLocalBranch();
-          if ((local != null) && (branch != null)) {
-            final SVNURL repoRoot = SvnUtil.getRepositoryRoot(SvnVcs.getInstance(myProject), new File(local));
-            if (repoRoot != null) {
-              return new WCPathsImpl(local, branch.getUrl(), repoRoot.toString());
-            }
-          }
+          // actually not used
           return null;
         }
       }
