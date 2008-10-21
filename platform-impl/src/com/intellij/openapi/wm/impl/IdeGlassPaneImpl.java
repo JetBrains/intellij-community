@@ -47,6 +47,8 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane, IdeEventQu
       dispatched = preprocess((MouseEvent)e, false);
     } else if (e.getID() == MouseEvent.MOUSE_MOVED || e.getID() == MouseEvent.MOUSE_DRAGGED) {
       dispatched = preprocess((MouseEvent)e, true);
+    } else if (e.getID() == MouseEvent.MOUSE_EXITED || e.getID() == MouseEvent.MOUSE_ENTERED) {
+      dispatched = preprocess((MouseEvent)e, false);
     } else {
       return false;
     }
