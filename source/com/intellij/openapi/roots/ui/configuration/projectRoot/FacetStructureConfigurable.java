@@ -10,8 +10,6 @@ import com.intellij.facet.impl.ui.facetType.FacetTypeEditor;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
@@ -98,11 +96,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
       editor.apply();
     }
     if (!myProject.isDefault()) {
-      new WriteAction() {
-        protected void run(final Result result) {
-          ((FacetAutodetectingManagerImpl)FacetAutodetectingManager.getInstance(myProject)).redetectFacets();
-        }
-      }.execute();
+      ((FacetAutodetectingManagerImpl)FacetAutodetectingManager.getInstance(myProject)).redetectFacets();
     }
   }
 
