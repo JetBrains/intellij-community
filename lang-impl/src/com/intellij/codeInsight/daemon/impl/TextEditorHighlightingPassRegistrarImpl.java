@@ -45,7 +45,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     private final int[] completionPredecessorIds;
     private final boolean runIntentionsPassAfter;
 
-    public PassConfig(@NotNull TextEditorHighlightingPassFactory passFactory,
+    private PassConfig(@NotNull TextEditorHighlightingPassFactory passFactory,
                       boolean runIntentionsPassAfter,
                       @NotNull int[] completionPredecessorIds,
                       @NotNull int[] startingPredecessorIds) {

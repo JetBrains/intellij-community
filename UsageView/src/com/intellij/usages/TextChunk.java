@@ -19,8 +19,8 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 public class TextChunk {
-  private TextAttributes myAttributes;
-  private String myText;
+  private final TextAttributes myAttributes;
+  private final String myText;
 
   public TextChunk(TextAttributes attributesKey, @NotNull String text) {
     myAttributes = attributesKey;

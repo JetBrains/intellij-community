@@ -181,7 +181,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           final SimpleToolWindowPanel twPanel = new SimpleToolWindowPanel(false, true);
           myRootPanel.add(twPanel, BorderLayout.CENTER);
 
-
           JPanel toolbarPanel = new JPanel(new BorderLayout());
           toolbarPanel.add(createActionsToolbar(), BorderLayout.WEST);
           toolbarPanel.add(createFiltersToolbar(), BorderLayout.CENTER);
@@ -1044,7 +1043,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator {
     @Nullable private OccurenceNavigatorSupport mySupport;
 
-    public MyPanel(JTree tree) {
+    private MyPanel(JTree tree) {
       mySupport = new OccurenceNavigatorSupport(tree) {
         protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
           if (node.getChildCount() > 0) return null;

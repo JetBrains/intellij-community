@@ -140,7 +140,6 @@ public class ChunkExtractor {
         TextAttributesKey[] tokenHighlights = highlighter.getTokenHighlights(tokenType);
 
         processIntersectingRange(chars, hiStart, hiEnd, tokenHighlights, result);
-        //result.add(new TextChunk(convertAttributes(tokenHighlights), text));
       }
       finally {
         lexer.advance();

@@ -43,7 +43,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   private final UsageViewPresentation myPresentation;
   private final UsageView myView;
 
-  public UsageViewTreeCellRenderer(UsageView view) {
+  UsageViewTreeCellRenderer(UsageView view) {
     myView = view;
     myPresentation = view.getPresentation();
     myNumberOfUsagesAttribute = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES));

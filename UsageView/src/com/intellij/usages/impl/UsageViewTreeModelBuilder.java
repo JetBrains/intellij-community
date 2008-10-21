@@ -105,7 +105,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   }
 
   private class RootGroupNode extends GroupNode {
-    public RootGroupNode() {
+    private RootGroupNode() {
       super(null, 0, UsageViewTreeModelBuilder.this);
     }
 

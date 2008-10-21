@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx/*, DocumentListener*/ {
+public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
 
   protected final Document myDocument;
@@ -155,10 +155,6 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       myStart += e.getNewLength() - oldLength;
       myEnd += e.getNewLength() - oldLength;
     }
-  }
-
-  public void beforeDocumentChange(final DocumentEvent event) {
-
   }
 
   @NonNls

@@ -16,7 +16,7 @@ import com.intellij.ui.content.Content;
 import java.util.Collection;
 
 public abstract class ChangeListTodosPanel extends TodoPanel{
-  private MyChangeListManagerListener myChangeListManagerListener = new MyChangeListManagerListener();
+  private final MyChangeListManagerListener myChangeListManagerListener = new MyChangeListManagerListener();
 
   public ChangeListTodosPanel(Project project,TodoPanelSettings settings, Content content){
     super(project,settings,false,content);

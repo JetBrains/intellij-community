@@ -68,7 +68,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Map<Document, AtomicLong> myLastIndexedDocStamps = new HashMap<Document, AtomicLong>();
   private final Map<Document, CharSequence> myLastIndexedUnsavedContent = new HashMap<Document, CharSequence>();
 
-  private ChangedFilesUpdater myChangedFilesUpdater;
+  private final ChangedFilesUpdater myChangedFilesUpdater;
 
   private final List<IndexableFileSet> myIndexableSets = new CopyOnWriteArrayList<IndexableFileSet>();
   
@@ -316,7 +316,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return false;
   }
 
-  private ThreadLocal<Integer> myUpToDateCheckState = new ThreadLocal<Integer>();
+  private static final ThreadLocal<Integer> myUpToDateCheckState = new ThreadLocal<Integer>();
   
   public void disableUpToDateCheckForCurrentThread() {
     final Integer currentValue = myUpToDateCheckState.get();
@@ -387,7 +387,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   
-  public static interface ValueProcessor<V> {
+  public interface ValueProcessor<V> {
     void process(VirtualFile file, V value);
   }
 
@@ -613,7 +613,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private static class AuthenticContent implements DocumentContent {
     private final Document myDocument;
 
-    public AuthenticContent(final Document document) {
+    private AuthenticContent(final Document document) {
       myDocument = document;
     }
 
@@ -630,7 +630,7 @@ public class FileBasedIndex implements ApplicationComponent {
     private final Document myDocument;
     private final PsiFile myFile;
 
-    public PsiContent(final Document document, final PsiFile file) {
+    private PsiContent(final Document document, final PsiFile file) {
       myDocument = document;
       myFile = file;
     }
@@ -772,7 +772,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
     PsiFile psiFile = null;
     for (ID<?, ?> indexId : myIndices.keySet()) {
-      if (forceIndexing? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
+      if (forceIndexing ? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
         if (fc == null) {
           byte[] currentBytes;
           try {
@@ -863,7 +863,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return LoadTextUtil.loadText(file, true);
   }
 
-  private static abstract class InvalidationTask implements Runnable {
+  private abstract static class InvalidationTask implements Runnable {
     private VirtualFile mySubj;
 
     protected InvalidationTask(final VirtualFile subj) {
@@ -1196,7 +1196,7 @@ public class FileBasedIndex implements ApplicationComponent {
     private final Collection<ID<?, ?>> mySkipContentLoading;
     private final ProgressIndicator myProgressIndicator;
 
-    public UnindexedFilesFinder(final Collection<ID<?, ?>> indexIds) {
+    private UnindexedFilesFinder(final Collection<ID<?, ?>> indexIds) {
       myIndexIds = new ArrayList<ID<?, ?>>();
       mySkipContentLoading = new ArrayList<ID<?, ?>>();
       for (ID<?, ?> indexId : indexIds) {
