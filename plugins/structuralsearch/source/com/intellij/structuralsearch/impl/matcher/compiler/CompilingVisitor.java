@@ -398,6 +398,10 @@ class CompilingVisitor {
     else {
       element.accept(myJavaVisitor);
     }
+
+    if (context.pattern.getStrategy() == null) {
+      context.pattern.setStrategy(ExprMatchingStrategy.getInstance());
+    }
   }
 
   private class MyJavaVisitor extends JavaRecursiveElementVisitor {
