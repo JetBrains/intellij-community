@@ -47,14 +47,9 @@ public class VcsGeneralConfigurationPanel implements Configurable {
   private JPanel myRemoveConfirmationPanel;
   private JPanel myAddConfirmationPanel;
   private JCheckBox myCbOfferToMoveChanges;
-  private JCheckBox myCbUpdateInBackground;
-  private JCheckBox myCbCommitInBackground;
   private JButton myConfigureIgnoredFilesButton;
-  private JCheckBox myCbEditInBackground;
-  private JCheckBox myCbAddRemoveInBackground;
   private JButton myConfigureHistoryCacheButton;
   private JComboBox myFailedCommitChangelistCombo;
-  private JCheckBox myCbCheckoutInBackground;
 
   public VcsGeneralConfigurationPanel(final Project project) {
 
@@ -105,11 +100,6 @@ public class VcsGeneralConfigurationPanel implements Configurable {
 
     settings.FORCE_NON_EMPTY_COMMENT = myForceNonEmptyComment.isSelected();
     settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = myCbOfferToMoveChanges.isSelected();
-    settings.PERFORM_COMMIT_IN_BACKGROUND = myCbCommitInBackground.isSelected();
-    settings.PERFORM_UPDATE_IN_BACKGROUND = myCbUpdateInBackground.isSelected();
-    settings.PERFORM_CHECKOUT_IN_BACKGROUND = myCbCheckoutInBackground.isSelected();
-    settings.PERFORM_EDIT_IN_BACKGROUND = myCbEditInBackground.isSelected();
-    settings.PERFORM_ADD_REMOVE_IN_BACKGROUND = myCbAddRemoveInBackground.isSelected();
     settings.MOVE_TO_FAILED_COMMIT_CHANGELIST = getFailedCommitConfirm();
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
@@ -163,25 +153,6 @@ public class VcsGeneralConfigurationPanel implements Configurable {
       return true;
     }
 
-    if (settings.PERFORM_COMMIT_IN_BACKGROUND != myCbCommitInBackground.isSelected()) {
-      return true;
-    }
-
-    if (settings.PERFORM_UPDATE_IN_BACKGROUND != myCbUpdateInBackground.isSelected()) {
-      return true;
-    }
-
-    if (settings.PERFORM_CHECKOUT_IN_BACKGROUND != myCbCheckoutInBackground.isSelected()) {
-      return true;
-    }
-
-    if (settings.PERFORM_EDIT_IN_BACKGROUND != myCbEditInBackground.isSelected()) {
-      return true;
-    }
-    if (settings.PERFORM_ADD_REMOVE_IN_BACKGROUND != myCbAddRemoveInBackground.isSelected()) {
-      return true;
-    }
-
     if (!Comparing.equal(getFailedCommitConfirm(), settings.MOVE_TO_FAILED_COMMIT_CHANGELIST)) {
       return true;
     }
@@ -205,11 +176,6 @@ public class VcsGeneralConfigurationPanel implements Configurable {
     myForceNonEmptyComment.setSelected(settings.FORCE_NON_EMPTY_COMMENT);
     myCbOfferToMoveChanges.setSelected(settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT);
     myShowReadOnlyStatusDialog.setSelected(getReadOnlyStatusHandler().getState().SHOW_DIALOG);
-    myCbCommitInBackground.setSelected(settings.PERFORM_COMMIT_IN_BACKGROUND);
-    myCbUpdateInBackground.setSelected(settings.PERFORM_UPDATE_IN_BACKGROUND);
-    myCbCheckoutInBackground.setSelected(settings.PERFORM_CHECKOUT_IN_BACKGROUND);
-    myCbEditInBackground.setSelected(settings.PERFORM_EDIT_IN_BACKGROUND);
-    myCbAddRemoveInBackground.setSelected(settings.PERFORM_ADD_REMOVE_IN_BACKGROUND);
     if (settings.MOVE_TO_FAILED_COMMIT_CHANGELIST == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       myFailedCommitChangelistCombo.setSelectedIndex(0);
     }
@@ -278,7 +244,7 @@ public class VcsGeneralConfigurationPanel implements Configurable {
 
   @Nls
   public String getDisplayName() {
-    return "Settings";
+    return "Confirmation Settings";
   }
 
   public Icon getIcon() {

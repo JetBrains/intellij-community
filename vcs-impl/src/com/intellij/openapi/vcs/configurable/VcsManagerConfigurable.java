@@ -42,14 +42,16 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     VcsDirectoryConfigurationPanel mappings = new VcsDirectoryConfigurationPanel(myProject);
     final VcsGeneralConfigurationPanel generalPanel = new VcsGeneralConfigurationPanel(myProject);
     generalPanel.updateAvailableOptions(mappings.getActiveVcses());
-    final IssueNavigationConfigurationPanel navPanel = new IssueNavigationConfigurationPanel(myProject);
     mappings.addVcsListener(new ModuleVcsListener() {
       public void activeVcsSetChanged(Collection<AbstractVcs> activeVcses) {
         generalPanel.updateAvailableOptions(activeVcses);
       }
     });
     return new Configurable[]{
-      mappings, generalPanel, navPanel
+      mappings,
+      generalPanel, 
+      new VcsBackgroundOperationsConfigurationPanel(myProject),
+      new IssueNavigationConfigurationPanel(myProject)
     };
 
   }
