@@ -210,12 +210,16 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                               ((PsiFileStubImpl)((IStubFileElementType)((PsiFileImpl)psiFile).getContentElementType()).getBuilder()
                                   .buildStubTree(psiFile)).printTree();
 
-                          System.out.println("Oops");
+                          StringBuilder builder = new StringBuilder();
+                          builder.append("Oops\n");
 
-                          System.out.println("Recorded stub:-----------------------------------");
-                          System.out.println(persistedStubTree);
-                          System.out.println("AST built stub: ------------------------------------");
-                          System.out.println(stubTreeJustBuilt);
+
+                          builder.append("Recorded stub:-----------------------------------\n");
+                          builder.append(persistedStubTree);
+                          builder.append("\nAST built stub: ------------------------------------\n");
+                          builder.append(stubTreeJustBuilt);
+                          builder.append("\n");
+                          LOG.info(builder.toString());
                         }
                       }
                     }
