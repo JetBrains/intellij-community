@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -500,6 +501,11 @@ class EditVarConstraintsDialog extends DialogWrapper {
     final Editor editor = EditorFactory.getInstance().createEditor(doc, project);
 
     ((EditorEx)editor).setEmbeddedIntoDialogWrapper(true);
+    final EditorSettings settings = editor.getSettings();
+    settings.setLineNumbersShown(false);
+    settings.setFoldingOutlineShown(false);
+    settings.setRightMarginShown(false);
+    settings.setLineMarkerAreaShown(false);
     ((EditorEx)editor).setHighlighter(HighlighterFactory.createHighlighter(fileType, DefaultColorSchemesManager.getInstance().getAllSchemes()[0], project));
 
     return editor;
