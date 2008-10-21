@@ -20,6 +20,8 @@ package git4idea.checkin;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -30,6 +32,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
@@ -149,33 +152,45 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
           Set<FilePath> files = new HashSet<FilePath>();
           final VirtualFile root = entry.getKey();
+          final Set<FilePath> added = new HashSet<FilePath>();
+          final Set<FilePath> removed = new HashSet<FilePath>();
           for (Change change : entry.getValue()) {
             switch (change.getType()) {
               case NEW:
               case MODIFICATION:
-                files.add(change.getAfterRevision().getFile());
+                added.add(change.getAfterRevision().getFile());
                 break;
               case DELETED:
-                files.add(change.getBeforeRevision().getFile());
+                removed.add(change.getBeforeRevision().getFile());
                 break;
               case MOVED:
-                files.add(change.getAfterRevision().getFile());
-                files.add(change.getBeforeRevision().getFile());
+                added.add(change.getAfterRevision().getFile());
+                removed.add(change.getBeforeRevision().getFile());
                 break;
               default:
                 throw new IllegalStateException("Unknown change type: " + change.getType());
             }
           }
           try {
-            if (updateIndex(myProject, root, files, exceptions)) {
-              commit(myProject, root, files, messageFile, myNextCommitAuthor).run();
+            if (updateIndex(myProject, root, added, removed, exceptions)) {
+              try {
+                files.addAll(added);
+                files.addAll(removed);
+                commit(myProject, root, files, messageFile, myNextCommitAuthor).run();
+              }
+              catch (VcsException ex) {
+                if (!isMergeCommit(ex)) {
+                  throw ex;
+                }
+                if (!mergeCommit(myProject, root, added, removed, messageFile, myNextCommitAuthor, exceptions)) {
+                  throw ex;
+                }
+              }
             }
             if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue()) {
               // push
               Collection<VcsException> problems = GitHandlerUtil.doSynchronouslyWithExceptions(GitPushUtils.preparePush(myProject, root));
-              for (VcsException ex : problems) {
-                exceptions.add(ex);
-              }
+              exceptions.addAll(problems);
             }
           }
           catch (VcsException e) {
@@ -196,6 +211,129 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   /**
+   * Preform a merge commit
+   *
+   * @param project     a project
+   * @param root        a vcs root
+   * @param added       added files
+   * @param removed     removed files
+   * @param messageFile a message file for commit
+   * @param author      an author
+   * @throws VcsException a vcs exception
+   */
+  private static boolean mergeCommit(final Project project,
+                                     final VirtualFile root,
+                                     final Set<FilePath> added,
+                                     final Set<FilePath> removed,
+                                     final File messageFile,
+                                     final String author,
+                                     List<VcsException> exceptions) {
+    HashSet<FilePath> realAdded = new HashSet<FilePath>();
+    HashSet<FilePath> realRemoved = new HashSet<FilePath>();
+    // perform diff
+    GitSimpleHandler diff = new GitSimpleHandler(project, root, "diff");
+    diff.setNoSSH(true);
+    diff.setSilent(true);
+    diff.addParameters("--diff-filter=ADMRUX", "--name-status", "HEAD");
+    diff.endOptions();
+    String output;
+    try {
+      output = diff.run();
+    }
+    catch (VcsException ex) {
+      exceptions.add(ex);
+      return false;
+    }
+    String rootPath = root.getPath();
+    for (StringTokenizer lines = new StringTokenizer(output, "\n", false); lines.hasMoreTokens();) {
+      String line = lines.nextToken().trim();
+      if (line.length() == 0) {
+        continue;
+      }
+      String[] tk = line.split("[ \t]+");
+      switch (tk[0].charAt(0)) {
+        case 'M':
+        case 'A':
+          realAdded.add(VcsUtil.getFilePath(rootPath + "/" + tk[tk.length - 1]));
+          break;
+        case 'D':
+          realRemoved.add(VcsUtil.getFilePathForDeletedFile(rootPath + "/" + tk[tk.length - 1], false));
+          break;
+        default:
+          throw new IllegalStateException("Unexpected status: " + line);
+      }
+    }
+    realAdded.removeAll(added);
+    realRemoved.removeAll(removed);
+    if (realAdded.size() != 0 || realRemoved.size() != 0) {
+      TreeSet<String> files = new TreeSet<String>();
+      for (FilePath f : realAdded) {
+        files.add(f.getPresentableUrl());
+      }
+      for (FilePath f : realRemoved) {
+        files.add(f.getPresentableUrl());
+      }
+      final StringBuilder fileList = new StringBuilder();
+      for (String f : files) {
+        //noinspection HardCodedStringLiteral
+        fileList.append("<li>");
+        fileList.append(StringUtil.escapeXml(f));
+        fileList.append("</li>");
+      }
+      final int[] rc = new int[1];
+      try {
+        EventQueue.invokeAndWait(new Runnable() {
+          public void run() {
+            rc[0] = Messages.showOkCancelDialog(project, GitBundle.message("commit.partial.merge.message", fileList.toString()),
+                                                GitBundle.getString("commit.partial.merge.title"), null);
+
+          }
+        });
+      }
+      catch (RuntimeException ex) {
+        throw ex;
+      }
+      catch (Exception ex) {
+        throw new RuntimeException("Unable to invoke a message box on awt thread", ex);
+      }
+      if (rc[0] != 0) {
+        return false;
+      }
+      // update non-indexed files
+      if (!updateIndex(project, root, realAdded, realRemoved, exceptions)) {
+        return false;
+      }
+    }
+    // perform merge commit
+    try {
+      GitSimpleHandler handler = new GitSimpleHandler(project, root, "commit");
+      handler.setNoSSH(true);
+      handler.addParameters("-F", messageFile.getAbsolutePath());
+      if (author != null) {
+        handler.addParameters("--author=" + author);
+      }
+      handler.endOptions();
+      handler.run();
+    }
+    catch (VcsException ex) {
+      exceptions.add(ex);
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Check if commit has failed due to unfinished merge
+   *
+   * @param ex an exception to examine
+   * @return true if exception meeans that there is a partial commit during merge
+   */
+  private static boolean isMergeCommit(final VcsException ex) {
+    //noinspection HardCodedStringLiteral
+    return -1 != ex.getMessage().indexOf("fatal: cannot do a partial commit during a merge.");
+  }
+
+  /**
    * Check if the exception means that no origin was found for pus operation
    *
    * @param ex an exception to use
@@ -211,25 +349,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    *
    * @param project    the project
    * @param root       a vcs root
-   * @param files      a files to commit
+   * @param added      a added/modified files to commit
+   * @param added      a removed files to commit
    * @param exceptions a list of exceptions to update
    * @return true if index was updated successfully
    */
   private static boolean updateIndex(final Project project,
                                      final VirtualFile root,
-                                     final Set<FilePath> files,
+                                     final Collection<FilePath> added,
+                                     final Collection<FilePath> removed,
                                      final List<VcsException> exceptions) {
-    ArrayList<FilePath> added = new ArrayList<FilePath>();
-    ArrayList<FilePath> removed = new ArrayList<FilePath>();
     boolean rc = true;
-    for (FilePath file : files) {
-      if (file.getIOFile().exists()) {
-        added.add(file);
-      }
-      else {
-        removed.add(file);
-      }
-    }
     if (!added.isEmpty()) {
       try {
         GitSimpleHandler.addPaths(project, root, added).run();
@@ -320,13 +450,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                          File message,
                                          final String nextCommitAuthor) {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, "commit");
+    handler.setNoSSH(true);
     handler.addParameters("--only", "-F", message.getAbsolutePath());
     if (nextCommitAuthor != null) {
       handler.addParameters("--author=" + nextCommitAuthor);
     }
     handler.endOptions();
     handler.addRelativePaths(files);
-    handler.setNoSSH(true);
     return handler;
   }
 
