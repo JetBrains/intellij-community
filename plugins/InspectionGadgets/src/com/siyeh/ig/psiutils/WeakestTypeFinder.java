@@ -308,6 +308,7 @@ public class WeakestTypeFinder {
                             final PsiExpression expression = expressions[index];
                             final PsiType expressionType = expression.getType();
                             if (expressionType == null ||
+                                    parameterType == null ||
                                     !parameterType.isAssignableFrom(
                                             expressionType)) {
                                 return false;
