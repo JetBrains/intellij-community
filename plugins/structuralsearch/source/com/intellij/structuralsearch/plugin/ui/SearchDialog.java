@@ -250,20 +250,19 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     //noinspection HardCodedStringLiteral
     fileTypes = new JComboBox(new String[]{"java", "xml", "html"});
-    if (ourSupportDifferentFileTypes) {
-      final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
-      searchOptions.add(
-        UIUtil.createOptionLine(
-          new JComponent[]{
-            jLabel,
-            fileTypes,
-            (JComponent)Box.createHorizontalGlue()
-          }
-        )
-      );
 
-      jLabel.setLabelFor(fileTypes);
-    }
+    final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
+    searchOptions.add(
+      UIUtil.createOptionLine(
+        new JComponent[]{
+          jLabel,
+          fileTypes,
+          (JComponent)Box.createHorizontalGlue()
+        }
+      )
+    );
+
+    jLabel.setLabelFor(fileTypes);
 
     final PsiFile file = searchContext.getFile();
     if (file != null) {
@@ -480,10 +479,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return result;
   }
 
-  private static boolean ourSupportDifferentFileTypes = true;
-
   protected int getRowsCount() {
-    return ourSupportDifferentFileTypes ? 4 : 3;
+    return 4;
   }
 
   protected JComponent createCenterPanel() {
