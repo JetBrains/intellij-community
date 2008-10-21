@@ -110,10 +110,21 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       void appendText(PsiExpression expr, StringBuffer buf) {
         if (expr instanceof PsiNewExpression) {
           final PsiAnonymousClass anonymousClass = ((PsiNewExpression)expr).getAnonymousClass();
-          if (anonymousClass != null) {
-            buf.append("new ").append(anonymousClass.getBaseClassType().getPresentableText()).append("(...) {...}");
-          } else {
+          final PsiExpressionList argumentList = ((PsiNewExpression)expr).getArgumentList();
+          if (argumentList == null) {
             buf.append(expr.getText());
+          } else {
+            final String args = argumentList.getExpressions().length > 0 ? "(...)" : "()";
+            if (anonymousClass != null) {
+              buf.append("new ").append(anonymousClass.getBaseClassType().getPresentableText()).append(args).append(" {...}");
+            } else {
+              final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)expr).getClassReference();
+              if (reference != null) {
+                buf.append("new ").append(reference.getText()).append(args);
+              } else {
+                buf.append(expr.getText());
+              }
+            }
           }
         } else if (expr instanceof PsiReferenceExpression) {
           final PsiExpression qualifierExpression = ((PsiReferenceExpression)expr).getQualifierExpression();
