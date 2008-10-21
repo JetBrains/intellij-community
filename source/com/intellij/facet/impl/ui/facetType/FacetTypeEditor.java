@@ -28,27 +28,29 @@ import java.util.List;
  * @author nik
  */
 public class FacetTypeEditor extends UnnamedConfigurableGroup {
-  private final List<Configurable> myConfigurables = new ArrayList<Configurable>();
+  private final List<Configurable> myInitialConfigurables = new ArrayList<Configurable>();
   private final Project myProject;
   private final StructureConfigurableContext myContext;
   private final FacetType<?, ?> myFacetType;
   private MultipleFacetSettingsEditor myAllFacetsEditor;
+  private List<Configurable> myCurrentConfigurables;
+  private TabbedPaneWrapper myTabbedPane;
 
   public <C extends FacetConfiguration> FacetTypeEditor(@NotNull Project project, final StructureConfigurableContext context, @NotNull FacetType<?, C> facetType) {
     myProject = project;
     myContext = context;
     myFacetType = facetType;
     if (FacetAutodetectingManager.getInstance(project).hasDetectors(facetType)) {
-      myConfigurables.add(new FacetAutodetectionConfigurable(project, context, facetType));
+      myInitialConfigurables.add(new FacetAutodetectionConfigurable(project, context, facetType));
     }
 
     C configuration = ProjectFacetManager.getInstance(project).createDefaultConfiguration(facetType);
     DefaultFacetSettingsEditor defaultSettingsEditor = facetType.createDefaultConfigurationEditor(project, configuration);
     if (defaultSettingsEditor != null) {
-      myConfigurables.add(new DefaultFacetSettingsConfigurable<C>(facetType, project, defaultSettingsEditor, configuration));
+      myInitialConfigurables.add(new DefaultFacetSettingsConfigurable<C>(facetType, project, defaultSettingsEditor, configuration));
     }
 
-    for (Configurable configurable : myConfigurables) {
+    for (Configurable configurable : myInitialConfigurables) {
       add(configurable);
     }
   }
@@ -77,23 +79,32 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
     }
     myAllFacetsEditor = allFacetsEditor;
 
-    List<Configurable> configurables = new ArrayList<Configurable>(myConfigurables);
+    myCurrentConfigurables = new ArrayList<Configurable>(myInitialConfigurables);
     if (myAllFacetsEditor != null) {
-      configurables.add(new AllFacetsConfigurable(myAllFacetsEditor));
+      myCurrentConfigurables.add(new AllFacetsConfigurable(myAllFacetsEditor));
     }
 
-    if (configurables.isEmpty()) {
+    if (myCurrentConfigurables.isEmpty()) {
       return new JPanel();
     }
-    if (configurables.size() == 1) {
-      return configurables.get(0).createComponent();
+    if (myCurrentConfigurables.size() == 1) {
+      return myCurrentConfigurables.get(0).createComponent();
     }
 
-    TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper();
-    for (Configurable configurable : configurables) {
-      tabbedPane.addTab(configurable.getDisplayName(), configurable.getIcon(), configurable.createComponent(), null);
+    myTabbedPane = new TabbedPaneWrapper();
+    for (Configurable configurable : myCurrentConfigurables) {
+      myTabbedPane.addTab(configurable.getDisplayName(), configurable.getIcon(), configurable.createComponent(), null);
     }
-    return tabbedPane.getComponent();
+    return myTabbedPane.getComponent();
+  }
+
+  @Nullable
+  public String getHelpTopic() {
+    int selectedTab = myTabbedPane != null ? myTabbedPane.getSelectedIndex() : 0;
+    if (myCurrentConfigurables != null && 0 <= selectedTab && selectedTab < myCurrentConfigurables.size()) {
+      return myCurrentConfigurables.get(selectedTab).getHelpTopic();
+    }
+    return null;
   }
 
   private static class AllFacetsConfigurable implements Configurable {
@@ -112,7 +123,7 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
     }
 
     public String getHelpTopic() {
-      return null;
+      return myEditor.getHelpTopic();
     }
 
     public JComponent createComponent() {

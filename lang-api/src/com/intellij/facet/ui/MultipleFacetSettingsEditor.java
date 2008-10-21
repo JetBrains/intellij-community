@@ -1,5 +1,8 @@
 package com.intellij.facet.ui;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
+
 import javax.swing.*;
 
 /**
@@ -15,4 +18,8 @@ public abstract class MultipleFacetSettingsEditor {
   public void disposeUIResources() {
   }
 
+  @Nullable @NonNls
+  public String getHelpTopic() {
+    return null;
+  }
 }

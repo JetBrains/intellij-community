@@ -163,7 +163,7 @@ public class FacetAutodetectionConfigurable implements Configurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "concepts.facet";
   }
 
   public JComponent createComponent() {

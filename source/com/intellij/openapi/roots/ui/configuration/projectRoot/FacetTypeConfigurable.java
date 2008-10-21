@@ -4,6 +4,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.facet.FacetType;
+import com.intellij.facet.impl.ui.facetType.FacetTypeEditor;
 
 import javax.swing.*;
 
@@ -43,7 +44,8 @@ public class FacetTypeConfigurable extends NamedConfigurable<FacetType> {
   }
 
   public String getHelpTopic() {
-    return null;
+    final FacetTypeEditor editor = myFacetStructureConfigurable.getFacetTypeEditor(myFacetType);
+    return editor != null ? editor.getHelpTopic() : null;
   }
 
   public boolean isModified() {

@@ -38,7 +38,7 @@ public class DefaultFacetSettingsConfigurable<C extends FacetConfiguration> impl
   }
 
   public String getHelpTopic() {
-    return null;
+    return myDelegate.getHelpTopic();
   }
 
   public JComponent createComponent() {

@@ -74,6 +74,11 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     }
   }
 
+  @Nullable
+  public FacetTypeEditor getFacetTypeEditor(@NotNull FacetType<?, ?> facetType) {
+    return myFacetTypeEditors.get(facetType);
+  }
+
   public FacetTypeEditor getOrCreateFacetTypeEditor(@NotNull FacetType<?, ?> facetType) {
     FacetTypeEditor editor = myFacetTypeEditors.get(facetType);
     if (editor == null) {
@@ -212,6 +217,12 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   public String getHelpTopic() {
+    if (myCurrentMultipleSettingsEditor != null) {
+      return myCurrentMultipleSettingsEditor.getHelpTopic();
+    }
+    if (myCurrentConfigurable != null) {
+      return myCurrentConfigurable.getHelpTopic();
+    }
     return "concepts.facet";//todo[nik]
   }
 
