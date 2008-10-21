@@ -204,7 +204,7 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
       if (element == null && tag.getParentTag() != null) {
         element = myManager.getDomElement(tag.getParentTag());
       }
-      if (element != null && file instanceof XmlFile) {
+      if (element != null && file instanceof XmlFile && !(myChildrenDescription instanceof MyRootDomChildrenDescription)) {
         final String namespace = DomService.getInstance().getEvaluatedXmlName(element).evaluateChildName(myChildrenDescription.getXmlName()).getNamespace(tag, (XmlFile)file);
         if (!tag.getNamespaceByPrefix("").equals(namespace)) {
           final String s = tag.getPrefixByNamespace(namespace);
