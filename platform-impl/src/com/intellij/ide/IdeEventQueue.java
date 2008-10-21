@@ -395,6 +395,11 @@ public class IdeEventQueue extends EventQueue {
       }
     }
 
+    if (e instanceof WindowEvent) {
+      ActivityTracker.getInstance().inc();
+    }
+
+
     // Process "idle" and "activity" listeners
     if (e instanceof KeyEvent || e instanceof MouseEvent) {
       ActivityTracker.getInstance().inc();

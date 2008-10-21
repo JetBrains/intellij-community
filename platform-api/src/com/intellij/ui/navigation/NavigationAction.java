@@ -13,14 +13,14 @@ abstract class NavigationAction extends AnAction {
   private ShadowAction myShadow;
 
   protected NavigationAction(JComponent c, final String originalActionID) {
-    final AnAction back = ActionManager.getInstance().getAction(originalActionID);
-    myShadow = new ShadowAction(this, back, c);
+    final AnAction original = ActionManager.getInstance().getAction(originalActionID);
+    myShadow = new ShadowAction(this, original, c);
+    getTemplatePresentation().setIcon(original.getTemplatePresentation().getIcon());
   }
 
   public final void update(final AnActionEvent e) {
     e.getPresentation().setEnabled(getHistory(e) != null);
     if (e.getPresentation().isEnabled()) {
-      e.getPresentation().setIcon(getTemplatePresentation().getIcon());
       doUpdate(e);
     }
   }

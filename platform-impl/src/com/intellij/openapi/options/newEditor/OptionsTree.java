@@ -275,7 +275,13 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         }
 
         int forcedWidth = 2000;
-        final TreePath path = tree.getPathForRow(row);
+        TreePath path = tree.getPathForRow(row);
+        if (path == null) {
+          if (value instanceof DefaultMutableTreeNode) {
+            path = new TreePath(((DefaultMutableTreeNode)value).getPath());
+          }
+        }
+
         final boolean toStretch = tree.isVisible() && path != null;
 
         if (toStretch) {
@@ -291,7 +297,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
           int indent = (left + right) * nestingLevel + (treeInsets != null ? treeInsets.left + treeInsets.right : 0);
 
           forcedWidth = visibleRect.width > 0 ? visibleRect.width - indent: forcedWidth;
-        }
+        } 
 
         result = configureComponent(base.getText(), base.getText(), null, null, selected, group != null,
                                                 group != null ? group.getDisplayName() : null, forcedWidth);

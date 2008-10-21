@@ -547,9 +547,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       if (myFiltered == null || !myFiltered.contains(current)) {
         if (myHits != null) {
           if (myHits.getNameHits().size() > 0) {
-            toSelect = myHits.getNameHits().iterator().next();
+            toSelect = suggestToSelect(myHits.getNameHits());
           } else if (myHits.getContentHits().size() > 0) {
-            toSelect = myHits.getContentHits().iterator().next();
+            toSelect = suggestToSelect(myHits.getContentHits());
           }
         }
       }
@@ -562,8 +562,24 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
 
     private boolean isEmptyParent(Configurable configurable) {
+      if (configurable instanceof SearchableConfigurable.Parent) {
+        return !((SearchableConfigurable.Parent)configurable).hasOwnContent();
+      }
       return false;
     }
+
+    @Nullable
+    private Configurable suggestToSelect(Set<Configurable> set) {
+      Configurable candidate = null;
+      for (Iterator<Configurable> iterator = set.iterator(); iterator.hasNext();) {
+        Configurable each = iterator.next();
+        if (!isEmptyParent(each)) return each;
+        candidate = each;
+      }
+
+      return candidate;
+    }
+
   }
 
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {

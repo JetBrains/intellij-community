@@ -100,6 +100,18 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     setLayout(new BorderLayout());
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
 
+    updateActions();
+
+    //
+    keymapManager.addKeymapManagerListener(new WeakKeymapManagerListener(keymapManager, myKeymapManagerListener));
+    actionManager.addTimerListener(500, new WeakTimerListener(actionManager, myTimerListener));
+    // If the panel doesn't handle mouse event then it will be passed to its parent.
+    // It means that if the panel is in slidindg mode then the focus goes to the editor
+    // and panel will be automatically hidden.
+    enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
+  }
+
+  private void updateActions() {
     final Application app = ApplicationManager.getApplication();
     if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
       if (app.isDispatchThread()) {
@@ -112,14 +124,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         });
       }
     }
-
-    //
-    keymapManager.addKeymapManagerListener(new WeakKeymapManagerListener(keymapManager, myKeymapManagerListener));
-    actionManager.addTimerListener(500, new WeakTimerListener(actionManager, myTimerListener));
-    // If the panel doesn't handle mouse event then it will be passed to its parent.
-    // It means that if the panel is in slidindg mode then the focus goes to the editor
-    // and panel will be automatically hidden.
-    enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
   }
 
   public JComponent getComponent() {
@@ -698,6 +702,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   public void setTargetComponent(final JComponent component) {
     myTargetComponent = component;
+    updateActions();
   }
 
   protected DataContext getToolbarDataContext() {
