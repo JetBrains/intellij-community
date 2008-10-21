@@ -80,7 +80,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
       };
 
     try {
-      final String prefixByNamespace = getPrefixByNamespace(file);
+      final String prefixByNamespace = getPrefixByNamespace(file, myNamespace);
       if (myNamespacePrefix != null || StringUtil.isEmpty(prefixByNamespace)) {
         final String nsPrefix = myNamespacePrefix == null ? suggestPrefix(file) : myNamespacePrefix;
         extension.insertNamespaceDeclaration(file, editor, Collections.singleton(myNamespace), nsPrefix, runAfter);
@@ -106,11 +106,11 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
   }
 
   @Nullable
-  private String getPrefixByNamespace(XmlFile file) {
+  public static String getPrefixByNamespace(XmlFile file, final String namespace) {
     final XmlDocument document = file.getDocument();
     assert document != null;
     final XmlTag tag = document.getRootTag();
-    return tag == null ? null : tag.getPrefixByNamespace(myNamespace);
+    return tag == null ? null : tag.getPrefixByNamespace(namespace);
   }
 
   @Nullable
@@ -127,6 +127,10 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
   }
 
   protected void qualifyWithPrefix(final String namespacePrefix, final PsiElement element, final Document document) {
+    qualifyWithPrefix(namespacePrefix, element);
+  }
+
+  public static void qualifyWithPrefix(final String namespacePrefix, final PsiElement element) {
     final PsiElement tag = element.getParent();
     if (tag instanceof XmlTag) {
       final String prefix = ((XmlTag)tag).getNamespacePrefix();

@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.completion.ExtendedTagInsertHandler;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
@@ -119,7 +120,15 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       project,
       new StringToAttributeProcessor() {
         public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String namespace) throws IncorrectOperationException {
-
+          if (StringUtil.isEmpty(myNamespacePrefix)) {
+            final XmlExtension extension = XmlExtension.getExtension(myFile);
+            final XmlFile xmlFile = extension.getContainingFile(myElement);
+            final String prefixByNamespace = ExtendedTagInsertHandler.getPrefixByNamespace(xmlFile, namespace);
+            if (prefixByNamespace != null) {
+              ExtendedTagInsertHandler.qualifyWithPrefix(prefixByNamespace, myElement);
+              return;
+            }
+          }
           final int offset = editor.getCaretModel().getOffset();
           final RangeMarker marker = editor.getDocument().createRangeMarker(offset, offset);
           final XmlExtension extension = XmlExtension.getExtension((XmlFile)file);
