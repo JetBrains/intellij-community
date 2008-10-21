@@ -318,7 +318,7 @@ public class MatcherImpl {
         if (psiElement == null) continue;
         final Language language = psiElement.getLanguage();
 
-        if (language != JspxFileViewProvider.JAVA_HOLDER_METHOD_TREE_LANGUAGE && language == ourPatternLanguage) { // prevent duplicated usages
+        if (language != JspxFileViewProvider.JAVA_HOLDER_METHOD_TREE_LANGUAGE && (language == ourPatternLanguage || language == ourPatternLanguage2)) { // prevent duplicated usages
           scheduler.addOneTask(new MatchOneFile(psiElement));
         }
         if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference
