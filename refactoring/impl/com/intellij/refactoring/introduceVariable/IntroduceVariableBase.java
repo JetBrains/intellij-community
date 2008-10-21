@@ -169,7 +169,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
           buf.append(((PsiPrefixExpression)expr).getOperationSign().getText());
           appendText(((PsiPrefixExpression)expr).getOperand(), buf);
         }
-        else {
+        else if (expr != null) {
           buf.append(expr.getText());
         }
       }
