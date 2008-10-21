@@ -123,7 +123,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
         myFiles = FileFinder.findPomFiles(getImportRoot().getChildren(), getImportingSettings().isLookForNested(), p.getIndicator(),
                                           new ArrayList<VirtualFile>());
 
-        collectProfiles();
+        collectProfiles(p);
 
         if (myProfiles.isEmpty()) {
           readMavenProjectTree(p);
@@ -134,13 +134,13 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
     });
   }
 
-  private void collectProfiles() {
+  private void collectProfiles(MavenProcess p) {
     myProfiles = new ArrayList<String>();
 
     MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(getGeneralSettings(), new SoutMavenConsole());
     try {
       for (VirtualFile f : myFiles) {
-        MavenProjectHolder holder = MavenReader.readProject(e, f, new ArrayList<String>());
+        MavenProjectHolder holder = MavenReader.readProject(e, f, new ArrayList<String>(), p);
         if (!holder.isValid) continue;
 
         Set<String> profiles = new LinkedHashSet<String>();

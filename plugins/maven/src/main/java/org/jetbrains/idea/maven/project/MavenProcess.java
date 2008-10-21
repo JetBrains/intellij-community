@@ -35,7 +35,7 @@ public class MavenProcess {
   }
 
   public void checkCanceled() throws MavenProcessCanceledException {
-    if (myIndicator != null && myIndicator.isCanceled()) throw new MavenProcessCanceledException();
+    if (isCanceled()) throw new MavenProcessCanceledException();
   }
 
   public static void run(Project project, String title, final MavenTask task) throws MavenProcessCanceledException {

@@ -10,11 +10,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import junit.framework.TestCase;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProcess;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +28,8 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class MavenTestCase extends TestCase {
+  protected static final MavenProcess EMPTY_MAVEN_PROCESS = new MavenProcess(new EmptyProgressIndicator());
+
   private static File ourTempDir;
 
   protected IdeaProjectTestFixture myTestFixture;

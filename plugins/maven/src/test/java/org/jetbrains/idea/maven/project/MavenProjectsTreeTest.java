@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.NullMavenConsole;
@@ -12,7 +11,6 @@ import java.util.List;
 
 public class MavenProjectsTreeTest extends MavenImportingTestCase {
   private static final MavenConsole NULL_CONSOLE = new NullMavenConsole();
-  private static final MavenProcess EMPTY_PROCESS = new MavenProcess(new EmptyProgressIndicator());
 
   MavenProjectsTree myTree = new MavenProjectsTree();
 
@@ -686,7 +684,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
     assertEquals("child", myTree.findProject(child).getMavenProject().getArtifactId());
 
-    myTree.delete(asList(parent), getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_PROCESS);
+    myTree.delete(asList(parent), getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
 
     assertEquals("${childName}", myTree.findProject(child).getMavenProject().getArtifactId());
   }
@@ -725,7 +723,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     readModel(myProjectPom, child, subChild);
     assertEquals("subChild", myTree.findProject(subChild).getMavenProject().getArtifactId());
 
-    myTree.delete(asList(child), getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_PROCESS);
+    myTree.delete(asList(child), getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
     assertEquals("${subChildName}", myTree.findProject(subChild).getMavenProject().getArtifactId());
   }
 
@@ -976,7 +974,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     assertEquals(1, roots.size());
     assertEquals(1, myTree.getModules(roots.get(0)).size());
 
-    myTree.delete(asList(m), getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_PROCESS);
+    myTree.delete(asList(m), getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
 
     roots = myTree.getRootProjects();
     assertEquals(1, roots.size());
@@ -1015,7 +1013,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     assertEquals(1, myTree.getModules(roots.get(0)).size());
     assertEquals(1, myTree.getModules(myTree.getModules(roots.get(0)).get(0)).size());
 
-    myTree.delete(asList(m1), getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_PROCESS);
+    myTree.delete(asList(m1), getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
 
     roots = myTree.getRootProjects();
     assertEquals(1, roots.size());
@@ -1032,10 +1030,10 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
                 profiles,
                 getMavenGeneralSettings(),
                 NULL_CONSOLE,
-                EMPTY_PROCESS);
+                EMPTY_MAVEN_PROCESS);
   }
 
   private void update(VirtualFile files) throws MavenProcessCanceledException {
-    myTree.update(asList(files), getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_PROCESS);
+    myTree.update(asList(files), getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
   }
 }

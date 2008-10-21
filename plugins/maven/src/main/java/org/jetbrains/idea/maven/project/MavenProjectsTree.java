@@ -50,12 +50,17 @@ public class MavenProjectsTree {
     }
   }
 
-  public void update(Collection<VirtualFile> files, MavenGeneralSettings mavenSettings, MavenConsole console, MavenProcess p) throws MavenProcessCanceledException {
+  public void update(Collection<VirtualFile> files, MavenGeneralSettings mavenSettings, MavenConsole console, MavenProcess p)
+    throws MavenProcessCanceledException {
     update(files, mavenSettings, console, p, false);
   }
 
-  private void update(Collection<VirtualFile> files, MavenGeneralSettings mavenSettings, MavenConsole console, MavenProcess p, boolean force)
-      throws MavenProcessCanceledException {
+  private void update(Collection<VirtualFile> files,
+                      MavenGeneralSettings mavenSettings,
+                      MavenConsole console,
+                      MavenProcess p,
+                      boolean force)
+    throws MavenProcessCanceledException {
     MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(mavenSettings, console, this);
 
     try {
@@ -82,7 +87,7 @@ public class MavenProjectsTree {
                      Set<VirtualFile> readFiles,
                      Stack<MavenProjectModel> updateStack,
                      MavenProcess p, boolean force)
-      throws MavenProcessCanceledException {
+    throws MavenProcessCanceledException {
     MavenProjectModel newProject = new MavenProjectModel(f);
 
     MavenProjectModel intendedAggregator = visit(new Visitor<MavenProjectModel>() {
@@ -133,9 +138,8 @@ public class MavenProjectsTree {
       }
       finally {
         writeUnlock();
-
       }
-      project.read(embedder, myProfiles);
+      project.read(embedder, myProfiles, p);
       readFiles.add(project.getFile());
 
       writeLock();
@@ -192,7 +196,6 @@ public class MavenProjectsTree {
       }
     }
 
-
     Set<MavenProjectModel> allInheritors = findInheritors(project);
     allInheritors.addAll(prevInheritors);
     for (MavenProjectModel each : allInheritors) {
@@ -226,7 +229,8 @@ public class MavenProjectsTree {
     }
   }
 
-  public void delete(List<VirtualFile> files, MavenGeneralSettings mavenSettings, MavenConsole console, MavenProcess p) throws MavenProcessCanceledException {
+  public void delete(List<VirtualFile> files, MavenGeneralSettings mavenSettings, MavenConsole console, MavenProcess p)
+    throws MavenProcessCanceledException {
     List<MavenProjectModel> projectsToUpdate = new ArrayList<MavenProjectModel>();
     List<MavenProjectModel> removedProjects = new ArrayList<MavenProjectModel>();
 
@@ -251,7 +255,7 @@ public class MavenProjectsTree {
   }
 
   private void doRemove(MavenProjectModel aggregator, MavenProjectModel project, List<MavenProjectModel> removedProjects)
-      throws MavenProcessCanceledException {
+    throws MavenProcessCanceledException {
     for (MavenProjectModel each : getModules(project)) {
       doRemove(project, each, removedProjects);
     }
@@ -406,7 +410,7 @@ public class MavenProjectsTree {
         p.checkCanceled();
         p.setText(ProjectBundle.message("maven.resolving.pom", FileUtil.toSystemDependentName(each.getPath())));
         p.setText2("");
-        each.resolve(e);
+        each.resolve(e, p);
         fireUpdated(each);
       }
 
@@ -427,7 +431,7 @@ public class MavenProjectsTree {
         p.checkCanceled();
         p.setText(ProjectBundle.message("maven.generating.sources.pom", FileUtil.toSystemDependentName(each.getPath())));
         p.setText2("");
-        each.generateSources(embedder, console);
+        each.generateSources(embedder, console, p);
       }
     }
     finally {

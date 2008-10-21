@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import org.apache.maven.artifact.Artifact;
+import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.File;
 import java.io.IOException;
@@ -239,6 +240,18 @@ public class MavenProjectConfigurator {
         if (!shouldCreateModuleFor(each)) return;
 
         Module module = myModuleModel.findModuleByName(name);
+        if (module == null) {
+          // todo: IDEADEV-30669 hook
+          String message = "Module " + name + "not found.";
+          message += "\nmavenProject="+each.getFile();
+          module = myMavenProjectToModule.get(each);
+          message += "\nmyMavenProjectToModule=" + (module == null ? null : module.getName());
+          message += "\nmyMavenProjectToModuleName=" +myMavenProjectToModuleName.get(each);
+          message += "\nmyMavenProjectToModulePath=" +myMavenProjectToModulePath.get(each);
+          MavenLog.LOG.warn(message);
+          return;
+        }
+
         myModuleModel.setModuleGroupPath(module, groups.isEmpty() ? null : groups.toArray(new String[groups.size()]));
       }
 
