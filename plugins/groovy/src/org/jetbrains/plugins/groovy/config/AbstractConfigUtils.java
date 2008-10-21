@@ -122,7 +122,7 @@ public abstract class AbstractConfigUtils {
   }
 
   public Library[] getProjectSDKLibraries(Project project) {
-    if (project == null || project.isDisposed()) return new Library[0];
+    if (project == null) return new Library[0];
     final LibraryTable table = ProjectLibraryTable.getInstance(project);
     final List<Library> all = ContainerUtil.findAll(table.getLibraries(), LIB_SEARCH_CONDITION);
     return all.toArray(new Library[all.size()]);
