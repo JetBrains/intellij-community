@@ -40,6 +40,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.groovy.compiler.rt.MessageCollector;
@@ -64,6 +65,7 @@ public class GroovyCompiler implements TranslatingCompiler {
   private static final String XMX_COMPILER_PROPERTY = "-Xmx300m";
 
   private Project myProject;
+  @NonNls private static final String GROOVY_COMPILER = "groovy compiler";
 
   public GroovyCompiler(Project project) {
     myProject = project;
@@ -333,7 +335,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
   @NotNull
   public String getDescription() {
-    return "groovy compiler";
+    return GROOVY_COMPILER;
   }
 
   public boolean validateConfiguration(CompileScope compileScope) {
@@ -351,11 +353,11 @@ public class GroovyCompiler implements TranslatingCompiler {
     for (Module module : modules) {
       final String groovyInstallPath = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
       final String grailsInstallPath = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
-      if (groovyInstallPath.length() == 0 && (grailsInstallPath == null || grailsInstallPath.length() == 0)) {
+      if (groovyInstallPath.length() == 0 && grailsInstallPath.length() == 0) {
         if (!GroovyConfigUtils.getInstance().tryToSetUpGroovyFacetOntheFly(module)) {
           Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet", module.getName()),
                                    GroovyBundle.message("cannot.compile"));
-          int result = Messages.showOkCancelDialog(GroovyBundle.message("groovy.configure.facet.question.text"),
+          int result = Messages.showOkCancelDialog(GroovyBundle.message("groovy.configure.facet.question.text", module.getName()),
                                                    GroovyBundle.message("groovy.configure.facet.question"), GroovyIcons.GROOVY_ICON_32x32);
           if (result == 0) {
             ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
@@ -391,7 +393,7 @@ public class GroovyCompiler implements TranslatingCompiler {
     return true;
   }
 
-  private PathsList getCompilationClasspath(Module module) {
+  private static PathsList getCompilationClasspath(Module module) {
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     OrderEntry[] entries = rootManager.getOrderEntries();
     Set<VirtualFile> cpVFiles = new HashSet<VirtualFile>();

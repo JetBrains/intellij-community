@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -253,7 +255,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     if (libraries.length > 0) {
       final Library library = libraries[0];
       int result = Messages
-        .showOkCancelDialog(GroovyBundle.message("groovy.like.library.found.text", library.getName(), getSDKLibVersion(library)),
+        .showOkCancelDialog(GroovyBundle.message("groovy.like.library.found.text", module.getName(), library.getName(), getSDKLibVersion(library)),
                             GroovyBundle.message("groovy.like.library.found"), GroovyIcons.GROOVY_ICON_32x32);
       final Ref<Boolean> ref = new Ref<Boolean>();
       ref.set(false);
@@ -265,6 +267,13 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
             LibrariesUtil.placeEntryToCorrectPlace(model, entry);
             model.commit();
             ref.set(true);
+            final FacetManager manager = FacetManager.getInstance(module);
+            final GroovyFacetType type = GroovyFacetType.getInstance();
+            final FacetTypeId<GroovyFacet> id = type.getId();
+            final GroovyFacet facetByType = manager.getFacetByType(id);
+            if (facetByType == null) {
+              manager.addFacet(type, type.getPresentableName(), null);
+            }
           }
         });
       }
