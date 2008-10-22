@@ -19,7 +19,7 @@ public abstract class ProjectImportWizardStep extends ModuleWizardStep {
   }
 
   public Icon getIcon() {
-    return getBuilder() != null && getBuilder().isUpdate() ? ICON : NEW_PROJECT_ICON;
+    return myContext.isCreatingNewProject() ? NEW_PROJECT_ICON : ICON;
   }
   
   protected ProjectImportBuilder getBuilder() {
