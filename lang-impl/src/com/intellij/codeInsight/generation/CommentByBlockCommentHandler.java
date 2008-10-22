@@ -4,7 +4,6 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
@@ -13,18 +12,20 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   private Project myProject;
@@ -75,6 +76,10 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       if (selectionModel.hasBlockSelection()) {
         final LogicalPosition start = selectionModel.getBlockStart();
         final LogicalPosition end = selectionModel.getBlockEnd();
+
+        assert start != null;
+        assert end != null;
+
         int startColumn = Math.min(start.column, end.column);
         int endColumn = Math.max(start.column, end.column);
         int startLine = Math.min(start.line, end.line);
@@ -105,6 +110,12 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     }
   }
 
+  @Nullable
+  private static String trim(String s) {
+    return s == null ? null : s.trim();
+  }
+
+  @Nullable
   private TextRange findCommentedRange(final Commenter commenter) {
     final CharSequence text = myDocument.getCharsSequence();
     final FileType fileType = myFile.getFileType();
@@ -121,8 +132,10 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       return null;
     }
 
-    final String prefix = commenter.getBlockCommentPrefix();
-    final String suffix = commenter.getBlockCommentSuffix();
+    final String prefix = trim(commenter.getBlockCommentPrefix());
+    final String suffix = trim(commenter.getBlockCommentSuffix());
+    if (prefix == null || suffix == null) return null;
+
     TextRange commentedRange = null;
     PsiElement comment = findCommentAtCaret();
     if (comment != null) {
@@ -171,6 +184,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     return findCommenter(myFile, myEditor);
   }
 
+  @Nullable
   private PsiElement findCommentAtCaret() {
     PsiElement elt = myFile.getViewProvider().findElementAt(myEditor.getCaretModel().getOffset());
     if (elt == null) return null;
@@ -236,7 +250,8 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     }
     myDocument.insertString(endOffset, commentSuffix);
     // process nested comments in back order
-    int i = nestedCommentPrefixes.size() - 1, j = nestedCommentSuffixes.size() - 1;
+    int i = nestedCommentPrefixes.size() - 1;
+    int j = nestedCommentSuffixes.size() - 1;
     while (i >= 0 && j >= 0) {
       final int prefixIndex = nestedCommentPrefixes.get(i);
       final int suffixIndex = nestedCommentSuffixes.get(j);
