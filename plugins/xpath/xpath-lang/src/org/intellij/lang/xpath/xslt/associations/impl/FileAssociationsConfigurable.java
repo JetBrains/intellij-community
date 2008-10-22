@@ -17,24 +17,24 @@ package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.fileTypes.FileOptionsProvider;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class FileAssociationsConfigurable implements FileOptionsProvider, NonDefaultProjectConfigurable {
+public class FileAssociationsConfigurable implements SearchableConfigurable, NonDefaultProjectConfigurable {
     private final Project myProject;
     private final UIState myState;
     private AssociationsEditor myEditor;
@@ -121,5 +121,13 @@ public class FileAssociationsConfigurable implements FileOptionsProvider, NonDef
         public void loadState(TreeState state) {
             this.state = state;
         }
+    }
+
+    public String getId() {
+        return getHelpTopic();
+    }
+
+    public Runnable enableSearch(final String option) {
+        return null;
     }
 }
