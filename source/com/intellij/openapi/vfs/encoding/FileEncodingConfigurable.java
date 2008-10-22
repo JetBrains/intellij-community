@@ -5,9 +5,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.fileTypes.FileOptionsProvider;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -23,7 +23,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-public class FileEncodingConfigurable implements FileOptionsProvider, NonDefaultProjectConfigurable {
+public class FileEncodingConfigurable implements SearchableConfigurable, NonDefaultProjectConfigurable {
   private final Project myProject;
   private FileTreeTable myTreeView;
   private JScrollPane myTreePanel;
@@ -56,6 +56,14 @@ public class FileEncodingConfigurable implements FileOptionsProvider, NonDefault
   @NonNls
   public String getHelpTopic() {
     return "topicId771616";
+  }
+
+  public String getId() {
+    return "File.Encoding";
+  }
+
+  public Runnable enableSearch(final String option) {
+    return null;
   }
 
   public JComponent createComponent() {

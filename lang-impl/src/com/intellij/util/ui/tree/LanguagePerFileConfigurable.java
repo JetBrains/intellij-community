@@ -8,9 +8,9 @@ import com.intellij.lang.PerFileMappings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.fileTypes.FileOptionsProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class LanguagePerFileConfigurable<T> implements FileOptionsProvider {
+public abstract class LanguagePerFileConfigurable<T> implements SearchableConfigurable {
   protected final Project myProject;
   private final Class<T> myValueClass;
   private final PerFileMappings<T> myMappings;
@@ -87,6 +87,14 @@ public abstract class LanguagePerFileConfigurable<T> implements FileOptionsProvi
 
   public AbstractFileTreeTable<T> getTreeView() {
     return myTreeView;
+  }
+
+  public String getId() {
+    return getDisplayName();
+  }
+
+  public Runnable enableSearch(final String option) {
+    return null;
   }
 
   private class MyTreeTable extends AbstractFileTreeTable<T> {
