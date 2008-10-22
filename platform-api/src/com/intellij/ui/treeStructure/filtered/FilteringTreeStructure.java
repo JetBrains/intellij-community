@@ -78,6 +78,11 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
       return myDelegate;
     }
 
+    @Override
+    protected void updateFileStatus() {
+      
+    }
+
     protected void doUpdate() {
       clearColoredText();
       if (myDelegate instanceof SimpleNode) {

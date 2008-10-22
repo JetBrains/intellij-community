@@ -97,7 +97,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     updateFromRoot();
 
     boolean wasSelected = false;
-    if (selectedObject != null) {
+    if (toSelect.get() != null && isSelectable(toSelect.get())) {
       wasSelected = myTree.select(this, new SimpleNodeVisitor() {
         public boolean accept(SimpleNode simpleNode) {
           if (simpleNode instanceof FilteringTreeStructure.Node) {
@@ -115,6 +115,10 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
       myTree.select(this, new SimpleNodeVisitor() {
         public boolean accept(SimpleNode simpleNode) {
           if (simpleNode instanceof FilteringTreeStructure.Node) {
+
+            final boolean isRoot = getTreeStructure().getRootElement() == simpleNode;
+            if (isRoot && !myTree.isRootVisible()) return false;
+
             FilteringTreeStructure.Node node = (FilteringTreeStructure.Node)simpleNode;
             if (isSelectable(node.getDelegate())) {
               return true;
@@ -154,6 +158,10 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
   public FilteringTreeStructure.Node getVisibleNodeFor(Object nodeObject) {
     return ((FilteringTreeStructure)getTreeStructure()).getVisibleNodeFor(nodeObject);
+  }
+
+  public Object getOriginalNode(SimpleNode node) {
+    return ((FilteringTreeStructure.Node)node).getDelegate();
   }
 
 

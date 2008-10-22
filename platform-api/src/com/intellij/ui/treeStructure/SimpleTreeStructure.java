@@ -58,4 +58,16 @@ public abstract class SimpleTreeStructure extends AbstractTreeStructure {
     cachingNode.cleanUpCache();
   }
 
+  public static class Impl extends SimpleTreeStructure {
+    private SimpleNode myRoot;
+
+    public Impl(SimpleNode root) {
+      myRoot = root;
+    }
+
+    public Object getRootElement() {
+      return myRoot;
+    }
+  }
+
 }

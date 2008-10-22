@@ -100,10 +100,7 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
 
         myColor = Color.black;
         assert getFileStatus() != null: getClass().getName() + ' ' + toString();
-        Color fileStatusColor = getFileStatus().getColor();
-        if (fileStatusColor != null) {
-          myColor = fileStatusColor;
-        }
+        updateFileStatus();
 
         doUpdate();
         myName = getName();
@@ -112,6 +109,13 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
                                            new Object[]{oldOpenIcon, oldClosedIcon, oldName, oldFragments, oldColor});
       }
     }).booleanValue();
+  }
+
+  protected  void updateFileStatus() {
+    Color fileStatusColor = getFileStatus().getColor();
+    if (fileStatusColor != null) {
+      myColor = fileStatusColor;
+    }
   }
 
   public final String getName() {

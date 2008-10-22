@@ -69,6 +69,10 @@ public class AbstractTreeBuilder implements Disposable {
     return new AbstractTreeUi();
   }
 
+  public final void select(final Object element) {
+    select(element, null);
+  }
+
   public final void select(final Object element, @Nullable final Runnable onDone) {
     getUi().select(element, onDone);
   }
