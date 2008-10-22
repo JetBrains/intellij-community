@@ -105,7 +105,7 @@ public class AddAnnotationFix extends PsiElementBaseIntentionAction implements L
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
-    if (element == null) return false;
+    if (element == null || !element.isValid()) return false;
     if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
     final PsiModifierListOwner owner;
     if (myModifierListOwner != null) {
