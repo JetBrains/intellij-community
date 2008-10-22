@@ -84,12 +84,28 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   static {
     final FileTypeConsumer consumer = new FileTypeConsumer() {
-      public void consume(final FileType fileType, final String extensions) {
-        ourStandardFileTypes.put(fileType.getName(), new StandardFileType(fileType, parse(extensions)));
+      public void consume(final @NotNull FileType fileType, final String extensions) {
+        register(fileType, parse(extensions));
       }
 
-      public void consume(final FileType fileType, final FileNameMatcher... matchers) {
-        ourStandardFileTypes.put(fileType.getName(), new StandardFileType(fileType, Arrays.asList(matchers)));
+      public void consume(final @NotNull FileType fileType, final FileNameMatcher... matchers) {
+        register(fileType, Arrays.asList(matchers));
+      }
+
+      public FileType getStandardFileTypeByName(@NotNull final String name) {
+        final StandardFileType type = ourStandardFileTypes.get(name);
+        return type != null ? type.fileType : null;
+      }
+
+      private void register(final FileType fileType, final List<FileNameMatcher> fileNameMatchers) {
+        final StandardFileType type = ourStandardFileTypes.get(fileType.getName());
+
+        if (type != null) {
+          for (FileNameMatcher matcher : fileNameMatchers) type.matchers.add(matcher);
+        }
+        else {
+          ourStandardFileTypes.put(fileType.getName(), new StandardFileType(fileType, fileNameMatchers));
+        }
       }
     };
     final FileTypeFactory[] fileTypeFactories = Extensions.getExtensions(FileTypeFactory.FILE_TYPE_FACTORY_EP);
@@ -619,7 +635,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private static List<FileNameMatcher> parse(@NonNls String semicolonDelimited) {
     if (semicolonDelimited == null) return Collections.emptyList();
-    StringTokenizer tokenizer = new StringTokenizer(semicolonDelimited, ";", false);
+    StringTokenizer tokenizer = new StringTokenizer(semicolonDelimited, FileTypeConsumer.EXTENSION_DELIMITER, false);
     ArrayList<FileNameMatcher> list = new ArrayList<FileNameMatcher>();
     while (tokenizer.hasMoreTokens()) {
       list.add(new ExtensionFileNameMatcher(tokenizer.nextToken().trim()));
