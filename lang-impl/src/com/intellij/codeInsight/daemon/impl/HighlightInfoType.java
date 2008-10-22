@@ -8,6 +8,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -16,6 +17,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public interface HighlightInfoType {
   @NonNls String UNUSED_SYMBOL_SHORT_NAME = "UNUSED_SYMBOL";
@@ -81,14 +83,13 @@ public interface HighlightInfoType {
     private final HighlightSeverity mySeverity;
     private final TextAttributesKey myAttributesKey;
 
-
     //read external only
     public HighlightInfoTypeImpl() {
       mySeverity = new HighlightSeverity();
       myAttributesKey = new TextAttributesKey();
     }
 
-    public HighlightInfoTypeImpl(HighlightSeverity severity, TextAttributesKey attributesKey) {
+    public HighlightInfoTypeImpl(@NotNull HighlightSeverity severity, TextAttributesKey attributesKey) {
       mySeverity = severity;
       myAttributesKey = attributesKey;
     }
@@ -123,7 +124,7 @@ public interface HighlightInfoType {
 
       final HighlightInfoTypeImpl that = (HighlightInfoTypeImpl)o;
 
-      if (!myAttributesKey.equals(that.myAttributesKey)) return false;
+      if (!Comparing.equal(myAttributesKey, that.myAttributesKey)) return false;
       if (!mySeverity.equals(that.mySeverity)) return false;
 
       return true;
