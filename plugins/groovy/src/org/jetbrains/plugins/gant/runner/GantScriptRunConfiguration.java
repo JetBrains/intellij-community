@@ -30,6 +30,7 @@ import org.jetbrains.plugins.gant.GantIcons;
 import org.jetbrains.plugins.gant.config.GantConfigUtils;
 import org.jetbrains.plugins.gant.config.grails.GantGrailsFacet;
 import org.jetbrains.plugins.gant.config.groovy.GantGroovyFacet;
+import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -130,7 +131,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
 
     // Setting up classpath
     RunnerUtil.configureScriptSystemClassPath(params, module);
-    
+
     params.setWorkingDirectory(getAbsoluteWorkDir());
 
     //add starter configuration parameters
@@ -149,7 +150,9 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     // -Dgroovy.starter.conf
     params.getVMParametersList().add(DGROOVY_STARTER_CONF + confpath);
     // -Dgroovy.home
-    params.getVMParametersList().add(DGROOVY_HOME + GroovyConfigUtils.getInstance().getSDKInstallPath(module));
+    final String path = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
+    params.getVMParametersList()
+      .add(DGROOVY_HOME + (path.length() == 0 ? GrailsConfigUtils.getInstance().getSDKInstallPath(module) : path));
     // -Dtools.jar
     Sdk jdk = params.getJdk();
     if (jdk != null && jdk.getSdkType() instanceof JavaSdkType) {
@@ -214,7 +217,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
       throw new ExecutionException("Module is not specified");
     }
 
-    if (!GroovyConfigUtils.getInstance().isSDKConfiguredToRun(module)) {
+    if (!GroovyConfigUtils.getInstance().isSDKConfiguredToRun(module) && !GrailsConfigUtils.getInstance().isSDKConfiguredToRun(module)) {
       //throw new ExecutionException("Gant is not configured");
       Messages.showErrorDialog(module.getProject(),
                                ExecutionBundle.message("error.running.configuration.with.error.error.message", getName(),
