@@ -21,13 +21,15 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author mike
  */
 public class FileStatusManagerImpl extends FileStatusManager implements ProjectComponent {
-  private final HashMap<VirtualFile, FileStatus> myCachedStatuses = new HashMap<VirtualFile, FileStatus>();
+  private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<VirtualFile, FileStatus>());
 
   private Project myProject;
   private List<FileStatusListener> myListeners = new ArrayList<FileStatusListener>();
