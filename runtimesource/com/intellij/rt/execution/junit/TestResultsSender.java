@@ -20,7 +20,7 @@ public class TestResultsSender implements TestListener, TestSkippingListener {
   }
 
   public synchronized void addError(Test test, Throwable throwable) {
-    if (JUnit4API != null && JUnit4API.isAssertion(throwable)) {
+    if (throwable instanceof AssertionError) {
       // junit4 makes no distinction between errors and failures
       doAddFailure(test, (Error)throwable);
     }
