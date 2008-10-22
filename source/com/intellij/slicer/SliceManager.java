@@ -17,7 +17,6 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.usageView.UsageInfo;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
 
@@ -26,7 +25,7 @@ public class SliceManager implements ProjectComponent {
   private ContentManager myContentManager;
   private final ToolWindowManager myToolWindowManager;
   private final Map<Content, SlicePanel> myContents = new THashMap<Content, SlicePanel>();
-  @NonNls private static final String TOOL_WINDOW_ID = "Slice";
+  private static final String TOOL_WINDOW_ID = "Dataflow to this";
 
   public static SliceManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, SliceManager.class);
@@ -45,9 +44,8 @@ public class SliceManager implements ProjectComponent {
 
   public void projectClosed() {
     myToolWindowManager.unregisterToolWindow(TOOL_WINDOW_ID);
-    for (Content content : myContents.keySet()) {
-      SlicePanel slicePanel = myContents.get(content);
-      slicePanel.dispose();
+    for (SlicePanel panel : myContents.values()) {
+      panel.dispose();
     }
   }
 
@@ -98,15 +96,11 @@ public class SliceManager implements ProjectComponent {
         sliceToolwindowSettings.setPreview(preview);
       }
     };
-    myContent[0] = myContentManager.getFactory().createContent(slicePanel, "Dataflow", true);
+    myContent[0] = myContentManager.getFactory().createContent(slicePanel, null, true);
     myContentManager.addContent(myContent[0]);
     myContentManager.setSelectedContent(myContent[0]);
 
-    ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID).activate(new Runnable(){
-      public void run() {
-        //mySlicePanel.sliceFinished();
-      }
-    });
+    ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID).activate(null);
     myContentManager.addContentManagerListener(new ContentManagerAdapter(){
       public void contentRemoved(final ContentManagerEvent event) {
         Content content = event.getContent();
