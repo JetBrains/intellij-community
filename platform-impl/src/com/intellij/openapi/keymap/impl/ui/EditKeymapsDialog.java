@@ -9,7 +9,7 @@ public class EditKeymapsDialog extends SingleConfigurableEditor {
   private String myActionToSelect;
 
   public EditKeymapsDialog(Project project, String actionToSelect) {
-    super(project, new KeymapConfigurable());
+    super(project, new KeymapPanel());
     myActionToSelect = actionToSelect;
   }
 
@@ -17,7 +17,7 @@ public class EditKeymapsDialog extends SingleConfigurableEditor {
     if (myActionToSelect != null) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          ((KeymapConfigurable)getConfigurable()).selectAction(myActionToSelect);
+          ((KeymapPanel)getConfigurable()).selectAction(myActionToSelect);
         }
       });
     }

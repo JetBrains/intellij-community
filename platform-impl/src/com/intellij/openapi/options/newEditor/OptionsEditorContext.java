@@ -22,6 +22,8 @@ public class OptionsEditorContext {
   Set<Configurable> myModified = new CopyOnWriteArraySet<Configurable>();
   Map<Configurable, ConfigurationException> myErrors = new HashMap<Configurable, ConfigurationException>();
   private boolean myHoldingFilter;
+  private final Map<Configurable,  Configurable> myConfigurableToParentMap = new HashMap<Configurable, Configurable>();
+
 
   public OptionsEditorContext(ElementFilter.Active filter) {
     myFilter = filter;
@@ -109,6 +111,14 @@ public class OptionsEditorContext {
 
   public boolean isHoldingFilter() {
     return myHoldingFilter;
+  }
+
+  public Configurable getParentConfigurable(final Configurable configurable) {
+    return myConfigurableToParentMap.get(configurable);
+  }
+
+  public void registerKid(final Configurable parent, final Configurable kid) {
+    myConfigurableToParentMap.put(kid,parent);
   }
 
   interface ColleagueAction {

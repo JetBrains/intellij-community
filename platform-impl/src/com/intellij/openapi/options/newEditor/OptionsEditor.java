@@ -327,8 +327,13 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   @Nullable
   public String getHelpTopic() {
-    final Configurable current = getContext().getCurrentConfigurable();
-    return current != null ? current.getHelpTopic() : null;
+    Configurable current = getContext().getCurrentConfigurable();
+    while (current != null) {
+      String topic = current.getHelpTopic();
+      if (topic != null) return topic;
+      current = getContext().getParentConfigurable(current);
+    }
+    return null;
   }
 
   public boolean isFilterFieldVisible() {

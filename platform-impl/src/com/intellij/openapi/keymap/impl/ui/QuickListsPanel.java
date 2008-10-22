@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -23,6 +24,7 @@ import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -38,7 +40,7 @@ import java.util.List;
  * User: anna
  * Date: 13-Apr-2006
  */
-public class QuickListsPanel extends JPanel {
+public class QuickListsPanel extends JPanel implements Configurable {
   private DefaultListModel myQuickListsModel = new DefaultListModel();
   private JList myQuickListsList = new JList(myQuickListsModel);
   private JPanel myRightPanel = new JPanel(new BorderLayout());
@@ -253,5 +255,25 @@ public class QuickListsPanel extends JPanel {
       setText(quickList.getDisplayName());
       return this;
     }
+  }
+
+  @Nls
+  public String getDisplayName() {
+    return "Quick Lists";
+  }
+
+  public Icon getIcon() {
+    return null;
+  }
+
+  public String getHelpTopic() {
+    return null;
+  }
+
+  public JComponent createComponent() {
+    return this;
+  }
+
+  public void disposeUIResources() {
   }
 }

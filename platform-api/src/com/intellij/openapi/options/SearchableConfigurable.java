@@ -33,6 +33,7 @@ public interface SearchableConfigurable extends Configurable {
   interface Parent extends SearchableConfigurable, Composite {
     boolean isToShowWhenChildIsShown();
     boolean hasOwnContent();
+    boolean isVisible();
 
 
     abstract class Abstract implements Parent {
@@ -67,6 +68,9 @@ public interface SearchableConfigurable extends Configurable {
         return null;
       }
 
+      public boolean isVisible() {
+        return true;
+      }
 
       public final Configurable[] getConfigurables() {
         if (myKids != null) return myKids;

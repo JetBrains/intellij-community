@@ -3,6 +3,7 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ErrorLabel;
@@ -371,12 +372,39 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         if (kids.length > 0) {
           for (int j = 0; j < kids.length; j++) {
             Configurable eachKid = kids[j];
-            result.add(new EditorNode(this, eachKid, eachGroup));
+            if (isInvisibleNode(eachKid)) {
+              result.addAll(OptionsTree.this.buildChildren(eachKid, this, eachGroup));
+            }
+            else {
+              result.add(new EditorNode(this, eachKid, eachGroup));
+            }
           }
         }
       }
 
       return result.toArray(new SimpleNode[result.size()]);
+    }
+  }
+
+  private boolean isInvisibleNode(final Configurable child) {
+    return child instanceof SearchableConfigurable.Parent && !((SearchableConfigurable.Parent)child).isVisible();
+  }
+
+  private List<EditorNode> buildChildren(final Configurable configurable, SimpleNode parent, final ConfigurableGroup group) {
+    if (configurable instanceof Configurable.Composite) {
+      final Configurable[] kids = ((Configurable.Composite)configurable).getConfigurables();
+      final List<EditorNode> result = new ArrayList<EditorNode>(kids.length);
+      for (int i = 0; i < kids.length; i++) {
+        Configurable child = kids[i];
+        if (isInvisibleNode(child)) {
+          result.addAll(buildChildren(child, parent, group));
+        }
+        result.add(new EditorNode(parent, child, group));
+        myContext.registerKid(configurable, kids[i]);
+      }
+      return result;
+    } else {
+      return Collections.EMPTY_LIST;
     }
   }
 
@@ -393,18 +421,11 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       addPlainText(configurable.getDisplayName());
     }
 
-    protected SimpleNode[] buildChildren() {
-      if (myConfigurable instanceof Configurable.Composite) {
-        final Configurable[] kids = ((Configurable.Composite)myConfigurable).getConfigurables();
-        final EditorNode[] result = new EditorNode[kids.length];
-        for (int i = 0; i < kids.length; i++) {
-          result[i] = new EditorNode(this, kids[i], null);
-        }
-        return result;
-      } else {
-        return NO_CHILDREN;
-      }
+    protected EditorNode[] buildChildren() {
+      List<EditorNode> list = OptionsTree.this.buildChildren(myConfigurable, this, null);
+      return list.toArray(new EditorNode[list.size()]);
     }
+
 
     @Override
     Configurable getConfigurable() {
