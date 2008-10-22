@@ -172,7 +172,12 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       String optionToCheck = option.trim().toLowerCase();
       for (Configurable each : contentHits) {
         if (each.getDisplayName() == null) continue;
-        final List<String> allWords = StringUtil.getWordsIn(each.getDisplayName().toLowerCase());
+        final String displayName = each.getDisplayName().toLowerCase();
+        final List<String> allWords = StringUtil.getWordsIn(displayName);
+        if (displayName.contains(optionToCheck)) {
+          hits.getNameFullHits().add(each);
+          hits.getNameHits().add(each);
+        }
         for (int i = 0; i < allWords.size(); i++) {
           String eachWord = allWords.get(i);
           if (eachWord.startsWith(optionToCheck)) {
@@ -233,7 +238,10 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   private void addChildren(Configurable configurable, ArrayList<Configurable> list) {
     if (configurable instanceof Configurable.Composite) {
       final Configurable[] kids = ((Configurable.Composite)configurable).getConfigurables();
-      list.addAll(Arrays.asList(kids));
+      for (Configurable eachKid : kids) {
+        list.add(eachKid);
+        addChildren(eachKid, list);
+      }
     }
   }
 

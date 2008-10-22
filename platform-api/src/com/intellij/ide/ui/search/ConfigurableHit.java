@@ -10,11 +10,17 @@ public final class ConfigurableHit {
   private Set<Configurable> myNameHits = new LinkedHashSet<Configurable>();
   private Set<Configurable> myContentHits = new LinkedHashSet<Configurable>();
 
+  private Set<Configurable> myNameFullHit = new LinkedHashSet<Configurable>();
+
   ConfigurableHit() {
   }
 
   public Set<Configurable> getNameHits() {
     return myNameHits;
+  }
+
+  public Set<Configurable> getNameFullHits() {
+    return myNameFullHit;
   }
 
   public Set<Configurable> getContentHits() {

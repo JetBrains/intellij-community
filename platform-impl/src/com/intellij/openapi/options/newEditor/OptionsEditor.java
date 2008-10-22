@@ -544,13 +544,15 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       Configurable toSelect = null;
       final Configurable current = getContext().getCurrentConfigurable();
-      if (myFiltered == null || !myFiltered.contains(current)) {
-        if (myHits != null) {
-          if (myHits.getNameHits().size() > 0) {
-            toSelect = suggestToSelect(myHits.getNameHits());
-          } else if (myHits.getContentHits().size() > 0) {
-            toSelect = suggestToSelect(myHits.getContentHits());
-          }
+      boolean shouldMoveSelection = myFiltered == null || !myFiltered.contains(current);
+      shouldMoveSelection |= myHits != null && myHits.getNameFullHits().size() > 0 && !myHits.getNameFullHits().contains(current);
+
+
+      if (shouldMoveSelection && myHits != null) {
+        if (myHits.getNameHits().size() > 0) {
+          toSelect = suggestToSelect(myHits.getNameHits(), myHits.getNameFullHits());
+        } else if (myHits.getContentHits().size() > 0) {
+          toSelect = suggestToSelect(myHits.getContentHits(), null);
         }
       }
 
@@ -569,12 +571,14 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
 
     @Nullable
-    private Configurable suggestToSelect(Set<Configurable> set) {
+    private Configurable suggestToSelect(Set<Configurable> set, Set<Configurable> fullHits) {
       Configurable candidate = null;
       for (Iterator<Configurable> iterator = set.iterator(); iterator.hasNext();) {
         Configurable each = iterator.next();
-        if (!isEmptyParent(each)) return each;
-        candidate = each;
+        if (fullHits != null && fullHits.contains(each)) return each;
+        if (!isEmptyParent(each) && candidate == null) {
+          candidate = each;
+        }
       }
 
       return candidate;
