@@ -97,9 +97,10 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
     myAutoScrollEnabled = false;
     myAutoScrollHandler.cancelAllRequests();
-    selectNodeInTree(node != null ? node : nodeByName).doWhenDone(new Runnable() {
+    final MyNode nodeToSelect = node != null ? node : nodeByName;
+    selectNodeInTree(nodeToSelect).doWhenDone(new Runnable() {
       public void run() {
-        updateSelection(config);
+        setSelectedNode(nodeToSelect);
         Place.goFurther(config, place, requestFocus).notifyWhenDone(result);
       }
     });

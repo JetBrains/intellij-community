@@ -173,7 +173,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
       return false;
     }
 
-    updateSelection(null);
+    setSelectedNode(null);
     myCurrentMultipleSettingsEditor = editor;
     detailsComponent.setText(ProjectBundle.message("multiple.facets.banner.0.1.facets", selectedEditors.length,
                                                         selectedFacetType.getPresentableName()));

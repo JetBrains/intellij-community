@@ -31,6 +31,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -97,7 +98,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       public void run() {
         MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
         if (node != null) {
-          myState.lastEditedConfigurable = node.getDisplayName(); //survive after rename
+          myState.lastEditedConfigurable = getNodePathString(node); //survive after rename;
           myDetails.setText(node.getConfigurable().getBannerSlogan());
           ((DefaultTreeModel)myTree.getModel()).reload(node);
           fireItemsChangedExternally();
@@ -207,10 +208,9 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       final Object lastPathComp = path.getLastPathComponent();
       if (!(lastPathComp instanceof MyNode)) return;
       final MyNode node = (MyNode)lastPathComp;
-      final NamedConfigurable configurable = node.getConfigurable();
-      updateSelection(configurable);
+      setSelectedNode(node);
     } else {
-      updateSelection(null);
+      setSelectedNode(null);
     }
   }
 
@@ -327,14 +327,10 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     while (enumeration.hasMoreElements()) {
       final MyNode node = (MyNode)enumeration.nextElement();
       if (node instanceof MyRootNode) continue;
-      final Object userObject = node.getUserObject();
-      if (userObject instanceof Configurable) {
-        final Configurable configurable = (Configurable)userObject;
-        final String displayName = configurable.getDisplayName();
-        if (!selected && Comparing.strEqual(displayName, myState.lastEditedConfigurable)) {
-          TreeUtil.selectInTree(node, true, myTree);
-          selected = true;
-        }
+      final String path = getNodePathString(node);
+      if (!selected && Comparing.strEqual(path, myState.lastEditedConfigurable)) {
+        TreeUtil.selectInTree(node, true, myTree);
+        selected = true;
       }
     }
     if (!selected) {
@@ -342,6 +338,25 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     }
   }
 
+  private static String getNodePathString(final MyNode node) {
+    StringBuilder path = new StringBuilder();
+    MyNode current = node;
+    while (current != null) {
+      final Object userObject = current.getUserObject();
+      if (!(userObject instanceof NamedConfigurable)) break;
+      final String displayName = current.getDisplayName();
+      if (StringUtil.isEmptyOrSpaces(displayName)) break;
+      if (path.length() > 0) {
+        path.append('|');
+      }
+      path.append(displayName);
+
+      final TreeNode parent = current.getParent();
+      if (!(parent instanceof MyNode)) break;
+      current = (MyNode)parent;
+    }
+    return path.toString();
+  }
 
   public UIState getState() {
     return myState;
@@ -557,6 +572,13 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       }
     });
     return nodeToSelect[0];
+  }
+
+  protected void setSelectedNode(@Nullable MyNode node) {
+    if (node != null) {
+      myState.lastEditedConfigurable = getNodePathString(node);
+    }
+    updateSelection(node != null ? node.getConfigurable() : null);
   }
 
   protected void updateSelection(@Nullable NamedConfigurable configurable) {
