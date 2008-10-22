@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
@@ -28,61 +28,63 @@ public class ContextMenuImpl extends JPanel implements Disposable {
   @NonNls
   public static final String ACTION_GROUP = "EditorContextBarMenu";
 
-  private ActionManager myActionManager;
   private ActionGroup myActionGroup;
   private JComponent myComponent;
   private boolean myShowing = false;
   private int myCurrentOpacity;
   private Timer myShowTimer;
   private Timer myHideTimer;
+  private EditorImpl myEditor;
+  private ContextMenuPanel myContextMenuPanel;
 
   public ContextMenuImpl(@NotNull final JScrollPane container, @NotNull final EditorImpl editor) {
     setLayout(new BorderLayout(0, 0));
-    myActionManager = ActionManager.getInstance();
+    final ActionManager actionManager = ActionManager.getInstance();
 
-    //editor.addEditorMouseListener(new EditorMouseAdapter() {
-    //  @Override
-    //  public void mouseExited(final EditorMouseEvent e) {
-    //    toggleContextToolbar(false);
-    //  }
-    //});
-
-    editor.addEditorMouseMotionListener(new EditorMouseMotionAdapter() {
+    editor.addEditorMouseListener(new EditorMouseAdapter() {
       @Override
-      public void mouseMoved(final EditorMouseEvent e) {
-        final Editor editor = e.getEditor();
-        final JComponent c = editor.getComponent();
-
-        final DataContext dataContext = DataManager.getInstance().getDataContext();
-        if (dataContext != null) {
-          final Editor editor1 = PlatformDataKeys.EDITOR.getData(dataContext);
-          if (editor == editor1) { // check if an event is from the focused editor
-            final Rectangle r = c.getBounds();
-            final Point viewPosition = container.getViewport().getViewPosition();
-
-            final Rectangle activationArea = new Rectangle(0, 0, r.width, 150);
-            final MouseEvent event = e.getMouseEvent();
-            final Point p = event.getPoint();
-            toggleContextToolbar(activationArea.contains(p.x, p.y - viewPosition.y));
-          }
+      public void mouseExited(final EditorMouseEvent e) {
+        if (!isInsideActivationArea(container, e)) {
+          toggleContextToolbar(false);
         }
       }
     });
 
-    AnAction action = myActionManager.getAction("EditorContextBarMenu");
+    editor.addEditorMouseMotionListener(new EditorMouseMotionAdapter() {
+      @Override
+      public void mouseMoved(final EditorMouseEvent e) {
+        toggleContextToolbar(isInsideActivationArea(container, e));
+      }
+    });
+
+    AnAction action = actionManager.getAction("EditorContextBarMenu");
     if (action == null) {
       action = new DefaultActionGroup();
-      myActionManager.registerAction(ACTION_GROUP, action);
+      actionManager.registerAction(ACTION_GROUP, action);
     }
 
     if (action instanceof ActionGroup) {
       myActionGroup = (ActionGroup)action;
     }
 
+    myEditor = editor;
+
     myComponent = createComponent();
     add(myComponent);
 
     setVisible(false);
+  }
+
+  private static boolean isInsideActivationArea(JScrollPane container, EditorMouseEvent e) {
+    final JViewport viewport = container.getViewport();
+    final Rectangle r = viewport.getBounds();
+    final Point viewPosition = viewport.getViewPosition();
+
+    final Rectangle activationArea = new Rectangle(0, 0, r.width, 150);
+    final MouseEvent event = e.getMouseEvent();
+    final Point p = event.getPoint();
+
+    return activationArea.contains(p.x, p.y - viewPosition.y);
   }
 
   private void toggleContextToolbar(final boolean show) {
@@ -95,8 +97,10 @@ public class ContextMenuImpl extends JPanel implements Disposable {
   }
 
   public void dispose() {
+    myEditor = null;
   }
 
+  @SuppressWarnings({"deprecation"})
   @Override
   public void show() {
     final Component toolbar = myComponent.getComponent(0);
@@ -146,6 +150,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     }
   }
 
+  @SuppressWarnings({"deprecation"})
   @Override
   public void hide() {
     if (myShowing) {
@@ -185,44 +190,46 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     }
   }
 
-  private static ActionToolbar createToolbar(final ActionGroup group) {
-    return new ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, group, true, DataManager.getInstance(), ActionManagerEx.getInstanceEx(),
-                                 KeymapManagerEx.getInstanceEx()) {
+  private ActionToolbar createToolbar(final ActionGroup group) {
+    final ActionToolbarImpl actionToolbar =
+      new ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, group, true, DataManager.getInstance(), ActionManagerEx.getInstanceEx(),
+                            KeymapManagerEx.getInstanceEx()) {
 
-      @Override
-      public void paint(final Graphics g) {
-        paintChildren(g);
-      }
+        @Override
+        public void paint(final Graphics g) {
+          paintChildren(g);
+        }
 
-      @Override
-      public ActionButton createToolbarButton(final AnAction action,
-                                              final ActionButtonLook look,
-                                              final String place,
-                                              final Presentation presentation,
-                                              final Dimension minimumSize) {
-        final ActionButton result = new ActionButton(action, presentation, place, minimumSize) {
-          @Override
-          protected DataContext getDataContext() {
-            return getToolbarDataContext();
-          }
+        @Override
+        public ActionButton createToolbarButton(final AnAction action,
+                                                final ActionButtonLook look,
+                                                final String place,
+                                                final Presentation presentation,
+                                                final Dimension minimumSize) {
+          final ActionButton result = new ActionButton(action, presentation, place, minimumSize) {
+            @Override
+            public void paintComponent(final Graphics g) {
+              if (myContextMenuPanel.isPaintChildren()) {
+                final ActionButtonLook look = getButtonLook();
+                look.paintIcon(g, this, getIcon());
+              }
+            }
 
-          @Override
-          public void paintComponent(final Graphics g) {
-            final ActionButtonLook look = getButtonLook();
-            look.paintIcon(g, this, getIcon());
-          }
+            @Override
+            public void paint(final Graphics g) {
+              final Graphics2D g2 = (Graphics2D)g;
+              paintComponent(g2);
+            }
+          };
 
-          @Override
-          public void paint(final Graphics g) {
-            final Graphics2D g2 = (Graphics2D)g;
-            paintComponent(g2);
-          }
-        };
+          result.setLook(look);
+          return result;
+        }
+      };
 
-        result.setLook(look);
-        return result;
-      }
-    };
+    actionToolbar.setTargetComponent(myEditor.getContentComponent());
+
+    return actionToolbar;
   }
 
   private JComponent createComponent() {
@@ -230,16 +237,17 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     toolbar.setMinimumButtonSize(new Dimension(20, 20));
     toolbar.setReservePlaceAutoPopupIcon(false);
 
-    final JPanel inner = new ContextMenuPanel(this);
-    inner.setLayout(new BorderLayout(0, 0));
-    inner.add(toolbar.getComponent());
+    myContextMenuPanel = new ContextMenuPanel(this);
+    myContextMenuPanel.setLayout(new BorderLayout(0, 0));
+    myContextMenuPanel.add(toolbar.getComponent());
 
-    return inner;
+    return myContextMenuPanel;
   }
 
   private static class ContextMenuPanel extends JPanel {
     private ContextMenuImpl myContextMenu;
     private BufferedImage myBufferedImage;
+    private boolean myPaintChildren = false;
 
     private ContextMenuPanel(final ContextMenuImpl contextMenu) {
       myContextMenu = contextMenu;
@@ -261,6 +269,17 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     }
 
     @Override
+    protected void paintChildren(final Graphics g) {
+      if (myPaintChildren) {
+        super.paintChildren(g);
+      }
+    }
+
+    public boolean isPaintChildren() {
+      return myPaintChildren;
+    }
+
+    @Override
     public void paint(final Graphics g) {
       final Rectangle r = getBounds();
       if (myBufferedImage == null) {
@@ -277,7 +296,9 @@ public class ContextMenuImpl extends JPanel implements Disposable {
 
         g2d2.setComposite(old);
 
+        myPaintChildren = true;
         paintChildren(g2d2);
+        myPaintChildren = false;
       }
 
       final Graphics2D g2 = (Graphics2D)g;
