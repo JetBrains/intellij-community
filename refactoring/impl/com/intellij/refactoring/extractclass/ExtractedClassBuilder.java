@@ -15,7 +15,6 @@ import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -81,7 +80,7 @@ class ExtractedClassBuilder {
   }
 
 
-  public String buildBeanClass() throws IOException {
+  public String buildBeanClass() {
     if (requiresBackPointer) {
       calculateBackpointerName();
     }

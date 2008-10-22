@@ -34,7 +34,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.*;
 
 public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
@@ -192,7 +191,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   }
 
   protected void performRefactoring(UsageInfo[] usageInfos) {
-    buildClass();
+    if (!buildClass()) return;
     if (delegationRequired) {
       buildDelegate();
     }
@@ -206,7 +205,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
     @NonNls final StringBuilder fieldBuffer = new StringBuilder();
     final String delegateVisibility = calculateDelegateVisibility();
-    fieldBuffer.append(delegateVisibility + ' ');
+    fieldBuffer.append(delegateVisibility).append(' ');
     fieldBuffer.append("final ");
     final String fullyQualifiedName = StringUtil.getQualifiedName(newPackageName, newClassName);
     fieldBuffer.append(fullyQualifiedName);
@@ -220,7 +219,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     fieldBuffer.append(' ');
     fieldBuffer.append(delegateFieldName);
     fieldBuffer.append('=');
-    fieldBuffer.append("new " + fullyQualifiedName);
+    fieldBuffer.append("new ").append(fullyQualifiedName);
     if (!typeParams.isEmpty()) {
       fieldBuffer.append('<');
       for (PsiTypeParameter typeParameter : typeParams) {
@@ -310,7 +309,10 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final Iterable<PsiReference> calls = ReferencesSearch.search(innerClass, scope);
     final String innerName = innerClass.getQualifiedName();
-    final String newInnerClassName = StringUtil.getQualifiedName(newPackageName, newClassName) + innerName.substring(sourceClass.getQualifiedName().length());
+    assert innerName != null;
+    final String sourceClassQualifiedName = sourceClass.getQualifiedName();
+    assert sourceClassQualifiedName != null;
+    final String newInnerClassName = StringUtil.getQualifiedName(newPackageName, newClassName) + innerName.substring(sourceClassQualifiedName.length());
     boolean hasExternalReference = false;
     for (PsiReference reference : calls) {
       final PsiElement referenceElement = reference.getElement();
@@ -446,7 +448,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   }
 
 
-  private void buildClass() {
+  private boolean buildClass() {
     final PsiManager manager = sourceClass.getManager();
     final Project project = sourceClass.getProject();
     final ExtractedClassBuilder extractedClassBuilder = new ExtractedClassBuilder();
@@ -468,20 +470,14 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final List<PsiClass> interfaces = calculateInterfacesSupported();
     extractedClassBuilder.setInterfaces(interfaces);
 
-    final String classString;
-    try {
-      classString = extractedClassBuilder.buildBeanClass();
-    }
-    catch (IOException e) {
-      logger.error(e);
-      return;
-    }
+    final String classString = extractedClassBuilder.buildBeanClass();
 
     try {
       final PsiFile containingFile = sourceClass.getContainingFile();
 
       final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
       final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
+      assert module != null;
       final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, newPackageName, containingDirectory, false);
       if (directory != null) {
         final PsiFile newFile = PsiFileFactory.getInstance(project).createFileFromText(newClassName + ".java", classString);
@@ -489,11 +485,14 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
         final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
         final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(project).shortenClassReferences(addedFile);
         codeStyleManager.reformat(shortenedFile);
+      } else {
+        return false;
       }
     }
     catch (IncorrectOperationException e) {
-      logger.error(e);
+      return false;
     }
+    return true;
   }
 
   private List<PsiClass> calculateInterfacesSupported() {
