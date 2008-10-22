@@ -16,19 +16,26 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusListener;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -219,7 +226,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
   }
 
   private void installTracker(final VirtualFile virtualFile, final Document document) {
-    if (virtualFile == null) return;
+    if (virtualFile == null || virtualFile instanceof LightVirtualFile) return;
     synchronized (TRACKERS_LOCK) {
       ApplicationManager.getApplication().assertIsDispatchThread();
 
