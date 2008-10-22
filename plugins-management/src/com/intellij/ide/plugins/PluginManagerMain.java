@@ -1,5 +1,6 @@
 package com.intellij.ide.plugins;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.search.SearchUtil;
@@ -21,7 +22,6 @@ import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,7 +161,7 @@ public class PluginManagerMain {
         });
       }
     });
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(main);
+    //GuiUtils.replaceJSplitPaneWithIDEASplitter(main);
 
     myToolbarPanel.setLayout(new BorderLayout());
     myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManaer", getActionGroup(), true);
