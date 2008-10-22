@@ -6,7 +6,7 @@ import com.intellij.compiler.ant.taskdefs.Exclude;
 import com.intellij.compiler.ant.taskdefs.PatternSet;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.project.ex.ProjectEx;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -15,15 +15,19 @@ import java.io.PrintWriter;
  * @author Eugene Zhuravlev
  *         Date: Mar 19, 2004
  */
-public class CompilerExcludes extends Generator{
+public class CompilerExcludes extends Generator {
   private final PatternSet myPatternSet;
 
   public CompilerExcludes(Project project, GenerationOptions genOptions) {
-    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl) CompilerConfiguration.getInstance(project);
-    final ExcludeEntryDescription[] excludeEntryDescriptions = compilerConfiguration.getExcludedEntriesConfiguration().getExcludeEntryDescriptions();
+    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
+    final ExcludeEntryDescription[] excludeEntryDescriptions =
+      compilerConfiguration.getExcludedEntriesConfiguration().getExcludeEntryDescriptions();
     myPatternSet = new PatternSet(BuildProperties.PROPERTY_COMPILER_EXCLUDES);
     for (final ExcludeEntryDescription entry : excludeEntryDescriptions) {
-      final String path = genOptions.subsitutePathWithMacros(VirtualFileManager.extractPath(entry.getUrl()));
+      final boolean relative = project instanceof ProjectEx && ((ProjectEx)project).isSavePathsRelative();
+      final String path = GenerationUtils
+        .toRelativePath(entry.getVirtualFile(), BuildProperties.getProjectBaseDir(project), BuildProperties.getProjectBaseDirProperty(),
+                        genOptions, !relative);
       if (entry.isFile()) {
         myPatternSet.add(new Exclude(path));
       }
@@ -39,14 +43,14 @@ public class CompilerExcludes extends Generator{
   }
 
 
-
   public void generate(PrintWriter out) throws IOException {
     myPatternSet.generate(out);
   }
 
   public static boolean isAvailable(Project project) {
-    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl) CompilerConfiguration.getInstance(project);
-    final ExcludeEntryDescription[] excludeEntryDescriptions = compilerConfiguration.getExcludedEntriesConfiguration().getExcludeEntryDescriptions();
+    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
+    final ExcludeEntryDescription[] excludeEntryDescriptions =
+      compilerConfiguration.getExcludedEntriesConfiguration().getExcludeEntryDescriptions();
     return excludeEntryDescriptions.length > 0;
   }
 

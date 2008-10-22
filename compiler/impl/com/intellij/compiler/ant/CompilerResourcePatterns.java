@@ -14,7 +14,7 @@ import java.io.PrintWriter;
  * @author Eugene Zhuravlev
  *         Date: Mar 19, 2004
  */
-public class CompilerResourcePatterns extends Generator{
+public class CompilerResourcePatterns extends Generator {
   private final PatternSet myPatternSet;
 
   public CompilerResourcePatterns(Project project) {
@@ -22,7 +22,7 @@ public class CompilerResourcePatterns extends Generator{
     final String[] patterns = compilerConfiguration.getResourceFilePatterns();
     myPatternSet = new PatternSet(BuildProperties.PROPERTY_COMPILER_RESOURCE_PATTERNS);
     for (String pattern : patterns) {
-      if (compilerConfiguration.isPatternNegated(pattern)) {
+      if (CompilerConfigurationImpl.isPatternNegated(pattern)) {
         myPatternSet.add(new Exclude("**/" + pattern.substring(1)));
       }
       else {
@@ -30,7 +30,6 @@ public class CompilerResourcePatterns extends Generator{
       }
     }
   }
-
 
 
   public void generate(PrintWriter out) throws IOException {

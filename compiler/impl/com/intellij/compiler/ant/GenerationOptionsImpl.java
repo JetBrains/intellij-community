@@ -22,38 +22,51 @@ import java.util.*;
 
 /**
  * Implementation class for Ant generation options
- * 
+ *
  * @author Eugene Zhuravlev
  *         Date: Mar 25, 2004
  */
 public class GenerationOptionsImpl extends GenerationOptions {
-  /** from absolute path to macro substitutions */
+  /**
+   * from absolute path to macro substitutions
+   */
   private final ReplacePathToMacroMap myMacroReplacementMap;
-  /** from absolute path to macro substitutions */
+  /**
+   * from absolute path to macro substitutions
+   */
   private final Map<String, String> myOutputUrlToPropertyRefMap;
-  /** module chunks */
+  /**
+   * module chunks
+   */
   private final ModuleChunk[] myModuleChunks;
-  /** the project to be converted */
+  /**
+   * the project to be converted
+   */
   private final Project myProject;
   private Set<String> myJdkUrls;
-  /** map from modules to chunks */
-  private Map<Module,ModuleChunk> myModuleToChunkMap = new HashMap<Module,ModuleChunk>();
+  /**
+   * map from modules to chunks
+   */
+  private Map<Module, ModuleChunk> myModuleToChunkMap = new HashMap<Module, ModuleChunk>();
 
   /**
    * A constructor
    *
-   * @param project a project to generate
-   * @param forceTargetJdk a value of corresponding option
-   * @param generateSingleFile  a value of corresponding option
-   * @param enableFormCompiler  a value of corresponding option
-   * @param backupPreviouslyGeneratedFiles  a value of corresponding option
-   * @param inlineRuntimeClasspath if true a runtiem classpaths are inlined
-   * @param representativeModuleNames a module name that represents module chunks.
+   * @param project                        a project to generate
+   * @param forceTargetJdk                 a value of corresponding option
+   * @param generateSingleFile             a value of corresponding option
+   * @param enableFormCompiler             a value of corresponding option
+   * @param backupPreviouslyGeneratedFiles a value of corresponding option
+   * @param inlineRuntimeClasspath         if true a runtiem classpaths are inlined
+   * @param representativeModuleNames      a module name that represents module chunks.
    */
   public GenerationOptionsImpl(Project project,
-                           boolean generateSingleFile,
-                           boolean enableFormCompiler,
-                           boolean backupPreviouslyGeneratedFiles, boolean forceTargetJdk, boolean inlineRuntimeClasspath, String[] representativeModuleNames) {
+                               boolean generateSingleFile,
+                               boolean enableFormCompiler,
+                               boolean backupPreviouslyGeneratedFiles,
+                               boolean forceTargetJdk,
+                               boolean inlineRuntimeClasspath,
+                               String[] representativeModuleNames) {
     super(forceTargetJdk, generateSingleFile, enableFormCompiler, backupPreviouslyGeneratedFiles, inlineRuntimeClasspath);
     myProject = project;
     myMacroReplacementMap = createReplacementMap();
@@ -63,30 +76,34 @@ public class GenerationOptionsImpl extends GenerationOptions {
 
   /**
    * A constructor
-   * @param project a project to generate
-   * @param forceTargetJdk a value of corresponding option
-   * @param generateSingleFile  a value of corresponding option
-   * @param enableFormCompiler  a value of corresponding option
-   * @param backupPreviouslyGeneratedFiles  a value of corresponding option
-   * @param inlineRuntimeClasspath if true a runtiem classpaths are inlined
-   * @param representativeModuleNames a module name that represents module chunks.
+   *
+   * @param project                        a project to generate
+   * @param forceTargetJdk                 a value of corresponding option
+   * @param generateSingleFile             a value of corresponding option
+   * @param enableFormCompiler             a value of corresponding option
+   * @param backupPreviouslyGeneratedFiles a value of corresponding option
+   * @param representativeModuleNames      a module name that represents module chunks.
    */
   @Deprecated
   public GenerationOptionsImpl(Project project,
-                           boolean generateSingleFile,
-                           boolean enableFormCompiler,
-                           boolean backupPreviouslyGeneratedFiles, boolean forceTargetJdk, String[] representativeModuleNames) {
+                               boolean generateSingleFile,
+                               boolean enableFormCompiler,
+                               boolean backupPreviouslyGeneratedFiles,
+                               boolean forceTargetJdk,
+                               String[] representativeModuleNames) {
     this(project, forceTargetJdk, generateSingleFile, enableFormCompiler, backupPreviouslyGeneratedFiles, false, representativeModuleNames);
   }
 
 
-  /** {@inheritDoc}  */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public ModuleChunk getChunkByModule(final Module module) {
-    if(myModuleToChunkMap.isEmpty()) {
-      for(ModuleChunk c  : myModuleChunks) {
-        for(Module m : c.getModules()) {
-          myModuleToChunkMap.put(m,c);
+    if (myModuleToChunkMap.isEmpty()) {
+      for (ModuleChunk c : myModuleChunks) {
+        for (Module m : c.getModules()) {
+          myModuleToChunkMap.put(m, c);
         }
       }
     }
@@ -174,9 +191,11 @@ public class GenerationOptionsImpl extends GenerationOptions {
           public boolean hasNext() {
             return in.hasNext();
           }
+
           public ModuleChunk next() {
             return map.get(in.next());
           }
+
           public void remove() {
             new OperationNotSupportedException();
           }
@@ -221,7 +240,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
     public int compare(final ModuleChunk o1, final ModuleChunk o2) {
       final int level1 = getChunkLevel(o1);
       final int level2 = getChunkLevel(o2);
-      return (level1 == level2)? o1.getName().compareToIgnoreCase(o2.getName()) : (level1 - level2);
+      return (level1 == level2) ? o1.getName().compareToIgnoreCase(o2.getName()) : (level1 - level2);
     }
 
     private int getChunkLevel(ModuleChunk chunk) {
