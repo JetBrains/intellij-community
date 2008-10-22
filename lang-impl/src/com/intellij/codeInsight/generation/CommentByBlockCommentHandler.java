@@ -1,4 +1,4 @@
-package com.intellij.codeInsight.generation;
+/**/package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CommentUtil;
@@ -69,7 +69,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
         commentRange(selectionStart, selectionEnd, prefix, suffix);
       }
       else {
-        uncommentRange(commentedRange, prefix, suffix);
+        uncommentRange(commentedRange, trim(prefix), trim(suffix));
       }
     }
     else {
