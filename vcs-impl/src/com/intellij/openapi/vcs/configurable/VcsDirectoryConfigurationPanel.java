@@ -193,13 +193,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
         removeMapping();
       }
     });
-    JButton configureButton = new JButton(VcsBundle.message("button.configure"));
-    configureButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        showConfigureDialog();
-      }
-    });
-    return new JButton[] {myAddButton, myEditButton, myRemoveButton, configureButton};
+    return new JButton[] {myAddButton, myEditButton, myRemoveButton};
   }
 
   private void addMapping() {
@@ -243,15 +237,6 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
       myDirectoryMappingTable.getSelectionModel().setSelectionInterval(index, index);
     }
     checkNotifyListeners(activeVcses);
-  }
-
-  private void showConfigureDialog() {
-    AbstractVcs defaultVcs = null;
-    final VcsDirectoryMapping mapping = myDirectoryMappingTable.getSelectedObject();
-    if (mapping != null && mapping.getVcs().length() != 0) {
-      defaultVcs = myVcsManager.findVcsByName(mapping.getVcs());
-    }
-    new VcsConfigurationsDialog(myProject, null, defaultVcs).show();
   }
 
   protected JComponent createMainComponent() {

@@ -80,7 +80,7 @@ public class CacheSettingsPanel implements Configurable {
 
   @Nls
   public String getDisplayName() {
-    return "Cache Settings";
+    return "Cache";
   }
 
   public Icon getIcon() {

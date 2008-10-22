@@ -226,7 +226,7 @@ public class VcsGeneralConfigurationPanel implements Configurable {
 
   @Nls
   public String getDisplayName() {
-    return "Confirmation Settings";
+    return "Confirmation";
   }
 
   public Icon getIcon() {
