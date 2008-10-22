@@ -6,6 +6,7 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -89,8 +90,12 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
                         final ProjectRootManagerEx projectRootManagerEx,
                         StartupManager startupManager,
                         FileTypeManager fileTypeManager,
-                        FileDocumentManager fileDocumentManager) {
+                        FileDocumentManager fileDocumentManager,
+                        PsiBuilderFactory psiBuilderFactory) {
     myProject = project;
+
+    //noinspection UnnecessaryLocalVariable. We need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
+    Object used = psiBuilderFactory;
 
     boolean isProjectDefault = project.isDefault();
 
