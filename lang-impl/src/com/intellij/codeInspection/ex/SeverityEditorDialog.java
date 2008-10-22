@@ -7,6 +7,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.application.options.colors.ColorAndFontDescriptionPanel;
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.TextAttributesDescription;
+import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -20,6 +21,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
@@ -101,10 +103,18 @@ public class SeverityEditorDialog extends DialogWrapper {
     final JButton button = new JButton(InspectionsBundle.message("severities.default.settings.message"));
     button.addActionListener(new ActionListener(){
       public void actionPerformed(final ActionEvent e) {
-        final ColorAndFontOptions colorAndFontOptions = ShowSettingsUtil.getInstance().findApplicationConfigurable(ColorAndFontOptions.class);
+        ColorAndFontOptions colorAndFontOptions = null;
+        for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
+          if (provider.getClass().isAssignableFrom(ColorAndFontOptions.class)) {
+            colorAndFontOptions = (ColorAndFontOptions)provider;
+            break;
+          }
+        }
+        assert colorAndFontOptions != null;
+        final ColorAndFontOptions colorAndFontOptionsConfigurable = colorAndFontOptions;
         final Runnable preselect = new Runnable() {
           public void run() {
-            SwingUtilities.invokeLater(colorAndFontOptions.selectOption(getSelectedType().getSeverity(null).myName));
+            SwingUtilities.invokeLater(colorAndFontOptionsConfigurable.selectOption(getSelectedType().getSeverity(null).myName));
           }
         };
         ShowSettingsUtil.getInstance().editConfigurable(myPanel, colorAndFontOptions, preselect);

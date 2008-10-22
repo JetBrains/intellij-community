@@ -1,5 +1,6 @@
 package com.intellij.application.options.colors;
 
+import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -17,7 +18,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ExternalizableScheme;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
@@ -44,7 +44,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class ColorAndFontOptions extends BaseConfigurable implements SearchableConfigurable {
+public class ColorAndFontOptions extends BaseConfigurable implements EditorOptionsProvider {
   private  ColorAndFontPanel myPanel;
   private HashMap<String,MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;

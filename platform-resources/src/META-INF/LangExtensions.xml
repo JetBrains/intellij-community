@@ -180,8 +180,6 @@
 <applicationConfigurable implementation="com.intellij.application.options.CodeCompletionOptions" id="completion" order="after editor"/>
   -->
 
-  <!-- Colors & Fonts-->
-  <applicationConfigurable implementation="com.intellij.application.options.colors.ColorAndFontOptions" id="colors" order="after editor"/>
 
   <!-- Global Code Style -->
   <applicationConfigurable implementation="com.intellij.application.options.CodeStyleSchemesConfigurable" order="after colors"/>
@@ -331,6 +329,8 @@
   <codeFoldingOptionsProvider implementation="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" order="first"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
+  <!-- Colors & Fonts-->
+  <editorOptionsProvider implementation="com.intellij.application.options.colors.ColorAndFontOptions"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorTabsConfigurable"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.CodeFoldingConfigurable"/>
   <editorOptionsProvider implementation="com.intellij.application.options.CodeCompletionOptions"/>
