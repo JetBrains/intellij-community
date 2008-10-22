@@ -220,14 +220,13 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
 
         LOG.assertTrue(library != null);
 
-        final Library lib = configurable.getModelProvider(true).getModifiableModel().createLibrary(myNameTf.getText());
-
-        final LibraryImpl model = (LibraryImpl)lib.getModifiableModel();
-
+        final LibraryTable.ModifiableModel libsModel = configurable.getModelProvider(true).getModifiableModel();
+        final Library lib = libsModel.createLibrary(myNameTf.getText());
+        final Library.ModifiableModel model = ((LibrariesModifiableModel)libsModel).getLibraryEditor(lib).getModel();
         for (OrderRootType type : OrderRootType.getAllTypes()) {
           final VirtualFile[] files = library.getFiles(type);
           for (VirtualFile file : files) {
-            if (mySaveAsCb.isSelected()) {
+            if (mySaveAsCb.isSelected() && myPathTf.getText().trim().length() > 0) {
               final File copy = new File(new File(myPathTf.getText()), file.getName());
               if (copy.mkdirs()) {
                 try {
