@@ -69,14 +69,17 @@ public class LibraryDefinitionsGeneratorFactory {
 
       final VirtualFile[] files = library.getFiles(OrderRootType.COMPILATION_CLASSES);
       final Path libraryPath = new Path(BuildProperties.getLibraryPathId(libraryName));
-      for (int i = 0; i < files.length; i++) {
-        final VirtualFile file = files[i];
-        libraryPath.add(new PathElement(GenerationUtils.toRelativePath(file, baseDir, BuildProperties.getProjectBaseDirProperty(),
-                                                                       myGenOptions, !myProject.isSavePathsRelative())));
+      HashSet<String> visitedPaths = new HashSet<String>();
+      for (final VirtualFile file : files) {
+        final String path = GenerationUtils
+          .toRelativePath(file, baseDir, BuildProperties.getProjectBaseDirProperty(), myGenOptions, !myProject.isSavePathsRelative());
+        if (visitedPaths.add(path)) {
+          libraryPath.add(new PathElement(path));
+        }
       }
       gen.add(libraryPath, 1);
     }
-    return gen.getGeneratorCount() > 0? gen : null;
+    return gen.getGeneratorCount() > 0 ? gen : null;
   }
 
 
