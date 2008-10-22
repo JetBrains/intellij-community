@@ -16,10 +16,13 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * @author Eugene Zhuravlev
@@ -51,6 +54,15 @@ public class LibraryDefinitionsGeneratorFactory {
     }
   }
 
+  /**
+   * Create a generator for the specified libary type. It generates a list of library definitions.
+   *
+   * @param libraryTable a library table to examine
+   * @param baseDir      base directory for ant build script
+   * @param comment      a comment to use for the library
+   * @return the created generator or null if there is a nothing to generate
+   */
+  @Nullable
   public Generator create(LibraryTable libraryTable, File baseDir, final String comment) {
     final Library[] libraries = libraryTable.getLibraries();
     if (libraries.length == 0) {
@@ -60,22 +72,28 @@ public class LibraryDefinitionsGeneratorFactory {
     final CompositeGenerator gen = new CompositeGenerator();
 
     gen.add(new Comment(comment), 1);
-
+    // sort libraries to ensure stable order of them.
+    TreeMap<String, Library> sortedLibs = new TreeMap<String, Library>();
     for (final Library library : libraries) {
       final String libraryName = library.getName();
       if (!myUsedLibraries.contains(libraryName)) {
         continue;
       }
-
+      sortedLibs.put(BuildProperties.getLibraryPathId(libraryName), library);
+    }
+    for (final Library library : sortedLibs.values()) {
+      final String libraryName = library.getName();
       final VirtualFile[] files = library.getFiles(OrderRootType.COMPILATION_CLASSES);
       final Path libraryPath = new Path(BuildProperties.getLibraryPathId(libraryName));
-      HashSet<String> visitedPaths = new HashSet<String>();
+      // note that it is assumed that directory entries inside library path are unordered
+      TreeSet<String> visitedPaths = new TreeSet<String>();
       for (final VirtualFile file : files) {
         final String path = GenerationUtils
           .toRelativePath(file, baseDir, BuildProperties.getProjectBaseDirProperty(), myGenOptions, !myProject.isSavePathsRelative());
-        if (visitedPaths.add(path)) {
-          libraryPath.add(new PathElement(path));
-        }
+        visitedPaths.add(path);
+      }
+      for (final String path : visitedPaths) {
+        libraryPath.add(new PathElement(path));
       }
       gen.add(libraryPath, 1);
     }
