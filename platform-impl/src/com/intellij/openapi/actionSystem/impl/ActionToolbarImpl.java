@@ -8,9 +8,9 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
@@ -702,7 +702,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   public void setTargetComponent(final JComponent component) {
     myTargetComponent = component;
-    updateActions();
+
+    if (myTargetComponent != null && myTargetComponent.isVisible()) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          updateActions();
+        }
+      }, ModalityState.stateForComponent(myTargetComponent));
+    }
   }
 
   protected DataContext getToolbarDataContext() {
