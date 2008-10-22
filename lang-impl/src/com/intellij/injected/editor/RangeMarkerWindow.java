@@ -60,4 +60,7 @@ public class RangeMarkerWindow implements RangeMarkerEx {
   public void documentChanged(final DocumentEvent e) {
     myHostMarker.documentChanged(e);
   }
+  public long getId() {
+    return myHostMarker.getId();
+  }
 }

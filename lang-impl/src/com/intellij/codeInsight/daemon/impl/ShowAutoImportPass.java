@@ -88,7 +88,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   @NotNull
   private static HighlightInfo[] getVisibleHighlights(int startOffset, int endOffset, Project project, Editor editor) {
-    HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), project);
+    List<HighlightInfo> highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), project);
     if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
 
     List<HighlightInfo> array = new ArrayList<HighlightInfo>();

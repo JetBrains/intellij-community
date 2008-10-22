@@ -232,14 +232,16 @@ public class HighlightInfo {
 
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    return obj instanceof HighlightInfo
-           && ((HighlightInfo)obj).getSeverity() == getSeverity()
-           && ((HighlightInfo)obj).startOffset == startOffset
-           && ((HighlightInfo)obj).endOffset == endOffset
-           && ((HighlightInfo)obj).type == type
-           && Comparing.equal(((HighlightInfo)obj).gutterIconRenderer, gutterIconRenderer)
-           && Comparing.equal(((HighlightInfo)obj).forcedTextAttributes, forcedTextAttributes)
-           && Comparing.strEqual(((HighlightInfo)obj).description, description);
+    if (!(obj instanceof HighlightInfo)) return false;
+    HighlightInfo info = (HighlightInfo)obj;
+
+    return info.getSeverity() == getSeverity() &&
+           info.startOffset == startOffset &&
+           info.endOffset == endOffset &&
+           Comparing.equal(info.type, type) &&
+           Comparing.equal(info.gutterIconRenderer, gutterIconRenderer) &&
+           Comparing.equal(info.forcedTextAttributes, forcedTextAttributes) &&
+           Comparing.strEqual(info.description, description);
   }
 
   public int hashCode() {
@@ -325,6 +327,13 @@ public class HighlightInfo {
 
   public void setHint(final boolean hasHint) {
     this.hasHint = hasHint;
+  }
+
+  public int getActualStartOffset() {
+    return highlighter == null || !highlighter.isValid() ? startOffset : highlighter.getStartOffset();
+  }
+  public int getActualEndOffset() {
+    return highlighter == null || !highlighter.isValid() ? endOffset : highlighter.getEndOffset();
   }
 
   public static class IntentionActionDescriptor {

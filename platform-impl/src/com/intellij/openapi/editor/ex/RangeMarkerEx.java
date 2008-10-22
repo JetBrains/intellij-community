@@ -13,4 +13,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 
 public interface RangeMarkerEx extends RangeMarker {
   void documentChanged(DocumentEvent e);
+
+  long getId();
 }

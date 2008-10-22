@@ -2,6 +2,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -22,22 +23,22 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
   private Color myLineSeparatorColor;
   private SeparatorPlacement mySeparatorPlacement;
   private boolean isAfterEndOfLine;
-  private final RangeMarkerImpl myRangeMarker;
+  private final RangeMarkerEx myRangeMarker;
   private GutterIconRenderer myGutterIconRenderer;
   private boolean myErrorStripeMarkIsThin;
   private Object myErrorStripeTooltip;
   private MarkupEditorFilter myFilter = MarkupEditorFilter.EMPTY;
 
-  RangeHighlighterImpl(MarkupModel model,
+  RangeHighlighterImpl(@NotNull MarkupModel model,
                        int start,
                        int end,
                        int layer,
-                       HighlighterTargetArea target,
+                       @NotNull HighlighterTargetArea target,
                        TextAttributes textAttributes,
                        boolean persistent) {
     myRangeMarker = persistent
                     ? new PersistentLineMarker(model.getDocument(), start)
-                    : new RangeMarkerImpl(model.getDocument(), start, end);
+                    : (RangeMarkerEx)model.getDocument().createRangeMarker(start, end);
     myTextAttributes = textAttributes;
     myTargetArea = target;
     myLayer = layer;

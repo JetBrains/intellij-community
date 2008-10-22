@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -112,10 +111,7 @@ public class DaemonListeners {
         }
 
         stopDaemon(true);
-        IntentionHintComponent component = myDaemonCodeAnalyzer.getLastIntentionHint();
-        if (component != null) {
-          myDaemonCodeAnalyzer.setLastIntentionHint(null);
-        }
+        myDaemonCodeAnalyzer.setLastIntentionHint(null);
       }
     };
     eventMulticaster.addCaretListener(myCaretListener);
@@ -145,7 +141,7 @@ public class DaemonListeners {
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
 
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiChangeHandler(myProject, daemonCodeAnalyzer));
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiChangeHandler(myProject, daemonCodeAnalyzer, connection));
 
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {

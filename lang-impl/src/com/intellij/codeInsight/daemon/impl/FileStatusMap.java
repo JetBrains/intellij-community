@@ -8,12 +8,16 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +39,8 @@ public class FileStatusMap {
     Document document = editor.getDocument();
     TextRange documentRange = TextRange.from(0, document.getTextLength());
 
-    TextRange dirtyScope = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(editor.getProject())).getFileStatusMap().getFileDirtyScope(document, part);
+    FileStatusMap me = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(editor.getProject())).getFileStatusMap();
+    TextRange dirtyScope = me.getFileDirtyScope(document, part);
     if (dirtyScope == null || !documentRange.intersects(dirtyScope)) {
       return null;
     }
@@ -43,52 +48,66 @@ public class FileStatusMap {
   }
 
   public void setErrorFoundFlag(@NotNull Document document, boolean errorFound) {
-    //GHP has found error. Flag is used by ExternalToolPass to decide whether to run itself or not
-    synchronized(myDocumentToStatusMap){
+    //GHP has found error. Flag is used by ExternalToolPass to decide whether to run or not
+    synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
         if (!errorFound) return;
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         assert file != null : document;
-        status = new FileStatus(file);
+        status = new FileStatus(file,document);
         myDocumentToStatusMap.put(document, status);
       }
       status.errorFound = errorFound;
     }
   }
-  
+
   public boolean wasErrorFound(@NotNull Document document) {
-    synchronized(myDocumentToStatusMap){
+    synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null && status.errorFound;
     }
   }
 
   private static class FileStatus {
-    private TextRange dirtyScope;
-    private TextRange localInspectionsDirtyScope;
     public boolean defensivelyMarked; // file marked dirty without knowledge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
     private boolean wolfPassFinfished;
-    private TextRange externalDirtyScope;
-    private final TIntObjectHashMap<TextRange> customPassDirtyScopes = new TIntObjectHashMap<TextRange>();
+    private final TIntObjectHashMap<RangeMarker> dirtyScopes = new TIntObjectHashMap<RangeMarker>();
     private boolean errorFound;
 
-    private FileStatus(@NotNull PsiFile file) {
-      TextRange range = file.getTextRange();
-      dirtyScope = range;
-      localInspectionsDirtyScope = range;
-      externalDirtyScope = range;
-      TextEditorHighlightingPassRegistrarImpl registrar = (TextEditorHighlightingPassRegistrarImpl) TextEditorHighlightingPassRegistrar.getInstance(file.getProject());
+    private FileStatus(@NotNull PsiFile file, @NotNull Document document) {
+      markWholeFile(file, document, file.getProject());
+    }
+
+    private void markWholeFile(PsiFile file, Document document, Project project) {
+      TextRange range = file == null ? null : file.getTextRange();
+      RangeMarker marker = range == null ? null : document.createRangeMarker(range);
+      dirtyScopes.put(Pass.UPDATE_ALL, marker);
+      dirtyScopes.put(Pass.EXTERNAL_TOOLS, marker);
+      dirtyScopes.put(Pass.LOCAL_INSPECTIONS, marker);
+      TextEditorHighlightingPassRegistrarImpl registrar = (TextEditorHighlightingPassRegistrarImpl) TextEditorHighlightingPassRegistrar.getInstance(project);
       for(DirtyScopeTrackingHighlightingPassFactory factory: registrar.getDirtyScopeTrackingFactories()) {
-        customPassDirtyScopes.put(factory.getPassId(), range);
+        dirtyScopes.put(factory.getPassId(), marker);
       }
     }
 
-    public boolean allCustomDirtyScopesAreNull() {
-      for (Object o : customPassDirtyScopes.getValues()) {
+    public boolean allDirtyScopesAreNull() {
+      for (Object o : dirtyScopes.getValues()) {
         if (o != null) return false;
       }
       return true;
+    }
+
+    public void combineScopesWith(final TextRange scope, final int fileLength, final Document document) {
+      dirtyScopes.forEachEntry(new TIntObjectProcedure<RangeMarker>() {
+        public boolean execute(int id, RangeMarker oldScope) {
+          RangeMarker newScope = combineScopes(oldScope, scope, fileLength, document);
+          if (newScope != oldScope) {
+            dirtyScopes.put(id, newScope);
+          }
+          return true;
+        }
+      });
     }
   }
 
@@ -104,30 +123,15 @@ public class FileStatusMap {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
-        status = new FileStatus(file);
+        status = new FileStatus(file,document);
         myDocumentToStatusMap.put(document, status);
       }
-
       status.defensivelyMarked=false;
-      switch (passId) {
-        case Pass.UPDATE_ALL:
-        case Pass.POST_UPDATE_ALL:
-          status.dirtyScope = null;
-          break;
-        case Pass.LOCAL_INSPECTIONS:
-          status.localInspectionsDirtyScope = null;
-          break;
-        case Pass.WOLF:
-          status.wolfPassFinfished = true;
-          break;
-        case Pass.EXTERNAL_TOOLS:
-          status.externalDirtyScope = null;
-          break;
-        default:
-          if (status.customPassDirtyScopes.containsKey(passId)) {
-            status.customPassDirtyScopes.put(passId, null);
-          }
-          break;
+      if (passId == Pass.WOLF) {
+        status.wolfPassFinfished = true;
+      }
+      else if (status.dirtyScopes.containsKey(passId)) {
+        status.dirtyScopes.put(passId, null);
       }
     }
   }
@@ -147,23 +151,12 @@ public class FileStatusMap {
       }
       if (status.defensivelyMarked) {
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        status.dirtyScope = status.localInspectionsDirtyScope = file == null ? null : file.getTextRange();
+        status.markWholeFile(file, document, myProject);
         status.defensivelyMarked = false;
       }
-      switch (passId) {
-        case Pass.UPDATE_ALL:
-          return status.dirtyScope;
-        case Pass.LOCAL_INSPECTIONS:
-          return status.localInspectionsDirtyScope;
-        case Pass.EXTERNAL_TOOLS:
-          return status.externalDirtyScope;
-        default:
-          if (status.customPassDirtyScopes.containsKey(passId)) {
-            return status.customPassDirtyScopes.get(passId);
-          }
-          LOG.error("Unknown pass " + passId);
-          return null;
-      }
+      LOG.assertTrue(status.dirtyScopes.containsKey(passId), "Unknown pass " + passId);
+      RangeMarker marker = status.dirtyScopes.get(passId);
+      return marker == null ? null : new TextRange(marker.getStartOffset(), marker.getEndOffset());
     }
   }
 
@@ -192,31 +185,34 @@ public class FileStatusMap {
       if (status.defensivelyMarked) {
         status.defensivelyMarked = false;
       }
-      status.dirtyScope = combineScopes(status.dirtyScope, scope, fileLength);
-      status.localInspectionsDirtyScope = combineScopes(status.localInspectionsDirtyScope, scope, fileLength);
-      status.externalDirtyScope = combineScopes(status.externalDirtyScope, scope, fileLength);
+      status.combineScopesWith(scope, fileLength,document);
     }
   }
 
-  private static TextRange combineScopes(TextRange scope1, TextRange scope2, int textLength) {
-    if (scope1 == null) return scope2;
-    if (scope2 == null) return scope1;
+  private static RangeMarker combineScopes(RangeMarker old, TextRange scope, int textLength, Document document) {
+    if (scope == null) return old;
+    if (old == null) {
+      return document.createRangeMarker(scope);
+    }
     TextRange documentRange = TextRange.from(0, textLength);
-    if (!documentRange.contains(scope1) || !documentRange.contains(scope2)) return documentRange;
-    return scope1.union(scope2);
+    if (scope.getEndOffset() >= textLength) {
+      return document.createRangeMarker(documentRange);
+    }
+    TextRange oldRange = new TextRange(old.getStartOffset(), old.getEndOffset());
+    TextRange union = scope.union(oldRange);
+    if (union.equals(oldRange)) {
+      return old;
+    }
+    else {
+      ((DocumentEx)document).removeRangeMarker((RangeMarkerEx)old);
+      return document.createRangeMarker(union);
+    }
   }
 
   public boolean allDirtyScopesAreNull(@NotNull Document document) {
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
-      return status != null
-             && !status.defensivelyMarked
-             && status.dirtyScope == null
-             && status.allCustomDirtyScopesAreNull()
-             && status.localInspectionsDirtyScope == null
-             && status.externalDirtyScope == null
-             && status.wolfPassFinfished
-        ;
+      return status != null && !status.defensivelyMarked && status.wolfPassFinfished && status.allDirtyScopesAreNull();
     }
   }
 }
