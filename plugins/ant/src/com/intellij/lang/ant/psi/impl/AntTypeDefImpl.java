@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.config.impl.AntResourcesClassLoader;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.reference.AntRefIdReference;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
@@ -21,7 +22,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ObjectCache;
-import com.intellij.util.lang.UrlClassLoader;
 import org.apache.tools.ant.PathTokenizer;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.TaskContainer;
@@ -508,7 +508,9 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     final List<File> files = new ArrayList<File>();
     final HashSet<AntFilesProvider> processed = new HashSet<AntFilesProvider>(); // aux collection 
     // check 'classpathref'
+    final ProgressManager progressManager = ProgressManager.getInstance();
     for (PsiReference reference : getReferences()) {
+      progressManager.checkCanceled();
       if (reference instanceof AntRefIdReference) {
         final PsiElement resolved = reference.resolve();
         if (resolved instanceof AntFilesProvider) {
@@ -518,6 +520,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
     // check nested elements
     for (AntElement antElement : getChildren()) {
+      progressManager.checkCanceled();
       if (antElement instanceof AntFilesProvider) {
         files.addAll(((AntFilesProvider)antElement).getFiles(processed));
       }
@@ -571,7 +574,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       return cached;
     }
     
-    final ClassLoader loader = new UrlClassLoader(urls, parentLoader, false, false);
+    final ClassLoader loader = new AntResourcesClassLoader(urls, parentLoader, false, false);
     LOADERS_CACHE.setClassLoader(urls, loader);
     return loader;
   }

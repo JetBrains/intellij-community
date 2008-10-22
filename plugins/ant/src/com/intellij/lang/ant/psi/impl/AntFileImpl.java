@@ -12,7 +12,6 @@ import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.lang.ant.misc.AntStringInterner;
 import com.intellij.lang.ant.psi.*;
-import com.intellij.lang.ant.psi.changes.AntChangeVisitor;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
@@ -394,7 +393,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
     finally {
       if (updateBuilFile) {
-        AntChangeVisitor.updateBuildFile(this);
+        //AntChangeVisitor.updateBuildFile(this);
       }
     }
   }              
@@ -732,7 +731,11 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   private boolean isDataDype(final AntTypeDefinition def) {
     try {
       final ClassLoader loader = getClassLoader();
-      final Class defClass = loader.loadClass(def.getClassName());
+      final String className = def.getClassName();
+      if (className.startsWith(AntMacroDefImpl.ANT_MACRODEF_NAME) || className.startsWith(AntPresetDefImpl.ANT_PRESETDEF_NAME)) {
+        return false;
+      }
+      final Class defClass = loader.loadClass(className);
       final Class dataTypeClass = loader.loadClass(DataType.class.getName());
       return dataTypeClass.isAssignableFrom(defClass);
     }
