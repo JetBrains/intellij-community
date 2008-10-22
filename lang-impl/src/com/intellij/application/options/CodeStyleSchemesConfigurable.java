@@ -72,11 +72,6 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
       mySelectedScheme = null;
     }
 
-    public void addNotify() {
-      super.addNotify();
-      myLayout.show(this, WAIT_CARD);
-    }
-
     public void addScheme(CodeStyleScheme scheme) {
       CodeStyleSettings settings = scheme.getCodeStyleSettings();
       if (cannotBeModified(scheme)) {
