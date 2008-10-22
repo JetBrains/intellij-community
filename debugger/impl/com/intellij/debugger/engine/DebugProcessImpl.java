@@ -42,6 +42,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -53,6 +54,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -338,16 +340,27 @@ public abstract class DebugProcessImpl implements DebugProcess {
       StepRequest stepRequest = requestManager.createStepRequest(stepThread.getThreadReference(), StepRequest.STEP_LINE, depth);
       DebuggerSettings settings = DebuggerSettings.getInstance();
       if (!(hint != null && hint.isIgnoreFilters()) /*&& depth == StepRequest.STEP_INTO*/) {
+        final String currentClassName = getCurrentClassName(stepThread);
+        final List<ClassFilter> activeFilters = new ArrayList<ClassFilter>();
         if (settings.TRACING_FILTERS_ENABLED) {
-          String currentClassName = getCurrentClassName(stepThread);
-          if (currentClassName == null || !settings.isNameFiltered(currentClassName)) {
-            // add class filters
-            ClassFilter[] filters = settings.getSteppingFilters();
-            for (ClassFilter filter : filters) {
-              if (filter.isEnabled()) {
-                stepRequest.addClassExclusionFilter(filter.getPattern());
-              }
+          for (ClassFilter filter : settings.getSteppingFilters()) {
+            if (filter.isEnabled()) {
+              activeFilters.add(filter);
             }
+          }
+        }
+        for (DebuggerClassFilterProvider provider : Extensions.getExtensions(DebuggerClassFilterProvider.EP_NAME)) {
+          for (ClassFilter filter : provider.getFilters()) {
+            if (filter.isEnabled()) {
+              activeFilters.add(filter);
+            }
+          }
+        }
+
+        if (currentClassName == null || !DebuggerUtilsEx.isFiltered(currentClassName, activeFilters)) {
+          // add class filters
+          for (ClassFilter filter : activeFilters) {
+            stepRequest.addClassExclusionFilter(filter.getPattern());
           }
         }
       }

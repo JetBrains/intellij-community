@@ -64,22 +64,11 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public void initComponent() {}
 
   public ClassFilter[] getSteppingFilters() {
-    return retrieveFilters(mySteppingFilters);
-  }
-
-  private ClassFilter[] retrieveFilters(ClassFilter[] filters) {
-    ClassFilter[] rv = new ClassFilter[filters.length];
+    final ClassFilter[] rv = new ClassFilter[mySteppingFilters.length];
     for (int idx = 0; idx < rv.length; idx++) {
-      rv[idx] = filters[idx].clone();
+      rv[idx] = mySteppingFilters[idx].clone();
     }
     return rv;
-  }
-
-  public boolean isNameFiltered(String qName) {
-    if (!TRACING_FILTERS_ENABLED) {
-      return false;
-    }
-    return DebuggerUtilsEx.isFiltered(qName, mySteppingFilters);
   }
 
   void setSteppingFilters(ClassFilter[] steppingFilters) {
