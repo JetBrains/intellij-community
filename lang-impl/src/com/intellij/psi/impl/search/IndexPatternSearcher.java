@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -34,13 +35,14 @@ import java.util.regex.Pattern;
 public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
   public boolean execute(final IndexPatternSearch.SearchParameters queryParameters, final Processor<IndexPatternOccurrence> consumer) {
     final PsiFile file = queryParameters.getFile();
-    if (file instanceof PsiBinaryFile || file instanceof PsiCompiledElement || file.getVirtualFile() == null) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (file instanceof PsiBinaryFile || file instanceof PsiCompiledElement || virtualFile == null) {
       return true;
     }
 
     final CacheManager cacheManager = ((PsiManagerEx)file.getManager()).getCacheManager();
     final IndexPatternProvider patternProvider = queryParameters.getPatternProvider();
-    int count = patternProvider != null ? cacheManager.getTodoCount(file.getVirtualFile(), patternProvider) : cacheManager.getTodoCount(file.getVirtualFile(), queryParameters.getPattern());
+    int count = patternProvider != null ? cacheManager.getTodoCount(virtualFile, patternProvider) : cacheManager.getTodoCount(virtualFile, queryParameters.getPattern());
     if (count == 0) return true;
 
     TIntArrayList commentStarts = new TIntArrayList();
@@ -125,7 +127,8 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
                                    final CharSequence chars,
                                    final TextRange range,
                                    final TokenSet commentTokens,
-                                   final TIntArrayList commentStarts, final TIntArrayList commentEnds,
+                                   final TIntArrayList commentStarts,
+                                   final TIntArrayList commentEnds,
                                    final IndexPatternBuilder builderForFile) {
     for (lexer.start(chars,0,chars.length(),0); ; lexer.advance()) {
       IElementType tokenType = lexer.getTokenType();
@@ -150,8 +153,11 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
         final int startDelta = builderForFile != null ? builderForFile.getCommentStartDelta(lexer.getTokenType()) : 0;
         final int endDelta = builderForFile != null ? builderForFile.getCommentEndDelta(lexer.getTokenType()) : 0;
 
-        commentStarts.add(lexer.getTokenStart() + startDelta);
-        commentEnds.add(lexer.getTokenEnd() - endDelta);
+        int start = lexer.getTokenStart() + startDelta;
+        int end = lexer.getTokenEnd() - endDelta;
+        assert start <= end : "Invalid comment range: " + new TextRange(start, end) + "; lexer token range="+new TextRange(lexer.getTokenStart(), lexer.getTokenEnd())+"; delta="+new TextRange(startDelta, endDelta)+"; lexer="+lexer+"; builder="+builderForFile;
+        commentStarts.add(start);
+        commentEnds.add(end);
       }
     }
   }

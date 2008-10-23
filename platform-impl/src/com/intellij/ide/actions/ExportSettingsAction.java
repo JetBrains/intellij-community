@@ -104,7 +104,7 @@ public class ExportSettingsAction extends AnAction {
           continue;
         }
         if (!(service instanceof ExportableComponent)) {
-          LOG.error("Service " + serviceClass + " is registered in exportable EP, but doesn't implement ExportableApplicationComponent");
+          LOG.error("Service " + serviceClass + " is registered in exportable EP, but doesn't implement ExportableComponent");
           continue;
         }
 
