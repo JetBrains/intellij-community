@@ -115,14 +115,15 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   public abstract ModuleType getModuleType();
 
   @NotNull
-  public Module createAndCommit(ModifiableModuleModel moduleModel, boolean runFromProjectWizard) throws
+  public Module createAndCommitIfNeeded(final Project project, ModifiableModuleModel model, boolean runFromProjectWizard) throws
                                                                                                  InvalidDataException,
                                                                                                  ConfigurationException,
                                                                                                  IOException,
                                                                                                  JDOMException,
                                                                                                  ModuleWithNameAlreadyExists{
+    final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
     final Module module = createModule(moduleModel);
-    moduleModel.commit();
+    if (model == null) moduleModel.commit();
 
     if (runFromProjectWizard) {
       StartupManager.getInstance(module.getProject()).registerPostStartupActivity(new Runnable() {
@@ -170,8 +171,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
       Exception ex = ApplicationManager.getApplication().runWriteAction(new Computable<Exception>() {
         public Exception compute() {
           try {
-            final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
-            result.set(createAndCommit(moduleModel, true));
+            result.set(createAndCommitIfNeeded(project, model, true));
             return null;
           }
           catch (Exception e) {
