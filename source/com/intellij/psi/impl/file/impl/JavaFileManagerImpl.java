@@ -18,8 +18,10 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
@@ -110,7 +112,10 @@ public class JavaFileManagerImpl implements JavaFileManager {
     final Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
     if (classes.isEmpty()) return PsiClass.EMPTY_ARRAY;
     List<PsiClass> result = new ArrayList<PsiClass>(classes.size());
-    for (PsiClass aClass : classes) {
+    for (PsiElement found : classes) {
+      if (notClass(found)) continue;
+
+      PsiClass aClass = (PsiClass)found;
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
 
@@ -125,6 +130,18 @@ public class JavaFileManagerImpl implements JavaFileManager {
       }
     });
     return result.toArray(new PsiClass[result.size()]);
+  }
+
+  private static boolean notClass(final PsiElement found) {
+    if (found instanceof PsiClass) return false;
+
+    VirtualFile faultyContainer = PsiUtil.getVirtualFile(found);
+    LOG.error("Non class in class list: " + faultyContainer);
+    if (faultyContainer != null && faultyContainer.isValid()) {
+      FileBasedIndex.getInstance().requestReindex(faultyContainer);
+    }
+
+    return true;
   }
 
   @Nullable
@@ -266,7 +283,10 @@ public class JavaFileManagerImpl implements JavaFileManager {
 
     final Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
 
-    for (PsiClass aClass : classes) {
+    for (PsiElement found : classes) {
+      if (notClass(found)) continue;
+
+      PsiClass aClass = (PsiClass)found;
       final boolean valid = aClass.isValid();
       LOG.assertTrue(valid);
       if (!valid) continue;

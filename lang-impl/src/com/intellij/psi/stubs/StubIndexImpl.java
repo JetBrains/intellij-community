@@ -220,6 +220,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                           builder.append(stubTreeJustBuilt);
                           builder.append("\n");
                           LOG.info(builder.toString());
+
+                          FileBasedIndex.getInstance().requestReindex(file);
                         }
                       }
                     }
