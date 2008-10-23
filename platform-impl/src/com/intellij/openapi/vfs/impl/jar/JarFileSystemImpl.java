@@ -65,6 +65,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
           final Application app = ApplicationManager.getApplication();
           app.invokeLater(new Runnable() {
             public void run() {
+              if (app.isDisposed()) return;
               for (VirtualFile root : rootsToRefresh) {
                 if (root.isValid()) {
                   ((NewVirtualFile)root).markDirtyRecursively();

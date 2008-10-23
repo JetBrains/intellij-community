@@ -996,7 +996,7 @@ public class HighlightUtil {
     PsiElement qualifier = place.getQualifier();
     if (qualifier == null) return true;
     if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return false;
-    PsiElement q = ((PsiJavaCodeReferenceElement)qualifier).resolve();
+    PsiElement q = ((PsiReference)qualifier).resolve();
     if (q instanceof PsiClass) return false;
     if (q != null) return true;
     String qname = ((PsiJavaCodeReferenceElement)qualifier).getQualifiedName();

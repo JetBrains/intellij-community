@@ -62,20 +62,24 @@ public final class QuickFixAction {
   /**
    * Is invoked inside atomic action.
    */
+  @NotNull
   public static List<HighlightInfo.IntentionActionDescriptor> getAvailableActions(@NotNull Editor editor, @NotNull PsiFile file, final int passId) {
     int offset = editor.getCaretModel().getOffset();
     final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    List<HighlightInfo.IntentionActionDescriptor> list = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    for (HighlightInfo info : DaemonCodeAnalyzerImpl.getHighlightsAround(editor.getDocument(), project, offset)) {
-      addAvailableActionsForGroups(info, editor, file, list, passId == -1 ? null : new int[]{passId});
+    List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    HighlightInfo[] infos = DaemonCodeAnalyzerImpl.getHighlightsAround(editor.getDocument(), project, offset);
+    int[] groups = passId == -1 ? null : new int[]{passId};
+    for (HighlightInfo info : infos) {
+      addAvailableActionsForGroups(info, editor, file, result, groups, offset);
     }
-    return list;
+    return result;
   }
 
-  private static void addAvailableActionsForGroups(HighlightInfo info, Editor editor, PsiFile file, List<HighlightInfo.IntentionActionDescriptor> outList, int[] groups) {
-    int offset = editor.getCaretModel().getOffset();
+  private static void addAvailableActionsForGroups(HighlightInfo info, Editor editor, PsiFile file, List<HighlightInfo.IntentionActionDescriptor> outList,
+                                                   int[] groups,
+                                                   int offset) {
     if (info == null || info.quickFixActionMarkers == null) return;
     if (groups != null && Arrays.binarySearch(groups, info.group) < 0) return;
     for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> pair : info.quickFixActionMarkers) {

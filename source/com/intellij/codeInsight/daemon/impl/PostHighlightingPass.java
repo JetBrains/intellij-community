@@ -139,8 +139,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   public void doApplyInformationToEditor() {
     if (myHighlights == null) return;
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset,
-                                                   myHighlights, Pass.POST_UPDATE_ALL);
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myHighlights, Pass.POST_UPDATE_ALL);
 
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, myFile, getId());

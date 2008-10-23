@@ -142,7 +142,7 @@ public class AddImportAction implements QuestionAction {
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (myProject.isOpen()) {
+        if (!myProject.isDisposed() && myProject.isOpen()) {
           DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
           if (daemonCodeAnalyzer != null) {
             daemonCodeAnalyzer.updateVisibleHighlighters(myEditor);
