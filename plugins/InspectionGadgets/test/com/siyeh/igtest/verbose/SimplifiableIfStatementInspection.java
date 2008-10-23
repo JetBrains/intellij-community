@@ -1,8 +1,3 @@
-/**
- * (c) 2006 Carp Technologies BV
- * Brouwerijstraat 1, 7523XC Enschede
- * Created: 20060313, 6:35:33 PM
- */
 package com.siyeh.igtest.verbose;
 
 public class SimplifiableIfStatementInspection {

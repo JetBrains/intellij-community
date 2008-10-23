@@ -1,13 +1,5 @@
-/**
- * (c) 2008 Carp Technologies BV
- * Brouwerijstraat 1, 7523XC Enschede
- * Created: 20080513, 4:16:29 PM
- */
 package com.siyeh.igtest.numeric.char_context;
 
-/**
- * @author <A href="bas@carp-technologies.nl">Bas Leijdekkers</a>
- */
 public class CharUsedInArithmeticContext {
 
     String foo() {

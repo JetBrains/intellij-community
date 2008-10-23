@@ -1,13 +1,5 @@
-/**
- * (c) 2006 Carp Technologies BV
- * Brouwerijstraat 1, 7523XC Enschede
- * Created: 20070122, 2:32:01 PM
- */
 package com.siyeh.igtest.classlayout;
 
-/**
- * @author <A href="bas@carp-technologies.nl">Bas Leijdekkers</a>
- */
 public class AnonymousInnerClass {
 
     enum Operation {
