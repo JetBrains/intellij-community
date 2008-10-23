@@ -266,8 +266,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   private void shiftFocus(int direction) {
-    myModel.setSelectedIndex(myModel.getIndexByMode(myModel.getSelectedIndex() + direction));
-    scrollSelectionToVisible(direction);
+    if (myModel.setSelectedIndex(myModel.getIndexByMode(myModel.getSelectedIndex() + direction))) {
+      scrollSelectionToVisible(direction);
+    }
   }
 
   private void scrollSelectionToVisible(final int direction) {

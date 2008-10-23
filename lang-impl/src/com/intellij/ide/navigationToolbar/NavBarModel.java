@@ -7,6 +7,7 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -19,7 +20,6 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -364,10 +364,11 @@ public class NavBarModel {
     return myModel.get(index);
   }
 
-  public void setSelectedIndex(final int selectedIndex) {
-    if (mySelectedIndex == selectedIndex) return;
+  public boolean setSelectedIndex(final int selectedIndex) {
+    if (mySelectedIndex == selectedIndex) return false;
     mySelectedIndex = selectedIndex;
     myObservable.fireChange();
+    return true;
   }
 
   private static final class SiblingsComparator implements Comparator<Object> {
