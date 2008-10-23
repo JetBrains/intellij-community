@@ -47,6 +47,9 @@ public class GlassPanel extends JComponent {
       int width = size.width;
       int height = size.height;
 
+      int hInset = 3;
+      int vInset = 4;
+
       Rectangle2D screen = new Rectangle2D.Double(0, 0, width, height);
       final Rectangle visibleRect = myPanel.getVisibleRect();
       final Point leftPoint = SwingUtilities.convertPoint(myPanel, new Point(visibleRect.x, visibleRect.y), surfaceComponent);
@@ -58,16 +61,20 @@ public class GlassPanel extends JComponent {
         final Point panelPoint = SwingUtilities.convertPoint(lightComponent, new Point(0, 0), surfaceComponent);
         final int x = panelPoint.x;
         final int y = panelPoint.y;
-        final Area area = new Area(new RoundRectangle2D.Double(x, y, lightComponent.getWidth(), lightComponent.getHeight(), 6, 6));
+        final Area area = new Area(new RoundRectangle2D.Double(x - hInset, y - vInset, lightComponent.getWidth() + hInset * 2, lightComponent.getHeight() + vInset * 2, 6, 6));
         area.intersect(innerPanel);
         mask.subtract(area);
       }
 
       Graphics2D g2 = (Graphics2D)g;
       Color shieldColor = new Color(0.0f, 0.0f, 0.0f, 0.2f);
+      Color boundsColor = new Color(0.0f, 0.0f, 0.0f, 0.25f);
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setColor(shieldColor);
       g2.fill(mask);
+
+      g2.setColor(boundsColor);
+      g2.draw(mask);
     }
   }
 
