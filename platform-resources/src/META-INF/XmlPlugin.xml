@@ -23,7 +23,7 @@
                         interface="com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider"/>
 
     <extensionPoint name="webBrowserUrlProvider"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+                    interface="com.intellij.ide.browsers.WebBrowserUrlProvider"/>
 
   </extensionPoints>
 
@@ -206,8 +206,7 @@
 
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.XmlMover" id="xml" order="before line"/>
 
-    <webBrowserUrlProvider language="HTML" implementationClass="com.intellij.ide.browsers.HtmlWebBrowserUrlProvider" id="static" order="last"/>
-    <webBrowserUrlProvider language="XHTML" implementationClass="com.intellij.ide.browsers.HtmlWebBrowserUrlProvider" id="static" order="last"/>
+    <webBrowserUrlProvider implementation="com.intellij.ide.browsers.HtmlWebBrowserUrlProvider" id="static" order="last"/>
 
     <lang.smartEnterProcessor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
     <lang.smartEnterProcessor language="HTML" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>

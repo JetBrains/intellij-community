@@ -22,6 +22,12 @@ public class HtmlWebBrowserUrlProvider extends WebBrowserUrlProvider {
     return BrowserUtil.getURL(virtualFile.getUrl()).toString();
   }
 
+  @Override
+  public boolean canHandleFile(@NotNull final PsiFile file) {
+    final Language language = file.getViewProvider().getBaseLanguage();
+    return HTMLLanguage.INSTANCE == language || XHTMLLanguage.INSTANCE == language;
+  }
+
   public static boolean isAvailableFor(@NotNull final PsiFile file) {
     final Language language = file.getLanguage();
     return language instanceof HTMLLanguage || language instanceof XHTMLLanguage;
