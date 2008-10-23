@@ -593,7 +593,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         return getSelectedNavigatable(problem, psiElement);
       }
       else if (DataConstants.PSI_ELEMENT.equals(dataId)) {
-        return psiElement;
+        return psiElement.isValid() ? psiElement : null;
       }
     }
     else if (selectedNode instanceof ProblemDescriptionNode && DataConstants.NAVIGATABLE.equals(dataId)) {
