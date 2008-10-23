@@ -68,7 +68,6 @@ public class TipManager implements Disposable {
     @Override
     public void mouseEntered(final MouseEvent e) {
       myInsideComponent = true;
-      tryTooltip(e);
     }
   }
 
