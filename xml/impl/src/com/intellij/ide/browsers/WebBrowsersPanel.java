@@ -87,6 +87,7 @@ public class WebBrowsersPanel extends JPanel {
     container.add(result);
 
     final Pair<String, Boolean> settings = myConfiguration.suggestBrowserPath(family);
+    LOG.assertTrue(settings != null, "Settings must not be null for family: " + family);
     field.getTextField().setText(settings.first);
     checkBox.setSelected(settings.second.booleanValue());
 
