@@ -33,27 +33,26 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.config.ConfigureProxiesListener;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
-public class SvnConfigurable implements Configurable, ActionListener {
+public class SvnConfigurable implements Configurable {
 
   private Project myProject;
   private JCheckBox myUseDefaultCheckBox;
@@ -64,63 +63,59 @@ public class SvnConfigurable implements Configurable, ActionListener {
   private JPanel myComponent;
 
   private JLabel myConfigurationDirectoryLabel;
-  private FileChooserDescriptor myBrowserDescriptor;
+  private JLabel myClearCacheLabel;
+  private JLabel myUseCommonProxyLabel;
+  private JLabel myEditProxyLabel;
 
   @NonNls private static final String HELP_ID = "project.propSubversion";
 
   public SvnConfigurable(Project project) {
     myProject = project;
-  }
 
-  public JComponent createComponent() {
-    // checkbox 'use default subversion configuration directory'
-    // path to configuration directory (set to default and disable when checkbox is checked).
-    myComponent = new JPanel();
-    GridBagLayout layout = new GridBagLayout();
-    myComponent.setLayout(layout);
-
-    GridBagConstraints gb = new GridBagConstraints();
-    gb.weightx = 0;
-    gb.weighty = 0;
-    gb.gridx = 0;
-    gb.gridy = 0;
-    gb.anchor = GridBagConstraints.WEST;
-    gb.gridwidth = 3;
-    myUseDefaultCheckBox = new JCheckBox(SvnBundle.message("checkbox.configure.use.system.default.configuration.directory"));
-    add(myUseDefaultCheckBox, gb);
-    myUseDefaultCheckBox.addActionListener(this);
-
-    // upgrade mode.
-    gb.gridy += 1;
-    gb.fill = GridBagConstraints.HORIZONTAL;
-    gb.gridwidth = 3;
-    gb.insets = new Insets(5, 5, 1, 5);
-
-    add(new JLabel(), gb);
-
-    gb.gridy += 1;
-    gb.fill = GridBagConstraints.HORIZONTAL;
-    gb.gridwidth = 3;
-    gb.insets = new Insets(5, 5, 1, 5);
-    JLabel label = new JLabel(SvnBundle.message("label.configuration.configuration.directory"));
-    myConfigurationDirectoryLabel = label;
-
-    myConfigurationDirectoryText = new TextFieldWithBrowseButton(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (myBrowserDescriptor == null) {
-          myBrowserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
-          myBrowserDescriptor.setShowFileSystemRoots(true);
-          myBrowserDescriptor.setTitle(SvnBundle.message("dialog.title.select.configuration.directory"));
-          myBrowserDescriptor.setDescription(SvnBundle.message("dialog.description.select.configuration.directory"));
-          myBrowserDescriptor.setHideIgnored(false);
+    myUseDefaultCheckBox.addActionListener(new ActionListener(){
+      public void actionPerformed(final ActionEvent e) {
+        boolean enabled = !myUseDefaultCheckBox.isSelected();
+        myConfigurationDirectoryText.setEnabled(enabled);
+        myConfigurationDirectoryLabel.setEnabled(enabled);
+        SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
+        String path = configuration.getConfigurationDirectory();
+        if (!enabled || path == null) {
+          myConfigurationDirectoryText.setText(SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath());
         }
+        else {
+          myConfigurationDirectoryText.setText(path);
+        }
+      }
+    });
+
+    myClearAuthButton.addActionListener(new ActionListener(){
+      public void actionPerformed(final ActionEvent e) {
+        String path = myConfigurationDirectoryText.getText();
+        if (path != null) {
+          int result = Messages.showYesNoDialog(myComponent, SvnBundle.message("confirmation.text.delete.stored.authentication.information"),
+                                                SvnBundle.message("confirmation.title.clear.authentication.cache"),
+                                                             Messages.getWarningIcon());
+          if (result == 0) {
+            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+            SvnApplicationSettings.getInstance().clearAuthenticationInfo();
+          }
+        }
+
+      }
+    });
+
+
+    final FileChooserDescriptor descriptor = createFileDescriptor();
+
+    myConfigurationDirectoryText.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
         @NonNls String path = myConfigurationDirectoryText.getText().trim();
         path = "file://" + path.replace(File.separatorChar, '/');
         VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(path);
 
         String oldValue = PropertiesComponent.getInstance().getValue("FileChooser.showHiddens");
         PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", Boolean.TRUE.toString());
-        VirtualFile[] files = FileChooser.chooseFiles(myComponent, myBrowserDescriptor, root);
+        VirtualFile[] files = FileChooser.chooseFiles(myComponent, descriptor, root);
         PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", oldValue);
         if (files.length != 1 || files[0] == null) {
           return;
@@ -129,74 +124,30 @@ public class SvnConfigurable implements Configurable, ActionListener {
       }
     });
     myConfigurationDirectoryText.setEditable(false);
-    label.setLabelFor(myConfigurationDirectoryText);
-    add(label, gb);
 
-    gb.gridy += 1;
-    gb.fill = GridBagConstraints.HORIZONTAL;
-    gb.weightx = 1;
-    gb.insets = new Insets(0, 5, 5, 0);
-    gb.gridwidth = 3;
-    add(myConfigurationDirectoryText, gb);
+    myConfigurationDirectoryLabel.setLabelFor(myConfigurationDirectoryText);
 
-    gb.weighty = 0;
-    gb.insets = new Insets(5, 5, 5, 5);
-    gb.weightx = 0;
-    gb.fill = GridBagConstraints.NONE;
-    gb.gridwidth = 1;
-    gb.gridheight = 1;
-    gb.gridx = 0;
-    gb.gridy += 1;
-    myClearAuthButton = new JButton(SvnBundle.message("button.text.clear.authentication.cache"));
-    myClearAuthButton.addActionListener(this);
-    add(myClearAuthButton, gb);
-    gb.gridwidth = 2;
-    gb.gridx = 1;
-    gb.fill = GridBagConstraints.HORIZONTAL;
-    label = new JLabel(SvnBundle.message("label.text.delete.stored.credentials"));
-    label.setEnabled(false);
-    add(label, gb);
-
-    myUseCommonProxy = new JCheckBox(SvnBundle.message("use.idea.proxy.as.default", ApplicationNamesInfo.getInstance().getProductName()));
-    gb.gridx = 0;
-    gb.gridy += 1;
-    gb.gridwidth = 1;
-    add(myUseCommonProxy, gb);
-    gb.gridwidth = 2;
-    gb.gridx = 1;
-    gb.fill = GridBagConstraints.HORIZONTAL;
-    label = new JLabel(SvnBundle.message("use.idea.proxy.as.default.label.text"));
-    label.setEnabled(false);
-    label.setLabelFor(myUseCommonProxy);
-    add(label, gb);
-
-    gb.gridx = 0;
-    gb.gridy += 1;
-    gb.gridwidth = 1;
-    myEditProxiesButton = new JButton(SvnBundle.message("button.text.edit.proxies"));
+    myUseCommonProxy.setText(SvnBundle.message("use.idea.proxy.as.default", ApplicationNamesInfo.getInstance().getProductName()));
     myEditProxiesButton.addActionListener(new ConfigureProxiesListener(myProject));
-    add(myEditProxiesButton, gb);
-    gb.gridwidth = 2;
-    gb.gridx = 1;
-    gb.fill = GridBagConstraints.HORIZONTAL;
-    label = new JLabel(SvnBundle.message("label.text.edit.proxies"));
-    label.setEnabled(false);
-    add(label, gb);
 
-    gb.fill = GridBagConstraints.NONE;
-    gb.gridheight = 1;
-    gb.gridx = 0;
-    gb.gridy += 1;
-    gb.weighty = 1;
-    gb.weightx = 1;
-    gb.fill = GridBagConstraints.HORIZONTAL;
-    gb.gridwidth = 3;
-    add(new JLabel(), gb);
-    return myComponent;
+    myClearCacheLabel.setLabelFor(myClearAuthButton);
+    myUseCommonProxyLabel.setLabelFor(myUseCommonProxy);
+    myEditProxyLabel.setLabelFor(myEditProxiesButton);
+
   }
 
-  private void add(JComponent component, GridBagConstraints gb) {
-    myComponent.add(component, gb);
+  private FileChooserDescriptor createFileDescriptor() {
+    final FileChooserDescriptor descriptor =  new FileChooserDescriptor(false, true, false, false, false, false);
+    descriptor.setShowFileSystemRoots(true);
+    descriptor.setTitle(SvnBundle.message("dialog.title.select.configuration.directory"));
+    descriptor.setDescription(SvnBundle.message("dialog.description.select.configuration.directory"));
+    descriptor.setHideIgnored(false);
+    return descriptor;
+  }
+
+  public JComponent createComponent() {
+
+    return myComponent;
   }
 
   public String getDisplayName() {
@@ -248,36 +199,6 @@ public class SvnConfigurable implements Configurable, ActionListener {
   }
 
   public void disposeUIResources() {
-    myComponent = null;
   }
-
-  public void actionPerformed(ActionEvent e) {
-    if (e.getSource() == myUseDefaultCheckBox) {
-      boolean enabled = !myUseDefaultCheckBox.isSelected();
-      myConfigurationDirectoryText.setEnabled(enabled);
-      myConfigurationDirectoryLabel.setEnabled(enabled);
-      SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
-      String path = configuration.getConfigurationDirectory();
-      if (!enabled || path == null) {
-        myConfigurationDirectoryText.setText(SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath());
-      }
-      else {
-        myConfigurationDirectoryText.setText(path);
-      }
-    }
-    else if (e.getSource() == myClearAuthButton) {
-      String path = myConfigurationDirectoryText.getText();
-      if (path != null) {
-        int result = Messages.showYesNoDialog(myComponent, SvnBundle.message("confirmation.text.delete.stored.authentication.information"),
-                                              SvnBundle.message("confirmation.title.clear.authentication.cache"),
-                                                           Messages.getWarningIcon());
-        if (result == 0) {
-          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-          SvnApplicationSettings.getInstance().clearAuthenticationInfo();
-        }
-      }
-    }
-  }
-
 }
 
