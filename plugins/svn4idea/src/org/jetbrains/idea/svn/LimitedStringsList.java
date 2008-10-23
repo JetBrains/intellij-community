@@ -16,7 +16,11 @@ public class LimitedStringsList {
     myList.remove(value);
 
     if (myList.size() >= ourMaxTypedUrls) {
-      myList.removeAll(myList.subList(0, (myList.size() - ourMaxTypedUrls + 1)));
+      // leave space for 1 to be added
+      final int numToRemove = myList.size() - ourMaxTypedUrls + 1;
+      for (int i = 0; i < numToRemove; i++) {
+        myList.remove(0);
+      }
     }
 
     // more recent first
