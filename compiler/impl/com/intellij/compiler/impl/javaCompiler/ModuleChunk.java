@@ -9,11 +9,14 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Chunk;
@@ -32,6 +35,7 @@ import java.util.*;
 public class ModuleChunk extends Chunk<Module> {
   private final CompileContextEx myContext;
   private final Map<Module, VirtualFile[]> myModuleToFilesMap = new HashMap<Module, VirtualFile[]>();
+  private final Map<VirtualFile, VirtualFile> myTransformedToOriginalMap = new HashMap<VirtualFile, VirtualFile>();
   private int mySourcesFilter = ALL_SOURCES;
 
   public ModuleChunk(CompileContextEx context, Chunk<Module> chunk, Map<Module, Set<VirtualFile>> moduleToFilesMap) {
@@ -56,6 +60,17 @@ public class ModuleChunk extends Chunk<Module> {
     mySourcesFilter = filter;
   }
 
+  public void substituteWithTransformedVersion(Module module, int fileIndex, VirtualFile transformedFile) {
+    final VirtualFile[] moduleFiles = getFilesToCompile(module);
+    final VirtualFile currentFile = moduleFiles[fileIndex];
+    moduleFiles[fileIndex] = transformedFile;
+    VirtualFile originalFile = myTransformedToOriginalMap.remove(currentFile);
+    if (originalFile == null) {
+      originalFile = currentFile;
+    }
+    myTransformedToOriginalMap.put(transformedFile, originalFile);
+  }
+
   public VirtualFile[] getFilesToCompile(Module forModule) {
     return myModuleToFilesMap.get(forModule);
   }
@@ -74,13 +89,17 @@ public class ModuleChunk extends Chunk<Module> {
       }
       else {
         for (final VirtualFile file : moduleCompilableFiles) {
+          VirtualFile originalFile = myTransformedToOriginalMap.get(file);
+          if (originalFile == null) {
+            originalFile = file;
+          }
           if (mySourcesFilter == TEST_SOURCES) {
-            if (myContext.isInTestSourceContent(file)) {
+            if (myContext.isInTestSourceContent(originalFile)) {
               filesToCompile.add(file);
             }
           }
           else {
-            if (!myContext.isInTestSourceContent(file)) {
+            if (!myContext.isInTestSourceContent(originalFile)) {
               filesToCompile.add(file);
             }
           }

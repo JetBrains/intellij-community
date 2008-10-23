@@ -558,7 +558,7 @@ public class BackendCompilerWrapper {
           if (fileCopy != null) {
             final boolean ok = transformer.transform(myCompileContext, fileCopy, file);
             if (ok) {
-              filesToCompile[j] = fileCopy;
+              chunk.substituteWithTransformedVersion(module, j, fileCopy);
             }
           }
         }
