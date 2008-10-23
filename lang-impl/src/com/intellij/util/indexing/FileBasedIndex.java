@@ -1223,10 +1223,22 @@ public class FileBasedIndex implements ApplicationComponent {
         if (file instanceof VirtualFileWithId && !SingleRootFileViewProvider.isTooLarge(file)) {
           boolean oldStuff = true;
           for (ID<?, ?> indexId : myIndexIds) {
-            if (myFileContentAttic.containsContent(file) ? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
-              myFiles.add(file);
-              oldStuff = false;
-              break;
+            try {
+              if (myFileContentAttic.containsContent(file) ? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
+                myFiles.add(file);
+                oldStuff = false;
+                break;
+              }
+            }
+            catch (RuntimeException e) {
+              final Throwable cause = e.getCause();
+              if (cause instanceof IOException || cause instanceof StorageException) {
+                LOG.info(e);
+                requestRebuild(indexId);
+              }
+              else {
+                throw e;
+              }
             }
           }
           FileContent fileContent = null;
