@@ -28,7 +28,10 @@ import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author lex
@@ -394,11 +397,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   private static void invoke(Project project, final AllProcessesCommand command) {
-    Collection<DebuggerSession> sessions = (DebuggerManagerEx.getInstanceEx(project)).getSessions();
-    for (Iterator<DebuggerSession> iterator = sessions.iterator(); iterator.hasNext();) {
-      DebuggerSession debuggerSession = iterator.next();
+    for (DebuggerSession debuggerSession : (DebuggerManagerEx.getInstanceEx(project)).getSessions()) {
       final DebugProcessImpl process = debuggerSession.getProcess();
-      if(process != null) {
+      if (process != null) {
         process.getManagerThread().invoke(new DebuggerCommandImpl() {
           protected void action() throws Exception {
             command.action(process);
