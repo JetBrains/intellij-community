@@ -69,7 +69,8 @@ public class FacetConfigurable extends NamedConfigurable<Facet> {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;
+    final FacetEditorImpl facetEditor = myFacetsConfigurator.getEditor(myFacet);
+    return facetEditor != null ? facetEditor.getHelpTopic() : null;
   }
 
   public boolean isModified() {

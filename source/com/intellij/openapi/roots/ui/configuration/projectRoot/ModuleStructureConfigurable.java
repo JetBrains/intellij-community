@@ -345,6 +345,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Nullable
   @NonNls
   public String getHelpTopic() {
+    final String topic = super.getHelpTopic();
+    if (topic != null) {
+      return topic;
+    }
     return "reference.settingsdialog.project.structure.module";
   }
 

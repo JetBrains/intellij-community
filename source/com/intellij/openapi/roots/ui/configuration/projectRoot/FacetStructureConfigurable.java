@@ -9,6 +9,7 @@ import com.intellij.facet.impl.autodetecting.FacetAutodetectingManagerImpl;
 import com.intellij.facet.impl.ui.facetType.FacetTypeEditor;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -217,13 +218,28 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   public String getHelpTopic() {
+    final Object component = DataManager.getInstance().getDataContext().getData(DataKeys.CONTEXT_COMPONENT.getName());
+    if (myTree.equals(component)) {
+      final NamedConfigurable selectedConfugurable = getSelectedConfugurable();
+      if (selectedConfugurable instanceof FacetTypeConfigurable) {
+        final FacetType facetType = ((FacetTypeConfigurable)selectedConfugurable).getEditableObject();
+        final String topic = facetType.getHelpTopic();
+        if (topic != null) {
+          return topic;
+        }
+      }
+    }
     if (myCurrentMultipleSettingsEditor != null) {
-      return myCurrentMultipleSettingsEditor.getHelpTopic();
+      final String topic = myCurrentMultipleSettingsEditor.getHelpTopic();
+      if (topic != null) {
+        return topic;
+      }
     }
-    if (myCurrentConfigurable != null) {
-      return myCurrentConfigurable.getHelpTopic();
+    String topic = super.getHelpTopic();
+    if (topic != null) {
+      return topic;
     }
-    return "concepts.facet";//todo[nik]
+    return "concepts.facet";
   }
 
   public String getId() {

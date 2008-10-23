@@ -602,6 +602,13 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     }
   }
 
+  public String getHelpTopic() {
+    if (myCurrentConfigurable != null) {
+      return myCurrentConfigurable.getHelpTopic();
+    }
+    return null;
+  }
+
   protected @Nullable String getEmptySelectionString() {
     return null;
   }

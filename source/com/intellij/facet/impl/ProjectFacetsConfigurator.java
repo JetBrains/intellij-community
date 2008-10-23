@@ -143,6 +143,11 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     return model;
   }
 
+  @Nullable
+  public FacetEditorImpl getEditor(Facet facet) {
+    return myEditors.get(facet);
+  }
+  
   @NotNull
   public FacetEditorImpl getOrCreateEditor(Facet facet) {
     FacetEditorImpl editor = myEditors.get(facet);

@@ -143,6 +143,16 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
     return null;
   }
 
+  /**
+   * Returns the topic in the help file which is shown when help for this facet type is requested
+   *
+   * @return the help topic, or null if no help is available.
+   */
+  @Nullable @NonNls
+  public String getHelpTopic() {
+    return null;
+  }
+
   @Nullable
   public DefaultFacetSettingsEditor createDefaultConfigurationEditor(@NotNull Project project, @NotNull C configuration) {
     return null;

@@ -108,6 +108,11 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
     super.disposeUIResources();
   }
 
+  @Nullable
+  public String getHelpTopic() {
+    return 0 <= mySelectedTabIndex && mySelectedTabIndex < myEditorTabs.length ? myEditorTabs[mySelectedTabIndex].getHelpTopic() : null;
+  }
+
   public void onFacetAdded(@NotNull Facet facet) {
     for (FacetEditorTab editorTab : myEditorTabs) {
       editorTab.onFacetInitialized(facet);
