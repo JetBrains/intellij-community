@@ -671,7 +671,7 @@ public class EditorWindow {
       doTrimSize(limit, fileToIgnore, closeNonModifiedFilesFirst);
     }
     finally {
-      setSelectedEditor(selectedComposite, true);
+      setSelectedEditor(selectedComposite, false);
     }
   }
 
