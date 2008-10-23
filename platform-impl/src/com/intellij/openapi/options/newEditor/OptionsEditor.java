@@ -550,9 +550,16 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       Configurable toSelect = null;
       final Configurable current = getContext().getCurrentConfigurable();
-      boolean shouldMoveSelection = myFiltered == null || !myFiltered.contains(current);
-      shouldMoveSelection |= myHits != null && myHits.getNameFullHits().size() > 0 && !myHits.getNameFullHits().contains(current);
 
+      boolean shouldMoveSelection = true;
+
+      if (myHits != null && myHits.getNameFullHits().contains(current)) {
+        shouldMoveSelection = false;
+      }
+
+      if (shouldMoveSelection && myFiltered != null && myFiltered.contains(current)) {
+        shouldMoveSelection = false;
+      }
 
       if (shouldMoveSelection && myHits != null) {
         if (myHits.getNameHits().size() > 0) {
