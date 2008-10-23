@@ -46,7 +46,15 @@ public class MavenSettings implements SearchableConfigurable.Parent {
     }
   }
 
+  public boolean hasOwnContent() {
+    return true;
+  }
+
   public boolean isToShowWhenChildIsShown() {
+    return true;
+  }
+
+  public boolean isVisible() {
     return true;
   }
 
@@ -72,10 +80,6 @@ public class MavenSettings implements SearchableConfigurable.Parent {
 
   public void disposeUIResources() {
     myConfigurable.disposeUIResources();
-  }
-
-  public boolean hasOwnContent() {
-    return true;
   }
 
   public Configurable[] getConfigurables() {
