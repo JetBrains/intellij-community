@@ -37,7 +37,6 @@ public class MavenRunnerSettings implements Cloneable {
   @NonNls public static final String USE_JAVA_HOME = "#JAVA_HOME";
 
   private boolean runMavenInBackground = false;
-  private boolean useMavenEmbedder = true;
   @NotNull private String jreName = "";
   @NotNull private String vmOptions = "";
   private boolean skipTests = false;
@@ -51,17 +50,10 @@ public class MavenRunnerSettings implements Cloneable {
     this.runMavenInBackground = runMavenInBackground;
   }
 
-  public boolean isUseMavenEmbedder() {
-    return useMavenEmbedder;
-  }
-
-  public void setUseMavenEmbedder(boolean useMavenEmbedder) {
-    this.useMavenEmbedder = useMavenEmbedder;
-  }
 
   @NotNull
   public String getJreName() {
-    if (!isUseMavenEmbedder() && StringUtil.isEmpty(jreName)) {
+    if (StringUtil.isEmpty(jreName)) {
       jreName = collectJdkNamesAndDescriptions().get(0).getFirst();
     }
     return jreName;
@@ -124,7 +116,6 @@ public class MavenRunnerSettings implements Cloneable {
 
     if (runMavenInBackground != that.runMavenInBackground) return false;
     if (skipTests != that.skipTests) return false;
-    if (useMavenEmbedder != that.useMavenEmbedder) return false;
     if (!jreName.equals(that.jreName)) return false;
     if (mavenProperties != null ? !mavenProperties.equals(that.mavenProperties) : that.mavenProperties != null) return false;
     if (!vmOptions.equals(that.vmOptions)) return false;
@@ -135,7 +126,6 @@ public class MavenRunnerSettings implements Cloneable {
   public int hashCode() {
     int result;
     result = (runMavenInBackground ? 1 : 0);
-    result = 31 * result + (useMavenEmbedder ? 1 : 0);
     result = 31 * result + jreName.hashCode();
     result = 31 * result + vmOptions.hashCode();
     result = 31 * result + (skipTests ? 1 : 0);

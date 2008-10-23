@@ -114,7 +114,6 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
     return MavenProjectsManager.getInstance(myProject).getGeneralSettings();
   }
 
-
   public boolean runBatch(List<MavenRunnerParameters> commands,
                           @Nullable MavenGeneralSettings coreSettings,
                           @Nullable MavenRunnerSettings runnerSettings,
@@ -166,11 +165,6 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
                                        MavenGeneralSettings coreSettings,
                                        MavenRunnerSettings runnerSettings,
                                        MavenConsole console) {
-    if (runnerSettings.isUseMavenEmbedder()) {
-      return new MavenEmbeddedExecutor(taskParameters, coreSettings, runnerSettings, console);
-    }
-    else {
-      return new MavenExternalExecutor(taskParameters, coreSettings, runnerSettings, console);
-    }
+    return new MavenExternalExecutor(taskParameters, coreSettings, runnerSettings, console);
   }
 }

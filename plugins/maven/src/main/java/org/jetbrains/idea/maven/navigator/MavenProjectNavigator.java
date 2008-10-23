@@ -19,11 +19,11 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.utils.IdeaAPIHelper;
 import org.jetbrains.idea.maven.events.MavenEventsManager;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
-import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.ProjectBundle;
+import org.jetbrains.idea.maven.utils.IdeaAPIHelper;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -32,8 +32,6 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -127,19 +125,6 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
 
     Disposer.register(myProject, myTreeBuilder);
 
-    myTree.addMouseMotionListener(new MouseMotionListener() {
-      public void mouseDragged(MouseEvent e) {
-      }
-
-      public void mouseMoved(MouseEvent e) {
-        TreePath p = myTree.getPathForLocation(e.getX(), e.getY());
-        if (p != null) {
-          Object last = p.getLastPathComponent();
-          showProblemsToolTip((CustomNode)((DefaultMutableTreeNode)last).getUserObject());
-        }
-      }
-    });
-
     IdeaAPIHelper.installCheckboxRenderer(myTree, new IdeaAPIHelper.CheckboxHandler() {
       public void toggle(final TreePath treePath, final InputEvent e) {
         final SimpleNode node = myTree.getNodeFor(treePath);
@@ -156,11 +141,6 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
         return ((ProfileNode)userObject).isActive();
       }
     });
-  }
-
-
-  private void showProblemsToolTip(CustomNode node) {
-    myTree.setToolTipText(node.getDescription());
   }
 
   private void subscribeForChanges() {

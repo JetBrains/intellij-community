@@ -235,20 +235,20 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       updateNameAndDescription();
     }
 
-    protected void setName(String name) {
-      setName(name, (String)null);
+    protected void setNameAndDescription(String name, String description) {
+      setNameAndDescription(name, description, (String)null);
     }
 
-    protected void setName(String name, @Nullable String hint) {
-      setName(name, getPlainAttributes());
+    protected void setNameAndDescription(String name, String description, @Nullable String hint) {
+      setNameAndDescription(name, description, getPlainAttributes());
       if (hint != null) {
-        addColoredFragment(" (" + hint + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        addColoredFragment(" (" + hint + ")", description, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
     }
 
-    protected void setName(String name, SimpleTextAttributes attribs) {
+    protected void setNameAndDescription(String name, String description, SimpleTextAttributes attribs) {
       clearColoredText();
-      addColoredFragment(name, prepareAttribs(attribs));
+      addColoredFragment(name, description, prepareAttribs(attribs));
     }
 
     private SimpleTextAttributes prepareAttribs(SimpleTextAttributes from) {
@@ -261,14 +261,6 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
                                       from.getFgColor(),
                                       waveColor,
                                       style);
-    }
-
-    public String getDescription() {
-      return myDescription;
-    }
-
-    public void setDescription(String text) {
-      myDescription = text;
     }
 
     @Nullable
@@ -444,7 +436,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     }
 
     protected void updateNameAndDescription() {
-      setName(NavigatorBundle.message("node.root"));
+      setNameAndDescription(NavigatorBundle.message("node.root"), null);
     }
 
     protected List<? extends CustomNode> getStructuralChildren() {
@@ -609,11 +601,10 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      setName(getId());
-      updateDescription();
+      setNameAndDescription(getId(), makeDescription());
     }
 
-    private void updateDescription() {
+    private String makeDescription() {
       StringBuffer desc = new StringBuffer();
       desc.append("<html>");
       desc.append("<table>");
@@ -642,7 +633,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
       desc.append("</table>");
       desc.append("</html>");
-      setDescription(desc.toString());
+      return desc.toString();
     }
 
     private ErrorLevel getModulesErrorLevel() {
@@ -879,7 +870,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      setName(NavigatorBundle.message("node.modules"));
+      setNameAndDescription(NavigatorBundle.message("node.modules"), null);
     }
 
     public boolean addUnder(PomNode newNode) {
@@ -903,7 +894,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      setName(NavigatorBundle.message("node.nested.poms"));
+      setNameAndDescription(NavigatorBundle.message("node.nested.poms"), null);
     }
   }
 
@@ -942,7 +933,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
       hint = myEventsHandler.getActionDescription(pomNode.savedPath, goal);
 
-      setName(goal, hint);
+      setNameAndDescription(goal, null, hint);
     }
 
     @Override
@@ -987,7 +978,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      setName(NavigatorBundle.message("node.lifecycle"));
+      setNameAndDescription(NavigatorBundle.message("node.lifecycle"), null);
     }
 
     public void updateGoals() {
@@ -1020,7 +1011,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      setName(NavigatorBundle.message("node.profiles"));
+      setNameAndDescription(NavigatorBundle.message("node.profiles"), null);
     }
 
     public boolean isVisible() {
@@ -1061,7 +1052,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      setName(name);
+      setNameAndDescription(name, null);
     }
 
     public String getProfile() {
@@ -1100,7 +1091,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      setName(NavigatorBundle.message("node.plugins"));
+      setNameAndDescription(NavigatorBundle.message("node.plugins"), null);
     }
 
     public boolean isVisible() {
@@ -1143,10 +1134,10 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     @Override
     protected void updateNameAndDescription() {
       if (myPluginInfo == null) {
-        setName(myId.toString());
+        setNameAndDescription(myId.toString(), null);
       }
       else {
-        setName(myPluginInfo.getGoalPrefix(), getId().toString());
+        setNameAndDescription(myPluginInfo.getGoalPrefix(), null, getId().toString());
       }
     }
 

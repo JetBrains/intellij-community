@@ -26,13 +26,11 @@ import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.utils.ComboBoxUtil;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.*;
 
 /**
@@ -44,8 +42,6 @@ import java.util.*;
 public abstract class MavenRunnerConfigurable implements Configurable {
   private JPanel panel;
   private JCheckBox checkBoxRunMavenInBackground;
-  private JRadioButton radioButtonUseEmbeddedMaven;
-  private JRadioButton radioButtonUseExternalMaven;
   private JLabel labelVMParameters;
   private RawCommandLineEditor textFieldVMParameters;
   private JLabel labelJdkHomeDirectory;
@@ -65,21 +61,7 @@ public abstract class MavenRunnerConfigurable implements Configurable {
 
     textFieldVMParameters.setDialogCaption(labelVMParameters.getText());
 
-    if (isRunConfiguration) {
-      checkBoxRunMavenInBackground.setVisible(false);
-      radioButtonUseEmbeddedMaven.setVisible(false);
-      radioButtonUseExternalMaven.setVisible(false);
-    } else {
-      final ItemListener mavenModeListener = new ItemListener() {
-        public void itemStateChanged(ItemEvent e) {
-          enableControls();
-        }
-      };
-
-      radioButtonUseEmbeddedMaven.addItemListener(mavenModeListener);
-      radioButtonUseExternalMaven.addItemListener(mavenModeListener);
-    }
-
+    checkBoxRunMavenInBackground.setVisible(!isRunConfiguration);
     collectProperties();
   }
 
@@ -87,7 +69,7 @@ public abstract class MavenRunnerConfigurable implements Configurable {
     MavenProjectsManager s = MavenProjectsManager.getInstance(myProject);
     Map<String, String> result = new LinkedHashMap<String, String>();
 
-    for(MavenProjectModel each : s.getProjects()) {
+    for (MavenProjectModel each : s.getProjects()) {
       Properties properties = each.getProperties();
       for (Map.Entry p : properties.entrySet()) {
         result.put((String)p.getKey(), (String)p.getValue());
@@ -150,13 +132,9 @@ public abstract class MavenRunnerConfigurable implements Configurable {
   }
 
   void getData(MavenRunnerSettings data) {
-    radioButtonUseEmbeddedMaven.setSelected(data.isUseMavenEmbedder());
-    radioButtonUseExternalMaven.setSelected(!data.isUseMavenEmbedder());
     checkBoxRunMavenInBackground.setSelected(data.isRunMavenInBackground());
     textFieldVMParameters.setText(data.getVmOptions());
     checkBoxSkipTests.setSelected(data.isSkipTests());
-
-    enableControls();
 
     fillComboboxJdk(data);
     ComboBoxUtil.select(comboboxModelChooseJdk, data.getJreName());
@@ -165,21 +143,12 @@ public abstract class MavenRunnerConfigurable implements Configurable {
   }
 
   void setData(MavenRunnerSettings data) {
-    data.setUseMavenEmbedder(radioButtonUseEmbeddedMaven.isSelected());
     data.setRunMavenInBackground(checkBoxRunMavenInBackground.isSelected());
     data.setVmOptions(textFieldVMParameters.getText().trim());
     data.setSkipTests(checkBoxSkipTests.isSelected());
     data.setJreName(ComboBoxUtil.getSelectedString(comboboxModelChooseJdk));
 
     data.setMavenProperties(propertiesPanel.getDataAsMap());
-  }
-
-  private void enableControls() {
-    final boolean on = radioButtonUseExternalMaven.isSelected();
-    labelVMParameters.setEnabled(on);
-    textFieldVMParameters.setEnabled(on);
-    labelJdkHomeDirectory.setEnabled(on);
-    comboBoxChooseJDK.setEnabled(on);
   }
 
   private class MyPropertiesPanel extends AddEditRemovePanel<Pair<String, String>> {
@@ -233,7 +202,7 @@ public abstract class MavenRunnerConfigurable implements Configurable {
     }
 
     public Object getField(Pair<String, String> o, int c) {
-      return c == 0? o.getFirst() : o.getSecond();
+      return c == 0 ? o.getFirst() : o.getSecond();
     }
   }
 }
