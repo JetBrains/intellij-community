@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nls;
@@ -15,36 +16,70 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MavenSettings extends SearchableConfigurable.Parent.Abstract {
+public class MavenSettings implements SearchableConfigurable.Parent {
   private Project myProject;
+  private Configurable myConfigurable;
+  private List<Configurable> myChildren;
 
   public MavenSettings(Project project) {
     myProject = project;
-  }
 
-  protected Configurable[] buildConfigurables() {
-    List<Configurable> result = new ArrayList<Configurable>();
-
-    result.add(new MavenGeneralConfigurable() {
+    myConfigurable = new MavenGeneralConfigurable() {
       protected MavenGeneralSettings getState() {
         return MavenProjectsManager.getInstance(myProject).getGeneralSettings();
       }
-    });
-    result.add(new MavenImportingConfigurable(MavenProjectsManager.getInstance(myProject).getImportingSettings()));
-    result.add(new MavenIgnoreConfigurable(MavenProjectsManager.getInstance(myProject)));
-    result.add(new MavenDownloadingConfigurable(MavenProjectsManager.getInstance(myProject).getArtifactSettings()));
+    };
 
-    result.add(new MavenRunnerConfigurable(myProject, false) {
+    myChildren = new ArrayList<Configurable>();
+    myChildren.add(new MavenImportingConfigurable(MavenProjectsManager.getInstance(myProject).getImportingSettings()));
+    myChildren.add(new MavenIgnoreConfigurable(MavenProjectsManager.getInstance(myProject)));
+    myChildren.add(new MavenDownloadingConfigurable(MavenProjectsManager.getInstance(myProject).getArtifactSettings()));
+
+    myChildren.add(new MavenRunnerConfigurable(myProject, false) {
       protected MavenRunnerSettings getState() {
         return MavenRunner.getInstance(myProject).getState();
       }
     });
 
     if (!myProject.isDefault()) {
-      result.add(new MavenIndicesConfigurable(myProject));
+      myChildren.add(new MavenIndicesConfigurable(myProject));
     }
+  }
 
-    return result.toArray(new Configurable[result.size()]);
+  public boolean isToShowWhenChildIsShown() {
+    return true;
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
+  }
+
+  public JComponent createComponent() {
+    return myConfigurable.createComponent();
+  }
+
+  public boolean isModified() {
+    return myConfigurable.isModified();
+  }
+
+  public void apply() throws ConfigurationException {
+    myConfigurable.apply();
+  }
+
+  public void reset() {
+    myConfigurable.reset();
+  }
+
+  public void disposeUIResources() {
+    myConfigurable.disposeUIResources();
+  }
+
+  public boolean hasOwnContent() {
+    return true;
+  }
+
+  public Configurable[] getConfigurables() {
+    return myChildren.toArray(new Configurable[myChildren.size()]);
   }
 
   public String getId() {
