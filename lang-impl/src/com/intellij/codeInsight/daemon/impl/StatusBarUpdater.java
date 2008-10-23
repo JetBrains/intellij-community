@@ -19,21 +19,16 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 
 public class StatusBarUpdater {
   private final Project myProject;
-
   private String myLastStatusText;
   private final CaretListener myCaretListener;
+  private final UpdateStatusRunnable myUpdateStatusRunnable = new UpdateStatusRunnable();
 
   public StatusBarUpdater(Project project) {
     myProject = project;
 
     myCaretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (myProject.isDisposed()) return;
-            updateStatus();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(myUpdateStatusRunnable);
       }
     };
     EditorFactory.getInstance().getEventMulticaster().addCaretListener(myCaretListener);
@@ -41,13 +36,7 @@ public class StatusBarUpdater {
     FileEditorManager.getInstance(myProject).addFileEditorManagerListener(
       new FileEditorManagerAdapter() {
         public void selectionChanged(FileEditorManagerEvent e) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              if (!myProject.isDisposed()) {
-                updateStatus();
-              }
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(myUpdateStatusRunnable);
         }
       }
     );
@@ -69,13 +58,7 @@ public class StatusBarUpdater {
     int offset = editor.getCaretModel().getOffset();
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     HighlightInfo info = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(document, offset, false);
-    String text;
-    if (info != null && info.description != null) {
-      text = info.description;
-    }
-    else{
-      text = "";
-    }
+    String text = info != null && info.description != null ? info.description : "";
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (!text.equals(myLastStatusText)){
@@ -84,6 +67,14 @@ public class StatusBarUpdater {
     }
     if (statusBar instanceof StatusBarEx) {
       ((StatusBarEx)statusBar).update(editor);
+    }
+  }
+
+  private class UpdateStatusRunnable implements Runnable {
+    public void run() {
+      if (!myProject.isDisposed()) {
+        updateStatus();
+      }
     }
   }
 }

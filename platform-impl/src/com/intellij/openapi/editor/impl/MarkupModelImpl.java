@@ -90,7 +90,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                                TextAttributes textAttributes,
                                                HighlighterTargetArea targetArea,
                                                boolean isPersistent) {
-
     RangeHighlighterImpl segmentHighlighter = new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea,
                                                                        textAttributes, isPersistent);
     myHighlighters.add(segmentHighlighter);
@@ -106,14 +105,14 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                               int endOffset,
                                               int layer,
                                               TextAttributes textAttributes,
-                                              HighlighterTargetArea targetArea) {
+                                              @NotNull HighlighterTargetArea targetArea) {
     return addRangeHighlighter(startOffset, endOffset, layer, textAttributes, targetArea, false);
   }
 
   public void removeHighlighter(RangeHighlighter segmentHighlighter) {
     boolean removed = myHighlighters.remove(segmentHighlighter);
-    myCachedHighlighters = null;
     LOG.assertTrue(removed);
+    myCachedHighlighters = null;
     myHighlighterList.removeSegmentHighlighter(segmentHighlighter);
     fireSegmentHighlighterChanged(segmentHighlighter);
   }
@@ -152,7 +151,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     if (myCachedListeners == null) {
       myCachedListeners = myListeners.isEmpty() ? MarkupModelListener.EMPTY_ARRAY : myListeners.toArray(new MarkupModelListener[myListeners.size()]);
     }
-
     return myCachedListeners;
   }
 

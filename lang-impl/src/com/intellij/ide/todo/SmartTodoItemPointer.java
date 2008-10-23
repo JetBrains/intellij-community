@@ -18,7 +18,7 @@ public final class SmartTodoItemPointer {
     myTodoItem=todoItem;
     myDocument=document;
     TextRange textRange=myTodoItem.getTextRange();
-    myRangeMarker=document.createRangeMarker(textRange.getStartOffset(),textRange.getEndOffset());
+    myRangeMarker=document.createRangeMarker(textRange);
   }
 
   public TodoItem getTodoItem(){

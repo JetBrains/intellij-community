@@ -34,7 +34,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
                                               int endOffset,
                                               int layer,
                                               @Nullable TextAttributes textAttributes,
-                                              HighlighterTargetArea targetArea) {
+                                              @NotNull HighlighterTargetArea targetArea) {
     return new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributes, false);
   }
 

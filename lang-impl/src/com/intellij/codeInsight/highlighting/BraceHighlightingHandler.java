@@ -422,7 +422,7 @@ public class BraceHighlightingHandler {
     private static final int THICKNESS = 2;
     private final Color myColor;
 
-    public MyLineMarkerRenderer(Color color) {
+    private MyLineMarkerRenderer(Color color) {
       myColor = color;
     }
 

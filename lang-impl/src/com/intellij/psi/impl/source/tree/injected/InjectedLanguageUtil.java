@@ -175,13 +175,14 @@ public class InjectedLanguageUtil {
       if (data == null) {
         places = InjectedPsiProvider.doCompute(current, injectedManager, project, hostPsiFile);
         if (places != null) {
-          ParameterizedCachedValue<Places, PsiElement> cachedValue =
-              psiManager.getCachedValuesManager().createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
+          ParameterizedCachedValue<Places, PsiElement> cachedValue = psiManager.getCachedValuesManager().createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
           Document hostDocument = hostPsiFile.getViewProvider().getDocument();
-          CachedValueProvider.Result<Places> result =
-              new CachedValueProvider.Result<Places>(places, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
+          CachedValueProvider.Result<Places> result = new CachedValueProvider.Result<Places>(places, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
           ((ParameterizedCachedValueImpl<Places, PsiElement>)cachedValue).setValue(result);
           current.putUserData(INJECTED_PSI_KEY, cachedValue);
+          //for (Place place : places) {
+          //  place.myShreds.get(0).host.putUserData(INJECTED_PSI_KEY, cachedValue);
+          //}
         }
       }
       else {

@@ -35,8 +35,7 @@ public abstract class SmartEnterProcessor {
     final PsiFile psiFile = elt.getContainingFile();
     final PsiDocumentManager instance = PsiDocumentManager.getInstance(elt.getProject());
     final Document document = instance.getDocument(psiFile);
-    final TextRange textRange = elt.getTextRange();
-    return document.createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
+    return document.createRangeMarker(elt.getTextRange());
   }
 
   @Nullable

@@ -154,12 +154,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
 
     if (status.errorCount[0] == 0) {
       text += BR;
-      if (!status.errorAnalyzingFinished) {
-        text += DaemonBundle.message("no.errors.or.warnings.found.so.far");
-      }
-      else {
-        text += DaemonBundle.message("no.errors.or.warnings.found");
-      }
+      text += status.errorAnalyzingFinished
+              ? DaemonBundle.message("no.errors.or.warnings.found")
+              : DaemonBundle.message("no.errors.or.warnings.found.so.far");
     }
     else {
       int currentSeverityErrors = 0;
@@ -169,12 +166,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
         if (count > 0) {
           text += BR;
           String name = count > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase();
-          if (!status.errorAnalyzingFinished) {
-            text += DaemonBundle.message("errors.found.so.far", count, name);
-          }
-          else {
-            text += DaemonBundle.message("errors.found", count, name);
-          }
+          text += status.errorAnalyzingFinished
+                  ? DaemonBundle.message("errors.found", count, name)
+                  : DaemonBundle.message("errors.found.so.far", count, name);
           currentSeverityErrors += count;
         }
       }
@@ -210,12 +204,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     if (roots != null) {
       final int length = roots.length;
       if (length > 0){
-        if (rootsNumber > 1){
-          return BR + DaemonBundle.message(prefix + NO_PASS_FOR_MESSAGE_KEY_SUFFIX, StringUtil.join(roots, ", "));
-        }
-        else {
-          return BR + DaemonBundle.message(prefix);
-        }
+        return BR + (rootsNumber > 1
+               ? DaemonBundle.message(prefix + NO_PASS_FOR_MESSAGE_KEY_SUFFIX, StringUtil.join(roots, ", "))
+               : DaemonBundle.message(prefix));
       }
     }
     return "";
@@ -250,13 +241,11 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
       }
     }
     Icon icon = status.errorAnalyzingFinished ? HighlightDisplayLevel.DO_NOT_SHOW.getIcon() : IN_PROGRESS_ICON;
-    String sev = status.errorAnalyzingFinished ? "green" : "---";
     if (atLeastOnePassFinished) {
       SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(myProject);
       for (int i = status.errorCount.length - 1; i >= 0; i--) {
         if (status.errorCount[i] != 0) {
           icon = severityRegistrar.getRendererIconByIndex(i);
-          sev = severityRegistrar.getSeverityByIndex(i).toString();
           break;
         }
       }

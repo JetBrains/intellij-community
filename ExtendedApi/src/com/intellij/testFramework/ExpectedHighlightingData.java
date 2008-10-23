@@ -187,7 +187,7 @@ public class ExpectedHighlightingData {
           }
         }
 
-        if (type == null) LOG.assertTrue(false,"Wrong highlight type: " + typeString);
+        LOG.assertTrue(type != null,"Wrong highlight type: " + typeString);
       }
 
       highlightInfo.type = type;

@@ -18,7 +18,7 @@ import java.util.ArrayList;
  * Date: 15-Feb-2006
  */
 public class InspectionProfileWrapper {
-  private InspectionProfileImpl myProfile;
+  private final InspectionProfileImpl myProfile;
 
   public InspectionProfileWrapper(final InspectionProfile profile) {
     myProfile = (InspectionProfileImpl)profile;

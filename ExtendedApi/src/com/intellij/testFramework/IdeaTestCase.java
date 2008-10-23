@@ -643,7 +643,7 @@ import java.util.HashSet;
     private Throwable myThrowable;
     @NonNls private static final String IDEATEST_THREAD_GROUP = "IDEATest";
 
-    public MyThreadGroup() {
+    private MyThreadGroup() {
       super(IDEATEST_THREAD_GROUP);
     }
 

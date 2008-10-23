@@ -47,7 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
-  private static final int[] EXCEPT_OVERRIDDEN = new int[]{
+  private static final int[] EXCEPT_OVERRIDDEN = {
     Pass.UPDATE_FOLDING,
     Pass.UPDATE_VISIBLE,
     Pass.POPUP_HINTS,
@@ -62,7 +62,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   private PsiFile myFile;
   private final Project myProject;
   private boolean myCompiled;
-  private static final int[] EXCEPT_VISIBLE = new int[]{
+  private static final int[] EXCEPT_VISIBLE = {
     Pass.UPDATE_ALL,
     Pass.POST_UPDATE_ALL,
     Pass.UPDATE_OVERRIDEN_MARKERS,

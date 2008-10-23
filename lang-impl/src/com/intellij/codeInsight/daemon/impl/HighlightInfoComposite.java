@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -20,8 +21,8 @@ public class HighlightInfoComposite extends HighlightInfo {
   @NonNls private static final String BODY_FOOTER = "</body>";
   @NonNls private static final String LINE_BREAK = "\n<hr size=1 noshade>";
 
-  public HighlightInfoComposite(List<HighlightInfo> infos) {
-    super(getType(infos), infos.get(0).startOffset, infos.get(0).endOffset, createCompositeDescription(infos),
+  public HighlightInfoComposite(@NotNull List<HighlightInfo> infos) {
+    super(infos.get(0).type, infos.get(0).startOffset, infos.get(0).endOffset, createCompositeDescription(infos),
           createCompositeTooltip(infos));
     text = infos.get(0).text;
     highlighter = infos.get(0).highlighter;
@@ -36,10 +37,6 @@ public class HighlightInfoComposite extends HighlightInfo {
         quickFixActionRanges.addAll(info.quickFixActionRanges);
       }
     }
-  }
-
-  private static HighlightInfoType getType(List<HighlightInfo> infos) {
-    return infos.get(0).type;
   }
 
   @Nullable

@@ -69,12 +69,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager != null) {
       final Keymap keymap = keymapManager.getActiveKeymap();
-      if (keymap != null) {
-        myShortcutText = "(" + KeymapUtil.getShortcutsText(keymap.getShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION)) + ")";
-      }
-      else {
-        myShortcutText = "";
-      }
+      myShortcutText = keymap == null ? "" : "(" + KeymapUtil.getShortcutsText(keymap.getShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION)) + ")";
     }
     else {
       myShortcutText = "";
@@ -298,7 +293,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
     else if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
       type = new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
-    } else if (highlightType == ProblemHighlightType.ERROR) {
+    }
+    else if (highlightType == ProblemHighlightType.ERROR) {
       type = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.ERROR, HighlightInfoType.WRONG_REF.getAttributesKey());
     }
     return type;
@@ -480,7 +476,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     public final PsiElement injectedPsi;
     public final List<ProblemDescriptor> foundProblems;
 
-    public InjectedPsiInspectionResult(final LocalInspectionTool tool, final PsiElement injectedPsi, final List<ProblemDescriptor> foundProblems) {
+    private InjectedPsiInspectionResult(final LocalInspectionTool tool, final PsiElement injectedPsi, final List<ProblemDescriptor> foundProblems) {
       this.tool = tool;
       this.injectedPsi = injectedPsi;
       this.foundProblems = foundProblems;

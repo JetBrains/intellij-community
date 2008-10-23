@@ -58,7 +58,7 @@ public interface MarkupModel extends UserDataHolder {
                                        int endOffset,
                                        int layer,
                                        @Nullable TextAttributes textAttributes,
-                                       HighlighterTargetArea targetArea);
+                                       @NotNull HighlighterTargetArea targetArea);
 
   /**
    * Adds a highlighter covering the specified line in the document.

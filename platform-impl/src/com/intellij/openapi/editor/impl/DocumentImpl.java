@@ -22,6 +22,7 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -251,13 +252,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (!(0 <= startOffset && startOffset <= endOffset && endOffset <= getTextLength())) {
       LOG.error("Incorrect offsets startOffset=" + startOffset + ", endOffset=" + endOffset + ", text length=" + getTextLength());
     }
-
-    if (surviveOnExternalChange) {
-      return new PersistentRangeMarker(this, startOffset, endOffset);
-    }
-    else {
-      return new RangeMarkerImpl(this, startOffset, endOffset);
-    }
+    return surviveOnExternalChange
+           ? new PersistentRangeMarker(this, startOffset, endOffset)
+           : new RangeMarkerImpl(this, startOffset, endOffset);
   }
 
   public long getModificationStamp() {
@@ -624,7 +621,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private final Object lock = new Object();
-  public MarkupModel getMarkupModel(Project project, boolean create) {
+  public MarkupModel getMarkupModel(@Nullable Project project, boolean create) {
     if (project == null) {
       MarkupModelEx markupModel = myMarkupModel;
       if (create && markupModel == null) {

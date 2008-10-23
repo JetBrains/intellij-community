@@ -954,7 +954,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean isShowing() {
-    return (myGutterComponent != null && myGutterComponent.isShowing());
+    return myGutterComponent != null && myGutterComponent.isShowing();
   }
 
   private void repaintToScreenBotton(int startLine) {
@@ -4179,7 +4179,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (c == '\t') {
         int prevX = x;
         x = nextTabStop(x);
-        column += ( (x - prevX) / spaceSize);
+        column += (x - prevX) / spaceSize;
         //column += Math.max(1, (x - prevX) / spaceSize);
       }
       else {

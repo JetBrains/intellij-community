@@ -34,7 +34,7 @@ class MarkupModelWindow extends UserDataHolderBase implements MarkupModelEx {
                                               final int endOffset,
                                               final int layer,
                                               final TextAttributes textAttributes,
-                                              final HighlighterTargetArea targetArea) {
+                                              @NotNull final HighlighterTargetArea targetArea) {
     TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
     return myHostModel.addRangeHighlighter(hostRange.getStartOffset(), hostRange.getEndOffset(), layer, textAttributes, targetArea);
   }

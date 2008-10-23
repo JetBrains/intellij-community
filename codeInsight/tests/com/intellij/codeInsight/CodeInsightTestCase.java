@@ -1,11 +1,13 @@
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -23,17 +25,17 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestData;
-import com.intellij.util.Function;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.ide.DataManager;
-import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * @author Mike
@@ -489,12 +491,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   public Object getData(String dataId) {
-    if (dataId.equals(DataConstants.EDITOR)) {
-      return myEditor;
-    }
-    else {
-      return super.getData(dataId);
-    }
+    return dataId.equals(DataConstants.EDITOR) ? myEditor : super.getData(dataId);
   }
 
   protected VirtualFile getVirtualFile(@NonNls String filePath) {
@@ -535,6 +532,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   protected void ctrlShiftF7() {
     HighlightUsagesHandler.invoke(getProject(), getEditor(), getFile());
   }
+
   protected static void ctrlW() {
     AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
     AnActionEvent event = new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", action.getTemplatePresentation(),
