@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.Alarm;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
@@ -18,11 +19,19 @@ public class LoadingDecorator {
 
   JLayeredPane myPane = new MyLayeredPane();
 
-  private LoadingLayer myLoadingLayer;
-  private Animator myFadeOutAnimator;
+  LoadingLayer myLoadingLayer;
+  Animator myFadeOutAnimator;
 
-  public LoadingDecorator(JComponent content, Disposable parent) {
+  int myDelay;
+  Alarm myStartAlarm;
+  boolean myStartRequest;
+
+
+  public LoadingDecorator(JComponent content, Disposable parent, int startDelayMs) {
     myLoadingLayer = new LoadingLayer();
+    myDelay = startDelayMs;
+    myStartAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, parent);
+
     setLoadingText("Loading...");
 
 
@@ -50,13 +59,34 @@ public class LoadingDecorator {
     return myPane;
   }
 
-  public void startLoading(boolean takeSnapshot) {
-    if (isLoading()) return;
+  public void startLoading(final boolean takeSnapshot) {
+    if (isLoading() || myStartRequest) return;
 
+    myStartRequest = true;
+    if (myDelay > 0) {
+      myStartAlarm.addRequest(new Runnable() {
+        public void run() {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            public void run() {
+              if (!myStartRequest) return;
+              _startLoading(takeSnapshot);
+            }
+          });
+        }
+      }, myDelay);
+    } else {
+      _startLoading(takeSnapshot);
+    }
+  }
+
+  private void _startLoading(final boolean takeSnapshot) {
     myLoadingLayer.setVisible(true, takeSnapshot);
   }
 
   public void stopLoading() {
+    myStartRequest = false;
+    myStartAlarm.cancelAllRequests();
+
     if (!isLoading()) return;
 
     myLoadingLayer.setVisible(false, false);
@@ -192,7 +222,7 @@ public class LoadingDecorator {
     final LoadingDecorator loadingTree = new LoadingDecorator(new JComboBox(), new Disposable() {
       public void dispose() {
       }
-    });
+    }, -1);
 
     content.add(loadingTree.getComponent(), BorderLayout.CENTER);
 
