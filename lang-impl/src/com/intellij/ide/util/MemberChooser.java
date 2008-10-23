@@ -14,9 +14,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.Icons;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashMap;
@@ -115,9 +117,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     myTree.setRootVisible(false);
 
     TreeUtil.expandAll(myTree);
-    myCopyJavadocCheckbox = new JCheckBox(IdeBundle.message("checkbox.copy.javadoc"));
+    myCopyJavadocCheckbox = new NonFocusableCheckBox(IdeBundle.message("checkbox.copy.javadoc"));
     if (myIsInsertOverrideVisible) {
-      myInsertOverrideAnnotationCheckbox = new JCheckBox(IdeBundle.message("checkbox.insert.at.override"));
+      myInsertOverrideAnnotationCheckbox = new NonFocusableCheckBox(IdeBundle.message("checkbox.insert.at.override"));
     }
 
     myTree.doLayout();
@@ -177,28 +179,27 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   protected void doHelpAction() {
   }
 
-  protected JComponent createSouthPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-
-    JPanel optionsPanel = new JPanel(new VerticalFlowLayout());
-    ActionListener actionListener = new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-              myTree.requestFocus();
-            }
-          };
+  protected List<JComponent> customizeOptionsPanel() {
+    final SmartList<JComponent> list = new SmartList<JComponent>();
 
     if (myIsInsertOverrideVisible) {
       CodeStyleSettings styleSettings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
       myInsertOverrideAnnotationCheckbox.setSelected(styleSettings.INSERT_OVERRIDE_ANNOTATION);
-      myInsertOverrideAnnotationCheckbox.addActionListener(actionListener);
-      optionsPanel.add(myInsertOverrideAnnotationCheckbox);
+      list.add(myInsertOverrideAnnotationCheckbox);
     }
 
     myCopyJavadocCheckbox.setSelected(PropertiesComponent.getInstance().isTrueValue(PROP_COPYJAVADOC));
-    myCopyJavadocCheckbox.addActionListener(actionListener);
-    optionsPanel.add(myCopyJavadocCheckbox);
+    list.add(myCopyJavadocCheckbox);
+    return list;
+  }
 
+  protected JComponent createSouthPanel() {
+    JPanel panel = new JPanel(new GridBagLayout());
 
+    JPanel optionsPanel = new JPanel(new VerticalFlowLayout());
+    for (final JComponent component : customizeOptionsPanel()) {
+      optionsPanel.add(component);
+    }
 
     panel.add(
       optionsPanel,
