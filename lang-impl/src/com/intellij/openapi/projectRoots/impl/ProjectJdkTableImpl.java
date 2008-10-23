@@ -157,28 +157,16 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
     myJdks.clear();
 
     final List children = element.getChildren(ELEMENT_JDK);
-    final List<ProjectJdkImpl> jdks = new ArrayList<ProjectJdkImpl>(children.size());
-    try {
-      for (final Object aChildren : children) {
-        final Element e = (Element)aChildren;
-        final ProjectJdkImpl jdk = new ProjectJdkImpl(null, null);
-        try {
-          jdk.readExternal(e);
-        }
-        catch (InvalidDataException ex) {
-          LOG.error(ex);
-        }
-        jdks.add(jdk);
+    for (final Object aChildren : children) {
+      final Element e = (Element)aChildren;
+      final ProjectJdkImpl jdk = new ProjectJdkImpl(null, null);
+      try {
+        jdk.readExternal(e);
       }
-    }
-    finally {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          for (final ProjectJdkImpl jdk : jdks) {
-            addJdk(jdk);
-          }
-        }
-      });
+      catch (InvalidDataException ex) {
+        LOG.error(ex);
+      }
+      myJdks.add(jdk);
     }
   }
 
