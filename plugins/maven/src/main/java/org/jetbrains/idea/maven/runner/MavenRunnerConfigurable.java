@@ -44,7 +44,6 @@ public abstract class MavenRunnerConfigurable implements Configurable {
   private JCheckBox checkBoxRunMavenInBackground;
   private JLabel labelVMParameters;
   private RawCommandLineEditor textFieldVMParameters;
-  private JLabel labelJdkHomeDirectory;
   private JComboBox comboBoxChooseJDK;
   private final DefaultComboBoxModel comboboxModelChooseJdk = new DefaultComboBoxModel();
   private JCheckBox checkBoxSkipTests;
