@@ -618,17 +618,29 @@ class AbstractTreeUi {
     Object[] children = getChildrenFor(getBuilder().getTreeStructureElement(descriptor));
     if (children.length == 0) {
       removeLoadingNode(node);
+    } else if (getBuilder().isAutoExpandNode((NodeDescriptor)node.getUserObject())) {
+      addNodeAction(getElementFor(node), new NodeAction() {
+        public void onReady(final DefaultMutableTreeNode node) {
+          removeLoadingNode(node);
+        }
+      });
     }
   }
 
   private void removeLoadingNode(final DefaultMutableTreeNode parent) {
     for (int i = 0; i < parent.getChildCount(); i++) {
-      if (isLoadingNode(parent.getChildAt(i))) {
-        removeNodeFromParent((MutableTreeNode)parent.getChildAt(i), false);
-        break;
-      }
+      if (removeIfLoading(parent.getChildAt(i))) break;
     }
     myUnbuiltNodes.remove(parent);
+  }
+
+  private boolean removeIfLoading(TreeNode node) {
+    if (isLoadingNode(node)) {
+      removeNodeFromParent((MutableTreeNode)node, false);
+      return true;
+    }
+
+    return false;
   }
 
   //todo [kirillk] temporary consistency check
@@ -643,15 +655,15 @@ class AbstractTreeUi {
 
     if (passOne.length != passTwo.length) {
       LOG.error(
-          "AbstractTreeStructure.getChildren() must either provide same objects or new objects but with correct hashCode() and equals() methods. Wrong parent element=" +
-          element);
+        "AbstractTreeStructure.getChildren() must either provide same objects or new objects but with correct hashCode() and equals() methods. Wrong parent element=" +
+        element);
     }
     else {
       for (Object eachInOne : passOne) {
         if (!two.contains(eachInOne)) {
           LOG.error(
-              "AbstractTreeStructure.getChildren() must either provide same objects or new objects but with correct hashCode() and equals() methods. Wrong parent element=" +
-              element);
+            "AbstractTreeStructure.getChildren() must either provide same objects or new objects but with correct hashCode() and equals() methods. Wrong parent element=" +
+            element);
           break;
         }
       }
@@ -906,7 +918,7 @@ class AbstractTreeUi {
               if (TreeBuilderUtil.isNodeSelected(myTree, node)) {
                 addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)), true, Condition.FALSE);
               }
-              removeNodeFromParent((MutableTreeNode)child, false);
+              removeIfLoading(child);
               i--;
             }
           }
@@ -1005,7 +1017,7 @@ class AbstractTreeUi {
     if (childDescr == null) {
       boolean isInMap = myElementToNodeMap.containsValue(childNode);
       LOG.error(
-          "childDescr == null, builder=" + this + ", childNode=" + childNode.getClass() + ", isInMap = " + isInMap + ", node = " + node);
+        "childDescr == null, builder=" + this + ", childNode=" + childNode.getClass() + ", isInMap = " + isInMap + ", node = " + node);
       return;
     }
     Object oldElement = childDescr.getElement();
@@ -1147,6 +1159,7 @@ class AbstractTreeUi {
       return new TreePath(nodes.toArray(new Object[nodes.size()]));
     }
   }
+
 
   private void removeNodeFromParent(final MutableTreeNode node, final boolean willAdjustSelection) {
     doWithUpdaterState(new Runnable() {
@@ -1580,8 +1593,8 @@ class AbstractTreeUi {
         firstVisible = getNodeForElement(eachElement, true);
         if (eachElement != element || !parentsOnly) {
           assert !kidsToExpand.contains(eachElement) :
-              "Not a valid tree structure, walking up the structure gives many entries for element=" +
-              eachElement;
+            "Not a valid tree structure, walking up the structure gives many entries for element=" +
+            eachElement;
           kidsToExpand.add(eachElement);
         }
         if (firstVisible != null) break;
@@ -1886,9 +1899,7 @@ class AbstractTreeUi {
       final Object element = getElementFor(node);
 
       for (int i = 0; i < node.getChildCount(); i++) {
-        if (isLoadingNode(node.getChildAt(i))) {
-          removeNodeFromParent((MutableTreeNode)node.getChildAt(i), false);
-        }
+        removeIfLoading(node.getChildAt(i));
       }
 
       if (node.getChildCount() == 0) {
