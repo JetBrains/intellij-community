@@ -653,6 +653,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
   }
 
+  public void flushModifications() {
+    fireModification(getContext().getCurrentConfigurable());
+  }
+
   public boolean canApply() {
     return getContext().getModified().size() > 0;
   }

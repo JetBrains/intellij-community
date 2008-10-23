@@ -82,6 +82,8 @@ public class OptionsEditorDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
+    myEditor.flushModifications();
+
     if (myEditor.canApply()) {
       myEditor.apply();
       if (!updateStatus()) return;
