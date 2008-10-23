@@ -9,15 +9,15 @@ import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -28,6 +28,7 @@ import java.util.List;
 public class CompilerConfigurable extends SearchableConfigurable.Parent.Abstract {
   private Project myProject;
   private static final Icon ICON = IconLoader.getIcon("/general/configurableCompiler.png");
+  private CompilerUIConfigurable myCompilerUIConfigurable;
 
   public static CompilerConfigurable getInstance(Project project) {
     return ShowSettingsUtil.getInstance().findProjectConfigurable(project, CompilerConfigurable.class);
@@ -35,6 +36,7 @@ public class CompilerConfigurable extends SearchableConfigurable.Parent.Abstract
 
   public CompilerConfigurable(Project project) {
     myProject = project;
+    myCompilerUIConfigurable = new CompilerUIConfigurable(myProject);
   }
 
   public String getDisplayName() {
@@ -58,6 +60,36 @@ public class CompilerConfigurable extends SearchableConfigurable.Parent.Abstract
     return null;
   }
 
+  @Override
+  public JComponent createComponent() {
+    return myCompilerUIConfigurable.createComponent();
+  }
+
+  @Override
+  public boolean hasOwnContent() {
+    return true;
+  }
+
+  @Override
+  public boolean isModified() {
+    return myCompilerUIConfigurable.isModified();
+  }
+
+  @Override
+  public void apply() throws ConfigurationException {
+    myCompilerUIConfigurable.apply();
+  }
+
+  @Override
+  public void reset() {
+    myCompilerUIConfigurable.reset();
+  }
+
+  @Override
+  public void disposeUIResources() {
+    myCompilerUIConfigurable.disposeUIResources();
+  }
+
   protected Configurable[] buildConfigurables() {
     List<Configurable> result = new ArrayList<Configurable>();
 
@@ -72,7 +104,6 @@ public class CompilerConfigurable extends SearchableConfigurable.Parent.Abstract
       }
     };
 
-    result.add(new CompilerUIConfigurable(myProject));
     result.add(createExcludesWrapper(excludes));
 
     ArrayList<Configurable> additional = new ArrayList<Configurable>();
