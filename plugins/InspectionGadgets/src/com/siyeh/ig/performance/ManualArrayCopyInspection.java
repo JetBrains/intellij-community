@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,26 +35,31 @@ import org.jetbrains.annotations.Nullable;
 
 public class ManualArrayCopyInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "manual.array.copy.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "manual.array.copy.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ManualArrayCopyVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new ManualArrayCopyFix();
     }
@@ -67,6 +72,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
                     "manual.array.copy.replace.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement forElement = descriptor.getPsiElement();
@@ -165,7 +171,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
 
         @NonNls @Nullable
         private static String getLengthText(PsiExpression expression,
-                                            PsiLocalVariable variable) {
+                                            PsiVariable variable) {
             expression =
                     PsiUtil.deparenthesizeExpression(expression);
             if (expression == null) {
@@ -310,7 +316,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
 
         private static boolean expressionIsArrayCopy(
                 @Nullable PsiExpression expression,
-                @NotNull PsiLocalVariable variable) {
+                @NotNull PsiVariable variable) {
             final PsiExpression strippedExpression =
                     PsiUtil.deparenthesizeExpression(expression);
             if (strippedExpression == null) {
@@ -374,7 +380,8 @@ public class ManualArrayCopyInspection extends BaseInspection {
                     return false;
                 }
             } else {
-                if (!lhsType.isAssignableFrom(rhsType)) {
+                if (!lhsType.isAssignableFrom(rhsType) ||
+                        rhsType instanceof PsiPrimitiveType) {
                     return false;
                 }
             }

@@ -1,4 +1,4 @@
-package com.siyeh.igtest.performance;
+package com.siyeh.igtest.performance.manual_array_copy;
 
 public class ManualArrayCopyInspection
 {
@@ -66,5 +66,13 @@ public class ManualArrayCopyInspection
         for (int k = 0; k < 5; k++) { // can be converted to System.arraycopy()
             target[k] = source[k];
         }
+    }
+
+    static Integer[] nono(int[] ints) {
+        Integer[] array = new Integer[ints.length];
+        for ( int i = 0; i < ints.length; i++ ) {
+            array[i] = ints[i];
+        }
+        return array;
     }
 }
