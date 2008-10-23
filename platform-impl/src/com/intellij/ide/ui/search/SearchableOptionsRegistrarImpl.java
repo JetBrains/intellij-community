@@ -162,7 +162,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     Set<String> options = getProcessedWordsWithoutStemming(option);
     if (configurables == null) {
       for (ConfigurableGroup group : groups) {
-        contentHits.addAll(expandGroup(group));
+        contentHits.addAll(SearchUtil.expandGroup(group));
       }
     } else {
       contentHits.addAll(configurables);
@@ -225,25 +225,6 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     return hits;
   }
 
-  private List<Configurable> expandGroup(final ConfigurableGroup group) {
-    final Configurable[] configurables = group.getConfigurables();
-    ArrayList<Configurable> result = new ArrayList<Configurable>();
-    result.addAll(Arrays.asList(configurables));
-    for (Configurable each : configurables) {
-      addChildren(each, result);
-    }
-    return result;
-  }
-
-  private void addChildren(Configurable configurable, ArrayList<Configurable> list) {
-    if (configurable instanceof Configurable.Composite) {
-      final Configurable[] kids = ((Configurable.Composite)configurable).getConfigurables();
-      for (Configurable eachKid : kids) {
-        list.add(eachKid);
-        addChildren(eachKid, list);
-      }
-    }
-  }
 
   @Nullable
   public Set<OptionDescription> getAcceptableDescriptions(final String prefix) {

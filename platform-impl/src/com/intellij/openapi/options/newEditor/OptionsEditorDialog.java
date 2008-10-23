@@ -1,13 +1,17 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,7 +33,7 @@ public class OptionsEditorDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     myGroups = groups;
-    myPreselected = preselectedConfigurable;
+    myPreselected = preselectedConfigurable != null ? preselectedConfigurable : findLastSavedConfigurable(groups);
 
     setTitle("Settings");
 
@@ -83,7 +87,39 @@ public class OptionsEditorDialog extends DialogWrapper {
       if (!updateStatus()) return;
     }
 
+    saveCurrentConfigurable();
+
     super.doOKAction();
+  }
+
+
+  private void saveCurrentConfigurable() {
+    final Configurable current = myEditor.getContext().getCurrentConfigurable();
+    if (current == null) return;
+
+    final PropertiesComponent props = PropertiesComponent.getInstance(myProject);
+
+    if (current instanceof SearchableConfigurable) {
+      props.setValue(OptionsEditor.LAST_SELECTED_CONFIGURABLE, ((SearchableConfigurable)current).getId());
+    } else {
+      props.setValue(OptionsEditor.LAST_SELECTED_CONFIGURABLE, current.getClass().getName());
+    }
+  }
+
+  @Nullable
+  private Configurable findLastSavedConfigurable(ConfigurableGroup[] groups) {
+    final String id = PropertiesComponent.getInstance(myProject).getValue(OptionsEditor.LAST_SELECTED_CONFIGURABLE);
+    if (id == null) return null;
+
+    final java.util.List<Configurable> all = SearchUtil.expand(groups);
+    for (Configurable each : all) {
+      if (each instanceof SearchableConfigurable) {
+        if (id.equals(((SearchableConfigurable)each).getId())) return each;
+      }
+      if (id.equals(each.getClass().getName())) return each;
+    }
+
+    return null;
   }
 
   @Override
@@ -105,6 +141,12 @@ public class OptionsEditorDialog extends DialogWrapper {
     }
 
     super.doCancelAction(source);
+  }
+
+  @Override
+  public void doCancelAction() {
+    saveCurrentConfigurable();
+    super.doCancelAction();
   }
 
   @Override

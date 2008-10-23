@@ -50,6 +50,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   @NonNls static final String MAIN_SPLITTER_PROPORTION = "options.splitter.main.proportions";
   @NonNls static final String DETAILS_SPLITTER_PROPORTION = "options.splitter.details.proportions";
+  @NonNls static final String LAST_SELECTED_CONFIGURABLE = "options.lastSelected";
 
   Project myProject;
 

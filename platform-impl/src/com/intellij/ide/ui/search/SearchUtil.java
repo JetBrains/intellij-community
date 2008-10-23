@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -613,4 +614,33 @@ public class SearchUtil {
       ((TextFieldWithProcessing)getTextEditor()).processKeyEvent(e);
     }
   }
+
+  public static List<Configurable> expand(ConfigurableGroup[] groups) {
+    final ArrayList<Configurable> result = new ArrayList<Configurable>();
+    for (ConfigurableGroup eachGroup : groups) {
+      result.addAll(expandGroup(eachGroup));
+    }
+    return result;
+  }
+
+  public static List<Configurable> expandGroup(final ConfigurableGroup group) {
+    final Configurable[] configurables = group.getConfigurables();
+    ArrayList<Configurable> result = new ArrayList<Configurable>();
+    result.addAll(Arrays.asList(configurables));
+    for (Configurable each : configurables) {
+      addChildren(each, result);
+    }
+    return result;
+  }
+
+  private static void addChildren(Configurable configurable, ArrayList<Configurable> list) {
+    if (configurable instanceof Configurable.Composite) {
+      final Configurable[] kids = ((Configurable.Composite)configurable).getConfigurables();
+      for (Configurable eachKid : kids) {
+        list.add(eachKid);
+        addChildren(eachKid, list);
+      }
+    }
+  }
+
 }
