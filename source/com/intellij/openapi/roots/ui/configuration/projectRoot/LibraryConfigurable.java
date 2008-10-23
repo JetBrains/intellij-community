@@ -68,8 +68,11 @@ public class LibraryConfigurable extends NamedConfigurable<Library> {
   }
 
   public void setDisplayName(final String name) {
-    final LibraryEditor libraryEditor = ((LibrariesModifiableModel)myModel.getModifiableModel()).getLibraryEditor(myLibrary);
-    libraryEditor.setName(name);
+    getLibraryEditor().setName(name);
+  }
+
+  private LibraryEditor getLibraryEditor() {
+    return ((LibrariesModifiableModel)myModel.getModifiableModel()).getLibraryEditor(myLibrary);
   }
 
   public Library getEditableObject() {
@@ -85,8 +88,7 @@ public class LibraryConfigurable extends NamedConfigurable<Library> {
   }
 
   public String getDisplayName() {
-    final LibraryEditor libraryEditor = ((LibrariesModifiableModel)myModel.getModifiableModel()).getLibraryEditor(myLibrary);
-    return libraryEditor.getName();
+    return getLibraryEditor().getName();
   }
 
   public Icon getIcon() {

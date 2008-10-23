@@ -5,6 +5,7 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
@@ -91,6 +92,10 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   }
 
   public LibraryEditor getLibraryEditor(Library library){
+    final Library source = ((LibraryImpl)library).getSource();
+    if (source != null) {
+      return getLibraryEditor(source);
+    }
     LibraryEditor libraryEditor = myLibrary2EditorMap.get(library);
     if (libraryEditor == null){
       libraryEditor = createLibraryEditor(library);
@@ -101,7 +106,6 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   private LibraryEditor createLibraryEditor(final Library library) {
     final LibraryEditor libraryEditor = new LibraryEditor(library);
     myLibrary2EditorMap.put(library, libraryEditor);
-    myLibrary2EditorMap.put((Library)libraryEditor.getModel(), libraryEditor);
     return libraryEditor;
   }
 

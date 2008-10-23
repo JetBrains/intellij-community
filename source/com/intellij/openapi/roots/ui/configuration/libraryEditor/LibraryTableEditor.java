@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -843,12 +844,6 @@ public class LibraryTableEditor implements Disposable {
       });
     }
 
-    public void doCancelAction() {
-      cancelChanges();
-      Disposer.dispose(LibraryTableEditor.this);
-      super.doCancelAction();
-    }
-
     protected JComponent createNorthPanel() {
       if (myTreeBuilder.getTreeStructure() instanceof LibraryTreeStructure) {
         final Library library = getSelectedLibrary();
@@ -880,6 +875,13 @@ public class LibraryTableEditor implements Disposable {
 
     protected JComponent createCenterPanel() {
       return LibraryTableEditor.this.getComponent();
+    }
+
+    @Override
+    protected Action[] createActions() {
+      final Action action = getOKAction();
+      action.putValue(Action.NAME, CommonBundle.getCloseButtonText());
+      return new Action[]{action};
     }
   }
 
