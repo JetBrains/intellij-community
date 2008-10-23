@@ -27,8 +27,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   private volatile AntTarget[] myImportedTargets;
   private volatile List<AntFile> myImports;
   private AntFile[] myCachedImportsArray;
-  private Set<String> myImportsDependentProperties;
-    
+
   private volatile Map<String, AntElement> myReferencedElements;
   private volatile String[] myRefIdsArray;
 
@@ -80,12 +79,10 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   public void clearImports() {
     synchronized (PsiLock.LOCK) {
-      if (myBuildingImports != 0) {
-        return;
+      if (myBuildingImports == 0) {
+        myImports = null;
       }
-      myImports = null;
       myCachedImportsArray = null;
-      myImportsDependentProperties = null;
       myImportedTargets = null;
     }
   }
@@ -176,7 +173,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
    * task, but also a fake file which aggregates definitions resolved from all
    * entity references under the root tag.
    */
-  int myBuildingImports = 0;
+  private int myBuildingImports = 0;
   @NotNull
   public AntFile[] getImportedFiles() {
     synchronized (PsiLock.LOCK) {
@@ -199,9 +196,6 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
                 final AntFile imported = AntImportImpl.getImportedFile(fileName, this);
                 if (imported != null) {
                   addImportedFile(imported);
-                }
-                else {
-                  registerImportsDependentProperties(fileName);
                 }
               }
             }
@@ -229,30 +223,14 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
         finally {
           StringBuilderSpinAllocator.dispose(builder);
           myBuildingImports--;
+          myCachedImportsArray = null;
+          myImportedTargets = null;
         }
       }
       if (myCachedImportsArray == null) {
         myCachedImportsArray = myImports.toArray(new AntFile[myImports.size()]);
       }
       return myCachedImportsArray;
-    }
-  }
-
-  // TODO: with the new implementation of properties management this will be obsolete; to be removed
-  private void registerImportsDependentProperties(final String fileName) {
-    int startProp = 0;
-    while ((startProp = fileName.indexOf("${", startProp)) >= 0) {
-      if (startProp == 0 || fileName.charAt(startProp - 1) != '$') {
-        // if the '$' is not escaped
-        final int endProp = fileName.indexOf('}', startProp + 2);
-        if (endProp > startProp + 2) {
-          if (myImportsDependentProperties == null) {
-            myImportsDependentProperties = new HashSet<String>();
-          }
-          myImportsDependentProperties.add(fileName.substring(startProp + 2, endProp));
-        }
-      }
-      startProp += 2;
     }
   }
 

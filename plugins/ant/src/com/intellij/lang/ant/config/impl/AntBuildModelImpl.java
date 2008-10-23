@@ -120,7 +120,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
     final AntTarget[] targets = (project == null) ? AntTarget.EMPTY_ARRAY : project.getTargets();
     final List<AntBuildTargetBase> list = new ArrayList<AntBuildTargetBase>(targets.length);
     final VirtualFile sourceFile = model.getBuildFile().getVirtualFile();
-    final AntTarget defaultTarget = project.getDefaultTarget();
+    final AntTarget defaultTarget = project != null? project.getDefaultTarget() : null;
     for (final AntTarget target : targets) {
       list.add(new AntBuildTargetImpl(target, model, sourceFile, false, target.equals(defaultTarget)));
     }
