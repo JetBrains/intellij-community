@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,7 +23,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ResourceFilteringCompiler implements ClassPostProcessingCompiler {
+public class MavenResourceFilteringCompiler implements ClassPostProcessingCompiler {
   @NotNull
   public ProcessingItem[] getProcessingItems(CompileContext context) {
     MavenProjectsManager mavenProjectManager = MavenProjectsManager.getInstance(context.getProject());
@@ -35,20 +36,21 @@ public class ResourceFilteringCompiler implements ClassPostProcessingCompiler {
       MavenProjectModel mavenProject = mavenProjectManager.findProject(eachModule);
       if (mavenProject == null) continue;
 
-      VirtualFile outputDir = context.getModuleOutputDirectory(eachModule);
-      VirtualFile testOutputDir = context.getModuleOutputDirectoryForTests(eachModule);
-
-      List<VirtualFile> outputDirs = new ArrayList<VirtualFile>();
-      if (outputDir != null) outputDirs.add(outputDir);
-      if (testOutputDir != null) outputDirs.add(testOutputDir);
-      
-      if (outputDirs.isEmpty()) continue;
-
       for (VirtualFile eachSourceRoot : context.getSourceRoots(eachModule)) {
+        VirtualFile outputDir = null;
+        CompileContextEx contextEx = (CompileContextEx)context;
+        if (contextEx.isInSourceContent(eachSourceRoot)) {
+          outputDir = context.getModuleOutputDirectory(eachModule);
+        }
+        if (contextEx.isInTestSourceContent(eachSourceRoot)) {
+          outputDir = context.getModuleOutputDirectoryForTests(eachModule);
+        }
+        if (outputDir == null) continue;
+
         collectProcessingItems(eachModule,
                                eachSourceRoot,
                                eachSourceRoot,
-                               outputDirs,
+                               outputDir,
                                config,
                                mavenProject.isFiltered(eachSourceRoot),
                                result,
@@ -62,7 +64,7 @@ public class ResourceFilteringCompiler implements ClassPostProcessingCompiler {
   private void collectProcessingItems(Module module,
                                       VirtualFile sourceRoot,
                                       VirtualFile currentDir,
-                                      List<VirtualFile> outputDirs,
+                                      VirtualFile outputDir,
                                       CompilerConfiguration config,
                                       boolean isSourceRootFiltered,
                                       List<ProcessingItem> result,
@@ -71,19 +73,17 @@ public class ResourceFilteringCompiler implements ClassPostProcessingCompiler {
 
     for (VirtualFile eachSourceFile : currentDir.getChildren()) {
       if (eachSourceFile.isDirectory()) {
-        collectProcessingItems(module, sourceRoot, eachSourceFile, outputDirs, config, isSourceRootFiltered, result, i);
+        collectProcessingItems(module, sourceRoot, eachSourceFile, outputDir, config, isSourceRootFiltered, result, i);
       }
       else {
         if (!config.isResourceFile(eachSourceFile.getName())) continue;
         if (eachSourceFile.getFileType().isBinary()) continue;
 
         String relPath = VfsUtil.getRelativePath(eachSourceFile, sourceRoot, '/');
-        for (VirtualFile eachOutputDir : outputDirs) {
-          VirtualFile outputFile = eachOutputDir.findFileByRelativePath(relPath);
-          if (outputFile != null) {
-            result.add(new MyProcessingItem(module, eachSourceFile, outputFile, isSourceRootFiltered));
-            break;
-          }
+        VirtualFile outputFile = outputDir.findFileByRelativePath(relPath);
+        if (outputFile != null) {
+          result.add(new MyProcessingItem(module, eachSourceFile, outputFile, isSourceRootFiltered));
+          break;
         }
       }
     }

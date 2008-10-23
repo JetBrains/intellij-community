@@ -32,7 +32,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationType implementation="org.jetbrains.idea.maven.runner.MavenRunConfigurationType"/>
 
-    <compiler implementation="org.jetbrains.idea.maven.compiler.ResourceFilteringCompiler" order="last"/>
+    <compiler implementation="org.jetbrains.idea.maven.compiler.MavenResourceFilteringCompiler" order="last"/>
 
     <selectInTarget implementation="org.jetbrains.idea.maven.navigator.SelectInMavenNavigatorTarget"/>
 

@@ -8,10 +8,10 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,9 +34,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertSources("project", "resources");
     compileModules("project");
 
-    VirtualFile result = LocalFileSystem.getInstance().findFileByPath(getProjectPath() + "/target/classes/file.properties");
-    assertNotNull(result);
-    assertEquals("value=1", VfsUtil.loadText(result));
+    assertResult("target/classes/file.properties", "value=1");
   }
 
   public void testFilteringTestResources() throws Exception {
@@ -57,9 +55,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertTestSources("project", "resources");
     compileModules("project");
 
-    VirtualFile result = LocalFileSystem.getInstance().findFileByPath(getProjectPath() + "/target/test-classes/file.properties");
-    assertNotNull(result);
-    assertEquals("value=1", VfsUtil.loadText(result));
+    assertResult("target/test-classes/file.properties", "value=1");
   }
 
   public void testFilterWithSeveralResourceFolders() throws Exception {
@@ -85,14 +81,8 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertSources("project", "resources1", "resources2");
     compileModules("project");
 
-
-    VirtualFile file1 = myProjectPom.getParent().findFileByRelativePath("target/classes/file1.properties");
-    VirtualFile file2 = myProjectPom.getParent().findFileByRelativePath("target/classes/file2.properties");
-    assertNotNull(file1);
-    assertNotNull(file2);
-
-    assertEquals("value=1", VfsUtil.loadText(file1));
-    assertEquals("value=1", VfsUtil.loadText(file2));
+    assertResult("target/classes/file1.properties", "value=1");
+    assertResult("target/classes/file2.properties", "value=1");
   }
 
   public void testFilterWithSeveralModules() throws Exception {
@@ -132,13 +122,8 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertSources("module2", "resources");
     compileModules("module1", "module2");
 
-    VirtualFile file1 = m1.getParent().findFileByRelativePath("target/classes/file1.properties");
-    VirtualFile file2 = m2.getParent().findFileByRelativePath("target/classes/file2.properties");
-    assertNotNull(file1);
-    assertNotNull(file2);
-
-    assertEquals("value=1", VfsUtil.loadText(file1));
-    assertEquals("value=2", VfsUtil.loadText(file2));
+    assertResult(m1, "target/classes/file1.properties", "value=1");
+    assertResult(m2, "target/classes/file2.properties", "value=2");
   }
 
   public void testDoNotFilterIfNotRequested() throws Exception {
@@ -165,13 +150,8 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     compileModules("project");
 
 
-    VirtualFile file1 = myProjectPom.getParent().findFileByRelativePath("target/classes/file1.properties");
-    VirtualFile file2 = myProjectPom.getParent().findFileByRelativePath("target/classes/file2.properties");
-    assertNotNull(file1);
-    assertNotNull(file2);
-
-    assertEquals("value=1", VfsUtil.loadText(file1));
-    assertEquals("value=${project.version}", VfsUtil.loadText(file2));
+    assertResult("target/classes/file1.properties", "value=1");
+    assertResult("target/classes/file2.properties", "value=${project.version}");
   }
 
   public void testDoNotChangeFileIfPropertyIsNotResolved() throws Exception {
@@ -192,9 +172,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertSources("project", "resources");
     compileModules("project");
 
-    VirtualFile result = LocalFileSystem.getInstance().findFileByPath(getProjectPath() + "/target/classes/file.properties");
-    assertNotNull(result);
-    assertEquals("value=${foo.bar}", VfsUtil.loadText(result));
+    assertResult("target/classes/file.properties", "value=${foo.bar}");
   }
 
   public void testChangingResolvedPropsBackWhenSettingsIsChange() throws Exception {
@@ -213,10 +191,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                   "  </resources>" +
                   "</build>");
     compileModules("project");
-
-    VirtualFile result = LocalFileSystem.getInstance().findFileByPath(getProjectPath() + "/target/classes/file.properties");
-    assertNotNull(result);
-    assertEquals("value=1", VfsUtil.loadText(result));
+    assertResult("target/classes/file.properties", "value=1");
 
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -233,9 +208,50 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     importProject();
     compileModules("project");
 
-    result = LocalFileSystem.getInstance().findFileByPath(getProjectPath() + "/target/classes/file.properties");
-    assertNotNull(result);
-    assertEquals("value=${project.version}", VfsUtil.loadText(result));
+    assertResult("target/classes/file.properties", "value=${project.version}");
+  }
+
+  public void testSameFileInSourcesAndTestSources() throws Exception {
+    createProjectSubFile("src/main/resources/file.properties").setBinaryContent("foo=${foo.main}".getBytes());
+    createProjectSubFile("src/test/resources/file.properties").setBinaryContent("foo=${foo.test}".getBytes());
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<properties>" +
+                  "  <foo.main>main</foo.main>" +
+                  "  <foo.test>test</foo.test>" +
+                  "</properties>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>src/main/resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "  <testResources>" +
+                  "    <testResource>" +
+                  "      <directory>src/test/resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </testResource>" +
+                  "  </testResources>" +
+                  "</build>");
+    compileModules("project");
+
+    assertResult("target/classes/file.properties", "foo=main");
+    assertResult("target/test-classes/file.properties", "foo=test");
+  }
+
+  private void assertResult(String relativePath, String content) throws IOException {
+    assertResult(myProjectPom, relativePath, content);
+  }
+
+  private void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {
+    VirtualFile file = pomFile.getParent().findFileByRelativePath(relativePath);
+    assertNotNull(file);
+    assertEquals(content, VfsUtil.loadText(file));
   }
 
   private void compileModules(String... modules) {
