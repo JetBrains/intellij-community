@@ -257,6 +257,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   private void setLine(final int line) {
     if (getLine() != line) {
       myState.setLine(line);
+      mySourcePosition = null;
       fireBreakpointChanged();
     }
   }
