@@ -103,6 +103,7 @@ public class DebuggerDataViewsConfigurable implements Configurable {
     final JLabel tooltipLabel = new JLabel(DebuggerBundle.message("label.debugger.general.configurable.tooltips.delay"));
     panel.add(tooltipLabel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
     myValueTooltipDelayField = new JTextField(10);
+    myValueTooltipDelayField.setMinimumSize(new Dimension(50, myValueTooltipDelayField.getPreferredSize().height));
     panel.add(myValueTooltipDelayField, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 0), 0, 0));
     tooltipLabel.setLabelFor(myValueTooltipDelayField);
 
