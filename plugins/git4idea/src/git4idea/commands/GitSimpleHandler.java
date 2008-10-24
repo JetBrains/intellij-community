@@ -72,6 +72,16 @@ public class GitSimpleHandler extends GitHandler {
   }
 
   /**
+   * A constructor
+   *
+   * @param project   a project
+   * @param directory a process directory
+   */
+  public GitSimpleHandler(final Project project, final File directory) {
+    super(project, directory, "");
+  }
+
+  /**
    * {@inheritDoc}
    */
   protected void onTextAvailable(final String text, final Key outputType) {

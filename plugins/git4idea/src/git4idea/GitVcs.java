@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.changes.GitChangeProvider;
 import git4idea.checkin.GitCheckinEnvironment;
+import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitVcsConfigurable;
 import git4idea.config.GitVcsSettings;
 import git4idea.diff.GitDiffProvider;
@@ -54,6 +55,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Date;
 import java.util.List;
 
@@ -373,5 +375,23 @@ public class GitVcs extends AbstractVcs {
    */
   private void showMessage(@NotNull String message, final TextAttributesKey style) {
     myVcsManager.addMessageToConsoleWindow(message, myEditorColorsScheme.getAttributes(style));
+  }
+
+  /**
+   * Get the version of configured git
+   *
+   * @param project the project
+   * @return a version of configured git
+   * @throws com.intellij.openapi.vcs.VcsException
+   *          an error if there is a problem with running git
+   */
+  public static String version(Project project) throws VcsException {
+    final String s;
+    GitSimpleHandler h = new GitSimpleHandler(project, new File("."));
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.addParameters("--version");
+    s = h.run();
+    return s;
   }
 }

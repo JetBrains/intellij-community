@@ -110,7 +110,7 @@ public abstract class GitHandler {
    *
    * @param project   a project
    * @param directory a process directory
-   * @param command   a command to execute
+   * @param command   a command to execute (if empty string, the parameter is ignored)
    */
   protected GitHandler(@NotNull Project project, @NotNull File directory, @NotNull String command) {
     myProject = project;
@@ -119,7 +119,9 @@ public abstract class GitHandler {
     myCommandLine = new GeneralCommandLine();
     myCommandLine.setExePath(settings.GIT_EXECUTABLE);
     myCommandLine.setWorkingDirectory(myWorkingDirectory);
-    myCommandLine.addParameter(command);
+    if (command.length() > 0) {
+      myCommandLine.addParameter(command);
+    }
   }
 
   /**

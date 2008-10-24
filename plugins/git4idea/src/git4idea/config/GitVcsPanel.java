@@ -22,8 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitCommand;
+import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,13 +54,9 @@ public class GitVcsPanel {
   private void testConnection() {
     final GitVcsSettings settings = new GitVcsSettings();
     settings.GIT_EXECUTABLE = gitField.getText();
-    final VirtualFile baseDir = project.getBaseDir();
-    assert baseDir != null;
-    final GitCommand command = new GitCommand(project, settings, baseDir);
     final String s;
-
     try {
-      s = command.version();
+      s = GitVcs.version(project);
     }
     catch (VcsException e) {
       Messages.showErrorDialog(project, e.getMessage(), GitBundle.getString("find.git.error.title"));
