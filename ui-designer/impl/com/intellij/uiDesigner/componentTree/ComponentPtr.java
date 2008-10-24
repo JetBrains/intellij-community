@@ -18,13 +18,26 @@ public final class ComponentPtr{
   /**
    * @param component
    */
-  public ComponentPtr(@NotNull final GuiEditor editor, @NotNull final RadComponent component){
+  public ComponentPtr(@NotNull final GuiEditor editor, @NotNull final RadComponent component) {
+    this(editor, component, true);
+  }
+
+  /**
+   * @param component
+   * @param validate
+   */
+  public ComponentPtr(@NotNull final GuiEditor editor, @NotNull final RadComponent component, final boolean validate){
     myEditor=editor;
     myId=component.getId();
 
-    validate();
-    if(!isValid()){
+    if (validate) {
+      validate();
+      if(!isValid()){
       throw new IllegalArgumentException("invalid component: "+component);
+      }
+    }
+    else {
+      myComponent = component;
     }
   }
 

@@ -100,7 +100,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
       if(component instanceof RadRootContainer){
         return myRootElement;
       }else{
-        return component.getParent() != null ? new ComponentPtr(myEditor,component.getParent()) : null;
+        return component.getParent() != null ? new ComponentPtr(myEditor, component.getParent(), false) : null;
       }
     }
     else{
