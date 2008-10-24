@@ -38,6 +38,9 @@ import java.util.*;
  * @author MYakovlev
  *         Date: Jul 24
  * @author 2002
+ *
+ * locking policy: if the class needs to take a read or write action, the LOCK lock must be taken
+ * _inside_, not outside of the read action
  */
 public class FileTemplateManagerImpl extends FileTemplateManager implements ExportableComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl");
@@ -53,7 +56,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   @NonNls private final String myTemplatesDir;
   private MyTemplates myTemplates;
   private final RecentTemplatesManager myRecentList = new RecentTemplatesManager();
-  private boolean myLoaded = false;
+  private volatile boolean myLoaded = false;
   private final FileTemplateManagerImpl myInternalTemplatesManager;
   private final FileTemplateManagerImpl myPatternsManager;
   private final FileTemplateManagerImpl myCodeTemplatesManager;
@@ -126,24 +129,24 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
   @NotNull
   public FileTemplate[] getAllTemplates() {
+    ensureTemplatesAreLoaded();
     synchronized (LOCK) {
-      ensureTemplatesAreLoaded();
       return myTemplates.getAllTemplates();
     }
   }
 
   public FileTemplate getTemplate(@NotNull @NonNls String templateName) {
+    ensureTemplatesAreLoaded();
     synchronized (LOCK) {
-      ensureTemplatesAreLoaded();
       return myTemplates.findByName(templateName);
     }
   }
 
   @NotNull
   public FileTemplate addTemplate(@NotNull @NonNls String name, @NotNull @NonNls String extension) {
+    invalidate();
+    ensureTemplatesAreLoaded();
     synchronized (LOCK) {
-      invalidate();
-      ensureTemplatesAreLoaded();
 
       LOG.assertTrue(name.length() > 0);
       if (myTemplates.findByName(name) != null) {
@@ -157,8 +160,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   }
 
   public void removeTemplate(@NotNull FileTemplate template, boolean fromDiskOnly) {
+    ensureTemplatesAreLoaded();
     synchronized (LOCK) {
-      ensureTemplatesAreLoaded();
       myTemplates.removeTemplate(template);
       try {
         ((FileTemplateImpl)template).removeFromDisk();
@@ -232,7 +235,12 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     }
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        loadTemplates();
+        synchronized (LOCK) {
+          if (myLoaded) {
+            return;
+          }
+          loadTemplates();
+        }
         myLoaded = true;
       }
     });
@@ -358,8 +366,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
   @NotNull
   public Collection<String> getRecentNames() {
+    ensureTemplatesAreLoaded();
     synchronized (LOCK) {
-      ensureTemplatesAreLoaded();
       validateRecentNames();
       return myRecentList.getRecentNames(RECENT_TEMPLATES_SIZE);
     }
@@ -460,12 +468,14 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   }
 
   private void invalidate() {
-    saveAll();
-    myLoaded = false;
-    if (myTemplates != null) {
-      FileTemplate[] allTemplates = myTemplates.getAllTemplates();
-      for (FileTemplate template : allTemplates) {
-        ((FileTemplateImpl)template).invalidate();
+    synchronized (LOCK) {
+      saveAll();
+      myLoaded = false;
+      if (myTemplates != null) {
+        FileTemplate[] allTemplates = myTemplates.getAllTemplates();
+        for (FileTemplate template : allTemplates) {
+          ((FileTemplateImpl)template).invalidate();
+        }
       }
     }
   }
