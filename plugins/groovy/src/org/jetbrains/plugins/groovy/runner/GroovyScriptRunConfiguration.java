@@ -159,6 +159,12 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(GROOVY_MAIN);
 
+    params.getProgramParametersList().add("--conf");
+    String groovyHome = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
+    final String confpath = groovyHome + GROOVY_STARTER_CONF;
+    params.getProgramParametersList().add(confpath);
+
+
     params.getProgramParametersList().add("--classpath");
 
     // Clear module libraries from JDK's occurrences
