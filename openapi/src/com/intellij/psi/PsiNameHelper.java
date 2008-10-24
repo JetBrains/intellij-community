@@ -113,6 +113,10 @@ public abstract class PsiNameHelper {
     final String referenceName = ref.getReferenceName();
 
     PsiType[] typeParameters = ref.getTypeParameters();
+    return getPresentableText(referenceName, typeParameters);
+  }
+
+  public static String getPresentableText(final String referenceName, final PsiType[] typeParameters) {
     if (typeParameters.length > 0) {
       StringBuilder buffer = new StringBuilder();
       buffer.append(referenceName);
@@ -124,7 +128,7 @@ public abstract class PsiNameHelper {
       buffer.append(">");
       return buffer.toString();
     }
-    
+
     return referenceName != null ? referenceName : "";
   }
 
