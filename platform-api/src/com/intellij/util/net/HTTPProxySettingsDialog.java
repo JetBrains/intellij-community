@@ -37,17 +37,18 @@ public class HTTPProxySettingsDialog extends DialogWrapper {
     super(false);
     setTitle(CommonBundle.message("title.http.proxy.settings"));
     panel = new HTTPProxySettingsPanel();
+    panel.reset();
 
-    okAction = new AbstractAction (CommonBundle.getOkButtonText()) {
+    okAction = new AbstractAction(CommonBundle.getOkButtonText()) {
       public void actionPerformed(ActionEvent e) {
         panel.apply();
-        close ( OK_EXIT_CODE );
+        close(OK_EXIT_CODE);
       }
     };
     okAction.putValue(DEFAULT_ACTION, Boolean.TRUE.toString());
     cancelAction = new AbstractAction(CommonBundle.getCancelButtonText()) {
       public void actionPerformed(ActionEvent e) {
-        close ( CANCEL_EXIT_CODE );
+        close(CANCEL_EXIT_CODE);
       }
     };
     init();
@@ -58,6 +59,6 @@ public class HTTPProxySettingsDialog extends DialogWrapper {
   }
 
   protected Action[] createActions() {
-    return new Action [] {okAction, cancelAction};
+    return new Action[]{okAction, cancelAction};
   }
 }
