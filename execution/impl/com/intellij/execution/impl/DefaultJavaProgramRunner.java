@@ -65,7 +65,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     ExecutionResult executionResult;
-    final boolean shouldAddDefaultActions;
+    boolean shouldAddDefaultActions = true;
     if (state instanceof JavaCommandLine) {
       patch(((JavaCommandLine)state).getJavaParameters(), state.getRunnerSettings(), true);
       final ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
@@ -73,11 +73,12 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       if (proxy != null && executionResult != null) {
         proxy.attach(executionResult.getProcessHandler());
       }
-      shouldAddDefaultActions = state instanceof JavaCommandLineState &&  ((JavaCommandLineState)state).shouldAddJavaProgramRunnerActions();
+      if (state instanceof JavaCommandLineState && !((JavaCommandLineState)state).shouldAddJavaProgramRunnerActions()) {
+        shouldAddDefaultActions = false;
+      }
     }
     else {
       executionResult = state.execute(executor, this);
-      shouldAddDefaultActions = true;
     }
 
     if (executionResult == null) {
