@@ -382,10 +382,7 @@ public class ApplyPatchDialog extends DialogWrapper {
         if (!autodetectFailed) {
           String oldDetectedBaseDirectory = myDetectedBaseDirectory;
           int oldDetectedStripLeadingDirs = myDetectedStripLeadingDirs;
-          success = detectDirectoryByName(patch.getBeforeName());
-          if (!success) {
-            success = detectDirectoryByName(patch.getAfterName());
-          }
+          success = detectDirectory(patch);
           if (success) {
             if ((oldDetectedBaseDirectory != null && !Comparing.equal(oldDetectedBaseDirectory, myDetectedBaseDirectory)) ||
                 (oldDetectedStripLeadingDirs >= 0 && oldDetectedStripLeadingDirs != myDetectedStripLeadingDirs)) {
@@ -399,6 +396,18 @@ public class ApplyPatchDialog extends DialogWrapper {
           myPatchesFailedToLoad.add(patch);
         }
       }
+    }
+  }
+
+  private boolean detectDirectory(final FilePatch patch) {
+    if (patch.getBeforeName().equals(patch.getAfterName()) && patch.isNewFile()) {
+      return false;
+    } else {
+      boolean success = detectDirectoryByName(patch.getBeforeName());
+      if (! success) {
+        success = detectDirectoryByName(patch.getAfterName());
+      }
+      return success;
     }
   }
 
