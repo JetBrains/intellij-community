@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -157,11 +158,15 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
   }
 
   private void updateContext(final String qName) {
-    PsiClass psiClass = DebuggerUtils.findClass(qName, myProject, GlobalSearchScope.allScope(myProject));
-    myLabelEditor.setContext(psiClass);
-    myChildrenEditor.setContext(psiClass);
-    myChildrenExpandedEditor.setContext(psiClass);
-    myListChildrenEditor.setContext(psiClass);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        final PsiClass psiClass = DebuggerUtils.findClass(qName, myProject, GlobalSearchScope.allScope(myProject));
+        myLabelEditor.setContext(psiClass);
+        myChildrenEditor.setContext(psiClass);
+        myChildrenExpandedEditor.setContext(psiClass);
+        myListChildrenEditor.setContext(psiClass);
+      }
+    });
   }
 
   private void updateEnabledState() {
