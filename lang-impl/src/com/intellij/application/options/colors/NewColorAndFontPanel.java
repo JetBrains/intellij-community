@@ -1,7 +1,5 @@
 package com.intellij.application.options.colors;
 
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-
 import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
@@ -52,7 +50,7 @@ public class NewColorAndFontPanel extends JPanel {
 
 
     mySchemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
-      public void schemeChanged(final EditorColorsScheme scheme) {
+      public void schemeChanged() {
         myOptionsPanel.updateOptionsList();
         myPreviewPanel.updateView();
       }
@@ -110,5 +108,9 @@ public class NewColorAndFontPanel extends JPanel {
 
   public void resetSchemesCombo() {
     mySchemesPanel.resetSchemesCombo();
+  }
+
+  public boolean contains(final EditorSchemeAttributeDescriptor descriptor) {
+    return descriptor.getGroup().equals(myCategory);
   }
 }

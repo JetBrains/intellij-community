@@ -83,7 +83,7 @@ public class SchemesPanel extends JPanel {
           }
 
           if (areSchemesLoaded()) {
-            myDispatcher.getMulticaster().schemeChanged(selected);
+            myDispatcher.getMulticaster().schemeChanged();
           }
         }
       }
@@ -416,7 +416,7 @@ public class SchemesPanel extends JPanel {
 
     changeToScheme(myOptions.getSelectedScheme());
 
-    myDispatcher.getMulticaster().schemeChanged(myOptions.getSelectedScheme());
+    myDispatcher.getMulticaster().schemeChanged();
   }
 
   private void setListLoaded(final boolean b) {

@@ -58,26 +58,44 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private boolean mySomeSchemesDeleted = false;
   private ArrayList<NewColorAndFontPanel> mySubPanels;
+
+  private SchemesPanel myRootSchemesPanel;
+
   private boolean myResetCompleted = false;
   private boolean myApplyCompleted = false;
 
   public boolean isModified() {
-    boolean result = isModifiedImpl();
-    if (result) {
+    boolean listModified = isSchemeListModified();
+    boolean schemeModified = isSomeSchemeModified();
+
+    if (listModified || schemeModified) {
       myApplyCompleted = false;
     }
-    return result;
+
+    return listModified;
   }
 
-  private boolean isModifiedImpl() {
+  private boolean isSchemeListModified(){
     if (mySomeSchemesDeleted) return true;
 
     if (!mySelectedScheme.getName().equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) return true;
 
+    return false;
+  }
+
+  private boolean isModifiedImpl() {
+
+    if (isSchemeListModified()) return true;
+
+    if (isSomeSchemeModified()) return true;
+
+    return false;
+  }
+
+  private boolean isSomeSchemeModified() {
     for (MyColorScheme scheme : mySchemes.values()) {
       if (scheme.isModified()) return true;
     }
-
     return false;
   }
 
@@ -218,6 +236,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private void resetSchemesCombo() {
     myIsReset = true;
     try {
+      myRootSchemesPanel.resetSchemesCombo();
       for (NewColorAndFontPanel subPanel : mySubPanels) {
         subPanel.resetSchemesCombo();
       }
@@ -227,6 +246,16 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
   }
 
+  @Override
+  public JComponent createComponent() {
+    return myRootSchemesPanel;
+  }
+
+  @Override
+  public boolean hasOwnContent() {
+    return true;
+  }
+
   protected Configurable[] buildConfigurables() {
     initAll();
 
@@ -234,7 +263,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     for (NewColorAndFontPanel subPanel : mySubPanels) {
       subPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
-        public void schemeChanged(final EditorColorsScheme scheme) {
+        public void schemeChanged() {
           if (!myIsReset) {
             resetSchemesCombo();
           }
@@ -264,7 +293,17 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         }
 
         public boolean isModified() {
-          return ColorAndFontOptions.this.isModified();
+          for (MyColorScheme scheme : mySchemes.values()) {
+            for (EditorSchemeAttributeDescriptor descriptor : scheme.getDescriptors()) {
+              if (subPanel.contains(descriptor) && descriptor.isModified()) {
+                return true;
+              }
+            }
+
+          }
+
+          return false;
+
         }
 
         public void apply() throws ConfigurationException {
@@ -336,7 +375,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     SchemesPanel schemesPanel = new SchemesPanel(this);
 
     schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
-      public void schemeChanged(final EditorColorsScheme scheme) {
+      public void schemeChanged() {
         diffPreviewPanel.setColorScheme(getSelectedScheme());
         optionsPanel.updateOptionsList();
         diffPreviewPanel.updateView();
@@ -532,7 +571,24 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   public void reset() {
+    super.reset();
     if (!myResetCompleted) {
+
+      if (myRootSchemesPanel == null) {
+        myRootSchemesPanel = new SchemesPanel(this);
+
+        myRootSchemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
+          @Override
+          public void schemeChanged() {
+            if (!myIsReset) {
+              resetSchemesCombo();
+            }
+          }
+        });
+
+      }
+
+
       try {
         mySomeSchemesDeleted = false;
         initAll();
@@ -546,9 +602,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   public void disposeUIResources() {
+    super.disposeUIResources();
     mySubPanels = null;
     myResetCompleted = false;
     myApplyCompleted = false;
+    myRootSchemesPanel = null;
   }
 
   public boolean currentSchemeIsDefault() {

@@ -1,12 +1,10 @@
 package com.intellij.application.options.colors;
 
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-
 import java.util.EventListener;
 
 public interface ColorAndFontSettingsListener extends EventListener {
   void selectedOptionChanged(final Object selected);
-  void schemeChanged(EditorColorsScheme scheme);
+  void schemeChanged();
   void settingsChanged();
   void selectionInPreviewChanged(final String typeToSelect);
 
@@ -15,7 +13,7 @@ public interface ColorAndFontSettingsListener extends EventListener {
 
     }
 
-    public void schemeChanged(final EditorColorsScheme scheme) {
+    public void schemeChanged() {
     }
 
     public void settingsChanged() {

@@ -46,6 +46,7 @@ public interface SearchableConfigurable extends Configurable {
         return false;
       }
 
+      
       public boolean isModified() {
         return false;
       }
@@ -57,6 +58,7 @@ public interface SearchableConfigurable extends Configurable {
       }
 
       public void disposeUIResources() {
+        myKids = null;
       }
 
       public Runnable enableSearch(final String option) {
