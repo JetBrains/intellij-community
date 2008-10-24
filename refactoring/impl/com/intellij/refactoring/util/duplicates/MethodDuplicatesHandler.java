@@ -250,12 +250,12 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         if (value instanceof PsiReferenceExpression) {
           final PsiElement var = ((PsiReferenceExpression)value).resolve();
           if (var instanceof PsiVariable) {
-            match.replace(methodCallExpression, (PsiVariable)var);
+            match.replace(myMethod, methodCallExpression, (PsiVariable)var);
             return methodCallExpression;
           }
         }
       }
-      return match.replace(methodCallExpression, null);
+      return match.replace(myMethod, methodCallExpression, null);
     }
 
 

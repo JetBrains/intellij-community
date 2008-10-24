@@ -21,7 +21,7 @@ public class ConditionalReturnStatementValue implements ReturnValue {
     return PsiEquivalenceUtil.areElementsEquivalent(myReturnValue, otherReturnValue);
   }
 
-  public PsiStatement createReplacement(PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
+  public PsiStatement createReplacement(final PsiMethod extractedMethod, PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
     PsiIfStatement statement;
     if (myReturnValue == null) {

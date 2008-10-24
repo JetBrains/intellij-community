@@ -4,9 +4,11 @@
  */
 package com.intellij.refactoring.util.duplicates;
 
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiStatement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dsl
@@ -14,5 +16,6 @@ import com.intellij.util.IncorrectOperationException;
 public interface ReturnValue {
   boolean isEquivalent(ReturnValue other);
 
-  PsiStatement createReplacement(PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException;
+  @Nullable
+  PsiStatement createReplacement(final PsiMethod extractedMethod, PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException;
 }

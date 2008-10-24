@@ -160,6 +160,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testCodeDuplicatesWithContinue() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testCodeDuplicatesWithContinueNoReturn() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testExpressionDuplicates() throws Exception {
     doDuplicatesTest();
   }

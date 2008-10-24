@@ -399,6 +399,10 @@ public class DuplicatesFinder {
     } else if (pattern instanceof PsiReturnStatement) {
       final PsiReturnStatement patternReturnStatement = (PsiReturnStatement)pattern;
       return matchReturnStatement(patternReturnStatement, candidate, candidates, match);
+    } else if (pattern instanceof PsiContinueStatement) {
+      match.registerReturnValue(new ContinueReturnValue());
+    } else if (pattern instanceof PsiBreakStatement) {
+      match.registerReturnValue(new BreakReturnValue());
     } else if (pattern instanceof PsiReferenceExpression) {
       final PsiReferenceExpression patternRefExpr = (PsiReferenceExpression)pattern;
       final PsiReferenceExpression candidateRefExpr = (PsiReferenceExpression)candidate;

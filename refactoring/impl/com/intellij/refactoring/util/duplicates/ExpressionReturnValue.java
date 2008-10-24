@@ -28,7 +28,7 @@ public class ExpressionReturnValue implements ReturnValue {
     return PsiEquivalenceUtil.areElementsEquivalent(myExpression, ((ExpressionReturnValue)other).myExpression);
   }
 
-  public PsiStatement createReplacement(final PsiMethodCallExpression methodCallExpression)
+  public PsiStatement createReplacement(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression)
     throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(methodCallExpression.getProject());

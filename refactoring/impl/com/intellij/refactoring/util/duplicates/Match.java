@@ -213,21 +213,20 @@ public final class Match {
     return element;
   }
 
-  public PsiElement replaceByStatement(final PsiMethodCallExpression methodCallExpression,
-                                           final PsiVariable outputVariable) throws IncorrectOperationException {
-    final PsiStatement statement;
+  public PsiElement replaceByStatement(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression, final PsiVariable outputVariable) throws IncorrectOperationException {
+    PsiStatement statement = null;
     if (outputVariable != null) {
       ReturnValue returnValue = getOutputVariableValue(outputVariable);
       if (returnValue == null && outputVariable instanceof PsiField) {
         returnValue = new FieldReturnValue((PsiField)outputVariable);
       }
       if (returnValue == null) return null;
-      statement = returnValue.createReplacement(methodCallExpression);
+      statement = returnValue.createReplacement(extractedMethod, methodCallExpression);
     }
     else if (getReturnValue() != null) {
-      statement = getReturnValue().createReplacement(methodCallExpression);
+      statement = getReturnValue().createReplacement(extractedMethod, methodCallExpression);
     }
-    else {
+    if (statement == null) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
       PsiExpressionStatement expressionStatement = (PsiExpressionStatement) elementFactory.createStatementFromText("x();", null);
       final CodeStyleManager styleManager = CodeStyleManager.getInstance(methodCallExpression.getManager());
@@ -247,13 +246,13 @@ public final class Match {
     }
   }
 
-  public PsiElement replace(final PsiMethodCallExpression methodCallExpression, PsiVariable outputVariable) throws IncorrectOperationException {
+  public PsiElement replace(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression, PsiVariable outputVariable) throws IncorrectOperationException {
     declareLocalVariables();
     if (getMatchStart() == getMatchEnd() && getMatchStart() instanceof PsiExpression) {
       return replaceWithExpression(methodCallExpression);
     }
     else {
-      return replaceByStatement(methodCallExpression, outputVariable);
+      return replaceByStatement(extractedMethod, methodCallExpression, outputVariable);
     }
   }
 

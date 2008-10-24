@@ -870,7 +870,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         methodCallExpression.getArgumentList().add(val);
       }
     }
-    return match.replace(methodCallExpression, myOutputVariable);
+    return match.replace(myExtractedMethod, methodCallExpression, myOutputVariable);
   }
 
   private void deleteExtracted() throws IncorrectOperationException {

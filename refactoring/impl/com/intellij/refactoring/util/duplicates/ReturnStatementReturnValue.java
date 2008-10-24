@@ -20,7 +20,7 @@ public class ReturnStatementReturnValue implements ReturnValue {
     return other instanceof ReturnStatementReturnValue;
   }
 
-  public PsiStatement createReplacement(final PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
+  public PsiStatement createReplacement(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(methodCallExpression.getProject());
     PsiReturnStatement returnStatement = (PsiReturnStatement)elementFactory.createStatementFromText("return x;", null);

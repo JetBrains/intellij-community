@@ -27,7 +27,7 @@ public class VariableReturnValue implements ReturnValue {
     return myVariable;
   }
 
-  public PsiStatement createReplacement(final PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
+  public PsiStatement createReplacement(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
     final PsiDeclarationStatement statement;
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
