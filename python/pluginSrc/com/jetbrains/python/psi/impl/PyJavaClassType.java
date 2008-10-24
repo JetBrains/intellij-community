@@ -30,4 +30,8 @@ public class PyJavaClassType implements PyType {
     myClass.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
     return processor.getResult();
   }
+
+  public String getName() {
+    return myClass.getName();
+  }
 }
