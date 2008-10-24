@@ -85,7 +85,7 @@ public class ParameterInfo {
     }
   }
 
-  PsiType createType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
+  public PsiType createType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
     if (getTypeWrapper() != null) {
       return getTypeWrapper().getType(context, manager);
     } else {
@@ -93,7 +93,7 @@ public class ParameterInfo {
     }
   }
 
-  void setType(PsiType type) {
+  public void setType(PsiType type) {
     myType = CanonicalTypes.createTypeWrapper(type);
   }
 
@@ -126,5 +126,17 @@ public class ParameterInfo {
   @Nullable
   public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
     return JavaPsiFacade.getInstance(expr.getProject()).getElementFactory().createExpressionFromText(defaultValue, expr);
+  }
+
+  public boolean isUseAnySingleVariable() {
+    return useAnySingleVariable;
+  }
+
+  public String getDefaultValue() {
+    return defaultValue;
+  }
+
+  public void setDefaultValue(final String defaultValue) {
+    this.defaultValue = defaultValue;
   }
 }

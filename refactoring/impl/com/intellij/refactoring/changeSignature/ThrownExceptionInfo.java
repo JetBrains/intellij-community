@@ -24,7 +24,7 @@ public class ThrownExceptionInfo {
     setType(type);
   }
 
-  void setType(PsiClassType type) {
+  public void setType(PsiClassType type) {
     myType = CanonicalTypes.createTypeWrapper(type);
   }
 
@@ -51,5 +51,9 @@ public class ThrownExceptionInfo {
     if (oldIndex >= 0) {
       setType(types[oldIndex]);
     }
+  }
+
+  public int getOldIndex() {
+    return oldIndex;
   }
 }
