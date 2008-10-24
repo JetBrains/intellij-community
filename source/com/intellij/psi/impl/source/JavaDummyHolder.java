@@ -11,10 +11,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
-  private final LinkedHashMap<String, PsiClass> myPseudoImports = new LinkedHashMap<String, PsiClass>();
+  private static final Map<String,PsiClass> EMPTY = Collections.emptyMap();
+  private Map<String, PsiClass> myPseudoImports = EMPTY;
 
   public JavaDummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context) {
     super(manager, contentElement, context, null, null, StdLanguages.JAVA);
@@ -50,6 +53,10 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
 
     String className = aClass.getName();
     if (!myPseudoImports.containsKey(className)) {
+      if (myPseudoImports == EMPTY) {
+        myPseudoImports = new LinkedHashMap<String, PsiClass>();
+      }
+
       myPseudoImports.put(className, aClass);
       myManager.nonPhysicalChange(); // to clear resolve caches!
       return true;
