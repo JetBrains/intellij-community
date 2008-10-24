@@ -129,11 +129,6 @@ public class SvnConfigurable implements Configurable {
 
     myUseCommonProxy.setText(SvnBundle.message("use.idea.proxy.as.default", ApplicationNamesInfo.getInstance().getProductName()));
     myEditProxiesButton.addActionListener(new ConfigureProxiesListener(myProject));
-
-    myClearCacheLabel.setLabelFor(myClearAuthButton);
-    myUseCommonProxyLabel.setLabelFor(myUseCommonProxy);
-    myEditProxyLabel.setLabelFor(myEditProxiesButton);
-
   }
 
   private FileChooserDescriptor createFileDescriptor() {
