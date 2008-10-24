@@ -103,7 +103,14 @@ public class PyClassType implements PyType {
     }
     return ret.toArray();
   }
-  
+
+  public String getName() {
+    PyClass cls = getPyClass();
+    if (cls != null)
+    return cls.getName();
+    else return null;
+  }
+
   @NotNull
   public Set<String> getPossibleInstanceMembers() {
     Set<String> ret = new HashSet<String>();

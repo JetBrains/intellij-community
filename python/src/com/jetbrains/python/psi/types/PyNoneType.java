@@ -20,4 +20,8 @@ public class PyNoneType implements PyType { // TODO must extend ClassType. It's 
   public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
+
+  public String getName() {
+    return "None"; 
+  }
 }

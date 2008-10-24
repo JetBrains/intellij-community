@@ -48,6 +48,12 @@ public class PyModuleType implements PyType { // TODO: make it a PyClassType ref
     return processor.getResult();
   }
 
+  public String getName() {
+    PsiFile mod = getModule();
+    if (mod != null) return mod.getName();
+    else return null;
+  }
+
   @NotNull
   public Set<String> getPossibleInstanceMembers() {
     return ourPossibleFields;
