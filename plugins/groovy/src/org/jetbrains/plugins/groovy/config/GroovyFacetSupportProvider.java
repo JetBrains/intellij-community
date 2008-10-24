@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.ide.util.newProjectWizard.FrameworkSupportModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,8 +49,8 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
   }
 
   @NotNull
-  public GroovyVersionConfigurable createConfigurable(final Project project) {
-    return new GroovyVersionConfigurable(project, getDefaultVersion());
+  public GroovyVersionConfigurable createConfigurable(final @NotNull FrameworkSupportModel model) {
+    return new GroovyVersionConfigurable(model.getProject(), getDefaultVersion());
   }
 
   @Nullable
