@@ -1,7 +1,6 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -43,12 +42,6 @@ public class CloseAllEditorsButActiveAction extends AnAction {
     if (project == null) {
       presentation.setEnabled(false);
       return;
-    }
-    if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace())) {
-      presentation.setText(IdeBundle.message("action.close.all.but.current"));
-    }
-    else if (ActionPlaces.EDITOR_TAB_POPUP.equals(event.getPlace())) {
-      presentation.setText(IdeBundle.message("action.close.all.but.this"));
     }
     FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     VirtualFile selectedFile;
