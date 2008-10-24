@@ -15,8 +15,8 @@ import java.util.List;
  */
 public class GroovyDebuggerClassFilterProvider implements DebuggerClassFilterProvider {
 
-  @NonNls private static final String[] PROHIBITED_CLASS_PATTERNS = {"sun.reflect.*", "groovy.lang.Meta*", "org.codehaus.groovy.runtime.*",
-  "org.codehaus.groovy.reflection.*"};
+  @NonNls private static final String[] PROHIBITED_CLASS_PATTERNS =
+    {"groovy.lang.Meta*", "org.codehaus.groovy.runtime.*", "org.codehaus.groovy.reflection.*, groovy.lang.GroovyObjectSupport"};
 
   private static ClassFilter[] FITERS = ContainerUtil.map(PROHIBITED_CLASS_PATTERNS, new Function<String, ClassFilter>() {
     public ClassFilter fun(final String s) {
