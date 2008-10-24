@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
+import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -132,6 +133,9 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
     //add starter configuration parameters
     String groovyHome = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
+    if (groovyHome.length() == 0) {
+      groovyHome = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
+    }
     params.getVMParametersList().addParametersString(DGROOVY_HOME + "\"" + groovyHome + "\"");
 
     // -Dgroovy.starter.conf
@@ -161,6 +165,9 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
     params.getProgramParametersList().add("--conf");
     String groovyHome = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
+    if (groovyHome.length() == 0) {
+      groovyHome = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
+    }
     final String confpath = groovyHome + GROOVY_STARTER_CONF;
     params.getProgramParametersList().add(confpath);
 
