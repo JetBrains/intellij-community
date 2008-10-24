@@ -91,7 +91,7 @@ public abstract class GitHandler {
   /**
    * Character set to use for IO
    */
-  @NonNls private Charset myCharset = Charset.forName("UTF-8");
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) @NonNls private Charset myCharset = Charset.forName("UTF-8");
   /**
    * No ssh flag
    */
@@ -438,6 +438,7 @@ public abstract class GitHandler {
    *
    * @param charset a character set
    */
+  @SuppressWarnings({"SameParameterValue"})
   public void setCharset(final Charset charset) {
     myCharset = charset;
   }

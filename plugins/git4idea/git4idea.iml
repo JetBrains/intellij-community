@@ -21,6 +21,8 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="XmlRPC" level="project" />
+    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="vcs-impl" />
   </component>
 </module>
 

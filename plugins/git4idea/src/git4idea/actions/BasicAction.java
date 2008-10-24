@@ -23,11 +23,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -65,26 +67,13 @@ public abstract class BasicAction extends AnAction {
         catch (VcsException e) {
           exceptions.add(e);
         }
-        refreshFiles(project, affectedFiles);
+        GitUtil.refreshFiles(project, Arrays.asList(affectedFiles));
       }
 
     }, null);
     vcs.showErrors(exceptions, actionName);
   }
 
-
-  private void refreshFiles(@NotNull final Project project, @NotNull final VirtualFile[] affectedFiles) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (VirtualFile file : affectedFiles) {
-          file.refresh(false, true);
-          FileStatusManager.getInstance(project).fileStatusChanged(file);
-        }
-      }
-
-    });
-
-  }
 
   protected abstract void perform(@NotNull Project project,
                                   GitVcs mksVcs,

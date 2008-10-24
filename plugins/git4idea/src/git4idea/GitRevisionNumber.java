@@ -220,7 +220,7 @@ public class GitRevisionNumber implements VcsRevisionNumber {
    * @param rev     a revision expression
    * @return a resolved revision number with correct time
    */
-  public static GitRevisionNumber resolve(Project project, VirtualFile vcsRoot, String rev) throws VcsException {
+  public static GitRevisionNumber resolve(Project project, VirtualFile vcsRoot, @NonNls String rev) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, vcsRoot, "rev-list");
     h.setNoSSH(true);
     h.setSilent(true);

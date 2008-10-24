@@ -25,6 +25,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -278,7 +279,7 @@ public class GitUtil {
    * @param roots git content roots
    * @return a content root
    */
-  public static Collection<VirtualFile> gitRoots(final Collection<VirtualFile> roots) {
+  public static Set<VirtualFile> gitRoots(final Collection<VirtualFile> roots) {
     HashSet<VirtualFile> rc = new HashSet<VirtualFile>();
     for (VirtualFile root : roots) {
       VirtualFile f = root;
@@ -399,5 +400,24 @@ public class GitUtil {
       throw new IllegalArgumentException("The file " + path + " cannot be made relative to " + root);
     }
     return rc.replace(File.separatorChar, '/');
+  }
+
+  /**
+   * Refresh files
+   *
+   * @param project       a project
+   * @param affectedFiles affected files and directories
+   */
+  public static void refreshFiles(@NotNull final Project project, @NotNull final Collection<VirtualFile> affectedFiles) {
+    final VcsDirtyScopeManager dirty = VcsDirtyScopeManager.getInstance(project);
+    for (VirtualFile file : affectedFiles) {
+      file.refresh(false, true);
+      if (file.isDirectory()) {
+        dirty.dirDirtyRecursively(file);
+      }
+      else {
+        dirty.fileDirty(file);
+      }
+    }
   }
 }

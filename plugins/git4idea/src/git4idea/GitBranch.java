@@ -18,7 +18,13 @@ package git4idea;
  */
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.StringTokenizer;
 
 /**
  * This data class represents a Git branch
@@ -52,5 +58,33 @@ public class GitBranch {
 
   public boolean isActive() {
     return active;
+  }
+
+  /**
+   * Get current branch
+   *
+   * @param project a project
+   * @param root    a directory inside the repository
+   * @return the current branch or null if there is no current branch or if specific commit has been checked out
+   * @throws VcsException if there is a problem running git
+   */
+  @Nullable
+  public static GitBranch current(Project project, VirtualFile root) throws VcsException {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, "branch");
+    h.setNoSSH(true);
+    h.setSilent(true);
+    for (StringTokenizer lines = new StringTokenizer(h.run(), "\n"); lines.hasMoreTokens();) {
+      String line = lines.nextToken();
+      if (line != null && line.startsWith("*")) {
+        //noinspection HardCodedStringLiteral
+        if ("* (no branch)".equals(line)) {
+          return null;
+        }
+        else {
+          return new GitBranch(project, line.substring(2), true, false);
+        }
+      }
+    }
+    return null;
   }
 }
