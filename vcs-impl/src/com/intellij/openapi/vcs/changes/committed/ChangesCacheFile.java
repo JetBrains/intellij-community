@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -721,7 +722,7 @@ public class ChangesCacheFile {
 
     private boolean processIncomingChange(final Change change,
                                           final IncomingChangeListData changeListData,
-                                          @Nullable final Collection<FilePath> incomingFiles) {
+                                          @Nullable final Collection<FilePath> incomingFiles) throws IOException {
       CommittedChangeList changeList = changeListData.changeList;
       ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {
@@ -740,6 +741,13 @@ public class ChangesCacheFile {
         }
         LOG.info("Checking file " + afterRevision.getFile().getPath());
         FilePath localPath = ChangesUtil.getLocalPath(myProject, afterRevision.getFile());
+
+        if (! FileUtil.isAncestor(myRootPath.getIOFile(), localPath.getIOFile(), false)) {
+          // alien change in list; skip
+          LOG.info("Alien path " + localPath.getPresentableUrl() + " under root " + myRootPath.getPresentableUrl() + "; skipping.");
+          return true;
+        }
+
         localPath.refresh();
         VirtualFile file = localPath.getVirtualFile();
         if (isDeletedFile(myDeletedFiles, afterRevision)) {
