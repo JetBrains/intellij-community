@@ -73,6 +73,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     add(myComponent);
 
     setVisible(false);
+    setOpaque(false);
   }
 
   private static boolean isInsideActivationArea(JScrollPane container, EditorMouseEvent e) {
@@ -197,7 +198,21 @@ public class ContextMenuImpl extends JPanel implements Disposable {
 
         @Override
         public void paint(final Graphics g) {
-          paintChildren(g);
+          if (myContextMenuPanel.isPaintChildren()) {
+            paintChildren(g);
+          }
+        }
+
+        @Override
+        protected void paintChildren(final Graphics g) {
+          if (myContextMenuPanel.isPaintChildren()) {
+            super.paintChildren(g);
+          }
+        }
+
+        @Override
+        public boolean isOpaque() {
+          return myContextMenuPanel.isPaintChildren();
         }
 
         @Override
@@ -213,6 +228,11 @@ public class ContextMenuImpl extends JPanel implements Disposable {
                 final ActionButtonLook look = getButtonLook();
                 look.paintIcon(g, this, getIcon());
               }
+            }
+
+            @Override
+            public boolean isOpaque() {
+              return myContextMenuPanel.isPaintChildren();
             }
 
             @Override
@@ -252,6 +272,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     private ContextMenuPanel(final ContextMenuImpl contextMenu) {
       myContextMenu = contextMenu;
       setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+      setOpaque(false);
     }
 
     @Override
