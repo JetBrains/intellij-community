@@ -824,7 +824,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     for (ProjectManagerListener listener : myListeners) {
-      if (!listener.canCloseProject(project)) return false;
+      try {
+        if (!listener.canCloseProject(project)) return false;
+      } catch (Throwable e) {
+        LOG.warn(e); // DO NOT LET ANY PLUGIN to prevent closing due to exception
+      }
     }
 
     return true;
